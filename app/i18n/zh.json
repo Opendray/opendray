@@ -4613,6 +4613,11 @@
   "cortexHub": {
     "title": "Cortex",
     "subtitle": "经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。",
+    "idleBadge": "闲置 {days} 天",
+    "activeProjectsBadge": "{count} 个活跃",
+    "activeProjectsTitle": "活跃项目",
+    "loopHint": "会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。",
+    "settings": "设置",
     "memory": "记忆",
     "memoryDesc": "代理存取的跨会话原始事实。",
     "notes": "笔记",

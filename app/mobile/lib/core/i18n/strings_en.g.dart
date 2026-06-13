@@ -2084,6 +2084,21 @@ class TranslationsCortexHubEn {
 	/// en: 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.'
 	String get subtitle => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.';
 
+	/// en: 'idle {days}d'
+	String idleBadge({required Object days}) => 'idle ${days}d';
+
+	/// en: '{count} active'
+	String activeProjectsBadge({required Object count}) => '${count} active';
+
+	/// en: 'Active projects'
+	String get activeProjectsTitle => 'Active projects';
+
+	/// en: 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.'
+	String get loopHint => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.';
+
+	/// en: 'Settings'
+	String get settings => 'Settings';
+
 	/// en: 'Memory'
 	String get memory => 'Memory';
 
@@ -19665,6 +19680,11 @@ extension on Translations {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
+			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',
+			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} active',
+			'cortexHub.activeProjectsTitle' => 'Active projects',
+			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
+			'cortexHub.settings' => 'Settings',
 			'cortexHub.memory' => 'Memory',
 			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
 			'cortexHub.notes' => 'Notes',

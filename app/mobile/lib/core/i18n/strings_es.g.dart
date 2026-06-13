@@ -976,6 +976,11 @@ class _TranslationsCortexHubEs extends TranslationsCortexHubEn {
 	// Translations
 	@override String get title => 'Cortex';
 	@override String get subtitle => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.';
+	@override String idleBadge({required Object days}) => 'inactivo ${days}d';
+	@override String activeProjectsBadge({required Object count}) => '${count} activos';
+	@override String get activeProjectsTitle => 'Proyectos activos';
+	@override String get loopHint => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.';
+	@override String get settings => 'Ajustes';
 	@override String get memory => 'Memoria';
 	@override String get memoryDesc => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.';
 	@override String get notes => 'Notas';
@@ -12229,6 +12234,11 @@ extension on TranslationsEs {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
+			'cortexHub.idleBadge' => ({required Object days}) => 'inactivo ${days}d',
+			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} activos',
+			'cortexHub.activeProjectsTitle' => 'Proyectos activos',
+			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.',
+			'cortexHub.settings' => 'Ajustes',
 			'cortexHub.memory' => 'Memoria',
 			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
 			'cortexHub.notes' => 'Notas',

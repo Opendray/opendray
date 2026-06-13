@@ -976,6 +976,11 @@ class _TranslationsCortexHubZh extends TranslationsCortexHubEn {
 	// Translations
 	@override String get title => 'Cortex';
 	@override String get subtitle => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。';
+	@override String idleBadge({required Object days}) => '闲置 ${days} 天';
+	@override String activeProjectsBadge({required Object count}) => '${count} 个活跃';
+	@override String get activeProjectsTitle => '活跃项目';
+	@override String get loopHint => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。';
+	@override String get settings => '设置';
 	@override String get memory => '记忆';
 	@override String get memoryDesc => '代理存取的跨会话原始事实。';
 	@override String get notes => '笔记';
@@ -12229,6 +12234,11 @@ extension on TranslationsZh {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
+			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
+			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
+			'cortexHub.activeProjectsTitle' => '活跃项目',
+			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
+			'cortexHub.settings' => '设置',
 			'cortexHub.memory' => '记忆',
 			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
 			'cortexHub.notes' => '笔记',

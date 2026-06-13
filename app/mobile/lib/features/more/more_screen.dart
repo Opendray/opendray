@@ -4,14 +4,11 @@ import 'package:intl/intl.dart';
 
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
-import 'package:opendray/features/activity/activity_screen.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
-import 'package:opendray/features/cortex/cortex_hub_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
-import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/memory_ambient/memory_ambient_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
@@ -48,19 +45,9 @@ class MoreScreen extends ConsumerWidget {
         children: [
           _IdentityCard(auth: auth),
           const SizedBox(height: 8),
+          // Activity + Integrations are top-level bottom-nav tabs now; the
+          // gateway section keeps the lower-frequency destinations.
           _SectionHeader(label: t.more.sections.gateway),
-          _MenuTile(
-            icon: Icons.timeline_outlined,
-            title: t.more.items.activity.title,
-            subtitle: t.more.items.activity.subtitle,
-            onTap: () => _push(context, const ActivityScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.api_outlined,
-            title: t.more.items.integrations.title,
-            subtitle: t.more.items.integrations.subtitle,
-            onTap: () => _push(context, const IntegrationsScreen()),
-          ),
           _MenuTile(
             icon: Icons.notifications_outlined,
             title: t.more.items.channels.title,
@@ -100,13 +87,9 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => _push(context, const CustomTasksScreen()),
           ),
           const SizedBox(height: 8),
+          // Cortex hub is the bottom-nav "Cortex" tab now — the memory
+          // section here keeps the deeper, lower-frequency tools.
           _SectionHeader(label: t.more.sections.memory),
-          _MenuTile(
-            icon: Icons.auto_awesome_motion_outlined,
-            title: t.more.items.cortexHub.title,
-            subtitle: t.more.items.cortexHub.subtitle,
-            onTap: () => _push(context, const CortexHubScreen()),
-          ),
           _MenuTile(
             icon: Icons.tune_outlined,
             title: t.more.items.memoryAmbient.title,

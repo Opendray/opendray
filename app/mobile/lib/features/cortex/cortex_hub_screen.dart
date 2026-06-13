@@ -9,6 +9,8 @@ import 'package:opendray/features/knowledge/knowledge_screen.dart';
 import 'package:opendray/features/memory/memory_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
 import 'package:opendray/features/notes/notes_screen.dart';
+import 'package:opendray/features/project/project_screen.dart';
+import 'package:opendray/features/settings/settings_screen.dart';
 import 'package:path/path.dart' as p;
 
 const _globalCwd = '__global__';
@@ -26,6 +28,7 @@ class CortexHubScreen extends ConsumerStatefulWidget {
 class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
   AsyncValue<CortexStatus> _status = const AsyncValue.loading();
   AsyncValue<List<DocProposal>> _proposals = const AsyncValue.loading();
+  AsyncValue<List<ProjectSummary>> _projects = const AsyncValue.loading();
   final _expanded = <String>{};
 
   @override
@@ -38,6 +41,7 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
     setState(() {
       _status = const AsyncValue.loading();
       _proposals = const AsyncValue.loading();
+      _projects = const AsyncValue.loading();
     });
     try {
       final status = await ref.read(cortexApiProvider).status();
@@ -52,6 +56,14 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _proposals = AsyncValue.error(e, StackTrace.current));
+      }
+    }
+    try {
+      final projects = await ref.read(projectDocsApiProvider).listProjects();
+      if (mounted) setState(() => _projects = AsyncValue.data(projects));
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() => _projects = AsyncValue.error(e, StackTrace.current));
       }
     }
   }
@@ -101,6 +113,11 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
         title: Text(t.cortexHub.title),
         actions: [
           IconButton(
+            tooltip: t.cortexHub.settings,
+            icon: const Icon(Icons.tune_outlined),
+            onPressed: () => _push(const SettingsScreen()),
+          ),
+          IconButton(
             tooltip: t.common.refresh,
             icon: const Icon(Icons.refresh),
             onPressed: _load,
@@ -133,6 +150,11 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
               title: t.cortexHub.notes,
               description: t.cortexHub.notesDesc,
               badges: [
+                if (status != null && status.notesActiveProjects > 0)
+                  _Badge(
+                      t.cortexHub.activeProjectsBadge(
+                          count: status.notesActiveProjects),
+                      _BadgeTone.outline),
                 if (status != null && status.notesPendingProposals > 0)
                   _Badge(t.cortexHub.pendingBadge(count: status.notesPendingProposals),
                       _BadgeTone.danger),
@@ -162,6 +184,18 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
                     t.cortexHub.quarantineBadge(count: status.quarantineCount)),
               ),
             ],
+            const SizedBox(height: 12),
+            // The flywheel, one line — mirrors web Cortex's loopHint.
+            Text(
+              t.cortexHub.loopHint,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.55),
+                  ),
+            ),
             const SizedBox(height: 16),
             if (_proposals.hasError)
               Text(
@@ -196,10 +230,50 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
                   onReject: () => _reject(pr.id),
                 ),
             ],
+            ..._activeProjectsSection(),
           ],
         ),
       ),
     );
+  }
+
+  // Active-project quick-jumps — mirrors web Cortex's closing section.
+  // Tapping a row opens that project's notes workspace directly.
+  List<Widget> _activeProjectsSection() {
+    final active = (_projects.valueOrNull ?? const <ProjectSummary>[])
+        .where((p) => p.status == 'active')
+        .take(8)
+        .toList();
+    if (active.isEmpty) return const [];
+    return [
+      const SizedBox(height: 16),
+      Text(t.cortexHub.activeProjectsTitle,
+          style: Theme.of(context).textTheme.titleSmall),
+      const SizedBox(height: 6),
+      for (final proj in active)
+        Card(
+          margin: const EdgeInsets.only(bottom: 6),
+          child: ListTile(
+            dense: true,
+            leading: const Icon(Icons.folder_open_outlined, size: 20),
+            title: Text(
+              p.basename(proj.cwd).isEmpty ? proj.cwd : p.basename(proj.cwd),
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(proj.cwd,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall),
+            trailing: proj.suggestArchive
+                ? _Badge(t.cortexHub.idleBadge(days: proj.idleDays),
+                    _BadgeTone.warning)
+                : const Icon(Icons.chevron_right, size: 18),
+            onTap: () => _push(
+                ProjectScreen(initialCwd: proj.cwd, variant: 'notes')),
+          ),
+        ),
+    ];
   }
 }
 
@@ -257,7 +331,7 @@ class _RungCard extends StatelessWidget {
   }
 }
 
-enum _BadgeTone { muted, warning, danger }
+enum _BadgeTone { muted, warning, danger, outline }
 
 class _Badge extends StatelessWidget {
   const _Badge(this.text, this.tone);
@@ -271,6 +345,7 @@ class _Badge extends StatelessWidget {
       _BadgeTone.muted => scheme.outline,
       _BadgeTone.warning => Colors.amber.shade700,
       _BadgeTone.danger => scheme.error,
+      _BadgeTone.outline => scheme.primary,
     };
     return Container(
       margin: const EdgeInsets.only(right: 4),

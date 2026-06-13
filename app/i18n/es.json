@@ -4613,6 +4613,11 @@
   "cortexHub": {
     "title": "Cortex",
     "subtitle": "El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.",
+    "idleBadge": "inactivo {days}d",
+    "activeProjectsBadge": "{count} activos",
+    "activeProjectsTitle": "Proyectos activos",
+    "loopHint": "Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.",
+    "settings": "Ajustes",
     "memory": "Memoria",
     "memoryDesc": "Hechos crudos entre sessions que los agentes guardan y recuerdan.",
     "notes": "Notas",

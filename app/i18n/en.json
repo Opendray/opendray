@@ -4613,6 +4613,11 @@
   "cortexHub": {
     "title": "Cortex",
     "subtitle": "The experience flywheel: Memory → Notes → Knowledge, fed back into every session.",
+    "idleBadge": "idle {days}d",
+    "activeProjectsBadge": "{count} active",
+    "activeProjectsTitle": "Active projects",
+    "loopHint": "Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.",
+    "settings": "Settings",
     "memory": "Memory",
     "memoryDesc": "Raw cross-session facts the agents store and recall.",
     "notes": "Notes",
