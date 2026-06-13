@@ -46,6 +46,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsWebEn web = TranslationsWebEn.internal(_root);
 	late final TranslationsMoreEn more = TranslationsMoreEn.internal(_root);
 	late final TranslationsActivityEn activity = TranslationsActivityEn.internal(_root);
+	late final TranslationsMemoryAmbientEn memoryAmbient = TranslationsMemoryAmbientEn.internal(_root);
 	late final TranslationsSessionsEn sessions = TranslationsSessionsEn.internal(_root);
 	late final TranslationsMcpEn mcp = TranslationsMcpEn.internal(_root);
 	late final TranslationsProvidersEn providers = TranslationsProvidersEn.internal(_root);
@@ -302,6 +303,87 @@ class TranslationsActivityEn {
 
 	late final TranslationsActivityFilterEn filter = TranslationsActivityFilterEn.internal(_root);
 	late final TranslationsActivityDetailEn detail = TranslationsActivityDetailEn.internal(_root);
+}
+
+// Path: memoryAmbient
+class TranslationsMemoryAmbientEn {
+	TranslationsMemoryAmbientEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Capture & injection'
+	String get title => 'Capture & injection';
+
+	/// en: 'How sessions are summarised into memory, and what context is pre-loaded. Creating rules and detailed editing live on the web admin.'
+	String get intro => 'How sessions are summarised into memory, and what context is pre-loaded. Creating rules and detailed editing live on the web admin.';
+
+	/// en: 'Capture rules'
+	String get captureSection => 'Capture rules';
+
+	/// en: 'Injection profiles'
+	String get injectionSection => 'Injection profiles';
+
+	/// en: 'None configured yet.'
+	String get empty => 'None configured yet.';
+
+	/// en: 'Failed to load'
+	String get loadFailed => 'Failed to load';
+
+	/// en: 'Run now'
+	String get runNow => 'Run now';
+
+	/// en: 'Ran on {count} session(s)'
+	String ranSnack({required Object count}) => 'Ran on ${count} session(s)';
+
+	/// en: 'Action failed: {error}'
+	String actionFailed({required Object error}) => 'Action failed: ${error}';
+
+	/// en: 'Strategy'
+	String get strategyLabel => 'Strategy';
+
+	/// en: 'project'
+	String get scopeProject => 'project';
+
+	/// en: 'global'
+	String get scopeGlobal => 'global';
+
+	/// en: 'After N messages'
+	String get triggerAfterMessages => 'After N messages';
+
+	/// en: 'On idle'
+	String get triggerOnIdle => 'On idle';
+
+	/// en: 'After K chars'
+	String get triggerKChars => 'After K chars';
+
+	/// en: 'Manual'
+	String get triggerManual => 'Manual';
+
+	/// en: 'Unknown'
+	String get triggerUnknown => 'Unknown';
+
+	/// en: 'None (on-demand search)'
+	String get strategyNone => 'None (on-demand search)';
+
+	/// en: 'Top-K recent'
+	String get strategyTopKRecent => 'Top-K recent';
+
+	/// en: 'Top-K relevant'
+	String get strategyTopKRelevant => 'Top-K relevant';
+
+	/// en: 'On keyword'
+	String get strategyOnKeyword => 'On keyword';
+
+	/// en: 'Manual only'
+	String get strategyManualOnly => 'Manual only';
+
+	/// en: 'Hybrid summary'
+	String get strategyHybrid => 'Hybrid summary';
+
+	/// en: 'Unknown'
+	String get strategyUnknown => 'Unknown';
 }
 
 // Path: sessions
@@ -3241,6 +3323,7 @@ class TranslationsMoreItemsEn {
 	// Translations
 	late final TranslationsMoreItemsIntegrationsEn integrations = TranslationsMoreItemsIntegrationsEn.internal(_root);
 	late final TranslationsMoreItemsActivityEn activity = TranslationsMoreItemsActivityEn.internal(_root);
+	late final TranslationsMoreItemsMemoryAmbientEn memoryAmbient = TranslationsMoreItemsMemoryAmbientEn.internal(_root);
 	late final TranslationsMoreItemsChannelsEn channels = TranslationsMoreItemsChannelsEn.internal(_root);
 	late final TranslationsMoreItemsProvidersEn providers = TranslationsMoreItemsProvidersEn.internal(_root);
 	late final TranslationsMoreItemsMcpEn mcp = TranslationsMoreItemsMcpEn.internal(_root);
@@ -10748,6 +10831,21 @@ class TranslationsMoreItemsActivityEn {
 	String get subtitle => 'Integration API call audit';
 }
 
+// Path: more.items.memoryAmbient
+class TranslationsMoreItemsMemoryAmbientEn {
+	TranslationsMoreItemsMemoryAmbientEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Capture & injection'
+	String get title => 'Capture & injection';
+
+	/// en: 'Memory capture rules + injection profiles'
+	String get subtitle => 'Memory capture rules + injection profiles';
+}
+
 // Path: more.items.channels
 class TranslationsMoreItemsChannelsEn {
 	TranslationsMoreItemsChannelsEn.internal(this._root);
@@ -18127,6 +18225,8 @@ extension on Translations {
 			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
 			'more.items.activity.title' => 'Activity',
 			'more.items.activity.subtitle' => 'Integration API call audit',
+			'more.items.memoryAmbient.title' => 'Capture & injection',
+			'more.items.memoryAmbient.subtitle' => 'Memory capture rules + injection profiles',
 			'more.items.channels.title' => 'Channels',
 			'more.items.channels.subtitle' => 'Notification destinations',
 			'more.items.providers.title' => 'Providers',
@@ -18183,6 +18283,30 @@ extension on Translations {
 			'activity.detail.requestId' => 'Request ID',
 			'activity.detail.resource' => 'Resource',
 			'activity.detail.timestamp' => 'Timestamp',
+			'memoryAmbient.title' => 'Capture & injection',
+			'memoryAmbient.intro' => 'How sessions are summarised into memory, and what context is pre-loaded. Creating rules and detailed editing live on the web admin.',
+			'memoryAmbient.captureSection' => 'Capture rules',
+			'memoryAmbient.injectionSection' => 'Injection profiles',
+			'memoryAmbient.empty' => 'None configured yet.',
+			'memoryAmbient.loadFailed' => 'Failed to load',
+			'memoryAmbient.runNow' => 'Run now',
+			'memoryAmbient.ranSnack' => ({required Object count}) => 'Ran on ${count} session(s)',
+			'memoryAmbient.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
+			'memoryAmbient.strategyLabel' => 'Strategy',
+			'memoryAmbient.scopeProject' => 'project',
+			'memoryAmbient.scopeGlobal' => 'global',
+			'memoryAmbient.triggerAfterMessages' => 'After N messages',
+			'memoryAmbient.triggerOnIdle' => 'On idle',
+			'memoryAmbient.triggerKChars' => 'After K chars',
+			'memoryAmbient.triggerManual' => 'Manual',
+			'memoryAmbient.triggerUnknown' => 'Unknown',
+			'memoryAmbient.strategyNone' => 'None (on-demand search)',
+			'memoryAmbient.strategyTopKRecent' => 'Top-K recent',
+			'memoryAmbient.strategyTopKRelevant' => 'Top-K relevant',
+			'memoryAmbient.strategyOnKeyword' => 'On keyword',
+			'memoryAmbient.strategyManualOnly' => 'Manual only',
+			'memoryAmbient.strategyHybrid' => 'Hybrid summary',
+			'memoryAmbient.strategyUnknown' => 'Unknown',
 			'sessions.title' => 'Sessions',
 			'sessions.refresh' => 'Refresh',
 			'sessions.actions' => 'Actions',
@@ -18434,6 +18558,8 @@ extension on Translations {
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => 'Removes the vault directory for ${id}. Sessions that reference this server stop being able to spawn it.',
 			'mcp.deleteServerSnack' => ({required Object id}) => 'Deleted ${id}.',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.serversCount' => ({required Object count}) => 'Servers (${count})',
 			'mcp.secretsCount' => ({required Object count}) => 'Secrets (${count})',
 			'mcp.emptyServers' => 'No MCP servers registered. Tap "New server" to add one.',
@@ -18460,8 +18586,6 @@ extension on Translations {
 			'providers.errorPrefix.rename' => 'Rename failed',
 			'providers.errorPrefix.delete' => 'Delete failed',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'providers.updateCheck.sectionTitle' => 'CLI version',
 			'providers.updateCheck.checking' => 'Checking for updates…',
 			'providers.updateCheck.checkFailed' => 'Couldn\'t check for updates',
@@ -18948,6 +19072,8 @@ extension on Translations {
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
 			'githosts.form.kinds.gitlab' => 'GitLab',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
 			'githosts.form.kinds.custom' => 'Custom',
@@ -18974,8 +19100,6 @@ extension on Translations {
 			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
 			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
 			'githosts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.enabledSnack' => ({required Object name}) => '${name} enabled.',
 			'githosts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'githosts.emptyList' => 'No git hosts configured.\n\nAdd a credential so the gateway can list pull requests across your repos.',
@@ -19462,6 +19586,8 @@ extension on Translations {
 			'settings.serverSettings.fields.store' => 'Store',
 			'settings.serverSettings.fields.defaultTopK' => 'Default top-k',
 			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.defaultScope' => 'Default scope',
 			'settings.serverSettings.fields.preserveHelper' => 'Blank to preserve current.',
 			'settings.serverSettings.fields.localModelName' => 'Local model name',
@@ -19488,8 +19614,6 @@ extension on Translations {
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
 			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
 			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump path',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore path',
 			'settings.serverSettings.fields.tmpRoot' => 'tmp root',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',

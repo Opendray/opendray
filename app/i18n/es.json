@@ -2876,6 +2876,10 @@
         "title": "Actividad",
         "subtitle": "Auditoría de llamadas API de integraciones"
       },
+      "memoryAmbient": {
+        "title": "Captura e inyección",
+        "subtitle": "Reglas de captura + perfiles de inyección"
+      },
       "channels": {
         "title": "Canales",
         "subtitle": "Destinos de notificaciones"
@@ -2969,6 +2973,32 @@
       "resource": "Recurso",
       "timestamp": "Marca de tiempo"
     }
+  },
+  "memoryAmbient": {
+    "title": "Captura e inyección",
+    "intro": "Cómo se resumen las sesiones en memoria y qué contexto se precarga. La creación de reglas y la edición detallada están en el panel web.",
+    "captureSection": "Reglas de captura",
+    "injectionSection": "Perfiles de inyección",
+    "empty": "Nada configurado aún.",
+    "loadFailed": "Error al cargar",
+    "runNow": "Ejecutar ahora",
+    "ranSnack": "Ejecutado en {count} sesión(es)",
+    "actionFailed": "Acción fallida: {error}",
+    "strategyLabel": "Estrategia",
+    "scopeProject": "proyecto",
+    "scopeGlobal": "global",
+    "triggerAfterMessages": "Tras N mensajes",
+    "triggerOnIdle": "En inactividad",
+    "triggerKChars": "Tras K caracteres",
+    "triggerManual": "Manual",
+    "triggerUnknown": "Desconocido",
+    "strategyNone": "Ninguna (búsqueda bajo demanda)",
+    "strategyTopKRecent": "Top-K recientes",
+    "strategyTopKRelevant": "Top-K relevantes",
+    "strategyOnKeyword": "Por palabra clave",
+    "strategyManualOnly": "Solo manual",
+    "strategyHybrid": "Resumen híbrido",
+    "strategyUnknown": "Desconocido"
   },
   "sessions": {
     "title": "Sesiones",

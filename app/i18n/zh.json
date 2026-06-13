@@ -2876,6 +2876,10 @@
         "title": "活动",
         "subtitle": "集成 API 调用审计"
       },
+      "memoryAmbient": {
+        "title": "捕获与注入",
+        "subtitle": "记忆捕获规则 + 注入配置"
+      },
       "channels": {
         "title": "通道",
         "subtitle": "通知目的地"
@@ -2969,6 +2973,32 @@
       "resource": "资源",
       "timestamp": "时间"
     }
+  },
+  "memoryAmbient": {
+    "title": "捕获与注入",
+    "intro": "会话如何被总结进记忆,以及预加载哪些上下文。创建规则与详细编辑请在 web 管理端进行。",
+    "captureSection": "捕获规则",
+    "injectionSection": "注入配置",
+    "empty": "尚未配置。",
+    "loadFailed": "加载失败",
+    "runNow": "立即运行",
+    "ranSnack": "已对 {count} 个会话运行",
+    "actionFailed": "操作失败:{error}",
+    "strategyLabel": "策略",
+    "scopeProject": "项目",
+    "scopeGlobal": "全局",
+    "triggerAfterMessages": "N 条消息后",
+    "triggerOnIdle": "空闲时",
+    "triggerKChars": "K 字符后",
+    "triggerManual": "手动",
+    "triggerUnknown": "未知",
+    "strategyNone": "无(按需搜索)",
+    "strategyTopKRecent": "最近 Top-K",
+    "strategyTopKRelevant": "相关 Top-K",
+    "strategyOnKeyword": "关键词触发",
+    "strategyManualOnly": "仅手动",
+    "strategyHybrid": "混合摘要",
+    "strategyUnknown": "未知"
   },
   "sessions": {
     "title": "会话",

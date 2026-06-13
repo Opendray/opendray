@@ -13,6 +13,7 @@ import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
+import 'package:opendray/features/memory_ambient/memory_ambient_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
@@ -103,6 +104,12 @@ class MoreScreen extends ConsumerWidget {
             title: t.more.items.cortexHub.title,
             subtitle: t.more.items.cortexHub.subtitle,
             onTap: () => _push(context, const CortexHubScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.tune_outlined,
+            title: t.more.items.memoryAmbient.title,
+            subtitle: t.more.items.memoryAmbient.subtitle,
+            onTap: () => _push(context, const MemoryAmbientScreen()),
           ),
           _MenuTile(
             icon: Icons.flag_outlined,

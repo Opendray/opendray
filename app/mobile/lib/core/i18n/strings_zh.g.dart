@@ -45,6 +45,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsWebZh web = _TranslationsWebZh._(_root);
 	@override late final _TranslationsMoreZh more = _TranslationsMoreZh._(_root);
 	@override late final _TranslationsActivityZh activity = _TranslationsActivityZh._(_root);
+	@override late final _TranslationsMemoryAmbientZh memoryAmbient = _TranslationsMemoryAmbientZh._(_root);
 	@override late final _TranslationsSessionsZh sessions = _TranslationsSessionsZh._(_root);
 	@override late final _TranslationsMcpZh mcp = _TranslationsMcpZh._(_root);
 	@override late final _TranslationsProvidersZh providers = _TranslationsProvidersZh._(_root);
@@ -202,6 +203,39 @@ class _TranslationsActivityZh extends TranslationsActivityEn {
 	@override String get directionOutbound => '出站';
 	@override late final _TranslationsActivityFilterZh filter = _TranslationsActivityFilterZh._(_root);
 	@override late final _TranslationsActivityDetailZh detail = _TranslationsActivityDetailZh._(_root);
+}
+
+// Path: memoryAmbient
+class _TranslationsMemoryAmbientZh extends TranslationsMemoryAmbientEn {
+	_TranslationsMemoryAmbientZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '捕获与注入';
+	@override String get intro => '会话如何被总结进记忆,以及预加载哪些上下文。创建规则与详细编辑请在 web 管理端进行。';
+	@override String get captureSection => '捕获规则';
+	@override String get injectionSection => '注入配置';
+	@override String get empty => '尚未配置。';
+	@override String get loadFailed => '加载失败';
+	@override String get runNow => '立即运行';
+	@override String ranSnack({required Object count}) => '已对 ${count} 个会话运行';
+	@override String actionFailed({required Object error}) => '操作失败:${error}';
+	@override String get strategyLabel => '策略';
+	@override String get scopeProject => '项目';
+	@override String get scopeGlobal => '全局';
+	@override String get triggerAfterMessages => 'N 条消息后';
+	@override String get triggerOnIdle => '空闲时';
+	@override String get triggerKChars => 'K 字符后';
+	@override String get triggerManual => '手动';
+	@override String get triggerUnknown => '未知';
+	@override String get strategyNone => '无(按需搜索)';
+	@override String get strategyTopKRecent => '最近 Top-K';
+	@override String get strategyTopKRelevant => '相关 Top-K';
+	@override String get strategyOnKeyword => '关键词触发';
+	@override String get strategyManualOnly => '仅手动';
+	@override String get strategyHybrid => '混合摘要';
+	@override String get strategyUnknown => '未知';
 }
 
 // Path: sessions
@@ -1623,6 +1657,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	// Translations
 	@override late final _TranslationsMoreItemsIntegrationsZh integrations = _TranslationsMoreItemsIntegrationsZh._(_root);
 	@override late final _TranslationsMoreItemsActivityZh activity = _TranslationsMoreItemsActivityZh._(_root);
+	@override late final _TranslationsMoreItemsMemoryAmbientZh memoryAmbient = _TranslationsMoreItemsMemoryAmbientZh._(_root);
 	@override late final _TranslationsMoreItemsChannelsZh channels = _TranslationsMoreItemsChannelsZh._(_root);
 	@override late final _TranslationsMoreItemsProvidersZh providers = _TranslationsMoreItemsProvidersZh._(_root);
 	@override late final _TranslationsMoreItemsMcpZh mcp = _TranslationsMoreItemsMcpZh._(_root);
@@ -5511,6 +5546,17 @@ class _TranslationsMoreItemsActivityZh extends TranslationsMoreItemsActivityEn {
 	// Translations
 	@override String get title => '活动';
 	@override String get subtitle => '集成 API 调用审计';
+}
+
+// Path: more.items.memoryAmbient
+class _TranslationsMoreItemsMemoryAmbientZh extends TranslationsMoreItemsMemoryAmbientEn {
+	_TranslationsMoreItemsMemoryAmbientZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '捕获与注入';
+	@override String get subtitle => '记忆捕获规则 + 注入配置';
 }
 
 // Path: more.items.channels
@@ -10755,6 +10801,8 @@ extension on TranslationsZh {
 			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
 			'more.items.activity.title' => '活动',
 			'more.items.activity.subtitle' => '集成 API 调用审计',
+			'more.items.memoryAmbient.title' => '捕获与注入',
+			'more.items.memoryAmbient.subtitle' => '记忆捕获规则 + 注入配置',
 			'more.items.channels.title' => '通道',
 			'more.items.channels.subtitle' => '通知目的地',
 			'more.items.providers.title' => '提供商',
@@ -10811,6 +10859,30 @@ extension on TranslationsZh {
 			'activity.detail.requestId' => '请求 ID',
 			'activity.detail.resource' => '资源',
 			'activity.detail.timestamp' => '时间',
+			'memoryAmbient.title' => '捕获与注入',
+			'memoryAmbient.intro' => '会话如何被总结进记忆,以及预加载哪些上下文。创建规则与详细编辑请在 web 管理端进行。',
+			'memoryAmbient.captureSection' => '捕获规则',
+			'memoryAmbient.injectionSection' => '注入配置',
+			'memoryAmbient.empty' => '尚未配置。',
+			'memoryAmbient.loadFailed' => '加载失败',
+			'memoryAmbient.runNow' => '立即运行',
+			'memoryAmbient.ranSnack' => ({required Object count}) => '已对 ${count} 个会话运行',
+			'memoryAmbient.actionFailed' => ({required Object error}) => '操作失败:${error}',
+			'memoryAmbient.strategyLabel' => '策略',
+			'memoryAmbient.scopeProject' => '项目',
+			'memoryAmbient.scopeGlobal' => '全局',
+			'memoryAmbient.triggerAfterMessages' => 'N 条消息后',
+			'memoryAmbient.triggerOnIdle' => '空闲时',
+			'memoryAmbient.triggerKChars' => 'K 字符后',
+			'memoryAmbient.triggerManual' => '手动',
+			'memoryAmbient.triggerUnknown' => '未知',
+			'memoryAmbient.strategyNone' => '无(按需搜索)',
+			'memoryAmbient.strategyTopKRecent' => '最近 Top-K',
+			'memoryAmbient.strategyTopKRelevant' => '相关 Top-K',
+			'memoryAmbient.strategyOnKeyword' => '关键词触发',
+			'memoryAmbient.strategyManualOnly' => '仅手动',
+			'memoryAmbient.strategyHybrid' => '混合摘要',
+			'memoryAmbient.strategyUnknown' => '未知',
 			'sessions.title' => '会话',
 			'sessions.refresh' => '刷新',
 			'sessions.actions' => '操作',
@@ -11062,6 +11134,8 @@ extension on TranslationsZh {
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。',
 			'mcp.deleteServerSnack' => ({required Object id}) => '已删除 ${id}。',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.serversCount' => ({required Object count}) => '服务器（${count}）',
 			'mcp.secretsCount' => ({required Object count}) => '密钥（${count}）',
 			'mcp.emptyServers' => '未注册任何 MCP 服务器。点击「新建服务器」添加一个。',
@@ -11088,8 +11162,6 @@ extension on TranslationsZh {
 			'providers.errorPrefix.rename' => '重命名失败',
 			'providers.errorPrefix.delete' => '删除失败',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'providers.updateCheck.sectionTitle' => 'CLI 版本',
 			'providers.updateCheck.checking' => '正在检查更新…',
 			'providers.updateCheck.checkFailed' => '无法检查更新',
@@ -11576,6 +11648,8 @@ extension on TranslationsZh {
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
 			'githosts.form.kinds.github' => 'GitHub',
 			'githosts.form.kinds.gitlab' => 'GitLab',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
 			'githosts.form.kinds.custom' => '自定义',
@@ -11602,8 +11676,6 @@ extension on TranslationsZh {
 			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
 			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
 			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'githosts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'githosts.emptyList' => '未配置任何 Git 主机。\n\n添加一个凭据，让网关可以列出你仓库的 pull request。',
@@ -12090,6 +12162,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.store' => '存储',
 			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
 			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.defaultScope' => '默认范围',
 			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',
 			'settings.serverSettings.fields.localModelName' => '本地模型名',
@@ -12116,8 +12190,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.httpApiKey' => 'HTTP api key',
 			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
 			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump 路径',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
 			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',

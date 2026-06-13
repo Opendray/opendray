@@ -2876,6 +2876,10 @@
         "title": "Activity",
         "subtitle": "Integration API call audit"
       },
+      "memoryAmbient": {
+        "title": "Capture & injection",
+        "subtitle": "Memory capture rules + injection profiles"
+      },
       "channels": {
         "title": "Channels",
         "subtitle": "Notification destinations"
@@ -2969,6 +2973,32 @@
       "resource": "Resource",
       "timestamp": "Timestamp"
     }
+  },
+  "memoryAmbient": {
+    "title": "Capture & injection",
+    "intro": "How sessions are summarised into memory, and what context is pre-loaded. Creating rules and detailed editing live on the web admin.",
+    "captureSection": "Capture rules",
+    "injectionSection": "Injection profiles",
+    "empty": "None configured yet.",
+    "loadFailed": "Failed to load",
+    "runNow": "Run now",
+    "ranSnack": "Ran on {count} session(s)",
+    "actionFailed": "Action failed: {error}",
+    "strategyLabel": "Strategy",
+    "scopeProject": "project",
+    "scopeGlobal": "global",
+    "triggerAfterMessages": "After N messages",
+    "triggerOnIdle": "On idle",
+    "triggerKChars": "After K chars",
+    "triggerManual": "Manual",
+    "triggerUnknown": "Unknown",
+    "strategyNone": "None (on-demand search)",
+    "strategyTopKRecent": "Top-K recent",
+    "strategyTopKRelevant": "Top-K relevant",
+    "strategyOnKeyword": "On keyword",
+    "strategyManualOnly": "Manual only",
+    "strategyHybrid": "Hybrid summary",
+    "strategyUnknown": "Unknown"
   },
   "sessions": {
     "title": "Sessions",

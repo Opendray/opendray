@@ -45,6 +45,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsWebEs web = _TranslationsWebEs._(_root);
 	@override late final _TranslationsMoreEs more = _TranslationsMoreEs._(_root);
 	@override late final _TranslationsActivityEs activity = _TranslationsActivityEs._(_root);
+	@override late final _TranslationsMemoryAmbientEs memoryAmbient = _TranslationsMemoryAmbientEs._(_root);
 	@override late final _TranslationsSessionsEs sessions = _TranslationsSessionsEs._(_root);
 	@override late final _TranslationsMcpEs mcp = _TranslationsMcpEs._(_root);
 	@override late final _TranslationsProvidersEs providers = _TranslationsProvidersEs._(_root);
@@ -202,6 +203,39 @@ class _TranslationsActivityEs extends TranslationsActivityEn {
 	@override String get directionOutbound => 'saliente';
 	@override late final _TranslationsActivityFilterEs filter = _TranslationsActivityFilterEs._(_root);
 	@override late final _TranslationsActivityDetailEs detail = _TranslationsActivityDetailEs._(_root);
+}
+
+// Path: memoryAmbient
+class _TranslationsMemoryAmbientEs extends TranslationsMemoryAmbientEn {
+	_TranslationsMemoryAmbientEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Captura e inyección';
+	@override String get intro => 'Cómo se resumen las sesiones en memoria y qué contexto se precarga. La creación de reglas y la edición detallada están en el panel web.';
+	@override String get captureSection => 'Reglas de captura';
+	@override String get injectionSection => 'Perfiles de inyección';
+	@override String get empty => 'Nada configurado aún.';
+	@override String get loadFailed => 'Error al cargar';
+	@override String get runNow => 'Ejecutar ahora';
+	@override String ranSnack({required Object count}) => 'Ejecutado en ${count} sesión(es)';
+	@override String actionFailed({required Object error}) => 'Acción fallida: ${error}';
+	@override String get strategyLabel => 'Estrategia';
+	@override String get scopeProject => 'proyecto';
+	@override String get scopeGlobal => 'global';
+	@override String get triggerAfterMessages => 'Tras N mensajes';
+	@override String get triggerOnIdle => 'En inactividad';
+	@override String get triggerKChars => 'Tras K caracteres';
+	@override String get triggerManual => 'Manual';
+	@override String get triggerUnknown => 'Desconocido';
+	@override String get strategyNone => 'Ninguna (búsqueda bajo demanda)';
+	@override String get strategyTopKRecent => 'Top-K recientes';
+	@override String get strategyTopKRelevant => 'Top-K relevantes';
+	@override String get strategyOnKeyword => 'Por palabra clave';
+	@override String get strategyManualOnly => 'Solo manual';
+	@override String get strategyHybrid => 'Resumen híbrido';
+	@override String get strategyUnknown => 'Desconocido';
 }
 
 // Path: sessions
@@ -1623,6 +1657,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	// Translations
 	@override late final _TranslationsMoreItemsIntegrationsEs integrations = _TranslationsMoreItemsIntegrationsEs._(_root);
 	@override late final _TranslationsMoreItemsActivityEs activity = _TranslationsMoreItemsActivityEs._(_root);
+	@override late final _TranslationsMoreItemsMemoryAmbientEs memoryAmbient = _TranslationsMoreItemsMemoryAmbientEs._(_root);
 	@override late final _TranslationsMoreItemsChannelsEs channels = _TranslationsMoreItemsChannelsEs._(_root);
 	@override late final _TranslationsMoreItemsProvidersEs providers = _TranslationsMoreItemsProvidersEs._(_root);
 	@override late final _TranslationsMoreItemsMcpEs mcp = _TranslationsMoreItemsMcpEs._(_root);
@@ -5511,6 +5546,17 @@ class _TranslationsMoreItemsActivityEs extends TranslationsMoreItemsActivityEn {
 	// Translations
 	@override String get title => 'Actividad';
 	@override String get subtitle => 'Auditoría de llamadas API de integraciones';
+}
+
+// Path: more.items.memoryAmbient
+class _TranslationsMoreItemsMemoryAmbientEs extends TranslationsMoreItemsMemoryAmbientEn {
+	_TranslationsMoreItemsMemoryAmbientEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Captura e inyección';
+	@override String get subtitle => 'Reglas de captura + perfiles de inyección';
 }
 
 // Path: more.items.channels
@@ -10755,6 +10801,8 @@ extension on TranslationsEs {
 			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
 			'more.items.activity.title' => 'Actividad',
 			'more.items.activity.subtitle' => 'Auditoría de llamadas API de integraciones',
+			'more.items.memoryAmbient.title' => 'Captura e inyección',
+			'more.items.memoryAmbient.subtitle' => 'Reglas de captura + perfiles de inyección',
 			'more.items.channels.title' => 'Canales',
 			'more.items.channels.subtitle' => 'Destinos de notificaciones',
 			'more.items.providers.title' => 'Proveedores',
@@ -10811,6 +10859,30 @@ extension on TranslationsEs {
 			'activity.detail.requestId' => 'ID de solicitud',
 			'activity.detail.resource' => 'Recurso',
 			'activity.detail.timestamp' => 'Marca de tiempo',
+			'memoryAmbient.title' => 'Captura e inyección',
+			'memoryAmbient.intro' => 'Cómo se resumen las sesiones en memoria y qué contexto se precarga. La creación de reglas y la edición detallada están en el panel web.',
+			'memoryAmbient.captureSection' => 'Reglas de captura',
+			'memoryAmbient.injectionSection' => 'Perfiles de inyección',
+			'memoryAmbient.empty' => 'Nada configurado aún.',
+			'memoryAmbient.loadFailed' => 'Error al cargar',
+			'memoryAmbient.runNow' => 'Ejecutar ahora',
+			'memoryAmbient.ranSnack' => ({required Object count}) => 'Ejecutado en ${count} sesión(es)',
+			'memoryAmbient.actionFailed' => ({required Object error}) => 'Acción fallida: ${error}',
+			'memoryAmbient.strategyLabel' => 'Estrategia',
+			'memoryAmbient.scopeProject' => 'proyecto',
+			'memoryAmbient.scopeGlobal' => 'global',
+			'memoryAmbient.triggerAfterMessages' => 'Tras N mensajes',
+			'memoryAmbient.triggerOnIdle' => 'En inactividad',
+			'memoryAmbient.triggerKChars' => 'Tras K caracteres',
+			'memoryAmbient.triggerManual' => 'Manual',
+			'memoryAmbient.triggerUnknown' => 'Desconocido',
+			'memoryAmbient.strategyNone' => 'Ninguna (búsqueda bajo demanda)',
+			'memoryAmbient.strategyTopKRecent' => 'Top-K recientes',
+			'memoryAmbient.strategyTopKRelevant' => 'Top-K relevantes',
+			'memoryAmbient.strategyOnKeyword' => 'Por palabra clave',
+			'memoryAmbient.strategyManualOnly' => 'Solo manual',
+			'memoryAmbient.strategyHybrid' => 'Resumen híbrido',
+			'memoryAmbient.strategyUnknown' => 'Desconocido',
 			'sessions.title' => 'Sesiones',
 			'sessions.refresh' => 'Actualizar',
 			'sessions.actions' => 'Acciones',
@@ -11062,6 +11134,8 @@ extension on TranslationsEs {
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => 'Elimina el directorio del vault para ${id}. Las sesiones que referencian este servidor dejan de poder iniciarlo.',
 			'mcp.deleteServerSnack' => ({required Object id}) => 'Eliminado ${id}.',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.serversCount' => ({required Object count}) => 'Servidores (${count})',
 			'mcp.secretsCount' => ({required Object count}) => 'Secretos (${count})',
 			'mcp.emptyServers' => 'No hay servidores MCP registrados. Toca "Nuevo servidor" para añadir uno.',
@@ -11088,8 +11162,6 @@ extension on TranslationsEs {
 			'providers.errorPrefix.rename' => 'Error al renombrar',
 			'providers.errorPrefix.delete' => 'Error al eliminar',
 			'providers.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'providers.updateCheck.sectionTitle' => 'Versión del CLI',
 			'providers.updateCheck.checking' => 'Buscando actualizaciones…',
 			'providers.updateCheck.checkFailed' => 'No se pudo buscar actualizaciones',
@@ -11576,6 +11648,8 @@ extension on TranslationsEs {
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
 			'githosts.form.kinds.gitlab' => 'GitLab',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
 			'githosts.form.kinds.custom' => 'Personalizado',
@@ -11602,8 +11676,6 @@ extension on TranslationsEs {
 			'githosts.form.pausedSubtitle' => 'En pausa. Las sessions omiten este host.',
 			'githosts.deleteBody' => ({required Object host}) => 'Elimina la credencial. Las sessions que intenten listar PRs de ${host} recurrirán a la API sin autenticar.',
 			'githosts.deletedSnack' => ({required Object name}) => '${name} eliminado.',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.enabledSnack' => ({required Object name}) => '${name} habilitado.',
 			'githosts.disabledSnack' => ({required Object name}) => '${name} deshabilitado.',
 			'githosts.emptyList' => 'No hay hosts de Git configurados.\n\nAñade una credencial para que el gateway pueda listar pull requests en todos tus repos.',
@@ -12090,6 +12162,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.store' => 'Almacén',
 			'settings.serverSettings.fields.defaultTopK' => 'Top-k por defecto',
 			'settings.serverSettings.fields.similarityThreshold' => 'Umbral de similitud',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.defaultScope' => 'Ámbito por defecto',
 			'settings.serverSettings.fields.preserveHelper' => 'En blanco para conservar el actual.',
 			'settings.serverSettings.fields.localModelName' => 'Nombre del modelo local',
@@ -12116,8 +12190,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.httpApiKey' => 'API key HTTP',
 			'settings.serverSettings.fields.httpDimensions' => 'Dimensiones HTTP',
 			'settings.serverSettings.fields.pgDumpPath' => 'Ruta de pg_dump',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.pgRestorePath' => 'Ruta de pg_restore',
 			'settings.serverSettings.fields.tmpRoot' => 'Raíz de tmp',
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
