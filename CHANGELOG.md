@@ -10,6 +10,97 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.5] — 2026-06-11
+
+### Fixed
+
+- **iOS Safari: restored the contextual copy pill on terminal text
+  selection** (regression from v2.7.3). PR #353 added `touch-action:
+  pan-y` to `.xterm-viewport` so iOS scrollback worked with the
+  clipped pane, but the same property claimed horizontal /
+  diagonal gestures for the browser and broke xterm's selection-drag
+  on iPad and iPhone — the pill (anchored at `pointerup` once a
+  selection finishes) never appeared because `pointerup` arrived
+  with no finished selection to anchor to. Dropped `pan-y` (the
+  default `auto` is sufficient for iOS scrollback) and added a
+  `touchend` belt-and-suspenders fallback so the pill anchors
+  reliably even when iOS Safari's synthesised `pointerup` doesn't
+  fire (or fires with stale coordinates) on canvas-internal events.
+
+## [v2.7.4] — 2026-06-11
+
+### Added
+
+- **Inspector: one-click download for files + zip-on-the-fly for
+  folders.** Every row in the Files tree now carries a hover-revealed
+  Download icon. Clicking it on a file streams the bytes as an
+  attachment with the original filename (including unicode via RFC
+  5987 `filename*=`); clicking it on a folder streams a built-on-the-
+  fly zip archive of the visible subtree (hidden entries + symlinks
+  skipped to match the tree's listing). `http.ServeContent` handles
+  Range requests so resume works on large files; the zip builder
+  walks deterministically and skips per-file permission errors
+  instead of aborting the whole archive. Downloads are confined to a
+  caller-supplied `root` (the session's cwd in the inspector) and
+  the server EvalSymlinks-checks the resolved target stays inside
+  it, so a hand-crafted URL can't exfiltrate files from outside the
+  inspector's view even with a leaked admin token.
+- **Plugins: drag-and-drop install of `SKILL.md`.** Drag a
+  `SKILL.md` onto the Agent skills table and the daemon slugs the
+  frontmatter `name:` into an id and writes it to `<vault>/<id>/
+  SKILL.md` — no id prompt, no editor modal. Vault collisions return
+  409; built-in collisions become overrides with the existing badge.
+  i18n parity preserved across en/es/zh.
+
+### Fixed
+
+- **Web sessions: breathing room around the chat pane.** Slimmed
+  the chrome (SessionTabs `h-9 → h-7`, WorkbenchHeader `h-14 → h-11`,
+  avatar `36 → 28px`) and reserved a 12px bottom strip so Claude's
+  input no longer sits flush against the browser bottom edge. Net
+  result: chat-top moves up ~20px and typing feels less cramped on
+  tall windows.
+
+## [v2.7.3] — 2026-06-10
+
+### Fixed
+
+- **Mac Safari terminal regressions** introduced in v2.7.2 by #323. The
+  chat no longer extends past the browser bottom; Claude's TUI input
+  wraps correctly past the visible right edge after 3-4 lines; and
+  `[disconnected — reconnecting…]` stops stacking — it announces once
+  per disconnect cycle, then prints `[reconnected]` on recovery or
+  `[connection lost — refresh the page to reconnect]` after retries are
+  exhausted. WebKit's `ResizeObserver` fires late on absolute-positioned
+  elements nested inside flex containers, which left `fit()` reading a
+  stale size after sidebar/banner shifts; the xterm host now stays
+  in-flow with `contain: layout paint` instead. The WebSocket retry
+  budget was also bumped (`maxRetries` 6 → 30, `maxBackoff` 8s → 15s)
+  so an idle proxy bouncing the socket doesn't read as "broken forever."
+- **iOS web terminal scrollback.** Two-finger drag on the terminal
+  canvas now scrolls xterm's scrollback. `.xterm-viewport` got
+  `-webkit-overflow-scrolling: touch`, `overscroll-behavior: contain`,
+  and `touch-action: pan-y`. The AppShell switched from `h-svh` to
+  `h-dvh` so the layout tracks the live visual viewport (keyboard,
+  address-bar) instead of locking to the address-bar-visible height.
+
+### Added
+
+- **Web: "update available" badge on the Settings icon.** A small
+  accent dot appears on the gear in the sidebar (expanded, icon-rail,
+  and mobile slide-over) when a newer release is detected — so the
+  upgrade prompt finds operators instead of waiting for them to open
+  About. Background poll every 6 hours, shares the `['version']` query
+  cache with the existing AboutSection so a manual "Check now" updates
+  the badge immediately. Suppressed while `pending=true` to avoid
+  nagging during an in-flight upgrade. i18n parity preserved across
+  en / es / zh.
+- **GitHub Sponsors landing material.** `SPONSORS.md` (pitch, five
+  tiers, FAQ, thank-you wall), `docs/sponsors/dashboard-copy.md`
+  (paste-ready text for both the Opendray org and the navidrast
+  personal Sponsors dashboards), and `.github/FUNDING.yml` updated to
+  list both accounts.
+
 ## [v2.7.2] — 2026-06-04
 
 ### Added

@@ -35,6 +35,11 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/skills", func(r chi.Router) {
 		r.Get("/", h.list)
 		r.Post("/", h.create)
+		// Multipart upload of a SKILL.md — derives the id from the
+		// frontmatter `name:` field (slugified) rather than asking the
+		// caller for one. Lets the dashboard offer drag-and-drop install
+		// of a skill file without an intermediate "pick an id" step.
+		r.Post("/upload", h.upload)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.get)
 			r.Put("/", h.update)
@@ -233,6 +238,104 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// upload accepts a multipart-uploaded SKILL.md and installs it in the
+// vault under <vault>/<slug-of-name>/SKILL.md. The id is derived from
+// the frontmatter `name:` field (slugified to validID's alphabet) so
+// the operator doesn't have to pick one — drag the .md, get a working
+// skill. Collides-with-vault is a 409 (delete first); collides-with-
+// builtin is allowed and just becomes an override (matches the
+// existing PUT semantics).
+func (h *Handlers) upload(w http.ResponseWriter, r *http.Request) {
+	if h.loader.VaultRoot() == "" {
+		writeError(w, http.StatusConflict,
+			errors.New("vault root is not configured; cannot upload skills"))
+		return
+	}
+	const maxUploadBytes = 4 << 20 // 4 MB — matches the JSON create cap.
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes)
+	if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
+		writeError(w, http.StatusBadRequest,
+			fmt.Errorf("read multipart form: %w", err))
+		return
+	}
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest,
+			errors.New("missing 'file' field in multipart upload"))
+		return
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(io.LimitReader(file, maxUploadBytes))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	body := string(data)
+	if strings.TrimSpace(body) == "" {
+		writeError(w, http.StatusBadRequest, errors.New("uploaded file is empty"))
+		return
+	}
+	name, _ := parseFrontmatter(body)
+	if strings.TrimSpace(name) == "" {
+		writeError(w, http.StatusBadRequest,
+			errors.New("SKILL.md must declare a 'name:' field in its frontmatter"))
+		return
+	}
+	id := slugify(name)
+	if !validID(id) {
+		writeError(w, http.StatusBadRequest,
+			fmt.Errorf("derived id %q is invalid; rename the skill so the frontmatter name slugs to lowercase alphanumeric / dash / underscore", id))
+		return
+	}
+
+	dest := filepath.Join(h.loader.VaultRoot(), id)
+	if _, err := os.Stat(dest); err == nil {
+		writeError(w, http.StatusConflict,
+			fmt.Errorf("skill %s already exists in vault; delete it first or rename the upload", id))
+		return
+	}
+	if err := os.MkdirAll(dest, 0o700); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := os.WriteFile(filepath.Join(dest, "SKILL.md"), []byte(body), 0o600); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	s, err := h.loader.Get(id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, skillView{
+		ID: s.ID, Name: s.Name, Description: s.Description,
+		Source: s.Source, Body: s.Body,
+	})
+}
+
+// slugify converts a frontmatter name into an id that validID will
+// accept: lowercase, collapse non-alphanumeric runs into single
+// dashes, trim leading/trailing dashes and underscores. Preserves
+// underscores so authors who want them get them.
+func slugify(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	lastDash := false
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' {
+			b.WriteRune(r)
+			lastDash = false
+			continue
+		}
+		if !lastDash && b.Len() > 0 {
+			b.WriteRune('-')
+			lastDash = true
+		}
+	}
+	return strings.Trim(b.String(), "-_")
 }
 
 func validID(id string) bool {

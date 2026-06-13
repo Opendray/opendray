@@ -135,6 +135,7 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get knowledge => '知识';
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
+	@override String get updateAvailable => '有可用更新';
 }
 
 // Path: web
@@ -4470,6 +4471,12 @@ class _TranslationsWebPluginsSkillsZh extends TranslationsWebPluginsSkillsEn {
 	@override String get removedToast => 'Skill 已移除';
 	@override String get deleteFailedToast => '删除失败';
 	@override late final _TranslationsWebPluginsSkillsEditorZh editor = _TranslationsWebPluginsSkillsEditorZh._(_root);
+	@override String get dropHint => '或将 SKILL.md 文件拖放到此处以安装。';
+	@override String get dropToInstall => '拖放 SKILL.md 以安装';
+	@override String get uploading => '正在安装 skill…';
+	@override String uploadedToast({required Object id}) => 'Skill "${id}" 已安装';
+	@override String get uploadFailedToast => '上传 skill 失败';
+	@override String get uploadInvalidTypeToast => '仅支持拖放 SKILL.md 文件';
 }
 
 // Path: web.plugins.customTasks
@@ -8640,6 +8647,7 @@ extension on TranslationsZh {
 			'nav.knowledge' => '知识',
 			'nav.vault' => '文档库',
 			'nav.cortex' => '心智中枢',
+			'nav.updateAvailable' => '有可用更新',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -9113,9 +9121,9 @@ extension on TranslationsZh {
 			'web.project.lifecycle.applied.archived' => '项目已归档',
 			'web.project.lifecycle.tooltip.badge' => '项目生命周期。冻结(暂停/归档)的项目不会被注入新会话,也不参与 AI 蒸馏。',
 			'web.project.lifecycle.tooltip.activate' => '重新激活:注入新会话并恢复 AI 维护。',
-			'web.project.lifecycle.tooltip.pause' => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.lifecycle.tooltip.pause' => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。',
 			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
 			'web.project.docMeta.maintainer.coauthored' => '你维护 · AI 提议',
 			'web.project.docMeta.maintainer.auto' => '自动生成 · 只读',
@@ -9627,9 +9635,9 @@ extension on TranslationsZh {
 			'web.integrations.register' => '注册',
 			'web.integrations.loading' => '加载中…',
 			'web.integrations.tabs.registered' => '已注册',
-			'web.integrations.tabs.console' => '反向代理',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.tabs.console' => '反向代理',
 			'web.integrations.empty.title' => '暂无集成',
 			'web.integrations.empty.description' => '注册一个外部应用，给它一个受限的 API key。它的代码不需要进入本仓库。',
 			'web.integrations.empty.register' => '注册集成',
@@ -9837,6 +9845,12 @@ extension on TranslationsZh {
 			'web.plugins.skills.editor.createFailedToast' => '创建失败',
 			'web.plugins.skills.editor.saveFailedToast' => '保存失败',
 			'web.plugins.skills.editor.saveAsOverride' => '保存为 vault 覆盖',
+			'web.plugins.skills.dropHint' => '或将 SKILL.md 文件拖放到此处以安装。',
+			'web.plugins.skills.dropToInstall' => '拖放 SKILL.md 以安装',
+			'web.plugins.skills.uploading' => '正在安装 skill…',
+			'web.plugins.skills.uploadedToast' => ({required Object id}) => 'Skill "${id}" 已安装',
+			'web.plugins.skills.uploadFailedToast' => '上传 skill 失败',
+			'web.plugins.skills.uploadInvalidTypeToast' => '仅支持拖放 SKILL.md 文件',
 			'web.plugins.customTasks.title' => '自定义任务',
 			'web.plugins.customTasks.description' => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。',
 			'web.plugins.customTasks.addTask' => '添加任务',
@@ -10135,6 +10149,8 @@ extension on TranslationsZh {
 			'web.serverSettings.saveToastTitle' => '设置已保存',
 			'web.serverSettings.saveToastDesc' => '点击「重启」以应用。',
 			'web.serverSettings.saveErrorTitle' => '保存失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.dangerousConfirm' => '您更改了监听地址 / 管理员账号 / 管理员密码。重启后可能需要重新登录或使用新地址。是否继续？',
 			'web.serverSettings.unsavedHint' => '有未保存的修改',
 			'web.serverSettings.savedHint' => '所有修改已保存',
@@ -10142,8 +10158,6 @@ extension on TranslationsZh {
 			'web.serverSettings.restart.button' => '重启服务器',
 			'web.serverSettings.restart.buttonTitle' => '对网关进程执行 self-exec',
 			'web.serverSettings.restart.dirtyConfirm' => '您有未保存的修改。重启将使用「上次保存」的配置，是否继续？',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.restart.confirm' => '重启 opendray 网关？所有打开的终端会话将自动重新连接。',
 			'web.serverSettings.restart.overlay' => '正在重启服务器…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => '等待 /health · ${tick}s',
@@ -10649,6 +10663,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.edit' => '编辑',
 			'web.knowledge.kb.unlock' => '解锁(交还 AI 维护)',
 			'web.knowledge.kb.regenerate' => '重新生成',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.save' => '保存',
 			'web.knowledge.kb.cancel' => '取消',
 			'web.knowledge.kb.editHint' => '保存后此页将锁定,AI 不再覆盖。',
@@ -10656,8 +10672,6 @@ extension on TranslationsZh {
 			'web.knowledge.kb.saved' => '已保存',
 			'web.knowledge.kb.unlocked' => '已解锁——AI 将重新维护此页',
 			'web.knowledge.kb.regenerating' => '正在后台重新生成…',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
 			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
 			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
@@ -11163,6 +11177,8 @@ extension on TranslationsZh {
 			'mcp.secret.helpRules' => 'shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。',
 			'mcp.secret.replaceHint' => '粘贴新值（旧值被擦除）',
 			'mcp.secret.addHint' => '粘贴密钥值',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.addedSnack' => ({required Object key}) => '已添加密钥 ${key}。',
 			'mcp.secret.updatedSnack' => ({required Object key}) => '已更新密钥 ${key}。',
 			'mcp.secret.deletedSnack' => ({required Object key}) => '已删除 ${key}。',
@@ -11170,8 +11186,6 @@ extension on TranslationsZh {
 			'mcp.popup.editConfigSubtitle' => '完整 JSON 编辑器 — 仅限密钥库支持的服务器',
 			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
 			'mcp.popup.deleteLabel' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.kv.transport' => '传输',
 			'mcp.kv.description' => '描述',
 			'mcp.kv.command' => '命令',
@@ -11677,6 +11691,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.privateKeyHintNew' => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。',
 			'backupTargetEditor.hostKeyLabel' => 'Host key（pinning）',
 			'backupTargetEditor.hostKeyHint' => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.rcloneNote' => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。',
 			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
 			'backupTargetEditor.rcloneRemoteHint' => '来自 `rclone config` 的名字（不带冒号）。',
@@ -11684,8 +11700,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.rcloneBinaryHint' => '覆盖 `which rclone`。留空 = PATH 查找。',
 			'backupTargetEditor.rcloneConfigLabel' => '配置路径',
 			'backupTargetEditor.rcloneConfigHint' => '覆盖 --config。留空 = rclone 默认。',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.title' => 'Git 主机',
 			'githosts.addHost' => '添加主机',
 			'githosts.deleteTitle' => '删除 Git 主机？',
@@ -12191,6 +12205,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
 			'settings.serverSettings.fields.level' => '级别',
 			'settings.serverSettings.fields.format' => '格式',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.filePath' => '文件路径',
 			'settings.serverSettings.fields.filePathHelper' => '留空 = 仅 stdout。',
 			'settings.serverSettings.fields.idleThreshold' => '空闲阈值',
@@ -12198,8 +12214,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.idleCheckInterval' => '空闲检查间隔',
 			'settings.serverSettings.fields.idleCheckHelper' => '空闲回收器运行的频率。',
 			'settings.serverSettings.fields.root' => '根目录',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
 			'settings.serverSettings.fields.notesPath' => '笔记路径',
 			'settings.serverSettings.fields.skillsPath' => '技能路径',

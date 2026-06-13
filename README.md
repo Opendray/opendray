@@ -106,7 +106,7 @@ Everything in the diagram runs on your network. No cloud dependencies, no infere
 
 ## Status
 
-**v2.7.2** (latest). The v2 generation continues to iterate. See
+**v2.7.5** (latest). The v2 generation continues to iterate. See
 [`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
 (major = product generation, not strict SemVer "breaking change") and
 [`CHANGELOG.md`](CHANGELOG.md) for the full release history.

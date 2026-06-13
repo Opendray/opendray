@@ -303,6 +303,16 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         term.writeln('')
         term.writeln('\x1b[33m[disconnected — reconnecting…]\x1b[0m')
       },
+      onReconnect: () => {
+        if (!alive) return
+        term.writeln('\x1b[32m[reconnected]\x1b[0m')
+      },
+      onGiveUp: () => {
+        if (!alive) return
+        term.writeln(
+          '\x1b[31m[connection lost — refresh the page to reconnect]\x1b[0m',
+        )
+      },
       onOpen: () => {
         // After (re)connect, push current dimensions so server sizes the PTY.
         if (!alive) return
@@ -403,8 +413,23 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         }
       })
     }
+    // Observe the in-flow root (not the absolute-positioned host).
+    // WebKit's ResizeObserver fires late on absolute elements nested
+    // inside `flex-1 min-h-0`, leaving the PTY a few cols too wide
+    // after a sidebar/banner-driven layout shift — the user sees
+    // input wrap past the visible right edge after 3-4 lines.
     const ro = new ResizeObserver(scheduleFit)
-    ro.observe(containerRef.current)
+    if (rootRef.current) ro.observe(rootRef.current)
+
+    // Safari/iOS don't surface keyboard show/hide or address-bar
+    // collapse through window resize alone — the visualViewport API
+    // is the only event that reliably fires. Without this, opening
+    // the soft keyboard would clip xterm's bottom rows without ever
+    // refitting, which reads as "chat goes below the browser window."
+    const vv =
+      typeof window !== 'undefined' ? window.visualViewport : null
+    vv?.addEventListener('resize', scheduleFit)
+    vv?.addEventListener('scroll', scheduleFit)
 
     // The synchronous fit() at open ran before the first post-mount
     // layout had settled (and before a webfont monospace face, on
@@ -423,6 +448,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       touchHost?.removeEventListener('touchend', onTouchEnd)
       touchHost?.removeEventListener('touchcancel', onTouchEnd)
       ro.disconnect()
+      vv?.removeEventListener('resize', scheduleFit)
+      vv?.removeEventListener('scroll', scheduleFit)
       ws.close()
       term.dispose()
       xtermRef.current = null
@@ -524,13 +551,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [themeApplied])
 
   // Anchor the copy pill where the selection ended. pointerup covers
-  // both mouse-drag and touch; we defer one frame so xterm finalizes
+  // mouse and most touch cases; we defer one frame so xterm finalizes
   // the selection first, then place the pill at the pointer (clamped
   // inside the box, flipped below the point near the top edge).
+  //
+  // touchend is a belt-and-suspenders fallback for iOS Safari: with
+  // touch events directly on a <canvas> inside an overflow-hidden
+  // container, the synthesised pointerup occasionally doesn't fire
+  // (or fires with stale coordinates), leaving a finished selection
+  // with no pill anchored to it.
   useEffect(() => {
     const root = rootRef.current
     if (!root) return
-    const onPointerUp = (e: PointerEvent) => {
+    const anchorAt = (x: number, y: number) => {
       requestAnimationFrame(() => {
         const term = xtermRef.current
         if (!term || !term.hasSelection()) {
@@ -538,29 +571,45 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
           return
         }
         const rect = root.getBoundingClientRect()
-        const rawY = e.clientY - rect.top
+        const rawY = y - rect.top
         setPill({
-          x: Math.min(Math.max(e.clientX - rect.left, 48), rect.width - 48),
+          x: Math.min(Math.max(x - rect.left, 48), rect.width - 48),
           y: rawY,
           below: rawY < 44,
         })
       })
     }
+    const onPointerUp = (e: PointerEvent) => anchorAt(e.clientX, e.clientY)
+    const onTouchEnd = (e: TouchEvent) => {
+      const t = e.changedTouches[0]
+      if (!t) return
+      anchorAt(t.clientX, t.clientY)
+    }
     root.addEventListener('pointerup', onPointerUp)
-    return () => root.removeEventListener('pointerup', onPointerUp)
+    root.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      root.removeEventListener('pointerup', onPointerUp)
+      root.removeEventListener('touchend', onTouchEnd)
+    }
   }, [])
 
   return (
     <div ref={rootRef} className="h-full w-full bg-background relative overflow-hidden">
-      {/* The xterm host is absolutely positioned + clipped so its size
-          is driven SOLELY by this (flex/viewport-sized) pane and never
-          by its own rendered content. Without the clip, a line wider
-          than the pane escapes up to the scrollable <main>, toggling
-          its scrollbar, which re-measures the pane and re-runs fit() —
-          a feedback loop that reads as the terminal "jittering" as you
-          type a long line. Clipping breaks the loop at the source and
-          forces xterm to wrap at the real visible width. */}
-      <div ref={containerRef} className="absolute inset-0 p-3 overflow-hidden" />
+      {/* `contain: layout` + `overflow-hidden` isolate xterm's inner
+          viewport from the surrounding flex/scroll layout: a line
+          wider than the pane can't escape up to <main>'s scrollbar
+          (which would re-measure the pane and re-run fit() — the
+          jitter feedback loop). We previously used `absolute inset-0`
+          for the same goal, but on WebKit ResizeObserver fires late
+          on absolute-positioned elements inside `flex-1 min-h-0`,
+          leaving fit() reading a stale size after layout shifts.
+          Staying in-flow with containment gives us the same isolation
+          and reliable RO timing across Safari/Chrome. */}
+      <div
+        ref={containerRef}
+        className="h-full w-full p-3 overflow-hidden"
+        style={{ contain: 'layout paint' }}
+      />
       <DetectedURLs urls={detectedURLs} />
       {pill && (
         <Button

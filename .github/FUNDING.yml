@@ -1,9 +1,13 @@
-# Funding sources for opendray — drives the "Sponsor" button GitHub
-# shows on the repo and on every release/issue. Mirrors the layout
-# popular OSS projects (Vite, Astro, Zod) use: one line per platform,
-# unused platforms left commented so they're easy to enable later.
+# Funding sources for opendray. Drives the "Sponsor" button GitHub
+# shows on the repo, on every release, and on every issue / PR.
+#
+# Two GitHub accounts, in priority order: the project (Opendray org)
+# for company sponsorships that flow to the project, and the
+# maintainer (navidrast) as a fallback for procurement processes
+# that can only pay individuals. Both surface the same tiers, the
+# money funds the same work, see SPONSORS.md.
 
-github: [navidrast]
+github: [Opendray, navidrast]
 
 # --- enable as accounts are set up (uncomment + set the real handle) ---
 # open_collective: opendray

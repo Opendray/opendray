@@ -135,6 +135,7 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	@override String get knowledge => 'Conocimiento';
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
+	@override String get updateAvailable => 'Actualización disponible';
 }
 
 // Path: web
@@ -4470,6 +4471,12 @@ class _TranslationsWebPluginsSkillsEs extends TranslationsWebPluginsSkillsEn {
 	@override String get removedToast => 'Habilidad eliminada';
 	@override String get deleteFailedToast => 'Error al eliminar';
 	@override late final _TranslationsWebPluginsSkillsEditorEs editor = _TranslationsWebPluginsSkillsEditorEs._(_root);
+	@override String get dropHint => 'O suelta un SKILL.md aquí para instalarlo.';
+	@override String get dropToInstall => 'Suelta el SKILL.md para instalar';
+	@override String get uploading => 'Instalando habilidad…';
+	@override String uploadedToast({required Object id}) => 'Habilidad "${id}" instalada';
+	@override String get uploadFailedToast => 'Error al subir la habilidad';
+	@override String get uploadInvalidTypeToast => 'Solo se pueden instalar archivos SKILL.md por arrastre';
 }
 
 // Path: web.plugins.customTasks
@@ -8640,6 +8647,7 @@ extension on TranslationsEs {
 			'nav.knowledge' => 'Conocimiento',
 			'nav.vault' => 'Bóveda',
 			'nav.cortex' => 'Cortex',
+			'nav.updateAvailable' => 'Actualización disponible',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Cargando…',
 			'web.topbar.expandSidebar' => 'Expandir barra lateral',
@@ -9113,9 +9121,9 @@ extension on TranslationsEs {
 			'web.project.lifecycle.applied.archived' => 'Proyecto archivado',
 			'web.project.lifecycle.tooltip.badge' => 'Ciclo de vida del proyecto. Los proyectos congelados (pausados/archivados) se excluyen de la inyección en nuevas sesiones y de la destilación por IA.',
 			'web.project.lifecycle.tooltip.activate' => 'Reactivar: inyectar en nuevas sesiones y reanudar el mantenimiento por IA.',
-			'web.project.lifecycle.tooltip.pause' => 'Pausar: congelar este proyecto — omitir inyección y destilación, pero mantenerlo en la lista activa.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.lifecycle.tooltip.pause' => 'Pausar: congelar este proyecto — omitir inyección y destilación, pero mantenerlo en la lista activa.',
 			'web.project.lifecycle.tooltip.archive' => 'Archivar: archivar este proyecto — congelado y oculto de las vistas habituales.',
 			'web.project.docMeta.maintainer.coauthored' => 'Tú mantienes · IA propone',
 			'web.project.docMeta.maintainer.auto' => 'Autogenerado · solo lectura',
@@ -9627,9 +9635,9 @@ extension on TranslationsEs {
 			'web.integrations.register' => 'Registrar',
 			'web.integrations.loading' => 'Cargando…',
 			'web.integrations.tabs.registered' => 'Registradas',
-			'web.integrations.tabs.console' => 'Reverse proxy',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.tabs.console' => 'Reverse proxy',
 			'web.integrations.empty.title' => 'Aún no hay integraciones',
 			'web.integrations.empty.description' => 'Registra una aplicación externa para darle una API key con alcance limitado. Su código se queda fuera de este repositorio.',
 			'web.integrations.empty.register' => 'Registrar integración',
@@ -9837,6 +9845,12 @@ extension on TranslationsEs {
 			'web.plugins.skills.editor.createFailedToast' => 'Error al crear',
 			'web.plugins.skills.editor.saveFailedToast' => 'Error al guardar',
 			'web.plugins.skills.editor.saveAsOverride' => 'Guardar como anulación del vault',
+			'web.plugins.skills.dropHint' => 'O suelta un SKILL.md aquí para instalarlo.',
+			'web.plugins.skills.dropToInstall' => 'Suelta el SKILL.md para instalar',
+			'web.plugins.skills.uploading' => 'Instalando habilidad…',
+			'web.plugins.skills.uploadedToast' => ({required Object id}) => 'Habilidad "${id}" instalada',
+			'web.plugins.skills.uploadFailedToast' => 'Error al subir la habilidad',
+			'web.plugins.skills.uploadInvalidTypeToast' => 'Solo se pueden instalar archivos SKILL.md por arrastre',
 			'web.plugins.customTasks.title' => 'Tareas personalizadas',
 			'web.plugins.customTasks.description' => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.',
 			'web.plugins.customTasks.addTask' => 'Añadir tarea',
@@ -10135,6 +10149,8 @@ extension on TranslationsEs {
 			'web.serverSettings.saveToastTitle' => 'Ajustes guardados',
 			'web.serverSettings.saveToastDesc' => 'Haz clic en Reiniciar para aplicarlos.',
 			'web.serverSettings.saveErrorTitle' => 'Error al guardar',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.dangerousConfirm' => 'Has cambiado la dirección de escucha, el usuario de administración o la contraseña de administración. Tras reiniciar puede que necesites volver a autenticarte o usar la nueva dirección. ¿Continuar?',
 			'web.serverSettings.unsavedHint' => 'Tienes cambios sin guardar',
 			'web.serverSettings.savedHint' => 'Todos los cambios guardados',
@@ -10142,8 +10158,6 @@ extension on TranslationsEs {
 			'web.serverSettings.restart.button' => 'Reiniciar servidor',
 			'web.serverSettings.restart.buttonTitle' => 'Auto-ejecutar el proceso del gateway',
 			'web.serverSettings.restart.dirtyConfirm' => 'Tienes cambios sin guardar. El reinicio usará la ÚLTIMA configuración GUARDADA. ¿Continuar?',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.restart.confirm' => '¿Reiniciar el gateway de opendray? Todas las sesiones de terminal abiertas se reconectarán automáticamente.',
 			'web.serverSettings.restart.overlay' => 'Reiniciando servidor…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Esperando a /health · ${tick}s',
@@ -10649,6 +10663,8 @@ extension on TranslationsEs {
 			'web.knowledge.kb.edit' => 'Editar',
 			'web.knowledge.kb.unlock' => 'Desbloquear (que lo gestione la IA)',
 			'web.knowledge.kb.regenerate' => 'Regenerar',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.save' => 'Guardar',
 			'web.knowledge.kb.cancel' => 'Cancelar',
 			'web.knowledge.kb.editHint' => 'Guardar bloquea esta página para que la IA no la sobrescriba.',
@@ -10656,8 +10672,6 @@ extension on TranslationsEs {
 			'web.knowledge.kb.saved' => 'Guardado',
 			'web.knowledge.kb.unlocked' => 'Desbloqueada — la IA volverá a gestionar esta página',
 			'web.knowledge.kb.regenerating' => 'Regenerando en segundo plano…',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
@@ -11163,6 +11177,8 @@ extension on TranslationsEs {
 			'mcp.secret.helpRules' => 'Reglas de variable de entorno de shell: empieza por una letra o _, después solo letras / dígitos / _.',
 			'mcp.secret.replaceHint' => 'Pega el nuevo valor (el anterior se borra)',
 			'mcp.secret.addHint' => 'Pega el valor del secreto',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.addedSnack' => ({required Object key}) => 'Secreto ${key} añadido.',
 			'mcp.secret.updatedSnack' => ({required Object key}) => 'Secreto ${key} actualizado.',
 			'mcp.secret.deletedSnack' => ({required Object key}) => 'Eliminado ${key}.',
@@ -11170,8 +11186,6 @@ extension on TranslationsEs {
 			'mcp.popup.editConfigSubtitle' => 'Editor JSON completo, solo servidores respaldados por el vault',
 			'mcp.popup.viewRawSubtitle' => 'Inspector de solo lectura para el JSON del servidor',
 			'mcp.popup.deleteLabel' => 'Eliminar',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Descripción',
 			'mcp.kv.command' => 'Command',
@@ -11677,6 +11691,8 @@ extension on TranslationsEs {
 			'backupTargetEditor.privateKeyHintNew' => 'Pega el contenido de una clave privada OpenSSH/PEM. Entrada de varias líneas: conserva los marcadores BEGIN/END.',
 			'backupTargetEditor.hostKeyLabel' => 'Clave de host (fijación)',
 			'backupTargetEditor.hostKeyHint' => 'Clave pública del servidor en formato OpenSSH. Usa `ssh-keyscan <host>` para obtenerla. En blanco = sin fijación (NO recomendado fuera de la LAN).',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.rcloneNote' => 'Requiere la CLI de rclone en el host de opendray. Ejecuta primero `rclone config` una vez de forma interactiva para autenticar las cuentas en la nube.',
 			'backupTargetEditor.rcloneRemoteLabel' => 'Nombre del remoto',
 			'backupTargetEditor.rcloneRemoteHint' => 'Nombre de `rclone config` (sin los dos puntos).',
@@ -11684,8 +11700,6 @@ extension on TranslationsEs {
 			'backupTargetEditor.rcloneBinaryHint' => 'Anula `which rclone`. Vacío = búsqueda en PATH.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Ruta de configuración',
 			'backupTargetEditor.rcloneConfigHint' => 'Anula --config. Vacío = valor por defecto de rclone.',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.title' => 'Hosts de Git',
 			'githosts.addHost' => 'Añadir host',
 			'githosts.deleteTitle' => '¿Eliminar host de Git?',
@@ -12191,6 +12205,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Cadena de duración de Go, p. ej. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Nivel',
 			'settings.serverSettings.fields.format' => 'Formato',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.filePath' => 'Ruta del archivo',
 			'settings.serverSettings.fields.filePathHelper' => 'Vacío = solo stdout.',
 			'settings.serverSettings.fields.idleThreshold' => 'Umbral de inactividad',
@@ -12198,8 +12214,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.idleCheckInterval' => 'Intervalo de comprobación de inactividad',
 			'settings.serverSettings.fields.idleCheckHelper' => 'Con qué frecuencia se ejecuta el reaper de inactividad.',
 			'settings.serverSettings.fields.root' => 'Raíz',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.rootHelper' => 'Padre de las sub-rutas notes / skills / git_root.',
 			'settings.serverSettings.fields.notesPath' => 'Ruta de notas',
 			'settings.serverSettings.fields.skillsPath' => 'Ruta de skills',

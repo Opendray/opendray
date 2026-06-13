@@ -41,7 +41,8 @@
     "workspace": "Workspace",
     "knowledge": "Knowledge",
     "vault": "Vault",
-    "cortex": "Cortex"
+    "cortex": "Cortex",
+    "updateAvailable": "Update available"
   },
   "web": {
     "brand": "opendray",
@@ -1520,7 +1521,13 @@
           "createFailedToast": "Create failed",
           "saveFailedToast": "Save failed",
           "saveAsOverride": "Save as vault override"
-        }
+        },
+        "dropHint": "Or drop a SKILL.md here to install it.",
+        "dropToInstall": "Drop SKILL.md to install",
+        "uploading": "Installing skill…",
+        "uploadedToast": "Skill \"{id}\" installed",
+        "uploadFailedToast": "Skill upload failed",
+        "uploadInvalidTypeToast": "Only SKILL.md files can be installed by drop"
       },
       "customTasks": {
         "title": "Custom tasks",

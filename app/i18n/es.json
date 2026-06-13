@@ -41,7 +41,8 @@
     "workspace": "Espacio de trabajo",
     "knowledge": "Conocimiento",
     "vault": "Bóveda",
-    "cortex": "Cortex"
+    "cortex": "Cortex",
+    "updateAvailable": "Actualización disponible"
   },
   "web": {
     "brand": "opendray",
@@ -1520,7 +1521,13 @@
           "createFailedToast": "Error al crear",
           "saveFailedToast": "Error al guardar",
           "saveAsOverride": "Guardar como anulación del vault"
-        }
+        },
+        "dropHint": "O suelta un SKILL.md aquí para instalarlo.",
+        "dropToInstall": "Suelta el SKILL.md para instalar",
+        "uploading": "Instalando habilidad…",
+        "uploadedToast": "Habilidad \"{id}\" instalada",
+        "uploadFailedToast": "Error al subir la habilidad",
+        "uploadInvalidTypeToast": "Solo se pueden instalar archivos SKILL.md por arrastre"
       },
       "customTasks": {
         "title": "Tareas personalizadas",

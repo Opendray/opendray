@@ -212,6 +212,9 @@ class TranslationsNavEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Update available'
+	String get updateAvailable => 'Update available';
 }
 
 // Path: web
@@ -8819,6 +8822,24 @@ class TranslationsWebPluginsSkillsEn {
 	String get deleteFailedToast => 'Delete failed';
 
 	late final TranslationsWebPluginsSkillsEditorEn editor = TranslationsWebPluginsSkillsEditorEn.internal(_root);
+
+	/// en: 'Or drop a SKILL.md here to install it.'
+	String get dropHint => 'Or drop a SKILL.md here to install it.';
+
+	/// en: 'Drop SKILL.md to install'
+	String get dropToInstall => 'Drop SKILL.md to install';
+
+	/// en: 'Installing skill…'
+	String get uploading => 'Installing skill…';
+
+	/// en: 'Skill "{id}" installed'
+	String uploadedToast({required Object id}) => 'Skill "${id}" installed';
+
+	/// en: 'Skill upload failed'
+	String get uploadFailedToast => 'Skill upload failed';
+
+	/// en: 'Only SKILL.md files can be installed by drop'
+	String get uploadInvalidTypeToast => 'Only SKILL.md files can be installed by drop';
 }
 
 // Path: web.plugins.customTasks
@@ -16116,6 +16137,7 @@ extension on Translations {
 			'nav.knowledge' => 'Knowledge',
 			'nav.vault' => 'Vault',
 			'nav.cortex' => 'Cortex',
+			'nav.updateAvailable' => 'Update available',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
 			'web.topbar.expandSidebar' => 'Expand sidebar',
@@ -16589,9 +16611,9 @@ extension on Translations {
 			'web.project.lifecycle.applied.archived' => 'Project archived',
 			'web.project.lifecycle.tooltip.badge' => 'Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.',
 			'web.project.lifecycle.tooltip.activate' => 'Re-activate: inject into new sessions and resume AI maintenance.',
-			'web.project.lifecycle.tooltip.pause' => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.lifecycle.tooltip.pause' => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.',
 			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
 			'web.project.docMeta.maintainer.coauthored' => 'You maintain · AI proposes',
 			'web.project.docMeta.maintainer.auto' => 'Auto-generated · read-only',
@@ -17103,9 +17125,9 @@ extension on Translations {
 			'web.integrations.register' => 'Register',
 			'web.integrations.loading' => 'Loading…',
 			'web.integrations.tabs.registered' => 'Registered',
-			'web.integrations.tabs.console' => 'Reverse proxy',
 			_ => null,
 		} ?? switch (path) {
+			'web.integrations.tabs.console' => 'Reverse proxy',
 			'web.integrations.empty.title' => 'No integrations yet',
 			'web.integrations.empty.description' => 'Register an external app to give it a scoped API key. Its code stays out of this repo.',
 			'web.integrations.empty.register' => 'Register integration',
@@ -17313,6 +17335,12 @@ extension on Translations {
 			'web.plugins.skills.editor.createFailedToast' => 'Create failed',
 			'web.plugins.skills.editor.saveFailedToast' => 'Save failed',
 			'web.plugins.skills.editor.saveAsOverride' => 'Save as vault override',
+			'web.plugins.skills.dropHint' => 'Or drop a SKILL.md here to install it.',
+			'web.plugins.skills.dropToInstall' => 'Drop SKILL.md to install',
+			'web.plugins.skills.uploading' => 'Installing skill…',
+			'web.plugins.skills.uploadedToast' => ({required Object id}) => 'Skill "${id}" installed',
+			'web.plugins.skills.uploadFailedToast' => 'Skill upload failed',
+			'web.plugins.skills.uploadInvalidTypeToast' => 'Only SKILL.md files can be installed by drop',
 			'web.plugins.customTasks.title' => 'Custom tasks',
 			'web.plugins.customTasks.description' => 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.',
 			'web.plugins.customTasks.addTask' => 'Add task',
@@ -17611,6 +17639,8 @@ extension on Translations {
 			'web.serverSettings.saveToastTitle' => 'Settings saved',
 			'web.serverSettings.saveToastDesc' => 'Click Restart to apply.',
 			'web.serverSettings.saveErrorTitle' => 'Save failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.dangerousConfirm' => 'You changed listen address / admin user / admin password. After restart you may need to re-authenticate or use the new address. Continue?',
 			'web.serverSettings.unsavedHint' => 'You have unsaved changes',
 			'web.serverSettings.savedHint' => 'All changes saved',
@@ -17618,8 +17648,6 @@ extension on Translations {
 			'web.serverSettings.restart.button' => 'Restart server',
 			'web.serverSettings.restart.buttonTitle' => 'Self-exec the gateway process',
 			'web.serverSettings.restart.dirtyConfirm' => 'You have unsaved changes. Restart will use the LAST SAVED config. Continue?',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.restart.confirm' => 'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
 			'web.serverSettings.restart.overlay' => 'Restarting server…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Waiting for /health · ${tick}s',
@@ -18125,6 +18153,8 @@ extension on Translations {
 			'web.knowledge.kb.edit' => 'Edit',
 			'web.knowledge.kb.unlock' => 'Unlock (let AI manage)',
 			'web.knowledge.kb.regenerate' => 'Regenerate',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.save' => 'Save',
 			'web.knowledge.kb.cancel' => 'Cancel',
 			'web.knowledge.kb.editHint' => 'Saving locks this page from AI overwrite.',
@@ -18132,8 +18162,6 @@ extension on Translations {
 			'web.knowledge.kb.saved' => 'Saved',
 			'web.knowledge.kb.unlocked' => 'Unlocked — AI will manage this page again',
 			'web.knowledge.kb.regenerating' => 'Regenerating in the background…',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
@@ -18639,6 +18667,8 @@ extension on Translations {
 			'mcp.secret.helpRules' => 'Shell-env-var rules: starts with a letter or _, then letters / digits / _ only.',
 			'mcp.secret.replaceHint' => 'Paste new value (the previous one is wiped)',
 			'mcp.secret.addHint' => 'Paste secret value',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.addedSnack' => ({required Object key}) => 'Secret ${key} added.',
 			'mcp.secret.updatedSnack' => ({required Object key}) => 'Secret ${key} updated.',
 			'mcp.secret.deletedSnack' => ({required Object key}) => 'Deleted ${key}.',
@@ -18646,8 +18676,6 @@ extension on Translations {
 			'mcp.popup.editConfigSubtitle' => 'Full JSON editor — vault-backed servers only',
 			'mcp.popup.viewRawSubtitle' => 'Read-only inspector for the server JSON',
 			'mcp.popup.deleteLabel' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Description',
 			'mcp.kv.command' => 'Command',
@@ -19153,6 +19181,8 @@ extension on Translations {
 			'backupTargetEditor.privateKeyHintNew' => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.',
 			'backupTargetEditor.hostKeyLabel' => 'Host key (pinning)',
 			'backupTargetEditor.hostKeyHint' => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.rcloneNote' => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.',
 			'backupTargetEditor.rcloneRemoteLabel' => 'Remote name',
 			'backupTargetEditor.rcloneRemoteHint' => 'Name from `rclone config` (no colon).',
@@ -19160,8 +19190,6 @@ extension on Translations {
 			'backupTargetEditor.rcloneBinaryHint' => 'Override `which rclone`. Empty = PATH lookup.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Config path',
 			'backupTargetEditor.rcloneConfigHint' => 'Override --config. Empty = rclone default.',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.title' => 'Git hosts',
 			'githosts.addHost' => 'Add host',
 			'githosts.deleteTitle' => 'Delete git host?',
@@ -19667,6 +19695,8 @@ extension on Translations {
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Level',
 			'settings.serverSettings.fields.format' => 'Format',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.filePath' => 'File path',
 			'settings.serverSettings.fields.filePathHelper' => 'Empty = stdout only.',
 			'settings.serverSettings.fields.idleThreshold' => 'Idle threshold',
@@ -19674,8 +19704,6 @@ extension on Translations {
 			'settings.serverSettings.fields.idleCheckInterval' => 'Idle check interval',
 			'settings.serverSettings.fields.idleCheckHelper' => 'How often the idle reaper runs.',
 			'settings.serverSettings.fields.root' => 'Root',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
 			'settings.serverSettings.fields.notesPath' => 'Notes path',
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',

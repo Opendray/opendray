@@ -264,7 +264,15 @@ export function SessionsPage() {
               inspectorOpen={inspectorOpen}
               onToggleInspector={toggleInspector}
             />
-            <div className="flex-1 min-h-0">
+            {/* pb-3 reserves a small breathing strip so Claude's
+                prompt+footer never sit flush against the browser bottom
+                edge — the input is the most-interacted-with row in the
+                whole UI, and an extra ~12px of breathing room makes
+                typing on a tall desktop window feel noticeably less
+                cramped. The Terminal's FitAddon picks up the smaller
+                available height on the next ResizeObserver tick, so the
+                PTY stays in sync. */}
+            <div className="flex-1 min-h-0 pb-3">
               {currentSession &&
               isTerminalSessionState(currentSession.state) ? (
                 <EndedSessionView key={currentId} sessionId={currentId} />
@@ -400,7 +408,7 @@ function WorkbenchHeader({
   const { t } = useTranslation()
   if (!session) {
     return (
-      <div className="h-14 border-b border-border flex items-center px-3 text-[12px] text-muted-foreground">
+      <div className="h-11 border-b border-border flex items-center px-3 text-[12px] text-muted-foreground">
         <Loader2 className="size-3 animate-spin" />
         <span className="ml-2">{t('web.sessions.header.loadingSession')}</span>
       </div>
@@ -418,7 +426,7 @@ function WorkbenchHeader({
   const copyLabel = t('web.sessions.header.copyOutput')
   const copyTooltip = t('web.sessions.header.copyOutputTooltip')
   return (
-    <div className="h-14 border-b border-border flex items-center px-3 gap-3">
+    <div className="h-11 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -440,7 +448,7 @@ function WorkbenchHeader({
       <BrandAvatar
         iconKey={providerIconKey(session.provider_id)}
         fallbackLetter={visual.letter}
-        size={36}
+        size={28}
         title={visual.name}
       />
       <div className="flex-1 min-w-0 flex flex-col gap-0.5">

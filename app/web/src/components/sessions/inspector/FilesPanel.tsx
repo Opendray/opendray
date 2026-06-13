@@ -1,8 +1,21 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronRight, ChevronDown, FileText, Folder, Loader2 } from 'lucide-react'
+import {
+  ChevronRight,
+  ChevronDown,
+  FileText,
+  Folder,
+  Loader2,
+  Download,
+} from 'lucide-react'
 
-import { listDir } from '@/lib/fs'
+import {
+  listDir,
+  fsDownloadURL,
+  fsZipURL,
+  triggerDownload,
+} from '@/lib/fs'
+import { useAuth } from '@/stores/auth'
 import { cn } from '@/lib/utils'
 
 import { FileViewerDialog } from './FileViewerDialog'
@@ -25,6 +38,12 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
           path={cwd}
           name={cwd}
           isRoot
+          // downloadRoot is the cwd: the server-side download/zip
+          // endpoints reject any resolved path that escapes it, so
+          // the operator's reach via the inspector matches what they
+          // can browse here — files outside the session subtree
+          // can't be exfiltrated through a hand-crafted URL.
+          downloadRoot={cwd}
           onOpenFile={(p) => setViewing(p)}
         />
       </div>
@@ -42,6 +61,10 @@ interface FsNodeProps {
   name: string
   isRoot?: boolean
   depth?: number
+  // downloadRoot is the operator-allowed root the server uses to
+  // confine download requests. Passed unchanged to every child so the
+  // whole subtree shares the same confinement.
+  downloadRoot: string
   onOpenFile: (path: string) => void
 }
 
@@ -50,10 +73,12 @@ function FsNode({
   name,
   isRoot = false,
   depth = 0,
+  downloadRoot,
   onOpenFile,
 }: FsNodeProps) {
   const [open, setOpen] = useState(isRoot)
   const indent = { paddingLeft: `${depth * 12}px` }
+  const token = useAuth((s) => s.token)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['fs', path],
@@ -64,24 +89,37 @@ function FsNode({
 
   return (
     <div className="flex flex-col">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={indent}
-        className={cn(
-          'flex items-center gap-1 text-[12px] py-0.5 pr-1 rounded-sm',
-          'hover:bg-card text-foreground/90 text-left',
+      <div className="group relative flex items-stretch">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={indent}
+          className={cn(
+            'flex-1 min-w-0 flex items-center gap-1 text-[12px] py-0.5 pr-8 rounded-sm',
+            'hover:bg-card text-foreground/90 text-left',
+          )}
+          title={path}
+        >
+          {open ? (
+            <ChevronDown className="size-3 shrink-0 opacity-60" />
+          ) : (
+            <ChevronRight className="size-3 shrink-0 opacity-60" />
+          )}
+          <Folder className="size-3 shrink-0 text-muted-foreground" />
+          <span className="truncate">{isRoot ? trimRoot(name) : name}</span>
+        </button>
+        {token && (
+          <DownloadIconButton
+            ariaLabel={`Download ${name} as zip`}
+            onActivate={() =>
+              triggerDownload(
+                fsZipURL(path, downloadRoot, token),
+                `${name || 'folder'}.zip`,
+              )
+            }
+          />
         )}
-        title={path}
-      >
-        {open ? (
-          <ChevronDown className="size-3 shrink-0 opacity-60" />
-        ) : (
-          <ChevronRight className="size-3 shrink-0 opacity-60" />
-        )}
-        <Folder className="size-3 shrink-0 text-muted-foreground" />
-        <span className="truncate">{isRoot ? trimRoot(name) : name}</span>
-      </button>
+      </div>
       {open && (
         <div className="flex flex-col">
           {isLoading && (
@@ -108,28 +146,79 @@ function FsNode({
                 path={e.path}
                 name={e.name}
                 depth={depth + 1}
+                downloadRoot={downloadRoot}
                 onOpenFile={onOpenFile}
               />
             ) : (
-              <button
-                key={e.path}
-                type="button"
-                onClick={() => onOpenFile(e.path)}
-                style={{ paddingLeft: `${(depth + 1) * 12 + 16}px` }}
-                className={cn(
-                  'flex items-center gap-1 text-[12px] py-0.5 pr-1 rounded-sm',
-                  'hover:bg-card text-muted-foreground/90 hover:text-foreground text-left',
+              <div key={e.path} className="group relative flex items-stretch">
+                <button
+                  type="button"
+                  onClick={() => onOpenFile(e.path)}
+                  style={{ paddingLeft: `${(depth + 1) * 12 + 16}px` }}
+                  className={cn(
+                    'flex-1 min-w-0 flex items-center gap-1 text-[12px] py-0.5 pr-8 rounded-sm',
+                    'hover:bg-card text-muted-foreground/90 hover:text-foreground text-left',
+                  )}
+                  title={e.path}
+                >
+                  <FileText className="size-3 shrink-0 opacity-60" />
+                  <span className="truncate">{e.name}</span>
+                </button>
+                {token && (
+                  <DownloadIconButton
+                    ariaLabel={`Download ${e.name}`}
+                    onActivate={() =>
+                      triggerDownload(
+                        fsDownloadURL(e.path, downloadRoot, token),
+                        e.name,
+                      )
+                    }
+                  />
                 )}
-                title={e.path}
-              >
-                <FileText className="size-3 shrink-0 opacity-60" />
-                <span className="truncate">{e.name}</span>
-              </button>
+              </div>
             ),
           )}
         </div>
       )}
     </div>
+  )
+}
+
+// DownloadIconButton overlays a small Download icon on the right edge
+// of a tree row. Visible-on-hover (or always on touch via the row's
+// group-hover and active fallbacks) so the tree stays scannable when
+// the operator isn't reaching for a file. Anchored absolutely so the
+// row's text isn't truncated to make space — the button sits over the
+// row's right padding.
+function DownloadIconButton({
+  ariaLabel,
+  onActivate,
+}: {
+  ariaLabel: string
+  onActivate: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        // Stop the click from also triggering the row's open/view
+        // action — the operator clicked the download icon, not the
+        // row body.
+        e.stopPropagation()
+        onActivate()
+      }}
+      aria-label={ariaLabel}
+      title={ariaLabel}
+      className={cn(
+        'absolute right-1 top-1/2 -translate-y-1/2',
+        'size-5 flex items-center justify-center rounded-sm',
+        'text-muted-foreground/70 hover:text-foreground hover:bg-border',
+        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+        'transition-opacity',
+      )}
+    >
+      <Download className="size-3" />
+    </button>
   )
 }
 

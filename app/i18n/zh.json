@@ -41,7 +41,8 @@
     "workspace": "工作区",
     "knowledge": "知识",
     "vault": "文档库",
-    "cortex": "心智中枢"
+    "cortex": "心智中枢",
+    "updateAvailable": "有可用更新"
   },
   "web": {
     "brand": "opendray",
@@ -1520,7 +1521,13 @@
           "createFailedToast": "创建失败",
           "saveFailedToast": "保存失败",
           "saveAsOverride": "保存为 vault 覆盖"
-        }
+        },
+        "dropHint": "或将 SKILL.md 文件拖放到此处以安装。",
+        "dropToInstall": "拖放 SKILL.md 以安装",
+        "uploading": "正在安装 skill…",
+        "uploadedToast": "Skill \"{id}\" 已安装",
+        "uploadFailedToast": "上传 skill 失败",
+        "uploadInvalidTypeToast": "仅支持拖放 SKILL.md 文件"
       },
       "customTasks": {
         "title": "自定义任务",
