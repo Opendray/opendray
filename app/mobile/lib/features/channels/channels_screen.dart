@@ -13,11 +13,13 @@ import 'package:opendray/features/channels/channel_kinds.dart';
 import 'package:opendray/features/channels/channel_visual.dart';
 
 // Notification destinations (Slack / Feishu / DingTalk / WeCom /
-// bridge). Read-only list. Per-row actions: test-send, toggle
-// enabled, toggle muted, view raw config. Create/edit/delete are
-// scoped out — kind-specific config schemas (workspace IDs, app
-// secrets, group tokens) would need a different form per kind, and
-// none of them are operator-tweakable on mobile in practice.
+// bridge). Full lifecycle: a create FAB opens a kind picker → the
+// kind-driven ChannelFormScreen → POST /channels (webhook kinds then
+// surface their inbound URL). Per-row actions: test-send, toggle
+// enabled, toggle muted, edit config, edit notify prefs, view raw
+// config, copy id, delete. Bridge channels are created on the web
+// admin only (their token-generator + capability multiselect don't
+// translate to the mobile form) but appear here for test/toggle/view.
 class ChannelsScreen extends ConsumerStatefulWidget {
   const ChannelsScreen({super.key});
 
