@@ -78,6 +78,16 @@ func (s *Service) GetStatus(ctx context.Context, cwd string) (ProjectStatus, err
 	return ProjectStatus(status), nil
 }
 
+// WithStatusChangeHook installs a callback invoked after every
+// successful SetStatus that actually changed the status. The app
+// wires the memory bridge here (project archived → soft-archive its
+// memories; unarchived → restore them) without projectdoc importing
+// internal/memory. Best-effort: the hook owns its own error handling.
+func (s *Service) WithStatusChangeHook(fn func(ctx context.Context, cwd string, old, new ProjectStatus)) *Service {
+	s.onStatusChange = fn
+	return s
+}
+
 // SetStatus upserts the lifecycle row for cwd. Setting StatusActive is kept as
 // an explicit row (rather than deleting) so the audit of "operator re-activated
 // on <date>" survives; callers treat a missing row and an active row alike.
@@ -91,6 +101,12 @@ func (s *Service) SetStatus(ctx context.Context, cwd string, status ProjectStatu
 	if author == "" {
 		author = AuthorOperator
 	}
+	// Prior status feeds the change hook. A read failure must not block
+	// the write — fall back to the no-row default (active).
+	old, gerr := s.GetStatus(ctx, cwd)
+	if gerr != nil {
+		old = StatusActive
+	}
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO project_lifecycle (cwd, status, updated_by, updated_at)
 		VALUES ($1, $2, $3, NOW())
@@ -101,6 +117,9 @@ func (s *Service) SetStatus(ctx context.Context, cwd string, status ProjectStatu
 		cwd, string(status), string(author))
 	if err != nil {
 		return fmt.Errorf("projectdoc: set status: %w", err)
+	}
+	if s.onStatusChange != nil && old != status {
+		s.onStatusChange(ctx, cwd, old, status)
 	}
 	return nil
 }

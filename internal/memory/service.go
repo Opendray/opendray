@@ -676,6 +676,23 @@ func (s *Service) Restore(ctx context.Context, id string) error {
 	return s.store.Restore(ctx, id)
 }
 
+// RestoreByScope un-archives every (scope, scopeKey) row archived with
+// the given reason — the project-unarchive bridge.
+func (s *Service) RestoreByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error) {
+	scope = normalizeScope(scope)
+	if err := scope.Validate(); err != nil {
+		return 0, err
+	}
+	return s.store.RestoreByScope(ctx, scope, scopeKey, reason)
+}
+
+// Quarantine moves an active durable memory into the quarantine tier
+// for the standard manual review window. Release it from the Cortex
+// quarantine queue (promote) or let the TTL expire it.
+func (s *Service) Quarantine(ctx context.Context, id string) error {
+	return s.store.Quarantine(ctx, id, time.Now().UTC().Add(ManualQuarantineTTL))
+}
+
 // ListArchived returns archived (restorable) memories for a scope.
 func (s *Service) ListArchived(ctx context.Context, scope Scope, scopeKey string, limit int) ([]Memory, error) {
 	scope = normalizeScope(scope)

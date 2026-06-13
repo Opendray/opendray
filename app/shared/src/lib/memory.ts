@@ -257,6 +257,22 @@ export async function restoreMemory(id: string): Promise<void> {
   })
 }
 
+/** Soft-archives one memory by hand (admin only) — reversible from the
+ * Archived view until the grace window purges it. */
+export async function archiveMemory(id: string): Promise<void> {
+  await api(`/api/v1/memory/${encodeURIComponent(id)}/archive`, {
+    method: 'POST',
+  })
+}
+
+/** Moves a durable memory into the quarantine review queue (admin
+ * only) — release it from Cortex → Quarantine, or the TTL expires it. */
+export async function quarantineMemory(id: string): Promise<void> {
+  await api(`/api/v1/memory/${encodeURIComponent(id)}/quarantine`, {
+    method: 'POST',
+  })
+}
+
 export async function storeMemory(
   text: string,
   scope: Scope,

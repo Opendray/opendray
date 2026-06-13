@@ -219,6 +219,11 @@ type Service struct {
 	// spawnMode resolves the operator's spawn injection mode at render
 	// time ("full"|"lean", Cortex settings). Nil = full (legacy).
 	spawnMode SpawnModeSource
+
+	// onStatusChange fires after a successful lifecycle transition
+	// (see WithStatusChangeHook). The app bridges project archive /
+	// unarchive to the memory store through this. Nil = no bridge.
+	onStatusChange func(ctx context.Context, cwd string, old, new ProjectStatus)
 }
 
 // SpawnModeSource resolves the spawn injection mode per render —

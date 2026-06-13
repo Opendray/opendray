@@ -466,7 +466,7 @@
       "emptyTitle": "Nothing archived",
       "emptyDescription": "No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.",
       "title": "Archived memories",
-      "subtitle": "Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.",
+      "subtitle": "Soft-archived memories, restorable until the 30-day grace window purges them. Sources: the auto-cleaner’s verdicts, manual per-memory archive, and whole projects you archive — a project’s memories land here together and return together when you unarchive it (project archives are exempt from the purge).",
       "globalScope": "(global)",
       "openProject": "Open project",
       "archivedAtPrefix": "Archived",
@@ -718,7 +718,9 @@
         "editTooltip": "Edit this memory",
         "deleteTooltip": "Delete this memory",
         "emptyError": "Memory text cannot be empty",
-        "deleteConfirm": "Delete memory {id}? This is permanent."
+        "deleteConfirm": "Delete memory {id}? This is permanent.",
+        "archiveTooltip": "Archive (reversible) — moves to the Archived view",
+        "quarantineTooltip": "Quarantine — moves to the review queue until promoted or expired"
       },
       "toasts": {
         "deleted": "Memory deleted",
@@ -736,7 +738,11 @@
         "syncIngested_other": "Ingested {count} new memory files",
         "syncEmpty": "No new .md files to sync",
         "syncEmptyDescription": "Already in sync, or no Claude memory dir for this cwd.",
-        "syncFailed": "Sync failed"
+        "syncFailed": "Sync failed",
+        "archived": "Memory archived — restorable from the Archived view",
+        "archiveFailed": "Archive failed",
+        "quarantined": "Memory quarantined — review it under Cortex → Quarantine",
+        "quarantineFailed": "Quarantine failed"
       },
       "bulkDelete": {
         "title": "Delete every memory in this scope?",
@@ -2793,8 +2799,8 @@
       },
       "quarantine": {
         "title": "Quarantine",
-        "subtitle": "Memories captured from third-party (integration) sessions. They never feed consolidation or spawn injection — promote the valuable ones, discard the noise; the rest expires automatically.",
-        "empty": "Quarantine is empty — no third-party capture awaiting review.",
+        "subtitle": "Facts that need review before they count as durable memory: third-party-integration captures land here by policy, and you can quarantine any memory by hand from the Memory inspector. Promote what is true; discard the rest — unreviewed rows expire on their own.",
+        "empty": "Nothing in quarantine. Rows arrive here from integration-origin sessions (memory policy “quarantine”) or when you quarantine a memory manually in the Memory inspector.",
         "promote": "Promote",
         "promoteHint": "Move into durable memory (joins recall + consolidation)",
         "discard": "Discard",

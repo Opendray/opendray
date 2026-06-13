@@ -808,6 +808,33 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// bge-m3 hits would rank against each other meaninglessly.
 	projectDocSvc.WithEmbedder(projectdocEmbedderAdapter{emb: memorySvc.Embedder()})
 
+	// Lifecycle ⇄ memory bridge: archiving a project soft-archives its
+	// project-scoped memories (they appear in the Archived view, exempt
+	// from the grace purge), and unarchiving restores exactly those rows.
+	// Without this the Archived view stayed empty after a project
+	// archive — the two features looked broken when they were just
+	// unwired.
+	if memorySvc != nil {
+		projectDocSvc.WithStatusChangeHook(func(ctx context.Context, cwd string, old, new projectdoc.ProjectStatus) {
+			switch {
+			case new == projectdoc.StatusArchived && old != projectdoc.StatusArchived:
+				n, err := memorySvc.ArchiveByScope(ctx, memory.ScopeProject, cwd, memory.ReasonProjectArchived)
+				if err != nil {
+					log.Warn("project archive: memory archive failed", "cwd", cwd, "err", err)
+					return
+				}
+				log.Info("project archived — memories soft-archived", "cwd", cwd, "count", n)
+			case old == projectdoc.StatusArchived && new != projectdoc.StatusArchived:
+				n, err := memorySvc.RestoreByScope(ctx, memory.ScopeProject, cwd, memory.ReasonProjectArchived)
+				if err != nil {
+					log.Warn("project unarchive: memory restore failed", "cwd", cwd, "err", err)
+					return
+				}
+				log.Info("project unarchived — memories restored", "cwd", cwd, "count", n)
+			}
+		})
+	}
+
 	// M-PB — now that projectDocSvc exists, build the cross-layer
 	// search service. memquery.New is strict about nil deps so we
 	// surface a misconfiguration at boot rather than at first hit.

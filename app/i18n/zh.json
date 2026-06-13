@@ -466,7 +466,7 @@
       "emptyTitle": "暂无归档",
       "emptyDescription": "所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。",
       "title": "已归档记忆",
-      "subtitle": "自动清理器与生命周期扫描在所有项目中软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。如有误判可在下方恢复。",
+      "subtitle": "软归档的记忆，在 30 天宽限期被清除前均可恢复。来源：auto-cleaner 的判定、逐条手动归档，以及你归档的整个项目——项目的记忆会一起到这里，取消归档时一起回来（项目归档不受宽限期清除影响）。",
       "globalScope": "(全局)",
       "openProject": "打开项目",
       "archivedAtPrefix": "归档于",
@@ -718,7 +718,9 @@
         "editTooltip": "编辑该记忆",
         "deleteTooltip": "删除该记忆",
         "emptyError": "记忆文本不能为空",
-        "deleteConfirm": "删除记忆 {id}? 不可恢复。"
+        "deleteConfirm": "删除记忆 {id}? 不可恢复。",
+        "archiveTooltip": "归档（可逆）——移入「已归档」视图",
+        "quarantineTooltip": "隔离——移入审查队列，直到批准或过期"
       },
       "toasts": {
         "deleted": "记忆已删除",
@@ -736,7 +738,11 @@
         "syncIngested_other": "已摄取 {count} 个新记忆文件",
         "syncEmpty": "没有需要同步的新 .md 文件",
         "syncEmptyDescription": "已是最新，或该 cwd 没有 Claude memory 目录。",
-        "syncFailed": "同步失败"
+        "syncFailed": "同步失败",
+        "archived": "记忆已归档——可在「已归档」视图中恢复",
+        "archiveFailed": "归档失败",
+        "quarantined": "记忆已隔离——请在 Cortex → 隔离区 中审查",
+        "quarantineFailed": "隔离失败"
       },
       "bulkDelete": {
         "title": "删除此 scope 的全部记忆?",
@@ -2793,8 +2799,8 @@
       },
       "quarantine": {
         "title": "隔离区",
-        "subtitle": "来自第三方（集成）会话采集的记忆。它们不参与知识蒸馏与启动注入——有价值的升格为正式记忆，噪音直接丢弃，其余到期自动清除。",
-        "empty": "隔离区为空——没有待审的第三方采集。",
+        "subtitle": "在被采信为持久记忆之前需要审查的事实：第三方 integration 的捕获会按策略落到这里，你也可以在记忆检查器中手动隔离任何一条记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。",
+        "empty": "隔离区为空。条目来源：integration 来源会话（记忆策略为 “quarantine”），或你在记忆检查器中手动隔离的记忆。",
         "promote": "升格",
         "promoteHint": "移入正式记忆（参与召回与知识蒸馏）",
         "discard": "丢弃",

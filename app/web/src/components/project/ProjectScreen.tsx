@@ -1261,6 +1261,11 @@ function LifecycleControl({ cwd }: { cwd: string }) {
     mutationFn: (next: ProjectStatus) => setProjectLifecycle(cwd, next),
     onSuccess: (_data, next) => {
       qc.invalidateQueries({ queryKey: ['projects-lifecycle'] })
+      // The lifecycle bridge archives / restores the project's
+      // memories server-side — refresh every surface that shows them.
+      qc.invalidateQueries({ queryKey: ['archived-memories'] })
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['known-projects'] })
       toast.success(t(`web.project.lifecycle.applied.${next}`))
     },
     onError: (e) =>

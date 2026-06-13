@@ -29,7 +29,15 @@ export function ArchivedPage() {
 
   const query = useQuery({
     queryKey: ['archived-memories', 'all'],
-    queryFn: () => listArchived('project', '', 500),
+    // Both scopes: project-scoped rows (all cwds) AND global-scope
+    // rows — global archived memories were invisible here before.
+    queryFn: async () => {
+      const [proj, glob] = await Promise.all([
+        listArchived('project', '', 500),
+        listArchived('global', '', 500),
+      ])
+      return [...proj, ...glob]
+    },
     staleTime: 10_000,
   })
 

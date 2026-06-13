@@ -466,7 +466,7 @@
       "emptyTitle": "Nada archivado",
       "emptyDescription": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
       "title": "Memorias archivadas",
-      "subtitle": "Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.",
+      "subtitle": "Memorias archivadas (reversibles) hasta que la ventana de gracia de 30 días las purgue. Fuentes: los veredictos del auto-cleaner, el archivado manual por memoria, y los proyectos que archivas — las memorias de un proyecto llegan juntas y vuelven juntas al desarchivarlo (los archivados de proyecto están exentos de la purga).",
       "globalScope": "(global)",
       "openProject": "Abrir proyecto",
       "archivedAtPrefix": "Archivado",
@@ -718,7 +718,9 @@
         "editTooltip": "Editar esta memoria",
         "deleteTooltip": "Eliminar esta memoria",
         "emptyError": "El texto de la memoria no puede estar vacío",
-        "deleteConfirm": "¿Eliminar la memoria {id}? Esto es permanente."
+        "deleteConfirm": "¿Eliminar la memoria {id}? Esto es permanente.",
+        "archiveTooltip": "Archivar (reversible) — va a la vista Archivado",
+        "quarantineTooltip": "Cuarentena — va a la cola de revisión hasta promoverla o que expire"
       },
       "toasts": {
         "deleted": "Memoria eliminada",
@@ -736,7 +738,11 @@
         "syncIngested_other": "Se importaron {count} nuevos archivos de memoria",
         "syncEmpty": "No hay nuevos archivos .md que sincronizar",
         "syncEmptyDescription": "Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.",
-        "syncFailed": "La sincronización falló"
+        "syncFailed": "La sincronización falló",
+        "archived": "Memoria archivada — restaurable desde la vista Archivado",
+        "archiveFailed": "Fallo al archivar",
+        "quarantined": "Memoria en cuarentena — revísala en Cortex → Cuarentena",
+        "quarantineFailed": "Fallo al poner en cuarentena"
       },
       "bulkDelete": {
         "title": "¿Eliminar todas las memorias de este scope?",
@@ -2793,8 +2799,8 @@
       },
       "quarantine": {
         "title": "Cuarentena",
-        "subtitle": "Memorias capturadas de sesiones de terceros (integraciones). Nunca alimentan la consolidación ni la inyección — promociona las valiosas, descarta el ruido; el resto expira solo.",
-        "empty": "Cuarentena vacía — no hay capturas de terceros por revisar.",
+        "subtitle": "Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones de terceros llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano desde el inspector de Memoria. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.",
+        "empty": "Nada en cuarentena. Las filas llegan desde sessions de origen integración (política “quarantine”) o cuando pones una memoria en cuarentena manualmente en el inspector de Memoria.",
         "promote": "Promocionar",
         "promoteHint": "Mover a memoria duradera (entra en la recuperación y consolidación)",
         "discard": "Descartar",

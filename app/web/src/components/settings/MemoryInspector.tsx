@@ -8,6 +8,8 @@ import {
   X,
   Loader2,
   Brain,
+  Archive,
+  ShieldQuestion,
   CheckCircle2,
   ChevronDown,
   AlertTriangle,
@@ -34,8 +36,10 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import {
+  archiveMemory,
   deleteMemoriesByScope,
   deleteMemory,
+  quarantineMemory,
   fetchEmbedderStats,
   fetchMemoryStatus,
   listMemories,
@@ -135,6 +139,38 @@ export function MemoryInspector() {
     },
     onError: (err: Error) =>
       toast.error(t('web.memoryInspector.toasts.deleteFailed'), {
+        description: err.message,
+      }),
+  })
+
+  // Manual archive — reversible (Archived view) until grace purges it.
+  const archive = useMutation({
+    mutationFn: (id: string) => archiveMemory(id).then(() => id),
+    onSuccess: (id) => {
+      toast.success(t('web.memoryInspector.toasts.archived'))
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['archived-memories'] })
+      setSearchHits((cur) => cur?.filter((h) => h.memory.id !== id) ?? null)
+    },
+    onError: (err: Error) =>
+      toast.error(t('web.memoryInspector.toasts.archiveFailed'), {
+        description: err.message,
+      }),
+  })
+
+  // Manual quarantine — moves the row to the Cortex review queue;
+  // promote it back from there or let the TTL expire it.
+  const quarantine = useMutation({
+    mutationFn: (id: string) => quarantineMemory(id).then(() => id),
+    onSuccess: (id) => {
+      toast.success(t('web.memoryInspector.toasts.quarantined'))
+      qc.invalidateQueries({ queryKey: ['memory-list'] })
+      qc.invalidateQueries({ queryKey: ['cortex-quarantine'] })
+      qc.invalidateQueries({ queryKey: ['cortex-status'] })
+      setSearchHits((cur) => cur?.filter((h) => h.memory.id !== id) ?? null)
+    },
+    onError: (err: Error) =>
+      toast.error(t('web.memoryInspector.toasts.quarantineFailed'), {
         description: err.message,
       }),
   })
@@ -564,6 +600,8 @@ export function MemoryInspector() {
             key={m.id}
             mem={m}
             similarity={similarity}
+            onArchive={() => archive.mutate(m.id)}
+            onQuarantine={() => quarantine.mutate(m.id)}
             onDelete={() => {
               if (
                 !window.confirm(
@@ -924,11 +962,15 @@ function ScopeKeyPicker({
 function Row({
   mem,
   similarity,
+  onArchive,
+  onQuarantine,
   onDelete,
   onSave,
 }: {
   mem: MemoryRecord
   similarity?: number
+  onArchive: () => void
+  onQuarantine: () => void
   onDelete: () => void
   onSave: (text: string) => Promise<void>
 }) {
@@ -1125,6 +1167,26 @@ function Row({
                 title={t('web.memoryInspector.row.editTooltip')}
               >
                 <Pencil className="size-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                onClick={onArchive}
+                title={t('web.memoryInspector.row.archiveTooltip')}
+              >
+                <Archive className="size-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-amber-400"
+                onClick={onQuarantine}
+                title={t('web.memoryInspector.row.quarantineTooltip')}
+              >
+                <ShieldQuestion className="size-3" />
               </Button>
               <Button
                 type="button"

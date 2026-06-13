@@ -695,15 +695,55 @@ func (s *PgvectorStore) Restore(ctx context.Context, id string) error {
 	return nil
 }
 
-// PurgeArchived hard-deletes rows archived before cutoff (grace expired).
+// RestoreByScope clears the archive flag on every row under (scope,
+// scopeKey) that was archived with the given reason. Used by the
+// project-unarchive bridge so reactivating a project brings back
+// exactly what archiving it removed — cleaner-archived rows keep
+// their verdicts. Returns the count restored; zero is not an error.
+func (s *PgvectorStore) RestoreByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error) {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		   SET archived_at = NULL, archived_reason = NULL, updated_at = NOW()
+		 WHERE scope = $1 AND scope_key = $2
+		   AND archived_at IS NOT NULL AND archived_reason = $3`,
+		string(scope), scopeKey, reason)
+	if err != nil {
+		return 0, fmt.Errorf("memory: restore by scope: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+// PurgeArchived hard-deletes rows archived before cutoff (grace
+// expired). Rows archived by the project-archive bridge are exempt:
+// an archived project's memories stay restorable for as long as the
+// project stays archived — unarchiving must always bring them back.
 func (s *PgvectorStore) PurgeArchived(ctx context.Context, cutoff time.Time) (int64, error) {
 	tag, err := s.pool.Exec(ctx, `
 		DELETE FROM memories
-		 WHERE archived_at IS NOT NULL AND archived_at < $1`, cutoff)
+		 WHERE archived_at IS NOT NULL AND archived_at < $1
+		   AND COALESCE(archived_reason, '') <> $2`, cutoff, ReasonProjectArchived)
 	if err != nil {
 		return 0, fmt.Errorf("memory: purge archived: %w", err)
 	}
 	return tag.RowsAffected(), nil
+}
+
+// Quarantine moves an active durable memory into the quarantine tier
+// with the given TTL — the manual counterpart of the integration
+// capture path, for facts the operator distrusts but isn't ready to
+// delete. Returns ErrNotFound when id isn't an active durable row.
+func (s *PgvectorStore) Quarantine(ctx context.Context, id string, expiresAt time.Time) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE memories
+		   SET tier = 'quarantine', quarantine_expires_at = $2, updated_at = NOW()
+		 WHERE id = $1 AND archived_at IS NULL AND tier = 'durable'`, id, expiresAt)
+	if err != nil {
+		return fmt.Errorf("memory: quarantine: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // ListQuarantined returns active quarantine-tier rows across every

@@ -28,6 +28,17 @@ const (
 	TierQuarantine = "quarantine"
 )
 
+// ReasonProjectArchived marks rows soft-archived by the project
+// lifecycle bridge (project status → archived). These rows are exempt
+// from the grace-window purge — unarchiving the project must always
+// bring them back — and RestoreByScope targets exactly this reason.
+const ReasonProjectArchived = "project_archived"
+
+// ManualQuarantineTTL is the review window for memories the operator
+// quarantines by hand. Mirrors the integration capture default: the
+// row hard-expires if nobody promotes or discards it in time.
+const ManualQuarantineTTL = 30 * 24 * time.Hour
+
 const (
 	ScopeProject Scope = "project"
 	ScopeGlobal  Scope = "global"
@@ -260,6 +271,15 @@ type Store interface {
 	// Restore clears the archive flag, returning a memory to active use.
 	// Returns ErrNotFound when the id isn't an archived row.
 	Restore(ctx context.Context, id string) error
+	// RestoreByScope clears the archive flag on every (scope, scopeKey)
+	// row archived with the given reason — the project-unarchive bridge.
+	// Returns the count restored; zero is not an error.
+	RestoreByScope(ctx context.Context, scope Scope, scopeKey, reason string) (int64, error)
+	// Quarantine moves an active durable memory into the quarantine
+	// tier with a TTL — the operator's manual counterpart of the
+	// integration capture path. Returns ErrNotFound when id isn't an
+	// active durable row.
+	Quarantine(ctx context.Context, id string, expiresAt time.Time) error
 	// PurgeArchived hard-deletes memories archived strictly before
 	// cutoff (the end of the grace window). Returns the row count
 	// removed; zero is not an error.

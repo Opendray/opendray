@@ -136,6 +136,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.With(h.requireAdmin).Patch("/{id}", h.update)
 		r.With(h.requireAdmin).Delete("/{id}", h.delete)
 		r.With(h.requireAdmin).Post("/{id}/restore", h.restore)
+		r.With(h.requireAdmin).Post("/{id}/archive", h.archive)
+		r.With(h.requireAdmin).Post("/{id}/quarantine", h.quarantine)
 		r.With(h.requireAdmin).Post("/delete-by-scope", h.deleteByScope)
 		r.With(h.requireAdmin).Post("/test", h.test)
 		r.With(h.requireAdmin).Post("/probe", h.probe)
@@ -428,6 +430,41 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"restored": id})
+}
+
+// archive soft-deletes one memory by hand (admin only) — same
+// reversible mechanism the auto-cleaner uses; the row moves to the
+// Archived view until restored or the grace window purges it.
+func (h *Handlers) archive(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Archive(r.Context(), id, "operator"); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"archived": id})
+}
+
+// quarantine moves a durable memory into the quarantine review queue
+// (admin only) — the manual counterpart of the integration capture
+// path. Release it via the Cortex quarantine promote, or let the TTL
+// expire it.
+func (h *Handlers) quarantine(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Quarantine(r.Context(), id); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"quarantined": id})
 }
 
 // scopeKeys returns distinct scope_key values stored under the given

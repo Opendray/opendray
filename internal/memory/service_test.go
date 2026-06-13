@@ -105,7 +105,11 @@ func (s *fakeStore) Archive(context.Context, string, string) error              
 func (s *fakeStore) ArchiveByScope(context.Context, Scope, string, string) (int64, error) {
 	return 0, nil
 }
-func (s *fakeStore) Restore(context.Context, string) error                   { return nil }
+func (s *fakeStore) Restore(context.Context, string) error { return nil }
+func (s *fakeStore) RestoreByScope(context.Context, Scope, string, string) (int64, error) {
+	return 0, nil
+}
+func (s *fakeStore) Quarantine(context.Context, string, time.Time) error     { return nil }
 func (s *fakeStore) PurgeArchived(context.Context, time.Time) (int64, error) { return 0, nil }
 func (s *fakeStore) ArchiveDormantStale(context.Context, Scope, string, time.Time, time.Time, string) (int64, error) {
 	return 0, nil
