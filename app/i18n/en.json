@@ -2864,6 +2864,7 @@
     },
     "sections": {
       "gateway": "Gateway",
+      "plugins": "Plugins",
       "memory": "Memory",
       "system": "System"
     },

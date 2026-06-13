@@ -1644,6 +1644,7 @@ class _TranslationsMoreSectionsEs extends TranslationsMoreSectionsEn {
 
 	// Translations
 	@override String get gateway => 'Gateway';
+	@override String get plugins => 'Complementos';
 	@override String get memory => 'Memoria';
 	@override String get system => 'Sistema';
 }
@@ -10795,6 +10796,7 @@ extension on TranslationsEs {
 			'more.identity.server' => 'Servidor',
 			'more.identity.tokenExpires' => 'El token caduca',
 			'more.sections.gateway' => 'Gateway',
+			'more.sections.plugins' => 'Complementos',
 			'more.sections.memory' => 'Memoria',
 			'more.sections.system' => 'Sistema',
 			'more.items.integrations.title' => 'Integraciones',
@@ -11133,9 +11135,9 @@ extension on TranslationsEs {
 			'mcp.kv.args' => 'Args',
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => 'Elimina el directorio del vault para ${id}. Las sesiones que referencian este servidor dejan de poder iniciarlo.',
-			'mcp.deleteServerSnack' => ({required Object id}) => 'Eliminado ${id}.',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.deleteServerSnack' => ({required Object id}) => 'Eliminado ${id}.',
 			'mcp.serversCount' => ({required Object count}) => 'Servidores (${count})',
 			'mcp.secretsCount' => ({required Object count}) => 'Secretos (${count})',
 			'mcp.emptyServers' => 'No hay servidores MCP registrados. Toca "Nuevo servidor" para añadir uno.',
@@ -11647,9 +11649,9 @@ extension on TranslationsEs {
 			'githosts.form.nameLabel' => 'Nombre',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
-			'githosts.form.kinds.gitlab' => 'GitLab',
 			_ => null,
 		} ?? switch (path) {
+			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
 			'githosts.form.kinds.custom' => 'Personalizado',
@@ -12161,9 +12163,9 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.backend' => 'Backend',
 			'settings.serverSettings.fields.store' => 'Almacén',
 			'settings.serverSettings.fields.defaultTopK' => 'Top-k por defecto',
-			'settings.serverSettings.fields.similarityThreshold' => 'Umbral de similitud',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.similarityThreshold' => 'Umbral de similitud',
 			'settings.serverSettings.fields.defaultScope' => 'Ámbito por defecto',
 			'settings.serverSettings.fields.preserveHelper' => 'En blanco para conservar el actual.',
 			'settings.serverSettings.fields.localModelName' => 'Nombre del modelo local',

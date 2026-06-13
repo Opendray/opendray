@@ -3307,6 +3307,9 @@ class TranslationsMoreSectionsEn {
 	/// en: 'Gateway'
 	String get gateway => 'Gateway';
 
+	/// en: 'Plugins'
+	String get plugins => 'Plugins';
+
 	/// en: 'Memory'
 	String get memory => 'Memory';
 
@@ -18219,6 +18222,7 @@ extension on Translations {
 			'more.identity.server' => 'Server',
 			'more.identity.tokenExpires' => 'Token expires',
 			'more.sections.gateway' => 'Gateway',
+			'more.sections.plugins' => 'Plugins',
 			'more.sections.memory' => 'Memory',
 			'more.sections.system' => 'System',
 			'more.items.integrations.title' => 'Integrations',
@@ -18557,9 +18561,9 @@ extension on Translations {
 			'mcp.kv.args' => 'Args',
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => 'Removes the vault directory for ${id}. Sessions that reference this server stop being able to spawn it.',
-			'mcp.deleteServerSnack' => ({required Object id}) => 'Deleted ${id}.',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.deleteServerSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'mcp.serversCount' => ({required Object count}) => 'Servers (${count})',
 			'mcp.secretsCount' => ({required Object count}) => 'Secrets (${count})',
 			'mcp.emptyServers' => 'No MCP servers registered. Tap "New server" to add one.',
@@ -19071,9 +19075,9 @@ extension on Translations {
 			'githosts.form.nameLabel' => 'Name',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
-			'githosts.form.kinds.gitlab' => 'GitLab',
 			_ => null,
 		} ?? switch (path) {
+			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
 			'githosts.form.kinds.custom' => 'Custom',
@@ -19585,9 +19589,9 @@ extension on Translations {
 			'settings.serverSettings.fields.backend' => 'Backend',
 			'settings.serverSettings.fields.store' => 'Store',
 			'settings.serverSettings.fields.defaultTopK' => 'Default top-k',
-			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.similarityThreshold' => 'Similarity threshold',
 			'settings.serverSettings.fields.defaultScope' => 'Default scope',
 			'settings.serverSettings.fields.preserveHelper' => 'Blank to preserve current.',
 			'settings.serverSettings.fields.localModelName' => 'Local model name',

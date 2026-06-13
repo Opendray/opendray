@@ -2864,6 +2864,7 @@
     },
     "sections": {
       "gateway": "网关",
+      "plugins": "插件",
       "memory": "记忆",
       "system": "系统"
     },

@@ -73,6 +73,8 @@ class MoreScreen extends ConsumerWidget {
             subtitle: t.more.items.providers.subtitle,
             onTap: () => _push(context, const ProvidersScreen()),
           ),
+          const SizedBox(height: 8),
+          _SectionHeader(label: t.more.sections.plugins),
           _MenuTile(
             icon: Icons.extension_outlined,
             title: t.more.items.mcp.title,

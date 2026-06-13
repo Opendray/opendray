@@ -1644,6 +1644,7 @@ class _TranslationsMoreSectionsZh extends TranslationsMoreSectionsEn {
 
 	// Translations
 	@override String get gateway => '网关';
+	@override String get plugins => '插件';
 	@override String get memory => '记忆';
 	@override String get system => '系统';
 }
@@ -10795,6 +10796,7 @@ extension on TranslationsZh {
 			'more.identity.server' => '服务器',
 			'more.identity.tokenExpires' => '令牌到期',
 			'more.sections.gateway' => '网关',
+			'more.sections.plugins' => '插件',
 			'more.sections.memory' => '记忆',
 			'more.sections.system' => '系统',
 			'more.items.integrations.title' => '集成',
@@ -11133,9 +11135,9 @@ extension on TranslationsZh {
 			'mcp.kv.args' => '参数',
 			'mcp.kv.headers' => 'Headers',
 			'mcp.deleteServerBody' => ({required Object id}) => '移除 ${id} 的密钥库目录。引用此服务器的会话将无法启动。',
-			'mcp.deleteServerSnack' => ({required Object id}) => '已删除 ${id}。',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.deleteServerSnack' => ({required Object id}) => '已删除 ${id}。',
 			'mcp.serversCount' => ({required Object count}) => '服务器（${count}）',
 			'mcp.secretsCount' => ({required Object count}) => '密钥（${count}）',
 			'mcp.emptyServers' => '未注册任何 MCP 服务器。点击「新建服务器」添加一个。',
@@ -11647,9 +11649,9 @@ extension on TranslationsZh {
 			'githosts.form.nameLabel' => '名称',
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
 			'githosts.form.kinds.github' => 'GitHub',
-			'githosts.form.kinds.gitlab' => 'GitLab',
 			_ => null,
 		} ?? switch (path) {
+			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
 			'githosts.form.kinds.custom' => '自定义',
@@ -12161,9 +12163,9 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.backend' => '后端',
 			'settings.serverSettings.fields.store' => '存储',
 			'settings.serverSettings.fields.defaultTopK' => '默认 top-k',
-			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.similarityThreshold' => '相似度阈值',
 			'settings.serverSettings.fields.defaultScope' => '默认范围',
 			'settings.serverSettings.fields.preserveHelper' => '留空 = 保留当前值。',
 			'settings.serverSettings.fields.localModelName' => '本地模型名',

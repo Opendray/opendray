@@ -2864,6 +2864,7 @@
     },
     "sections": {
       "gateway": "Gateway",
+      "plugins": "Complementos",
       "memory": "Memoria",
       "system": "Sistema"
     },
