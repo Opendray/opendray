@@ -248,6 +248,9 @@ class _TranslationsMcpZh extends TranslationsMcpEn {
 	@override String get encryptionPlaintext => '明文 — keychain 不可用';
 	@override String toggleEnabledSnack({required Object name}) => '${name} 已启用。';
 	@override String toggleDisabledSnack({required Object name}) => '${name} 已停用。';
+	@override String get builtinBadge => '内置';
+	@override String get builtinAlwaysOn => '始终启用';
+	@override String get builtinHint => '由 opendray 提供——自动附加到每个会话。不可编辑或删除。';
 }
 
 // Path: providers
@@ -10938,6 +10941,9 @@ extension on TranslationsZh {
 			'mcp.encryptionPlaintext' => '明文 — keychain 不可用',
 			'mcp.toggleEnabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'mcp.toggleDisabledSnack' => ({required Object name}) => '${name} 已停用。',
+			'mcp.builtinBadge' => '内置',
+			'mcp.builtinAlwaysOn' => '始终启用',
+			'mcp.builtinHint' => '由 opendray 提供——自动附加到每个会话。不可编辑或删除。',
 			'providers.title' => '提供商',
 			'providers.configSaved' => '提供商配置已更新。',
 			'providers.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
@@ -10978,11 +10984,11 @@ extension on TranslationsZh {
 			'providers.accounts.importedSnackOne' => ({required Object n}) => '已导入 ${n} 个账号。',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => '已导入 ${n} 个账号。',
 			'providers.accounts.importing' => '同步中…',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importLocal' => '导入本地',
 			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
 			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
 			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
@@ -11492,11 +11498,11 @@ extension on TranslationsZh {
 			'channels.notifications.modes.onceDescription' => '空闲时触发一次，回复或结束前不再触发。',
 			'channels.notifications.modes.cooldownLabel' => '时间窗冷却',
 			'channels.notifications.modes.cooldownDescription' => '在所选时间窗内抑制重复。',
+			_ => null,
+		} ?? switch (path) {
 			'channels.notifications.modes.everyLabel' => '每次事件（嘈杂）',
 			'channels.notifications.modes.everyDescription' => '不抑制 — 仅适合低频通道。',
 			'channels.popup.enable' => '启用',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.disable' => '停用',
 			'channels.popup.mute' => '静音',
 			'channels.popup.unmute' => '取消静音',
@@ -12006,6 +12012,8 @@ extension on TranslationsZh {
 			'cortexHub.approve' => '批准',
 			'cortexHub.reject' => '拒绝',
 			'cortexHub.approvedToast' => '提案已批准',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.rejectedToast' => '提案已拒绝',
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => '加载失败：${error}',

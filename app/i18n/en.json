@@ -3262,7 +3262,10 @@
     "encryptionAes": "AES-GCM encrypted (key in OS keychain)",
     "encryptionPlaintext": "PLAINTEXT — keychain unavailable",
     "toggleEnabledSnack": "{name} enabled.",
-    "toggleDisabledSnack": "{name} disabled."
+    "toggleDisabledSnack": "{name} disabled.",
+    "builtinBadge": "built-in",
+    "builtinAlwaysOn": "always on",
+    "builtinHint": "Provided by opendray — auto-attached to every session. Cannot be edited or deleted."
   },
   "providers": {
     "title": "Providers",

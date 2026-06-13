@@ -248,6 +248,9 @@ class _TranslationsMcpEs extends TranslationsMcpEn {
 	@override String get encryptionPlaintext => 'PLAINTEXT, keychain no disponible';
 	@override String toggleEnabledSnack({required Object name}) => '${name} activado.';
 	@override String toggleDisabledSnack({required Object name}) => '${name} desactivado.';
+	@override String get builtinBadge => 'integrado';
+	@override String get builtinAlwaysOn => 'siempre activo';
+	@override String get builtinHint => 'Provisto por opendray — se adjunta a cada session. No se puede editar ni eliminar.';
 }
 
 // Path: providers
@@ -10938,6 +10941,9 @@ extension on TranslationsEs {
 			'mcp.encryptionPlaintext' => 'PLAINTEXT, keychain no disponible',
 			'mcp.toggleEnabledSnack' => ({required Object name}) => '${name} activado.',
 			'mcp.toggleDisabledSnack' => ({required Object name}) => '${name} desactivado.',
+			'mcp.builtinBadge' => 'integrado',
+			'mcp.builtinAlwaysOn' => 'siempre activo',
+			'mcp.builtinHint' => 'Provisto por opendray — se adjunta a cada session. No se puede editar ni eliminar.',
 			'providers.title' => 'Proveedores',
 			'providers.configSaved' => 'Configuración del proveedor actualizada.',
 			'providers.saveFailedApi' => ({required Object error}) => 'Error al guardar: ${error}',
@@ -10978,11 +10984,11 @@ extension on TranslationsEs {
 			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Se importó ${n} cuenta.',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Se importaron ${n} cuentas.',
 			'providers.accounts.importing' => 'Sincronizando…',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importLocal' => 'Importar local',
 			'providers.accounts.addHint' => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.',
 			'providers.accounts.addBody' => 'El nuevo directorio aparece aquí automáticamente. Consulta la documentación para los pasos del flujo OAuth.',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Error al cargar las cuentas: ${error}',
 			'providers.accounts.intro' => 'Las sessions creadas con el proveedor Claude eligen entre estas cuentas (o recurren a las variables de entorno).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} activada.',
@@ -11492,11 +11498,11 @@ extension on TranslationsEs {
 			'channels.notifications.modes.onceDescription' => 'Se dispara una vez al quedar inactiva, permanece en silencio hasta la respuesta o el fin.',
 			'channels.notifications.modes.cooldownLabel' => 'Cooldown por ventana de tiempo',
 			'channels.notifications.modes.cooldownDescription' => 'Suprime las repeticiones dentro de la ventana elegida.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.notifications.modes.everyLabel' => 'Cada evento (ruidoso)',
 			'channels.notifications.modes.everyDescription' => 'Sin supresión. Solo para canales de baja frecuencia.',
 			'channels.popup.enable' => 'Activar',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.disable' => 'Desactivar',
 			'channels.popup.mute' => 'Silenciar',
 			'channels.popup.unmute' => 'Reactivar sonido',
@@ -12006,6 +12012,8 @@ extension on TranslationsEs {
 			'cortexHub.approve' => 'Aprobar',
 			'cortexHub.reject' => 'Rechazar',
 			'cortexHub.approvedToast' => 'Propuesta aprobada',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',

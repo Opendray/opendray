@@ -3262,7 +3262,10 @@
     "encryptionAes": "Cifrado AES-GCM (clave en el keychain del SO)",
     "encryptionPlaintext": "PLAINTEXT, keychain no disponible",
     "toggleEnabledSnack": "{name} activado.",
-    "toggleDisabledSnack": "{name} desactivado."
+    "toggleDisabledSnack": "{name} desactivado.",
+    "builtinBadge": "integrado",
+    "builtinAlwaysOn": "siempre activo",
+    "builtinHint": "Provisto por opendray — se adjunta a cada session. No se puede editar ni eliminar."
   },
   "providers": {
     "title": "Proveedores",

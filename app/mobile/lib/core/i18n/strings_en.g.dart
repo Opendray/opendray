@@ -401,6 +401,15 @@ class TranslationsMcpEn {
 
 	/// en: '{name} disabled.'
 	String toggleDisabledSnack({required Object name}) => '${name} disabled.';
+
+	/// en: 'built-in'
+	String get builtinBadge => 'built-in';
+
+	/// en: 'always on'
+	String get builtinAlwaysOn => 'always on';
+
+	/// en: 'Provided by opendray — auto-attached to every session. Cannot be edited or deleted.'
+	String get builtinHint => 'Provided by opendray — auto-attached to every session. Cannot be edited or deleted.';
 }
 
 // Path: providers
@@ -18215,6 +18224,9 @@ extension on Translations {
 			'mcp.encryptionPlaintext' => 'PLAINTEXT — keychain unavailable',
 			'mcp.toggleEnabledSnack' => ({required Object name}) => '${name} enabled.',
 			'mcp.toggleDisabledSnack' => ({required Object name}) => '${name} disabled.',
+			'mcp.builtinBadge' => 'built-in',
+			'mcp.builtinAlwaysOn' => 'always on',
+			'mcp.builtinHint' => 'Provided by opendray — auto-attached to every session. Cannot be edited or deleted.',
 			'providers.title' => 'Providers',
 			'providers.configSaved' => 'Provider config updated.',
 			'providers.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
@@ -18255,11 +18267,11 @@ extension on Translations {
 			'providers.accounts.importedSnackOne' => ({required Object n}) => 'Imported ${n} account.',
 			'providers.accounts.importedSnackOther' => ({required Object n}) => 'Imported ${n} accounts.',
 			'providers.accounts.importing' => 'Syncing…',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importLocal' => 'Import local',
 			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
 			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
 			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
@@ -18769,11 +18781,11 @@ extension on Translations {
 			'channels.notifications.modes.onceDescription' => 'Fire once when idle, stay silent until reply or end.',
 			'channels.notifications.modes.cooldownLabel' => 'Time-window cooldown',
 			'channels.notifications.modes.cooldownDescription' => 'Suppress repeats within the chosen window.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.notifications.modes.everyLabel' => 'Every event (noisy)',
 			'channels.notifications.modes.everyDescription' => 'No suppression — only for low-frequency channels.',
 			'channels.popup.enable' => 'Enable',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.disable' => 'Disable',
 			'channels.popup.mute' => 'Mute',
 			'channels.popup.unmute' => 'Unmute',
@@ -19283,6 +19295,8 @@ extension on Translations {
 			'cortexHub.approve' => 'Approve',
 			'cortexHub.reject' => 'Reject',
 			'cortexHub.approvedToast' => 'Proposal approved',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.rejectedToast' => 'Proposal rejected',
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',

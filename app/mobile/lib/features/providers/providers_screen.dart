@@ -210,15 +210,17 @@ class _ProviderTile extends StatelessWidget {
               .withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(
-          provider.name.isNotEmpty
-              ? provider.name[0].toUpperCase()
-              : provider.id[0].toUpperCase(),
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        child: provider.icon.isNotEmpty
+            ? Text(provider.icon, style: const TextStyle(fontSize: 18))
+            : Text(
+                provider.name.isNotEmpty
+                    ? provider.name[0].toUpperCase()
+                    : provider.id[0].toUpperCase(),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
       title: Text(
         provider.name,

@@ -3262,7 +3262,10 @@
     "encryptionAes": "AES-GCM 加密（密钥存于 OS keychain）",
     "encryptionPlaintext": "明文 — keychain 不可用",
     "toggleEnabledSnack": "{name} 已启用。",
-    "toggleDisabledSnack": "{name} 已停用。"
+    "toggleDisabledSnack": "{name} 已停用。",
+    "builtinBadge": "内置",
+    "builtinAlwaysOn": "始终启用",
+    "builtinHint": "由 opendray 提供——自动附加到每个会话。不可编辑或删除。"
   },
   "providers": {
     "title": "提供商",
