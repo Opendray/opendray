@@ -131,6 +131,10 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
               segments: [
                 ButtonSegment(value: 'kb', label: Text(t.web.knowledge.kb.tab)),
                 ButtonSegment(
+                  value: 'distill',
+                  label: Text(t.web.knowledge.distill.tab),
+                ),
+                ButtonSegment(
                   value: 'graph',
                   label: Text(t.web.knowledge.kb.graphTab),
                 ),
@@ -140,7 +144,11 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
             ),
           ),
           Expanded(
-            child: _view == 'kb' ? const _KbView() : _graphView(context),
+            child: switch (_view) {
+              'kb' => const _KbView(),
+              'distill' => const _DistillView(),
+              _ => _graphView(context),
+            },
           ),
         ],
       ),
@@ -865,6 +873,394 @@ class _DetailSheet extends ConsumerWidget {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Distillation workbench ───────────────────────────────────────
+//
+// Playbooks (distilled candidates) → promote to Skills (injected into
+// every spawn). Web parity: app/web/src/pages/Knowledge.tsx DistillationView.
+class _DistillView extends ConsumerStatefulWidget {
+  const _DistillView();
+
+  @override
+  ConsumerState<_DistillView> createState() => _DistillViewState();
+}
+
+class _DistillViewState extends ConsumerState<_DistillView> {
+  AsyncValue<List<KnowledgeNode>> _playbooks = const AsyncValue.loading();
+  AsyncValue<List<KnowledgeNode>> _skills = const AsyncValue.loading();
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _playbooks = const AsyncValue.loading();
+      _skills = const AsyncValue.loading();
+    });
+    final api = ref.read(knowledgeApiProvider);
+    try {
+      final pb = await api.list(kind: 'playbook');
+      if (mounted) setState(() => _playbooks = AsyncValue.data(pb));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _playbooks = AsyncValue.error(e, st));
+    }
+    try {
+      final sk = await api.list(kind: 'skill');
+      if (mounted) setState(() => _skills = AsyncValue.data(sk));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _skills = AsyncValue.error(e, st));
+    }
+  }
+
+  Future<void> _skillify(String id) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(knowledgeApiProvider).skillify(id);
+      _snack(t.web.knowledge.distill.skillifiedToast);
+    } on ApiException catch (e) {
+      _snack(t.web.knowledge.actionFailed);
+      _snack(e.message);
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        await _load();
+      }
+    }
+  }
+
+  Future<void> _toggle(KnowledgeNode n) async {
+    setState(() => _busy = true);
+    try {
+      final next = !n.enabled;
+      await ref.read(knowledgeApiProvider).setEnabled(n.id, enabled: next);
+      _snack(next
+          ? t.web.knowledge.distill.enabledToast
+          : t.web.knowledge.distill.disabledToast);
+    } on ApiException catch (_) {
+      _snack(t.web.knowledge.actionFailed);
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        await _load();
+      }
+    }
+  }
+
+  Future<void> _remove(String id) async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(knowledgeApiProvider).delete(id);
+      _snack(t.web.knowledge.distill.removedToast);
+    } on ApiException catch (_) {
+      _snack(t.web.knowledge.actionFailed);
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+        await _load();
+      }
+    }
+  }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  void _preview(KnowledgeNode n) {
+    final body = n.body.replaceFirst(RegExp(r'^---\n[\s\S]*?\n---\n?'), '');
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        maxChildSize: 0.95,
+        builder: (_, controller) => Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            controller: controller,
+            children: [
+              Text(n.title,
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              SelectableText(body,
+                  style: const TextStyle(fontSize: 13, height: 1.5)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Text(t.web.knowledge.distill.intro,
+              style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 16),
+          _SectionHeader(
+            title: t.web.knowledge.distill.playbooks,
+            hint: t.web.knowledge.distill.playbooksHint,
+            count: _playbooks.valueOrNull?.length,
+          ),
+          _playbooks.when(
+            loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Padding(
+                padding: const EdgeInsets.all(8), child: Text(e.toString())),
+            data: (rows) => rows.isEmpty
+                ? _empty(t.web.knowledge.distill.playbooksEmpty)
+                : Column(
+                    children: [
+                      for (final n in rows)
+                        _PlaybookCard(
+                          node: n,
+                          busy: _busy,
+                          onPreview: () => _preview(n),
+                          onSkillify: () => _skillify(n.id),
+                          onDiscard: () => _remove(n.id),
+                        ),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 16),
+          _SectionHeader(
+            title: t.web.knowledge.distill.skills,
+            hint: t.web.knowledge.distill.skillsHint,
+            count: _skills.valueOrNull?.length,
+          ),
+          _skills.when(
+            loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator())),
+            error: (e, _) => Padding(
+                padding: const EdgeInsets.all(8), child: Text(e.toString())),
+            data: (rows) => rows.isEmpty
+                ? _empty(t.web.knowledge.distill.skillsEmpty)
+                : Column(
+                    children: [
+                      for (final n in rows)
+                        _SkillCard(
+                          node: n,
+                          busy: _busy,
+                          onPreview: () => _preview(n),
+                          onToggle: () => _toggle(n),
+                          onRetire: () => _remove(n.id),
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _empty(String text) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall),
+      );
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.hint, this.count});
+  final String title;
+  final String hint;
+  final int? count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleSmall),
+            if (count != null) ...[
+              const SizedBox(width: 6),
+              Text('$count', style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(hint, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 6),
+      ],
+    );
+  }
+}
+
+class _PlaybookCard extends StatelessWidget {
+  const _PlaybookCard({
+    required this.node,
+    required this.busy,
+    required this.onPreview,
+    required this.onSkillify,
+    required this.onDiscard,
+  });
+  final KnowledgeNode node;
+  final bool busy;
+  final VoidCallback onPreview;
+  final VoidCallback onSkillify;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final summary = node.provenance['summary'];
+    final recurrence = (node.provenance['recurrence'] as num?)?.toInt() ?? 0;
+    final estMinutes = (node.provenance['est_minutes'] as num?)?.toInt() ?? 0;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: onPreview,
+              child: Text(node.title,
+                  style: Theme.of(context).textTheme.titleSmall),
+            ),
+            if (recurrence > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${t.web.knowledge.distill.recurrence(count: recurrence)} · '
+                  '${t.web.knowledge.distill.timeCost(minutes: estMinutes)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            if (summary is String && summary.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(summary,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: busy ? null : onDiscard,
+                  style: TextButton.styleFrom(foregroundColor: scheme.error),
+                  child: Text(t.web.knowledge.distill.discard),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.tonal(
+                  onPressed: busy ? null : onSkillify,
+                  child: Text(t.web.knowledge.distill.skillify),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkillCard extends StatelessWidget {
+  const _SkillCard({
+    required this.node,
+    required this.busy,
+    required this.onPreview,
+    required this.onToggle,
+    required this.onRetire,
+  });
+  final KnowledgeNode node;
+  final bool busy;
+  final VoidCallback onPreview;
+  final VoidCallback onToggle;
+  final VoidCallback onRetire;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final outcomes = node.successCount + node.failureCount;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Opacity(
+        opacity: node.enabled ? 1 : 0.6,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: onPreview,
+                      child: Text(node.title,
+                          style: Theme.of(context).textTheme.titleSmall),
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: (node.enabled ? Colors.green : scheme.outline)
+                          .withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      node.enabled
+                          ? t.web.knowledge.distill.injectedBadge
+                          : t.web.knowledge.distill.disabledBadge,
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: node.enabled ? Colors.green : scheme.outline),
+                    ),
+                  ),
+                  Switch(
+                    value: node.enabled,
+                    onChanged: busy ? null : (_) => onToggle(),
+                  ),
+                ],
+              ),
+              Text(
+                t.web.knowledge.distill.usage(count: node.useCount) +
+                    (outcomes > 0
+                        ? ' · ${t.web.knowledge.distill.outcomes(ok: node.successCount, failed: node.failureCount)}'
+                        : ''),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: busy ? null : onRetire,
+                  style: TextButton.styleFrom(foregroundColor: scheme.error),
+                  child: Text(t.web.knowledge.distill.retire),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

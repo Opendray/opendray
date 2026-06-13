@@ -17,6 +17,12 @@ class KnowledgeNode {
     required this.scopeKey,
     required this.maturity,
     this.entityType = '',
+    this.enabled = true,
+    this.useCount = 0,
+    this.successCount = 0,
+    this.failureCount = 0,
+    this.lastUsedAt,
+    this.provenance = const {},
   });
 
   factory KnowledgeNode.fromJson(Map<String, dynamic> json) => KnowledgeNode(
@@ -28,6 +34,16 @@ class KnowledgeNode {
     scopeKey: json['scope_key'] as String? ?? '',
     maturity: json['maturity'] as String? ?? '',
     entityType: json['entity_type'] as String? ?? '',
+    enabled: json['enabled'] != false,
+    useCount: (json['use_count'] as num?)?.toInt() ?? 0,
+    successCount: (json['success_count'] as num?)?.toInt() ?? 0,
+    failureCount: (json['failure_count'] as num?)?.toInt() ?? 0,
+    lastUsedAt: (json['last_used_at'] is String)
+        ? DateTime.tryParse(json['last_used_at'] as String)
+        : null,
+    provenance: (json['provenance'] is Map)
+        ? Map<String, dynamic>.from(json['provenance'] as Map)
+        : const {},
   );
 
   final String id;
@@ -38,6 +54,12 @@ class KnowledgeNode {
   final String scopeKey;
   final String maturity;
   final String entityType;
+  final bool enabled;
+  final int useCount;
+  final int successCount;
+  final int failureCount;
+  final DateTime? lastUsedAt;
+  final Map<String, dynamic> provenance;
 }
 
 class KnowledgeNeighbor {
@@ -163,6 +185,20 @@ class KnowledgeApi {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/knowledge/nodes/$id/skillify',
+      );
+      return KnowledgeNode.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // Flips a skill's enabled flag — writes/removes the vault SKILL.md so
+  // sessions only load enabled skills.
+  Future<KnowledgeNode> setEnabled(String id, {required bool enabled}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/knowledge/nodes/$id/enable',
+        data: {'enabled': enabled},
       );
       return KnowledgeNode.fromJson(res.data ?? {});
     } on Object catch (e) {
