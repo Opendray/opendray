@@ -15,6 +15,7 @@
 
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import {
   AlertTriangle,
@@ -52,6 +53,8 @@ import {
 } from '@/lib/memoryWorkers'
 import { listProviders as listSummarizerProviders } from '@/lib/memoryAmbient'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
+import { fetchMemoryStatus, type MemoryStatus } from '@/lib/memory'
+import { fetchServerSettings } from '@/lib/settings'
 import {
   type SpawnMode,
   getCortexSettings,
@@ -96,6 +99,21 @@ export function MemoryWorkersPage() {
     staleTime: 15_000,
     refetchInterval: 30_000,
   })
+  // Infrastructure context (read-only here): embedder health + the
+  // config.toml gates for gatekeeper / cleaner / knowledge. Editing
+  // those lives in Settings → Server → Memory (restart required) —
+  // this page only shows where the boundary is.
+  const memoryStatusQuery = useQuery({
+    queryKey: ['memory-status'],
+    queryFn: fetchMemoryStatus,
+    staleTime: 30_000,
+  })
+  const serverSettingsQuery = useQuery({
+    queryKey: ['server-settings'],
+    queryFn: fetchServerSettings,
+    staleTime: 30_000,
+  })
+  const infraCfg = serverSettingsQuery.data?.config
 
   const refresh = () =>
     qc.invalidateQueries({ queryKey: ['memory-workers'] })
@@ -130,6 +148,15 @@ export function MemoryWorkersPage() {
     )
   }
 
+  const sections = [
+    { id: 'cortex-sec-0', label: t('web.cortex.settings.injection.title') },
+    { id: 'cortex-sec-1', label: t('web.memoryConfig.sections.providers') },
+    { id: 'cortex-sec-2', label: t('web.memoryConfig.sections.workers') },
+    { id: 'cortex-sec-3', label: t('web.memoryConfig.sections.rules') },
+    { id: 'cortex-sec-4', label: t('web.memoryConfig.sections.profiles') },
+    { id: 'cortex-sec-5', label: t('web.memoryConfig.sections.costs') },
+  ]
+
   return (
     <div className="mx-auto max-w-3xl space-y-10 p-6">
       <header>
@@ -139,11 +166,40 @@ export function MemoryWorkersPage() {
         <p className="text-muted-foreground mt-1 text-sm">
           {t('web.memoryConfig.subtitle')}
         </p>
+        {/* Jump nav — the page is six sections long; let the operator
+            land on the right one without scroll-hunting. */}
+        <nav className="mt-3 flex flex-wrap gap-1.5">
+          {sections.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() =>
+                document
+                  .getElementById(s.id)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="border-border text-muted-foreground hover:text-foreground hover:bg-card rounded-full border px-2.5 py-0.5 text-[11px]"
+            >
+              <span className="mr-1 font-mono text-[10px]">§{i}</span>
+              {s.label}
+            </button>
+          ))}
+        </nav>
       </header>
+
+      {/* Infrastructure strip — the OTHER half of memory config
+          (embedder, storage, background governance) lives in Server
+          Settings and needs a restart. Read-only summary here so the
+          boundary is visible instead of a mystery. */}
+      <InfrastructureStrip
+        status={memoryStatusQuery.data}
+        gatekeeperOn={infraCfg?.memory.gatekeeper.enabled}
+        cleanerOn={infraCfg?.memory.cleaner.enabled}
+        knowledgeOn={infraCfg?.knowledge.enabled}
+      />
 
       {/* § 0. Spawn injection — how much Cortex context each new
           session pays for upfront (Cortex settings, no restart). */}
-      <section className="space-y-3">
+      <section id="cortex-sec-0" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={0}
           title={t('web.cortex.settings.injection.title')}
@@ -154,7 +210,7 @@ export function MemoryWorkersPage() {
 
       {/* § 1. Providers — HTTP endpoint registry consumed by both
           Workers and (legacy) Capture rule pins. */}
-      <section className="space-y-3">
+      <section id="cortex-sec-1" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={1}
           title={t('web.memoryConfig.sections.providers')}
@@ -165,7 +221,7 @@ export function MemoryWorkersPage() {
 
       {/* § 2. Workers — per-task routing decisions (summarizer
           provider vs headless Claude/Gemini agent). */}
-      <section className="space-y-3">
+      <section id="cortex-sec-2" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={2}
           title={t('web.memoryConfig.sections.workers')}
@@ -186,13 +242,19 @@ export function MemoryWorkersPage() {
               accounts={accountsQuery.data ?? []}
               calls={(callsQuery.data ?? []).filter((c) => c.task === w.task)}
               onSaved={refresh}
+              infraGateOff={
+                (w.task === 'gatekeeper' &&
+                  infraCfg?.memory.gatekeeper.enabled === false) ||
+                (w.task === 'cleaner' &&
+                  infraCfg?.memory.cleaner.enabled === false)
+              }
             />
           ))}
         </div>
       </section>
 
       {/* § 3. Capture rules — when/how the capture engine fires. */}
-      <section className="space-y-3">
+      <section id="cortex-sec-3" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={3}
           title={t('web.memoryConfig.sections.rules')}
@@ -203,7 +265,7 @@ export function MemoryWorkersPage() {
 
       {/* § 4. Injection profiles — spawn-time memory banner
           strategy (top_k_recent / relevant / hybrid / none). */}
-      <section className="space-y-3">
+      <section id="cortex-sec-4" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={4}
           title={t('web.memoryConfig.sections.profiles')}
@@ -213,7 +275,7 @@ export function MemoryWorkersPage() {
       </section>
 
       {/* § 5. Token cost — all-time audit summary across providers. */}
-      <section className="space-y-3">
+      <section id="cortex-sec-5" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={5}
           title={t('web.memoryConfig.sections.costs')}
@@ -312,6 +374,84 @@ function ModelPicker({
   )
 }
 
+// InfrastructureStrip is the read-only bridge to the OTHER half of
+// memory configuration: the embedder / storage / background-governance
+// keys that live in config.toml (Settings → Server → Memory, restart
+// required). Everything on THIS page hot-applies; everything behind
+// the strip's link does not — making that boundary visible is the
+// whole point of the strip.
+function InfrastructureStrip({
+  status,
+  gatekeeperOn,
+  cleanerOn,
+  knowledgeOn,
+}: {
+  status?: MemoryStatus
+  gatekeeperOn?: boolean
+  cleanerOn?: boolean
+  knowledgeOn?: boolean
+}) {
+  const { t } = useTranslation()
+  const gate = (label: string, on?: boolean) => (
+    <span className="flex items-center gap-1 text-[11px]">
+      <span
+        className={`inline-block h-1.5 w-1.5 rounded-full ${
+          on === undefined
+            ? 'bg-muted-foreground/40'
+            : on
+              ? 'bg-emerald-400'
+              : 'bg-zinc-500'
+        }`}
+      />
+      {label}
+      <span className="text-muted-foreground">
+        {on === undefined
+          ? '…'
+          : on
+            ? t('web.memoryConfig.infra.on')
+            : t('web.memoryConfig.infra.off')}
+      </span>
+    </span>
+  )
+  return (
+    <div className="bg-card/50 rounded-md border p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[12.5px] font-medium">
+            {t('web.memoryConfig.infra.title')}
+          </h2>
+          <p className="text-muted-foreground mt-0.5 text-[11px] leading-snug">
+            {t('web.memoryConfig.infra.hint')}
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="h-8 shrink-0 text-[11px]">
+          <Link to="/settings" search={{ section: 'server.memory' }}>
+            {t('web.memoryConfig.infra.openSettings')}
+          </Link>
+        </Button>
+      </div>
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+        <span className="flex items-center gap-1 text-[11px]">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${
+              status ? (status.degraded ? 'bg-amber-400' : 'bg-emerald-400') : 'bg-muted-foreground/40'
+            }`}
+          />
+          {t('web.memoryConfig.infra.embedder')}
+          <code className="text-muted-foreground">
+            {status
+              ? `${status.effective_embedder || status.embedder} · ${status.dimensions}d`
+              : '…'}
+          </code>
+        </span>
+        {gate(t('web.memoryConfig.infra.gatekeeper'), gatekeeperOn)}
+        {gate(t('web.memoryConfig.infra.cleaner'), cleanerOn)}
+        {gate(t('web.memoryConfig.infra.knowledge'), knowledgeOn)}
+      </div>
+    </div>
+  )
+}
+
 // SpawnInjectionBlock — the full↔lean switch (Cortex settings).
 // lean: spawn carries the binding guardrails + a compact index;
 // agents pull sections/pages on demand via doc_read / project_search.
@@ -398,6 +538,10 @@ interface WorkerCardProps {
   accounts: { id: string; display_name?: string; name?: string }[]
   calls: CallSummary[]
   onSaved: () => void
+  /** True when this worker's config.toml feature gate is OFF (e.g.
+   * [memory.gatekeeper] enabled = false) — the routing below is saved
+   * but inert until the operator flips the infra toggle. */
+  infraGateOff?: boolean
 }
 
 function WorkerCard({
@@ -406,6 +550,7 @@ function WorkerCard({
   accounts,
   calls,
   onSaved,
+  infraGateOff,
 }: WorkerCardProps) {
   const { t } = useTranslation()
   const taskLabels = useTaskLabels()
@@ -482,6 +627,23 @@ function WorkerCard({
 
   return (
     <div className="bg-card space-y-3 rounded-md border p-4">
+      {infraGateOff && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[11px] text-amber-300">
+          <AlertTriangle className="h-3 w-3 shrink-0" />
+          <span className="min-w-0 flex-1">
+            {t('web.memoryWorkers.infraGateOff', {
+              label: taskLabels.label(config.task),
+            })}
+          </span>
+          <Link
+            to="/settings"
+            search={{ section: 'server.memory' }}
+            className="shrink-0 underline underline-offset-2"
+          >
+            {t('web.memoryWorkers.infraGateOpen')}
+          </Link>
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">

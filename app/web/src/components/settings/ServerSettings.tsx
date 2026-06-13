@@ -336,6 +336,43 @@ function SectionForm({
       </FieldRow>
     ) : null
   }
+  // OnOff renders a boolean as the page's segmented control idiom.
+  const OnOff = ({
+    value,
+    onChange,
+  }: {
+    value: boolean
+    onChange: (v: boolean) => void
+  }) => (
+    <SegmentedSelect
+      value={value ? 'on' : 'off'}
+      options={[
+        { value: 'off', label: t('web.serverSettings.toggle.off') },
+        { value: 'on', label: t('web.serverSettings.toggle.on') },
+      ]}
+      onChange={(v) => onChange(v === 'on')}
+    />
+  )
+  // TriState renders a *bool (null = built-in default) the same way.
+  const TriState = ({
+    value,
+    defaultLabel,
+    onChange,
+  }: {
+    value: boolean | null
+    defaultLabel: string
+    onChange: (v: boolean | null) => void
+  }) => (
+    <SegmentedSelect
+      value={value === null ? 'default' : value ? 'on' : 'off'}
+      options={[
+        { value: 'default', label: defaultLabel },
+        { value: 'on', label: t('web.serverSettings.toggle.on') },
+        { value: 'off', label: t('web.serverSettings.toggle.off') },
+      ]}
+      onChange={(v) => onChange(v === 'default' ? null : v === 'on')}
+    />
+  )
 
   switch (active) {
     case 'general':
@@ -422,6 +459,44 @@ function SectionForm({
                 }
                 placeholder="24h"
                 className="h-9 font-mono w-32"
+              />,
+            )}
+            {F(
+              'mobileTokenTTL',
+              'admin.mobile_token_ttl',
+              <Input
+                value={c.admin.mobile_token_ttl}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    admin: { ...c.admin, mobile_token_ttl: e.target.value },
+                  })
+                }
+                placeholder="720h"
+                className="h-9 font-mono w-32"
+              />,
+            )}
+          </FormGroup>
+
+          <FormGroup heading={t('web.serverSettings.formGroups.database')}>
+            {F(
+              'dbMaxConns',
+              'database.max_conns',
+              <Input
+                type="number"
+                min="0"
+                value={c.database.max_conns || ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    database: {
+                      ...c.database,
+                      max_conns: parseInt(e.target.value || '0', 10),
+                    },
+                  })
+                }
+                placeholder="16"
+                className="h-9 font-mono w-24"
               />,
             )}
           </FormGroup>
@@ -644,6 +719,21 @@ function SectionForm({
     case 'memory':
       return (
         <div className="flex flex-col gap-8">
+          {/* Scope banner — runtime AI behaviour (workers, capture,
+              injection, spawn mode) lives in Cortex settings and
+              hot-applies; THIS section is the infrastructure half
+              (embedder + storage + background governance, restart). */}
+          <div className="rounded-md border border-border bg-card/30 px-3 py-2.5 flex items-center justify-between gap-3">
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              {t('web.serverSettings.memoryRuntimeBanner')}
+            </p>
+            <Button asChild variant="outline" size="sm" className="h-8 text-[11px] shrink-0">
+              <Link to="/cortex/settings">
+                {t('web.serverSettings.memoryRuntimeBannerButton')}
+              </Link>
+            </Button>
+          </div>
+
           <FormGroup heading={t('web.serverSettings.formGroups.memoryConfiguration')}>
             {F(
               'memoryBackend',
@@ -710,6 +800,28 @@ function SectionForm({
                   })
                 }
                 placeholder="0.1"
+                className="h-9 font-mono w-28"
+              />,
+            )}
+            {F(
+              'memoryDedup',
+              'memory.dedup_threshold',
+              <Input
+                type="number"
+                step="0.01"
+                min="-1"
+                max="1"
+                value={c.memory.dedup_threshold || ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    memory: {
+                      ...c.memory,
+                      dedup_threshold: parseFloat(e.target.value || '0'),
+                    },
+                  })
+                }
+                placeholder="0 (auto)"
                 className="h-9 font-mono w-28"
               />,
             )}
@@ -911,6 +1023,116 @@ function SectionForm({
             )}
           </FormGroup>
 
+          <FormGroup heading={t('web.serverSettings.formGroups.memoryGovernance')}>
+            {F(
+              'gatekeeperEnabled',
+              'memory.gatekeeper.enabled',
+              <OnOff
+                value={c.memory.gatekeeper.enabled}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    memory: {
+                      ...c.memory,
+                      gatekeeper: { ...c.memory.gatekeeper, enabled: v },
+                    },
+                  })
+                }
+              />,
+            )}
+            {F(
+              'gatekeeperLatency',
+              'memory.gatekeeper.max_latency_ms',
+              <Input
+                type="number"
+                min="0"
+                value={c.memory.gatekeeper.max_latency_ms || ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    memory: {
+                      ...c.memory,
+                      gatekeeper: {
+                        ...c.memory.gatekeeper,
+                        max_latency_ms: parseInt(e.target.value || '0', 10),
+                      },
+                    },
+                  })
+                }
+                placeholder="2000"
+                className="h-9 font-mono w-28"
+              />,
+            )}
+            {F(
+              'cleanerEnabled',
+              'memory.cleaner.enabled',
+              <OnOff
+                value={c.memory.cleaner.enabled}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    memory: {
+                      ...c.memory,
+                      cleaner: { ...c.memory.cleaner, enabled: v },
+                    },
+                  })
+                }
+              />,
+            )}
+            {F(
+              'cleanerInterval',
+              'memory.cleaner.interval_seconds',
+              <Input
+                type="number"
+                min="0"
+                value={c.memory.cleaner.interval_seconds || ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    memory: {
+                      ...c.memory,
+                      cleaner: {
+                        ...c.memory.cleaner,
+                        interval_seconds: parseInt(e.target.value || '0', 10),
+                      },
+                    },
+                  })
+                }
+                placeholder="86400"
+                className="h-9 font-mono w-28"
+              />,
+            )}
+            {F(
+              'cleanerGlobalScope',
+              'memory.cleaner.include_global_scope',
+              <OnOff
+                value={c.memory.cleaner.include_global_scope}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    memory: {
+                      ...c.memory,
+                      cleaner: { ...c.memory.cleaner, include_global_scope: v },
+                    },
+                  })
+                }
+              />,
+            )}
+          </FormGroup>
+
+          <FormGroup heading={t('web.serverSettings.formGroups.knowledgeGraph')}>
+            {F(
+              'knowledgeEnabled',
+              'knowledge.enabled',
+              <OnOff
+                value={c.knowledge.enabled}
+                onChange={(v) =>
+                  setDraft({ ...draft, knowledge: { enabled: v } })
+                }
+              />,
+            )}
+          </FormGroup>
+
           <div className="rounded-md border border-border bg-card/30 px-3 py-2.5 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-[12.5px] font-medium">
@@ -968,6 +1190,40 @@ function SectionForm({
               }
               placeholder="~/.claude-accounts"
               expectDir
+            />,
+          )}
+          {F(
+            'claudeWatcher',
+            'providers.claude.watcher_enabled',
+            <TriState
+              value={c.providers.claude.watcher_enabled ?? null}
+              defaultLabel={t('web.serverSettings.toggle.defaultOn')}
+              onChange={(v) =>
+                setDraft({
+                  ...draft,
+                  providers: {
+                    ...c.providers,
+                    claude: { ...c.providers.claude, watcher_enabled: v },
+                  },
+                })
+              }
+            />,
+          )}
+          {F(
+            'claudeAutoFailover',
+            'providers.claude.auto_failover_enabled',
+            <TriState
+              value={c.providers.claude.auto_failover_enabled ?? null}
+              defaultLabel={t('web.serverSettings.toggle.defaultOff')}
+              onChange={(v) =>
+                setDraft({
+                  ...draft,
+                  providers: {
+                    ...c.providers,
+                    claude: { ...c.providers.claude, auto_failover_enabled: v },
+                  },
+                })
+              }
             />,
           )}
         </FormGrid>
@@ -1284,6 +1540,7 @@ function mergeSection(
       // password always reset to empty so the masked input doesn't
       // re-introduce the previous draft value.
       out.admin = { ...src.admin, password: '' }
+      out.database = src.database
       break
     case 'logging':
       out.log = src.log
@@ -1299,6 +1556,9 @@ function mergeSection(
       break
     case 'memory':
       out.memory = src.memory
+      // The knowledge-graph toggle renders inside the memory section,
+      // so a section reset must restore it too.
+      out.knowledge = src.knowledge
       break
     case 'backup':
       out.backup = src.backup

@@ -252,8 +252,8 @@
       "subtitle": "Browse, search and edit memories agents have stored via the opendray-memory MCP server.",
       "navProject": "Project",
       "navArchived": "Archived",
-      "navWorkers": "Workers",
-      "navConfiguration": "Configuration →",
+      "navWorkers": "Cortex settings",
+      "navConfiguration": "Storage & embedder →",
       "navQuarantine": "Quarantine"
     },
     "journalStale": {
@@ -332,8 +332,8 @@
       "daysAgo_other": "{count} days ago"
     },
     "memoryConfig": {
-      "title": "Memory configuration",
-      "subtitle": "All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.",
+      "title": "Cortex settings",
+      "subtitle": "Every runtime knob of the AI loop in one place — spawn injection, LLM providers, per-task workers, capture triggers, injection profiles, token costs. Changes apply immediately; no restart.",
       "sections": {
         "providers": "Providers",
         "workers": "Workers",
@@ -352,6 +352,17 @@
         "title": "Memory configuration has moved",
         "body": "All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.",
         "openButton": "Open Memory configuration →"
+      },
+      "infra": {
+        "title": "Storage & embedder (infrastructure)",
+        "hint": "The other half of memory config — embedding backend, retrieval tuning, gatekeeper/cleaner gates and the knowledge graph flag — lives in Server Settings and needs a restart.",
+        "openSettings": "Server Settings →",
+        "embedder": "embedder",
+        "gatekeeper": "gatekeeper",
+        "cleaner": "cleaner",
+        "knowledge": "knowledge graph",
+        "on": "on",
+        "off": "off"
       }
     },
     "memoryWorkers": {
@@ -445,7 +456,9 @@
       "modelCustom": "Custom…",
       "modelCustomPlaceholder": "exact model id",
       "modelBackToList": "List",
-      "cliCodex": "Codex (codex exec)"
+      "cliCodex": "Codex (codex exec)",
+      "infraGateOff": "{label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.",
+      "infraGateOpen": "Enable it"
     },
     "archived": {
       "loading": "Loading…",
@@ -1829,8 +1842,8 @@
           "desc": "Server registry + secrets."
         },
         "memory": {
-          "title": "Memory",
-          "desc": "Cross-CLI persistent memory subsystem."
+          "title": "Memory · storage & embedder",
+          "desc": "Infrastructure half of the memory subsystem: embedding backend, retrieval tuning and background governance. Restart to apply. Runtime behaviour (workers, capture, injection) lives in Cortex settings."
         },
         "backup": {
           "title": "Backup",
@@ -1885,7 +1898,10 @@
         "backupStatus": "Status",
         "backupWhere": "Where backups go",
         "backupSchedules": "Schedules",
-        "backupWhatsInside": "What's in a backup?"
+        "backupWhatsInside": "What's in a backup?",
+        "memoryGovernance": "Background governance (gatekeeper / cleaner)",
+        "knowledgeGraph": "Knowledge graph",
+        "database": "Database"
       },
       "fields": {
         "listenAddress": {
@@ -2045,6 +2061,50 @@
         "backupPgRestorePath": {
           "label": "pg_restore path",
           "hint": "Absolute path to pg_restore for the /backups/restore flow. Same major-version rule."
+        },
+        "memoryDedup": {
+          "label": "Dedup threshold",
+          "hint": "Write-time fold threshold: similarity above this updates the existing memory instead of inserting a near-duplicate. 0 = embedder-relative default; negative disables folding."
+        },
+        "gatekeeperEnabled": {
+          "label": "Gatekeeper",
+          "hint": "Pre-write LLM judge: decides whether a memory_store call carries a durable fact or noise. Which LLM runs it is routed in Cortex settings → Workers."
+        },
+        "gatekeeperLatency": {
+          "label": "Gatekeeper max latency (ms)",
+          "hint": "Above this the gatekeeper degrades to \"allow\" rather than blocking the write on a slow LLM. Default 2000."
+        },
+        "cleanerEnabled": {
+          "label": "Cleaner (auto-librarian)",
+          "hint": "Periodic sweep that soft-archives stale / duplicate memories (reversible, grace period applies). Which LLM runs it is routed in Cortex settings → Workers."
+        },
+        "cleanerInterval": {
+          "label": "Cleaner interval (s)",
+          "hint": "Seconds between automatic sweeps. Default 86400 (24h)."
+        },
+        "cleanerGlobalScope": {
+          "label": "Cleaner sweeps global scope",
+          "hint": "Also review global-scope memories (usually operator-curated). Default off until you trust the cleaner."
+        },
+        "knowledgeEnabled": {
+          "label": "Knowledge graph",
+          "hint": "The structured, self-evolving knowledge layer (entities / playbooks / skills) built on top of episodic memory. Powers the Cortex → Knowledge tab."
+        },
+        "claudeWatcher": {
+          "label": "Accounts watcher",
+          "hint": "Watch accounts_dir and auto-register a new account when a .credentials.json appears (the result of CLAUDE_CONFIG_DIR=<dir> claude login)."
+        },
+        "claudeAutoFailover": {
+          "label": "Rate-limit auto-failover",
+          "hint": "Switch a live session to another Claude account when it hits a rate limit. Opt-in: it changes billing attribution without a click."
+        },
+        "mobileTokenTTL": {
+          "label": "Mobile token TTL",
+          "hint": "Lifetime of bearer tokens issued to the mobile app. Default 720h (30 days)."
+        },
+        "dbMaxConns": {
+          "label": "Max connections",
+          "hint": "pgx connection pool cap. 0 = store default (16)."
         }
       },
       "liveTail": {
@@ -2131,7 +2191,15 @@
         "deleteSuccess": "Target deleted",
         "deleteFailedTitle": "Delete failed",
         "unknownError": "Unknown error"
-      }
+      },
+      "toggle": {
+        "on": "On",
+        "off": "Off",
+        "defaultOn": "Default (on)",
+        "defaultOff": "Default (off)"
+      },
+      "memoryRuntimeBanner": "Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).",
+      "memoryRuntimeBannerButton": "Open Cortex settings"
     },
     "settings": {
       "title": "Settings",

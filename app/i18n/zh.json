@@ -252,8 +252,8 @@
       "subtitle": "浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。",
       "navProject": "项目",
       "navArchived": "已归档",
-      "navWorkers": "Workers",
-      "navConfiguration": "配置 →",
+      "navWorkers": "Cortex 设置",
+      "navConfiguration": "存储与嵌入 →",
       "navQuarantine": "隔离区"
     },
     "journalStale": {
@@ -332,8 +332,8 @@
       "daysAgo_other": "{count} 天前"
     },
     "memoryConfig": {
-      "title": "记忆配置",
-      "subtitle": "所有记忆相关开关汇总到这里：HTTP provider、每个任务的路由、capture 触发器、spawn 时注入策略、累计花费。",
+      "title": "Cortex 设置",
+      "subtitle": "AI 闭环的全部运行时旋钮都在这里——spawn 注入、LLM provider、按任务的工作器路由、捕获触发器、注入策略、token 花费。保存即生效，无需重启。",
       "sections": {
         "providers": "Provider 池",
         "workers": "任务路由 (Workers)",
@@ -352,6 +352,17 @@
         "title": "记忆配置已迁移",
         "body": "所有记忆相关设置（providers / capture rules / injection profiles / cost）现在跟 Workers 在同一页面，相关开关聚在一起。",
         "openButton": "打开 记忆配置 →"
+      },
+      "infra": {
+        "title": "存储与嵌入（基础设施）",
+        "hint": "记忆配置的另一半——嵌入后端、检索调参、gatekeeper/cleaner 总开关与知识图谱开关——位于 Server Settings，修改需重启。",
+        "openSettings": "Server Settings →",
+        "embedder": "嵌入器",
+        "gatekeeper": "gatekeeper",
+        "cleaner": "cleaner",
+        "knowledge": "知识图谱",
+        "on": "开",
+        "off": "关"
       }
     },
     "memoryWorkers": {
@@ -445,7 +456,9 @@
       "modelCustom": "自定义…",
       "modelCustomPlaceholder": "精确模型 ID",
       "modelBackToList": "返回列表",
-      "cliCodex": "Codex（codex exec）"
+      "cliCodex": "Codex（codex exec）",
+      "infraGateOff": "{label} 的路由已保存，但它的功能总开关在 Server Settings 中处于关闭状态——开启之前不会执行任何调用。",
+      "infraGateOpen": "去开启"
     },
     "archived": {
       "loading": "加载中…",
@@ -1829,8 +1842,8 @@
           "desc": "服务器注册表与密钥。"
         },
         "memory": {
-          "title": "记忆",
-          "desc": "跨 CLI 的持久化记忆子系统。"
+          "title": "记忆 · 存储与嵌入",
+          "desc": "记忆子系统的基础设施一半：嵌入后端、检索调参与后台治理。重启后生效。运行时行为（工作器、捕获、注入）在 Cortex 设置中。"
         },
         "backup": {
           "title": "备份",
@@ -1885,7 +1898,10 @@
         "backupStatus": "状态",
         "backupWhere": "备份目标位置",
         "backupSchedules": "计划任务",
-        "backupWhatsInside": "备份里有什么？"
+        "backupWhatsInside": "备份里有什么？",
+        "memoryGovernance": "后台治理（gatekeeper / cleaner）",
+        "knowledgeGraph": "知识图谱",
+        "database": "数据库"
       },
       "fields": {
         "listenAddress": {
@@ -2045,6 +2061,50 @@
         "backupPgRestorePath": {
           "label": "pg_restore 路径",
           "hint": "/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。"
+        },
+        "memoryDedup": {
+          "label": "去重阈值",
+          "hint": "写入时折叠阈值：相似度高于此值会更新现有记忆而非插入近重复项。0 = 随嵌入器自动；负值完全关闭折叠。"
+        },
+        "gatekeeperEnabled": {
+          "label": "Gatekeeper（写入守门员）",
+          "hint": "写入前的 LLM 判官：判断 memory_store 是持久事实还是噪音。由哪个 LLM 执行在 Cortex 设置 → 工作器中路由。"
+        },
+        "gatekeeperLatency": {
+          "label": "Gatekeeper 最大延迟（ms）",
+          "hint": "超过该延迟时守门员退化为\"放行\"，不会因 LLM 慢而阻塞写入。默认 2000。"
+        },
+        "cleanerEnabled": {
+          "label": "Cleaner（自动馆员）",
+          "hint": "周期性扫描，将过期/重复的记忆软归档（可恢复，有宽限期）。由哪个 LLM 执行在 Cortex 设置 → 工作器中路由。"
+        },
+        "cleanerInterval": {
+          "label": "Cleaner 间隔（秒）",
+          "hint": "自动扫描的间隔秒数。默认 86400（24 小时）。"
+        },
+        "cleanerGlobalScope": {
+          "label": "Cleaner 扫描全局作用域",
+          "hint": "同时审查全局作用域的记忆（通常由操作员手工维护）。建议在信任 cleaner 之前保持关闭。"
+        },
+        "knowledgeEnabled": {
+          "label": "知识图谱",
+          "hint": "建立在情景记忆之上的结构化、自进化知识层（实体/手册/技能）。驱动 Cortex → 知识 标签页。"
+        },
+        "claudeWatcher": {
+          "label": "账号目录监视",
+          "hint": "监视 accounts_dir，当出现 .credentials.json（CLAUDE_CONFIG_DIR=<dir> claude login 的产物）时自动注册新账号。"
+        },
+        "claudeAutoFailover": {
+          "label": "限流自动切换",
+          "hint": "当活动会话撞到限流时自动切换到另一个 Claude 账号。需显式开启：它会在无人点击的情况下改变计费归属。"
+        },
+        "mobileTokenTTL": {
+          "label": "移动端 token 有效期",
+          "hint": "签发给移动 App 的 bearer token 的有效期。默认 720h（30 天）。"
+        },
+        "dbMaxConns": {
+          "label": "最大连接数",
+          "hint": "pgx 连接池上限。0 = 默认值（16）。"
         }
       },
       "liveTail": {
@@ -2131,7 +2191,15 @@
         "deleteSuccess": "目标已删除",
         "deleteFailedTitle": "删除失败",
         "unknownError": "未知错误"
-      }
+      },
+      "toggle": {
+        "on": "开启",
+        "off": "关闭",
+        "defaultOn": "默认（开）",
+        "defaultOff": "默认（关）"
+      },
+      "memoryRuntimeBanner": "运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。",
+      "memoryRuntimeBannerButton": "打开 Cortex 设置"
     },
     "settings": {
       "title": "设置",

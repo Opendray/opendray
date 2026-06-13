@@ -252,8 +252,8 @@
       "subtitle": "Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.",
       "navProject": "Proyecto",
       "navArchived": "Archivadas",
-      "navWorkers": "Workers",
-      "navConfiguration": "Configuración →",
+      "navWorkers": "Ajustes de Cortex",
+      "navConfiguration": "Almacenamiento y embedder →",
       "navQuarantine": "Cuarentena"
     },
     "journalStale": {
@@ -332,8 +332,8 @@
       "daysAgo_other": "hace {count} días"
     },
     "memoryConfig": {
-      "title": "Configuración de memoria",
-      "subtitle": "Todos los ajustes relacionados con la memoria en un solo lugar: providers HTTP, enrutamiento de workers por tarea, disparadores de captura, inyección al iniciar y costes de auditoría.",
+      "title": "Ajustes de Cortex",
+      "subtitle": "Todos los mandos de runtime del ciclo de IA en un solo lugar — inyección de spawn, providers LLM, workers por tarea, triggers de captura, perfiles de inyección, costes de tokens. Los cambios aplican al instante; sin reinicio.",
       "sections": {
         "providers": "Providers",
         "workers": "Workers",
@@ -352,6 +352,17 @@
         "title": "La configuración de memoria se ha movido",
         "body": "Todos los ajustes relacionados con la memoria (providers / reglas de captura / perfiles de inyección / coste) ahora conviven con Workers en una sola página para que los ajustes relacionados estén juntos.",
         "openButton": "Abrir Configuración de memoria →"
+      },
+      "infra": {
+        "title": "Almacenamiento y embedder (infraestructura)",
+        "hint": "La otra mitad de la config de memoria — backend de embeddings, ajuste de recuperación, puertas de gatekeeper/cleaner y el flag del grafo de conocimiento — vive en Server Settings y requiere reinicio.",
+        "openSettings": "Server Settings →",
+        "embedder": "embedder",
+        "gatekeeper": "gatekeeper",
+        "cleaner": "cleaner",
+        "knowledge": "grafo de conocimiento",
+        "on": "on",
+        "off": "off"
       }
     },
     "memoryWorkers": {
@@ -445,7 +456,9 @@
       "modelCustom": "Personalizado…",
       "modelCustomPlaceholder": "id exacto del modelo",
       "modelBackToList": "Lista",
-      "cliCodex": "Codex (codex exec)"
+      "cliCodex": "Codex (codex exec)",
+      "infraGateOff": "El enrutado de {label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.",
+      "infraGateOpen": "Activarla"
     },
     "archived": {
       "loading": "Cargando…",
@@ -1829,8 +1842,8 @@
           "desc": "Registro de servidores + secretos."
         },
         "memory": {
-          "title": "Memory",
-          "desc": "Subsistema de memoria persistente entre CLI."
+          "title": "Memoria · almacenamiento y embedder",
+          "desc": "La mitad de infraestructura del subsistema de memoria: backend de embeddings, ajuste de recuperación y gobernanza de fondo. Reinicia para aplicar. El comportamiento en runtime (workers, captura, inyección) vive en los ajustes de Cortex."
         },
         "backup": {
           "title": "Backup",
@@ -1885,7 +1898,10 @@
         "backupStatus": "Estado",
         "backupWhere": "Dónde van las copias de seguridad",
         "backupSchedules": "Programaciones",
-        "backupWhatsInside": "¿Qué contiene una copia de seguridad?"
+        "backupWhatsInside": "¿Qué contiene una copia de seguridad?",
+        "memoryGovernance": "Gobernanza de fondo (gatekeeper / cleaner)",
+        "knowledgeGraph": "Grafo de conocimiento",
+        "database": "Base de datos"
       },
       "fields": {
         "listenAddress": {
@@ -2045,6 +2061,50 @@
         "backupPgRestorePath": {
           "label": "Ruta de pg_restore",
           "hint": "Ruta absoluta a pg_restore para el flujo /backups/restore. Misma regla de versión mayor."
+        },
+        "memoryDedup": {
+          "label": "Umbral de dedup",
+          "hint": "Umbral de plegado al escribir: una similitud superior actualiza la memoria existente en vez de insertar un casi-duplicado. 0 = valor por defecto relativo al embedder; negativo desactiva el plegado."
+        },
+        "gatekeeperEnabled": {
+          "label": "Gatekeeper",
+          "hint": "Juez LLM pre-escritura: decide si un memory_store trae un hecho durable o ruido. Qué LLM lo ejecuta se enruta en ajustes de Cortex → Workers."
+        },
+        "gatekeeperLatency": {
+          "label": "Latencia máx. del gatekeeper (ms)",
+          "hint": "Por encima de esto el gatekeeper degrada a \"permitir\" en vez de bloquear la escritura por un LLM lento. Por defecto 2000."
+        },
+        "cleanerEnabled": {
+          "label": "Cleaner (auto-bibliotecario)",
+          "hint": "Barrido periódico que archiva (reversible, con periodo de gracia) memorias obsoletas o duplicadas. Qué LLM lo ejecuta se enruta en ajustes de Cortex → Workers."
+        },
+        "cleanerInterval": {
+          "label": "Intervalo del cleaner (s)",
+          "hint": "Segundos entre barridos automáticos. Por defecto 86400 (24h)."
+        },
+        "cleanerGlobalScope": {
+          "label": "Cleaner barre el scope global",
+          "hint": "Revisar también memorias de scope global (normalmente curadas por el operador). Por defecto off hasta que confíes en el cleaner."
+        },
+        "knowledgeEnabled": {
+          "label": "Grafo de conocimiento",
+          "hint": "La capa de conocimiento estructurada y auto-evolutiva (entidades / playbooks / skills) sobre la memoria episódica. Alimenta la pestaña Cortex → Knowledge."
+        },
+        "claudeWatcher": {
+          "label": "Watcher de cuentas",
+          "hint": "Vigila accounts_dir y auto-registra una cuenta nueva cuando aparece un .credentials.json (resultado de CLAUDE_CONFIG_DIR=<dir> claude login)."
+        },
+        "claudeAutoFailover": {
+          "label": "Auto-failover por rate limit",
+          "hint": "Cambia una session viva a otra cuenta de Claude al chocar con un rate limit. Opt-in: cambia la atribución de facturación sin un clic."
+        },
+        "mobileTokenTTL": {
+          "label": "TTL del token móvil",
+          "hint": "Vida de los tokens emitidos a la app móvil. Por defecto 720h (30 días)."
+        },
+        "dbMaxConns": {
+          "label": "Conexiones máx.",
+          "hint": "Tope del pool de conexiones pgx. 0 = valor por defecto (16)."
         }
       },
       "liveTail": {
@@ -2131,7 +2191,15 @@
         "deleteSuccess": "Destino eliminado",
         "deleteFailedTitle": "Error al eliminar",
         "unknownError": "Error desconocido"
-      }
+      },
+      "toggle": {
+        "on": "Activado",
+        "off": "Desactivado",
+        "defaultOn": "Por defecto (on)",
+        "defaultOff": "Por defecto (off)"
+      },
+      "memoryRuntimeBanner": "El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).",
+      "memoryRuntimeBannerButton": "Abrir ajustes de Cortex"
     },
     "settings": {
       "title": "Ajustes",

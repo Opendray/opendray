@@ -176,13 +176,12 @@ type MemoryCleanerConfig struct {
 	// Enabled toggles the auto-run scheduler (periodic sweep +
 	// dormant-archive + purge). The on-demand POST /memory/cleanup/run
 	// works either way.
+	//
+	// Note: the legacy `summarizer_id` key was removed in the settings
+	// consolidation — cleaner dispatch goes through the memory worker
+	// registry (memory_workers.cleaner) since M25, and BurntSushi/toml
+	// ignores the stale key in older config files.
 	Enabled bool `toml:"enabled" json:"enabled"`
-
-	// SummarizerID is DEPRECATED and ignored since M25 — cleaner
-	// dispatch now goes through the memory worker registry instead
-	// (memory_workers.cleaner.summarizer_id). Kept only so existing
-	// configs still decode without error.
-	SummarizerID string `toml:"summarizer_id" json:"summarizer_id"`
 
 	// IntervalSeconds between automatic sweeps. Empty / 0 → 86400
 	// (24h). Set to a small value (e.g. 300 = 5 min) for testing.

@@ -14,11 +14,10 @@ import (
 	"github.com/opendray/opendray-v2/internal/memory/worker"
 )
 
-// Config controls scanning + LLM batching behaviour.
+// Config controls scanning + LLM batching behaviour. Provider routing
+// is NOT here — the worker registry (memory_workers.cleaner) picks the
+// summarizer / agent at call time.
 type Config struct {
-	// SummarizerID picks the LLM provider. Empty → registry default.
-	SummarizerID string
-
 	// BatchSize caps how many memories are reviewed in one LLM call.
 	// Default 30. Larger batches mean fewer round-trips but exceed
 	// context windows quickly — qwen3.5-9b can handle ~50 reliably.

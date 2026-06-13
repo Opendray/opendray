@@ -736,12 +736,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if memorySvc != nil {
 		cc := cfg.Memory.Cleaner
 		// M25 — cleaner dispatch goes through the memory worker
-		// registry; SummarizerID config is now ignored (lives in
-		// memory_workers.cleaner.summarizer_id instead).
+		// registry (memory_workers.cleaner picks the provider).
 		cleanerSvc = cleaner.NewService(
 			st.Pool(), memorySvc, memoryWorkerRegistry,
 			cleaner.Config{
-				SummarizerID:         cc.SummarizerID,
 				BatchSize:            cc.BatchSize,
 				MinAge:               time.Duration(cc.MinAgeHours) * time.Hour,
 				SkipIfDecidedWithin:  time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
