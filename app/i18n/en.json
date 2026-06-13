@@ -3642,6 +3642,7 @@
     "loadFailed": "Failed to load: {error}",
     "projectsLoadFailed": "Failed to load projects: {error}",
     "projectLabel": "Project",
+    "browseFolder": "Browse folder…",
     "resetTooltip": "Reset project memory",
     "append": "Append",
     "appendDialogTitle": "Append journal entry",

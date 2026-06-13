@@ -479,6 +479,7 @@ class _TranslationsProjectZh extends TranslationsProjectEn {
 	@override String loadFailed({required Object error}) => '加载失败：${error}';
 	@override String projectsLoadFailed({required Object error}) => '加载项目列表失败：${error}';
 	@override String get projectLabel => '项目';
+	@override String get browseFolder => '浏览文件夹…';
 	@override String get resetTooltip => '重置项目记忆';
 	@override String get append => '追加';
 	@override String get appendDialogTitle => '追加日志条目';
@@ -11460,6 +11461,7 @@ extension on TranslationsZh {
 			'project.loadFailed' => ({required Object error}) => '加载失败：${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => '加载项目列表失败：${error}',
 			'project.projectLabel' => '项目',
+			'project.browseFolder' => '浏览文件夹…',
 			'project.resetTooltip' => '重置项目记忆',
 			'project.append' => '追加',
 			'project.appendDialogTitle' => '追加日志条目',
@@ -11693,9 +11695,9 @@ extension on TranslationsZh {
 			'backupTargetEditor.privateKeyHintEdit' => '留空 = 保留。粘贴 OpenSSH/PEM 内容。',
 			'backupTargetEditor.privateKeyHintNew' => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。',
 			'backupTargetEditor.hostKeyLabel' => 'Host key（pinning）',
-			'backupTargetEditor.hostKeyHint' => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。',
 			_ => null,
 		} ?? switch (path) {
+			'backupTargetEditor.hostKeyHint' => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。',
 			'backupTargetEditor.rcloneNote' => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。',
 			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
 			'backupTargetEditor.rcloneRemoteHint' => '来自 `rclone config` 的名字（不带冒号）。',
@@ -12207,9 +12209,9 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
 			'settings.serverSettings.fields.adminPassword' => '管理员密码',
 			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
-			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
 			'settings.serverSettings.fields.level' => '级别',
 			'settings.serverSettings.fields.format' => '格式',

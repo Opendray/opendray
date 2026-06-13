@@ -949,6 +949,9 @@ class TranslationsProjectEn {
 	/// en: 'Project'
 	String get projectLabel => 'Project';
 
+	/// en: 'Browse folder…'
+	String get browseFolder => 'Browse folder…';
+
 	/// en: 'Reset project memory'
 	String get resetTooltip => 'Reset project memory';
 
@@ -18956,6 +18959,7 @@ extension on Translations {
 			'project.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => 'Failed to load projects: ${error}',
 			'project.projectLabel' => 'Project',
+			'project.browseFolder' => 'Browse folder…',
 			'project.resetTooltip' => 'Reset project memory',
 			'project.append' => 'Append',
 			'project.appendDialogTitle' => 'Append journal entry',
@@ -19189,9 +19193,9 @@ extension on Translations {
 			'backupTargetEditor.privateKeyHintEdit' => 'Leave blank to keep. Paste OpenSSH/PEM contents.',
 			'backupTargetEditor.privateKeyHintNew' => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.',
 			'backupTargetEditor.hostKeyLabel' => 'Host key (pinning)',
-			'backupTargetEditor.hostKeyHint' => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).',
 			_ => null,
 		} ?? switch (path) {
+			'backupTargetEditor.hostKeyHint' => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).',
 			'backupTargetEditor.rcloneNote' => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.',
 			'backupTargetEditor.rcloneRemoteLabel' => 'Remote name',
 			'backupTargetEditor.rcloneRemoteHint' => 'Name from `rclone config` (no colon).',
@@ -19703,9 +19707,9 @@ extension on Translations {
 			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
 			'settings.serverSettings.fields.adminPassword' => 'Admin password',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
-			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Level',
 			'settings.serverSettings.fields.format' => 'Format',

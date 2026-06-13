@@ -3642,6 +3642,7 @@
     "loadFailed": "加载失败：{error}",
     "projectsLoadFailed": "加载项目列表失败：{error}",
     "projectLabel": "项目",
+    "browseFolder": "浏览文件夹…",
     "resetTooltip": "重置项目记忆",
     "append": "追加",
     "appendDialogTitle": "追加日志条目",

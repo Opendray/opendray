@@ -479,6 +479,7 @@ class _TranslationsProjectEs extends TranslationsProjectEn {
 	@override String loadFailed({required Object error}) => 'Error al cargar: ${error}';
 	@override String projectsLoadFailed({required Object error}) => 'Error al cargar los proyectos: ${error}';
 	@override String get projectLabel => 'Proyecto';
+	@override String get browseFolder => 'Explorar carpeta…';
 	@override String get resetTooltip => 'Restablecer la memoria del proyecto';
 	@override String get append => 'Añadir';
 	@override String get appendDialogTitle => 'Añadir entrada de diario';
@@ -11460,6 +11461,7 @@ extension on TranslationsEs {
 			'project.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
 			'project.projectsLoadFailed' => ({required Object error}) => 'Error al cargar los proyectos: ${error}',
 			'project.projectLabel' => 'Proyecto',
+			'project.browseFolder' => 'Explorar carpeta…',
 			'project.resetTooltip' => 'Restablecer la memoria del proyecto',
 			'project.append' => 'Añadir',
 			'project.appendDialogTitle' => 'Añadir entrada de diario',
@@ -11693,9 +11695,9 @@ extension on TranslationsEs {
 			'backupTargetEditor.privateKeyHintEdit' => 'Déjalo en blanco para conservarla. Pega el contenido OpenSSH/PEM.',
 			'backupTargetEditor.privateKeyHintNew' => 'Pega el contenido de una clave privada OpenSSH/PEM. Entrada de varias líneas: conserva los marcadores BEGIN/END.',
 			'backupTargetEditor.hostKeyLabel' => 'Clave de host (fijación)',
-			'backupTargetEditor.hostKeyHint' => 'Clave pública del servidor en formato OpenSSH. Usa `ssh-keyscan <host>` para obtenerla. En blanco = sin fijación (NO recomendado fuera de la LAN).',
 			_ => null,
 		} ?? switch (path) {
+			'backupTargetEditor.hostKeyHint' => 'Clave pública del servidor en formato OpenSSH. Usa `ssh-keyscan <host>` para obtenerla. En blanco = sin fijación (NO recomendado fuera de la LAN).',
 			'backupTargetEditor.rcloneNote' => 'Requiere la CLI de rclone en el host de opendray. Ejecuta primero `rclone config` una vez de forma interactiva para autenticar las cuentas en la nube.',
 			'backupTargetEditor.rcloneRemoteLabel' => 'Nombre del remoto',
 			'backupTargetEditor.rcloneRemoteHint' => 'Nombre de `rclone config` (sin los dos puntos).',
@@ -12207,9 +12209,9 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.adminUserHelper' => 'Efectivo cuando no hay keyfile ni variable de entorno configurada. Si no, consulta Ajustes → Cuenta.',
 			'settings.serverSettings.fields.adminPassword' => 'Contraseña admin',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Envíalo en blanco para conservarlo. Para rotaciones continuas usa Ajustes → Cuenta (respaldado por keyfile, sin reinicio).',
-			'settings.serverSettings.fields.tokenTtlWeb' => 'TTL del token (web)',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.tokenTtlWeb' => 'TTL del token (web)',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Cadena de duración de Go, p. ej. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Nivel',
 			'settings.serverSettings.fields.format' => 'Formato',

@@ -3642,6 +3642,7 @@
     "loadFailed": "Error al cargar: {error}",
     "projectsLoadFailed": "Error al cargar los proyectos: {error}",
     "projectLabel": "Proyecto",
+    "browseFolder": "Explorar carpeta…",
     "resetTooltip": "Restablecer la memoria del proyecto",
     "append": "Añadir",
     "appendDialogTitle": "Añadir entrada de diario",

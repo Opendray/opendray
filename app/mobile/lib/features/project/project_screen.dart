@@ -9,6 +9,7 @@ import 'package:opendray/core/api/memory_health_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
 // Project screen — surfaces memory layers 2-4 (goal / plan / journal)
@@ -241,6 +242,23 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
+              // Browse the gateway's filesystem to pick any directory as the
+              // project — not just one already in the known-projects list.
+              ListTile(
+                leading: const Icon(Icons.folder_open_outlined),
+                title: Text(t.project.browseFolder),
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final dir = await DirectoryPickerSheet.show(
+                    context,
+                    initialPath: _selectedKey,
+                  );
+                  if (dir == null || !mounted) return;
+                  setState(() => _selectedKey = dir);
+                  await _loadAll(dir);
+                },
+              ),
+              const Divider(height: 1),
               for (final k in keys)
                 ListTile(
                   title: Text(p.basename(k)),
