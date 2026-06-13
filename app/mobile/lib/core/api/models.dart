@@ -279,6 +279,7 @@ class Memory {
     this.confidence,
     this.archivedAt,
     this.archivedReason,
+    this.quarantineExpiresAt,
   });
 
   factory Memory.fromJson(Map<String, dynamic> json) => Memory(
@@ -308,6 +309,9 @@ class Memory {
             ? DateTime.tryParse(json['archived_at'] as String)
             : null,
         archivedReason: json['archived_reason'] as String?,
+        quarantineExpiresAt: (json['quarantine_expires_at'] is String)
+            ? DateTime.tryParse(json['quarantine_expires_at'] as String)
+            : null,
       );
 
   final String id;
@@ -328,6 +332,8 @@ class Memory {
   // list/search never returns archived rows.
   final DateTime? archivedAt;
   final String? archivedReason;
+  // TTL deadline for quarantine-tier rows; null for durable memories.
+  final DateTime? quarantineExpiresAt;
 }
 
 // SearchHit pairs a Memory with its cosine similarity score so the

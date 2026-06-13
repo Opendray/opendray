@@ -65,6 +65,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMemoryZh memory = _TranslationsMemoryZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
+	@override late final _TranslationsMemoryQuarantineZh memoryQuarantine = _TranslationsMemoryQuarantineZh._(_root);
 }
 
 // Path: common
@@ -888,6 +889,26 @@ class _TranslationsSettingsZh extends TranslationsSettingsEn {
 	@override late final _TranslationsSettingsServerSettingsZh serverSettings = _TranslationsSettingsServerSettingsZh._(_root);
 }
 
+// Path: memoryQuarantine
+class _TranslationsMemoryQuarantineZh extends TranslationsMemoryQuarantineEn {
+	_TranslationsMemoryQuarantineZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '隔离区';
+	@override String get subtitle => '在被采信为持久记忆前需要审查的事实：integration 捕获按策略落到这里，你也可以手动隔离任何记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。';
+	@override String get empty => '隔离区为空。';
+	@override String loadFailed({required Object error}) => '加载失败：${error}';
+	@override String get promote => '批准';
+	@override String get discard => '丢弃';
+	@override String get promotedToast => '已批准为持久记忆';
+	@override String get discardedToast => '已丢弃';
+	@override String actionFailed({required Object error}) => '操作失败：${error}';
+	@override String expires({required Object date}) => '${date} 过期';
+	@override String countBadge({required Object count}) => '${count} 条待审';
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1554,6 +1575,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsCustomTasksZh customTasks = _TranslationsMoreItemsCustomTasksZh._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryZh projectMemory = _TranslationsMoreItemsProjectMemoryZh._(_root);
 	@override late final _TranslationsMoreItemsArchivedZh archived = _TranslationsMoreItemsArchivedZh._(_root);
+	@override late final _TranslationsMoreItemsQuarantineZh quarantine = _TranslationsMoreItemsQuarantineZh._(_root);
 	@override late final _TranslationsMoreItemsBackupsZh backups = _TranslationsMoreItemsBackupsZh._(_root);
 	@override late final _TranslationsMoreItemsDataExportZh dataExport = _TranslationsMoreItemsDataExportZh._(_root);
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
@@ -5470,6 +5492,17 @@ class _TranslationsMoreItemsArchivedZh extends TranslationsMoreItemsArchivedEn {
 	// Translations
 	@override String get title => '已归档记忆';
 	@override String get subtitle => '恢复自动清理器软归档的记忆（30 天宽限期）';
+}
+
+// Path: more.items.quarantine
+class _TranslationsMoreItemsQuarantineZh extends TranslationsMoreItemsQuarantineEn {
+	_TranslationsMoreItemsQuarantineZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '隔离区';
+	@override String get subtitle => '在捕获的记忆被采信为持久记忆前进行审查';
 }
 
 // Path: more.items.backups
@@ -10581,6 +10614,8 @@ extension on TranslationsZh {
 			'more.items.projectMemory.subtitle' => '按 cwd 的记忆层 2-4 + 代理提案',
 			'more.items.archived.title' => '已归档记忆',
 			'more.items.archived.subtitle' => '恢复自动清理器软归档的记忆（30 天宽限期）',
+			'more.items.quarantine.title' => '隔离区',
+			'more.items.quarantine.subtitle' => '在捕获的记忆被采信为持久记忆前进行审查',
 			'more.items.backups.title' => '备份',
 			'more.items.backups.subtitle' => '最新备份状态与立即运行',
 			'more.items.dataExport.title' => '数据导出与导入',
@@ -10902,10 +10937,10 @@ extension on TranslationsZh {
 			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
 			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
 			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
-			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
-			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
 			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
 			'providers.accounts.activeSessions' => ({required Object count}) => '${count} 个活跃',
 			'providers.accounts.usedAgo' => ({required Object when}) => '${when}使用',
@@ -11416,10 +11451,10 @@ extension on TranslationsZh {
 			'channels.popup.enable' => '启用',
 			'channels.popup.disable' => '停用',
 			'channels.popup.mute' => '静音',
-			'channels.popup.unmute' => '取消静音',
-			'channels.popup.deleteLabel' => '删除',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.unmute' => '取消静音',
+			'channels.popup.deleteLabel' => '删除',
 			'channels.badges.running' => '运行中',
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
@@ -11895,6 +11930,17 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
+			'memoryQuarantine.title' => '隔离区',
+			'memoryQuarantine.subtitle' => '在被采信为持久记忆前需要审查的事实：integration 捕获按策略落到这里，你也可以手动隔离任何记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
+			'memoryQuarantine.empty' => '隔离区为空。',
+			'memoryQuarantine.loadFailed' => ({required Object error}) => '加载失败：${error}',
+			'memoryQuarantine.promote' => '批准',
+			'memoryQuarantine.discard' => '丢弃',
+			'memoryQuarantine.promotedToast' => '已批准为持久记忆',
+			'memoryQuarantine.discardedToast' => '已丢弃',
+			'memoryQuarantine.actionFailed' => ({required Object error}) => '操作失败：${error}',
+			'memoryQuarantine.expires' => ({required Object date}) => '${date} 过期',
+			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
 			_ => null,
 		};
 	}

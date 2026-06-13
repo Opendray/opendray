@@ -2896,6 +2896,10 @@
         "title": "Archived memories",
         "subtitle": "Restore memories the auto-cleaner soft-archived (30-day grace)"
       },
+      "quarantine": {
+        "title": "Quarantine",
+        "subtitle": "Review captured memories before they count as durable"
+      },
       "backups": {
         "title": "Backups",
         "subtitle": "Latest backup status & run-now"
@@ -4493,5 +4497,18 @@
       "validateInteger": "\"{field}\" must be an integer",
       "validateNumber": "\"{field}\" must be a number"
     }
+  },
+  "memoryQuarantine": {
+    "title": "Quarantine",
+    "subtitle": "Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.",
+    "empty": "Nothing in quarantine.",
+    "loadFailed": "Failed to load: {error}",
+    "promote": "Promote",
+    "discard": "Discard",
+    "promotedToast": "Promoted to durable memory",
+    "discardedToast": "Discarded",
+    "actionFailed": "Action failed: {error}",
+    "expires": "expires {date}",
+    "countBadge": "{count} pending"
   }
 }

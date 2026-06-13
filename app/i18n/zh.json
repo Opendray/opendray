@@ -2896,6 +2896,10 @@
         "title": "已归档记忆",
         "subtitle": "恢复自动清理器软归档的记忆（30 天宽限期）"
       },
+      "quarantine": {
+        "title": "隔离区",
+        "subtitle": "在捕获的记忆被采信为持久记忆前进行审查"
+      },
       "backups": {
         "title": "备份",
         "subtitle": "最新备份状态与立即运行"
@@ -4493,5 +4497,18 @@
       "validateInteger": "「{field}」必须是整数",
       "validateNumber": "「{field}」必须是数字"
     }
+  },
+  "memoryQuarantine": {
+    "title": "隔离区",
+    "subtitle": "在被采信为持久记忆前需要审查的事实：integration 捕获按策略落到这里，你也可以手动隔离任何记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。",
+    "empty": "隔离区为空。",
+    "loadFailed": "加载失败：{error}",
+    "promote": "批准",
+    "discard": "丢弃",
+    "promotedToast": "已批准为持久记忆",
+    "discardedToast": "已丢弃",
+    "actionFailed": "操作失败：{error}",
+    "expires": "{date} 过期",
+    "countBadge": "{count} 条待审"
   }
 }

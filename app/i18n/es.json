@@ -2896,6 +2896,10 @@
         "title": "Memorias archivadas",
         "subtitle": "Restaura memorias que el limpiador automático archivó (gracia de 30 días)"
       },
+      "quarantine": {
+        "title": "Cuarentena",
+        "subtitle": "Revisa memorias capturadas antes de que sean durables"
+      },
       "backups": {
         "title": "Copias de seguridad",
         "subtitle": "Estado de la última copia de seguridad y ejecución inmediata"
@@ -4493,5 +4497,18 @@
       "validateInteger": "\"{field}\" debe ser un entero",
       "validateNumber": "\"{field}\" debe ser un número"
     }
+  },
+  "memoryQuarantine": {
+    "title": "Cuarentena",
+    "subtitle": "Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.",
+    "empty": "Nada en cuarentena.",
+    "loadFailed": "Error al cargar: {error}",
+    "promote": "Promover",
+    "discard": "Descartar",
+    "promotedToast": "Promovida a memoria durable",
+    "discardedToast": "Descartada",
+    "actionFailed": "La acción falló: {error}",
+    "expires": "expira {date}",
+    "countBadge": "{count} pendientes"
   }
 }

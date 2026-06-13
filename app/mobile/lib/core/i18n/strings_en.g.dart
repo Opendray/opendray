@@ -66,6 +66,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMemoryEn memory = TranslationsMemoryEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
+	late final TranslationsMemoryQuarantineEn memoryQuarantine = TranslationsMemoryQuarantineEn.internal(_root);
 }
 
 // Path: common
@@ -1898,6 +1899,48 @@ class TranslationsSettingsEn {
 	late final TranslationsSettingsServerSettingsEn serverSettings = TranslationsSettingsServerSettingsEn.internal(_root);
 }
 
+// Path: memoryQuarantine
+class TranslationsMemoryQuarantineEn {
+	TranslationsMemoryQuarantineEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Quarantine'
+	String get title => 'Quarantine';
+
+	/// en: 'Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.'
+	String get subtitle => 'Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.';
+
+	/// en: 'Nothing in quarantine.'
+	String get empty => 'Nothing in quarantine.';
+
+	/// en: 'Failed to load: {error}'
+	String loadFailed({required Object error}) => 'Failed to load: ${error}';
+
+	/// en: 'Promote'
+	String get promote => 'Promote';
+
+	/// en: 'Discard'
+	String get discard => 'Discard';
+
+	/// en: 'Promoted to durable memory'
+	String get promotedToast => 'Promoted to durable memory';
+
+	/// en: 'Discarded'
+	String get discardedToast => 'Discarded';
+
+	/// en: 'Action failed: {error}'
+	String actionFailed({required Object error}) => 'Action failed: ${error}';
+
+	/// en: 'expires {date}'
+	String expires({required Object date}) => 'expires ${date}';
+
+	/// en: '{count} pending'
+	String countBadge({required Object count}) => '${count} pending';
+}
+
 // Path: web.topbar
 class TranslationsWebTopbarEn {
 	TranslationsWebTopbarEn.internal(this._root);
@@ -3083,6 +3126,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsCustomTasksEn customTasks = TranslationsMoreItemsCustomTasksEn.internal(_root);
 	late final TranslationsMoreItemsProjectMemoryEn projectMemory = TranslationsMoreItemsProjectMemoryEn.internal(_root);
 	late final TranslationsMoreItemsArchivedEn archived = TranslationsMoreItemsArchivedEn.internal(_root);
+	late final TranslationsMoreItemsQuarantineEn quarantine = TranslationsMoreItemsQuarantineEn.internal(_root);
 	late final TranslationsMoreItemsBackupsEn backups = TranslationsMoreItemsBackupsEn.internal(_root);
 	late final TranslationsMoreItemsDataExportEn dataExport = TranslationsMoreItemsDataExportEn.internal(_root);
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
@@ -10608,6 +10652,21 @@ class TranslationsMoreItemsArchivedEn {
 	String get subtitle => 'Restore memories the auto-cleaner soft-archived (30-day grace)';
 }
 
+// Path: more.items.quarantine
+class TranslationsMoreItemsQuarantineEn {
+	TranslationsMoreItemsQuarantineEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Quarantine'
+	String get title => 'Quarantine';
+
+	/// en: 'Review captured memories before they count as durable'
+	String get subtitle => 'Review captured memories before they count as durable';
+}
+
 // Path: more.items.backups
 class TranslationsMoreItemsBackupsEn {
 	TranslationsMoreItemsBackupsEn.internal(this._root);
@@ -17784,6 +17843,8 @@ extension on Translations {
 			'more.items.projectMemory.subtitle' => 'Per-cwd memory layers 2-4 + agent proposals',
 			'more.items.archived.title' => 'Archived memories',
 			'more.items.archived.subtitle' => 'Restore memories the auto-cleaner soft-archived (30-day grace)',
+			'more.items.quarantine.title' => 'Quarantine',
+			'more.items.quarantine.subtitle' => 'Review captured memories before they count as durable',
 			'more.items.backups.title' => 'Backups',
 			'more.items.backups.subtitle' => 'Latest backup status & run-now',
 			'more.items.dataExport.title' => 'Data export & import',
@@ -18105,10 +18166,10 @@ extension on Translations {
 			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
 			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
-			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
-			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
 			'providers.accounts.activeSessions' => ({required Object count}) => '${count} active',
 			'providers.accounts.usedAgo' => ({required Object when}) => 'used ${when}',
@@ -18619,10 +18680,10 @@ extension on Translations {
 			'channels.popup.enable' => 'Enable',
 			'channels.popup.disable' => 'Disable',
 			'channels.popup.mute' => 'Mute',
-			'channels.popup.unmute' => 'Unmute',
-			'channels.popup.deleteLabel' => 'Delete',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.unmute' => 'Unmute',
+			'channels.popup.deleteLabel' => 'Delete',
 			'channels.badges.running' => 'running',
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
@@ -19098,6 +19159,17 @@ extension on Translations {
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
+			'memoryQuarantine.title' => 'Quarantine',
+			'memoryQuarantine.subtitle' => 'Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.',
+			'memoryQuarantine.empty' => 'Nothing in quarantine.',
+			'memoryQuarantine.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
+			'memoryQuarantine.promote' => 'Promote',
+			'memoryQuarantine.discard' => 'Discard',
+			'memoryQuarantine.promotedToast' => 'Promoted to durable memory',
+			'memoryQuarantine.discardedToast' => 'Discarded',
+			'memoryQuarantine.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
+			'memoryQuarantine.expires' => ({required Object date}) => 'expires ${date}',
+			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
 			_ => null,
 		};
 	}

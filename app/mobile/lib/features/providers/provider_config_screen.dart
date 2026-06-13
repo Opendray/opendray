@@ -264,6 +264,11 @@ class _FieldEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     switch (field.type) {
+      case 'note':
+        // Read-only informational row — label + description, no input.
+        // Used for providers whose auth lives outside opendray (e.g.
+        // Antigravity's Google login). Mirrors the web ConfigForm.
+        return _NoteField(field: field);
       case 'boolean':
         return _BoolField(field: field, value: value, onChanged: onChanged);
       case 'select':
@@ -298,6 +303,47 @@ class _FieldEditor extends StatelessWidget {
       default:
         return _TextField(field: field, value: value, onChanged: onChanged);
     }
+  }
+}
+
+class _NoteField extends StatelessWidget {
+  const _NoteField({required this.field});
+  final ConfigField field;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 16, color: scheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(field.label,
+                    style: Theme.of(context).textTheme.bodyMedium),
+                if ((field.description ?? '').isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      field.description!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

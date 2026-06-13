@@ -65,6 +65,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMemoryEs memory = _TranslationsMemoryEs._(_root);
 	@override late final _TranslationsAboutEs about = _TranslationsAboutEs._(_root);
 	@override late final _TranslationsSettingsEs settings = _TranslationsSettingsEs._(_root);
+	@override late final _TranslationsMemoryQuarantineEs memoryQuarantine = _TranslationsMemoryQuarantineEs._(_root);
 }
 
 // Path: common
@@ -888,6 +889,26 @@ class _TranslationsSettingsEs extends TranslationsSettingsEn {
 	@override late final _TranslationsSettingsServerSettingsEs serverSettings = _TranslationsSettingsServerSettingsEs._(_root);
 }
 
+// Path: memoryQuarantine
+class _TranslationsMemoryQuarantineEs extends TranslationsMemoryQuarantineEn {
+	_TranslationsMemoryQuarantineEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cuarentena';
+	@override String get subtitle => 'Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.';
+	@override String get empty => 'Nada en cuarentena.';
+	@override String loadFailed({required Object error}) => 'Error al cargar: ${error}';
+	@override String get promote => 'Promover';
+	@override String get discard => 'Descartar';
+	@override String get promotedToast => 'Promovida a memoria durable';
+	@override String get discardedToast => 'Descartada';
+	@override String actionFailed({required Object error}) => 'La acción falló: ${error}';
+	@override String expires({required Object date}) => 'expira ${date}';
+	@override String countBadge({required Object count}) => '${count} pendientes';
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarEs extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -1554,6 +1575,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsCustomTasksEs customTasks = _TranslationsMoreItemsCustomTasksEs._(_root);
 	@override late final _TranslationsMoreItemsProjectMemoryEs projectMemory = _TranslationsMoreItemsProjectMemoryEs._(_root);
 	@override late final _TranslationsMoreItemsArchivedEs archived = _TranslationsMoreItemsArchivedEs._(_root);
+	@override late final _TranslationsMoreItemsQuarantineEs quarantine = _TranslationsMoreItemsQuarantineEs._(_root);
 	@override late final _TranslationsMoreItemsBackupsEs backups = _TranslationsMoreItemsBackupsEs._(_root);
 	@override late final _TranslationsMoreItemsDataExportEs dataExport = _TranslationsMoreItemsDataExportEs._(_root);
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
@@ -5470,6 +5492,17 @@ class _TranslationsMoreItemsArchivedEs extends TranslationsMoreItemsArchivedEn {
 	// Translations
 	@override String get title => 'Memorias archivadas';
 	@override String get subtitle => 'Restaura memorias que el limpiador automático archivó (gracia de 30 días)';
+}
+
+// Path: more.items.quarantine
+class _TranslationsMoreItemsQuarantineEs extends TranslationsMoreItemsQuarantineEn {
+	_TranslationsMoreItemsQuarantineEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cuarentena';
+	@override String get subtitle => 'Revisa memorias capturadas antes de que sean durables';
 }
 
 // Path: more.items.backups
@@ -10581,6 +10614,8 @@ extension on TranslationsEs {
 			'more.items.projectMemory.subtitle' => 'Capas de memoria 2-4 por cwd + propuestas del agente',
 			'more.items.archived.title' => 'Memorias archivadas',
 			'more.items.archived.subtitle' => 'Restaura memorias que el limpiador automático archivó (gracia de 30 días)',
+			'more.items.quarantine.title' => 'Cuarentena',
+			'more.items.quarantine.subtitle' => 'Revisa memorias capturadas antes de que sean durables',
 			'more.items.backups.title' => 'Copias de seguridad',
 			'more.items.backups.subtitle' => 'Estado de la última copia de seguridad y ejecución inmediata',
 			'more.items.dataExport.title' => 'Exportación e importación de datos',
@@ -10902,10 +10937,10 @@ extension on TranslationsEs {
 			'providers.accounts.addBody' => 'El nuevo directorio aparece aquí automáticamente. Consulta la documentación para los pasos del flujo OAuth.',
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Error al cargar las cuentas: ${error}',
 			'providers.accounts.intro' => 'Las sessions creadas con el proveedor Claude eligen entre estas cuentas (o recurren a las variables de entorno).',
-			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} activada.',
-			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} desactivada.',
 			_ => null,
 		} ?? switch (path) {
+			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} activada.',
+			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} desactivada.',
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renombrada a ${name}.',
 			'providers.accounts.activeSessions' => ({required Object count}) => '${count} activas',
 			'providers.accounts.usedAgo' => ({required Object when}) => 'usada ${when}',
@@ -11416,10 +11451,10 @@ extension on TranslationsEs {
 			'channels.popup.enable' => 'Activar',
 			'channels.popup.disable' => 'Desactivar',
 			'channels.popup.mute' => 'Silenciar',
-			'channels.popup.unmute' => 'Reactivar sonido',
-			'channels.popup.deleteLabel' => 'Eliminar',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.unmute' => 'Reactivar sonido',
+			'channels.popup.deleteLabel' => 'Eliminar',
 			'channels.badges.running' => 'en ejecución',
 			'channels.badges.starting' => 'iniciando…',
 			'channels.badges.disabled' => 'desactivado',
@@ -11895,6 +11930,17 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.projectsJson' => 'projects.json',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" debe ser un entero',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" debe ser un número',
+			'memoryQuarantine.title' => 'Cuarentena',
+			'memoryQuarantine.subtitle' => 'Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.',
+			'memoryQuarantine.empty' => 'Nada en cuarentena.',
+			'memoryQuarantine.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
+			'memoryQuarantine.promote' => 'Promover',
+			'memoryQuarantine.discard' => 'Descartar',
+			'memoryQuarantine.promotedToast' => 'Promovida a memoria durable',
+			'memoryQuarantine.discardedToast' => 'Descartada',
+			'memoryQuarantine.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
+			'memoryQuarantine.expires' => ({required Object date}) => 'expira ${date}',
+			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
 			_ => null,
 		};
 	}
