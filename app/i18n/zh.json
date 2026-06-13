@@ -458,7 +458,8 @@
       "modelBackToList": "返回列表",
       "cliCodex": "Codex（codex exec）",
       "infraGateOff": "{label} 的路由已保存，但它的功能总开关在 Server Settings 中处于关闭状态——开启之前不会执行任何调用。",
-      "infraGateOpen": "去开启"
+      "infraGateOpen": "去开启",
+      "providerModel": "模型："
     },
     "archived": {
       "loading": "加载中…",

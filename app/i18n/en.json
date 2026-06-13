@@ -458,7 +458,8 @@
       "modelBackToList": "List",
       "cliCodex": "Codex (codex exec)",
       "infraGateOff": "{label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.",
-      "infraGateOpen": "Enable it"
+      "infraGateOpen": "Enable it",
+      "providerModel": "model:"
     },
     "archived": {
       "loading": "Loading…",

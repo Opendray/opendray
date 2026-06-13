@@ -48,6 +48,7 @@ import {
 import { TargetEditor, targetSummary } from '@/components/backup/TargetEditor'
 
 import { LogViewer } from './LogViewer'
+import { LocalModelSelect } from './MemoryAmbientSection'
 import { PathInput } from './PathInput'
 
 // SECTIONS describe every server-settings panel rendered to the right
@@ -881,19 +882,20 @@ function SectionForm({
             {F(
               'memoryModel',
               'memory.http.model',
-              <Input
+              <LocalModelSelect
+                baseURL={c.memory.http.base_url}
+                apiKey={c.memory.http.api_key}
                 value={c.memory.http.model}
-                onChange={(e) =>
+                onChange={(v) =>
                   setDraft({
                     ...draft,
                     memory: {
                       ...c.memory,
-                      http: { ...c.memory.http, model: e.target.value },
+                      http: { ...c.memory.http, model: v },
                     },
                   })
                 }
-                placeholder="nomic-embed-text"
-                className="h-9 font-mono"
+                autoFill={false}
               />,
             )}
             {F(

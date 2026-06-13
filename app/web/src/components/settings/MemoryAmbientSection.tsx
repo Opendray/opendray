@@ -273,22 +273,30 @@ function isLocalModelKind(kind: ProviderKind): boolean {
 // workers' ModelPicker. Probes <base_url>/models (with the Ollama
 // /api/tags fallback the backend probe already implements); endpoint
 // unreachable → plain input with a hint, so nothing is ever blocked
-// on the probe.
-function LocalModelSelect({
+// on the probe. Shared by the summarizer-provider dialogs and the
+// embedder config in Settings → Server → Memory.
+export function LocalModelSelect({
   baseURL,
+  apiKey = '',
   value,
   onChange,
+  autoFill = true,
 }: {
   baseURL: string
+  apiKey?: string
   value: string
   onChange: (v: string) => void
+  /** Auto-pick the first advertised model when the field is empty.
+   * Disable where a wrong guess is costly (embedder config — chat
+   * models also appear in the list). */
+  autoFill?: boolean
 }) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [customMode, setCustomMode] = useState(false)
   const probe = useQuery({
-    queryKey: ['endpoint-models', baseURL],
-    queryFn: () => probeEmbeddingEndpoint(baseURL),
+    queryKey: ['endpoint-models', baseURL, apiKey !== ''],
+    queryFn: () => probeEmbeddingEndpoint(baseURL, apiKey),
     enabled: baseURL.trim() !== '',
     staleTime: 30_000,
     retry: false,
@@ -299,7 +307,7 @@ function LocalModelSelect({
   // Default to the first advertised model when the field is empty —
   // saves the "type a guess, watch the call fail" round-trip.
   useEffect(() => {
-    if (reachable && models.length > 0 && value === '') {
+    if (autoFill && reachable && models.length > 0 && value === '') {
       onChange(models[0])
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -368,6 +376,7 @@ function LocalModelSelect({
             {value} · {t('web.memoryAmbient.providers.modelSelect.notOnEndpoint')}
           </option>
         )}
+        {value === '' && <option value="__keep__"></option>}
         {models.map((m) => (
           <option key={m} value={m}>
             {m}
@@ -384,7 +393,7 @@ function LocalModelSelect({
         className="h-8 w-8 shrink-0 p-0"
         title={t('web.memoryAmbient.providers.modelSelect.refresh')}
         onClick={() =>
-          qc.invalidateQueries({ queryKey: ['endpoint-models', baseURL] })
+          qc.invalidateQueries({ queryKey: ['endpoint-models', baseURL, apiKey !== ''] })
         }
       >
         <RefreshCw className="size-3" />
@@ -396,7 +405,9 @@ function LocalModelSelect({
 // ChangeModelDialog — per-row model switch for an existing provider.
 // Before this the only way to change a provider's model was delete +
 // recreate; with local endpoints the picker lists what's installed.
-function ChangeModelDialog({
+// Also reused by the Cortex settings worker cards, so the model is
+// switchable right where the provider is being routed.
+export function ChangeModelDialog({
   provider,
   onSaved,
 }: {

@@ -458,7 +458,8 @@
       "modelBackToList": "Lista",
       "cliCodex": "Codex (codex exec)",
       "infraGateOff": "El enrutado de {label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.",
-      "infraGateOpen": "Activarla"
+      "infraGateOpen": "Activarla",
+      "providerModel": "modelo:"
     },
     "archived": {
       "loading": "Cargando…",

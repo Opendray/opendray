@@ -51,7 +51,10 @@ import {
   testMemoryWorker,
   upsertMemoryWorker,
 } from '@/lib/memoryWorkers'
-import { listProviders as listSummarizerProviders } from '@/lib/memoryAmbient'
+import {
+  listProviders as listSummarizerProviders,
+  type SummarizerProvider,
+} from '@/lib/memoryAmbient'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { fetchMemoryStatus, type MemoryStatus } from '@/lib/memory'
 import { fetchServerSettings } from '@/lib/settings'
@@ -61,6 +64,7 @@ import {
   putCortexSettings,
 } from '@/lib/cortex'
 import {
+  ChangeModelDialog,
   CostBlock,
   ProfilesBlock,
   ProvidersBlock,
@@ -534,7 +538,7 @@ function SectionTitle({
 
 interface WorkerCardProps {
   config: WorkerConfig
-  summarizers: { id: string; name: string; kind: string }[]
+  summarizers: SummarizerProvider[]
   accounts: { id: string; display_name?: string; name?: string }[]
   calls: CallSummary[]
   onSaved: () => void
@@ -562,6 +566,16 @@ function WorkerCard({
   const [accountId, setAccountId] = useState(config.account_id ?? '')
   const [model, setModel] = useState(config.model ?? '')
   const [enabled, setEnabled] = useState(config.enabled)
+
+  const qc = useQueryClient()
+  // The provider whose model this worker will actually call: the
+  // pinned one, falling back to the registry default.
+  const effectiveSummarizer =
+    kind === 'summarizer'
+      ? ((summarizerId
+          ? summarizers.find((s) => s.id === summarizerId)
+          : summarizers.find((s) => s.is_default)) ?? null)
+      : null
 
   const agentAllowed = taskAgentSupported(config.task)
   const dirty =
@@ -745,6 +759,26 @@ function WorkerCard({
                   ))}
                 </SelectContent>
               </Select>
+              {/* The provider pins the actual model — surface it here
+                  with an inline switcher (local endpoints list what's
+                  installed) so changing the model doesn't require a
+                  detour to §1. */}
+              {effectiveSummarizer && (
+                <div className="text-muted-foreground mt-1.5 flex items-center gap-2 text-[11px]">
+                  <span>{t('web.memoryWorkers.providerModel')}</span>
+                  <code className="text-foreground">
+                    {effectiveSummarizer.model}
+                  </code>
+                  <ChangeModelDialog
+                    provider={effectiveSummarizer}
+                    onSaved={() =>
+                      qc.invalidateQueries({
+                        queryKey: ['memory-summarizer-providers'],
+                      })
+                    }
+                  />
+                </div>
+              )}
             </div>
           )}
 
