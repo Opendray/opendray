@@ -3462,7 +3462,19 @@
     "emptyBody": "No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.",
     "globalScope": "(global)",
     "countBadge": "{count} archived",
-    "restore": "Restore"
+    "restore": "Restore",
+    "restoreAll": "Restore all",
+    "deleteAll": "Delete all",
+    "restoreAllConfirm": "Restore all {count} archived memories in {project}?",
+    "deleteAllConfirm": "Permanently delete all {count} archived memories in {project}? This skips the 30-day grace window and cannot be undone.",
+    "deletePermanently": "Delete",
+    "deleteConfirm": "Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.",
+    "restoredToast": "Restored",
+    "restoredAllToast": "Restored {count} memories",
+    "deletedToast": "Deleted permanently",
+    "deletedAllToast": "Deleted {count} memories",
+    "deleteFailed": "Delete failed: {error}",
+    "summary": "{projects} projects · {memories} archived"
   },
   "project": {
     "title": "Project",
@@ -4275,7 +4287,13 @@
       "scopeKeyLabel": "Scope key (project cwd)",
       "scopeKeyHint": "/Users/you/projects/foo",
       "submit": "Create"
-    }
+    },
+    "archive": "Archive",
+    "quarantine": "Quarantine",
+    "archivedToast": "Memory archived — restorable from Archived",
+    "quarantinedToast": "Memory quarantined — review under Cortex → Quarantine",
+    "archiveFailed": "Archive failed: {error}",
+    "quarantineFailed": "Quarantine failed: {error}"
   },
   "about": {
     "title": "About",

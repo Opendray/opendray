@@ -3462,7 +3462,19 @@
     "emptyBody": "所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。",
     "globalScope": "(全局)",
     "countBadge": "{count} 条已归档",
-    "restore": "恢复"
+    "restore": "恢复",
+    "restoreAll": "全部恢复",
+    "deleteAll": "全部删除",
+    "restoreAllConfirm": "恢复 {project} 的全部 {count} 条归档记忆？",
+    "deleteAllConfirm": "永久删除 {project} 的全部 {count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。",
+    "deletePermanently": "删除",
+    "deleteConfirm": "立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。",
+    "restoredToast": "已恢复",
+    "restoredAllToast": "已恢复 {count} 条记忆",
+    "deletedToast": "已永久删除",
+    "deletedAllToast": "已删除 {count} 条记忆",
+    "deleteFailed": "删除失败：{error}",
+    "summary": "{projects} 个项目 · {memories} 条归档"
   },
   "project": {
     "title": "项目",
@@ -4275,7 +4287,13 @@
       "scopeKeyLabel": "范围键（项目 cwd）",
       "scopeKeyHint": "/Users/you/projects/foo",
       "submit": "创建"
-    }
+    },
+    "archive": "归档",
+    "quarantine": "隔离",
+    "archivedToast": "记忆已归档——可在「已归档」中恢复",
+    "quarantinedToast": "记忆已隔离——请在 Cortex → 隔离区 审查",
+    "archiveFailed": "归档失败：{error}",
+    "quarantineFailed": "隔离失败：{error}"
   },
   "about": {
     "title": "关于",

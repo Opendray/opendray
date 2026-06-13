@@ -81,6 +81,26 @@ class MemoryApi {
     }
   }
 
+  // POST /memory/{id}/archive — soft-archive one memory by hand
+  // (reversible from the Archived view until the grace window purges it).
+  Future<void> archive(String id) async {
+    try {
+      await _dio.post<void>('/api/v1/memory/$id/archive');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /memory/{id}/quarantine — move a durable memory into the
+  // quarantine review queue (release via Cortex → Quarantine promote).
+  Future<void> quarantine(String id) async {
+    try {
+      await _dio.post<void>('/api/v1/memory/$id/quarantine');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // POST /memory/{id}/restore — un-archives a soft-deleted memory.
   Future<void> restore(String id) async {
     try {

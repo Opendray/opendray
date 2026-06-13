@@ -3462,7 +3462,19 @@
     "emptyBody": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
     "globalScope": "(global)",
     "countBadge": "{count} archivadas",
-    "restore": "Restaurar"
+    "restore": "Restaurar",
+    "restoreAll": "Restaurar todo",
+    "deleteAll": "Eliminar todo",
+    "restoreAllConfirm": "¿Restaurar las {count} memorias archivadas de {project}?",
+    "deleteAllConfirm": "¿Eliminar permanentemente las {count} memorias archivadas de {project}? Omite la ventana de gracia de 30 días y no se puede deshacer.",
+    "deletePermanently": "Eliminar",
+    "deleteConfirm": "¿Eliminar permanentemente esta memoria ahora? Omite la ventana de gracia de 30 días y no se puede deshacer.",
+    "restoredToast": "Restaurada",
+    "restoredAllToast": "{count} memorias restauradas",
+    "deletedToast": "Eliminada permanentemente",
+    "deletedAllToast": "{count} memorias eliminadas",
+    "deleteFailed": "Error al eliminar: {error}",
+    "summary": "{projects} proyectos · {memories} archivadas"
   },
   "project": {
     "title": "Proyecto",
@@ -4275,7 +4287,13 @@
       "scopeKeyLabel": "Clave de ámbito (cwd del proyecto)",
       "scopeKeyHint": "/Users/you/projects/foo",
       "submit": "Crear"
-    }
+    },
+    "archive": "Archivar",
+    "quarantine": "Cuarentena",
+    "archivedToast": "Memoria archivada — restaurable desde Archivado",
+    "quarantinedToast": "Memoria en cuarentena — revísala en Cortex → Cuarentena",
+    "archiveFailed": "Error al archivar: {error}",
+    "quarantineFailed": "Error al poner en cuarentena: {error}"
   },
   "about": {
     "title": "Acerca de",

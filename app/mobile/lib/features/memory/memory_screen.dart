@@ -1471,6 +1471,66 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
     );
   }
 
+  // Manual archive — reversible (Archived view) until grace purges it.
+  Future<void> _archive() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(memoryApiProvider).archive(widget.memory.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.memory.archivedToast)),
+      );
+      Navigator.of(context).pop(_DetailResult.changed);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = t.memory.archiveFailed(error: e.message);
+        });
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = t.memory.archiveFailed(error: e.toString());
+        });
+      }
+    }
+  }
+
+  // Manual quarantine — moves the row to the Cortex review queue.
+  Future<void> _quarantine() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(memoryApiProvider).quarantine(widget.memory.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.memory.quarantinedToast)),
+      );
+      Navigator.of(context).pop(_DetailResult.changed);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = t.memory.quarantineFailed(error: e.message);
+        });
+      }
+    } on Object catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = t.memory.quarantineFailed(error: e.toString());
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final m = widget.memory;
@@ -1507,6 +1567,18 @@ class _MemoryDetailSheetState extends ConsumerState<_MemoryDetailSheet> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  if (!_editing) ...[
+                    IconButton(
+                      icon: const Icon(Icons.archive_outlined, size: 18),
+                      tooltip: t.memory.archive,
+                      onPressed: _busy ? null : _archive,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.shield_outlined, size: 18),
+                      tooltip: t.memory.quarantine,
+                      onPressed: _busy ? null : _quarantine,
+                    ),
+                  ],
                   IconButton(
                     icon: const Icon(Icons.copy, size: 18),
                     tooltip: t.memory.copyTooltip,

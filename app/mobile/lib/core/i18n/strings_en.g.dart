@@ -204,6 +204,9 @@ class TranslationsNavEn {
 
 	/// en: 'Vault'
 	String get vault => 'Vault';
+
+	/// en: 'Cortex'
+	String get cortex => 'Cortex';
 }
 
 // Path: web
@@ -246,6 +249,7 @@ class TranslationsWebEn {
 	late final TranslationsWebNoteEditorEn noteEditor = TranslationsWebNoteEditorEn.internal(_root);
 	late final TranslationsWebExportEn export = TranslationsWebExportEn.internal(_root);
 	late final TranslationsWebKnowledgeEn knowledge = TranslationsWebKnowledgeEn.internal(_root);
+	late final TranslationsWebCortexEn cortex = TranslationsWebCortexEn.internal(_root);
 }
 
 // Path: more
@@ -731,6 +735,42 @@ class TranslationsMemoryArchivedEn {
 
 	/// en: 'Restore'
 	String get restore => 'Restore';
+
+	/// en: 'Restore all'
+	String get restoreAll => 'Restore all';
+
+	/// en: 'Delete all'
+	String get deleteAll => 'Delete all';
+
+	/// en: 'Restore all {count} archived memories in {project}?'
+	String restoreAllConfirm({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?';
+
+	/// en: 'Permanently delete all {count} archived memories in {project}? This skips the 30-day grace window and cannot be undone.'
+	String deleteAllConfirm({required Object count, required Object project}) => 'Permanently delete all ${count} archived memories in ${project}? This skips the 30-day grace window and cannot be undone.';
+
+	/// en: 'Delete'
+	String get deletePermanently => 'Delete';
+
+	/// en: 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.'
+	String get deleteConfirm => 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.';
+
+	/// en: 'Restored'
+	String get restoredToast => 'Restored';
+
+	/// en: 'Restored {count} memories'
+	String restoredAllToast({required Object count}) => 'Restored ${count} memories';
+
+	/// en: 'Deleted permanently'
+	String get deletedToast => 'Deleted permanently';
+
+	/// en: 'Deleted {count} memories'
+	String deletedAllToast({required Object count}) => 'Deleted ${count} memories';
+
+	/// en: 'Delete failed: {error}'
+	String deleteFailed({required Object error}) => 'Delete failed: ${error}';
+
+	/// en: '{projects} projects · {memories} archived'
+	String summary({required Object projects, required Object memories}) => '${projects} projects · ${memories} archived';
 }
 
 // Path: project
@@ -1787,6 +1827,24 @@ class TranslationsMemoryEn {
 	late final TranslationsMemoryDeleteOneEn deleteOne = TranslationsMemoryDeleteOneEn.internal(_root);
 	late final TranslationsMemoryScopeEn scope = TranslationsMemoryScopeEn.internal(_root);
 	late final TranslationsMemoryCreateEn create = TranslationsMemoryCreateEn.internal(_root);
+
+	/// en: 'Archive'
+	String get archive => 'Archive';
+
+	/// en: 'Quarantine'
+	String get quarantine => 'Quarantine';
+
+	/// en: 'Memory archived — restorable from Archived'
+	String get archivedToast => 'Memory archived — restorable from Archived';
+
+	/// en: 'Memory quarantined — review under Cortex → Quarantine'
+	String get quarantinedToast => 'Memory quarantined — review under Cortex → Quarantine';
+
+	/// en: 'Archive failed: {error}'
+	String archiveFailed({required Object error}) => 'Archive failed: ${error}';
+
+	/// en: 'Quarantine failed: {error}'
+	String quarantineFailed({required Object error}) => 'Quarantine failed: ${error}';
 }
 
 // Path: about
@@ -1918,6 +1976,7 @@ class TranslationsWebSessionsEn {
 	late final TranslationsWebSessionsInspectorEn inspector = TranslationsWebSessionsInspectorEn.internal(_root);
 	late final TranslationsWebSessionsEndedEn ended = TranslationsWebSessionsEndedEn.internal(_root);
 	late final TranslationsWebSessionsFileBrowserEn fileBrowser = TranslationsWebSessionsFileBrowserEn.internal(_root);
+	late final TranslationsWebSessionsNotesEn notes = TranslationsWebSessionsNotesEn.internal(_root);
 }
 
 // Path: web.memory
@@ -1940,11 +1999,14 @@ class TranslationsWebMemoryEn {
 	/// en: 'Archived'
 	String get navArchived => 'Archived';
 
-	/// en: 'Workers'
-	String get navWorkers => 'Workers';
+	/// en: 'Cortex settings'
+	String get navWorkers => 'Cortex settings';
 
-	/// en: 'Configuration →'
-	String get navConfiguration => 'Configuration →';
+	/// en: 'Storage & embedder →'
+	String get navConfiguration => 'Storage & embedder →';
+
+	/// en: 'Quarantine'
+	String get navQuarantine => 'Quarantine';
 }
 
 // Path: web.journalStale
@@ -2130,15 +2192,16 @@ class TranslationsWebMemoryConfigEn {
 
 	// Translations
 
-	/// en: 'Memory configuration'
-	String get title => 'Memory configuration';
+	/// en: 'Cortex settings'
+	String get title => 'Cortex settings';
 
-	/// en: 'All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.'
-	String get subtitle => 'All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.';
+	/// en: 'Every runtime knob of the AI loop in one place — spawn injection, LLM providers, per-task workers, capture triggers, injection profiles, token costs. Changes apply immediately; no restart.'
+	String get subtitle => 'Every runtime knob of the AI loop in one place — spawn injection, LLM providers, per-task workers, capture triggers, injection profiles, token costs. Changes apply immediately; no restart.';
 
 	late final TranslationsWebMemoryConfigSectionsEn sections = TranslationsWebMemoryConfigSectionsEn.internal(_root);
 	late final TranslationsWebMemoryConfigSectionHintsEn sectionHints = TranslationsWebMemoryConfigSectionHintsEn.internal(_root);
 	late final TranslationsWebMemoryConfigMoveBannerEn moveBanner = TranslationsWebMemoryConfigMoveBannerEn.internal(_root);
+	late final TranslationsWebMemoryConfigInfraEn infra = TranslationsWebMemoryConfigInfraEn.internal(_root);
 }
 
 // Path: web.memoryWorkers
@@ -2261,6 +2324,39 @@ class TranslationsWebMemoryWorkersEn {
 	String get unknownError => 'unknown error';
 
 	late final TranslationsWebMemoryWorkersTasksEn tasks = TranslationsWebMemoryWorkersTasksEn.internal(_root);
+
+	/// en: 'Model'
+	String get modelLabel => 'Model';
+
+	/// en: 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.'
+	String get modelHint => 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.';
+
+	/// en: 'CLI default (latest)'
+	String get modelCliDefault => 'CLI default (latest)';
+
+	/// en: 'Custom…'
+	String get modelCustom => 'Custom…';
+
+	/// en: 'exact model id'
+	String get modelCustomPlaceholder => 'exact model id';
+
+	/// en: 'List'
+	String get modelBackToList => 'List';
+
+	/// en: 'Codex (codex exec)'
+	String get cliCodex => 'Codex (codex exec)';
+
+	/// en: 'Antigravity (agy --print)'
+	String get cliAntigravity => 'Antigravity (agy --print)';
+
+	/// en: '{label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.'
+	String infraGateOff({required Object label}) => '${label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.';
+
+	/// en: 'Enable it'
+	String get infraGateOpen => 'Enable it';
+
+	/// en: 'model:'
+	String get providerModel => 'model:';
 }
 
 // Path: web.archived
@@ -2283,11 +2379,56 @@ class TranslationsWebArchivedEn {
 	/// en: 'Archived memories'
 	String get title => 'Archived memories';
 
-	/// en: 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.'
-	String get subtitle => 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.';
+	/// en: 'Soft-archived memories, restorable until the 30-day grace window purges them. Sources: the auto-cleaner’s verdicts, manual per-memory archive, and whole projects you archive — a project’s memories land here together and return together when you unarchive it (project archives are exempt from the purge).'
+	String get subtitle => 'Soft-archived memories, restorable until the 30-day grace window purges them. Sources: the auto-cleaner’s verdicts, manual per-memory archive, and whole projects you archive — a project’s memories land here together and return together when you unarchive it (project archives are exempt from the purge).';
 
 	/// en: '(global)'
 	String get globalScope => '(global)';
+
+	/// en: '{projects} projects · {memories} archived memories'
+	String summary({required Object projects, required Object memories}) => '${projects} projects · ${memories} archived memories';
+
+	/// en: '{count} memories'
+	String memCount({required Object count}) => '${count} memories';
+
+	/// en: 'Restore all'
+	String get restoreAll => 'Restore all';
+
+	/// en: 'Restore every archived memory in this project'
+	String get restoreAllTooltip => 'Restore every archived memory in this project';
+
+	/// en: 'Restore all {count} archived memories in {project}?'
+	String restoreAllConfirm({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?';
+
+	/// en: 'Restored {count} memories'
+	String restoredAllToast({required Object count}) => 'Restored ${count} memories';
+
+	/// en: 'Delete'
+	String get deleteButton => 'Delete';
+
+	/// en: 'Delete permanently now — skips the 30-day grace window, cannot be undone'
+	String get deleteTooltip => 'Delete permanently now — skips the 30-day grace window, cannot be undone';
+
+	/// en: 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.'
+	String get deleteConfirm => 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.';
+
+	/// en: 'Deleted permanently'
+	String get deletedToast => 'Deleted permanently';
+
+	/// en: 'Delete failed'
+	String get deleteFailedToast => 'Delete failed';
+
+	/// en: 'Delete all'
+	String get deleteAll => 'Delete all';
+
+	/// en: 'Permanently delete every archived memory in this project now'
+	String get deleteAllTooltip => 'Permanently delete every archived memory in this project now';
+
+	/// en: 'Permanently delete all {count} archived memories in {project} now? This skips the 30-day grace window and cannot be undone.'
+	String deleteAllConfirm({required Object count, required Object project}) => 'Permanently delete all ${count} archived memories in ${project} now? This skips the 30-day grace window and cannot be undone.';
+
+	/// en: 'Deleted {count} memories'
+	String deletedAllToast({required Object count}) => 'Deleted ${count} memories';
 
 	/// en: 'Open project'
 	String get openProject => 'Open project';
@@ -2620,6 +2761,13 @@ class TranslationsWebServerSettingsEn {
 	late final TranslationsWebServerSettingsProbeEn probe = TranslationsWebServerSettingsProbeEn.internal(_root);
 	late final TranslationsWebServerSettingsBackupEn backup = TranslationsWebServerSettingsBackupEn.internal(_root);
 	late final TranslationsWebServerSettingsTargetRowEn targetRow = TranslationsWebServerSettingsTargetRowEn.internal(_root);
+	late final TranslationsWebServerSettingsToggleEn toggle = TranslationsWebServerSettingsToggleEn.internal(_root);
+
+	/// en: 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).'
+	String get memoryRuntimeBanner => 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).';
+
+	/// en: 'Open Cortex settings'
+	String get memoryRuntimeBannerButton => 'Open Cortex settings';
 }
 
 // Path: web.settings
@@ -2865,6 +3013,22 @@ class TranslationsWebKnowledgeEn {
 	late final TranslationsWebKnowledgeScopesEn scopes = TranslationsWebKnowledgeScopesEn.internal(_root);
 	late final TranslationsWebKnowledgeKbEn kb = TranslationsWebKnowledgeKbEn.internal(_root);
 	late final TranslationsWebKnowledgeKindsEn kinds = TranslationsWebKnowledgeKindsEn.internal(_root);
+	late final TranslationsWebKnowledgeDistillEn distill = TranslationsWebKnowledgeDistillEn.internal(_root);
+	late final TranslationsWebKnowledgeGraphEn graph = TranslationsWebKnowledgeGraphEn.internal(_root);
+}
+
+// Path: web.cortex
+class TranslationsWebCortexEn {
+	TranslationsWebCortexEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebCortexHomeEn home = TranslationsWebCortexHomeEn.internal(_root);
+	late final TranslationsWebCortexChatEn chat = TranslationsWebCortexChatEn.internal(_root);
+	late final TranslationsWebCortexBlueprintEn blueprint = TranslationsWebCortexBlueprintEn.internal(_root);
+	late final TranslationsWebCortexQuarantineEn quarantine = TranslationsWebCortexQuarantineEn.internal(_root);
+	late final TranslationsWebCortexSettingsEn settings = TranslationsWebCortexSettingsEn.internal(_root);
 }
 
 // Path: more.identity
@@ -5644,6 +5808,16 @@ class TranslationsWebSessionsFileBrowserEn {
 	String get homeFailedToast => 'Failed to read home';
 }
 
+// Path: web.sessions.notes
+class TranslationsWebSessionsNotesEn {
+	TranslationsWebSessionsNotesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebSessionsNotesCortexDocEn cortexDoc = TranslationsWebSessionsNotesCortexDocEn.internal(_root);
+}
+
 // Path: web.conflicts.confirmDelete
 class TranslationsWebConflictsConfirmDeleteEn {
 	TranslationsWebConflictsConfirmDeleteEn.internal(this._root);
@@ -5782,6 +5956,42 @@ class TranslationsWebMemoryConfigMoveBannerEn {
 	String get openButton => 'Open Memory configuration →';
 }
 
+// Path: web.memoryConfig.infra
+class TranslationsWebMemoryConfigInfraEn {
+	TranslationsWebMemoryConfigInfraEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Storage & embedder (infrastructure)'
+	String get title => 'Storage & embedder (infrastructure)';
+
+	/// en: 'The other half of memory config — embedding backend, retrieval tuning, gatekeeper/cleaner gates and the knowledge graph flag — lives in Server Settings and needs a restart.'
+	String get hint => 'The other half of memory config — embedding backend, retrieval tuning, gatekeeper/cleaner gates and the knowledge graph flag — lives in Server Settings and needs a restart.';
+
+	/// en: 'Server Settings →'
+	String get openSettings => 'Server Settings →';
+
+	/// en: 'embedder'
+	String get embedder => 'embedder';
+
+	/// en: 'gatekeeper'
+	String get gatekeeper => 'gatekeeper';
+
+	/// en: 'cleaner'
+	String get cleaner => 'cleaner';
+
+	/// en: 'knowledge graph'
+	String get knowledge => 'knowledge graph';
+
+	/// en: 'on'
+	String get on => 'on';
+
+	/// en: 'off'
+	String get off => 'off';
+}
+
 // Path: web.memoryWorkers.tasks
 class TranslationsWebMemoryWorkersTasksEn {
 	TranslationsWebMemoryWorkersTasksEn.internal(this._root);
@@ -5796,6 +6006,8 @@ class TranslationsWebMemoryWorkersTasksEn {
 	late final TranslationsWebMemoryWorkersTasksPlanDriftEn plan_drift = TranslationsWebMemoryWorkersTasksPlanDriftEn.internal(_root);
 	late final TranslationsWebMemoryWorkersTasksConflictDetectorEn conflict_detector = TranslationsWebMemoryWorkersTasksConflictDetectorEn.internal(_root);
 	late final TranslationsWebMemoryWorkersTasksCaptureEn capture = TranslationsWebMemoryWorkersTasksCaptureEn.internal(_root);
+	late final TranslationsWebMemoryWorkersTasksBlueprintEn blueprint = TranslationsWebMemoryWorkersTasksBlueprintEn.internal(_root);
+	late final TranslationsWebMemoryWorkersTasksCurationEn curation = TranslationsWebMemoryWorkersTasksCurationEn.internal(_root);
 }
 
 // Path: web.project.picker
@@ -5901,6 +6113,9 @@ class TranslationsWebProjectTabsEn {
 
 	/// en: 'Overview'
 	String get overview => 'Overview';
+
+	/// en: 'Hygiene'
+	String get hygiene => 'Hygiene';
 }
 
 // Path: web.project.docLabel
@@ -5952,6 +6167,9 @@ class TranslationsWebProjectEditorEn {
 
 	/// en: 'Active plan — what we are doing right now and what is next. Updated as work progresses.'
 	String get planPlaceholder => 'Active plan — what we are doing right now and what is next. Updated as work progresses.';
+
+	/// en: 'Write this section in markdown…'
+	String get sectionPlaceholder => 'Write this section in markdown…';
 }
 
 // Path: web.project.readonly
@@ -5972,6 +6190,9 @@ class TranslationsWebProjectReadonlyEn {
 
 	/// en: 'last refresh'
 	String get lastRefresh => 'last refresh';
+
+	/// en: 'This section is scanner-managed; it fills in when its scanner runs.'
+	String get customEmpty => 'This section is scanner-managed; it fills in when its scanner runs.';
 }
 
 // Path: web.project.journal
@@ -6435,6 +6656,12 @@ class TranslationsWebMemoryInspectorRowEn {
 
 	/// en: 'Delete memory {id}? This is permanent.'
 	String deleteConfirm({required Object id}) => 'Delete memory ${id}? This is permanent.';
+
+	/// en: 'Archive (reversible) — moves to the Archived view'
+	String get archiveTooltip => 'Archive (reversible) — moves to the Archived view';
+
+	/// en: 'Quarantine — moves to the review queue until promoted or expired'
+	String get quarantineTooltip => 'Quarantine — moves to the review queue until promoted or expired';
 }
 
 // Path: web.memoryInspector.toasts
@@ -6492,6 +6719,18 @@ class TranslationsWebMemoryInspectorToastsEn {
 
 	/// en: 'Sync failed'
 	String get syncFailed => 'Sync failed';
+
+	/// en: 'Memory archived — restorable from the Archived view'
+	String get archived => 'Memory archived — restorable from the Archived view';
+
+	/// en: 'Archive failed'
+	String get archiveFailed => 'Archive failed';
+
+	/// en: 'Memory quarantined — review it under Cortex → Quarantine'
+	String get quarantined => 'Memory quarantined — review it under Cortex → Quarantine';
+
+	/// en: 'Quarantine failed'
+	String get quarantineFailed => 'Quarantine failed';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -8045,6 +8284,18 @@ class TranslationsWebPluginsMcpEn {
 	/// en: 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.'
 	String get codexUnsupportedTooltip => 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.';
 
+	/// en: 'Built-in'
+	String get builtinBadge => 'Built-in';
+
+	/// en: 'Provided by opendray itself — attached automatically to every session that supports MCP. Cannot be edited or deleted.'
+	String get builtinTooltip => 'Provided by opendray itself — attached automatically to every session that supports MCP. Cannot be edited or deleted.';
+
+	/// en: 'opendray's shared memory & knowledge server: memory_search / memory_store, project_goal & project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Auto-attaches to every Claude / Codex / Gemini session.'
+	String get builtinDescription => 'opendray\'s shared memory & knowledge server: memory_search / memory_store, project_goal & project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Auto-attaches to every Claude / Codex / Gemini session.';
+
+	/// en: 'always on'
+	String get builtinAutoAttach => 'always on';
+
 	late final TranslationsWebPluginsMcpEditorEn editor = TranslationsWebPluginsMcpEditorEn.internal(_root);
 	late final TranslationsWebPluginsMcpTestEn test = TranslationsWebPluginsMcpTestEn.internal(_root);
 }
@@ -8800,6 +9051,15 @@ class TranslationsWebServerSettingsFormGroupsEn {
 
 	/// en: 'What's in a backup?'
 	String get backupWhatsInside => 'What\'s in a backup?';
+
+	/// en: 'Background governance (gatekeeper / cleaner)'
+	String get memoryGovernance => 'Background governance (gatekeeper / cleaner)';
+
+	/// en: 'Knowledge graph'
+	String get knowledgeGraph => 'Knowledge graph';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.serverSettings.fields
@@ -8848,6 +9108,17 @@ class TranslationsWebServerSettingsFieldsEn {
 	late final TranslationsWebServerSettingsFieldsBackupExportDirEn backupExportDir = TranslationsWebServerSettingsFieldsBackupExportDirEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsBackupPgDumpPathEn backupPgDumpPath = TranslationsWebServerSettingsFieldsBackupPgDumpPathEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsBackupPgRestorePathEn backupPgRestorePath = TranslationsWebServerSettingsFieldsBackupPgRestorePathEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsMemoryDedupEn memoryDedup = TranslationsWebServerSettingsFieldsMemoryDedupEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsGatekeeperEnabledEn gatekeeperEnabled = TranslationsWebServerSettingsFieldsGatekeeperEnabledEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsGatekeeperLatencyEn gatekeeperLatency = TranslationsWebServerSettingsFieldsGatekeeperLatencyEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsCleanerEnabledEn cleanerEnabled = TranslationsWebServerSettingsFieldsCleanerEnabledEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsCleanerIntervalEn cleanerInterval = TranslationsWebServerSettingsFieldsCleanerIntervalEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsCleanerGlobalScopeEn cleanerGlobalScope = TranslationsWebServerSettingsFieldsCleanerGlobalScopeEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsKnowledgeEnabledEn knowledgeEnabled = TranslationsWebServerSettingsFieldsKnowledgeEnabledEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsClaudeWatcherEn claudeWatcher = TranslationsWebServerSettingsFieldsClaudeWatcherEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn claudeAutoFailover = TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsMobileTokenTTLEn mobileTokenTTL = TranslationsWebServerSettingsFieldsMobileTokenTTLEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsDbMaxConnsEn dbMaxConns = TranslationsWebServerSettingsFieldsDbMaxConnsEn.internal(_root);
 }
 
 // Path: web.serverSettings.liveTail
@@ -9089,6 +9360,27 @@ class TranslationsWebServerSettingsTargetRowEn {
 
 	/// en: 'Unknown error'
 	String get unknownError => 'Unknown error';
+}
+
+// Path: web.serverSettings.toggle
+class TranslationsWebServerSettingsToggleEn {
+	TranslationsWebServerSettingsToggleEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'On'
+	String get on => 'On';
+
+	/// en: 'Off'
+	String get off => 'Off';
+
+	/// en: 'Default (on)'
+	String get defaultOn => 'Default (on)';
+
+	/// en: 'Default (off)'
+	String get defaultOff => 'Default (off)';
 }
 
 // Path: web.settings.groups
@@ -9405,6 +9697,7 @@ class TranslationsWebMemoryAmbientProvidersEn {
 
 	late final TranslationsWebMemoryAmbientProvidersRowEn row = TranslationsWebMemoryAmbientProvidersRowEn.internal(_root);
 	late final TranslationsWebMemoryAmbientProvidersDialogEn dialog = TranslationsWebMemoryAmbientProvidersDialogEn.internal(_root);
+	late final TranslationsWebMemoryAmbientProvidersModelSelectEn modelSelect = TranslationsWebMemoryAmbientProvidersModelSelectEn.internal(_root);
 }
 
 // Path: web.memoryAmbient.rules
@@ -9788,6 +10081,26 @@ class TranslationsWebKnowledgeKbEn {
 	String get referenceBadge => 'Reference';
 
 	late final TranslationsWebKnowledgeKbProposalEn proposal = TranslationsWebKnowledgeKbProposalEn.internal(_root);
+
+	/// en: 'Discuss with AI'
+	String get discuss => 'Discuss with AI';
+
+	/// en: 'Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites'
+	String get discussHint => 'Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites';
+
+	/// en: 'on-demand'
+	String get onDemand => 'on-demand';
+
+	/// en: 'Remove page'
+	String get removePage => 'Remove page';
+
+	/// en: 'Remove this page from the knowledge base (its content is kept and resurrects if the slug is re-added)'
+	String get removePageHint => 'Remove this page from the knowledge base (its content is kept and resurrects if the slug is re-added)';
+
+	/// en: 'Page removed'
+	String get pageRemovedToast => 'Page removed';
+
+	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9812,6 +10125,352 @@ class TranslationsWebKnowledgeKindsEn {
 
 	/// en: 'Skills'
 	String get skill => 'Skills';
+}
+
+// Path: web.knowledge.distill
+class TranslationsWebKnowledgeDistillEn {
+	TranslationsWebKnowledgeDistillEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Distillation'
+	String get tab => 'Distillation';
+
+	/// en: 'A SKILL is a proven, repeatable PROCEDURE distilled from your real work. The experience compiler mines session journals ACROSS projects, clusters similar work, and only drafts a candidate when the same procedure SUCCEEDED in 2+ sessions — every evidence quote is verified verbatim against the journal. Candidates are ranked by recurrence × the manual procedure's time cost, so what saves the most time distills first; fully mechanical procedures also compile to an executable run.sh with a validation step.'
+	String get intro => 'A SKILL is a proven, repeatable PROCEDURE distilled from your real work. The experience compiler mines session journals ACROSS projects, clusters similar work, and only drafts a candidate when the same procedure SUCCEEDED in 2+ sessions — every evidence quote is verified verbatim against the journal. Candidates are ranked by recurrence × the manual procedure\'s time cost, so what saves the most time distills first; fully mechanical procedures also compile to an executable run.sh with a validation step.';
+
+	/// en: 'Playbooks — distilled, awaiting review'
+	String get playbooks => 'Playbooks — distilled, awaiting review';
+
+	/// en: 'Every candidate passed the gates: ≥2 successful sessions, verified evidence quotes, ≥3 concrete steps. Ranked by time saved (recurrence × manual minutes). Promote what you'll reuse, discard the rest.'
+	String get playbooksHint => 'Every candidate passed the gates: ≥2 successful sessions, verified evidence quotes, ≥3 concrete steps. Ranked by time saved (recurrence × manual minutes). Promote what you\'ll reuse, discard the rest.';
+
+	/// en: 'Nothing mined yet — candidates appear once the same procedure succeeds in two or more sessions.'
+	String get playbooksEmpty => 'Nothing mined yet — candidates appear once the same procedure succeeds in two or more sessions.';
+
+	/// en: 'Skills — active, injected at spawn'
+	String get skills => 'Skills — active, injected at spawn';
+
+	/// en: 'Promoted playbooks. Every new session receives these as skills.'
+	String get skillsHint => 'Promoted playbooks. Every new session receives these as skills.';
+
+	/// en: 'No skills yet — promote a playbook to create the first one.'
+	String get skillsEmpty => 'No skills yet — promote a playbook to create the first one.';
+
+	/// en: 'Promote to skill'
+	String get skillify => 'Promote to skill';
+
+	/// en: 'Render as a skill file and inject into every spawn'
+	String get skillifyHint => 'Render as a skill file and inject into every spawn';
+
+	/// en: 'Discard'
+	String get discard => 'Discard';
+
+	/// en: 'Retire skill'
+	String get retire => 'Retire skill';
+
+	/// en: 'injected'
+	String get injectedBadge => 'injected';
+
+	/// en: 'Promoted — published to Plugins → Agent Skills; new sessions receive this skill'
+	String get skillifiedToast => 'Promoted — published to Plugins → Agent Skills; new sessions receive this skill';
+
+	/// en: 'Removed'
+	String get removedToast => 'Removed';
+
+	/// en: 'used in {count} sessions'
+	String usage({required Object count}) => 'used in ${count} sessions';
+
+	/// en: 'last {date}'
+	String lastUsed({required Object date}) => 'last ${date}';
+
+	/// en: 'Skill enabled — new sessions load it'
+	String get enabledToast => 'Skill enabled — new sessions load it';
+
+	/// en: 'Skill disabled — removed from the loaded set'
+	String get disabledToast => 'Skill disabled — removed from the loaded set';
+
+	/// en: 'off'
+	String get disabledBadge => 'off';
+
+	/// en: 'Enabled skills are loadable by sessions; disable what this period of work doesn't need'
+	String get toggleHint => 'Enabled skills are loadable by sessions; disable what this period of work doesn\'t need';
+
+	/// en: 'Click to view the full procedure'
+	String get viewHint => 'Click to view the full procedure';
+
+	/// en: 'in Plugins → Agent Skills'
+	String get inAgentSkills => 'in Plugins → Agent Skills';
+
+	/// en: 'The rendered SKILL.md lives in the skills vault — view or manage it under Plugins → Agent Skills.'
+	String get agentSkillsHint => 'The rendered SKILL.md lives in the skills vault — view or manage it under Plugins → Agent Skills.';
+
+	/// en: 'disabled — SKILL.md removed from the vault'
+	String get notInVault => 'disabled — SKILL.md removed from the vault';
+
+	/// en: 'compiled'
+	String get compiledBadge => 'compiled';
+
+	/// en: 'Ships an executable run.sh with a validation step; promotion also registers it as a custom task'
+	String get compiledHint => 'Ships an executable run.sh with a validation step; promotion also registers it as a custom task';
+
+	/// en: 'succeeded ×{count}'
+	String recurrence({required Object count}) => 'succeeded ×${count}';
+
+	/// en: '~{minutes} min manual'
+	String timeCost({required Object minutes}) => '~${minutes} min manual';
+
+	/// en: '{count} projects'
+	String projectSpan({required Object count}) => '${count} projects';
+
+	/// en: 'Ranked by recurrence × manual time cost — what saves the most operator time distills first'
+	String get scoreHint => 'Ranked by recurrence × manual time cost — what saves the most operator time distills first';
+
+	/// en: '{ok} ok / {failed} failed after loading'
+	String outcomes({required Object ok, required Object failed}) => '${ok} ok / ${failed} failed after loading';
+
+	late final TranslationsWebKnowledgeDistillRetirementEn retirement = TranslationsWebKnowledgeDistillRetirementEn.internal(_root);
+}
+
+// Path: web.knowledge.graph
+class TranslationsWebKnowledgeGraphEn {
+	TranslationsWebKnowledgeGraphEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Graph'
+	String get tab => 'Graph';
+
+	/// en: 'The relationship map of everything the AI has learned: which projects share tech, which skills and pitfalls attach to which entities. Check a node’s blast radius here BEFORE touching shared infrastructure.'
+	String get intro => 'The relationship map of everything the AI has learned: which projects share tech, which skills and pitfalls attach to which entities. Check a node’s blast radius here BEFORE touching shared infrastructure.';
+
+	/// en: 'No knowledge yet — the graph builds itself as sessions run: the anchor sweep lifts entities out of project work, and distillation adds playbooks and skills. Come back after a few working sessions.'
+	String get empty => 'No knowledge yet — the graph builds itself as sessions run: the anchor sweep lifts entities out of project work, and distillation adds playbooks and skills. Come back after a few working sessions.';
+
+	/// en: 'Scroll to zoom · drag the background to pan · drag a node to untangle · click a node to inspect it'
+	String get hint => 'Scroll to zoom · drag the background to pan · drag a node to untangle · click a node to inspect it';
+
+	late final TranslationsWebKnowledgeGraphLegendEn legend = TranslationsWebKnowledgeGraphLegendEn.internal(_root);
+
+	/// en: '{count} connected nodes'
+	String connections({required Object count}) => '${count} connected nodes';
+
+	/// en: 'Nothing links to this node yet.'
+	String get noLinks => 'Nothing links to this node yet.';
+}
+
+// Path: web.cortex.home
+class TranslationsWebCortexHomeEn {
+	TranslationsWebCortexHomeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cortex'
+	String get title => 'Cortex';
+
+	/// en: 'One module, three rungs, one loop: raw memory crystallises into each project's official doc, distils into cross-project knowledge, and is injected back into every new session.'
+	String get subtitle => 'One module, three rungs, one loop: raw memory crystallises into each project\'s official doc, distils into cross-project knowledge, and is injected back into every new session.';
+
+	/// en: 'disabled'
+	String get disabled => 'disabled';
+
+	/// en: '{count} pending'
+	String pendingProposals({required Object count}) => '${count} pending';
+
+	/// en: 'Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.'
+	String get loopHint => 'Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.';
+
+	/// en: 'Active projects'
+	String get activeProjects => 'Active projects';
+
+	/// en: 'idle {days}d'
+	String idle({required Object days}) => 'idle ${days}d';
+
+	late final TranslationsWebCortexHomeMemoryEn memory = TranslationsWebCortexHomeMemoryEn.internal(_root);
+	late final TranslationsWebCortexHomeNotesEn notes = TranslationsWebCortexHomeNotesEn.internal(_root);
+	late final TranslationsWebCortexHomeKnowledgeEn knowledge = TranslationsWebCortexHomeKnowledgeEn.internal(_root);
+
+	/// en: 'Settings'
+	String get settings => 'Settings';
+
+	late final TranslationsWebCortexHomeProposalsEn proposals = TranslationsWebCortexHomeProposalsEn.internal(_root);
+}
+
+// Path: web.cortex.chat
+class TranslationsWebCortexChatEn {
+	TranslationsWebCortexChatEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Curation chat'
+	String get title => 'Curation chat';
+
+	/// en: 'Discuss with AI'
+	String get show => 'Discuss with AI';
+
+	/// en: 'Hide chat'
+	String get hide => 'Hide chat';
+
+	/// en: 'Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you've locked it.'
+	String get emptyHint => 'Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you\'ve locked it.';
+
+	/// en: 'e.g. update this from the latest work · ⌘↵ to send'
+	String get placeholder => 'e.g. update this from the latest work · ⌘↵ to send';
+
+	/// en: 'AI is working…'
+	String get thinking => 'AI is working…';
+
+	/// en: 'Send failed'
+	String get sendFailed => 'Send failed';
+
+	/// en: 'Escalate to session'
+	String get escalate => 'Escalate to session';
+
+	/// en: 'Escalated'
+	String get escalated => 'Escalated';
+
+	/// en: 'Spawn a full agent session, grounded in the codebase, seeded with this conversation'
+	String get escalateHint => 'Spawn a full agent session, grounded in the codebase, seeded with this conversation';
+
+	/// en: 'Escalation failed'
+	String get escalateFailed => 'Escalation failed';
+
+	/// en: 'Agent session launched'
+	String get escalatedToast => 'Agent session launched';
+
+	/// en: 'Close this conversation'
+	String get closeHint => 'Close this conversation';
+
+	/// en: 'Document updated'
+	String get revisionApplied => 'Document updated';
+
+	/// en: 'Proposal filed — review in Inbox'
+	String get revisionProposed => 'Proposal filed — review in Inbox';
+}
+
+// Path: web.cortex.blueprint
+class TranslationsWebCortexBlueprintEn {
+	TranslationsWebCortexBlueprintEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Blueprint'
+	String get open => 'Blueprint';
+
+	/// en: 'Edit which doc sections this project carries'
+	String get openHint => 'Edit which doc sections this project carries';
+
+	/// en: 'Doc blueprint'
+	String get title => 'Doc blueprint';
+
+	/// en: 'The section set of this project's official document. Different kinds of projects deserve different sections — shape it yourself or let the AI propose one.'
+	String get description => 'The section set of this project\'s official document. Different kinds of projects deserve different sections — shape it yourself or let the AI propose one.';
+
+	/// en: 'AI propose'
+	String get propose => 'AI propose';
+
+	/// en: 'Classify this project and propose a tailored section set'
+	String get proposeHint => 'Classify this project and propose a tailored section set';
+
+	/// en: 'Proposal failed'
+	String get proposeFailed => 'Proposal failed';
+
+	/// en: 'AI classified this as: {type} — {reason} Review below, edit freely, then Apply.'
+	String proposalNote({required Object type, required Object reason}) => 'AI classified this as: ${type} — ${reason} Review below, edit freely, then Apply.';
+
+	/// en: 'Add section'
+	String get addSection => 'Add section';
+
+	/// en: 'slug'
+	String get slugPlaceholder => 'slug';
+
+	/// en: 'Title'
+	String get titlePlaceholder => 'Title';
+
+	/// en: 'Maintainer hint — one sentence steering the AI for this section (optional)'
+	String get hintPlaceholder => 'Maintainer hint — one sentence steering the AI for this section (optional)';
+
+	late final TranslationsWebCortexBlueprintModeEn mode = TranslationsWebCortexBlueprintModeEn.internal(_root);
+
+	/// en: 'inject'
+	String get inject => 'inject';
+
+	/// en: 'reserved'
+	String get reserved => 'reserved';
+
+	/// en: 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.'
+	String get deleteNote => 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Apply blueprint'
+	String get apply => 'Apply blueprint';
+
+	/// en: 'Apply failed'
+	String get applyFailed => 'Apply failed';
+
+	/// en: 'Blueprint applied'
+	String get appliedToast => 'Blueprint applied';
+}
+
+// Path: web.cortex.quarantine
+class TranslationsWebCortexQuarantineEn {
+	TranslationsWebCortexQuarantineEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Quarantine'
+	String get title => 'Quarantine';
+
+	/// en: 'Facts that need review before they count as durable memory: third-party-integration captures land here by policy, and you can quarantine any memory by hand from the Memory inspector. Promote what is true; discard the rest — unreviewed rows expire on their own.'
+	String get subtitle => 'Facts that need review before they count as durable memory: third-party-integration captures land here by policy, and you can quarantine any memory by hand from the Memory inspector. Promote what is true; discard the rest — unreviewed rows expire on their own.';
+
+	/// en: 'Nothing in quarantine. Rows arrive here from integration-origin sessions (memory policy “quarantine”) or when you quarantine a memory manually in the Memory inspector.'
+	String get empty => 'Nothing in quarantine. Rows arrive here from integration-origin sessions (memory policy “quarantine”) or when you quarantine a memory manually in the Memory inspector.';
+
+	/// en: 'Promote'
+	String get promote => 'Promote';
+
+	/// en: 'Move into durable memory (joins recall + consolidation)'
+	String get promoteHint => 'Move into durable memory (joins recall + consolidation)';
+
+	/// en: 'Discard'
+	String get discard => 'Discard';
+
+	/// en: 'Promoted to durable memory'
+	String get promotedToast => 'Promoted to durable memory';
+
+	/// en: 'Discarded'
+	String get discardedToast => 'Discarded';
+
+	/// en: 'Action failed'
+	String get actionFailed => 'Action failed';
+
+	/// en: 'expires {date}'
+	String expires({required Object date}) => 'expires ${date}';
+}
+
+// Path: web.cortex.settings
+class TranslationsWebCortexSettingsEn {
+	TranslationsWebCortexSettingsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebCortexSettingsInjectionEn injection = TranslationsWebCortexSettingsInjectionEn.internal(_root);
 }
 
 // Path: more.items.integrations
@@ -11517,6 +12176,27 @@ class TranslationsWebSessionsInspectorTabsEn {
 	String get memory => 'Memory';
 }
 
+// Path: web.sessions.notes.cortexDoc
+class TranslationsWebSessionsNotesCortexDocEn {
+	TranslationsWebSessionsNotesCortexDocEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project doc (Cortex)'
+	String get title => 'Project doc (Cortex)';
+
+	/// en: 'The project's official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.'
+	String get hint => 'The project\'s official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.';
+
+	/// en: 'Open workspace'
+	String get open => 'Open workspace';
+
+	/// en: 'empty'
+	String get empty => 'empty';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	TranslationsWebMemoryWorkersTasksGatekeeperEn.internal(this._root);
@@ -11530,6 +12210,9 @@ class TranslationsWebMemoryWorkersTasksGatekeeperEn {
 
 	/// en: 'Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.'
 	String get description => 'Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.';
+
+	/// en: 'High-frequency yes/no judgement — a light model (haiku / flash-lite / codex-mini / local) is plenty.'
+	String get modelAdvice => 'High-frequency yes/no judgement — a light model (haiku / flash-lite / codex-mini / local) is plenty.';
 }
 
 // Path: web.memoryWorkers.tasks.cleaner
@@ -11545,6 +12228,9 @@ class TranslationsWebMemoryWorkersTasksCleanerEn {
 
 	/// en: 'Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.'
 	String get description => 'Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.';
+
+	/// en: 'Batch keep/stale verdicts on old facts — light model recommended; runs on a schedule.'
+	String get modelAdvice => 'Batch keep/stale verdicts on old facts — light model recommended; runs on a schedule.';
 }
 
 // Path: web.memoryWorkers.tasks.gitactivity
@@ -11560,6 +12246,9 @@ class TranslationsWebMemoryWorkersTasksGitactivityEn {
 
 	/// en: 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.'
 	String get description => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.';
+
+	/// en: 'Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better.'
+	String get modelAdvice => 'Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better.';
 }
 
 // Path: web.memoryWorkers.tasks.transcript
@@ -11575,6 +12264,9 @@ class TranslationsWebMemoryWorkersTasksTranscriptEn {
 
 	/// en: 'Session-end "what did the agent do" summary. Naturally fits an agent worker.'
 	String get description => 'Session-end "what did the agent do" summary. Naturally fits an agent worker.';
+
+	/// en: 'Session 'what the agent did' summaries — balanced model recommended; feeds the journal and drift detection.'
+	String get modelAdvice => 'Session \'what the agent did\' summaries — balanced model recommended; feeds the journal and drift detection.';
 }
 
 // Path: web.memoryWorkers.tasks.plan_drift
@@ -11590,6 +12282,9 @@ class TranslationsWebMemoryWorkersTasksPlanDriftEn {
 
 	/// en: 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.'
 	String get description => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.';
+
+	/// en: 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.'
+	String get modelAdvice => 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.';
 }
 
 // Path: web.memoryWorkers.tasks.conflict_detector
@@ -11605,6 +12300,9 @@ class TranslationsWebMemoryWorkersTasksConflictDetectorEn {
 
 	/// en: 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.'
 	String get description => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.';
+
+	/// en: 'Daily cross-layer contradiction scan — balanced model is enough.'
+	String get modelAdvice => 'Daily cross-layer contradiction scan — balanced model is enough.';
 }
 
 // Path: web.memoryWorkers.tasks.capture
@@ -11620,6 +12318,45 @@ class TranslationsWebMemoryWorkersTasksCaptureEn {
 
 	/// en: 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.'
 	String get description => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.';
+
+	/// en: 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).'
+	String get modelAdvice => 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).';
+}
+
+// Path: web.memoryWorkers.tasks.blueprint
+class TranslationsWebMemoryWorkersTasksBlueprintEn {
+	TranslationsWebMemoryWorkersTasksBlueprintEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.'
+	String get modelAdvice => 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.';
+
+	/// en: 'Blueprint proposer'
+	String get label => 'Blueprint proposer';
+
+	/// en: 'Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor.'
+	String get description => 'Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor.';
+}
+
+// Path: web.memoryWorkers.tasks.curation
+class TranslationsWebMemoryWorkersTasksCurationEn {
+	TranslationsWebMemoryWorkersTasksCurationEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.'
+	String get modelAdvice => 'Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.';
+
+	/// en: 'Curation chat'
+	String get label => 'Curation chat';
+
+	/// en: 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.'
+	String get description => 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.';
 }
 
 // Path: web.project.readonly.tech_stack
@@ -11752,6 +12489,9 @@ class TranslationsWebProjectDocMetaMaintainerEn {
 
 	/// en: 'Auto-generated · read-only'
 	String get auto => 'Auto-generated · read-only';
+
+	/// en: 'Human-authored'
+	String get human => 'Human-authored';
 }
 
 // Path: web.project.docMeta.purpose
@@ -13077,11 +13817,11 @@ class TranslationsWebServerSettingsSectionsMemoryEn {
 
 	// Translations
 
-	/// en: 'Memory'
-	String get title => 'Memory';
+	/// en: 'Memory · storage & embedder'
+	String get title => 'Memory · storage & embedder';
 
-	/// en: 'Cross-CLI persistent memory subsystem.'
-	String get desc => 'Cross-CLI persistent memory subsystem.';
+	/// en: 'Infrastructure half of the memory subsystem: embedding backend, retrieval tuning and background governance. Restart to apply. Runtime behaviour (workers, capture, injection) lives in Cortex settings.'
+	String get desc => 'Infrastructure half of the memory subsystem: embedding backend, retrieval tuning and background governance. Restart to apply. Runtime behaviour (workers, capture, injection) lives in Cortex settings.';
 }
 
 // Path: web.serverSettings.sections.backup
@@ -13735,6 +14475,171 @@ class TranslationsWebServerSettingsFieldsBackupPgRestorePathEn {
 	String get hint => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.';
 }
 
+// Path: web.serverSettings.fields.memoryDedup
+class TranslationsWebServerSettingsFieldsMemoryDedupEn {
+	TranslationsWebServerSettingsFieldsMemoryDedupEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Dedup threshold'
+	String get label => 'Dedup threshold';
+
+	/// en: 'Write-time fold threshold: similarity above this updates the existing memory instead of inserting a near-duplicate. 0 = embedder-relative default; negative disables folding.'
+	String get hint => 'Write-time fold threshold: similarity above this updates the existing memory instead of inserting a near-duplicate. 0 = embedder-relative default; negative disables folding.';
+}
+
+// Path: web.serverSettings.fields.gatekeeperEnabled
+class TranslationsWebServerSettingsFieldsGatekeeperEnabledEn {
+	TranslationsWebServerSettingsFieldsGatekeeperEnabledEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Gatekeeper'
+	String get label => 'Gatekeeper';
+
+	/// en: 'Pre-write LLM judge: decides whether a memory_store call carries a durable fact or noise. Which LLM runs it is routed in Cortex settings → Workers.'
+	String get hint => 'Pre-write LLM judge: decides whether a memory_store call carries a durable fact or noise. Which LLM runs it is routed in Cortex settings → Workers.';
+}
+
+// Path: web.serverSettings.fields.gatekeeperLatency
+class TranslationsWebServerSettingsFieldsGatekeeperLatencyEn {
+	TranslationsWebServerSettingsFieldsGatekeeperLatencyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Gatekeeper max latency (ms)'
+	String get label => 'Gatekeeper max latency (ms)';
+
+	/// en: 'Above this the gatekeeper degrades to "allow" rather than blocking the write on a slow LLM. Default 2000.'
+	String get hint => 'Above this the gatekeeper degrades to "allow" rather than blocking the write on a slow LLM. Default 2000.';
+}
+
+// Path: web.serverSettings.fields.cleanerEnabled
+class TranslationsWebServerSettingsFieldsCleanerEnabledEn {
+	TranslationsWebServerSettingsFieldsCleanerEnabledEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cleaner (auto-librarian)'
+	String get label => 'Cleaner (auto-librarian)';
+
+	/// en: 'Periodic sweep that soft-archives stale / duplicate memories (reversible, grace period applies). Which LLM runs it is routed in Cortex settings → Workers.'
+	String get hint => 'Periodic sweep that soft-archives stale / duplicate memories (reversible, grace period applies). Which LLM runs it is routed in Cortex settings → Workers.';
+}
+
+// Path: web.serverSettings.fields.cleanerInterval
+class TranslationsWebServerSettingsFieldsCleanerIntervalEn {
+	TranslationsWebServerSettingsFieldsCleanerIntervalEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cleaner interval (s)'
+	String get label => 'Cleaner interval (s)';
+
+	/// en: 'Seconds between automatic sweeps. Default 86400 (24h).'
+	String get hint => 'Seconds between automatic sweeps. Default 86400 (24h).';
+}
+
+// Path: web.serverSettings.fields.cleanerGlobalScope
+class TranslationsWebServerSettingsFieldsCleanerGlobalScopeEn {
+	TranslationsWebServerSettingsFieldsCleanerGlobalScopeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cleaner sweeps global scope'
+	String get label => 'Cleaner sweeps global scope';
+
+	/// en: 'Also review global-scope memories (usually operator-curated). Default off until you trust the cleaner.'
+	String get hint => 'Also review global-scope memories (usually operator-curated). Default off until you trust the cleaner.';
+}
+
+// Path: web.serverSettings.fields.knowledgeEnabled
+class TranslationsWebServerSettingsFieldsKnowledgeEnabledEn {
+	TranslationsWebServerSettingsFieldsKnowledgeEnabledEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Knowledge graph'
+	String get label => 'Knowledge graph';
+
+	/// en: 'The structured, self-evolving knowledge layer (entities / playbooks / skills) built on top of episodic memory. Powers the Cortex → Knowledge tab.'
+	String get hint => 'The structured, self-evolving knowledge layer (entities / playbooks / skills) built on top of episodic memory. Powers the Cortex → Knowledge tab.';
+}
+
+// Path: web.serverSettings.fields.claudeWatcher
+class TranslationsWebServerSettingsFieldsClaudeWatcherEn {
+	TranslationsWebServerSettingsFieldsClaudeWatcherEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Accounts watcher'
+	String get label => 'Accounts watcher';
+
+	/// en: 'Watch accounts_dir and auto-register a new account when a .credentials.json appears (the result of CLAUDE_CONFIG_DIR=<dir> claude login).'
+	String get hint => 'Watch accounts_dir and auto-register a new account when a .credentials.json appears (the result of CLAUDE_CONFIG_DIR=<dir> claude login).';
+}
+
+// Path: web.serverSettings.fields.claudeAutoFailover
+class TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn {
+	TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rate-limit auto-failover'
+	String get label => 'Rate-limit auto-failover';
+
+	/// en: 'Switch a live session to another Claude account when it hits a rate limit. Opt-in: it changes billing attribution without a click.'
+	String get hint => 'Switch a live session to another Claude account when it hits a rate limit. Opt-in: it changes billing attribution without a click.';
+}
+
+// Path: web.serverSettings.fields.mobileTokenTTL
+class TranslationsWebServerSettingsFieldsMobileTokenTTLEn {
+	TranslationsWebServerSettingsFieldsMobileTokenTTLEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Mobile token TTL'
+	String get label => 'Mobile token TTL';
+
+	/// en: 'Lifetime of bearer tokens issued to the mobile app. Default 720h (30 days).'
+	String get hint => 'Lifetime of bearer tokens issued to the mobile app. Default 720h (30 days).';
+}
+
+// Path: web.serverSettings.fields.dbMaxConns
+class TranslationsWebServerSettingsFieldsDbMaxConnsEn {
+	TranslationsWebServerSettingsFieldsDbMaxConnsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Max connections'
+	String get label => 'Max connections';
+
+	/// en: 'pgx connection pool cap. 0 = store default (16).'
+	String get hint => 'pgx connection pool cap. 0 = store default (16).';
+}
+
 // Path: web.serverSettings.httpHelpers.presetTip
 class TranslationsWebServerSettingsHttpHelpersPresetTipEn {
 	TranslationsWebServerSettingsHttpHelpersPresetTipEn.internal(this._root);
@@ -13919,6 +14824,45 @@ class TranslationsWebMemoryAmbientProvidersDialogEn {
 
 	/// en: 'Create failed'
 	String get createFailedToast => 'Create failed';
+}
+
+// Path: web.memoryAmbient.providers.modelSelect
+class TranslationsWebMemoryAmbientProvidersModelSelectEn {
+	TranslationsWebMemoryAmbientProvidersModelSelectEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Change model'
+	String get editTitle => 'Change model';
+
+	/// en: 'Change model — {name}'
+	String dialogTitle({required Object name}) => 'Change model — ${name}';
+
+	/// en: 'Custom…'
+	String get custom => 'Custom…';
+
+	/// en: 'Pick from list'
+	String get backToList => 'Pick from list';
+
+	/// en: 'Re-scan the endpoint for models'
+	String get refresh => 'Re-scan the endpoint for models';
+
+	/// en: 'Endpoint not reachable — type the model name manually; the list appears once the service is up.'
+	String get unreachable => 'Endpoint not reachable — type the model name manually; the list appears once the service is up.';
+
+	/// en: 'The endpoint responded but advertises no models — load one in LM Studio / pull one in Ollama, then re-scan.'
+	String get none => 'The endpoint responded but advertises no models — load one in LM Studio / pull one in Ollama, then re-scan.';
+
+	/// en: 'not on endpoint'
+	String get notOnEndpoint => 'not on endpoint';
+
+	/// en: 'Save model'
+	String get save => 'Save model';
+
+	/// en: '{name} now uses {model}'
+	String savedToast({required Object name, required Object model}) => '${name} now uses ${model}';
 }
 
 // Path: web.memoryAmbient.rules.row
@@ -14253,6 +15197,233 @@ class TranslationsWebKnowledgeKbProposalEn {
 	String get rejected => 'Proposal rejected';
 }
 
+// Path: web.knowledge.kb.newPage
+class TranslationsWebKnowledgeKbNewPageEn {
+	TranslationsWebKnowledgeKbNewPageEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'New knowledge page'
+	String get button => 'New knowledge page';
+
+	/// en: 'New knowledge page'
+	String get title => 'New knowledge page';
+
+	/// en: 'Give each knowledge domain its own fine-grained page instead of growing the classics forever — agents index pages individually and retrieve only what a task needs.'
+	String get description => 'Give each knowledge domain its own fine-grained page instead of growing the classics forever — agents index pages individually and retrieve only what a task needs.';
+
+	/// en: 'network_topology'
+	String get slugPlaceholder => 'network_topology';
+
+	/// en: 'Title (e.g. Network topology)'
+	String get titlePlaceholder => 'Title (e.g. Network topology)';
+
+	/// en: 'One sentence: what belongs on this page'
+	String get descPlaceholder => 'One sentence: what belongs on this page';
+
+	/// en: 'inject into every spawn'
+	String get inject => 'inject into every spawn';
+
+	/// en: 'Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.'
+	String get injectHint => 'Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.';
+
+	/// en: 'Create page'
+	String get create => 'Create page';
+
+	/// en: 'Knowledge page created'
+	String get createdToast => 'Knowledge page created';
+}
+
+// Path: web.knowledge.distill.retirement
+class TranslationsWebKnowledgeDistillRetirementEn {
+	TranslationsWebKnowledgeDistillRetirementEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'never used'
+	String get never_used => 'never used';
+
+	/// en: 'Injected for 14+ days without any session referencing it — the outcome loop proposes retirement'
+	String get never_usedHint => 'Injected for 14+ days without any session referencing it — the outcome loop proposes retirement';
+
+	/// en: 'low success'
+	String get low_success => 'low success';
+
+	/// en: 'Sessions that load this skill keep ending in failure — the outcome loop proposes retirement'
+	String get low_successHint => 'Sessions that load this skill keep ending in failure — the outcome loop proposes retirement';
+
+	/// en: 'dormant'
+	String get dormant => 'dormant';
+
+	/// en: 'Once used, but not referenced for 45+ days — the outcome loop proposes retirement'
+	String get dormantHint => 'Once used, but not referenced for 45+ days — the outcome loop proposes retirement';
+}
+
+// Path: web.knowledge.graph.legend
+class TranslationsWebKnowledgeGraphLegendEn {
+	TranslationsWebKnowledgeGraphLegendEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Project'
+	String get project => 'Project';
+
+	/// en: 'Entity'
+	String get entity => 'Entity';
+
+	/// en: 'Playbook'
+	String get playbook => 'Playbook';
+
+	/// en: 'Skill'
+	String get skill => 'Skill';
+}
+
+// Path: web.cortex.home.memory
+class TranslationsWebCortexHomeMemoryEn {
+	TranslationsWebCortexHomeMemoryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Memory'
+	String get title => 'Memory';
+
+	/// en: 'Raw episodic facts captured from your sessions — recalled by relevance, quarantined when third-party.'
+	String get description => 'Raw episodic facts captured from your sessions — recalled by relevance, quarantined when third-party.';
+
+	/// en: '{count} quarantined'
+	String quarantine({required Object count}) => '${count} quarantined';
+}
+
+// Path: web.cortex.home.notes
+class TranslationsWebCortexHomeNotesEn {
+	TranslationsWebCortexHomeNotesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Notes'
+	String get title => 'Notes';
+
+	/// en: 'Each project's official document — blueprint-shaped sections the AI keeps current as you work.'
+	String get description => 'Each project\'s official document — blueprint-shaped sections the AI keeps current as you work.';
+
+	/// en: '{count} active'
+	String projects({required Object count}) => '${count} active';
+}
+
+// Path: web.cortex.home.knowledge
+class TranslationsWebCortexHomeKnowledgeEn {
+	TranslationsWebCortexHomeKnowledgeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Knowledge'
+	String get title => 'Knowledge';
+
+	/// en: 'Cross-project, iterable expertise: binding foundational rules + emergent lessons, injected into every spawn.'
+	String get description => 'Cross-project, iterable expertise: binding foundational rules + emergent lessons, injected into every spawn.';
+}
+
+// Path: web.cortex.home.proposals
+class TranslationsWebCortexHomeProposalsEn {
+	TranslationsWebCortexHomeProposalsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pending proposals ({count})'
+	String title({required Object count}) => 'Pending proposals (${count})';
+
+	/// en: 'AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.'
+	String get hint => 'AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.';
+
+	/// en: 'Knowledge Base'
+	String get kbLabel => 'Knowledge Base';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Hide'
+	String get hide => 'Hide';
+
+	/// en: 'Approve'
+	String get approve => 'Approve';
+
+	/// en: 'Reject'
+	String get reject => 'Reject';
+
+	/// en: 'Open the owning page'
+	String get open => 'Open the owning page';
+
+	/// en: 'Proposal approved — document updated'
+	String get approvedToast => 'Proposal approved — document updated';
+
+	/// en: 'Proposal rejected'
+	String get rejectedToast => 'Proposal rejected';
+
+	/// en: 'Action failed'
+	String get failedToast => 'Action failed';
+}
+
+// Path: web.cortex.blueprint.mode
+class TranslationsWebCortexBlueprintModeEn {
+	TranslationsWebCortexBlueprintModeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'AI'
+	String get ai => 'AI';
+
+	/// en: 'Human'
+	String get human => 'Human';
+
+	/// en: 'Scanner'
+	String get scanner => 'Scanner';
+}
+
+// Path: web.cortex.settings.injection
+class TranslationsWebCortexSettingsInjectionEn {
+	TranslationsWebCortexSettingsInjectionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Spawn injection'
+	String get title => 'Spawn injection';
+
+	/// en: 'How much Cortex context each NEW SESSION loads upfront. Switching takes effect immediately for sessions spawned afterwards — the backend never needs a restart.'
+	String get hint => 'How much Cortex context each NEW SESSION loads upfront. Switching takes effect immediately for sessions spawned afterwards — the backend never needs a restart.';
+
+	/// en: 'active'
+	String get active => 'active';
+
+	late final TranslationsWebCortexSettingsInjectionModeEn mode = TranslationsWebCortexSettingsInjectionModeEn.internal(_root);
+
+	/// en: 'Injection mode saved — new sessions use it immediately (no backend restart)'
+	String get savedToast => 'Injection mode saved — new sessions use it immediately (no backend restart)';
+
+	/// en: 'Save failed'
+	String get saveFailed => 'Save failed';
+
+	/// en: 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.'
+	String get note => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.';
+}
+
 // Path: sessions.inspector.shell.tabs
 class TranslationsSessionsInspectorShellTabsEn {
 	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
@@ -14319,6 +15490,47 @@ class TranslationsWebMemoryAmbientRulesRowSummaryEn {
 	String get manual => 'manual only';
 }
 
+// Path: web.cortex.settings.injection.mode
+class TranslationsWebCortexSettingsInjectionModeEn {
+	TranslationsWebCortexSettingsInjectionModeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebCortexSettingsInjectionModeLeanEn lean = TranslationsWebCortexSettingsInjectionModeLeanEn.internal(_root);
+	late final TranslationsWebCortexSettingsInjectionModeFullEn full = TranslationsWebCortexSettingsInjectionModeFullEn.internal(_root);
+}
+
+// Path: web.cortex.settings.injection.mode.lean
+class TranslationsWebCortexSettingsInjectionModeLeanEn {
+	TranslationsWebCortexSettingsInjectionModeLeanEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Lean — index + fetch on demand (recommended)'
+	String get label => 'Lean — index + fetch on demand (recommended)';
+
+	/// en: 'Inject only the binding foundational rules plus a compact index of doc sections and knowledge pages. Agents pull exactly what a task needs via the doc_read / project_search MCP tools. Saves tokens and keeps long sessions from drowning in upfront context.'
+	String get description => 'Inject only the binding foundational rules plus a compact index of doc sections and knowledge pages. Agents pull exactly what a task needs via the doc_read / project_search MCP tools. Saves tokens and keeps long sessions from drowning in upfront context.';
+}
+
+// Path: web.cortex.settings.injection.mode.full
+class TranslationsWebCortexSettingsInjectionModeFullEn {
+	TranslationsWebCortexSettingsInjectionModeFullEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Full — inject everything'
+	String get label => 'Full — inject everything';
+
+	/// en: 'Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window.'
+	String get description => 'Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window.';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -14364,6 +15576,7 @@ extension on Translations {
 			'nav.workspace' => 'Workspace',
 			'nav.knowledge' => 'Knowledge',
 			'nav.vault' => 'Vault',
+			'nav.cortex' => 'Cortex',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
 			'web.topbar.expandSidebar' => 'Expand sidebar',
@@ -14527,12 +15740,17 @@ extension on Translations {
 			'web.sessions.fileBrowser.createdToast' => 'Directory created',
 			'web.sessions.fileBrowser.mkdirFailedToast' => 'Mkdir failed',
 			'web.sessions.fileBrowser.homeFailedToast' => 'Failed to read home',
+			'web.sessions.notes.cortexDoc.title' => 'Project doc (Cortex)',
+			'web.sessions.notes.cortexDoc.hint' => 'The project\'s official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.',
+			'web.sessions.notes.cortexDoc.open' => 'Open workspace',
+			'web.sessions.notes.cortexDoc.empty' => 'empty',
 			'web.memory.title' => 'Memory',
 			'web.memory.subtitle' => 'Browse, search and edit memories agents have stored via the opendray-memory MCP server.',
 			'web.memory.navProject' => 'Project',
 			'web.memory.navArchived' => 'Archived',
-			'web.memory.navWorkers' => 'Workers',
-			'web.memory.navConfiguration' => 'Configuration →',
+			'web.memory.navWorkers' => 'Cortex settings',
+			'web.memory.navConfiguration' => 'Storage & embedder →',
+			'web.memory.navQuarantine' => 'Quarantine',
 			'web.journalStale.title' => 'Prune stale entries',
 			'web.journalStale.subtitle' => ({required Object days}) => '(older than ${days} days, no pending conflicts)',
 			'web.journalStale.daysLabel' => 'Older than (days):',
@@ -14596,8 +15814,8 @@ extension on Translations {
 			'web.memoryHealth.today' => 'today',
 			'web.memoryHealth.daysAgo_one' => ({required Object count}) => '${count} day ago',
 			'web.memoryHealth.daysAgo_other' => ({required Object count}) => '${count} days ago',
-			'web.memoryConfig.title' => 'Memory configuration',
-			'web.memoryConfig.subtitle' => 'All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.',
+			'web.memoryConfig.title' => 'Cortex settings',
+			'web.memoryConfig.subtitle' => 'Every runtime knob of the AI loop in one place — spawn injection, LLM providers, per-task workers, capture triggers, injection profiles, token costs. Changes apply immediately; no restart.',
 			'web.memoryConfig.sections.providers' => 'Providers',
 			'web.memoryConfig.sections.workers' => 'Workers',
 			'web.memoryConfig.sections.rules' => 'Capture rules',
@@ -14611,6 +15829,15 @@ extension on Translations {
 			'web.memoryConfig.moveBanner.title' => 'Memory configuration has moved',
 			'web.memoryConfig.moveBanner.body' => 'All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.',
 			'web.memoryConfig.moveBanner.openButton' => 'Open Memory configuration →',
+			'web.memoryConfig.infra.title' => 'Storage & embedder (infrastructure)',
+			'web.memoryConfig.infra.hint' => 'The other half of memory config — embedding backend, retrieval tuning, gatekeeper/cleaner gates and the knowledge graph flag — lives in Server Settings and needs a restart.',
+			'web.memoryConfig.infra.openSettings' => 'Server Settings →',
+			'web.memoryConfig.infra.embedder' => 'embedder',
+			'web.memoryConfig.infra.gatekeeper' => 'gatekeeper',
+			'web.memoryConfig.infra.cleaner' => 'cleaner',
+			'web.memoryConfig.infra.knowledge' => 'knowledge graph',
+			'web.memoryConfig.infra.on' => 'on',
+			'web.memoryConfig.infra.off' => 'off',
 			'web.memoryWorkers.title' => 'Memory workers',
 			'web.memoryWorkers.loading' => 'Loading worker config…',
 			'web.memoryWorkers.errorTitle' => 'Endpoint not reachable.',
@@ -14650,24 +15877,63 @@ extension on Translations {
 			'web.memoryWorkers.unknownError' => 'unknown error',
 			'web.memoryWorkers.tasks.gatekeeper.label' => 'Gatekeeper',
 			'web.memoryWorkers.tasks.gatekeeper.description' => 'Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.',
+			'web.memoryWorkers.tasks.gatekeeper.modelAdvice' => 'High-frequency yes/no judgement — a light model (haiku / flash-lite / codex-mini / local) is plenty.',
 			'web.memoryWorkers.tasks.cleaner.label' => 'Cleaner librarian',
 			'web.memoryWorkers.tasks.cleaner.description' => 'Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.',
+			'web.memoryWorkers.tasks.cleaner.modelAdvice' => 'Batch keep/stale verdicts on old facts — light model recommended; runs on a schedule.',
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Git activity summariser',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.',
+			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better.',
 			'web.memoryWorkers.tasks.transcript.label' => 'Session transcript summariser',
 			'web.memoryWorkers.tasks.transcript.description' => 'Session-end "what did the agent do" summary. Naturally fits an agent worker.',
+			'web.memoryWorkers.tasks.transcript.modelAdvice' => 'Session \'what the agent did\' summaries — balanced model recommended; feeds the journal and drift detection.',
 			'web.memoryWorkers.tasks.plan_drift.label' => 'Plan drift detector',
 			'web.memoryWorkers.tasks.plan_drift.description' => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.',
+			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
+			'web.memoryWorkers.tasks.capture.modelAdvice' => 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).',
+			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.',
+			'web.memoryWorkers.tasks.blueprint.label' => 'Blueprint proposer',
+			'web.memoryWorkers.tasks.blueprint.description' => 'Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor.',
+			'web.memoryWorkers.tasks.curation.modelAdvice' => 'Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.',
+			'web.memoryWorkers.tasks.curation.label' => 'Curation chat',
+			'web.memoryWorkers.tasks.curation.description' => 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.',
+			'web.memoryWorkers.modelLabel' => 'Model',
+			'web.memoryWorkers.modelHint' => 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.',
+			'web.memoryWorkers.modelCliDefault' => 'CLI default (latest)',
+			'web.memoryWorkers.modelCustom' => 'Custom…',
+			'web.memoryWorkers.modelCustomPlaceholder' => 'exact model id',
+			'web.memoryWorkers.modelBackToList' => 'List',
+			'web.memoryWorkers.cliCodex' => 'Codex (codex exec)',
+			'web.memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.',
+			'web.memoryWorkers.infraGateOpen' => 'Enable it',
+			'web.memoryWorkers.providerModel' => 'model:',
 			'web.archived.loading' => 'Loading…',
 			'web.archived.emptyTitle' => 'Nothing archived',
 			'web.archived.emptyDescription' => 'No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.',
 			'web.archived.title' => 'Archived memories',
-			'web.archived.subtitle' => 'Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.',
+			'web.archived.subtitle' => 'Soft-archived memories, restorable until the 30-day grace window purges them. Sources: the auto-cleaner’s verdicts, manual per-memory archive, and whole projects you archive — a project’s memories land here together and return together when you unarchive it (project archives are exempt from the purge).',
 			'web.archived.globalScope' => '(global)',
+			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} projects · ${memories} archived memories',
+			'web.archived.memCount' => ({required Object count}) => '${count} memories',
+			'web.archived.restoreAll' => 'Restore all',
+			'web.archived.restoreAllTooltip' => 'Restore every archived memory in this project',
+			'web.archived.restoreAllConfirm' => ({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?',
+			'web.archived.restoredAllToast' => ({required Object count}) => 'Restored ${count} memories',
+			'web.archived.deleteButton' => 'Delete',
+			'web.archived.deleteTooltip' => 'Delete permanently now — skips the 30-day grace window, cannot be undone',
+			'web.archived.deleteConfirm' => 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.',
+			'web.archived.deletedToast' => 'Deleted permanently',
+			'web.archived.deleteFailedToast' => 'Delete failed',
+			'web.archived.deleteAll' => 'Delete all',
+			'web.archived.deleteAllTooltip' => 'Permanently delete every archived memory in this project now',
+			'web.archived.deleteAllConfirm' => ({required Object count, required Object project}) => 'Permanently delete all ${count} archived memories in ${project} now? This skips the 30-day grace window and cannot be undone.',
+			'web.archived.deletedAllToast' => ({required Object count}) => 'Deleted ${count} memories',
 			'web.archived.openProject' => 'Open project',
 			'web.archived.archivedAtPrefix' => 'Archived',
 			'web.archived.restoreButton' => 'Restore',
@@ -14700,6 +15966,7 @@ extension on Translations {
 			'web.project.tabs.conflicts' => 'Conflicts',
 			'web.project.tabs.archived' => 'Archived',
 			'web.project.tabs.overview' => 'Overview',
+			'web.project.tabs.hygiene' => 'Hygiene',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.tech_stack' => 'Tech stack',
@@ -14711,6 +15978,7 @@ extension on Translations {
 			'web.project.editor.savedToast' => ({required Object label}) => '${label} saved',
 			'web.project.editor.goalPlaceholder' => 'What are we building? One paragraph. Read by every agent on spawn.',
 			'web.project.editor.planPlaceholder' => 'Active plan — what we are doing right now and what is next. Updated as work progresses.',
+			'web.project.editor.sectionPlaceholder' => 'Write this section in markdown…',
 			'web.project.readonly.tech_stack.label' => 'Tech stack & structure',
 			'web.project.readonly.tech_stack.empty' => 'Run a Claude session in this project — scanner refreshes on every spawn.',
 			'web.project.readonly.recent_activity.label' => 'Recent activity (git → LLM)',
@@ -14718,6 +15986,7 @@ extension on Translations {
 			'web.project.readonly.noneCaptured' => ({required Object label}) => 'No ${label} captured yet.',
 			'web.project.readonly.generatedBy' => 'Generated by',
 			'web.project.readonly.lastRefresh' => 'last refresh',
+			'web.project.readonly.customEmpty' => 'This section is scanner-managed; it fills in when its scanner runs.',
 			'web.project.journal.loading' => 'Loading…',
 			'web.project.journal.empty' => 'No journal entries yet. Each session-end appends one automatically.',
 			'web.project.inbox.loading' => 'Loading…',
@@ -14782,8 +16051,11 @@ extension on Translations {
 			'web.project.lifecycle.tooltip.activate' => 'Re-activate: inject into new sessions and resume AI maintenance.',
 			'web.project.lifecycle.tooltip.pause' => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.',
 			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.docMeta.maintainer.coauthored' => 'You maintain · AI proposes',
 			'web.project.docMeta.maintainer.auto' => 'Auto-generated · read-only',
+			'web.project.docMeta.maintainer.human' => 'Human-authored',
 			'web.project.docMeta.purpose.goal' => 'The project\'s long-term intent — what we\'re ultimately building and why. When a session shifts the direction, AI proposes an update to your Inbox for approval.',
 			'web.project.docMeta.purpose.plan' => 'The current roadmap / work in progress. AI proposes an update to your Inbox after a session moves it forward; you approve.',
 			'web.project.docMeta.purpose.tech_stack' => 'Tech stack & structure, auto-generated by the project scanner (refreshes every 6h).',
@@ -14839,8 +16111,6 @@ extension on Translations {
 			'web.memoryInspector.records.addTooltip' => 'Manually create a memory in this scope',
 			'web.memoryInspector.records.deleteAll' => 'Delete all',
 			'web.memoryInspector.records.deleteAllTooltip' => 'Delete every memory under this scope/scope_key',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.records.loading' => 'Loading…',
 			'web.memoryInspector.records.enterScopeKeyHint' => 'Enter a scope key to browse memories.',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => 'No matches for "${query}"',
@@ -14858,6 +16128,8 @@ extension on Translations {
 			'web.memoryInspector.row.deleteTooltip' => 'Delete this memory',
 			'web.memoryInspector.row.emptyError' => 'Memory text cannot be empty',
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => 'Delete memory ${id}? This is permanent.',
+			'web.memoryInspector.row.archiveTooltip' => 'Archive (reversible) — moves to the Archived view',
+			'web.memoryInspector.row.quarantineTooltip' => 'Quarantine — moves to the review queue until promoted or expired',
 			'web.memoryInspector.toasts.deleted' => 'Memory deleted',
 			'web.memoryInspector.toasts.deleteFailed' => 'Delete failed',
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => 'Deleted ${count} memory from this scope',
@@ -14874,6 +16146,10 @@ extension on Translations {
 			'web.memoryInspector.toasts.syncEmpty' => 'No new .md files to sync',
 			'web.memoryInspector.toasts.syncEmptyDescription' => 'Already in sync, or no Claude memory dir for this cwd.',
 			'web.memoryInspector.toasts.syncFailed' => 'Sync failed',
+			'web.memoryInspector.toasts.archived' => 'Memory archived — restorable from the Archived view',
+			'web.memoryInspector.toasts.archiveFailed' => 'Archive failed',
+			'web.memoryInspector.toasts.quarantined' => 'Memory quarantined — review it under Cortex → Quarantine',
+			'web.memoryInspector.toasts.quarantineFailed' => 'Quarantine failed',
 			'web.memoryInspector.bulkDelete.title' => 'Delete every memory in this scope?',
 			'web.memoryInspector.bulkDelete.description' => 'This is a single SQL operation — all memories under the specified scope are removed atomically. Memories that were ingested via the Claude mirror reappear on the next <1>Sync .md</1> run; everything else is gone for good.',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -15289,6 +16565,8 @@ extension on Translations {
 			'web.integrations.tabs.registered' => 'Registered',
 			'web.integrations.tabs.console' => 'Reverse proxy',
 			'web.integrations.empty.title' => 'No integrations yet',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.empty.description' => 'Register an external app to give it a scoped API key. Its code stays out of this repo.',
 			'web.integrations.empty.register' => 'Register integration',
 			'web.integrations.groupSystem' => 'System (managed by opendray)',
@@ -15353,8 +16631,6 @@ extension on Translations {
 			'web.integrations.edit_dialog.baseUrlProxySuffix' => '(reverse-proxy target)',
 			'web.integrations.edit_dialog.baseUrlConsumerPlaceholder' => '(blank — this integration consumes opendray\'s API)',
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.edit_dialog.consumerHint' => 'This is a consumer-only integration. Changing base URL here would also require a route prefix; do that with delete + re-register.',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
@@ -15406,6 +16682,10 @@ extension on Translations {
 			'web.plugins.mcp.toggleFailedToast' => 'Toggle failed',
 			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: unsupported',
 			'web.plugins.mcp.codexUnsupportedTooltip' => 'The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.',
+			'web.plugins.mcp.builtinBadge' => 'Built-in',
+			'web.plugins.mcp.builtinTooltip' => 'Provided by opendray itself — attached automatically to every session that supports MCP. Cannot be edited or deleted.',
+			'web.plugins.mcp.builtinDescription' => 'opendray\'s shared memory & knowledge server: memory_search / memory_store, project_goal & project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Auto-attaches to every Claude / Codex / Gemini session.',
+			'web.plugins.mcp.builtinAutoAttach' => 'always on',
 			'web.plugins.mcp.editor.createTitle' => 'New MCP server',
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => 'Edit MCP: ${id}',
 			'web.plugins.mcp.editor.description' => ({required Object API_KEY}) => 'JSON shape: <1>command</1>+<3>args</3>+<5>env</5> for stdio (default), or <7>transport</7> +<9> url</9>+<11>headers</11> for sse / http. Reference secrets as <13>\$${API_KEY}</13> — they get substituted at spawn time from the secrets file.',
@@ -15767,8 +17047,8 @@ extension on Translations {
 			'web.serverSettings.sections.vault.desc' => 'Notes, skills, and git-versioned root.',
 			'web.serverSettings.sections.mcp.title' => 'MCP registry',
 			'web.serverSettings.sections.mcp.desc' => 'Server registry + secrets.',
-			'web.serverSettings.sections.memory.title' => 'Memory',
-			'web.serverSettings.sections.memory.desc' => 'Cross-CLI persistent memory subsystem.',
+			'web.serverSettings.sections.memory.title' => 'Memory · storage & embedder',
+			'web.serverSettings.sections.memory.desc' => 'Infrastructure half of the memory subsystem: embedding backend, retrieval tuning and background governance. Restart to apply. Runtime behaviour (workers, capture, injection) lives in Cortex settings.',
 			'web.serverSettings.sections.backup.title' => 'Backup',
 			'web.serverSettings.sections.backup.desc' => 'Encrypted DB backups, restore, and admin data exports.',
 			'web.serverSettings.sections.claude.title' => 'Storage · Claude',
@@ -15799,6 +17079,8 @@ extension on Translations {
 			'web.serverSettings.restart.confirm' => 'Restart the opendray gateway? All open terminal sessions will reconnect automatically.',
 			'web.serverSettings.restart.overlay' => 'Restarting server…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => 'Waiting for /health · ${tick}s',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.restart.timedOutTitle' => 'Restart timed out',
 			'web.serverSettings.restart.timedOutDesc' => 'Health endpoint never came back. Check server logs.',
 			'web.serverSettings.restart.successToast' => 'Server restarted',
@@ -15811,6 +17093,9 @@ extension on Translations {
 			'web.serverSettings.formGroups.backupWhere' => 'Where backups go',
 			'web.serverSettings.formGroups.backupSchedules' => 'Schedules',
 			'web.serverSettings.formGroups.backupWhatsInside' => 'What\'s in a backup?',
+			'web.serverSettings.formGroups.memoryGovernance' => 'Background governance (gatekeeper / cleaner)',
+			'web.serverSettings.formGroups.knowledgeGraph' => 'Knowledge graph',
+			'web.serverSettings.formGroups.database' => 'Database',
 			'web.serverSettings.fields.listenAddress.label' => 'Listen address',
 			'web.serverSettings.fields.listenAddress.hint' => 'The host:port the HTTP server binds to. Example: 0.0.0.0:8770.',
 			'web.serverSettings.fields.username.label' => 'Username',
@@ -15867,8 +17152,6 @@ extension on Translations {
 			'web.serverSettings.fields.memoryLocalModel.hint' => 'Cosmetic — appears in logs / Inspector. e.g. "bge-m3", "bge-small-en-v1.5".',
 			'web.serverSettings.fields.memoryLibraryPath.label' => 'Library path',
 			'web.serverSettings.fields.memoryLibraryPath.hint' => 'Directory holding libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux). After `brew install onnxruntime`, that\'s /opt/homebrew/opt/onnxruntime/lib.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.memoryModelPath.label' => 'Model path',
 			'web.serverSettings.fields.memoryModelPath.hint' => 'Absolute path to the .onnx weights. Download from HuggingFace, e.g. Xenova/bge-m3 or Xenova/bge-small-en-v1.5.',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer path',
@@ -15893,6 +17176,28 @@ extension on Translations {
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'Absolute path to pg_dump. Major version must be ≥ the server\'s. Empty = first pg_dump on PATH.',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore path',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => 'Absolute path to pg_restore for the /backups/restore flow. Same major-version rule.',
+			'web.serverSettings.fields.memoryDedup.label' => 'Dedup threshold',
+			'web.serverSettings.fields.memoryDedup.hint' => 'Write-time fold threshold: similarity above this updates the existing memory instead of inserting a near-duplicate. 0 = embedder-relative default; negative disables folding.',
+			'web.serverSettings.fields.gatekeeperEnabled.label' => 'Gatekeeper',
+			'web.serverSettings.fields.gatekeeperEnabled.hint' => 'Pre-write LLM judge: decides whether a memory_store call carries a durable fact or noise. Which LLM runs it is routed in Cortex settings → Workers.',
+			'web.serverSettings.fields.gatekeeperLatency.label' => 'Gatekeeper max latency (ms)',
+			'web.serverSettings.fields.gatekeeperLatency.hint' => 'Above this the gatekeeper degrades to "allow" rather than blocking the write on a slow LLM. Default 2000.',
+			'web.serverSettings.fields.cleanerEnabled.label' => 'Cleaner (auto-librarian)',
+			'web.serverSettings.fields.cleanerEnabled.hint' => 'Periodic sweep that soft-archives stale / duplicate memories (reversible, grace period applies). Which LLM runs it is routed in Cortex settings → Workers.',
+			'web.serverSettings.fields.cleanerInterval.label' => 'Cleaner interval (s)',
+			'web.serverSettings.fields.cleanerInterval.hint' => 'Seconds between automatic sweeps. Default 86400 (24h).',
+			'web.serverSettings.fields.cleanerGlobalScope.label' => 'Cleaner sweeps global scope',
+			'web.serverSettings.fields.cleanerGlobalScope.hint' => 'Also review global-scope memories (usually operator-curated). Default off until you trust the cleaner.',
+			'web.serverSettings.fields.knowledgeEnabled.label' => 'Knowledge graph',
+			'web.serverSettings.fields.knowledgeEnabled.hint' => 'The structured, self-evolving knowledge layer (entities / playbooks / skills) built on top of episodic memory. Powers the Cortex → Knowledge tab.',
+			'web.serverSettings.fields.claudeWatcher.label' => 'Accounts watcher',
+			'web.serverSettings.fields.claudeWatcher.hint' => 'Watch accounts_dir and auto-register a new account when a .credentials.json appears (the result of CLAUDE_CONFIG_DIR=<dir> claude login).',
+			'web.serverSettings.fields.claudeAutoFailover.label' => 'Rate-limit auto-failover',
+			'web.serverSettings.fields.claudeAutoFailover.hint' => 'Switch a live session to another Claude account when it hits a rate limit. Opt-in: it changes billing attribution without a click.',
+			'web.serverSettings.fields.mobileTokenTTL.label' => 'Mobile token TTL',
+			'web.serverSettings.fields.mobileTokenTTL.hint' => 'Lifetime of bearer tokens issued to the mobile app. Default 720h (30 days).',
+			'web.serverSettings.fields.dbMaxConns.label' => 'Max connections',
+			'web.serverSettings.fields.dbMaxConns.hint' => 'pgx connection pool cap. 0 = store default (16).',
 			'web.serverSettings.liveTail.heading' => 'Live tail',
 			'web.serverSettings.liveTail.description' => 'In-memory ring buffer (last ~2,000 records). Resets on restart.',
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
@@ -15960,6 +17265,12 @@ extension on Translations {
 			'web.serverSettings.targetRow.deleteSuccess' => 'Target deleted',
 			'web.serverSettings.targetRow.deleteFailedTitle' => 'Delete failed',
 			'web.serverSettings.targetRow.unknownError' => 'Unknown error',
+			'web.serverSettings.toggle.on' => 'On',
+			'web.serverSettings.toggle.off' => 'Off',
+			'web.serverSettings.toggle.defaultOn' => 'Default (on)',
+			'web.serverSettings.toggle.defaultOff' => 'Default (off)',
+			'web.serverSettings.memoryRuntimeBanner' => 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).',
+			'web.serverSettings.memoryRuntimeBannerButton' => 'Open Cortex settings',
 			'web.settings.title' => 'Settings',
 			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
 			'web.settings.groups.workspace' => 'Workspace',
@@ -16086,6 +17397,16 @@ extension on Translations {
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => 'Name is required',
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => 'Provider ${name} created',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => 'Create failed',
+			'web.memoryAmbient.providers.modelSelect.editTitle' => 'Change model',
+			'web.memoryAmbient.providers.modelSelect.dialogTitle' => ({required Object name}) => 'Change model — ${name}',
+			'web.memoryAmbient.providers.modelSelect.custom' => 'Custom…',
+			'web.memoryAmbient.providers.modelSelect.backToList' => 'Pick from list',
+			'web.memoryAmbient.providers.modelSelect.refresh' => 'Re-scan the endpoint for models',
+			'web.memoryAmbient.providers.modelSelect.unreachable' => 'Endpoint not reachable — type the model name manually; the list appears once the service is up.',
+			'web.memoryAmbient.providers.modelSelect.none' => 'The endpoint responded but advertises no models — load one in LM Studio / pull one in Ollama, then re-scan.',
+			'web.memoryAmbient.providers.modelSelect.notOnEndpoint' => 'not on endpoint',
+			'web.memoryAmbient.providers.modelSelect.save' => 'Save model',
+			'web.memoryAmbient.providers.modelSelect.savedToast' => ({required Object name, required Object model}) => '${name} now uses ${model}',
 			'web.memoryAmbient.rules.title' => 'Capture rules',
 			'web.memoryAmbient.rules.addButton' => 'Add rule',
 			'web.memoryAmbient.rules.intro' => 'Each rule says "when this trigger fires, summarize new transcript messages and store the durable facts." Per-session rules override the global default. v1 ships 4 trigger kinds.',
@@ -16272,6 +17593,8 @@ extension on Translations {
 			'web.knowledge.kb.kinds.kb_reusable' => 'Reusable features',
 			'web.knowledge.kb.foundational' => 'Foundational',
 			'web.knowledge.kb.foundationalHint' => 'Infrastructure & conventions — binding rules injected into every project.',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.emergent' => 'Emergent',
 			'web.knowledge.kb.emergentHint' => 'Lessons & reusable features distilled from past work — guidance.',
 			'web.knowledge.kb.bindingBadge' => 'Binding · must follow',
@@ -16283,11 +17606,159 @@ extension on Translations {
 			'web.knowledge.kb.proposal.reject' => 'Reject',
 			'web.knowledge.kb.proposal.approved' => 'Update approved',
 			'web.knowledge.kb.proposal.rejected' => 'Proposal rejected',
+			'web.knowledge.kb.discuss' => 'Discuss with AI',
+			'web.knowledge.kb.discussHint' => 'Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites',
+			'web.knowledge.kb.onDemand' => 'on-demand',
+			'web.knowledge.kb.removePage' => 'Remove page',
+			'web.knowledge.kb.removePageHint' => 'Remove this page from the knowledge base (its content is kept and resurrects if the slug is re-added)',
+			'web.knowledge.kb.pageRemovedToast' => 'Page removed',
+			'web.knowledge.kb.newPage.button' => 'New knowledge page',
+			'web.knowledge.kb.newPage.title' => 'New knowledge page',
+			'web.knowledge.kb.newPage.description' => 'Give each knowledge domain its own fine-grained page instead of growing the classics forever — agents index pages individually and retrieve only what a task needs.',
+			'web.knowledge.kb.newPage.slugPlaceholder' => 'network_topology',
+			'web.knowledge.kb.newPage.titlePlaceholder' => 'Title (e.g. Network topology)',
+			'web.knowledge.kb.newPage.descPlaceholder' => 'One sentence: what belongs on this page',
+			'web.knowledge.kb.newPage.inject' => 'inject into every spawn',
+			'web.knowledge.kb.newPage.injectHint' => 'Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.',
+			'web.knowledge.kb.newPage.create' => 'Create page',
+			'web.knowledge.kb.newPage.createdToast' => 'Knowledge page created',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
 			'web.knowledge.kinds.playbook' => 'Playbooks',
 			'web.knowledge.kinds.skill' => 'Skills',
+			'web.knowledge.distill.tab' => 'Distillation',
+			'web.knowledge.distill.intro' => 'A SKILL is a proven, repeatable PROCEDURE distilled from your real work. The experience compiler mines session journals ACROSS projects, clusters similar work, and only drafts a candidate when the same procedure SUCCEEDED in 2+ sessions — every evidence quote is verified verbatim against the journal. Candidates are ranked by recurrence × the manual procedure\'s time cost, so what saves the most time distills first; fully mechanical procedures also compile to an executable run.sh with a validation step.',
+			'web.knowledge.distill.playbooks' => 'Playbooks — distilled, awaiting review',
+			'web.knowledge.distill.playbooksHint' => 'Every candidate passed the gates: ≥2 successful sessions, verified evidence quotes, ≥3 concrete steps. Ranked by time saved (recurrence × manual minutes). Promote what you\'ll reuse, discard the rest.',
+			'web.knowledge.distill.playbooksEmpty' => 'Nothing mined yet — candidates appear once the same procedure succeeds in two or more sessions.',
+			'web.knowledge.distill.skills' => 'Skills — active, injected at spawn',
+			'web.knowledge.distill.skillsHint' => 'Promoted playbooks. Every new session receives these as skills.',
+			'web.knowledge.distill.skillsEmpty' => 'No skills yet — promote a playbook to create the first one.',
+			'web.knowledge.distill.skillify' => 'Promote to skill',
+			'web.knowledge.distill.skillifyHint' => 'Render as a skill file and inject into every spawn',
+			'web.knowledge.distill.discard' => 'Discard',
+			'web.knowledge.distill.retire' => 'Retire skill',
+			'web.knowledge.distill.injectedBadge' => 'injected',
+			'web.knowledge.distill.skillifiedToast' => 'Promoted — published to Plugins → Agent Skills; new sessions receive this skill',
+			'web.knowledge.distill.removedToast' => 'Removed',
+			'web.knowledge.distill.usage' => ({required Object count}) => 'used in ${count} sessions',
+			'web.knowledge.distill.lastUsed' => ({required Object date}) => 'last ${date}',
+			'web.knowledge.distill.enabledToast' => 'Skill enabled — new sessions load it',
+			'web.knowledge.distill.disabledToast' => 'Skill disabled — removed from the loaded set',
+			'web.knowledge.distill.disabledBadge' => 'off',
+			'web.knowledge.distill.toggleHint' => 'Enabled skills are loadable by sessions; disable what this period of work doesn\'t need',
+			'web.knowledge.distill.viewHint' => 'Click to view the full procedure',
+			'web.knowledge.distill.inAgentSkills' => 'in Plugins → Agent Skills',
+			'web.knowledge.distill.agentSkillsHint' => 'The rendered SKILL.md lives in the skills vault — view or manage it under Plugins → Agent Skills.',
+			'web.knowledge.distill.notInVault' => 'disabled — SKILL.md removed from the vault',
+			'web.knowledge.distill.compiledBadge' => 'compiled',
+			'web.knowledge.distill.compiledHint' => 'Ships an executable run.sh with a validation step; promotion also registers it as a custom task',
+			'web.knowledge.distill.recurrence' => ({required Object count}) => 'succeeded ×${count}',
+			'web.knowledge.distill.timeCost' => ({required Object minutes}) => '~${minutes} min manual',
+			'web.knowledge.distill.projectSpan' => ({required Object count}) => '${count} projects',
+			'web.knowledge.distill.scoreHint' => 'Ranked by recurrence × manual time cost — what saves the most operator time distills first',
+			'web.knowledge.distill.outcomes' => ({required Object ok, required Object failed}) => '${ok} ok / ${failed} failed after loading',
+			'web.knowledge.distill.retirement.never_used' => 'never used',
+			'web.knowledge.distill.retirement.never_usedHint' => 'Injected for 14+ days without any session referencing it — the outcome loop proposes retirement',
+			'web.knowledge.distill.retirement.low_success' => 'low success',
+			'web.knowledge.distill.retirement.low_successHint' => 'Sessions that load this skill keep ending in failure — the outcome loop proposes retirement',
+			'web.knowledge.distill.retirement.dormant' => 'dormant',
+			'web.knowledge.distill.retirement.dormantHint' => 'Once used, but not referenced for 45+ days — the outcome loop proposes retirement',
+			'web.knowledge.graph.tab' => 'Graph',
+			'web.knowledge.graph.intro' => 'The relationship map of everything the AI has learned: which projects share tech, which skills and pitfalls attach to which entities. Check a node’s blast radius here BEFORE touching shared infrastructure.',
+			'web.knowledge.graph.empty' => 'No knowledge yet — the graph builds itself as sessions run: the anchor sweep lifts entities out of project work, and distillation adds playbooks and skills. Come back after a few working sessions.',
+			'web.knowledge.graph.hint' => 'Scroll to zoom · drag the background to pan · drag a node to untangle · click a node to inspect it',
+			'web.knowledge.graph.legend.project' => 'Project',
+			'web.knowledge.graph.legend.entity' => 'Entity',
+			'web.knowledge.graph.legend.playbook' => 'Playbook',
+			'web.knowledge.graph.legend.skill' => 'Skill',
+			'web.knowledge.graph.connections' => ({required Object count}) => '${count} connected nodes',
+			'web.knowledge.graph.noLinks' => 'Nothing links to this node yet.',
+			'web.cortex.home.title' => 'Cortex',
+			'web.cortex.home.subtitle' => 'One module, three rungs, one loop: raw memory crystallises into each project\'s official doc, distils into cross-project knowledge, and is injected back into every new session.',
+			'web.cortex.home.disabled' => 'disabled',
+			'web.cortex.home.pendingProposals' => ({required Object count}) => '${count} pending',
+			'web.cortex.home.loopHint' => 'Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.',
+			'web.cortex.home.activeProjects' => 'Active projects',
+			'web.cortex.home.idle' => ({required Object days}) => 'idle ${days}d',
+			'web.cortex.home.memory.title' => 'Memory',
+			'web.cortex.home.memory.description' => 'Raw episodic facts captured from your sessions — recalled by relevance, quarantined when third-party.',
+			'web.cortex.home.memory.quarantine' => ({required Object count}) => '${count} quarantined',
+			'web.cortex.home.notes.title' => 'Notes',
+			'web.cortex.home.notes.description' => 'Each project\'s official document — blueprint-shaped sections the AI keeps current as you work.',
+			'web.cortex.home.notes.projects' => ({required Object count}) => '${count} active',
+			'web.cortex.home.knowledge.title' => 'Knowledge',
+			'web.cortex.home.knowledge.description' => 'Cross-project, iterable expertise: binding foundational rules + emergent lessons, injected into every spawn.',
+			'web.cortex.home.settings' => 'Settings',
+			'web.cortex.home.proposals.title' => ({required Object count}) => 'Pending proposals (${count})',
+			'web.cortex.home.proposals.hint' => 'AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.',
+			'web.cortex.home.proposals.kbLabel' => 'Knowledge Base',
+			'web.cortex.home.proposals.preview' => 'Preview',
+			'web.cortex.home.proposals.hide' => 'Hide',
+			'web.cortex.home.proposals.approve' => 'Approve',
+			'web.cortex.home.proposals.reject' => 'Reject',
+			'web.cortex.home.proposals.open' => 'Open the owning page',
+			'web.cortex.home.proposals.approvedToast' => 'Proposal approved — document updated',
+			'web.cortex.home.proposals.rejectedToast' => 'Proposal rejected',
+			'web.cortex.home.proposals.failedToast' => 'Action failed',
+			'web.cortex.chat.title' => 'Curation chat',
+			'web.cortex.chat.show' => 'Discuss with AI',
+			'web.cortex.chat.hide' => 'Hide chat',
+			'web.cortex.chat.emptyHint' => 'Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you\'ve locked it.',
+			'web.cortex.chat.placeholder' => 'e.g. update this from the latest work · ⌘↵ to send',
+			'web.cortex.chat.thinking' => 'AI is working…',
+			'web.cortex.chat.sendFailed' => 'Send failed',
+			'web.cortex.chat.escalate' => 'Escalate to session',
+			'web.cortex.chat.escalated' => 'Escalated',
+			'web.cortex.chat.escalateHint' => 'Spawn a full agent session, grounded in the codebase, seeded with this conversation',
+			'web.cortex.chat.escalateFailed' => 'Escalation failed',
+			'web.cortex.chat.escalatedToast' => 'Agent session launched',
+			'web.cortex.chat.closeHint' => 'Close this conversation',
+			'web.cortex.chat.revisionApplied' => 'Document updated',
+			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
+			'web.cortex.blueprint.open' => 'Blueprint',
+			'web.cortex.blueprint.openHint' => 'Edit which doc sections this project carries',
+			'web.cortex.blueprint.title' => 'Doc blueprint',
+			'web.cortex.blueprint.description' => 'The section set of this project\'s official document. Different kinds of projects deserve different sections — shape it yourself or let the AI propose one.',
+			'web.cortex.blueprint.propose' => 'AI propose',
+			'web.cortex.blueprint.proposeHint' => 'Classify this project and propose a tailored section set',
+			'web.cortex.blueprint.proposeFailed' => 'Proposal failed',
+			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'AI classified this as: ${type} — ${reason} Review below, edit freely, then Apply.',
+			'web.cortex.blueprint.addSection' => 'Add section',
+			'web.cortex.blueprint.slugPlaceholder' => 'slug',
+			'web.cortex.blueprint.titlePlaceholder' => 'Title',
+			'web.cortex.blueprint.hintPlaceholder' => 'Maintainer hint — one sentence steering the AI for this section (optional)',
+			'web.cortex.blueprint.mode.ai' => 'AI',
+			'web.cortex.blueprint.mode.human' => 'Human',
+			'web.cortex.blueprint.mode.scanner' => 'Scanner',
+			'web.cortex.blueprint.inject' => 'inject',
+			'web.cortex.blueprint.reserved' => 'reserved',
+			'web.cortex.blueprint.deleteNote' => 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.',
+			'web.cortex.blueprint.cancel' => 'Cancel',
+			'web.cortex.blueprint.apply' => 'Apply blueprint',
+			'web.cortex.blueprint.applyFailed' => 'Apply failed',
+			'web.cortex.blueprint.appliedToast' => 'Blueprint applied',
+			'web.cortex.quarantine.title' => 'Quarantine',
+			'web.cortex.quarantine.subtitle' => 'Facts that need review before they count as durable memory: third-party-integration captures land here by policy, and you can quarantine any memory by hand from the Memory inspector. Promote what is true; discard the rest — unreviewed rows expire on their own.',
+			'web.cortex.quarantine.empty' => 'Nothing in quarantine. Rows arrive here from integration-origin sessions (memory policy “quarantine”) or when you quarantine a memory manually in the Memory inspector.',
+			'web.cortex.quarantine.promote' => 'Promote',
+			'web.cortex.quarantine.promoteHint' => 'Move into durable memory (joins recall + consolidation)',
+			'web.cortex.quarantine.discard' => 'Discard',
+			'web.cortex.quarantine.promotedToast' => 'Promoted to durable memory',
+			'web.cortex.quarantine.discardedToast' => 'Discarded',
+			'web.cortex.quarantine.actionFailed' => 'Action failed',
+			'web.cortex.quarantine.expires' => ({required Object date}) => 'expires ${date}',
+			'web.cortex.settings.injection.title' => 'Spawn injection',
+			'web.cortex.settings.injection.hint' => 'How much Cortex context each NEW SESSION loads upfront. Switching takes effect immediately for sessions spawned afterwards — the backend never needs a restart.',
+			'web.cortex.settings.injection.active' => 'active',
+			'web.cortex.settings.injection.mode.lean.label' => 'Lean — index + fetch on demand (recommended)',
+			'web.cortex.settings.injection.mode.lean.description' => 'Inject only the binding foundational rules plus a compact index of doc sections and knowledge pages. Agents pull exactly what a task needs via the doc_read / project_search MCP tools. Saves tokens and keeps long sessions from drowning in upfront context.',
+			'web.cortex.settings.injection.mode.full.label' => 'Full — inject everything',
+			'web.cortex.settings.injection.mode.full.description' => 'Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window.',
+			'web.cortex.settings.injection.savedToast' => 'Injection mode saved — new sessions use it immediately (no backend restart)',
+			'web.cortex.settings.injection.saveFailed' => 'Save failed',
+			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -16381,8 +17852,6 @@ extension on Translations {
 			'sessions.terminal.connection.reconnecting' => 'Reconnecting…',
 			'sessions.terminal.connection.reconnectingWithError' => ({required Object error}) => 'Reconnecting (${error})…',
 			'sessions.terminal.connection.disconnected' => 'Disconnected',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => 'Disconnected (${error})',
 			'sessions.terminal.connection.ended' => 'Session ended',
 			'sessions.action.stop' => 'Stop',
@@ -16638,6 +18107,8 @@ extension on Translations {
 			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} disabled.',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.renamedSnack' => ({required Object name}) => 'Renamed to ${name}.',
 			'providers.accounts.activeSessions' => ({required Object count}) => '${count} active',
 			'providers.accounts.usedAgo' => ({required Object when}) => 'used ${when}',
@@ -16767,6 +18238,18 @@ extension on Translations {
 			'memoryArchived.globalScope' => '(global)',
 			'memoryArchived.countBadge' => ({required Object count}) => '${count} archived',
 			'memoryArchived.restore' => 'Restore',
+			'memoryArchived.restoreAll' => 'Restore all',
+			'memoryArchived.deleteAll' => 'Delete all',
+			'memoryArchived.restoreAllConfirm' => ({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?',
+			'memoryArchived.deleteAllConfirm' => ({required Object count, required Object project}) => 'Permanently delete all ${count} archived memories in ${project}? This skips the 30-day grace window and cannot be undone.',
+			'memoryArchived.deletePermanently' => 'Delete',
+			'memoryArchived.deleteConfirm' => 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.',
+			'memoryArchived.restoredToast' => 'Restored',
+			'memoryArchived.restoredAllToast' => ({required Object count}) => 'Restored ${count} memories',
+			'memoryArchived.deletedToast' => 'Deleted permanently',
+			'memoryArchived.deletedAllToast' => ({required Object count}) => 'Deleted ${count} memories',
+			'memoryArchived.deleteFailed' => ({required Object error}) => 'Delete failed: ${error}',
+			'memoryArchived.summary' => ({required Object projects, required Object memories}) => '${projects} projects · ${memories} archived',
 			'project.title' => 'Project',
 			'project.pickFirst' => 'Pick a project first.',
 			'project.health.title' => ({required Object days}) => 'Memory health — last ${days} days',
@@ -16895,8 +18378,6 @@ extension on Translations {
 			'backups.wizard.generateHint' => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.',
 			'backups.wizard.helperRecommended' => 'Recommended: 40+ chars from a password manager',
 			'backups.wizard.saveNowHeader' => 'Save this passphrase NOW',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
 			'backups.statusReady' => 'Backups ready',
 			'backups.statusCannot' => 'Backups cannot run',
@@ -17140,6 +18621,8 @@ extension on Translations {
 			'channels.popup.mute' => 'Mute',
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => 'running',
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
@@ -17409,8 +18892,6 @@ extension on Translations {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'memory.status.enabled' => 'enabled',
 			'memory.status.disabled' => 'disabled',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
@@ -17446,6 +18927,12 @@ extension on Translations {
 			'memory.create.scopeKeyLabel' => 'Scope key (project cwd)',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Create',
+			'memory.archive' => 'Archive',
+			'memory.quarantine' => 'Quarantine',
+			'memory.archivedToast' => 'Memory archived — restorable from Archived',
+			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
+			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
+			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',

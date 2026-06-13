@@ -129,6 +129,7 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get workspace => '工作区';
 	@override String get knowledge => '知识';
 	@override String get vault => '文档库';
+	@override String get cortex => '心智中枢';
 }
 
 // Path: web
@@ -166,6 +167,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebNoteEditorZh noteEditor = _TranslationsWebNoteEditorZh._(_root);
 	@override late final _TranslationsWebExportZh export = _TranslationsWebExportZh._(_root);
 	@override late final _TranslationsWebKnowledgeZh knowledge = _TranslationsWebKnowledgeZh._(_root);
+	@override late final _TranslationsWebCortexZh cortex = _TranslationsWebCortexZh._(_root);
 }
 
 // Path: more
@@ -382,6 +384,18 @@ class _TranslationsMemoryArchivedZh extends TranslationsMemoryArchivedEn {
 	@override String get globalScope => '(全局)';
 	@override String countBadge({required Object count}) => '${count} 条已归档';
 	@override String get restore => '恢复';
+	@override String get restoreAll => '全部恢复';
+	@override String get deleteAll => '全部删除';
+	@override String restoreAllConfirm({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？';
+	@override String deleteAllConfirm({required Object project, required Object count}) => '永久删除 ${project} 的全部 ${count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。';
+	@override String get deletePermanently => '删除';
+	@override String get deleteConfirm => '立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。';
+	@override String get restoredToast => '已恢复';
+	@override String restoredAllToast({required Object count}) => '已恢复 ${count} 条记忆';
+	@override String get deletedToast => '已永久删除';
+	@override String deletedAllToast({required Object count}) => '已删除 ${count} 条记忆';
+	@override String deleteFailed({required Object error}) => '删除失败：${error}';
+	@override String summary({required Object projects, required Object memories}) => '${projects} 个项目 · ${memories} 条归档';
 }
 
 // Path: project
@@ -831,6 +845,12 @@ class _TranslationsMemoryZh extends TranslationsMemoryEn {
 	@override late final _TranslationsMemoryDeleteOneZh deleteOne = _TranslationsMemoryDeleteOneZh._(_root);
 	@override late final _TranslationsMemoryScopeZh scope = _TranslationsMemoryScopeZh._(_root);
 	@override late final _TranslationsMemoryCreateZh create = _TranslationsMemoryCreateZh._(_root);
+	@override String get archive => '归档';
+	@override String get quarantine => '隔离';
+	@override String get archivedToast => '记忆已归档——可在「已归档」中恢复';
+	@override String get quarantinedToast => '记忆已隔离——请在 Cortex → 隔离区 审查';
+	@override String archiveFailed({required Object error}) => '归档失败：${error}';
+	@override String quarantineFailed({required Object error}) => '隔离失败：${error}';
 }
 
 // Path: about
@@ -912,6 +932,7 @@ class _TranslationsWebSessionsZh extends TranslationsWebSessionsEn {
 	@override late final _TranslationsWebSessionsInspectorZh inspector = _TranslationsWebSessionsInspectorZh._(_root);
 	@override late final _TranslationsWebSessionsEndedZh ended = _TranslationsWebSessionsEndedZh._(_root);
 	@override late final _TranslationsWebSessionsFileBrowserZh fileBrowser = _TranslationsWebSessionsFileBrowserZh._(_root);
+	@override late final _TranslationsWebSessionsNotesZh notes = _TranslationsWebSessionsNotesZh._(_root);
 }
 
 // Path: web.memory
@@ -925,8 +946,9 @@ class _TranslationsWebMemoryZh extends TranslationsWebMemoryEn {
 	@override String get subtitle => '浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。';
 	@override String get navProject => '项目';
 	@override String get navArchived => '已归档';
-	@override String get navWorkers => 'Workers';
-	@override String get navConfiguration => '配置 →';
+	@override String get navWorkers => 'Cortex 设置';
+	@override String get navConfiguration => '存储与嵌入 →';
+	@override String get navQuarantine => '隔离区';
 }
 
 // Path: web.journalStale
@@ -1014,11 +1036,12 @@ class _TranslationsWebMemoryConfigZh extends TranslationsWebMemoryConfigEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '记忆配置';
-	@override String get subtitle => '所有记忆相关开关汇总到这里：HTTP provider、每个任务的路由、capture 触发器、spawn 时注入策略、累计花费。';
+	@override String get title => 'Cortex 设置';
+	@override String get subtitle => 'AI 闭环的全部运行时旋钮都在这里——spawn 注入、LLM provider、按任务的工作器路由、捕获触发器、注入策略、token 花费。保存即生效，无需重启。';
 	@override late final _TranslationsWebMemoryConfigSectionsZh sections = _TranslationsWebMemoryConfigSectionsZh._(_root);
 	@override late final _TranslationsWebMemoryConfigSectionHintsZh sectionHints = _TranslationsWebMemoryConfigSectionHintsZh._(_root);
 	@override late final _TranslationsWebMemoryConfigMoveBannerZh moveBanner = _TranslationsWebMemoryConfigMoveBannerZh._(_root);
+	@override late final _TranslationsWebMemoryConfigInfraZh infra = _TranslationsWebMemoryConfigInfraZh._(_root);
 }
 
 // Path: web.memoryWorkers
@@ -1066,6 +1089,17 @@ class _TranslationsWebMemoryWorkersZh extends TranslationsWebMemoryWorkersEn {
 	@override String get testCallFailedToast => '测试调用失败';
 	@override String get unknownError => '未知错误';
 	@override late final _TranslationsWebMemoryWorkersTasksZh tasks = _TranslationsWebMemoryWorkersTasksZh._(_root);
+	@override String get modelLabel => '模型';
+	@override String get modelHint => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。';
+	@override String get modelCliDefault => 'CLI 默认（最新）';
+	@override String get modelCustom => '自定义…';
+	@override String get modelCustomPlaceholder => '精确模型 ID';
+	@override String get modelBackToList => '返回列表';
+	@override String get cliCodex => 'Codex（codex exec）';
+	@override String get cliAntigravity => 'Antigravity（agy --print）';
+	@override String infraGateOff({required Object label}) => '${label} 的路由已保存，但它的功能总开关在 Server Settings 中处于关闭状态——开启之前不会执行任何调用。';
+	@override String get infraGateOpen => '去开启';
+	@override String get providerModel => '模型：';
 }
 
 // Path: web.archived
@@ -1079,8 +1113,23 @@ class _TranslationsWebArchivedZh extends TranslationsWebArchivedEn {
 	@override String get emptyTitle => '暂无归档';
 	@override String get emptyDescription => '所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。';
 	@override String get title => '已归档记忆';
-	@override String get subtitle => '自动清理器与生命周期扫描在所有项目中软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。如有误判可在下方恢复。';
+	@override String get subtitle => '软归档的记忆，在 30 天宽限期被清除前均可恢复。来源：auto-cleaner 的判定、逐条手动归档，以及你归档的整个项目——项目的记忆会一起到这里，取消归档时一起回来（项目归档不受宽限期清除影响）。';
 	@override String get globalScope => '(全局)';
+	@override String summary({required Object projects, required Object memories}) => '${projects} 个项目 · ${memories} 条归档记忆';
+	@override String memCount({required Object count}) => '${count} 条记忆';
+	@override String get restoreAll => '全部恢复';
+	@override String get restoreAllTooltip => '恢复该项目下的全部归档记忆';
+	@override String restoreAllConfirm({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？';
+	@override String restoredAllToast({required Object count}) => '已恢复 ${count} 条记忆';
+	@override String get deleteButton => '删除';
+	@override String get deleteTooltip => '立即永久删除——跳过 30 天宽限期，不可撤销';
+	@override String get deleteConfirm => '立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。';
+	@override String get deletedToast => '已永久删除';
+	@override String get deleteFailedToast => '删除失败';
+	@override String get deleteAll => '全部删除';
+	@override String get deleteAllTooltip => '立即永久删除该项目下的全部归档记忆';
+	@override String deleteAllConfirm({required Object project, required Object count}) => '立即永久删除 ${project} 的全部 ${count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。';
+	@override String deletedAllToast({required Object count}) => '已删除 ${count} 条记忆';
 	@override String get openProject => '打开项目';
 	@override String get archivedAtPrefix => '归档于';
 	@override String get restoreButton => '恢复';
@@ -1306,6 +1355,9 @@ class _TranslationsWebServerSettingsZh extends TranslationsWebServerSettingsEn {
 	@override late final _TranslationsWebServerSettingsProbeZh probe = _TranslationsWebServerSettingsProbeZh._(_root);
 	@override late final _TranslationsWebServerSettingsBackupZh backup = _TranslationsWebServerSettingsBackupZh._(_root);
 	@override late final _TranslationsWebServerSettingsTargetRowZh targetRow = _TranslationsWebServerSettingsTargetRowZh._(_root);
+	@override late final _TranslationsWebServerSettingsToggleZh toggle = _TranslationsWebServerSettingsToggleZh._(_root);
+	@override String get memoryRuntimeBanner => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。';
+	@override String get memoryRuntimeBannerButton => '打开 Cortex 设置';
 }
 
 // Path: web.settings
@@ -1444,6 +1496,22 @@ class _TranslationsWebKnowledgeZh extends TranslationsWebKnowledgeEn {
 	@override late final _TranslationsWebKnowledgeScopesZh scopes = _TranslationsWebKnowledgeScopesZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbZh kb = _TranslationsWebKnowledgeKbZh._(_root);
 	@override late final _TranslationsWebKnowledgeKindsZh kinds = _TranslationsWebKnowledgeKindsZh._(_root);
+	@override late final _TranslationsWebKnowledgeDistillZh distill = _TranslationsWebKnowledgeDistillZh._(_root);
+	@override late final _TranslationsWebKnowledgeGraphZh graph = _TranslationsWebKnowledgeGraphZh._(_root);
+}
+
+// Path: web.cortex
+class _TranslationsWebCortexZh extends TranslationsWebCortexEn {
+	_TranslationsWebCortexZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebCortexHomeZh home = _TranslationsWebCortexHomeZh._(_root);
+	@override late final _TranslationsWebCortexChatZh chat = _TranslationsWebCortexChatZh._(_root);
+	@override late final _TranslationsWebCortexBlueprintZh blueprint = _TranslationsWebCortexBlueprintZh._(_root);
+	@override late final _TranslationsWebCortexQuarantineZh quarantine = _TranslationsWebCortexQuarantineZh._(_root);
+	@override late final _TranslationsWebCortexSettingsZh settings = _TranslationsWebCortexSettingsZh._(_root);
 }
 
 // Path: more.identity
@@ -2902,6 +2970,16 @@ class _TranslationsWebSessionsFileBrowserZh extends TranslationsWebSessionsFileB
 	@override String get homeFailedToast => '读取家目录失败';
 }
 
+// Path: web.sessions.notes
+class _TranslationsWebSessionsNotesZh extends TranslationsWebSessionsNotesEn {
+	_TranslationsWebSessionsNotesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebSessionsNotesCortexDocZh cortexDoc = _TranslationsWebSessionsNotesCortexDocZh._(_root);
+}
+
 // Path: web.conflicts.confirmDelete
 class _TranslationsWebConflictsConfirmDeleteZh extends TranslationsWebConflictsConfirmDeleteEn {
 	_TranslationsWebConflictsConfirmDeleteZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2984,6 +3062,24 @@ class _TranslationsWebMemoryConfigMoveBannerZh extends TranslationsWebMemoryConf
 	@override String get openButton => '打开 记忆配置 →';
 }
 
+// Path: web.memoryConfig.infra
+class _TranslationsWebMemoryConfigInfraZh extends TranslationsWebMemoryConfigInfraEn {
+	_TranslationsWebMemoryConfigInfraZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '存储与嵌入（基础设施）';
+	@override String get hint => '记忆配置的另一半——嵌入后端、检索调参、gatekeeper/cleaner 总开关与知识图谱开关——位于 Server Settings，修改需重启。';
+	@override String get openSettings => 'Server Settings →';
+	@override String get embedder => '嵌入器';
+	@override String get gatekeeper => 'gatekeeper';
+	@override String get cleaner => 'cleaner';
+	@override String get knowledge => '知识图谱';
+	@override String get on => '开';
+	@override String get off => '关';
+}
+
 // Path: web.memoryWorkers.tasks
 class _TranslationsWebMemoryWorkersTasksZh extends TranslationsWebMemoryWorkersTasksEn {
 	_TranslationsWebMemoryWorkersTasksZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2998,6 +3094,8 @@ class _TranslationsWebMemoryWorkersTasksZh extends TranslationsWebMemoryWorkersT
 	@override late final _TranslationsWebMemoryWorkersTasksPlanDriftZh plan_drift = _TranslationsWebMemoryWorkersTasksPlanDriftZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersTasksConflictDetectorZh conflict_detector = _TranslationsWebMemoryWorkersTasksConflictDetectorZh._(_root);
 	@override late final _TranslationsWebMemoryWorkersTasksCaptureZh capture = _TranslationsWebMemoryWorkersTasksCaptureZh._(_root);
+	@override late final _TranslationsWebMemoryWorkersTasksBlueprintZh blueprint = _TranslationsWebMemoryWorkersTasksBlueprintZh._(_root);
+	@override late final _TranslationsWebMemoryWorkersTasksCurationZh curation = _TranslationsWebMemoryWorkersTasksCurationZh._(_root);
 }
 
 // Path: web.project.picker
@@ -3051,6 +3149,7 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get conflicts => '冲突';
 	@override String get archived => '已归档';
 	@override String get overview => '概览';
+	@override String get hygiene => '记忆卫生';
 }
 
 // Path: web.project.docLabel
@@ -3080,6 +3179,7 @@ class _TranslationsWebProjectEditorZh extends TranslationsWebProjectEditorEn {
 	@override String savedToast({required Object label}) => '${label}已保存';
 	@override String get goalPlaceholder => '我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。';
 	@override String get planPlaceholder => '当前计划 — 现在在做什么、下一步是什么。随进度更新。';
+	@override String get sectionPlaceholder => '以 markdown 撰写本章节…';
 }
 
 // Path: web.project.readonly
@@ -3094,6 +3194,7 @@ class _TranslationsWebProjectReadonlyZh extends TranslationsWebProjectReadonlyEn
 	@override String noneCaptured({required Object label}) => '尚未捕获${label}。';
 	@override String get generatedBy => '生成者';
 	@override String get lastRefresh => '最近刷新';
+	@override String get customEmpty => '本章节由扫描器维护，扫描运行后自动填充。';
 }
 
 // Path: web.project.journal
@@ -3330,6 +3431,8 @@ class _TranslationsWebMemoryInspectorRowZh extends TranslationsWebMemoryInspecto
 	@override String get deleteTooltip => '删除该记忆';
 	@override String get emptyError => '记忆文本不能为空';
 	@override String deleteConfirm({required Object id}) => '删除记忆 ${id}? 不可恢复。';
+	@override String get archiveTooltip => '归档（可逆）——移入「已归档」视图';
+	@override String get quarantineTooltip => '隔离——移入审查队列，直到批准或过期';
 }
 
 // Path: web.memoryInspector.toasts
@@ -3355,6 +3458,10 @@ class _TranslationsWebMemoryInspectorToastsZh extends TranslationsWebMemoryInspe
 	@override String get syncEmpty => '没有需要同步的新 .md 文件';
 	@override String get syncEmptyDescription => '已是最新，或该 cwd 没有 Claude memory 目录。';
 	@override String get syncFailed => '同步失败';
+	@override String get archived => '记忆已归档——可在「已归档」视图中恢复';
+	@override String get archiveFailed => '归档失败';
+	@override String get quarantined => '记忆已隔离——请在 Cortex → 隔离区 中审查';
+	@override String get quarantineFailed => '隔离失败';
 }
 
 // Path: web.memoryInspector.bulkDelete
@@ -4121,6 +4228,10 @@ class _TranslationsWebPluginsMcpZh extends TranslationsWebPluginsMcpEn {
 	@override String get toggleFailedToast => '切换失败';
 	@override String get codexUnsupportedBadge => 'Codex: 不支持';
 	@override String get codexUnsupportedTooltip => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。';
+	@override String get builtinBadge => '内置';
+	@override String get builtinTooltip => '由 opendray 自身提供——自动附加到每个支持 MCP 的会话。不可编辑或删除。';
+	@override String get builtinDescription => 'opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Gemini 会话。';
+	@override String get builtinAutoAttach => '始终启用';
 	@override late final _TranslationsWebPluginsMcpEditorZh editor = _TranslationsWebPluginsMcpEditorZh._(_root);
 	@override late final _TranslationsWebPluginsMcpTestZh test = _TranslationsWebPluginsMcpTestZh._(_root);
 }
@@ -4502,6 +4613,9 @@ class _TranslationsWebServerSettingsFormGroupsZh extends TranslationsWebServerSe
 	@override String get backupWhere => '备份目标位置';
 	@override String get backupSchedules => '计划任务';
 	@override String get backupWhatsInside => '备份里有什么？';
+	@override String get memoryGovernance => '后台治理（gatekeeper / cleaner）';
+	@override String get knowledgeGraph => '知识图谱';
+	@override String get database => '数据库';
 }
 
 // Path: web.serverSettings.fields
@@ -4550,6 +4664,17 @@ class _TranslationsWebServerSettingsFieldsZh extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsBackupExportDirZh backupExportDir = _TranslationsWebServerSettingsFieldsBackupExportDirZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupPgDumpPathZh backupPgDumpPath = _TranslationsWebServerSettingsFieldsBackupPgDumpPathZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupPgRestorePathZh backupPgRestorePath = _TranslationsWebServerSettingsFieldsBackupPgRestorePathZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsMemoryDedupZh memoryDedup = _TranslationsWebServerSettingsFieldsMemoryDedupZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsGatekeeperEnabledZh gatekeeperEnabled = _TranslationsWebServerSettingsFieldsGatekeeperEnabledZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsGatekeeperLatencyZh gatekeeperLatency = _TranslationsWebServerSettingsFieldsGatekeeperLatencyZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsCleanerEnabledZh cleanerEnabled = _TranslationsWebServerSettingsFieldsCleanerEnabledZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsCleanerIntervalZh cleanerInterval = _TranslationsWebServerSettingsFieldsCleanerIntervalZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsCleanerGlobalScopeZh cleanerGlobalScope = _TranslationsWebServerSettingsFieldsCleanerGlobalScopeZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsKnowledgeEnabledZh knowledgeEnabled = _TranslationsWebServerSettingsFieldsKnowledgeEnabledZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsClaudeWatcherZh claudeWatcher = _TranslationsWebServerSettingsFieldsClaudeWatcherZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsClaudeAutoFailoverZh claudeAutoFailover = _TranslationsWebServerSettingsFieldsClaudeAutoFailoverZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsMobileTokenTTLZh mobileTokenTTL = _TranslationsWebServerSettingsFieldsMobileTokenTTLZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsDbMaxConnsZh dbMaxConns = _TranslationsWebServerSettingsFieldsDbMaxConnsZh._(_root);
 }
 
 // Path: web.serverSettings.liveTail
@@ -4673,6 +4798,19 @@ class _TranslationsWebServerSettingsTargetRowZh extends TranslationsWebServerSet
 	@override String get deleteSuccess => '目标已删除';
 	@override String get deleteFailedTitle => '删除失败';
 	@override String get unknownError => '未知错误';
+}
+
+// Path: web.serverSettings.toggle
+class _TranslationsWebServerSettingsToggleZh extends TranslationsWebServerSettingsToggleEn {
+	_TranslationsWebServerSettingsToggleZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get on => '开启';
+	@override String get off => '关闭';
+	@override String get defaultOn => '默认（开）';
+	@override String get defaultOff => '默认（关）';
 }
 
 // Path: web.settings.groups
@@ -4852,6 +4990,7 @@ class _TranslationsWebMemoryAmbientProvidersZh extends TranslationsWebMemoryAmbi
 	@override String get empty => '尚未配置 provider。';
 	@override late final _TranslationsWebMemoryAmbientProvidersRowZh row = _TranslationsWebMemoryAmbientProvidersRowZh._(_root);
 	@override late final _TranslationsWebMemoryAmbientProvidersDialogZh dialog = _TranslationsWebMemoryAmbientProvidersDialogZh._(_root);
+	@override late final _TranslationsWebMemoryAmbientProvidersModelSelectZh modelSelect = _TranslationsWebMemoryAmbientProvidersModelSelectZh._(_root);
 }
 
 // Path: web.memoryAmbient.rules
@@ -5050,6 +5189,13 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get bindingBadge => '强约束 · 必须遵守';
 	@override String get referenceBadge => '参考';
 	@override late final _TranslationsWebKnowledgeKbProposalZh proposal = _TranslationsWebKnowledgeKbProposalZh._(_root);
+	@override String get discuss => '与 AI 讨论';
+	@override String get discussHint => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写';
+	@override String get onDemand => '按需';
+	@override String get removePage => '移除页面';
+	@override String get removePageHint => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）';
+	@override String get pageRemovedToast => '页面已移除';
+	@override late final _TranslationsWebKnowledgeKbNewPageZh newPage = _TranslationsWebKnowledgeKbNewPageZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -5064,6 +5210,167 @@ class _TranslationsWebKnowledgeKindsZh extends TranslationsWebKnowledgeKindsEn {
 	@override String get fact => '事实';
 	@override String get playbook => 'Playbook';
 	@override String get skill => '技能';
+}
+
+// Path: web.knowledge.distill
+class _TranslationsWebKnowledgeDistillZh extends TranslationsWebKnowledgeDistillEn {
+	_TranslationsWebKnowledgeDistillZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tab => '蒸馏';
+	@override String get intro => '技能 = 从你的真实工作中蒸馏出的、被验证过且可重复执行的【流程】。经验编译器跨项目挖掘会话日志，把相似工作聚类，只有当同一流程在 2 次以上会话中【成功】完成时才生成候选——每条证据引文都会与日志原文逐字核验。候选按「复现次数 × 手动流程耗时」排序，最省时间的优先蒸馏；纯机械化的流程还会编译成带验证步骤的可执行 run.sh。';
+	@override String get playbooks => '手册——已蒸馏，待审阅';
+	@override String get playbooksHint => '出现在这里的每个候选都已通过门禁：≥2 次成功会话、经核验的证据引文、≥3 个具体步骤。按节省时间排序（复现次数 × 手动分钟数）。把会复用的提升为技能，其余丢弃。';
+	@override String get playbooksEmpty => '还没有挖掘产物——当同一流程在两次以上会话中成功完成后，候选会出现在这里。';
+	@override String get skills => '技能——生效中，随启动注入';
+	@override String get skillsHint => '已提升的手册。每个新会话都会获得这些技能。';
+	@override String get skillsEmpty => '还没有技能——提升一个手册来创建第一个。';
+	@override String get skillify => '提升为技能';
+	@override String get skillifyHint => '渲染为技能文件并注入每次启动';
+	@override String get discard => '丢弃';
+	@override String get retire => '退役技能';
+	@override String get injectedBadge => '已注入';
+	@override String get skillifiedToast => '已晋升——已发布到 插件 → Agent Skills，新会话将加载此技能';
+	@override String get removedToast => '已移除';
+	@override String usage({required Object count}) => '${count} 个会话用到';
+	@override String lastUsed({required Object date}) => '最近 ${date}';
+	@override String get enabledToast => '技能已启用——新会话将可加载';
+	@override String get disabledToast => '技能已停用——已从加载集合移除';
+	@override String get disabledBadge => '停用';
+	@override String get toggleHint => '启用的技能才会被会话加载；当前阶段用不到的就停掉';
+	@override String get viewHint => '点击查看完整流程';
+	@override String get inAgentSkills => '已发布到 插件 → Agent Skills';
+	@override String get agentSkillsHint => '渲染后的 SKILL.md 存放在技能 vault 中——可在 插件 → Agent Skills 查看与管理。';
+	@override String get notInVault => '已停用——SKILL.md 已从 vault 移除';
+	@override String get compiledBadge => '已编译';
+	@override String get compiledHint => '附带可执行的 run.sh（含验证步骤）；提升时还会注册为自定义任务';
+	@override String recurrence({required Object count}) => '成功 ×${count}';
+	@override String timeCost({required Object minutes}) => '手动约 ${minutes} 分钟';
+	@override String projectSpan({required Object count}) => '${count} 个项目';
+	@override String get scoreHint => '按「复现次数 × 手动耗时」排序——最省操作员时间的优先蒸馏';
+	@override String outcomes({required Object ok, required Object failed}) => '加载后 ${ok} 次成功 / ${failed} 次失败';
+	@override late final _TranslationsWebKnowledgeDistillRetirementZh retirement = _TranslationsWebKnowledgeDistillRetirementZh._(_root);
+}
+
+// Path: web.knowledge.graph
+class _TranslationsWebKnowledgeGraphZh extends TranslationsWebKnowledgeGraphEn {
+	_TranslationsWebKnowledgeGraphZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tab => '图谱';
+	@override String get intro => 'AI 所学一切的关系图谱：哪些项目共用同一技术、哪些技能与坑绑定在哪些实体上。动共享基础设施之前，先在这里确认节点的爆炸半径。';
+	@override String get empty => '还没有知识——图谱会随着会话运行自动生长：锚定扫描从项目工作中提取实体，蒸馏再沉淀出手册与技能。跑几个工作会话后再来看看。';
+	@override String get hint => '滚轮缩放 · 拖动背景平移 · 拖动节点整理布局 · 点击节点查看详情';
+	@override late final _TranslationsWebKnowledgeGraphLegendZh legend = _TranslationsWebKnowledgeGraphLegendZh._(_root);
+	@override String connections({required Object count}) => '${count} 个关联节点';
+	@override String get noLinks => '还没有任何东西关联到这个节点。';
+}
+
+// Path: web.cortex.home
+class _TranslationsWebCortexHomeZh extends TranslationsWebCortexHomeEn {
+	_TranslationsWebCortexHomeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '心智中枢 Cortex';
+	@override String get subtitle => '一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。';
+	@override String get disabled => '未启用';
+	@override String pendingProposals({required Object count}) => '${count} 个待审';
+	@override String get loopHint => '记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。';
+	@override String get activeProjects => '活跃项目';
+	@override String idle({required Object days}) => '闲置 ${days} 天';
+	@override late final _TranslationsWebCortexHomeMemoryZh memory = _TranslationsWebCortexHomeMemoryZh._(_root);
+	@override late final _TranslationsWebCortexHomeNotesZh notes = _TranslationsWebCortexHomeNotesZh._(_root);
+	@override late final _TranslationsWebCortexHomeKnowledgeZh knowledge = _TranslationsWebCortexHomeKnowledgeZh._(_root);
+	@override String get settings => '设置';
+	@override late final _TranslationsWebCortexHomeProposalsZh proposals = _TranslationsWebCortexHomeProposalsZh._(_root);
+}
+
+// Path: web.cortex.chat
+class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
+	_TranslationsWebCortexChatZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '管护对话';
+	@override String get show => '与 AI 讨论';
+	@override String get hide => '收起对话';
+	@override String get emptyHint => '让 AI 更新、重组或重写这份文档。AI 维护且未锁定时直接生效；你锁定过的文档会以提案进入收件箱。';
+	@override String get placeholder => '例如：根据最近的工作更新本节 · ⌘↵ 发送';
+	@override String get thinking => 'AI 处理中…';
+	@override String get sendFailed => '发送失败';
+	@override String get escalate => '升级为会话';
+	@override String get escalated => '已升级';
+	@override String get escalateHint => '拉起完整 agent 会话，基于代码库取证，并携带本对话上下文';
+	@override String get escalateFailed => '升级失败';
+	@override String get escalatedToast => 'Agent 会话已启动';
+	@override String get closeHint => '关闭此对话';
+	@override String get revisionApplied => '文档已更新';
+	@override String get revisionProposed => '已生成提案——请到收件箱审阅';
+}
+
+// Path: web.cortex.blueprint
+class _TranslationsWebCortexBlueprintZh extends TranslationsWebCortexBlueprintEn {
+	_TranslationsWebCortexBlueprintZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get open => '蓝图';
+	@override String get openHint => '编辑本项目文档包含哪些章节';
+	@override String get title => '文档蓝图';
+	@override String get description => '本项目官方文档的章节结构。不同类型的项目应有不同的章节——可自行调整，也可让 AI 按项目类型提议。';
+	@override String get propose => 'AI 提议';
+	@override String get proposeHint => '识别项目类型并提议契合的章节结构';
+	@override String get proposeFailed => '提议失败';
+	@override String proposalNote({required Object type, required Object reason}) => 'AI 判断项目类型为：${type}——${reason} 请在下方审阅并自由修改后应用。';
+	@override String get addSection => '添加章节';
+	@override String get slugPlaceholder => '标识';
+	@override String get titlePlaceholder => '标题';
+	@override String get hintPlaceholder => '维护提示——一句话指引 AI 如何维护本章节（可选）';
+	@override late final _TranslationsWebCortexBlueprintModeZh mode = _TranslationsWebCortexBlueprintModeZh._(_root);
+	@override String get inject => '注入';
+	@override String get reserved => '保留';
+	@override String get deleteNote => '删除章节只是隐藏，内容不会丢——重新添加同名标识即可恢复。';
+	@override String get cancel => '取消';
+	@override String get apply => '应用蓝图';
+	@override String get applyFailed => '应用失败';
+	@override String get appliedToast => '蓝图已应用';
+}
+
+// Path: web.cortex.quarantine
+class _TranslationsWebCortexQuarantineZh extends TranslationsWebCortexQuarantineEn {
+	_TranslationsWebCortexQuarantineZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '隔离区';
+	@override String get subtitle => '在被采信为持久记忆之前需要审查的事实：第三方 integration 的捕获会按策略落到这里，你也可以在记忆检查器中手动隔离任何一条记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。';
+	@override String get empty => '隔离区为空。条目来源：integration 来源会话（记忆策略为 “quarantine”），或你在记忆检查器中手动隔离的记忆。';
+	@override String get promote => '升格';
+	@override String get promoteHint => '移入正式记忆（参与召回与知识蒸馏）';
+	@override String get discard => '丢弃';
+	@override String get promotedToast => '已升格为正式记忆';
+	@override String get discardedToast => '已丢弃';
+	@override String get actionFailed => '操作失败';
+	@override String expires({required Object date}) => '${date} 到期';
+}
+
+// Path: web.cortex.settings
+class _TranslationsWebCortexSettingsZh extends TranslationsWebCortexSettingsEn {
+	_TranslationsWebCortexSettingsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebCortexSettingsInjectionZh injection = _TranslationsWebCortexSettingsInjectionZh._(_root);
 }
 
 // Path: more.items.integrations
@@ -6024,6 +6331,19 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get memory => '记忆';
 }
 
+// Path: web.sessions.notes.cortexDoc
+class _TranslationsWebSessionsNotesCortexDocZh extends TranslationsWebSessionsNotesCortexDocEn {
+	_TranslationsWebSessionsNotesCortexDocZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '项目文档（心智中枢）';
+	@override String get hint => '项目的官方文档——此处只读；进入心智中枢工作区可编辑、对话或调整蓝图。';
+	@override String get open => '打开工作区';
+	@override String get empty => '空';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class _TranslationsWebMemoryWorkersTasksGatekeeperZh extends TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	_TranslationsWebMemoryWorkersTasksGatekeeperZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -6033,6 +6353,7 @@ class _TranslationsWebMemoryWorkersTasksGatekeeperZh extends TranslationsWebMemo
 	// Translations
 	@override String get label => 'Gatekeeper';
 	@override String get description => '每次 memory_store 前的预写过滤器。高频（目标 <500ms） — 仅 summarizer。';
+	@override String get modelAdvice => '高频的是/否判断——轻量模型（haiku / flash-lite / codex-mini / 本地）完全够用。';
 }
 
 // Path: web.memoryWorkers.tasks.cleaner
@@ -6044,6 +6365,7 @@ class _TranslationsWebMemoryWorkersTasksCleanerZh extends TranslationsWebMemoryW
 	// Translations
 	@override String get label => 'Cleaner librarian';
 	@override String get description => '周期性 LLM 整理。对旧记忆判定为保留 / 过期 / 重复。';
+	@override String get modelAdvice => '批量判定旧事实去留——推荐轻量模型；按计划周期运行。';
 }
 
 // Path: web.memoryWorkers.tasks.gitactivity
@@ -6055,6 +6377,7 @@ class _TranslationsWebMemoryWorkersTasksGitactivityZh extends TranslationsWebMem
 	// Translations
 	@override String get label => 'Git 活动总结器';
 	@override String get description => 'git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。';
+	@override String get modelAdvice => 'git 历史的叙事性总结——均衡模型（sonnet / flash）的可读性明显更好。';
 }
 
 // Path: web.memoryWorkers.tasks.transcript
@@ -6066,6 +6389,7 @@ class _TranslationsWebMemoryWorkersTasksTranscriptZh extends TranslationsWebMemo
 	// Translations
 	@override String get label => '会话记录总结器';
 	@override String get description => '会话结束时的“agent 都做了什么”总结。天然适合 agent worker。';
+	@override String get modelAdvice => '会话「agent 做了什么」总结——推荐均衡模型；其产出供日志与漂移检测使用。';
 }
 
 // Path: web.memoryWorkers.tasks.plan_drift
@@ -6077,6 +6401,7 @@ class _TranslationsWebMemoryWorkersTasksPlanDriftZh extends TranslationsWebMemor
 	// Translations
 	@override String get label => '计划漂移检测';
 	@override String get description => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。';
+	@override String get modelAdvice => '改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。';
 }
 
 // Path: web.memoryWorkers.tasks.conflict_detector
@@ -6088,6 +6413,7 @@ class _TranslationsWebMemoryWorkersTasksConflictDetectorZh extends TranslationsW
 	// Translations
 	@override String get label => '跨层冲突检测';
 	@override String get description => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。';
+	@override String get modelAdvice => '每日跨层矛盾扫描——均衡模型即可。';
 }
 
 // Path: web.memoryWorkers.tasks.capture
@@ -6099,6 +6425,31 @@ class _TranslationsWebMemoryWorkersTasksCaptureZh extends TranslationsWebMemoryW
 	// Translations
 	@override String get label => 'Capture 引擎';
 	@override String get description => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。';
+	@override String get modelAdvice => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。';
+}
+
+// Path: web.memoryWorkers.tasks.blueprint
+class _TranslationsWebMemoryWorkersTasksBlueprintZh extends TranslationsWebMemoryWorkersTasksBlueprintEn {
+	_TranslationsWebMemoryWorkersTasksBlueprintZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get modelAdvice => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。';
+	@override String get label => '蓝图提议器';
+	@override String get description => '根据仓库信号识别项目类型并提议文档章节结构。由蓝图编辑器手动触发。';
+}
+
+// Path: web.memoryWorkers.tasks.curation
+class _TranslationsWebMemoryWorkersTasksCurationZh extends TranslationsWebMemoryWorkersTasksCurationEn {
+	_TranslationsWebMemoryWorkersTasksCurationZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get modelAdvice => '你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。';
+	@override String get label => '管护对话';
+	@override String get description => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。';
 }
 
 // Path: web.project.readonly.tech_stack
@@ -6185,6 +6536,7 @@ class _TranslationsWebProjectDocMetaMaintainerZh extends TranslationsWebProjectD
 	// Translations
 	@override String get coauthored => '你维护 · AI 提议';
 	@override String get auto => '自动生成 · 只读';
+	@override String get human => '人工撰写';
 }
 
 // Path: web.project.docMeta.purpose
@@ -6879,8 +7231,8 @@ class _TranslationsWebServerSettingsSectionsMemoryZh extends TranslationsWebServ
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '记忆';
-	@override String get desc => '跨 CLI 的持久化记忆子系统。';
+	@override String get title => '记忆 · 存储与嵌入';
+	@override String get desc => '记忆子系统的基础设施一半：嵌入后端、检索调参与后台治理。重启后生效。运行时行为（工作器、捕获、注入）在 Cortex 设置中。';
 }
 
 // Path: web.serverSettings.sections.backup
@@ -7358,6 +7710,127 @@ class _TranslationsWebServerSettingsFieldsBackupPgRestorePathZh extends Translat
 	@override String get hint => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。';
 }
 
+// Path: web.serverSettings.fields.memoryDedup
+class _TranslationsWebServerSettingsFieldsMemoryDedupZh extends TranslationsWebServerSettingsFieldsMemoryDedupEn {
+	_TranslationsWebServerSettingsFieldsMemoryDedupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '去重阈值';
+	@override String get hint => '写入时折叠阈值：相似度高于此值会更新现有记忆而非插入近重复项。0 = 随嵌入器自动；负值完全关闭折叠。';
+}
+
+// Path: web.serverSettings.fields.gatekeeperEnabled
+class _TranslationsWebServerSettingsFieldsGatekeeperEnabledZh extends TranslationsWebServerSettingsFieldsGatekeeperEnabledEn {
+	_TranslationsWebServerSettingsFieldsGatekeeperEnabledZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Gatekeeper（写入守门员）';
+	@override String get hint => '写入前的 LLM 判官：判断 memory_store 是持久事实还是噪音。由哪个 LLM 执行在 Cortex 设置 → 工作器中路由。';
+}
+
+// Path: web.serverSettings.fields.gatekeeperLatency
+class _TranslationsWebServerSettingsFieldsGatekeeperLatencyZh extends TranslationsWebServerSettingsFieldsGatekeeperLatencyEn {
+	_TranslationsWebServerSettingsFieldsGatekeeperLatencyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Gatekeeper 最大延迟（ms）';
+	@override String get hint => '超过该延迟时守门员退化为"放行"，不会因 LLM 慢而阻塞写入。默认 2000。';
+}
+
+// Path: web.serverSettings.fields.cleanerEnabled
+class _TranslationsWebServerSettingsFieldsCleanerEnabledZh extends TranslationsWebServerSettingsFieldsCleanerEnabledEn {
+	_TranslationsWebServerSettingsFieldsCleanerEnabledZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Cleaner（自动馆员）';
+	@override String get hint => '周期性扫描，将过期/重复的记忆软归档（可恢复，有宽限期）。由哪个 LLM 执行在 Cortex 设置 → 工作器中路由。';
+}
+
+// Path: web.serverSettings.fields.cleanerInterval
+class _TranslationsWebServerSettingsFieldsCleanerIntervalZh extends TranslationsWebServerSettingsFieldsCleanerIntervalEn {
+	_TranslationsWebServerSettingsFieldsCleanerIntervalZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Cleaner 间隔（秒）';
+	@override String get hint => '自动扫描的间隔秒数。默认 86400（24 小时）。';
+}
+
+// Path: web.serverSettings.fields.cleanerGlobalScope
+class _TranslationsWebServerSettingsFieldsCleanerGlobalScopeZh extends TranslationsWebServerSettingsFieldsCleanerGlobalScopeEn {
+	_TranslationsWebServerSettingsFieldsCleanerGlobalScopeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Cleaner 扫描全局作用域';
+	@override String get hint => '同时审查全局作用域的记忆（通常由操作员手工维护）。建议在信任 cleaner 之前保持关闭。';
+}
+
+// Path: web.serverSettings.fields.knowledgeEnabled
+class _TranslationsWebServerSettingsFieldsKnowledgeEnabledZh extends TranslationsWebServerSettingsFieldsKnowledgeEnabledEn {
+	_TranslationsWebServerSettingsFieldsKnowledgeEnabledZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '知识图谱';
+	@override String get hint => '建立在情景记忆之上的结构化、自进化知识层（实体/手册/技能）。驱动 Cortex → 知识 标签页。';
+}
+
+// Path: web.serverSettings.fields.claudeWatcher
+class _TranslationsWebServerSettingsFieldsClaudeWatcherZh extends TranslationsWebServerSettingsFieldsClaudeWatcherEn {
+	_TranslationsWebServerSettingsFieldsClaudeWatcherZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '账号目录监视';
+	@override String get hint => '监视 accounts_dir，当出现 .credentials.json（CLAUDE_CONFIG_DIR=<dir> claude login 的产物）时自动注册新账号。';
+}
+
+// Path: web.serverSettings.fields.claudeAutoFailover
+class _TranslationsWebServerSettingsFieldsClaudeAutoFailoverZh extends TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn {
+	_TranslationsWebServerSettingsFieldsClaudeAutoFailoverZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '限流自动切换';
+	@override String get hint => '当活动会话撞到限流时自动切换到另一个 Claude 账号。需显式开启：它会在无人点击的情况下改变计费归属。';
+}
+
+// Path: web.serverSettings.fields.mobileTokenTTL
+class _TranslationsWebServerSettingsFieldsMobileTokenTTLZh extends TranslationsWebServerSettingsFieldsMobileTokenTTLEn {
+	_TranslationsWebServerSettingsFieldsMobileTokenTTLZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '移动端 token 有效期';
+	@override String get hint => '签发给移动 App 的 bearer token 的有效期。默认 720h（30 天）。';
+}
+
+// Path: web.serverSettings.fields.dbMaxConns
+class _TranslationsWebServerSettingsFieldsDbMaxConnsZh extends TranslationsWebServerSettingsFieldsDbMaxConnsEn {
+	_TranslationsWebServerSettingsFieldsDbMaxConnsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '最大连接数';
+	@override String get hint => 'pgx 连接池上限。0 = 默认值（16）。';
+}
+
 // Path: web.serverSettings.httpHelpers.presetTip
 class _TranslationsWebServerSettingsHttpHelpersPresetTipZh extends TranslationsWebServerSettingsHttpHelpersPresetTipEn {
 	_TranslationsWebServerSettingsHttpHelpersPresetTipZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7454,6 +7927,25 @@ class _TranslationsWebMemoryAmbientProvidersDialogZh extends TranslationsWebMemo
 	@override String get nameRequiredToast => '名称不能为空';
 	@override String createdToast({required Object name}) => '已创建 Provider ${name}';
 	@override String get createFailedToast => '创建失败';
+}
+
+// Path: web.memoryAmbient.providers.modelSelect
+class _TranslationsWebMemoryAmbientProvidersModelSelectZh extends TranslationsWebMemoryAmbientProvidersModelSelectEn {
+	_TranslationsWebMemoryAmbientProvidersModelSelectZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get editTitle => '更换模型';
+	@override String dialogTitle({required Object name}) => '更换模型 — ${name}';
+	@override String get custom => '自定义…';
+	@override String get backToList => '从列表选择';
+	@override String get refresh => '重新扫描端点上的模型';
+	@override String get unreachable => '端点不可达——请手动输入模型名；服务启动后会显示模型列表。';
+	@override String get none => '端点有响应但没有公布任何模型——在 LM Studio 加载或在 Ollama pull 一个模型后重新扫描。';
+	@override String get notOnEndpoint => '端点上不存在';
+	@override String get save => '保存模型';
+	@override String savedToast({required Object name, required Object model}) => '${name} 现在使用 ${model}';
 }
 
 // Path: web.memoryAmbient.rules.row
@@ -7633,6 +8125,136 @@ class _TranslationsWebKnowledgeKbProposalZh extends TranslationsWebKnowledgeKbPr
 	@override String get rejected => '提议已拒绝';
 }
 
+// Path: web.knowledge.kb.newPage
+class _TranslationsWebKnowledgeKbNewPageZh extends TranslationsWebKnowledgeKbNewPageEn {
+	_TranslationsWebKnowledgeKbNewPageZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '新建知识页';
+	@override String get title => '新建知识页';
+	@override String get description => '为每个知识领域建立独立的细粒度页面，而不是把所有内容塞进四个经典页——AI 按页索引，只检索任务需要的部分。';
+	@override String get slugPlaceholder => 'network_topology';
+	@override String get titlePlaceholder => '标题（如：网络拓扑）';
+	@override String get descPlaceholder => '一句话：这个页面收录什么';
+	@override String get inject => '注入每次启动';
+	@override String get injectHint => '关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。';
+	@override String get create => '创建页面';
+	@override String get createdToast => '知识页已创建';
+}
+
+// Path: web.knowledge.distill.retirement
+class _TranslationsWebKnowledgeDistillRetirementZh extends TranslationsWebKnowledgeDistillRetirementEn {
+	_TranslationsWebKnowledgeDistillRetirementZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get never_used => '从未用到';
+	@override String get never_usedHint => '注入超过 14 天没有任何会话引用——结果回路建议退役';
+	@override String get low_success => '成功率低';
+	@override String get low_successHint => '加载此技能的会话持续以失败告终——结果回路建议退役';
+	@override String get dormant => '休眠';
+	@override String get dormantHint => '曾被使用，但已 45+ 天无引用——结果回路建议退役';
+}
+
+// Path: web.knowledge.graph.legend
+class _TranslationsWebKnowledgeGraphLegendZh extends TranslationsWebKnowledgeGraphLegendEn {
+	_TranslationsWebKnowledgeGraphLegendZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get project => '项目';
+	@override String get entity => '实体';
+	@override String get playbook => '手册';
+	@override String get skill => '技能';
+}
+
+// Path: web.cortex.home.memory
+class _TranslationsWebCortexHomeMemoryZh extends TranslationsWebCortexHomeMemoryEn {
+	_TranslationsWebCortexHomeMemoryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '记忆';
+	@override String get description => '从会话中自动采集的原始事实——按相关性召回；第三方来源默认隔离。';
+	@override String quarantine({required Object count}) => '${count} 条隔离中';
+}
+
+// Path: web.cortex.home.notes
+class _TranslationsWebCortexHomeNotesZh extends TranslationsWebCortexHomeNotesEn {
+	_TranslationsWebCortexHomeNotesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '笔记';
+	@override String get description => '每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。';
+	@override String projects({required Object count}) => '${count} 个活跃';
+}
+
+// Path: web.cortex.home.knowledge
+class _TranslationsWebCortexHomeKnowledgeZh extends TranslationsWebCortexHomeKnowledgeEn {
+	_TranslationsWebCortexHomeKnowledgeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '知识';
+	@override String get description => '跨项目、可迭代的经验资产：绑定性基础方针 + 涌现的经验教训，注入每次启动。';
+}
+
+// Path: web.cortex.home.proposals
+class _TranslationsWebCortexHomeProposalsZh extends TranslationsWebCortexHomeProposalsEn {
+	_TranslationsWebCortexHomeProposalsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String title({required Object count}) => '待审提案（${count}）';
+	@override String get hint => 'AI 对项目笔记与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。';
+	@override String get kbLabel => '知识库';
+	@override String get preview => '预览';
+	@override String get hide => '收起';
+	@override String get approve => '批准';
+	@override String get reject => '拒绝';
+	@override String get open => '打开所属页面';
+	@override String get approvedToast => '提案已批准——文档已更新';
+	@override String get rejectedToast => '提案已拒绝';
+	@override String get failedToast => '操作失败';
+}
+
+// Path: web.cortex.blueprint.mode
+class _TranslationsWebCortexBlueprintModeZh extends TranslationsWebCortexBlueprintModeEn {
+	_TranslationsWebCortexBlueprintModeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get ai => 'AI';
+	@override String get human => '人工';
+	@override String get scanner => '扫描器';
+}
+
+// Path: web.cortex.settings.injection
+class _TranslationsWebCortexSettingsInjectionZh extends TranslationsWebCortexSettingsInjectionEn {
+	_TranslationsWebCortexSettingsInjectionZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '启动注入';
+	@override String get hint => '每个【新建会话】预先加载多少心智中枢上下文。切换立即生效（影响之后新建的会话）——后端无需重启。';
+	@override String get active => '当前';
+	@override late final _TranslationsWebCortexSettingsInjectionModeZh mode = _TranslationsWebCortexSettingsInjectionModeZh._(_root);
+	@override String get savedToast => '注入模式已保存——新建会话立即采用，后端无需重启';
+	@override String get saveFailed => '保存失败';
+	@override String get note => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7671,6 +8293,39 @@ class _TranslationsWebMemoryAmbientRulesRowSummaryZh extends TranslationsWebMemo
 	@override String onIdle({required Object seconds}) => 'idle ≥ ${seconds}s';
 	@override String kChars({required Object k}) => '≥ ${k} 字符';
 	@override String get manual => '仅手动';
+}
+
+// Path: web.cortex.settings.injection.mode
+class _TranslationsWebCortexSettingsInjectionModeZh extends TranslationsWebCortexSettingsInjectionModeEn {
+	_TranslationsWebCortexSettingsInjectionModeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebCortexSettingsInjectionModeLeanZh lean = _TranslationsWebCortexSettingsInjectionModeLeanZh._(_root);
+	@override late final _TranslationsWebCortexSettingsInjectionModeFullZh full = _TranslationsWebCortexSettingsInjectionModeFullZh._(_root);
+}
+
+// Path: web.cortex.settings.injection.mode.lean
+class _TranslationsWebCortexSettingsInjectionModeLeanZh extends TranslationsWebCortexSettingsInjectionModeLeanEn {
+	_TranslationsWebCortexSettingsInjectionModeLeanZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '精简——索引 + 按需取用（推荐）';
+	@override String get description => '只注入强约束的基础方针，外加文档章节与知识页的紧凑索引。AI 通过 doc_read / project_search 工具按任务需要精准取回。省 token，长会话也不会被开场信息淹没。';
+}
+
+// Path: web.cortex.settings.injection.mode.full
+class _TranslationsWebCortexSettingsInjectionModeFullZh extends TranslationsWebCortexSettingsInjectionModeFullEn {
+	_TranslationsWebCortexSettingsInjectionModeFullZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '完整——全部注入';
+	@override String get description => '启动时把所有标记注入的章节与知识页完整注入（旧行为）。简单直接，但每个会话都花 token，且挤占上下文窗口。';
 }
 
 /// The flat map containing all translations for locale <zh>.
@@ -7718,6 +8373,7 @@ extension on TranslationsZh {
 			'nav.workspace' => '工作区',
 			'nav.knowledge' => '知识',
 			'nav.vault' => '文档库',
+			'nav.cortex' => '心智中枢',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -7881,12 +8537,17 @@ extension on TranslationsZh {
 			'web.sessions.fileBrowser.createdToast' => '文件夹已创建',
 			'web.sessions.fileBrowser.mkdirFailedToast' => '创建失败',
 			'web.sessions.fileBrowser.homeFailedToast' => '读取家目录失败',
+			'web.sessions.notes.cortexDoc.title' => '项目文档（心智中枢）',
+			'web.sessions.notes.cortexDoc.hint' => '项目的官方文档——此处只读；进入心智中枢工作区可编辑、对话或调整蓝图。',
+			'web.sessions.notes.cortexDoc.open' => '打开工作区',
+			'web.sessions.notes.cortexDoc.empty' => '空',
 			'web.memory.title' => '记忆',
 			'web.memory.subtitle' => '浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。',
 			'web.memory.navProject' => '项目',
 			'web.memory.navArchived' => '已归档',
-			'web.memory.navWorkers' => 'Workers',
-			'web.memory.navConfiguration' => '配置 →',
+			'web.memory.navWorkers' => 'Cortex 设置',
+			'web.memory.navConfiguration' => '存储与嵌入 →',
+			'web.memory.navQuarantine' => '隔离区',
 			'web.journalStale.title' => '清理陈旧条目',
 			'web.journalStale.subtitle' => ({required Object days}) => '（超过 ${days} 天、无 pending 冲突引用）',
 			'web.journalStale.daysLabel' => '超过（天）：',
@@ -7950,8 +8611,8 @@ extension on TranslationsZh {
 			'web.memoryHealth.today' => '今日',
 			'web.memoryHealth.daysAgo_one' => ({required Object count}) => '${count} 天前',
 			'web.memoryHealth.daysAgo_other' => ({required Object count}) => '${count} 天前',
-			'web.memoryConfig.title' => '记忆配置',
-			'web.memoryConfig.subtitle' => '所有记忆相关开关汇总到这里：HTTP provider、每个任务的路由、capture 触发器、spawn 时注入策略、累计花费。',
+			'web.memoryConfig.title' => 'Cortex 设置',
+			'web.memoryConfig.subtitle' => 'AI 闭环的全部运行时旋钮都在这里——spawn 注入、LLM provider、按任务的工作器路由、捕获触发器、注入策略、token 花费。保存即生效，无需重启。',
 			'web.memoryConfig.sections.providers' => 'Provider 池',
 			'web.memoryConfig.sections.workers' => '任务路由 (Workers)',
 			'web.memoryConfig.sections.rules' => 'Capture 规则',
@@ -7965,6 +8626,15 @@ extension on TranslationsZh {
 			'web.memoryConfig.moveBanner.title' => '记忆配置已迁移',
 			'web.memoryConfig.moveBanner.body' => '所有记忆相关设置（providers / capture rules / injection profiles / cost）现在跟 Workers 在同一页面，相关开关聚在一起。',
 			'web.memoryConfig.moveBanner.openButton' => '打开 记忆配置 →',
+			'web.memoryConfig.infra.title' => '存储与嵌入（基础设施）',
+			'web.memoryConfig.infra.hint' => '记忆配置的另一半——嵌入后端、检索调参、gatekeeper/cleaner 总开关与知识图谱开关——位于 Server Settings，修改需重启。',
+			'web.memoryConfig.infra.openSettings' => 'Server Settings →',
+			'web.memoryConfig.infra.embedder' => '嵌入器',
+			'web.memoryConfig.infra.gatekeeper' => 'gatekeeper',
+			'web.memoryConfig.infra.cleaner' => 'cleaner',
+			'web.memoryConfig.infra.knowledge' => '知识图谱',
+			'web.memoryConfig.infra.on' => '开',
+			'web.memoryConfig.infra.off' => '关',
 			'web.memoryWorkers.title' => 'Memory workers',
 			'web.memoryWorkers.loading' => '正在加载 worker 配置…',
 			'web.memoryWorkers.errorTitle' => '无法访问该接口。',
@@ -8004,24 +8674,63 @@ extension on TranslationsZh {
 			'web.memoryWorkers.unknownError' => '未知错误',
 			'web.memoryWorkers.tasks.gatekeeper.label' => 'Gatekeeper',
 			'web.memoryWorkers.tasks.gatekeeper.description' => '每次 memory_store 前的预写过滤器。高频（目标 <500ms） — 仅 summarizer。',
+			'web.memoryWorkers.tasks.gatekeeper.modelAdvice' => '高频的是/否判断——轻量模型（haiku / flash-lite / codex-mini / 本地）完全够用。',
 			'web.memoryWorkers.tasks.cleaner.label' => 'Cleaner librarian',
 			'web.memoryWorkers.tasks.cleaner.description' => '周期性 LLM 整理。对旧记忆判定为保留 / 过期 / 重复。',
+			'web.memoryWorkers.tasks.cleaner.modelAdvice' => '批量判定旧事实去留——推荐轻量模型；按计划周期运行。',
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Git 活动总结器',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。',
+			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'git 历史的叙事性总结——均衡模型（sonnet / flash）的可读性明显更好。',
 			'web.memoryWorkers.tasks.transcript.label' => '会话记录总结器',
 			'web.memoryWorkers.tasks.transcript.description' => '会话结束时的“agent 都做了什么”总结。天然适合 agent worker。',
+			'web.memoryWorkers.tasks.transcript.modelAdvice' => '会话「agent 做了什么」总结——推荐均衡模型；其产出供日志与漂移检测使用。',
 			'web.memoryWorkers.tasks.plan_drift.label' => '计划漂移检测',
 			'web.memoryWorkers.tasks.plan_drift.description' => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。',
+			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => '改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。',
 			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
+			'web.memoryWorkers.tasks.capture.modelAdvice' => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。',
+			'web.memoryWorkers.tasks.blueprint.modelAdvice' => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。',
+			'web.memoryWorkers.tasks.blueprint.label' => '蓝图提议器',
+			'web.memoryWorkers.tasks.blueprint.description' => '根据仓库信号识别项目类型并提议文档章节结构。由蓝图编辑器手动触发。',
+			'web.memoryWorkers.tasks.curation.modelAdvice' => '你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。',
+			'web.memoryWorkers.tasks.curation.label' => '管护对话',
+			'web.memoryWorkers.tasks.curation.description' => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。',
+			'web.memoryWorkers.modelLabel' => '模型',
+			'web.memoryWorkers.modelHint' => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。',
+			'web.memoryWorkers.modelCliDefault' => 'CLI 默认（最新）',
+			'web.memoryWorkers.modelCustom' => '自定义…',
+			'web.memoryWorkers.modelCustomPlaceholder' => '精确模型 ID',
+			'web.memoryWorkers.modelBackToList' => '返回列表',
+			'web.memoryWorkers.cliCodex' => 'Codex（codex exec）',
+			'web.memoryWorkers.cliAntigravity' => 'Antigravity（agy --print）',
+			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} 的路由已保存，但它的功能总开关在 Server Settings 中处于关闭状态——开启之前不会执行任何调用。',
+			'web.memoryWorkers.infraGateOpen' => '去开启',
+			'web.memoryWorkers.providerModel' => '模型：',
 			'web.archived.loading' => '加载中…',
 			'web.archived.emptyTitle' => '暂无归档',
 			'web.archived.emptyDescription' => '所有项目均无已归档记忆。自动清理器会把过时和重复的事实软归档到这里（30 天内可恢复）——目前尚未移除任何内容。',
 			'web.archived.title' => '已归档记忆',
-			'web.archived.subtitle' => '自动清理器与生命周期扫描在所有项目中软归档的记忆。它们已从检索中排除，但在 30 天宽限期清除前均可恢复。如有误判可在下方恢复。',
+			'web.archived.subtitle' => '软归档的记忆，在 30 天宽限期被清除前均可恢复。来源：auto-cleaner 的判定、逐条手动归档，以及你归档的整个项目——项目的记忆会一起到这里，取消归档时一起回来（项目归档不受宽限期清除影响）。',
 			'web.archived.globalScope' => '(全局)',
+			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} 个项目 · ${memories} 条归档记忆',
+			'web.archived.memCount' => ({required Object count}) => '${count} 条记忆',
+			'web.archived.restoreAll' => '全部恢复',
+			'web.archived.restoreAllTooltip' => '恢复该项目下的全部归档记忆',
+			'web.archived.restoreAllConfirm' => ({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？',
+			'web.archived.restoredAllToast' => ({required Object count}) => '已恢复 ${count} 条记忆',
+			'web.archived.deleteButton' => '删除',
+			'web.archived.deleteTooltip' => '立即永久删除——跳过 30 天宽限期，不可撤销',
+			'web.archived.deleteConfirm' => '立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。',
+			'web.archived.deletedToast' => '已永久删除',
+			'web.archived.deleteFailedToast' => '删除失败',
+			'web.archived.deleteAll' => '全部删除',
+			'web.archived.deleteAllTooltip' => '立即永久删除该项目下的全部归档记忆',
+			'web.archived.deleteAllConfirm' => ({required Object project, required Object count}) => '立即永久删除 ${project} 的全部 ${count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。',
+			'web.archived.deletedAllToast' => ({required Object count}) => '已删除 ${count} 条记忆',
 			'web.archived.openProject' => '打开项目',
 			'web.archived.archivedAtPrefix' => '归档于',
 			'web.archived.restoreButton' => '恢复',
@@ -8054,6 +8763,7 @@ extension on TranslationsZh {
 			'web.project.tabs.conflicts' => '冲突',
 			'web.project.tabs.archived' => '已归档',
 			'web.project.tabs.overview' => '概览',
+			'web.project.tabs.hygiene' => '记忆卫生',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.tech_stack' => '技术栈',
@@ -8065,6 +8775,7 @@ extension on TranslationsZh {
 			'web.project.editor.savedToast' => ({required Object label}) => '${label}已保存',
 			'web.project.editor.goalPlaceholder' => '我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。',
 			'web.project.editor.planPlaceholder' => '当前计划 — 现在在做什么、下一步是什么。随进度更新。',
+			'web.project.editor.sectionPlaceholder' => '以 markdown 撰写本章节…',
 			'web.project.readonly.tech_stack.label' => '技术栈与结构',
 			'web.project.readonly.tech_stack.empty' => '在该项目运行一次 Claude 会话 — scanner 会在每次 spawn 时刷新。',
 			'web.project.readonly.recent_activity.label' => '最近活动 (git → LLM)',
@@ -8072,6 +8783,7 @@ extension on TranslationsZh {
 			'web.project.readonly.noneCaptured' => ({required Object label}) => '尚未捕获${label}。',
 			'web.project.readonly.generatedBy' => '生成者',
 			'web.project.readonly.lastRefresh' => '最近刷新',
+			'web.project.readonly.customEmpty' => '本章节由扫描器维护，扫描运行后自动填充。',
 			'web.project.journal.loading' => '加载中…',
 			'web.project.journal.empty' => '暂无日志条目。每次会话结束都会自动追加一条。',
 			'web.project.inbox.loading' => '加载中…',
@@ -8136,8 +8848,11 @@ extension on TranslationsZh {
 			'web.project.lifecycle.tooltip.activate' => '重新激活:注入新会话并恢复 AI 维护。',
 			'web.project.lifecycle.tooltip.pause' => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。',
 			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.docMeta.maintainer.coauthored' => '你维护 · AI 提议',
 			'web.project.docMeta.maintainer.auto' => '自动生成 · 只读',
+			'web.project.docMeta.maintainer.human' => '人工撰写',
 			'web.project.docMeta.purpose.goal' => '项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。',
 			'web.project.docMeta.purpose.plan' => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。',
 			'web.project.docMeta.purpose.tech_stack' => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。',
@@ -8193,8 +8908,6 @@ extension on TranslationsZh {
 			'web.memoryInspector.records.addTooltip' => '手动在此 scope 创建一条记忆',
 			'web.memoryInspector.records.deleteAll' => '全部删除',
 			'web.memoryInspector.records.deleteAllTooltip' => '删除该 scope/scope_key 下的全部记忆',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryInspector.records.loading' => '加载中…',
 			'web.memoryInspector.records.enterScopeKeyHint' => '输入 scope key 以浏览记忆。',
 			'web.memoryInspector.records.noMatchesForQuery' => ({required Object query}) => '未找到匹配 "${query}"',
@@ -8212,6 +8925,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.row.deleteTooltip' => '删除该记忆',
 			'web.memoryInspector.row.emptyError' => '记忆文本不能为空',
 			'web.memoryInspector.row.deleteConfirm' => ({required Object id}) => '删除记忆 ${id}? 不可恢复。',
+			'web.memoryInspector.row.archiveTooltip' => '归档（可逆）——移入「已归档」视图',
+			'web.memoryInspector.row.quarantineTooltip' => '隔离——移入审查队列，直到批准或过期',
 			'web.memoryInspector.toasts.deleted' => '记忆已删除',
 			'web.memoryInspector.toasts.deleteFailed' => '删除失败',
 			'web.memoryInspector.toasts.bulkDeleted_one' => ({required Object count}) => '已从此 scope 删除 ${count} 条记忆',
@@ -8228,6 +8943,10 @@ extension on TranslationsZh {
 			'web.memoryInspector.toasts.syncEmpty' => '没有需要同步的新 .md 文件',
 			'web.memoryInspector.toasts.syncEmptyDescription' => '已是最新，或该 cwd 没有 Claude memory 目录。',
 			'web.memoryInspector.toasts.syncFailed' => '同步失败',
+			'web.memoryInspector.toasts.archived' => '记忆已归档——可在「已归档」视图中恢复',
+			'web.memoryInspector.toasts.archiveFailed' => '归档失败',
+			'web.memoryInspector.toasts.quarantined' => '记忆已隔离——请在 Cortex → 隔离区 中审查',
+			'web.memoryInspector.toasts.quarantineFailed' => '隔离失败',
 			'web.memoryInspector.bulkDelete.title' => '删除此 scope 的全部记忆?',
 			'web.memoryInspector.bulkDelete.description' => '这是一次 SQL 操作 — 该 scope 下全部记忆将被原子性删除。通过 Claude 镜像摄取的记忆会在下次 <1>同步 .md</1> 时重新出现；其余内容永久消失。',
 			'web.memoryInspector.bulkDelete.scope' => 'Scope',
@@ -8643,6 +9362,8 @@ extension on TranslationsZh {
 			'web.integrations.tabs.registered' => '已注册',
 			'web.integrations.tabs.console' => '反向代理',
 			'web.integrations.empty.title' => '暂无集成',
+			_ => null,
+		} ?? switch (path) {
 			'web.integrations.empty.description' => '注册一个外部应用，给它一个受限的 API key。它的代码不需要进入本仓库。',
 			'web.integrations.empty.register' => '注册集成',
 			'web.integrations.groupSystem' => '系统（由 opendray 管理）',
@@ -8707,8 +9428,6 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.baseUrlProxySuffix' => '(反向代理目标)',
 			'web.integrations.edit_dialog.baseUrlConsumerPlaceholder' => '(留空 — 此集成消费 opendray API)',
 			'web.integrations.edit_dialog.baseUrlProxyPlaceholder' => 'http://127.0.0.1:8080',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.edit_dialog.consumerHint' => '这是一个仅消费型集成。在此修改 base URL 还需要 route prefix；请删除后重新注册。',
 			'web.integrations.edit_dialog.versionLabel' => 'Version',
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
@@ -8760,6 +9479,10 @@ extension on TranslationsZh {
 			'web.plugins.mcp.toggleFailedToast' => '切换失败',
 			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: 不支持',
 			'web.plugins.mcp.codexUnsupportedTooltip' => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。',
+			'web.plugins.mcp.builtinBadge' => '内置',
+			'web.plugins.mcp.builtinTooltip' => '由 opendray 自身提供——自动附加到每个支持 MCP 的会话。不可编辑或删除。',
+			'web.plugins.mcp.builtinDescription' => 'opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Gemini 会话。',
+			'web.plugins.mcp.builtinAutoAttach' => '始终启用',
 			'web.plugins.mcp.editor.createTitle' => '新建 MCP 服务器',
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => '编辑 MCP: ${id}',
 			'web.plugins.mcp.editor.description' => ({required Object API_KEY}) => 'JSON 结构：stdio（默认）使用 <1>command</1>+<3>args</3>+<5>env</5>；sse / http 使用 <7>transport</7> +<9> url</9>+<11>headers</11>。以 <13>\$${API_KEY}</13> 引用密钥 — spawn 时会从密钥文件替换。',
@@ -9121,8 +9844,8 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.vault.desc' => '笔记、技能与 git 版本化根目录。',
 			'web.serverSettings.sections.mcp.title' => 'MCP 注册表',
 			'web.serverSettings.sections.mcp.desc' => '服务器注册表与密钥。',
-			'web.serverSettings.sections.memory.title' => '记忆',
-			'web.serverSettings.sections.memory.desc' => '跨 CLI 的持久化记忆子系统。',
+			'web.serverSettings.sections.memory.title' => '记忆 · 存储与嵌入',
+			'web.serverSettings.sections.memory.desc' => '记忆子系统的基础设施一半：嵌入后端、检索调参与后台治理。重启后生效。运行时行为（工作器、捕获、注入）在 Cortex 设置中。',
 			'web.serverSettings.sections.backup.title' => '备份',
 			'web.serverSettings.sections.backup.desc' => '加密数据库备份、恢复，以及管理员数据导出。',
 			'web.serverSettings.sections.claude.title' => '存储 · Claude',
@@ -9153,6 +9876,8 @@ extension on TranslationsZh {
 			'web.serverSettings.restart.confirm' => '重启 opendray 网关？所有打开的终端会话将自动重新连接。',
 			'web.serverSettings.restart.overlay' => '正在重启服务器…',
 			'web.serverSettings.restart.waiting' => ({required Object tick}) => '等待 /health · ${tick}s',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.restart.timedOutTitle' => '重启超时',
 			'web.serverSettings.restart.timedOutDesc' => 'Health 接口未恢复。请查看服务器日志。',
 			'web.serverSettings.restart.successToast' => '服务器已重启',
@@ -9165,6 +9890,9 @@ extension on TranslationsZh {
 			'web.serverSettings.formGroups.backupWhere' => '备份目标位置',
 			'web.serverSettings.formGroups.backupSchedules' => '计划任务',
 			'web.serverSettings.formGroups.backupWhatsInside' => '备份里有什么？',
+			'web.serverSettings.formGroups.memoryGovernance' => '后台治理（gatekeeper / cleaner）',
+			'web.serverSettings.formGroups.knowledgeGraph' => '知识图谱',
+			'web.serverSettings.formGroups.database' => '数据库',
 			'web.serverSettings.fields.listenAddress.label' => '监听地址',
 			'web.serverSettings.fields.listenAddress.hint' => 'HTTP 服务绑定的 host:port，例如：0.0.0.0:8770。',
 			'web.serverSettings.fields.username.label' => '用户名',
@@ -9221,8 +9949,6 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.memoryLocalModel.hint' => '仅作显示用 — 出现在日志 / Inspector 中。如 "bge-m3"、"bge-small-en-v1.5"。',
 			'web.serverSettings.fields.memoryLibraryPath.label' => '库路径',
 			'web.serverSettings.fields.memoryLibraryPath.hint' => '存放 libonnxruntime.dylib (macOS) / libonnxruntime.so (Linux) 的目录。`brew install onnxruntime` 后即 /opt/homebrew/opt/onnxruntime/lib。',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.fields.memoryModelPath.label' => '模型路径',
 			'web.serverSettings.fields.memoryModelPath.hint' => '.onnx 权重的绝对路径。从 HuggingFace 下载，如 Xenova/bge-m3 或 Xenova/bge-small-en-v1.5。',
 			'web.serverSettings.fields.memoryTokenizerPath.label' => 'Tokenizer 路径',
@@ -9247,6 +9973,28 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.backupPgDumpPath.hint' => 'pg_dump 的绝对路径。主版本号必须 ≥ 服务器的。留空 = PATH 上的第一个 pg_dump。',
 			'web.serverSettings.fields.backupPgRestorePath.label' => 'pg_restore 路径',
 			'web.serverSettings.fields.backupPgRestorePath.hint' => '/backups/restore 流程使用的 pg_restore 绝对路径。同样的主版本号规则。',
+			'web.serverSettings.fields.memoryDedup.label' => '去重阈值',
+			'web.serverSettings.fields.memoryDedup.hint' => '写入时折叠阈值：相似度高于此值会更新现有记忆而非插入近重复项。0 = 随嵌入器自动；负值完全关闭折叠。',
+			'web.serverSettings.fields.gatekeeperEnabled.label' => 'Gatekeeper（写入守门员）',
+			'web.serverSettings.fields.gatekeeperEnabled.hint' => '写入前的 LLM 判官：判断 memory_store 是持久事实还是噪音。由哪个 LLM 执行在 Cortex 设置 → 工作器中路由。',
+			'web.serverSettings.fields.gatekeeperLatency.label' => 'Gatekeeper 最大延迟（ms）',
+			'web.serverSettings.fields.gatekeeperLatency.hint' => '超过该延迟时守门员退化为"放行"，不会因 LLM 慢而阻塞写入。默认 2000。',
+			'web.serverSettings.fields.cleanerEnabled.label' => 'Cleaner（自动馆员）',
+			'web.serverSettings.fields.cleanerEnabled.hint' => '周期性扫描，将过期/重复的记忆软归档（可恢复，有宽限期）。由哪个 LLM 执行在 Cortex 设置 → 工作器中路由。',
+			'web.serverSettings.fields.cleanerInterval.label' => 'Cleaner 间隔（秒）',
+			'web.serverSettings.fields.cleanerInterval.hint' => '自动扫描的间隔秒数。默认 86400（24 小时）。',
+			'web.serverSettings.fields.cleanerGlobalScope.label' => 'Cleaner 扫描全局作用域',
+			'web.serverSettings.fields.cleanerGlobalScope.hint' => '同时审查全局作用域的记忆（通常由操作员手工维护）。建议在信任 cleaner 之前保持关闭。',
+			'web.serverSettings.fields.knowledgeEnabled.label' => '知识图谱',
+			'web.serverSettings.fields.knowledgeEnabled.hint' => '建立在情景记忆之上的结构化、自进化知识层（实体/手册/技能）。驱动 Cortex → 知识 标签页。',
+			'web.serverSettings.fields.claudeWatcher.label' => '账号目录监视',
+			'web.serverSettings.fields.claudeWatcher.hint' => '监视 accounts_dir，当出现 .credentials.json（CLAUDE_CONFIG_DIR=<dir> claude login 的产物）时自动注册新账号。',
+			'web.serverSettings.fields.claudeAutoFailover.label' => '限流自动切换',
+			'web.serverSettings.fields.claudeAutoFailover.hint' => '当活动会话撞到限流时自动切换到另一个 Claude 账号。需显式开启：它会在无人点击的情况下改变计费归属。',
+			'web.serverSettings.fields.mobileTokenTTL.label' => '移动端 token 有效期',
+			'web.serverSettings.fields.mobileTokenTTL.hint' => '签发给移动 App 的 bearer token 的有效期。默认 720h（30 天）。',
+			'web.serverSettings.fields.dbMaxConns.label' => '最大连接数',
+			'web.serverSettings.fields.dbMaxConns.hint' => 'pgx 连接池上限。0 = 默认值（16）。',
 			'web.serverSettings.liveTail.heading' => '实时日志',
 			'web.serverSettings.liveTail.description' => '内存中的环形缓冲区（最近约 2,000 条）。重启后清空。',
 			'web.serverSettings.memoryInspectorCard.heading' => '检查器',
@@ -9314,6 +10062,12 @@ extension on TranslationsZh {
 			'web.serverSettings.targetRow.deleteSuccess' => '目标已删除',
 			'web.serverSettings.targetRow.deleteFailedTitle' => '删除失败',
 			'web.serverSettings.targetRow.unknownError' => '未知错误',
+			'web.serverSettings.toggle.on' => '开启',
+			'web.serverSettings.toggle.off' => '关闭',
+			'web.serverSettings.toggle.defaultOn' => '默认（开）',
+			'web.serverSettings.toggle.defaultOff' => '默认（关）',
+			'web.serverSettings.memoryRuntimeBanner' => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。',
+			'web.serverSettings.memoryRuntimeBannerButton' => '打开 Cortex 设置',
 			'web.settings.title' => '设置',
 			'web.settings.subtitle' => '工作区、账号与网关配置。',
 			'web.settings.groups.workspace' => '工作区',
@@ -9440,6 +10194,16 @@ extension on TranslationsZh {
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => '名称不能为空',
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => '已创建 Provider ${name}',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => '创建失败',
+			'web.memoryAmbient.providers.modelSelect.editTitle' => '更换模型',
+			'web.memoryAmbient.providers.modelSelect.dialogTitle' => ({required Object name}) => '更换模型 — ${name}',
+			'web.memoryAmbient.providers.modelSelect.custom' => '自定义…',
+			'web.memoryAmbient.providers.modelSelect.backToList' => '从列表选择',
+			'web.memoryAmbient.providers.modelSelect.refresh' => '重新扫描端点上的模型',
+			'web.memoryAmbient.providers.modelSelect.unreachable' => '端点不可达——请手动输入模型名；服务启动后会显示模型列表。',
+			'web.memoryAmbient.providers.modelSelect.none' => '端点有响应但没有公布任何模型——在 LM Studio 加载或在 Ollama pull 一个模型后重新扫描。',
+			'web.memoryAmbient.providers.modelSelect.notOnEndpoint' => '端点上不存在',
+			'web.memoryAmbient.providers.modelSelect.save' => '保存模型',
+			'web.memoryAmbient.providers.modelSelect.savedToast' => ({required Object name, required Object model}) => '${name} 现在使用 ${model}',
 			'web.memoryAmbient.rules.title' => '捕获规则',
 			'web.memoryAmbient.rules.addButton' => '添加规则',
 			'web.memoryAmbient.rules.intro' => '每条规则表示 "当此 trigger 触发时，对新的会话消息做总结并存储持久事实。" 单会话规则覆盖全局默认。v1 内置 4 种 trigger 类型。',
@@ -9626,6 +10390,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.kinds.kb_reusable' => '可复用功能',
 			'web.knowledge.kb.foundational' => '基础 / 规约',
 			'web.knowledge.kb.foundationalHint' => '基础设施与规范——注入每个项目的强约束规则。',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.emergent' => '经验',
 			'web.knowledge.kb.emergentHint' => '从过往工作蒸馏的教训与可复用功能——参考性引导。',
 			'web.knowledge.kb.bindingBadge' => '强约束 · 必须遵守',
@@ -9637,11 +10403,159 @@ extension on TranslationsZh {
 			'web.knowledge.kb.proposal.reject' => '拒绝',
 			'web.knowledge.kb.proposal.approved' => '更新已批准',
 			'web.knowledge.kb.proposal.rejected' => '提议已拒绝',
+			'web.knowledge.kb.discuss' => '与 AI 讨论',
+			'web.knowledge.kb.discussHint' => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写',
+			'web.knowledge.kb.onDemand' => '按需',
+			'web.knowledge.kb.removePage' => '移除页面',
+			'web.knowledge.kb.removePageHint' => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）',
+			'web.knowledge.kb.pageRemovedToast' => '页面已移除',
+			'web.knowledge.kb.newPage.button' => '新建知识页',
+			'web.knowledge.kb.newPage.title' => '新建知识页',
+			'web.knowledge.kb.newPage.description' => '为每个知识领域建立独立的细粒度页面，而不是把所有内容塞进四个经典页——AI 按页索引，只检索任务需要的部分。',
+			'web.knowledge.kb.newPage.slugPlaceholder' => 'network_topology',
+			'web.knowledge.kb.newPage.titlePlaceholder' => '标题（如：网络拓扑）',
+			'web.knowledge.kb.newPage.descPlaceholder' => '一句话：这个页面收录什么',
+			'web.knowledge.kb.newPage.inject' => '注入每次启动',
+			'web.knowledge.kb.newPage.injectHint' => '关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。',
+			'web.knowledge.kb.newPage.create' => '创建页面',
+			'web.knowledge.kb.newPage.createdToast' => '知识页已创建',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
 			'web.knowledge.kinds.playbook' => 'Playbook',
 			'web.knowledge.kinds.skill' => '技能',
+			'web.knowledge.distill.tab' => '蒸馏',
+			'web.knowledge.distill.intro' => '技能 = 从你的真实工作中蒸馏出的、被验证过且可重复执行的【流程】。经验编译器跨项目挖掘会话日志，把相似工作聚类，只有当同一流程在 2 次以上会话中【成功】完成时才生成候选——每条证据引文都会与日志原文逐字核验。候选按「复现次数 × 手动流程耗时」排序，最省时间的优先蒸馏；纯机械化的流程还会编译成带验证步骤的可执行 run.sh。',
+			'web.knowledge.distill.playbooks' => '手册——已蒸馏，待审阅',
+			'web.knowledge.distill.playbooksHint' => '出现在这里的每个候选都已通过门禁：≥2 次成功会话、经核验的证据引文、≥3 个具体步骤。按节省时间排序（复现次数 × 手动分钟数）。把会复用的提升为技能，其余丢弃。',
+			'web.knowledge.distill.playbooksEmpty' => '还没有挖掘产物——当同一流程在两次以上会话中成功完成后，候选会出现在这里。',
+			'web.knowledge.distill.skills' => '技能——生效中，随启动注入',
+			'web.knowledge.distill.skillsHint' => '已提升的手册。每个新会话都会获得这些技能。',
+			'web.knowledge.distill.skillsEmpty' => '还没有技能——提升一个手册来创建第一个。',
+			'web.knowledge.distill.skillify' => '提升为技能',
+			'web.knowledge.distill.skillifyHint' => '渲染为技能文件并注入每次启动',
+			'web.knowledge.distill.discard' => '丢弃',
+			'web.knowledge.distill.retire' => '退役技能',
+			'web.knowledge.distill.injectedBadge' => '已注入',
+			'web.knowledge.distill.skillifiedToast' => '已晋升——已发布到 插件 → Agent Skills，新会话将加载此技能',
+			'web.knowledge.distill.removedToast' => '已移除',
+			'web.knowledge.distill.usage' => ({required Object count}) => '${count} 个会话用到',
+			'web.knowledge.distill.lastUsed' => ({required Object date}) => '最近 ${date}',
+			'web.knowledge.distill.enabledToast' => '技能已启用——新会话将可加载',
+			'web.knowledge.distill.disabledToast' => '技能已停用——已从加载集合移除',
+			'web.knowledge.distill.disabledBadge' => '停用',
+			'web.knowledge.distill.toggleHint' => '启用的技能才会被会话加载；当前阶段用不到的就停掉',
+			'web.knowledge.distill.viewHint' => '点击查看完整流程',
+			'web.knowledge.distill.inAgentSkills' => '已发布到 插件 → Agent Skills',
+			'web.knowledge.distill.agentSkillsHint' => '渲染后的 SKILL.md 存放在技能 vault 中——可在 插件 → Agent Skills 查看与管理。',
+			'web.knowledge.distill.notInVault' => '已停用——SKILL.md 已从 vault 移除',
+			'web.knowledge.distill.compiledBadge' => '已编译',
+			'web.knowledge.distill.compiledHint' => '附带可执行的 run.sh（含验证步骤）；提升时还会注册为自定义任务',
+			'web.knowledge.distill.recurrence' => ({required Object count}) => '成功 ×${count}',
+			'web.knowledge.distill.timeCost' => ({required Object minutes}) => '手动约 ${minutes} 分钟',
+			'web.knowledge.distill.projectSpan' => ({required Object count}) => '${count} 个项目',
+			'web.knowledge.distill.scoreHint' => '按「复现次数 × 手动耗时」排序——最省操作员时间的优先蒸馏',
+			'web.knowledge.distill.outcomes' => ({required Object ok, required Object failed}) => '加载后 ${ok} 次成功 / ${failed} 次失败',
+			'web.knowledge.distill.retirement.never_used' => '从未用到',
+			'web.knowledge.distill.retirement.never_usedHint' => '注入超过 14 天没有任何会话引用——结果回路建议退役',
+			'web.knowledge.distill.retirement.low_success' => '成功率低',
+			'web.knowledge.distill.retirement.low_successHint' => '加载此技能的会话持续以失败告终——结果回路建议退役',
+			'web.knowledge.distill.retirement.dormant' => '休眠',
+			'web.knowledge.distill.retirement.dormantHint' => '曾被使用，但已 45+ 天无引用——结果回路建议退役',
+			'web.knowledge.graph.tab' => '图谱',
+			'web.knowledge.graph.intro' => 'AI 所学一切的关系图谱：哪些项目共用同一技术、哪些技能与坑绑定在哪些实体上。动共享基础设施之前，先在这里确认节点的爆炸半径。',
+			'web.knowledge.graph.empty' => '还没有知识——图谱会随着会话运行自动生长：锚定扫描从项目工作中提取实体，蒸馏再沉淀出手册与技能。跑几个工作会话后再来看看。',
+			'web.knowledge.graph.hint' => '滚轮缩放 · 拖动背景平移 · 拖动节点整理布局 · 点击节点查看详情',
+			'web.knowledge.graph.legend.project' => '项目',
+			'web.knowledge.graph.legend.entity' => '实体',
+			'web.knowledge.graph.legend.playbook' => '手册',
+			'web.knowledge.graph.legend.skill' => '技能',
+			'web.knowledge.graph.connections' => ({required Object count}) => '${count} 个关联节点',
+			'web.knowledge.graph.noLinks' => '还没有任何东西关联到这个节点。',
+			'web.cortex.home.title' => '心智中枢 Cortex',
+			'web.cortex.home.subtitle' => '一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。',
+			'web.cortex.home.disabled' => '未启用',
+			'web.cortex.home.pendingProposals' => ({required Object count}) => '${count} 个待审',
+			'web.cortex.home.loopHint' => '记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。',
+			'web.cortex.home.activeProjects' => '活跃项目',
+			'web.cortex.home.idle' => ({required Object days}) => '闲置 ${days} 天',
+			'web.cortex.home.memory.title' => '记忆',
+			'web.cortex.home.memory.description' => '从会话中自动采集的原始事实——按相关性召回；第三方来源默认隔离。',
+			'web.cortex.home.memory.quarantine' => ({required Object count}) => '${count} 条隔离中',
+			'web.cortex.home.notes.title' => '笔记',
+			'web.cortex.home.notes.description' => '每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。',
+			'web.cortex.home.notes.projects' => ({required Object count}) => '${count} 个活跃',
+			'web.cortex.home.knowledge.title' => '知识',
+			'web.cortex.home.knowledge.description' => '跨项目、可迭代的经验资产：绑定性基础方针 + 涌现的经验教训，注入每次启动。',
+			'web.cortex.home.settings' => '设置',
+			'web.cortex.home.proposals.title' => ({required Object count}) => '待审提案（${count}）',
+			'web.cortex.home.proposals.hint' => 'AI 对项目笔记与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。',
+			'web.cortex.home.proposals.kbLabel' => '知识库',
+			'web.cortex.home.proposals.preview' => '预览',
+			'web.cortex.home.proposals.hide' => '收起',
+			'web.cortex.home.proposals.approve' => '批准',
+			'web.cortex.home.proposals.reject' => '拒绝',
+			'web.cortex.home.proposals.open' => '打开所属页面',
+			'web.cortex.home.proposals.approvedToast' => '提案已批准——文档已更新',
+			'web.cortex.home.proposals.rejectedToast' => '提案已拒绝',
+			'web.cortex.home.proposals.failedToast' => '操作失败',
+			'web.cortex.chat.title' => '管护对话',
+			'web.cortex.chat.show' => '与 AI 讨论',
+			'web.cortex.chat.hide' => '收起对话',
+			'web.cortex.chat.emptyHint' => '让 AI 更新、重组或重写这份文档。AI 维护且未锁定时直接生效；你锁定过的文档会以提案进入收件箱。',
+			'web.cortex.chat.placeholder' => '例如：根据最近的工作更新本节 · ⌘↵ 发送',
+			'web.cortex.chat.thinking' => 'AI 处理中…',
+			'web.cortex.chat.sendFailed' => '发送失败',
+			'web.cortex.chat.escalate' => '升级为会话',
+			'web.cortex.chat.escalated' => '已升级',
+			'web.cortex.chat.escalateHint' => '拉起完整 agent 会话，基于代码库取证，并携带本对话上下文',
+			'web.cortex.chat.escalateFailed' => '升级失败',
+			'web.cortex.chat.escalatedToast' => 'Agent 会话已启动',
+			'web.cortex.chat.closeHint' => '关闭此对话',
+			'web.cortex.chat.revisionApplied' => '文档已更新',
+			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
+			'web.cortex.blueprint.open' => '蓝图',
+			'web.cortex.blueprint.openHint' => '编辑本项目文档包含哪些章节',
+			'web.cortex.blueprint.title' => '文档蓝图',
+			'web.cortex.blueprint.description' => '本项目官方文档的章节结构。不同类型的项目应有不同的章节——可自行调整，也可让 AI 按项目类型提议。',
+			'web.cortex.blueprint.propose' => 'AI 提议',
+			'web.cortex.blueprint.proposeHint' => '识别项目类型并提议契合的章节结构',
+			'web.cortex.blueprint.proposeFailed' => '提议失败',
+			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'AI 判断项目类型为：${type}——${reason} 请在下方审阅并自由修改后应用。',
+			'web.cortex.blueprint.addSection' => '添加章节',
+			'web.cortex.blueprint.slugPlaceholder' => '标识',
+			'web.cortex.blueprint.titlePlaceholder' => '标题',
+			'web.cortex.blueprint.hintPlaceholder' => '维护提示——一句话指引 AI 如何维护本章节（可选）',
+			'web.cortex.blueprint.mode.ai' => 'AI',
+			'web.cortex.blueprint.mode.human' => '人工',
+			'web.cortex.blueprint.mode.scanner' => '扫描器',
+			'web.cortex.blueprint.inject' => '注入',
+			'web.cortex.blueprint.reserved' => '保留',
+			'web.cortex.blueprint.deleteNote' => '删除章节只是隐藏，内容不会丢——重新添加同名标识即可恢复。',
+			'web.cortex.blueprint.cancel' => '取消',
+			'web.cortex.blueprint.apply' => '应用蓝图',
+			'web.cortex.blueprint.applyFailed' => '应用失败',
+			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
+			'web.cortex.quarantine.title' => '隔离区',
+			'web.cortex.quarantine.subtitle' => '在被采信为持久记忆之前需要审查的事实：第三方 integration 的捕获会按策略落到这里，你也可以在记忆检查器中手动隔离任何一条记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
+			'web.cortex.quarantine.empty' => '隔离区为空。条目来源：integration 来源会话（记忆策略为 “quarantine”），或你在记忆检查器中手动隔离的记忆。',
+			'web.cortex.quarantine.promote' => '升格',
+			'web.cortex.quarantine.promoteHint' => '移入正式记忆（参与召回与知识蒸馏）',
+			'web.cortex.quarantine.discard' => '丢弃',
+			'web.cortex.quarantine.promotedToast' => '已升格为正式记忆',
+			'web.cortex.quarantine.discardedToast' => '已丢弃',
+			'web.cortex.quarantine.actionFailed' => '操作失败',
+			'web.cortex.quarantine.expires' => ({required Object date}) => '${date} 到期',
+			'web.cortex.settings.injection.title' => '启动注入',
+			'web.cortex.settings.injection.hint' => '每个【新建会话】预先加载多少心智中枢上下文。切换立即生效（影响之后新建的会话）——后端无需重启。',
+			'web.cortex.settings.injection.active' => '当前',
+			'web.cortex.settings.injection.mode.lean.label' => '精简——索引 + 按需取用（推荐）',
+			'web.cortex.settings.injection.mode.lean.description' => '只注入强约束的基础方针，外加文档章节与知识页的紧凑索引。AI 通过 doc_read / project_search 工具按任务需要精准取回。省 token，长会话也不会被开场信息淹没。',
+			'web.cortex.settings.injection.mode.full.label' => '完整——全部注入',
+			'web.cortex.settings.injection.mode.full.description' => '启动时把所有标记注入的章节与知识页完整注入（旧行为）。简单直接，但每个会话都花 token，且挤占上下文窗口。',
+			'web.cortex.settings.injection.savedToast' => '注入模式已保存——新建会话立即采用，后端无需重启',
+			'web.cortex.settings.injection.saveFailed' => '保存失败',
+			'web.cortex.settings.injection.note' => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -9735,8 +10649,6 @@ extension on TranslationsZh {
 			'sessions.terminal.connection.reconnecting' => '重连中…',
 			'sessions.terminal.connection.reconnectingWithError' => ({required Object error}) => '重连中（${error}）…',
 			'sessions.terminal.connection.disconnected' => '已断开',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => '已断开（${error}）',
 			'sessions.terminal.connection.ended' => '会话已结束',
 			'sessions.action.stop' => '停止',
@@ -9992,6 +10904,8 @@ extension on TranslationsZh {
 			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
 			'providers.accounts.disabledSnack' => ({required Object name}) => '${name} 已停用。',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.renamedSnack' => ({required Object name}) => '已重命名为 ${name}。',
 			'providers.accounts.activeSessions' => ({required Object count}) => '${count} 个活跃',
 			'providers.accounts.usedAgo' => ({required Object when}) => '${when}使用',
@@ -10121,6 +11035,18 @@ extension on TranslationsZh {
 			'memoryArchived.globalScope' => '(全局)',
 			'memoryArchived.countBadge' => ({required Object count}) => '${count} 条已归档',
 			'memoryArchived.restore' => '恢复',
+			'memoryArchived.restoreAll' => '全部恢复',
+			'memoryArchived.deleteAll' => '全部删除',
+			'memoryArchived.restoreAllConfirm' => ({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？',
+			'memoryArchived.deleteAllConfirm' => ({required Object project, required Object count}) => '永久删除 ${project} 的全部 ${count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。',
+			'memoryArchived.deletePermanently' => '删除',
+			'memoryArchived.deleteConfirm' => '立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。',
+			'memoryArchived.restoredToast' => '已恢复',
+			'memoryArchived.restoredAllToast' => ({required Object count}) => '已恢复 ${count} 条记忆',
+			'memoryArchived.deletedToast' => '已永久删除',
+			'memoryArchived.deletedAllToast' => ({required Object count}) => '已删除 ${count} 条记忆',
+			'memoryArchived.deleteFailed' => ({required Object error}) => '删除失败：${error}',
+			'memoryArchived.summary' => ({required Object projects, required Object memories}) => '${projects} 个项目 · ${memories} 条归档',
 			'project.title' => '项目',
 			'project.pickFirst' => '请先选择一个项目。',
 			'project.health.title' => ({required Object days}) => '记忆健康 — 最近 ${days} 天',
@@ -10249,8 +11175,6 @@ extension on TranslationsZh {
 			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
 			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
 			'backups.wizard.saveNowHeader' => '立即保存这个密语',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
 			'backups.statusReady' => '备份就绪',
 			'backups.statusCannot' => '备份无法运行',
@@ -10494,6 +11418,8 @@ extension on TranslationsZh {
 			'channels.popup.mute' => '静音',
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => '运行中',
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
@@ -10763,8 +11689,6 @@ extension on TranslationsZh {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'memory.status.enabled' => '已启用',
 			'memory.status.disabled' => '已禁用',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
@@ -10800,6 +11724,12 @@ extension on TranslationsZh {
 			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => '创建',
+			'memory.archive' => '归档',
+			'memory.quarantine' => '隔离',
+			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
+			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
+			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
+			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
 			'about.title' => '关于',
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
