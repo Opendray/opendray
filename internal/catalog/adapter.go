@@ -645,6 +645,9 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 //	gemini — writes a GEMINI.md inside the per-session scratch dir
 //	         and adds it to the workspace via --include-directories;
 //	         does NOT override ~/.gemini, so auth is preserved
+//	antigravity — same as gemini but AGENTS.md + --add-dir (agy's
+//	         workspace-context convention; verified it reads AGENTS.md
+//	         from added dirs)
 //
 // codex is intentionally NOT in the default list: it has no system-
 // prompt CLI flag, so the only path is `<CODEX_HOME>/instructions.md`,
@@ -656,11 +659,27 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 // Adding a new provider here requires a matching arm in injectSkillsFor.
 func providerSupportsSkills(id string) bool {
 	switch id {
-	case "claude", "gemini":
+	case "claude", "gemini", "antigravity":
 		return true
 	default:
 		return false
 	}
+}
+
+// injectAgyContext appends content to <baseDir>/AGENTS.md and ensures
+// `--add-dir <baseDir>` is set (idempotent). Antigravity (agy) reads
+// AGENTS.md from directories added via --add-dir — verified live — which
+// mirrors gemini's GEMINI.md + --include-directories convention without
+// touching the user's real ~/.gemini or cwd AGENTS.md.
+func injectAgyContext(baseDir, content string, out *session.PrepareOutput) error {
+	path := filepath.Join(baseDir, "AGENTS.md")
+	if err := appendToFile(path, content); err != nil {
+		return err
+	}
+	if !hasArgPair(out.Args, "--add-dir", baseDir) {
+		out.Args = append(out.Args, "--add-dir", baseDir)
+	}
+	return nil
 }
 
 // injectSkillsFor dispatches to the per-CLI Tier 1 index injection
@@ -744,6 +763,9 @@ func injectSkillsFor(providerID, baseDir string, loaded []skills.Skill, out *ses
 		}
 		out.Args = append(out.Args, "--include-directories", baseDir)
 		return nil
+	case "antigravity":
+		// agy reads AGENTS.md from --add-dir'd workspace dirs.
+		return injectAgyContext(baseDir, index, out)
 	default:
 		return fmt.Errorf("no skill injection path for provider %s", providerID)
 	}
@@ -1224,6 +1246,8 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 			out.Args = append(out.Args, "--include-directories", baseDir)
 		}
 		return nil
+	case "antigravity":
+		return injectAgyContext(baseDir, "\n\n---\n\n"+memoryGuidanceText, out)
 	}
 	// Other providers: silently skip — they don't have an MCP
 	// surface yet so the memory MCP wouldn't be attached anyway.
@@ -1261,6 +1285,8 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 			out.Args = append(out.Args, "--include-directories", baseDir)
 		}
 		return nil
+	case "antigravity":
+		return injectAgyContext(baseDir, "\n\n---\n\n"+text, out)
 	}
 	return nil
 }
