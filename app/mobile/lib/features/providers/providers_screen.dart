@@ -5,6 +5,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/widgets/brand_avatar.dart';
 import 'package:opendray/features/providers/provider_config_screen.dart';
 
 // Providers — list of CLI providers (Claude / Codex / Gemini / Shell).
@@ -199,29 +200,11 @@ class _ProviderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: onTap,
-      leading: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Theme.of(context)
-              .colorScheme
-              .primary
-              .withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: provider.icon.isNotEmpty
-            ? Text(provider.icon, style: const TextStyle(fontSize: 18))
-            : Text(
-                provider.name.isNotEmpty
-                    ? provider.name[0].toUpperCase()
-                    : provider.id[0].toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-      ),
+      // Use the same curated brand SVG as the web Providers page
+      // (BrandAvatar → providerVisualFor → assets/provider_icons/*.svg),
+      // not the manifest's emoji/letter, so claude/codex/gemini/agy/shell
+      // render their real marks identically across web and mobile.
+      leading: BrandAvatar(providerId: provider.id),
       title: Text(
         provider.name,
         style: const TextStyle(fontWeight: FontWeight.w600),
