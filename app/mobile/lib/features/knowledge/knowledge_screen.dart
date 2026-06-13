@@ -5,6 +5,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/knowledge_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/knowledge/force_graph.dart';
 
 // Knowledge tab — read-mostly browser over the M-KG knowledge graph.
 // Lists + semantic-searches nodes; tap opens a detail sheet with the
@@ -17,64 +18,18 @@ class KnowledgeScreen extends ConsumerStatefulWidget {
 }
 
 class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
-  AsyncValue<List<KnowledgeNode>> _state = const AsyncValue.loading();
-  final _searchCtrl = TextEditingController();
-  bool _searching = false;
-  String _kind = 'entity';
-  String _scope = 'all';
   String _view = 'kb';
+  // Force-graph state — lazily loaded the first time the Graph tab opens.
+  AsyncValue<KnowledgeGraphSnapshot>? _graph;
+  String? _graphSelId;
 
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _state = const AsyncValue.loading();
-      _searching = false;
-    });
+  Future<void> _loadGraph() async {
+    setState(() => _graph = const AsyncValue.loading());
     try {
-      final nodes = await ref
-          .read(knowledgeApiProvider)
-          .list(
-            kind: _kind == 'all' ? null : _kind,
-            scope: _scope == 'all' ? null : _scope,
-          );
-      if (!mounted) return;
-      setState(() => _state = AsyncValue.data(nodes));
-    } on ApiException catch (e) {
-      if (mounted) {
-        setState(() => _state = AsyncValue.error(e, StackTrace.current));
-      }
+      final snap = await ref.read(knowledgeApiProvider).graphAll();
+      if (mounted) setState(() => _graph = AsyncValue.data(snap));
     } on Object catch (e, st) {
-      if (mounted) setState(() => _state = AsyncValue.error(e, st));
-    }
-  }
-
-  Future<void> _runSearch() async {
-    final q = _searchCtrl.text.trim();
-    if (q.isEmpty) {
-      await _load();
-      return;
-    }
-    setState(() => _state = const AsyncValue.loading());
-    try {
-      final hits = await ref.read(knowledgeApiProvider).search(query: q);
-      if (!mounted) return;
-      setState(() {
-        _state = AsyncValue.data(hits.map((h) => h.node).toList());
-        _searching = true;
-      });
-    } on Object catch (e, st) {
-      if (mounted) setState(() => _state = AsyncValue.error(e, st));
+      if (mounted) setState(() => _graph = AsyncValue.error(e, st));
     }
   }
 
@@ -86,36 +41,8 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => _DetailSheet(node: node, onChanged: _load),
+      builder: (_) => _DetailSheet(node: node, onChanged: _loadGraph),
     );
-  }
-
-  String _kindLabel(String k) {
-    switch (k) {
-      case 'entity':
-        return t.web.knowledge.kinds.entity;
-      case 'fact':
-        return t.web.knowledge.kinds.fact;
-      case 'playbook':
-        return t.web.knowledge.kinds.playbook;
-      case 'skill':
-        return t.web.knowledge.kinds.skill;
-      default:
-        return t.web.knowledge.kinds.all;
-    }
-  }
-
-  String _scopeLabel(String s) {
-    switch (s) {
-      case 'global':
-        return t.web.knowledge.scopes.global;
-      case 'project':
-        return t.web.knowledge.scopes.project;
-      case 'domain':
-        return t.web.knowledge.scopes.domain;
-      default:
-        return t.web.knowledge.scopes.all;
-    }
   }
 
   @override
@@ -140,7 +67,10 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
                 ),
               ],
               selected: {_view},
-              onSelectionChanged: (s) => setState(() => _view = s.first),
+              onSelectionChanged: (s) {
+                setState(() => _view = s.first);
+                if (s.first == 'graph' && _graph == null) _loadGraph();
+              },
             ),
           ),
           Expanded(
@@ -155,139 +85,139 @@ class _KnowledgeScreenState extends ConsumerState<KnowledgeScreen> {
     );
   }
 
+  // Obsidian-style force-directed graph. Tap a node → its detail sheet;
+  // pinch to zoom, drag to pan. Lazy-loaded via _loadGraph().
   Widget _graphView(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            controller: _searchCtrl,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _runSearch(),
-            decoration: InputDecoration(
-              hintText: t.web.knowledge.searchPlaceholder,
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searching
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchCtrl.clear();
-                        _load();
-                      },
-                    )
-                  : null,
-              border: const OutlineInputBorder(),
-              isDense: true,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 44,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                // 'fact' retired (P-G): facts live in Memory, not the graph.
-                for (final k in const [
-                  'all',
-                  'entity',
-                  'playbook',
-                  'skill',
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ChoiceChip(
-                      label: Text(_kindLabel(k)),
-                      selected: _kind == k,
-                      onSelected: (_) {
-                        setState(() => _kind = k);
-                        if (!_searching) _load();
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 44,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Center(child: Text(t.web.knowledge.scope)),
-                ),
-                for (final s in const ['all', 'global', 'project', 'domain'])
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ChoiceChip(
-                      label: Text(_scopeLabel(s)),
-                      selected: _scope == s,
-                      onSelected: (_) {
-                        setState(() => _scope = s);
-                        if (!_searching) _load();
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: _state.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('$e', textAlign: TextAlign.center),
+    final g = _graph;
+    if (g == null || g.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (g.hasError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${g.error}', textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: _loadGraph,
+                child: Text(t.common.retry),
               ),
+            ],
+          ),
+        ),
+      );
+    }
+    final snap = g.value!;
+    if (snap.nodes.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(t.web.knowledge.empty,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium),
+        ),
+      );
+    }
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ForceGraphView(
+            nodes: snap.nodes,
+            edges: snap.edges,
+            selectedId: _graphSelId,
+            onSelect: (id) {
+              setState(() => _graphSelId = id);
+              if (id == null) return;
+              final node = snap.nodes.firstWhere(
+                (n) => n.id == id,
+                orElse: () => snap.nodes.first,
+              );
+              _openDetail(node);
+            },
+          ),
+        ),
+        // Legend + node/edge count overlay.
+        Positioned(
+          left: 12,
+          top: 12,
+          child: _GraphLegend(
+            nodeCount: snap.nodes.length,
+            edgeCount: snap.edges.length,
+          ),
+        ),
+        Positioned(
+          right: 12,
+          top: 12,
+          child: Material(
+            color: Colors.transparent,
+            child: IconButton.filledTonal(
+              tooltip: t.common.refresh,
+              icon: const Icon(Icons.refresh, size: 18),
+              onPressed: _loadGraph,
             ),
-            data: (nodes) => nodes.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        _searching
-                            ? t.web.knowledge.noResults
-                            : t.web.knowledge.empty,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView.separated(
-                      itemCount: nodes.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, i) {
-                        final n = nodes[i];
-                        return ListTile(
-                          leading: _KindChip(kind: n.kind),
-                          title: Text(
-                            n.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            n.scopeKey.isNotEmpty
-                                ? '${n.scope} · ${n.scopeKey}'
-                                : n.scope,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () => _openDetail(n),
-                        );
-                      },
-                    ),
-                  ),
           ),
         ),
       ],
+    );
+  }
+}
+
+// Compact kind-color legend + counts, floated over the graph canvas.
+class _GraphLegend extends StatelessWidget {
+  const _GraphLegend({required this.nodeCount, required this.edgeCount});
+  final int nodeCount;
+  final int edgeCount;
+
+  static const _legend = <String, Color>{
+    'entity': Color(0xFF60A5FA),
+    'project': Color(0xFFA78BFA),
+    'playbook': Color(0xFFFBBF24),
+    'skill': Color(0xFF34D399),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.surface.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            t.web.knowledge.kb.graphCounts(nodes: nodeCount, edges: edgeCount),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.7),
+                ),
+          ),
+          const SizedBox(height: 6),
+          for (final e in _legend.entries)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration:
+                        BoxDecoration(color: e.value, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(e.key, style: Theme.of(context).textTheme.labelSmall),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

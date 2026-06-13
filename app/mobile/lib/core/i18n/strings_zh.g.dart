@@ -5327,6 +5327,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	// Translations
 	@override String get tab => '知识库';
 	@override String get graphTab => '图谱';
+	@override String graphCounts({required Object nodes, required Object edges}) => '${nodes} 节点 · ${edges} 连接';
 	@override String get global => '全局';
 	@override String get projectHandbook => '项目手册';
 	@override String get locked => '你已编辑';
@@ -10616,6 +10617,7 @@ extension on TranslationsZh {
 			'web.knowledge.scopes.domain' => '领域',
 			'web.knowledge.kb.tab' => '知识库',
 			'web.knowledge.kb.graphTab' => '图谱',
+			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} 节点 · ${edges} 连接',
 			'web.knowledge.kb.global' => '全局',
 			'web.knowledge.kb.projectHandbook' => '项目手册',
 			'web.knowledge.kb.locked' => '你已编辑',
@@ -10630,9 +10632,9 @@ extension on TranslationsZh {
 			'web.knowledge.kb.saved' => '已保存',
 			'web.knowledge.kb.unlocked' => '已解锁——AI 将重新维护此页',
 			'web.knowledge.kb.regenerating' => '正在后台重新生成…',
-			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
 			_ => null,
 		} ?? switch (path) {
+			'web.knowledge.kb.kinds.kb_infrastructure' => '基础设施',
 			'web.knowledge.kb.kinds.kb_conventions' => '开发规范',
 			'web.knowledge.kb.kinds.kb_lessons' => '经验教训',
 			'web.knowledge.kb.kinds.kb_reusable' => '可复用功能',
@@ -11144,9 +11146,9 @@ extension on TranslationsZh {
 			'mcp.popup.editConfigSubtitle' => '完整 JSON 编辑器 — 仅限密钥库支持的服务器',
 			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
 			'mcp.popup.deleteLabel' => '删除',
-			'mcp.kv.transport' => '传输',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.kv.transport' => '传输',
 			'mcp.kv.description' => '描述',
 			'mcp.kv.command' => '命令',
 			'mcp.kv.args' => '参数',
@@ -11658,9 +11660,9 @@ extension on TranslationsZh {
 			'githosts.deleteTitle' => '删除 Git 主机？',
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'githosts.errorPrefix.toggle' => '切换失败',
-			'githosts.errorPrefix.delete' => '删除失败',
 			_ => null,
 		} ?? switch (path) {
+			'githosts.errorPrefix.delete' => '删除失败',
 			'githosts.form.kindLabel' => '类型',
 			'githosts.form.hostLabel' => '主机',
 			'githosts.form.nameLabel' => '名称',
@@ -12172,9 +12174,9 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.skillsPath' => '技能路径',
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
-			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
 			'settings.serverSettings.fields.registryRoot' => '注册表根',
 			'settings.serverSettings.fields.secretsFile' => '密钥文件',
 			'settings.serverSettings.fields.backend' => '后端',

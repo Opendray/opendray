@@ -2623,6 +2623,7 @@
       "kb": {
         "tab": "知识库",
         "graphTab": "图谱",
+        "graphCounts": "{nodes} 节点 · {edges} 连接",
         "global": "全局",
         "projectHandbook": "项目手册",
         "locked": "你已编辑",

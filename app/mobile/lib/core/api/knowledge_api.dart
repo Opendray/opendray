@@ -226,6 +226,35 @@ class KnowledgeApi {
     }
   }
 
+  // All live nodes + the edges between them (capped most-connected first)
+  // for the force-directed graph view. Mirrors web getKnowledgeGraphAll.
+  Future<KnowledgeGraphSnapshot> graphAll({int limit = 500}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/knowledge/graph-all',
+        queryParameters: {'n': limit},
+      );
+      final rawNodes = res.data?['nodes'];
+      final rawEdges = res.data?['edges'];
+      return KnowledgeGraphSnapshot(
+        nodes: rawNodes is List
+            ? rawNodes
+                .whereType<Map<String, dynamic>>()
+                .map(KnowledgeNode.fromJson)
+                .toList()
+            : <KnowledgeNode>[],
+        edges: rawEdges is List
+            ? rawEdges
+                .whereType<Map<String, dynamic>>()
+                .map(KnowledgeEdge.fromJson)
+                .toList()
+            : <KnowledgeEdge>[],
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // Skills the outcome loop proposes to retire: never referenced after
   // 14+ days, repeatedly loaded into sessions that then fail, or long
   // dormant. The operator disables (or deletes) the ones they agree with.
@@ -245,6 +274,30 @@ class KnowledgeApi {
       throw toApiException(e);
     }
   }
+}
+
+// KnowledgeEdge is one directed link in the full graph (src → dst).
+class KnowledgeEdge {
+  KnowledgeEdge({required this.srcId, required this.edgeType, required this.dstId});
+
+  factory KnowledgeEdge.fromJson(Map<String, dynamic> j) => KnowledgeEdge(
+        srcId: j['src_id'] as String? ?? '',
+        edgeType: j['edge_type'] as String? ?? '',
+        dstId: j['dst_id'] as String? ?? '',
+      );
+
+  final String srcId;
+  final String edgeType;
+  final String dstId;
+}
+
+// KnowledgeGraphSnapshot is the whole live graph (nodes + edges between
+// them), capped most-connected-first, for the Obsidian-style force view.
+class KnowledgeGraphSnapshot {
+  KnowledgeGraphSnapshot({required this.nodes, required this.edges});
+
+  final List<KnowledgeNode> nodes;
+  final List<KnowledgeEdge> edges;
 }
 
 // RetirementCandidate pairs a skill node with WHY the outcome loop

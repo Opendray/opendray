@@ -5327,6 +5327,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	// Translations
 	@override String get tab => 'Base de conocimiento';
 	@override String get graphTab => 'Grafo';
+	@override String graphCounts({required Object nodes, required Object edges}) => '${nodes} nodos · ${edges} enlaces';
 	@override String get global => 'Global';
 	@override String get projectHandbook => 'Manual del proyecto';
 	@override String get locked => 'Editado por ti';
@@ -10616,6 +10617,7 @@ extension on TranslationsEs {
 			'web.knowledge.scopes.domain' => 'Dominio',
 			'web.knowledge.kb.tab' => 'Base de conocimiento',
 			'web.knowledge.kb.graphTab' => 'Grafo',
+			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} nodos · ${edges} enlaces',
 			'web.knowledge.kb.global' => 'Global',
 			'web.knowledge.kb.projectHandbook' => 'Manual del proyecto',
 			'web.knowledge.kb.locked' => 'Editado por ti',
@@ -10630,9 +10632,9 @@ extension on TranslationsEs {
 			'web.knowledge.kb.saved' => 'Guardado',
 			'web.knowledge.kb.unlocked' => 'Desbloqueada — la IA volverá a gestionar esta página',
 			'web.knowledge.kb.regenerating' => 'Regenerando en segundo plano…',
-			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
 			_ => null,
 		} ?? switch (path) {
+			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infraestructura',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Convenciones',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lecciones',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Funciones reutilizables',
@@ -11144,9 +11146,9 @@ extension on TranslationsEs {
 			'mcp.popup.editConfigSubtitle' => 'Editor JSON completo, solo servidores respaldados por el vault',
 			'mcp.popup.viewRawSubtitle' => 'Inspector de solo lectura para el JSON del servidor',
 			'mcp.popup.deleteLabel' => 'Eliminar',
-			'mcp.kv.transport' => 'Transport',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Descripción',
 			'mcp.kv.command' => 'Command',
 			'mcp.kv.args' => 'Args',
@@ -11658,9 +11660,9 @@ extension on TranslationsEs {
 			'githosts.deleteTitle' => '¿Eliminar host de Git?',
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'githosts.errorPrefix.toggle' => 'Error al alternar',
-			'githosts.errorPrefix.delete' => 'Error al eliminar',
 			_ => null,
 		} ?? switch (path) {
+			'githosts.errorPrefix.delete' => 'Error al eliminar',
 			'githosts.form.kindLabel' => 'Tipo',
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Nombre',
@@ -12172,9 +12174,9 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.skillsPath' => 'Ruta de skills',
 			'settings.serverSettings.fields.gitRoot' => 'Raíz de git',
 			'settings.serverSettings.fields.personalPrefix' => 'Prefijo personal',
-			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',
 			'settings.serverSettings.fields.registryRoot' => 'Raíz del registro',
 			'settings.serverSettings.fields.secretsFile' => 'Archivo de secretos',
 			'settings.serverSettings.fields.backend' => 'Backend',

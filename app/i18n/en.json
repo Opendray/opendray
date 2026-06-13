@@ -2623,6 +2623,7 @@
       "kb": {
         "tab": "Knowledge Base",
         "graphTab": "Graph",
+        "graphCounts": "{nodes} nodes · {edges} links",
         "global": "Global",
         "projectHandbook": "Project handbook",
         "locked": "Edited by you",

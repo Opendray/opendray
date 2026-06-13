@@ -10367,6 +10367,9 @@ class TranslationsWebKnowledgeKbEn {
 	/// en: 'Graph'
 	String get graphTab => 'Graph';
 
+	/// en: '{nodes} nodes · {edges} links'
+	String graphCounts({required Object nodes, required Object edges}) => '${nodes} nodes · ${edges} links';
+
 	/// en: 'Global'
 	String get global => 'Global';
 
@@ -18062,6 +18065,7 @@ extension on Translations {
 			'web.knowledge.scopes.domain' => 'Domain',
 			'web.knowledge.kb.tab' => 'Knowledge Base',
 			'web.knowledge.kb.graphTab' => 'Graph',
+			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} nodes · ${edges} links',
 			'web.knowledge.kb.global' => 'Global',
 			'web.knowledge.kb.projectHandbook' => 'Project handbook',
 			'web.knowledge.kb.locked' => 'Edited by you',
@@ -18076,9 +18080,9 @@ extension on Translations {
 			'web.knowledge.kb.saved' => 'Saved',
 			'web.knowledge.kb.unlocked' => 'Unlocked — AI will manage this page again',
 			'web.knowledge.kb.regenerating' => 'Regenerating in the background…',
-			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
 			_ => null,
 		} ?? switch (path) {
+			'web.knowledge.kb.kinds.kb_infrastructure' => 'Infrastructure',
 			'web.knowledge.kb.kinds.kb_conventions' => 'Conventions',
 			'web.knowledge.kb.kinds.kb_lessons' => 'Lessons',
 			'web.knowledge.kb.kinds.kb_reusable' => 'Reusable features',
@@ -18590,9 +18594,9 @@ extension on Translations {
 			'mcp.popup.editConfigSubtitle' => 'Full JSON editor — vault-backed servers only',
 			'mcp.popup.viewRawSubtitle' => 'Read-only inspector for the server JSON',
 			'mcp.popup.deleteLabel' => 'Delete',
-			'mcp.kv.transport' => 'Transport',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Description',
 			'mcp.kv.command' => 'Command',
 			'mcp.kv.args' => 'Args',
@@ -19104,9 +19108,9 @@ extension on Translations {
 			'githosts.deleteTitle' => 'Delete git host?',
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'githosts.errorPrefix.toggle' => 'Toggle failed',
-			'githosts.errorPrefix.delete' => 'Delete failed',
 			_ => null,
 		} ?? switch (path) {
+			'githosts.errorPrefix.delete' => 'Delete failed',
 			'githosts.form.kindLabel' => 'Kind',
 			'githosts.form.hostLabel' => 'Host',
 			'githosts.form.nameLabel' => 'Name',
@@ -19618,9 +19622,9 @@ extension on Translations {
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
-			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
 			_ => null,
 		} ?? switch (path) {
+			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
 			'settings.serverSettings.fields.registryRoot' => 'Registry root',
 			'settings.serverSettings.fields.secretsFile' => 'Secrets file',
 			'settings.serverSettings.fields.backend' => 'Backend',
