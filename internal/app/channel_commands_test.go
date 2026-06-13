@@ -44,6 +44,9 @@ func (f *fakeSessionOps) Start(_ context.Context, id string) (session.Session, e
 	f.startCalls = append(f.startCalls, id)
 	return f.startResp, f.startErr
 }
+func (f *fakeSessionOps) Create(_ context.Context, _ session.CreateRequest) (session.Session, error) {
+	return session.Session{}, nil
+}
 func (f *fakeSessionOps) RecentSnippet(id string) string {
 	return f.snippet[id]
 }

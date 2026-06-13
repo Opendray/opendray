@@ -10,7 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opendray/opendray-v2/internal/catalog"
 	"github.com/opendray/opendray-v2/internal/channel"
+	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/session"
 )
 
@@ -50,6 +52,8 @@ type sessionOps interface {
 	List(ctx context.Context) ([]session.Session, error)
 	Start(ctx context.Context, id string) (session.Session, error)
 	Stop(ctx context.Context, id string) error
+	// Create spawns a brand new session — backs /new.
+	Create(ctx context.Context, req session.CreateRequest) (session.Session, error)
 	// RecentSnippet is the live, notification-grade preview of a
 	// running session's latest output (backs /peek). "" when not live.
 	RecentSnippet(id string) string
@@ -73,7 +77,22 @@ type sessionOps interface {
 //     inline button on the idle card as well)
 //   - /resume <id>    — re-spawn a stopped/ended session under the
 //     same id (used by the Resume inline button)
-func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
+//
+// providerLister is the narrow slice of catalog.Catalog the /new
+// command needs to enumerate which AI CLI providers the operator can
+// pick from.
+type providerLister interface {
+	List(ctx context.Context) ([]catalog.Provider, error)
+}
+
+// accountLister is the narrow slice of cliacct.Service the /new
+// command needs to enumerate Claude accounts (multi-account
+// selection lives only on the claude provider today).
+type accountLister interface {
+	List(ctx context.Context) ([]cliacct.Account, error)
+}
+
+func registerChannelCommands(hub *channel.Hub, mgr sessionOps, providers providerLister, accounts accountLister) {
 	hub.RegisterCommand(channel.Command{
 		Name:        "list",
 		Description: "List active sessions",
@@ -129,6 +148,20 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 			CardHandler: panelCardHandler(mgr),
 		})
 	}
+
+	// /new spawns a fresh session from chat with provider (and Claude
+	// account) selection. Auto-pins the new session so the operator can
+	// start typing immediately. Three callable shapes:
+	//   /new                         → provider picker
+	//   /new claude                  → Claude account picker
+	//   /new <provider> [<account>]  → spawn + auto-select
+	hub.RegisterCommand(channel.Command{
+		Name:                 "new",
+		Description:          "Start a new session (provider picker)",
+		Source:               "builtin",
+		CardHandler:          newSessionCardHandler(mgr, providers, accounts),
+		DocksControlKeyboard: true,
+	})
 }
 
 // panelCardHandler renders the control-panel home: the session list
@@ -525,5 +558,209 @@ func relativeAge(ts, now time.Time) string {
 		return fmt.Sprintf("%dh ago", int(d/time.Hour))
 	default:
 		return fmt.Sprintf("%dd ago", int(d/(24*time.Hour)))
+	}
+}
+
+// newSessionCwd is the cwd we hand to mgr.Create when /new is invoked
+// from chat. Chat operators don't have a project context handy and
+// the gateway data dir is a sensible neutral default (matches what
+// the REST handler falls back to when the client omits cwd).
+const newSessionCwd = "/var/lib/opendray"
+
+// newSessionCardHandler implements /new — a three-step pick-spawn-pin
+// flow over chat buttons:
+//
+//	(1) /new                       → card of enabled providers
+//	(2) /new claude                → card of enabled Claude accounts
+//	(3) /new <provider> [<acc>]    → spawn + auto-pin
+//
+// Providers other than claude skip step 2 since multi-account today
+// only exists for claude. The card returned by each step is the same
+// shape as /panel's, so Telegram (and other CardSender channels)
+// render tap-to-act buttons natively.
+func newSessionCardHandler(mgr sessionOps, providers providerLister, accounts accountLister) channel.CommandCardHandler {
+	return func(ctx context.Context, cc channel.CommandContext) (*channel.Card, error) {
+		args := cc.Args
+
+		// Step 1 — provider picker
+		if len(args) == 0 {
+			return providerPickerCard(ctx, providers)
+		}
+
+		providerID := strings.ToLower(args[0])
+
+		// Step 2 — Claude account picker (only when an account isn't
+		// already supplied)
+		if providerID == "claude" && len(args) == 1 {
+			return claudeAccountPickerCard(ctx, accounts)
+		}
+
+		// Step 3 — spawn + auto-pin
+		req := session.CreateRequest{
+			ProviderID: providerID,
+			Cwd:        newSessionCwd,
+		}
+		if providerID == "claude" && len(args) >= 2 {
+			// "auto" is the picker's sentinel for "let
+			// PickAutoAssignClaudeAccount choose" — Manager.Create
+			// treats an empty ClaudeAccountID the same way.
+			if args[1] != "auto" {
+				req.ClaudeAccountID = args[1]
+			}
+		}
+		sess, err := mgr.Create(ctx, req)
+		if err != nil {
+			return errorCard(fmt.Sprintf("Couldn't start %s session", providerID), err.Error()), nil
+		}
+
+		// Pin the new session to this chat so the operator can start
+		// typing immediately — the whole point of /new vs. opening the
+		// dashboard, hand-rolling, and then /select-ing.
+		chID := ""
+		if cc.Channel != nil {
+			chID = cc.Channel.ID()
+		}
+		if cc.Hub != nil && chID != "" {
+			cc.Hub.SetActiveSession(chID, sess.ID)
+		}
+
+		return newSessionStartedCard(sess), nil
+	}
+}
+
+// providerPickerCard renders the row of provider buttons for step 1
+// of /new. Order matches catalog.List (manifest-declared order); only
+// enabled providers are surfaced.
+func providerPickerCard(ctx context.Context, providers providerLister) (*channel.Card, error) {
+	if providers == nil {
+		return errorCard("Provider list unavailable", "no provider catalog wired"), nil
+	}
+	list, err := providers.List(ctx)
+	if err != nil {
+		return errorCard("Provider list unavailable", err.Error()), nil
+	}
+	row := make([]channel.ButtonOption, 0, len(list))
+	for _, p := range list {
+		if !p.Enabled {
+			continue
+		}
+		label := p.Manifest.DisplayName
+		if label == "" {
+			label = p.Manifest.ID
+		}
+		row = append(row, channel.ButtonOption{
+			Text:  label,
+			Value: "cmd:/new " + p.Manifest.ID,
+		})
+	}
+	if len(row) == 0 {
+		return &channel.Card{Elements: []channel.CardElement{
+			channel.CardMarkdown{Content: "No providers enabled. Configure one in the dashboard first."},
+		}}, nil
+	}
+	return &channel.Card{
+		Header: &channel.CardHeader{Title: "🆕 Start a new session"},
+		Elements: []channel.CardElement{
+			channel.CardMarkdown{Content: "Pick a provider:"},
+			channel.CardActions{Buttons: [][]channel.ButtonOption{row}},
+		},
+	}, nil
+}
+
+// claudeAccountPickerCard renders the Claude account row for step 2.
+// One button per enabled account, labelled with the account's display
+// name or id. The "auto-assign" option uses an empty account id so
+// Manager.Create falls back to PickAutoAssignClaudeAccount.
+func claudeAccountPickerCard(ctx context.Context, accounts accountLister) (*channel.Card, error) {
+	if accounts == nil {
+		// No Claude account service wired — fall through to auto-assign
+		// without offering a picker, so the operator still gets a Claude
+		// session.
+		return &channel.Card{
+			Header: &channel.CardHeader{Title: "🆕 Claude session"},
+			Elements: []channel.CardElement{
+				channel.CardMarkdown{Content: "Starting with the auto-assigned account…"},
+				channel.CardActions{Buttons: [][]channel.ButtonOption{{
+					{Text: "▶ Start", Value: "cmd:/new claude auto", Style: "primary"},
+				}}},
+			},
+		}, nil
+	}
+	list, err := accounts.List(ctx)
+	if err != nil {
+		return errorCard("Account list unavailable", err.Error()), nil
+	}
+	row := make([]channel.ButtonOption, 0, len(list)+1)
+	row = append(row, channel.ButtonOption{
+		Text:  "⚖ auto",
+		Value: "cmd:/new claude auto",
+		Style: "primary",
+	})
+	for _, a := range list {
+		if !a.Enabled {
+			continue
+		}
+		label := a.DisplayName
+		if label == "" {
+			label = a.Name
+		}
+		if label == "" {
+			label = a.ID
+		}
+		row = append(row, channel.ButtonOption{
+			Text:  label,
+			Value: "cmd:/new claude " + a.ID,
+		})
+	}
+	// Telegram's inline keyboard supports ~8 buttons per row; chunk
+	// into rows of 4 so long account lists stay readable.
+	const perRow = 4
+	rows := make([][]channel.ButtonOption, 0, (len(row)+perRow-1)/perRow)
+	for i := 0; i < len(row); i += perRow {
+		end := i + perRow
+		if end > len(row) {
+			end = len(row)
+		}
+		rows = append(rows, row[i:end])
+	}
+	return &channel.Card{
+		Header: &channel.CardHeader{Title: "🆕 Pick a Claude account"},
+		Elements: []channel.CardElement{
+			channel.CardMarkdown{Content: "Which account?"},
+			channel.CardActions{Buttons: rows},
+		},
+	}, nil
+}
+
+// newSessionStartedCard is the success reply after /new completes
+// step 3. The session is already pinned by the time this card is
+// returned, so the body just confirms the chat is bound and the
+// next inbound text will go to it.
+func newSessionStartedCard(sess session.Session) *channel.Card {
+	label := sessionLabel(sess)
+	return &channel.Card{
+		Header: &channel.CardHeader{Title: "✅ New session started", Color: "green"},
+		Elements: []channel.CardElement{
+			channel.CardMarkdown{Content: fmt.Sprintf(
+				"%s is live and pinned to this chat. Just type to start the conversation.",
+				label,
+			)},
+			channel.CardActions{Buttons: [][]channel.ButtonOption{{
+				{Text: "📋 Sessions", Value: "cmd:/panel"},
+				{Text: "⏹ End", Value: "cmd:/end " + sess.ID, Style: "danger"},
+			}}},
+		},
+	}
+}
+
+// errorCard formats a one-shot failure card with a friendly title and
+// the underlying error tucked into the body — operators get to see
+// what went wrong without leaving the chat.
+func errorCard(title, detail string) *channel.Card {
+	return &channel.Card{
+		Header: &channel.CardHeader{Title: title, Color: "red"},
+		Elements: []channel.CardElement{
+			channel.CardMarkdown{Content: detail},
+		},
 	}
 }
