@@ -751,6 +751,9 @@ class _TranslationsSkillsZh extends TranslationsSkillsEn {
 	// Translations
 	@override String get title => '技能';
 	@override String get newSkill => '新建技能';
+	@override String get install => '安装 SKILL.md';
+	@override String installedSnack({required Object name}) => '已安装 ${name}';
+	@override String installFailed({required Object error}) => '安装失败:${error}';
 	@override String customizingBuiltin({required Object id}) => '自定义内置 ${id}';
 	@override String get idLabel => 'Id（slug）';
 	@override String get idHint => '例如：tdd-guide';
@@ -11850,6 +11853,9 @@ extension on TranslationsZh {
 			'onboarding.kContinue' => '继续',
 			'skills.title' => '技能',
 			'skills.newSkill' => '新建技能',
+			'skills.install' => '安装 SKILL.md',
+			'skills.installedSnack' => ({required Object name}) => '已安装 ${name}',
+			'skills.installFailed' => ({required Object error}) => '安装失败:${error}',
 			'skills.customizingBuiltin' => ({required Object id}) => '自定义内置 ${id}',
 			'skills.idLabel' => 'Id（slug）',
 			'skills.idHint' => '例如：tdd-guide',
@@ -12202,11 +12208,11 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.adminPassword' => '管理员密码',
 			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
 			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
 			'settings.serverSettings.fields.level' => '级别',
 			'settings.serverSettings.fields.format' => '格式',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.filePath' => '文件路径',
 			'settings.serverSettings.fields.filePathHelper' => '留空 = 仅 stdout。',
 			'settings.serverSettings.fields.idleThreshold' => '空闲阈值',

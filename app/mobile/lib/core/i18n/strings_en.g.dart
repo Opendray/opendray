@@ -1592,6 +1592,15 @@ class TranslationsSkillsEn {
 	/// en: 'New skill'
 	String get newSkill => 'New skill';
 
+	/// en: 'Install SKILL.md'
+	String get install => 'Install SKILL.md';
+
+	/// en: 'Installed {name}'
+	String installedSnack({required Object name}) => 'Installed ${name}';
+
+	/// en: 'Install failed: {error}'
+	String installFailed({required Object error}) => 'Install failed: ${error}';
+
 	/// en: 'Customizing built-in {id}'
 	String customizingBuiltin({required Object id}) => 'Customizing built-in ${id}';
 
@@ -19340,6 +19349,9 @@ extension on Translations {
 			'onboarding.kContinue' => 'Continue',
 			'skills.title' => 'Skills',
 			'skills.newSkill' => 'New skill',
+			'skills.install' => 'Install SKILL.md',
+			'skills.installedSnack' => ({required Object name}) => 'Installed ${name}',
+			'skills.installFailed' => ({required Object error}) => 'Install failed: ${error}',
 			'skills.customizingBuiltin' => ({required Object id}) => 'Customizing built-in ${id}',
 			'skills.idLabel' => 'Id (slug)',
 			'skills.idHint' => 'e.g. tdd-guide',
@@ -19692,11 +19704,11 @@ extension on Translations {
 			'settings.serverSettings.fields.adminPassword' => 'Admin password',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
 			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Level',
 			'settings.serverSettings.fields.format' => 'Format',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.filePath' => 'File path',
 			'settings.serverSettings.fields.filePathHelper' => 'Empty = stdout only.',
 			'settings.serverSettings.fields.idleThreshold' => 'Idle threshold',

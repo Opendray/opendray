@@ -751,6 +751,9 @@ class _TranslationsSkillsEs extends TranslationsSkillsEn {
 	// Translations
 	@override String get title => 'Skills';
 	@override String get newSkill => 'Nuevo skill';
+	@override String get install => 'Instalar SKILL.md';
+	@override String installedSnack({required Object name}) => 'Instalado ${name}';
+	@override String installFailed({required Object error}) => 'Instalación fallida: ${error}';
 	@override String customizingBuiltin({required Object id}) => 'Personalizando ${id} integrado';
 	@override String get idLabel => 'Id (slug)';
 	@override String get idHint => 'p. ej. tdd-guide';
@@ -11850,6 +11853,9 @@ extension on TranslationsEs {
 			'onboarding.kContinue' => 'Continuar',
 			'skills.title' => 'Skills',
 			'skills.newSkill' => 'Nuevo skill',
+			'skills.install' => 'Instalar SKILL.md',
+			'skills.installedSnack' => ({required Object name}) => 'Instalado ${name}',
+			'skills.installFailed' => ({required Object error}) => 'Instalación fallida: ${error}',
 			'skills.customizingBuiltin' => ({required Object id}) => 'Personalizando ${id} integrado',
 			'skills.idLabel' => 'Id (slug)',
 			'skills.idHint' => 'p. ej. tdd-guide',
@@ -12202,11 +12208,11 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.adminPassword' => 'Contraseña admin',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Envíalo en blanco para conservarlo. Para rotaciones continuas usa Ajustes → Cuenta (respaldado por keyfile, sin reinicio).',
 			'settings.serverSettings.fields.tokenTtlWeb' => 'TTL del token (web)',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Cadena de duración de Go, p. ej. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Nivel',
 			'settings.serverSettings.fields.format' => 'Formato',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.filePath' => 'Ruta del archivo',
 			'settings.serverSettings.fields.filePathHelper' => 'Vacío = solo stdout.',
 			'settings.serverSettings.fields.idleThreshold' => 'Umbral de inactividad',

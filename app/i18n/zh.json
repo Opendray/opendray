@@ -4117,6 +4117,9 @@
   "skills": {
     "title": "技能",
     "newSkill": "新建技能",
+    "install": "安装 SKILL.md",
+    "installedSnack": "已安装 {name}",
+    "installFailed": "安装失败:{error}",
     "customizingBuiltin": "自定义内置 {id}",
     "idLabel": "Id（slug）",
     "idHint": "例如：tdd-guide",

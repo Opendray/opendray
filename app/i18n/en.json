@@ -4117,6 +4117,9 @@
   "skills": {
     "title": "Skills",
     "newSkill": "New skill",
+    "install": "Install SKILL.md",
+    "installedSnack": "Installed {name}",
+    "installFailed": "Install failed: {error}",
     "customizingBuiltin": "Customizing built-in {id}",
     "idLabel": "Id (slug)",
     "idHint": "e.g. tdd-guide",

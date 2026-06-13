@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/api/version_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/activity/activity_screen.dart';
 import 'package:opendray/features/cortex/cortex_hub_screen.dart';
@@ -46,6 +47,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       _TabSpec(icon: Icons.api_outlined, label: t.nav.integrations),
       _TabSpec(icon: Icons.more_horiz, label: t.nav.more),
     ];
+    // Badge the More tab (which leads to Settings) when the gateway has an
+    // update waiting — the mobile mirror of the web's Settings-icon badge.
+    final updateAvailable =
+        ref.watch(versionInfoProvider).asData?.value.updateAvailable ?? false;
 
     return Scaffold(
       body: IndexedStack(index: _index, children: pages),
@@ -54,8 +59,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         items: [
-          for (final tab in tabs)
-            BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label),
+          for (var i = 0; i < tabs.length; i++)
+            BottomNavigationBarItem(
+              icon: (i == tabs.length - 1 && updateAvailable)
+                  ? Badge(smallSize: 8, child: Icon(tabs[i].icon))
+                  : Icon(tabs[i].icon),
+              label: tabs[i].label,
+            ),
         ],
       ),
     );

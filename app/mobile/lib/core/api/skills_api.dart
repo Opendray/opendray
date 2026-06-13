@@ -104,6 +104,29 @@ class SkillsApi {
     }
   }
 
+  // POST /skills/upload installs a SKILL.md as a vault skill, deriving
+  // the id from the file's frontmatter `name:` (slugified) — no id
+  // prompt. The mobile counterpart of the web's drag-and-drop install.
+  // Server rejects a blank `name:`, an id collision (409 — delete first),
+  // an empty file, or a body over 4 MB.
+  Future<Skill> upload({
+    required String filename,
+    required List<int> bytes,
+  }) async {
+    try {
+      final form = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      });
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/skills/upload',
+        data: form,
+      );
+      return Skill.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // PUT /skills/{id} writes the body to the vault — works whether or
   // not a vault entry already exists. The "customize a builtin" flow
   // uses this with the cloned-from-builtin body.

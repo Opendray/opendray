@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:opendray/core/api/version_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
@@ -35,6 +36,8 @@ class MoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final updateAvailable =
+        ref.watch(versionInfoProvider).asData?.value.updateAvailable ?? false;
     if (auth is! AuthLoggedIn) {
       return const Scaffold(body: SizedBox.shrink());
     }
@@ -133,6 +136,7 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.tune_outlined,
             title: t.more.items.settings.title,
             subtitle: t.more.items.settings.subtitle,
+            badge: updateAvailable,
             onTap: () => _push(context, const SettingsScreen()),
           ),
           _MenuTile(
@@ -234,12 +238,15 @@ class _MenuTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badge = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  // When true, shows an "update available" dot before the chevron.
+  final bool badge;
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +255,22 @@ class _MenuTile extends StatelessWidget {
       leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
       title: Text(title),
       subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (badge)
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error,
+                shape: BoxShape.circle,
+              ),
+            ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
     );
   }
 }
