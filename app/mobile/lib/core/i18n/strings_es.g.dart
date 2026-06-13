@@ -411,6 +411,11 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get cliGemini => 'Gemini';
 	@override String get cliCodex => 'Codex (codex exec)';
 	@override String get cliAntigravity => 'Antigravity (agy --print)';
+	@override String get modelLabel => 'Modelo';
+	@override String get modelCliDefault => 'Predeterminado del CLI (último)';
+	@override String get modelCustom => 'Personalizado…';
+	@override String get modelCustomPlaceholder => 'id de modelo exacto';
+	@override String get modelBackToList => 'Lista';
 	@override String get claudeAccountLabel => 'Cuenta de Claude';
 	@override String get claudeAccountDefault => 'Predeterminada';
 	@override String get test => 'Probar';
@@ -11314,6 +11319,11 @@ extension on TranslationsEs {
 			'memoryWorkers.cliGemini' => 'Gemini',
 			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'memoryWorkers.modelLabel' => 'Modelo',
+			'memoryWorkers.modelCliDefault' => 'Predeterminado del CLI (último)',
+			'memoryWorkers.modelCustom' => 'Personalizado…',
+			'memoryWorkers.modelCustomPlaceholder' => 'id de modelo exacto',
+			'memoryWorkers.modelBackToList' => 'Lista',
 			'memoryWorkers.claudeAccountLabel' => 'Cuenta de Claude',
 			'memoryWorkers.claudeAccountDefault' => 'Predeterminada',
 			'memoryWorkers.test' => 'Probar',
@@ -11655,13 +11665,13 @@ extension on TranslationsEs {
 			'backupTargetEditor.rcloneBinaryHint' => 'Anula `which rclone`. Vacío = búsqueda en PATH.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Ruta de configuración',
 			'backupTargetEditor.rcloneConfigHint' => 'Anula --config. Vacío = valor por defecto de rclone.',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.title' => 'Hosts de Git',
 			'githosts.addHost' => 'Añadir host',
 			'githosts.deleteTitle' => '¿Eliminar host de Git?',
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'githosts.errorPrefix.toggle' => 'Error al alternar',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.errorPrefix.delete' => 'Error al eliminar',
 			'githosts.form.kindLabel' => 'Tipo',
 			'githosts.form.hostLabel' => 'Host',
@@ -12169,13 +12179,13 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.idleCheckInterval' => 'Intervalo de comprobación de inactividad',
 			'settings.serverSettings.fields.idleCheckHelper' => 'Con qué frecuencia se ejecuta el reaper de inactividad.',
 			'settings.serverSettings.fields.root' => 'Raíz',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.rootHelper' => 'Padre de las sub-rutas notes / skills / git_root.',
 			'settings.serverSettings.fields.notesPath' => 'Ruta de notas',
 			'settings.serverSettings.fields.skillsPath' => 'Ruta de skills',
 			'settings.serverSettings.fields.gitRoot' => 'Raíz de git',
 			'settings.serverSettings.fields.personalPrefix' => 'Prefijo personal',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',
 			'settings.serverSettings.fields.registryRoot' => 'Raíz del registro',
 			'settings.serverSettings.fields.secretsFile' => 'Archivo de secretos',

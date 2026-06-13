@@ -789,6 +789,21 @@ class TranslationsMemoryWorkersEn {
 	/// en: 'Antigravity (agy --print)'
 	String get cliAntigravity => 'Antigravity (agy --print)';
 
+	/// en: 'Model'
+	String get modelLabel => 'Model';
+
+	/// en: 'CLI default (latest)'
+	String get modelCliDefault => 'CLI default (latest)';
+
+	/// en: 'Custom…'
+	String get modelCustom => 'Custom…';
+
+	/// en: 'exact model id'
+	String get modelCustomPlaceholder => 'exact model id';
+
+	/// en: 'List'
+	String get modelBackToList => 'List';
+
 	/// en: 'Claude account'
 	String get claudeAccountLabel => 'Claude account';
 
@@ -18762,6 +18777,11 @@ extension on Translations {
 			'memoryWorkers.cliGemini' => 'Gemini',
 			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'memoryWorkers.modelLabel' => 'Model',
+			'memoryWorkers.modelCliDefault' => 'CLI default (latest)',
+			'memoryWorkers.modelCustom' => 'Custom…',
+			'memoryWorkers.modelCustomPlaceholder' => 'exact model id',
+			'memoryWorkers.modelBackToList' => 'List',
 			'memoryWorkers.claudeAccountLabel' => 'Claude account',
 			'memoryWorkers.claudeAccountDefault' => 'Default',
 			'memoryWorkers.test' => 'Test',
@@ -19103,13 +19123,13 @@ extension on Translations {
 			'backupTargetEditor.rcloneBinaryHint' => 'Override `which rclone`. Empty = PATH lookup.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Config path',
 			'backupTargetEditor.rcloneConfigHint' => 'Override --config. Empty = rclone default.',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.title' => 'Git hosts',
 			'githosts.addHost' => 'Add host',
 			'githosts.deleteTitle' => 'Delete git host?',
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'githosts.errorPrefix.toggle' => 'Toggle failed',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.errorPrefix.delete' => 'Delete failed',
 			'githosts.form.kindLabel' => 'Kind',
 			'githosts.form.hostLabel' => 'Host',
@@ -19617,13 +19637,13 @@ extension on Translations {
 			'settings.serverSettings.fields.idleCheckInterval' => 'Idle check interval',
 			'settings.serverSettings.fields.idleCheckHelper' => 'How often the idle reaper runs.',
 			'settings.serverSettings.fields.root' => 'Root',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
 			'settings.serverSettings.fields.notesPath' => 'Notes path',
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
 			'settings.serverSettings.fields.registryRoot' => 'Registry root',
 			'settings.serverSettings.fields.secretsFile' => 'Secrets file',

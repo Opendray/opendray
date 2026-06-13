@@ -411,6 +411,11 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get cliGemini => 'Gemini';
 	@override String get cliCodex => 'Codex（codex exec）';
 	@override String get cliAntigravity => 'Antigravity（agy --print）';
+	@override String get modelLabel => '模型';
+	@override String get modelCliDefault => 'CLI 默认(最新)';
+	@override String get modelCustom => '自定义…';
+	@override String get modelCustomPlaceholder => '精确模型 id';
+	@override String get modelBackToList => '列表';
 	@override String get claudeAccountLabel => 'Claude 账号';
 	@override String get claudeAccountDefault => '默认';
 	@override String get test => '测试';
@@ -11314,6 +11319,11 @@ extension on TranslationsZh {
 			'memoryWorkers.cliGemini' => 'Gemini',
 			'memoryWorkers.cliCodex' => 'Codex（codex exec）',
 			'memoryWorkers.cliAntigravity' => 'Antigravity（agy --print）',
+			'memoryWorkers.modelLabel' => '模型',
+			'memoryWorkers.modelCliDefault' => 'CLI 默认(最新)',
+			'memoryWorkers.modelCustom' => '自定义…',
+			'memoryWorkers.modelCustomPlaceholder' => '精确模型 id',
+			'memoryWorkers.modelBackToList' => '列表',
 			'memoryWorkers.claudeAccountLabel' => 'Claude 账号',
 			'memoryWorkers.claudeAccountDefault' => '默认',
 			'memoryWorkers.test' => '测试',
@@ -11655,13 +11665,13 @@ extension on TranslationsZh {
 			'backupTargetEditor.rcloneBinaryHint' => '覆盖 `which rclone`。留空 = PATH 查找。',
 			'backupTargetEditor.rcloneConfigLabel' => '配置路径',
 			'backupTargetEditor.rcloneConfigHint' => '覆盖 --config。留空 = rclone 默认。',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.title' => 'Git 主机',
 			'githosts.addHost' => '添加主机',
 			'githosts.deleteTitle' => '删除 Git 主机？',
 			'githosts.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'githosts.errorPrefix.toggle' => '切换失败',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.errorPrefix.delete' => '删除失败',
 			'githosts.form.kindLabel' => '类型',
 			'githosts.form.hostLabel' => '主机',
@@ -12169,13 +12179,13 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.idleCheckInterval' => '空闲检查间隔',
 			'settings.serverSettings.fields.idleCheckHelper' => '空闲回收器运行的频率。',
 			'settings.serverSettings.fields.root' => '根目录',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
 			'settings.serverSettings.fields.notesPath' => '笔记路径',
 			'settings.serverSettings.fields.skillsPath' => '技能路径',
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
 			'settings.serverSettings.fields.registryRoot' => '注册表根',
 			'settings.serverSettings.fields.secretsFile' => '密钥文件',
