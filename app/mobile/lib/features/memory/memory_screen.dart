@@ -10,7 +10,7 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/core/memory/ranking.dart';
-import 'package:opendray/features/memory_workers/memory_workers_screen.dart';
+import 'package:opendray/features/cortex/cortex_settings_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
@@ -468,7 +468,7 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const MemoryWorkersScreen(),
+                  builder: (_) => const CortexSettingsScreen(),
                 ),
               );
             },

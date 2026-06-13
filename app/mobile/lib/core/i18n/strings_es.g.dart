@@ -69,6 +69,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsSettingsEs settings = _TranslationsSettingsEs._(_root);
 	@override late final _TranslationsMemoryQuarantineEs memoryQuarantine = _TranslationsMemoryQuarantineEs._(_root);
 	@override late final _TranslationsCortexHubEs cortexHub = _TranslationsCortexHubEs._(_root);
+	@override late final _TranslationsCortexSettingsEs cortexSettings = _TranslationsCortexSettingsEs._(_root);
 }
 
 // Path: common
@@ -1006,6 +1007,24 @@ class _TranslationsCortexHubEs extends TranslationsCortexHubEn {
 	@override String get rejectedToast => 'Propuesta rechazada';
 	@override String actionFailed({required Object error}) => 'La acción falló: ${error}';
 	@override String loadFailed({required Object error}) => 'Error al cargar: ${error}';
+}
+
+// Path: cortexSettings
+class _TranslationsCortexSettingsEs extends TranslationsCortexSettingsEn {
+	_TranslationsCortexSettingsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Ajustes de Cortex';
+	@override String get tabWorkers => 'Workers';
+	@override String get tabCapture => 'Captura e inyección';
+	@override String get tabProviders => 'Proveedores';
+	@override String get providersHint => 'Endpoints LLM a los que enrutan los workers de resumen/agente.';
+	@override String get providersEmpty => 'Sin proveedores configurados.';
+	@override String get providersManageOnWeb => 'Añade o edita proveedores en el panel web.';
+	@override String get providersLoadFailed => 'Error al cargar proveedores';
+	@override String get defaultBadge => 'predeterminado';
 }
 
 // Path: web.topbar
@@ -12271,6 +12290,15 @@ extension on TranslationsEs {
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
+			'cortexSettings.title' => 'Ajustes de Cortex',
+			'cortexSettings.tabWorkers' => 'Workers',
+			'cortexSettings.tabCapture' => 'Captura e inyección',
+			'cortexSettings.tabProviders' => 'Proveedores',
+			'cortexSettings.providersHint' => 'Endpoints LLM a los que enrutan los workers de resumen/agente.',
+			'cortexSettings.providersEmpty' => 'Sin proveedores configurados.',
+			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',
+			'cortexSettings.providersLoadFailed' => 'Error al cargar proveedores',
+			'cortexSettings.defaultBadge' => 'predeterminado',
 			_ => null,
 		};
 	}

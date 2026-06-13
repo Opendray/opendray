@@ -70,6 +70,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsSettingsEn settings = TranslationsSettingsEn.internal(_root);
 	late final TranslationsMemoryQuarantineEn memoryQuarantine = TranslationsMemoryQuarantineEn.internal(_root);
 	late final TranslationsCortexHubEn cortexHub = TranslationsCortexHubEn.internal(_root);
+	late final TranslationsCortexSettingsEn cortexSettings = TranslationsCortexSettingsEn.internal(_root);
 }
 
 // Path: common
@@ -2173,6 +2174,42 @@ class TranslationsCortexHubEn {
 
 	/// en: 'Failed to load: {error}'
 	String loadFailed({required Object error}) => 'Failed to load: ${error}';
+}
+
+// Path: cortexSettings
+class TranslationsCortexSettingsEn {
+	TranslationsCortexSettingsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cortex settings'
+	String get title => 'Cortex settings';
+
+	/// en: 'Workers'
+	String get tabWorkers => 'Workers';
+
+	/// en: 'Capture & injection'
+	String get tabCapture => 'Capture & injection';
+
+	/// en: 'Providers'
+	String get tabProviders => 'Providers';
+
+	/// en: 'LLM endpoints that summarizer/agent workers route to.'
+	String get providersHint => 'LLM endpoints that summarizer/agent workers route to.';
+
+	/// en: 'No providers configured.'
+	String get providersEmpty => 'No providers configured.';
+
+	/// en: 'Add or edit providers on the web admin.'
+	String get providersManageOnWeb => 'Add or edit providers on the web admin.';
+
+	/// en: 'Failed to load providers'
+	String get providersLoadFailed => 'Failed to load providers';
+
+	/// en: 'default'
+	String get defaultBadge => 'default';
 }
 
 // Path: web.topbar
@@ -19729,6 +19766,15 @@ extension on Translations {
 			'cortexHub.rejectedToast' => 'Proposal rejected',
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
+			'cortexSettings.title' => 'Cortex settings',
+			'cortexSettings.tabWorkers' => 'Workers',
+			'cortexSettings.tabCapture' => 'Capture & injection',
+			'cortexSettings.tabProviders' => 'Providers',
+			'cortexSettings.providersHint' => 'LLM endpoints that summarizer/agent workers route to.',
+			'cortexSettings.providersEmpty' => 'No providers configured.',
+			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',
+			'cortexSettings.providersLoadFailed' => 'Failed to load providers',
+			'cortexSettings.defaultBadge' => 'default',
 			_ => null,
 		};
 	}

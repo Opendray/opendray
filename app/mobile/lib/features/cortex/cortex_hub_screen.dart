@@ -5,12 +5,12 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/cortex/cortex_settings_screen.dart';
 import 'package:opendray/features/knowledge/knowledge_screen.dart';
 import 'package:opendray/features/memory/memory_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
 import 'package:opendray/features/notes/notes_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
-import 'package:opendray/features/settings/settings_screen.dart';
 import 'package:path/path.dart' as p;
 
 const _globalCwd = '__global__';
@@ -115,7 +115,7 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
           IconButton(
             tooltip: t.cortexHub.settings,
             icon: const Icon(Icons.tune_outlined),
-            onPressed: () => _push(const SettingsScreen()),
+            onPressed: () => _push(const CortexSettingsScreen()),
           ),
           IconButton(
             tooltip: t.common.refresh,

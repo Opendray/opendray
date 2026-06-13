@@ -14,7 +14,11 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // a bottom sheet. Creating rules and editing trigger configs stay on
 // the web admin (too dense for a phone form) — surfaced by the intro.
 class MemoryAmbientScreen extends ConsumerStatefulWidget {
-  const MemoryAmbientScreen({super.key});
+  const MemoryAmbientScreen({super.key, this.embedded = false});
+
+  /// When embedded inside the unified Cortex settings tabs, drop the
+  /// Scaffold/AppBar and render just the scrollable body.
+  final bool embedded;
 
   @override
   ConsumerState<MemoryAmbientScreen> createState() =>
@@ -90,6 +94,12 @@ class _MemoryAmbientScreenState extends ConsumerState<MemoryAmbientScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _state.when(
+      data: (d) => _buildBody(d.$1, d.$2),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
+    );
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.memoryAmbient.title),
@@ -100,11 +110,7 @@ class _MemoryAmbientScreenState extends ConsumerState<MemoryAmbientScreen> {
           ),
         ],
       ),
-      body: _state.when(
-        data: (d) => _buildBody(d.$1, d.$2),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
-      ),
+      body: body,
     );
   }
 

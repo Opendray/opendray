@@ -4644,5 +4644,16 @@
     "rejectedToast": "提案已拒绝",
     "actionFailed": "操作失败：{error}",
     "loadFailed": "加载失败：{error}"
+  },
+  "cortexSettings": {
+    "title": "Cortex 设置",
+    "tabWorkers": "工作器",
+    "tabCapture": "捕获与注入",
+    "tabProviders": "Provider",
+    "providersHint": "总结/agent 工作器路由到的 LLM 端点。",
+    "providersEmpty": "未配置 provider。",
+    "providersManageOnWeb": "在 web 管理端添加或编辑 provider。",
+    "providersLoadFailed": "加载 provider 失败",
+    "defaultBadge": "默认"
   }
 }

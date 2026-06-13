@@ -16,7 +16,11 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // Reachable from Memory screen AppBar → 🛠 Workers icon (added in
 // the same PR).
 class MemoryWorkersScreen extends ConsumerStatefulWidget {
-  const MemoryWorkersScreen({super.key});
+  const MemoryWorkersScreen({super.key, this.embedded = false});
+
+  /// When embedded inside the unified Cortex settings tabs, drop the
+  /// Scaffold/AppBar and render just the body.
+  final bool embedded;
 
   @override
   ConsumerState<MemoryWorkersScreen> createState() =>
@@ -47,6 +51,8 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _body();
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.memoryWorkers.title),
@@ -57,7 +63,12 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<WorkerConfig>>(
+      body: body,
+    );
+  }
+
+  Widget _body() {
+    return FutureBuilder<List<WorkerConfig>>(
         future: _workersFuture,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
@@ -122,8 +133,7 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
             ],
           );
         },
-      ),
-    );
+      );
   }
 }
 

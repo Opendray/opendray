@@ -4644,5 +4644,16 @@
     "rejectedToast": "Propuesta rechazada",
     "actionFailed": "La acción falló: {error}",
     "loadFailed": "Error al cargar: {error}"
+  },
+  "cortexSettings": {
+    "title": "Ajustes de Cortex",
+    "tabWorkers": "Workers",
+    "tabCapture": "Captura e inyección",
+    "tabProviders": "Proveedores",
+    "providersHint": "Endpoints LLM a los que enrutan los workers de resumen/agente.",
+    "providersEmpty": "Sin proveedores configurados.",
+    "providersManageOnWeb": "Añade o edita proveedores en el panel web.",
+    "providersLoadFailed": "Error al cargar proveedores",
+    "defaultBadge": "predeterminado"
   }
 }

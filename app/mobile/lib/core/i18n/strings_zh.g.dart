@@ -69,6 +69,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsSettingsZh settings = _TranslationsSettingsZh._(_root);
 	@override late final _TranslationsMemoryQuarantineZh memoryQuarantine = _TranslationsMemoryQuarantineZh._(_root);
 	@override late final _TranslationsCortexHubZh cortexHub = _TranslationsCortexHubZh._(_root);
+	@override late final _TranslationsCortexSettingsZh cortexSettings = _TranslationsCortexSettingsZh._(_root);
 }
 
 // Path: common
@@ -1006,6 +1007,24 @@ class _TranslationsCortexHubZh extends TranslationsCortexHubEn {
 	@override String get rejectedToast => '提案已拒绝';
 	@override String actionFailed({required Object error}) => '操作失败：${error}';
 	@override String loadFailed({required Object error}) => '加载失败：${error}';
+}
+
+// Path: cortexSettings
+class _TranslationsCortexSettingsZh extends TranslationsCortexSettingsEn {
+	_TranslationsCortexSettingsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cortex 设置';
+	@override String get tabWorkers => '工作器';
+	@override String get tabCapture => '捕获与注入';
+	@override String get tabProviders => 'Provider';
+	@override String get providersHint => '总结/agent 工作器路由到的 LLM 端点。';
+	@override String get providersEmpty => '未配置 provider。';
+	@override String get providersManageOnWeb => '在 web 管理端添加或编辑 provider。';
+	@override String get providersLoadFailed => '加载 provider 失败';
+	@override String get defaultBadge => '默认';
 }
 
 // Path: web.topbar
@@ -12271,6 +12290,15 @@ extension on TranslationsZh {
 			'cortexHub.rejectedToast' => '提案已拒绝',
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => '加载失败：${error}',
+			'cortexSettings.title' => 'Cortex 设置',
+			'cortexSettings.tabWorkers' => '工作器',
+			'cortexSettings.tabCapture' => '捕获与注入',
+			'cortexSettings.tabProviders' => 'Provider',
+			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
+			'cortexSettings.providersEmpty' => '未配置 provider。',
+			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
+			'cortexSettings.providersLoadFailed' => '加载 provider 失败',
+			'cortexSettings.defaultBadge' => '默认',
 			_ => null,
 		};
 	}

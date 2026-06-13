@@ -10,7 +10,6 @@ import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
-import 'package:opendray/features/memory_ambient/memory_ambient_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
@@ -87,15 +86,11 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => _push(context, const CustomTasksScreen()),
           ),
           const SizedBox(height: 8),
-          // Cortex hub is the bottom-nav "Cortex" tab now — the memory
-          // section here keeps the deeper, lower-frequency tools.
+          // Cortex hub is the bottom-nav "Cortex" tab and its ⚙ opens the
+          // unified Cortex settings (workers + capture/injection +
+          // providers) — so capture/injection no longer needs its own More
+          // entry. This section keeps the deeper, lower-frequency tools.
           _SectionHeader(label: t.more.sections.memory),
-          _MenuTile(
-            icon: Icons.tune_outlined,
-            title: t.more.items.memoryAmbient.title,
-            subtitle: t.more.items.memoryAmbient.subtitle,
-            onTap: () => _push(context, const MemoryAmbientScreen()),
-          ),
           _MenuTile(
             icon: Icons.flag_outlined,
             title: t.more.items.projectMemory.title,

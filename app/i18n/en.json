@@ -4644,5 +4644,16 @@
     "rejectedToast": "Proposal rejected",
     "actionFailed": "Action failed: {error}",
     "loadFailed": "Failed to load: {error}"
+  },
+  "cortexSettings": {
+    "title": "Cortex settings",
+    "tabWorkers": "Workers",
+    "tabCapture": "Capture & injection",
+    "tabProviders": "Providers",
+    "providersHint": "LLM endpoints that summarizer/agent workers route to.",
+    "providersEmpty": "No providers configured.",
+    "providersManageOnWeb": "Add or edit providers on the web admin.",
+    "providersLoadFailed": "Failed to load providers",
+    "defaultBadge": "default"
   }
 }
