@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -178,28 +179,47 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
   }
 
   Future<void> _runNow() async {
+    var fullInstance = false;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.backups.runConfirmTitle),
-        content: Text(t.backups.runConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(t.common.cancel),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(t.backups.runConfirmTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.backups.runConfirmBody),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: fullInstance,
+                onChanged: (v) => setLocal(() => fullInstance = v),
+                title: Text(t.backups.runFullInstance),
+                subtitle: Text(t.backups.runFullInstanceHint),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(t.backups.run),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(t.common.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(t.backups.run),
+            ),
+          ],
+        ),
       ),
     );
     if (ok != true || !mounted) return;
     setState(() => _running = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final row = await ref.read(backupsApiProvider).runNow();
+      final row = await ref
+          .read(backupsApiProvider)
+          .runNow(kind: fullInstance ? 'full_instance' : 'db_only');
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
@@ -224,6 +244,109 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       );
     } finally {
       if (mounted) setState(() => _running = false);
+    }
+  }
+
+  // Recovery Kit: wrap the backup passphrase under a recovery passphrase
+  // the operator stores out-of-band. On mobile we show the kit JSON with
+  // a copy button (no filesystem download UX); the operator pastes it
+  // into a password manager along with the recovery passphrase.
+  Future<void> _openRecoveryKit() async {
+    final passCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    final messenger = ScaffoldMessenger.of(context);
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final ready =
+              passCtrl.text.length >= 8 && passCtrl.text == confirmCtrl.text;
+          return AlertDialog(
+            title: Text(t.backups.recoveryKit.title),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.backups.recoveryKit.warning),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: passCtrl,
+                  obscureText: true,
+                  onChanged: (_) => setLocal(() {}),
+                  decoration: InputDecoration(
+                    labelText: t.backups.recoveryKit.passphraseLabel,
+                  ),
+                ),
+                TextField(
+                  controller: confirmCtrl,
+                  obscureText: true,
+                  onChanged: (_) => setLocal(() {}),
+                  decoration: InputDecoration(
+                    labelText: t.backups.recoveryKit.confirmLabel,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(t.common.cancel),
+              ),
+              FilledButton(
+                onPressed: ready ? () => Navigator.of(ctx).pop(true) : null,
+                child: Text(t.backups.recoveryKit.generate),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    if (go != true || !mounted) return;
+    try {
+      final kit = await ref
+          .read(backupsApiProvider)
+          .recoveryKit(passCtrl.text);
+      final pretty = const JsonEncoder.withIndent('  ').convert(kit);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(t.backups.recoveryKit.title),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              pretty,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(t.common.close),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: pretty));
+                if (ctx.mounted) Navigator.of(ctx).pop();
+                messenger.showSnackBar(
+                  SnackBar(content: Text(t.backups.recoveryKit.copied)),
+                );
+              },
+              icon: const Icon(Icons.copy, size: 16),
+              label: Text(t.backups.recoveryKit.copy),
+            ),
+          ],
+        ),
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.backups.recoveryKit.failed(error: e.message))),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.backups.recoveryKit.failed(error: e.toString())),
+        ),
+      );
     }
   }
 
@@ -254,6 +377,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
           targetId: '',
           status: '',
           triggeredBy: '',
+          kind: 'db_only',
           startedAt: DateTime.now().toUtc(),
           bytes: 0,
           encrypted: false,
@@ -305,6 +429,12 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
               children: [
                 _kv('ID', b.id, mono: true),
                 _kv(t.backups.kv.status, b.status),
+                _kv(
+                  t.backups.kv.kind,
+                  b.kind == 'full_instance'
+                      ? t.backups.kindFullInstance
+                      : t.backups.kindDbOnly,
+                ),
                 _kv(t.backups.kv.target, b.targetId),
                 _kv(t.backups.kv.triggeredBy, b.triggeredBy),
                 _kv(
@@ -479,6 +609,8 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                   );
                 case _AppBarAction.restore:
                   unawaited(_openRestoreSheet());
+                case _AppBarAction.recoveryKit:
+                  unawaited(_openRecoveryKit());
               }
             },
             itemBuilder: (_) => [
@@ -487,6 +619,13 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.restore_outlined),
                   title: Text(t.backups.restoreFromFile),
+                ),
+              ),
+              PopupMenuItem(
+                value: _AppBarAction.recoveryKit,
+                child: ListTile(
+                  leading: const Icon(Icons.vpn_key_outlined),
+                  title: Text(t.backups.recoveryKit.menuLabel),
                 ),
               ),
               PopupMenuItem(
@@ -763,7 +902,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
 
 enum _DetailAction { close, delete }
 
-enum _AppBarAction { schedules, targets, restore }
+enum _AppBarAction { schedules, targets, restore, recoveryKit }
 
 // Rendered when the operator has already set up a passphrase (env
 // var present OR key file on disk) but the feature isn't running
@@ -1797,6 +1936,10 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
                 ? null
                 : _targetDsnCtrl.text.trim(),
             clean: _clean,
+            // The mobile sheet commits directly (its own confirm gate
+            // already guards it); the server defaults to dry-run, so we
+            // must opt into apply explicitly.
+            apply: true,
             confirm: _restoringOwn ? t.backups.restore.confirmSentinel : null,
             note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
           );

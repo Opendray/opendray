@@ -516,6 +516,10 @@ class _TranslationsBackupsEs extends TranslationsBackupsEn {
 	@override String get title => 'Copias de seguridad';
 	@override String get runConfirmTitle => '¿Ejecutar copia de seguridad ahora?';
 	@override String get runConfirmBody => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.';
+	@override String get runFullInstance => 'Instancia completa';
+	@override String get runFullInstanceHint => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.';
+	@override String get kindDbOnly => 'Solo BD';
+	@override String get kindFullInstance => 'Instancia completa';
 	@override String get run => 'Ejecutar';
 	@override String get runNow => 'Ejecutar ahora';
 	@override String get queueing => 'Encolando…';
@@ -534,6 +538,7 @@ class _TranslationsBackupsEs extends TranslationsBackupsEn {
 	@override String get menuSchedules => 'Programaciones';
 	@override String get menuTargets => 'Destinos';
 	@override late final _TranslationsBackupsKvEs kv = _TranslationsBackupsKvEs._(_root);
+	@override late final _TranslationsBackupsRecoveryKitEs recoveryKit = _TranslationsBackupsRecoveryKitEs._(_root);
 	@override late final _TranslationsBackupsEmptyMissingDepsEs emptyMissingDeps = _TranslationsBackupsEmptyMissingDepsEs._(_root);
 	@override late final _TranslationsBackupsEmptyNoTargetsEs emptyNoTargets = _TranslationsBackupsEmptyNoTargetsEs._(_root);
 	@override late final _TranslationsBackupsEmptyNoBackupsEs emptyNoBackups = _TranslationsBackupsEmptyNoBackupsEs._(_root);
@@ -1458,6 +1463,9 @@ class _TranslationsWebBackupsEs extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsStatusEs status = _TranslationsWebBackupsStatusEs._(_root);
 	@override late final _TranslationsWebBackupsBackupsTabEs backupsTab = _TranslationsWebBackupsBackupsTabEs._(_root);
 	@override late final _TranslationsWebBackupsRestoreEs restore = _TranslationsWebBackupsRestoreEs._(_root);
+	@override late final _TranslationsWebBackupsKindEs kind = _TranslationsWebBackupsKindEs._(_root);
+	@override late final _TranslationsWebBackupsTriggerEs trigger = _TranslationsWebBackupsTriggerEs._(_root);
+	@override late final _TranslationsWebBackupsRecoveryKitEs recoveryKit = _TranslationsWebBackupsRecoveryKitEs._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabEs schedulesTab = _TranslationsWebBackupsSchedulesTabEs._(_root);
 	@override late final _TranslationsWebBackupsNewScheduleEs newSchedule = _TranslationsWebBackupsNewScheduleEs._(_root);
 	@override late final _TranslationsWebBackupsTargetsTabEs targetsTab = _TranslationsWebBackupsTargetsTabEs._(_root);
@@ -2209,6 +2217,7 @@ class _TranslationsBackupsKvEs extends TranslationsBackupsKvEn {
 
 	// Translations
 	@override String get status => 'Estado';
+	@override String get kind => 'Tipo';
 	@override String get target => 'Destino';
 	@override String get triggeredBy => 'Lanzado por';
 	@override String get started => 'Iniciado';
@@ -2219,6 +2228,24 @@ class _TranslationsBackupsKvEs extends TranslationsBackupsKvEn {
 	@override String get error => 'Error';
 	@override String get yes => 'sí';
 	@override String get no => 'no';
+}
+
+// Path: backups.recoveryKit
+class _TranslationsBackupsRecoveryKitEs extends TranslationsBackupsRecoveryKitEn {
+	_TranslationsBackupsRecoveryKitEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get menuLabel => 'Kit de recuperación';
+	@override String get title => 'Kit de recuperación';
+	@override String get warning => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.';
+	@override String get passphraseLabel => 'Frase de recuperación (mín. 8)';
+	@override String get confirmLabel => 'Confirmar frase de recuperación';
+	@override String get generate => 'Generar';
+	@override String get copy => 'Copiar kit';
+	@override String get copied => 'Kit de recuperación copiado: guárdalo de forma segura';
+	@override String failed({required Object error}) => 'No se pudo generar el kit de recuperación: ${error}';
 }
 
 // Path: backups.emptyMissingDeps
@@ -4637,6 +4664,8 @@ class _TranslationsWebBackupsBackupsTabEs extends TranslationsWebBackupsBackupsT
 	@override String get backupNow => 'Hacer copia ahora';
 	@override String get triggering => 'Lanzando…';
 	@override String get includeConfig => 'incluir config.toml';
+	@override String get fullInstance => 'Instancia completa';
+	@override String get fullInstanceHint => 'Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.';
 	@override String get restoreFromFile => 'Restaurar desde archivo';
 	@override String get refresh => 'Actualizar';
 	@override String get queuedToast => 'Copia de seguridad en cola';
@@ -4677,6 +4706,62 @@ class _TranslationsWebBackupsRestoreEs extends TranslationsWebBackupsRestoreEn {
 	@override String get failedToast => 'Error en la restauración';
 	@override String get restoring => 'Restaurando…';
 	@override String get restore => 'Restaurar';
+	@override String get dryRunToast => 'Simulación completa: revisa el plan y luego aplícalo';
+	@override String get planTitle => 'Plan de restauración (simulación: nada cambió)';
+	@override String planDump({required Object size}) => 'Volcado de base de datos: ${size}';
+	@override String planConfig({required Object path}) => 'config.toml → ${path}';
+	@override String planSecrets({required Object path}) => 'secrets.env → ${path}';
+	@override String planVault({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})';
+	@override String get planApplyHint => 'Aplicar toma primero una instantánea de seguridad de instancia completa, luego sobrescribe lo anterior y ejecuta pg_restore.';
+	@override String get preview => 'Previsualizar (simulación)';
+	@override String get previewing => 'Previsualizando…';
+	@override String get previewFirstHint => 'Ejecuta primero una simulación';
+	@override String get applyRestore => 'Aplicar restauración';
+}
+
+// Path: web.backups.kind
+class _TranslationsWebBackupsKindEs extends TranslationsWebBackupsKindEn {
+	_TranslationsWebBackupsKindEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get dbOnly => 'Solo BD';
+	@override String get fullInstance => 'Instancia completa';
+	@override String get fullInstanceHint => 'Incluye el vault, secrets.env y config.toml';
+}
+
+// Path: web.backups.trigger
+class _TranslationsWebBackupsTriggerEs extends TranslationsWebBackupsTriggerEn {
+	_TranslationsWebBackupsTriggerEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get preMigrate => 'pre-migración';
+	@override String get preMigrateHint => 'Instantánea automática tomada antes de ejecutar las migraciones de esquema';
+	@override String get preRestore => 'pre-restauración';
+	@override String get preRestoreHint => 'Instantánea de seguridad automática tomada antes de aplicar una restauración';
+}
+
+// Path: web.backups.recoveryKit
+class _TranslationsWebBackupsRecoveryKitEs extends TranslationsWebBackupsRecoveryKitEn {
+	_TranslationsWebBackupsRecoveryKitEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => 'Kit de recuperación';
+	@override String get title => 'Descargar kit de recuperación';
+	@override String get warning => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.';
+	@override String get passphraseLabel => 'Frase de recuperación (mín. 8 caracteres)';
+	@override String get passphrasePlaceholder => 'una frase fuerte que no perderás';
+	@override String get confirmLabel => 'Confirmar frase de recuperación';
+	@override String get mismatch => 'Las frases no coinciden';
+	@override String get generating => 'Generando…';
+	@override String get download => 'Descargar kit';
+	@override String get downloadedToast => 'Kit de recuperación descargado: guárdalo de forma segura';
+	@override String get failedToast => 'No se pudo generar el kit de recuperación';
 }
 
 // Path: web.backups.schedulesTab
@@ -7343,6 +7428,7 @@ class _TranslationsWebBackupsBackupsTabColumnsEs extends TranslationsWebBackupsB
 
 	// Translations
 	@override String get id => 'ID';
+	@override String get type => 'Tipo';
 	@override String get target => 'Destino';
 	@override String get status => 'Estado';
 	@override String get started => 'Iniciada';
@@ -10071,6 +10157,8 @@ extension on TranslationsEs {
 			'web.backups.backupsTab.backupNow' => 'Hacer copia ahora',
 			'web.backups.backupsTab.triggering' => 'Lanzando…',
 			'web.backups.backupsTab.includeConfig' => 'incluir config.toml',
+			'web.backups.backupsTab.fullInstance' => 'Instancia completa',
+			'web.backups.backupsTab.fullInstanceHint' => 'Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.',
 			'web.backups.backupsTab.restoreFromFile' => 'Restaurar desde archivo',
 			'web.backups.backupsTab.refresh' => 'Actualizar',
 			'web.backups.backupsTab.queuedToast' => 'Copia de seguridad en cola',
@@ -10081,6 +10169,7 @@ extension on TranslationsEs {
 			'web.backups.backupsTab.deleteFailedToast' => 'Error al eliminar',
 			'web.backups.backupsTab.empty' => 'Aún no hay copias de seguridad. Haz clic en "Hacer copia ahora" arriba para crear la primera.',
 			'web.backups.backupsTab.columns.id' => 'ID',
+			'web.backups.backupsTab.columns.type' => 'Tipo',
 			'web.backups.backupsTab.columns.target' => 'Destino',
 			'web.backups.backupsTab.columns.status' => 'Estado',
 			'web.backups.backupsTab.columns.started' => 'Iniciada',
@@ -10107,6 +10196,35 @@ extension on TranslationsEs {
 			'web.backups.restore.failedToast' => 'Error en la restauración',
 			'web.backups.restore.restoring' => 'Restaurando…',
 			'web.backups.restore.restore' => 'Restaurar',
+			'web.backups.restore.dryRunToast' => 'Simulación completa: revisa el plan y luego aplícalo',
+			'web.backups.restore.planTitle' => 'Plan de restauración (simulación: nada cambió)',
+			'web.backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
+			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
+			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
+			'web.backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de instancia completa, luego sobrescribe lo anterior y ejecuta pg_restore.',
+			'web.backups.restore.preview' => 'Previsualizar (simulación)',
+			'web.backups.restore.previewing' => 'Previsualizando…',
+			'web.backups.restore.previewFirstHint' => 'Ejecuta primero una simulación',
+			'web.backups.restore.applyRestore' => 'Aplicar restauración',
+			'web.backups.kind.dbOnly' => 'Solo BD',
+			'web.backups.kind.fullInstance' => 'Instancia completa',
+			'web.backups.kind.fullInstanceHint' => 'Incluye el vault, secrets.env y config.toml',
+			'web.backups.trigger.preMigrate' => 'pre-migración',
+			'web.backups.trigger.preMigrateHint' => 'Instantánea automática tomada antes de ejecutar las migraciones de esquema',
+			'web.backups.trigger.preRestore' => 'pre-restauración',
+			'web.backups.trigger.preRestoreHint' => 'Instantánea de seguridad automática tomada antes de aplicar una restauración',
+			'web.backups.recoveryKit.button' => 'Kit de recuperación',
+			'web.backups.recoveryKit.title' => 'Descargar kit de recuperación',
+			'web.backups.recoveryKit.warning' => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.',
+			'web.backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8 caracteres)',
+			'web.backups.recoveryKit.passphrasePlaceholder' => 'una frase fuerte que no perderás',
+			'web.backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
+			'web.backups.recoveryKit.mismatch' => 'Las frases no coinciden',
+			'web.backups.recoveryKit.generating' => 'Generando…',
+			'web.backups.recoveryKit.download' => 'Descargar kit',
+			'web.backups.recoveryKit.downloadedToast' => 'Kit de recuperación descargado: guárdalo de forma segura',
+			'web.backups.recoveryKit.failedToast' => 'No se pudo generar el kit de recuperación',
 			'web.backups.schedulesTab.description' => 'Copias de seguridad periódicas. El programador consulta cada 30 s y ejecuta la programación pendiente más antigua.',
 			'web.backups.schedulesTab.newSchedule' => 'Nueva programación',
 			'web.backups.schedulesTab.loadFailedToast' => 'No se pudieron cargar las programaciones',
@@ -10198,6 +10316,8 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.webdav.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => 'Prefijo de ruta',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Subcarpeta bajo la URL base (opcional)',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.sftp.hostLabel' => 'Host',
 			'web.backups.targetEditor.sftp.hostPlaceholder' => 'vps.example.com',
@@ -10230,8 +10350,6 @@ extension on TranslationsEs {
 			'web.serverSettings.sections.general.title' => 'General',
 			'web.serverSettings.sections.general.desc' => 'Dirección de escucha, cuenta de operador, TTL del token.',
 			'web.serverSettings.sections.logging.title' => 'Registro',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.sections.logging.desc' => 'Verbosidad, formato y seguimiento en vivo.',
 			'web.serverSettings.sections.sessions.title' => 'Sesiones',
 			'web.serverSettings.sections.sessions.desc' => 'Umbrales de detección de inactividad.',
@@ -10712,6 +10830,8 @@ extension on TranslationsEs {
 			'web.export.history.noTokenToast' => 'Sin token de descarga (¿caducado?)',
 			'web.export.history.deleteConfirm' => ({required Object id}) => '¿Eliminar la exportación ${id}?',
 			'web.export.history.deletedToast' => 'Exportación eliminada',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.deleteFailedToast' => 'Falló la eliminación',
 			'web.export.history.scopeEmpty' => '(vacío)',
 			'web.export.import.intro' => 'Reproduce un paquete de exportación (zip) en la base de datos en vivo. Los conflictos (id coincidente, o route_prefix único para integraciones) se <1>omiten</1> de forma predeterminada. Las memorias se etiquetan con <3>embedder=imported_v1</3> y necesitan una pasada de re-embedding antes de que la búsqueda las devuelva; activa el re-embedding en <5>Memory → Maintenance</5>. Las integraciones se importan con <7>enabled=false</7> y una clave de marcador de posición sin bcrypt; el operador debe rotarla antes de usarla.',
@@ -10744,8 +10864,6 @@ extension on TranslationsEs {
 			'web.export.imports.listFailedToast' => 'No se pudieron listar las importaciones',
 			'web.knowledge.title' => 'Conocimiento',
 			'web.knowledge.subtitle' => 'Lo que sabemos en todos los proyectos: infraestructura y reglas fundacionales, más lecciones y funciones reutilizables destiladas del trabajo previo. Se inyecta para arrancar cada proyecto nuevo.',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.searchPlaceholder' => 'Buscar conocimiento…',
 			'web.knowledge.search' => 'Buscar',
 			'web.knowledge.browse' => 'Explorar',
@@ -11226,6 +11344,8 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.cwdHelper' => 'Ruta absoluta en el host del gateway.',
 			'sessions.spawnSheet.browse' => 'Examinar',
 			'sessions.spawnSheet.nameLabel' => 'Nombre (opcional)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.nameHint' => 'p. ej. backend-refactor',
 			'sessions.spawnSheet.argsLabel' => 'Argumentos adicionales (opcional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
@@ -11258,8 +11378,6 @@ extension on TranslationsEs {
 			'mcp.viewRawConfig' => 'Ver configuración en bruto',
 			'mcp.copyId' => 'Copiar id',
 			'mcp.copiedSnack' => ({required Object id}) => 'Copiado ${id}',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.deleteServerTitle' => '¿Eliminar servidor MCP?',
 			'mcp.deleteSecretTitle' => '¿Eliminar secreto?',
 			'mcp.errorPrefix.delete' => 'Error al eliminar',
@@ -11604,6 +11722,10 @@ extension on TranslationsEs {
 			'backups.title' => 'Copias de seguridad',
 			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
 			'backups.runConfirmBody' => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.',
+			'backups.runFullInstance' => 'Instancia completa',
+			'backups.runFullInstanceHint' => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.',
+			'backups.kindDbOnly' => 'Solo BD',
+			'backups.kindFullInstance' => 'Instancia completa',
 			'backups.run' => 'Ejecutar',
 			'backups.runNow' => 'Ejecutar ahora',
 			'backups.queueing' => 'Encolando…',
@@ -11622,6 +11744,7 @@ extension on TranslationsEs {
 			'backups.menuSchedules' => 'Programaciones',
 			'backups.menuTargets' => 'Destinos',
 			'backups.kv.status' => 'Estado',
+			'backups.kv.kind' => 'Tipo',
 			'backups.kv.target' => 'Destino',
 			'backups.kv.triggeredBy' => 'Lanzado por',
 			'backups.kv.started' => 'Iniciado',
@@ -11632,6 +11755,15 @@ extension on TranslationsEs {
 			'backups.kv.error' => 'Error',
 			'backups.kv.yes' => 'sí',
 			'backups.kv.no' => 'no',
+			'backups.recoveryKit.menuLabel' => 'Kit de recuperación',
+			'backups.recoveryKit.title' => 'Kit de recuperación',
+			'backups.recoveryKit.warning' => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.',
+			'backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8)',
+			'backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
+			'backups.recoveryKit.generate' => 'Generar',
+			'backups.recoveryKit.copy' => 'Copiar kit',
+			'backups.recoveryKit.copied' => 'Kit de recuperación copiado: guárdalo de forma segura',
+			'backups.recoveryKit.failed' => ({required Object error}) => 'No se pudo generar el kit de recuperación: ${error}',
 			'backups.emptyMissingDeps.headline' => 'Las copias de seguridad aún no pueden ejecutarse',
 			'backups.emptyMissingDeps.body' => 'Instala postgresql-client y reinicia opendray.',
 			'backups.emptyNoTargets.headline' => 'No hay destinos de copia de seguridad configurados',
@@ -11726,6 +11858,8 @@ extension on TranslationsEs {
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
 			'backupSchedules.targetLabel' => 'Destino',
 			'backupSchedules.intervalLabel' => 'Intervalo',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
@@ -11772,8 +11906,6 @@ extension on TranslationsEs {
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Automático: ${prefix}-1',
 			'backupTargetEditor.idHelper' => 'Letras minúsculas, dígitos, guiones. Por defecto, la siguiente ranura disponible.',
 			'backupTargetEditor.enabledOn' => 'Los backups programados y puntuales pueden usar este destino.',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.enabledOff' => 'El servidor se negará a escribir backups aquí.',
 			'backupTargetEditor.saving' => 'Guardando…',
 			'backupTargetEditor.create' => 'Crear',
@@ -12240,6 +12372,8 @@ extension on TranslationsEs {
 			'about.gateway.releaseNotes' => 'Notas de la versión',
 			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
 			'settings.title' => 'Ajustes',
+			_ => null,
+		} ?? switch (path) {
 			'settings.language.section' => 'Idioma',
 			'settings.language.system' => 'Sistema',
 			'settings.language.systemSubtitle' => 'Sigue la configuración de idioma de tu teléfono',
@@ -12286,8 +12420,6 @@ extension on TranslationsEs {
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
 			'settings.logViewer.levels.error' => 'Error',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.title' => 'Ajustes del servidor',
 			'settings.serverSettings.reloadTooltip' => 'Recargar desde el servidor',
 			'settings.serverSettings.restartTooltip' => 'Reiniciar gateway',

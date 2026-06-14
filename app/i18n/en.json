@@ -3752,6 +3752,10 @@
     "title": "Backups",
     "runConfirmTitle": "Run backup now?",
     "runConfirmBody": "Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.",
+    "runFullInstance": "Full instance",
+    "runFullInstanceHint": "Also bundle the vault, secrets.env and config.toml — not just the database.",
+    "kindDbOnly": "DB only",
+    "kindFullInstance": "Full instance",
     "run": "Run",
     "runNow": "Run now",
     "queueing": "Queueing…",
@@ -3771,6 +3775,7 @@
     "menuTargets": "Targets",
     "kv": {
       "status": "Status",
+      "kind": "Type",
       "target": "Target",
       "triggeredBy": "Triggered by",
       "started": "Started",
@@ -3781,6 +3786,17 @@
       "error": "Error",
       "yes": "yes",
       "no": "no"
+    },
+    "recoveryKit": {
+      "menuLabel": "Recovery Kit",
+      "title": "Recovery Kit",
+      "warning": "The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.",
+      "passphraseLabel": "Recovery passphrase (min 8)",
+      "confirmLabel": "Confirm recovery passphrase",
+      "generate": "Generate",
+      "copy": "Copy kit",
+      "copied": "Recovery Kit copied — store it safely",
+      "failed": "Could not generate Recovery Kit: {error}"
     },
     "emptyMissingDeps": {
       "headline": "Backups can't run yet",

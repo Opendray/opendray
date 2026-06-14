@@ -516,6 +516,10 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get title => '备份';
 	@override String get runConfirmTitle => '立即运行备份？';
 	@override String get runConfirmBody => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。';
+	@override String get runFullInstance => '完整实例';
+	@override String get runFullInstanceHint => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。';
+	@override String get kindDbOnly => '仅数据库';
+	@override String get kindFullInstance => '完整实例';
 	@override String get run => '运行';
 	@override String get runNow => '立即运行';
 	@override String get queueing => '入队中…';
@@ -534,6 +538,7 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get menuSchedules => '计划';
 	@override String get menuTargets => '目标';
 	@override late final _TranslationsBackupsKvZh kv = _TranslationsBackupsKvZh._(_root);
+	@override late final _TranslationsBackupsRecoveryKitZh recoveryKit = _TranslationsBackupsRecoveryKitZh._(_root);
 	@override late final _TranslationsBackupsEmptyMissingDepsZh emptyMissingDeps = _TranslationsBackupsEmptyMissingDepsZh._(_root);
 	@override late final _TranslationsBackupsEmptyNoTargetsZh emptyNoTargets = _TranslationsBackupsEmptyNoTargetsZh._(_root);
 	@override late final _TranslationsBackupsEmptyNoBackupsZh emptyNoBackups = _TranslationsBackupsEmptyNoBackupsZh._(_root);
@@ -1458,6 +1463,9 @@ class _TranslationsWebBackupsZh extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsStatusZh status = _TranslationsWebBackupsStatusZh._(_root);
 	@override late final _TranslationsWebBackupsBackupsTabZh backupsTab = _TranslationsWebBackupsBackupsTabZh._(_root);
 	@override late final _TranslationsWebBackupsRestoreZh restore = _TranslationsWebBackupsRestoreZh._(_root);
+	@override late final _TranslationsWebBackupsKindZh kind = _TranslationsWebBackupsKindZh._(_root);
+	@override late final _TranslationsWebBackupsTriggerZh trigger = _TranslationsWebBackupsTriggerZh._(_root);
+	@override late final _TranslationsWebBackupsRecoveryKitZh recoveryKit = _TranslationsWebBackupsRecoveryKitZh._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabZh schedulesTab = _TranslationsWebBackupsSchedulesTabZh._(_root);
 	@override late final _TranslationsWebBackupsNewScheduleZh newSchedule = _TranslationsWebBackupsNewScheduleZh._(_root);
 	@override late final _TranslationsWebBackupsTargetsTabZh targetsTab = _TranslationsWebBackupsTargetsTabZh._(_root);
@@ -2209,6 +2217,7 @@ class _TranslationsBackupsKvZh extends TranslationsBackupsKvEn {
 
 	// Translations
 	@override String get status => '状态';
+	@override String get kind => '类型';
 	@override String get target => '目标';
 	@override String get triggeredBy => '触发者';
 	@override String get started => '开始';
@@ -2219,6 +2228,24 @@ class _TranslationsBackupsKvZh extends TranslationsBackupsKvEn {
 	@override String get error => '错误';
 	@override String get yes => '是';
 	@override String get no => '否';
+}
+
+// Path: backups.recoveryKit
+class _TranslationsBackupsRecoveryKitZh extends TranslationsBackupsRecoveryKitEn {
+	_TranslationsBackupsRecoveryKitZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get menuLabel => '恢复工具包';
+	@override String get title => '恢复工具包';
+	@override String get warning => '备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。';
+	@override String get passphraseLabel => '恢复口令（至少 8 位）';
+	@override String get confirmLabel => '确认恢复口令';
+	@override String get generate => '生成';
+	@override String get copy => '复制工具包';
+	@override String get copied => '恢复工具包已复制 —— 请妥善保存';
+	@override String failed({required Object error}) => '无法生成恢复工具包：${error}';
 }
 
 // Path: backups.emptyMissingDeps
@@ -4637,6 +4664,8 @@ class _TranslationsWebBackupsBackupsTabZh extends TranslationsWebBackupsBackupsT
 	@override String get backupNow => '立即备份';
 	@override String get triggering => '触发中…';
 	@override String get includeConfig => '包含 config.toml';
+	@override String get fullInstance => '完整实例';
+	@override String get fullInstanceHint => '同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。';
 	@override String get restoreFromFile => '从文件恢复';
 	@override String get refresh => '刷新';
 	@override String get queuedToast => '备份已排队';
@@ -4677,6 +4706,62 @@ class _TranslationsWebBackupsRestoreZh extends TranslationsWebBackupsRestoreEn {
 	@override String get failedToast => '恢复失败';
 	@override String get restoring => '恢复中…';
 	@override String get restore => '恢复';
+	@override String get dryRunToast => '试运行完成 —— 查看计划后再应用';
+	@override String get planTitle => '恢复计划（试运行 —— 未改动任何内容）';
+	@override String planDump({required Object size}) => '数据库 dump：${size}';
+	@override String planConfig({required Object path}) => 'config.toml → ${path}';
+	@override String planSecrets({required Object path}) => 'secrets.env → ${path}';
+	@override String planVault({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）';
+	@override String get planApplyHint => '应用前会先做一次完整实例安全快照,再覆盖上述内容并执行 pg_restore。';
+	@override String get preview => '预览（试运行）';
+	@override String get previewing => '预览中…';
+	@override String get previewFirstHint => '请先运行试运行预览';
+	@override String get applyRestore => '应用恢复';
+}
+
+// Path: web.backups.kind
+class _TranslationsWebBackupsKindZh extends TranslationsWebBackupsKindEn {
+	_TranslationsWebBackupsKindZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get dbOnly => '仅数据库';
+	@override String get fullInstance => '完整实例';
+	@override String get fullInstanceHint => '包含 vault、secrets.env 和 config.toml';
+}
+
+// Path: web.backups.trigger
+class _TranslationsWebBackupsTriggerZh extends TranslationsWebBackupsTriggerEn {
+	_TranslationsWebBackupsTriggerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get preMigrate => '迁移前';
+	@override String get preMigrateHint => 'schema 迁移前自动拍摄的快照';
+	@override String get preRestore => '恢复前';
+	@override String get preRestoreHint => '应用恢复前自动拍摄的安全快照';
+}
+
+// Path: web.backups.recoveryKit
+class _TranslationsWebBackupsRecoveryKitZh extends TranslationsWebBackupsRecoveryKitEn {
+	_TranslationsWebBackupsRecoveryKitZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '恢复工具包';
+	@override String get title => '下载恢复工具包';
+	@override String get warning => '备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。';
+	@override String get passphraseLabel => '恢复口令（至少 8 位）';
+	@override String get passphrasePlaceholder => '一个你不会丢失的强口令';
+	@override String get confirmLabel => '确认恢复口令';
+	@override String get mismatch => '两次口令不一致';
+	@override String get generating => '生成中…';
+	@override String get download => '下载工具包';
+	@override String get downloadedToast => '恢复工具包已下载 —— 请妥善保存';
+	@override String get failedToast => '无法生成恢复工具包';
 }
 
 // Path: web.backups.schedulesTab
@@ -7343,6 +7428,7 @@ class _TranslationsWebBackupsBackupsTabColumnsZh extends TranslationsWebBackupsB
 
 	// Translations
 	@override String get id => 'ID';
+	@override String get type => '类型';
 	@override String get target => '目标';
 	@override String get status => '状态';
 	@override String get started => '开始';
@@ -10071,6 +10157,8 @@ extension on TranslationsZh {
 			'web.backups.backupsTab.backupNow' => '立即备份',
 			'web.backups.backupsTab.triggering' => '触发中…',
 			'web.backups.backupsTab.includeConfig' => '包含 config.toml',
+			'web.backups.backupsTab.fullInstance' => '完整实例',
+			'web.backups.backupsTab.fullInstanceHint' => '同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。',
 			'web.backups.backupsTab.restoreFromFile' => '从文件恢复',
 			'web.backups.backupsTab.refresh' => '刷新',
 			'web.backups.backupsTab.queuedToast' => '备份已排队',
@@ -10081,6 +10169,7 @@ extension on TranslationsZh {
 			'web.backups.backupsTab.deleteFailedToast' => '删除失败',
 			'web.backups.backupsTab.empty' => '暂无备份。点击上方 "立即备份" 进行第一次。',
 			'web.backups.backupsTab.columns.id' => 'ID',
+			'web.backups.backupsTab.columns.type' => '类型',
 			'web.backups.backupsTab.columns.target' => '目标',
 			'web.backups.backupsTab.columns.status' => '状态',
 			'web.backups.backupsTab.columns.started' => '开始',
@@ -10107,6 +10196,35 @@ extension on TranslationsZh {
 			'web.backups.restore.failedToast' => '恢复失败',
 			'web.backups.restore.restoring' => '恢复中…',
 			'web.backups.restore.restore' => '恢复',
+			'web.backups.restore.dryRunToast' => '试运行完成 —— 查看计划后再应用',
+			'web.backups.restore.planTitle' => '恢复计划（试运行 —— 未改动任何内容）',
+			'web.backups.restore.planDump' => ({required Object size}) => '数据库 dump：${size}',
+			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
+			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
+			'web.backups.restore.planApplyHint' => '应用前会先做一次完整实例安全快照,再覆盖上述内容并执行 pg_restore。',
+			'web.backups.restore.preview' => '预览（试运行）',
+			'web.backups.restore.previewing' => '预览中…',
+			'web.backups.restore.previewFirstHint' => '请先运行试运行预览',
+			'web.backups.restore.applyRestore' => '应用恢复',
+			'web.backups.kind.dbOnly' => '仅数据库',
+			'web.backups.kind.fullInstance' => '完整实例',
+			'web.backups.kind.fullInstanceHint' => '包含 vault、secrets.env 和 config.toml',
+			'web.backups.trigger.preMigrate' => '迁移前',
+			'web.backups.trigger.preMigrateHint' => 'schema 迁移前自动拍摄的快照',
+			'web.backups.trigger.preRestore' => '恢复前',
+			'web.backups.trigger.preRestoreHint' => '应用恢复前自动拍摄的安全快照',
+			'web.backups.recoveryKit.button' => '恢复工具包',
+			'web.backups.recoveryKit.title' => '下载恢复工具包',
+			'web.backups.recoveryKit.warning' => '备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。',
+			'web.backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
+			'web.backups.recoveryKit.passphrasePlaceholder' => '一个你不会丢失的强口令',
+			'web.backups.recoveryKit.confirmLabel' => '确认恢复口令',
+			'web.backups.recoveryKit.mismatch' => '两次口令不一致',
+			'web.backups.recoveryKit.generating' => '生成中…',
+			'web.backups.recoveryKit.download' => '下载工具包',
+			'web.backups.recoveryKit.downloadedToast' => '恢复工具包已下载 —— 请妥善保存',
+			'web.backups.recoveryKit.failedToast' => '无法生成恢复工具包',
 			'web.backups.schedulesTab.description' => '周期备份。调度器每 30 秒轮询一次，并运行最旧的到期计划。',
 			'web.backups.schedulesTab.newSchedule' => '新建计划',
 			'web.backups.schedulesTab.loadFailedToast' => '加载计划失败',
@@ -10198,6 +10316,8 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.webdav.passwordLabel' => '密码',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => '路径前缀',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Base URL 下的子文件夹（可选）',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.sftp.hostLabel' => '主机',
 			'web.backups.targetEditor.sftp.hostPlaceholder' => 'vps.example.com',
@@ -10230,8 +10350,6 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.general.title' => '通用',
 			'web.serverSettings.sections.general.desc' => '监听地址、操作员账号、令牌 TTL。',
 			'web.serverSettings.sections.logging.title' => '日志',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.sections.logging.desc' => '日志级别、格式与实时跟踪。',
 			'web.serverSettings.sections.sessions.title' => '会话',
 			'web.serverSettings.sections.sessions.desc' => '空闲检测阈值。',
@@ -10712,6 +10830,8 @@ extension on TranslationsZh {
 			'web.export.history.noTokenToast' => '没有下载 token（已过期？）',
 			'web.export.history.deleteConfirm' => ({required Object id}) => '删除导出 ${id}?',
 			'web.export.history.deletedToast' => '导出已删除',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.deleteFailedToast' => '删除失败',
 			'web.export.history.scopeEmpty' => '(空)',
 			'web.export.import.intro' => '将一个导出 bundle（zip）回放到当前数据库。冲突项（id 一致，或 integrations 的 route_prefix 唯一冲突）默认 <1>跳过</1>。记忆条目会被标记为 <3>embedder=imported_v1</3>，需要做一次重嵌入后搜索才能返回；可在 <5>Memory → 维护</5> 触发。集成以 <7>enabled=false</7> 导入并使用非 bcrypt 的占位 key — 启用前请轮换。',
@@ -10744,8 +10864,6 @@ extension on TranslationsZh {
 			'web.export.imports.listFailedToast' => '加载导入列表失败',
 			'web.knowledge.title' => '知识',
 			'web.knowledge.subtitle' => '跨所有项目沉淀的知识——基础设施与规约,加上从过往工作蒸馏的教训与可复用功能。开新项目时注入,快速起步、不从头再来。',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.searchPlaceholder' => '搜索知识…',
 			'web.knowledge.search' => '搜索',
 			'web.knowledge.browse' => '浏览',
@@ -11226,6 +11344,8 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.nameHint' => '例如：backend-refactor',
 			'sessions.spawnSheet.argsLabel' => '额外参数（可选）',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
@@ -11258,8 +11378,6 @@ extension on TranslationsZh {
 			'mcp.viewRawConfig' => '查看原始配置',
 			'mcp.copyId' => '复制 ID',
 			'mcp.copiedSnack' => ({required Object id}) => '已复制 ${id}',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.deleteServerTitle' => '删除 MCP 服务器？',
 			'mcp.deleteSecretTitle' => '删除密钥？',
 			'mcp.errorPrefix.delete' => '删除失败',
@@ -11604,6 +11722,10 @@ extension on TranslationsZh {
 			'backups.title' => '备份',
 			'backups.runConfirmTitle' => '立即运行备份？',
 			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
+			'backups.runFullInstance' => '完整实例',
+			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
+			'backups.kindDbOnly' => '仅数据库',
+			'backups.kindFullInstance' => '完整实例',
 			'backups.run' => '运行',
 			'backups.runNow' => '立即运行',
 			'backups.queueing' => '入队中…',
@@ -11622,6 +11744,7 @@ extension on TranslationsZh {
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
 			'backups.kv.status' => '状态',
+			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
 			'backups.kv.triggeredBy' => '触发者',
 			'backups.kv.started' => '开始',
@@ -11632,6 +11755,15 @@ extension on TranslationsZh {
 			'backups.kv.error' => '错误',
 			'backups.kv.yes' => '是',
 			'backups.kv.no' => '否',
+			'backups.recoveryKit.menuLabel' => '恢复工具包',
+			'backups.recoveryKit.title' => '恢复工具包',
+			'backups.recoveryKit.warning' => '备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。',
+			'backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
+			'backups.recoveryKit.confirmLabel' => '确认恢复口令',
+			'backups.recoveryKit.generate' => '生成',
+			'backups.recoveryKit.copy' => '复制工具包',
+			'backups.recoveryKit.copied' => '恢复工具包已复制 —— 请妥善保存',
+			'backups.recoveryKit.failed' => ({required Object error}) => '无法生成恢复工具包：${error}',
 			'backups.emptyMissingDeps.headline' => '备份暂时无法运行',
 			'backups.emptyMissingDeps.body' => '安装 postgresql-client 并重启 opendray。',
 			'backups.emptyNoTargets.headline' => '未配置任何备份目标',
@@ -11726,6 +11858,8 @@ extension on TranslationsZh {
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.intervalLabel' => '间隔',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
@@ -11772,8 +11906,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
 			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
 			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
 			'backupTargetEditor.saving' => '保存中…',
 			'backupTargetEditor.create' => '创建',
@@ -12240,6 +12372,8 @@ extension on TranslationsZh {
 			'about.gateway.releaseNotes' => '更新说明',
 			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
+			_ => null,
+		} ?? switch (path) {
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
 			'settings.language.systemSubtitle' => '跟随手机的语言设置',
@@ -12286,8 +12420,6 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.info' => '信息',
 			'settings.logViewer.levels.warn' => '警告',
 			'settings.logViewer.levels.error' => '错误',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.title' => '服务器设置',
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
 			'settings.serverSettings.restartTooltip' => '重启网关',

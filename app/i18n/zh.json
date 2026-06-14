@@ -3752,6 +3752,10 @@
     "title": "备份",
     "runConfirmTitle": "立即运行备份？",
     "runConfirmBody": "向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。",
+    "runFullInstance": "完整实例",
+    "runFullInstanceHint": "同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。",
+    "kindDbOnly": "仅数据库",
+    "kindFullInstance": "完整实例",
     "run": "运行",
     "runNow": "立即运行",
     "queueing": "入队中…",
@@ -3771,6 +3775,7 @@
     "menuTargets": "目标",
     "kv": {
       "status": "状态",
+      "kind": "类型",
       "target": "目标",
       "triggeredBy": "触发者",
       "started": "开始",
@@ -3781,6 +3786,17 @@
       "error": "错误",
       "yes": "是",
       "no": "否"
+    },
+    "recoveryKit": {
+      "menuLabel": "恢复工具包",
+      "title": "恢复工具包",
+      "warning": "备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。",
+      "passphraseLabel": "恢复口令（至少 8 位）",
+      "confirmLabel": "确认恢复口令",
+      "generate": "生成",
+      "copy": "复制工具包",
+      "copied": "恢复工具包已复制 —— 请妥善保存",
+      "failed": "无法生成恢复工具包：{error}"
     },
     "emptyMissingDeps": {
       "headline": "备份暂时无法运行",

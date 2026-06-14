@@ -17,6 +17,7 @@ class BackupRow {
     required this.targetId,
     required this.status,
     required this.triggeredBy,
+    required this.kind,
     required this.startedAt,
     required this.bytes,
     required this.encrypted,
@@ -32,6 +33,7 @@ class BackupRow {
     targetId: json['target_id'] as String? ?? '',
     status: json['status'] as String? ?? '',
     triggeredBy: json['triggered_by'] as String? ?? '',
+    kind: json['kind'] as String? ?? 'db_only',
     startedAt:
         DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
         DateTime.now().toUtc(),
@@ -49,8 +51,10 @@ class BackupRow {
   final String targetId;
   // pending | running | succeeded | failed | deleted
   final String status;
-  // scheduler | manual | api
+  // scheduler | manual | api | pre_migrate | pre_restore
   final String triggeredBy;
+  // db_only | full_instance
+  final String kind;
   final DateTime startedAt;
   final DateTime? finishedAt;
   final int bytes;
@@ -611,14 +615,34 @@ class BackupsApi {
   // to watch the row transition to running → succeeded/failed.
   Future<BackupRow> runNow({
     String targetId = 'local',
+    String kind = 'db_only',
     bool includeConfig = false,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/backups',
-        data: {'target_id': targetId, 'include_config': includeConfig},
+        data: {
+          'target_id': targetId,
+          'kind': kind,
+          'include_config': includeConfig,
+        },
       );
       return BackupRow.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /backup-recovery-kit → the backup passphrase wrapped under a
+  // recovery passphrase the operator stores out-of-band. Returns the
+  // raw kit JSON (caller copies/saves it).
+  Future<Map<String, dynamic>> recoveryKit(String recoveryPassphrase) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/backup-recovery-kit',
+        data: {'recovery_passphrase': recoveryPassphrase},
+      );
+      return res.data ?? <String, dynamic>{};
     } on Object catch (e) {
       throw toApiException(e);
     }
@@ -817,10 +841,15 @@ class BackupsApi {
   //
   // Cap is 256 MiB (server-side ParseMultipartForm); the mobile
   // client honors that by streaming via MultipartFile.fromFile.
+  // [apply] defaults to false (a dry run that validates the bundle and
+  // returns a plan, changing nothing). Pass apply=true to commit. This
+  // mirrors the server, whose restore now defaults to dry-run.
   Future<RestoreResult> restore({
     required File bundle,
     String? targetDsn,
     bool clean = false,
+    bool apply = false,
+    bool force = false,
     String? confirm,
     String? note,
   }) async {
@@ -834,6 +863,8 @@ class BackupsApi {
         ),
         if (targetDsn != null && targetDsn.isNotEmpty) 'target_dsn': targetDsn,
         'clean': clean ? 'true' : 'false',
+        'apply': apply ? 'true' : 'false',
+        if (force) 'force': 'true',
         if (confirm != null && confirm.isNotEmpty) 'confirm': confirm,
         if (note != null && note.isNotEmpty) 'note': note,
       });

@@ -1041,6 +1041,18 @@ class TranslationsBackupsEn {
 	/// en: 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.'
 	String get runConfirmBody => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.';
 
+	/// en: 'Full instance'
+	String get runFullInstance => 'Full instance';
+
+	/// en: 'Also bundle the vault, secrets.env and config.toml — not just the database.'
+	String get runFullInstanceHint => 'Also bundle the vault, secrets.env and config.toml — not just the database.';
+
+	/// en: 'DB only'
+	String get kindDbOnly => 'DB only';
+
+	/// en: 'Full instance'
+	String get kindFullInstance => 'Full instance';
+
 	/// en: 'Run'
 	String get run => 'Run';
 
@@ -1093,6 +1105,7 @@ class TranslationsBackupsEn {
 	String get menuTargets => 'Targets';
 
 	late final TranslationsBackupsKvEn kv = TranslationsBackupsKvEn.internal(_root);
+	late final TranslationsBackupsRecoveryKitEn recoveryKit = TranslationsBackupsRecoveryKitEn.internal(_root);
 	late final TranslationsBackupsEmptyMissingDepsEn emptyMissingDeps = TranslationsBackupsEmptyMissingDepsEn.internal(_root);
 	late final TranslationsBackupsEmptyNoTargetsEn emptyNoTargets = TranslationsBackupsEmptyNoTargetsEn.internal(_root);
 	late final TranslationsBackupsEmptyNoBackupsEn emptyNoBackups = TranslationsBackupsEmptyNoBackupsEn.internal(_root);
@@ -3014,6 +3027,9 @@ class TranslationsWebBackupsEn {
 	late final TranslationsWebBackupsStatusEn status = TranslationsWebBackupsStatusEn.internal(_root);
 	late final TranslationsWebBackupsBackupsTabEn backupsTab = TranslationsWebBackupsBackupsTabEn.internal(_root);
 	late final TranslationsWebBackupsRestoreEn restore = TranslationsWebBackupsRestoreEn.internal(_root);
+	late final TranslationsWebBackupsKindEn kind = TranslationsWebBackupsKindEn.internal(_root);
+	late final TranslationsWebBackupsTriggerEn trigger = TranslationsWebBackupsTriggerEn.internal(_root);
+	late final TranslationsWebBackupsRecoveryKitEn recoveryKit = TranslationsWebBackupsRecoveryKitEn.internal(_root);
 	late final TranslationsWebBackupsSchedulesTabEn schedulesTab = TranslationsWebBackupsSchedulesTabEn.internal(_root);
 	late final TranslationsWebBackupsNewScheduleEn newSchedule = TranslationsWebBackupsNewScheduleEn.internal(_root);
 	late final TranslationsWebBackupsTargetsTabEn targetsTab = TranslationsWebBackupsTargetsTabEn.internal(_root);
@@ -4394,6 +4410,9 @@ class TranslationsBackupsKvEn {
 	/// en: 'Status'
 	String get status => 'Status';
 
+	/// en: 'Type'
+	String get kind => 'Type';
+
 	/// en: 'Target'
 	String get target => 'Target';
 
@@ -4423,6 +4442,42 @@ class TranslationsBackupsKvEn {
 
 	/// en: 'no'
 	String get no => 'no';
+}
+
+// Path: backups.recoveryKit
+class TranslationsBackupsRecoveryKitEn {
+	TranslationsBackupsRecoveryKitEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Recovery Kit'
+	String get menuLabel => 'Recovery Kit';
+
+	/// en: 'Recovery Kit'
+	String get title => 'Recovery Kit';
+
+	/// en: 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.'
+	String get warning => 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.';
+
+	/// en: 'Recovery passphrase (min 8)'
+	String get passphraseLabel => 'Recovery passphrase (min 8)';
+
+	/// en: 'Confirm recovery passphrase'
+	String get confirmLabel => 'Confirm recovery passphrase';
+
+	/// en: 'Generate'
+	String get generate => 'Generate';
+
+	/// en: 'Copy kit'
+	String get copy => 'Copy kit';
+
+	/// en: 'Recovery Kit copied — store it safely'
+	String get copied => 'Recovery Kit copied — store it safely';
+
+	/// en: 'Could not generate Recovery Kit: {error}'
+	String failed({required Object error}) => 'Could not generate Recovery Kit: ${error}';
 }
 
 // Path: backups.emptyMissingDeps
@@ -9151,6 +9206,12 @@ class TranslationsWebBackupsBackupsTabEn {
 	/// en: 'include config.toml'
 	String get includeConfig => 'include config.toml';
 
+	/// en: 'Full instance'
+	String get fullInstance => 'Full instance';
+
+	/// en: 'Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.'
+	String get fullInstanceHint => 'Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.';
+
 	/// en: 'Restore from file'
 	String get restoreFromFile => 'Restore from file';
 
@@ -9251,6 +9312,120 @@ class TranslationsWebBackupsRestoreEn {
 
 	/// en: 'Restore'
 	String get restore => 'Restore';
+
+	/// en: 'Dry run complete — review the plan, then apply'
+	String get dryRunToast => 'Dry run complete — review the plan, then apply';
+
+	/// en: 'Restore plan (dry run — nothing changed)'
+	String get planTitle => 'Restore plan (dry run — nothing changed)';
+
+	/// en: 'Database dump: {size}'
+	String planDump({required Object size}) => 'Database dump: ${size}';
+
+	/// en: 'config.toml → {path}'
+	String planConfig({required Object path}) => 'config.toml → ${path}';
+
+	/// en: 'secrets.env → {path}'
+	String planSecrets({required Object path}) => 'secrets.env → ${path}';
+
+	/// en: 'vault: {files} files ({roots})'
+	String planVault({required Object files, required Object roots}) => 'vault: ${files} files (${roots})';
+
+	/// en: 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.'
+	String get planApplyHint => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.';
+
+	/// en: 'Preview (dry run)'
+	String get preview => 'Preview (dry run)';
+
+	/// en: 'Previewing…'
+	String get previewing => 'Previewing…';
+
+	/// en: 'Run a dry-run preview first'
+	String get previewFirstHint => 'Run a dry-run preview first';
+
+	/// en: 'Apply restore'
+	String get applyRestore => 'Apply restore';
+}
+
+// Path: web.backups.kind
+class TranslationsWebBackupsKindEn {
+	TranslationsWebBackupsKindEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'DB only'
+	String get dbOnly => 'DB only';
+
+	/// en: 'Full instance'
+	String get fullInstance => 'Full instance';
+
+	/// en: 'Includes the vault, secrets.env and config.toml'
+	String get fullInstanceHint => 'Includes the vault, secrets.env and config.toml';
+}
+
+// Path: web.backups.trigger
+class TranslationsWebBackupsTriggerEn {
+	TranslationsWebBackupsTriggerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'pre-migrate'
+	String get preMigrate => 'pre-migrate';
+
+	/// en: 'Automatic snapshot taken before schema migrations ran'
+	String get preMigrateHint => 'Automatic snapshot taken before schema migrations ran';
+
+	/// en: 'pre-restore'
+	String get preRestore => 'pre-restore';
+
+	/// en: 'Automatic safety snapshot taken before a restore was applied'
+	String get preRestoreHint => 'Automatic safety snapshot taken before a restore was applied';
+}
+
+// Path: web.backups.recoveryKit
+class TranslationsWebBackupsRecoveryKitEn {
+	TranslationsWebBackupsRecoveryKitEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Recovery Kit'
+	String get button => 'Recovery Kit';
+
+	/// en: 'Download Recovery Kit'
+	String get title => 'Download Recovery Kit';
+
+	/// en: 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.'
+	String get warning => 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.';
+
+	/// en: 'Recovery passphrase (min 8 chars)'
+	String get passphraseLabel => 'Recovery passphrase (min 8 chars)';
+
+	/// en: 'a strong passphrase you will not lose'
+	String get passphrasePlaceholder => 'a strong passphrase you will not lose';
+
+	/// en: 'Confirm recovery passphrase'
+	String get confirmLabel => 'Confirm recovery passphrase';
+
+	/// en: 'Passphrases don't match'
+	String get mismatch => 'Passphrases don\'t match';
+
+	/// en: 'Generating…'
+	String get generating => 'Generating…';
+
+	/// en: 'Download kit'
+	String get download => 'Download kit';
+
+	/// en: 'Recovery Kit downloaded — store it safely'
+	String get downloadedToast => 'Recovery Kit downloaded — store it safely';
+
+	/// en: 'Could not generate Recovery Kit'
+	String get failedToast => 'Could not generate Recovery Kit';
 }
 
 // Path: web.backups.schedulesTab
@@ -14124,6 +14299,9 @@ class TranslationsWebBackupsBackupsTabColumnsEn {
 	/// en: 'ID'
 	String get id => 'ID';
 
+	/// en: 'Type'
+	String get type => 'Type';
+
 	/// en: 'Target'
 	String get target => 'Target';
 
@@ -17665,6 +17843,8 @@ extension on Translations {
 			'web.backups.backupsTab.backupNow' => 'Backup now',
 			'web.backups.backupsTab.triggering' => 'Triggering…',
 			'web.backups.backupsTab.includeConfig' => 'include config.toml',
+			'web.backups.backupsTab.fullInstance' => 'Full instance',
+			'web.backups.backupsTab.fullInstanceHint' => 'Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.',
 			'web.backups.backupsTab.restoreFromFile' => 'Restore from file',
 			'web.backups.backupsTab.refresh' => 'Refresh',
 			'web.backups.backupsTab.queuedToast' => 'Backup queued',
@@ -17675,6 +17855,7 @@ extension on Translations {
 			'web.backups.backupsTab.deleteFailedToast' => 'Delete failed',
 			'web.backups.backupsTab.empty' => 'No backups yet. Click "Backup now" above to take the first one.',
 			'web.backups.backupsTab.columns.id' => 'ID',
+			'web.backups.backupsTab.columns.type' => 'Type',
 			'web.backups.backupsTab.columns.target' => 'Target',
 			'web.backups.backupsTab.columns.status' => 'Status',
 			'web.backups.backupsTab.columns.started' => 'Started',
@@ -17701,6 +17882,35 @@ extension on Translations {
 			'web.backups.restore.failedToast' => 'Restore failed',
 			'web.backups.restore.restoring' => 'Restoring…',
 			'web.backups.restore.restore' => 'Restore',
+			'web.backups.restore.dryRunToast' => 'Dry run complete — review the plan, then apply',
+			'web.backups.restore.planTitle' => 'Restore plan (dry run — nothing changed)',
+			'web.backups.restore.planDump' => ({required Object size}) => 'Database dump: ${size}',
+			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
+			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
+			'web.backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
+			'web.backups.restore.preview' => 'Preview (dry run)',
+			'web.backups.restore.previewing' => 'Previewing…',
+			'web.backups.restore.previewFirstHint' => 'Run a dry-run preview first',
+			'web.backups.restore.applyRestore' => 'Apply restore',
+			'web.backups.kind.dbOnly' => 'DB only',
+			'web.backups.kind.fullInstance' => 'Full instance',
+			'web.backups.kind.fullInstanceHint' => 'Includes the vault, secrets.env and config.toml',
+			'web.backups.trigger.preMigrate' => 'pre-migrate',
+			'web.backups.trigger.preMigrateHint' => 'Automatic snapshot taken before schema migrations ran',
+			'web.backups.trigger.preRestore' => 'pre-restore',
+			'web.backups.trigger.preRestoreHint' => 'Automatic safety snapshot taken before a restore was applied',
+			'web.backups.recoveryKit.button' => 'Recovery Kit',
+			'web.backups.recoveryKit.title' => 'Download Recovery Kit',
+			'web.backups.recoveryKit.warning' => 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.',
+			'web.backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8 chars)',
+			'web.backups.recoveryKit.passphrasePlaceholder' => 'a strong passphrase you will not lose',
+			'web.backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
+			'web.backups.recoveryKit.mismatch' => 'Passphrases don\'t match',
+			'web.backups.recoveryKit.generating' => 'Generating…',
+			'web.backups.recoveryKit.download' => 'Download kit',
+			'web.backups.recoveryKit.downloadedToast' => 'Recovery Kit downloaded — store it safely',
+			'web.backups.recoveryKit.failedToast' => 'Could not generate Recovery Kit',
 			'web.backups.schedulesTab.description' => 'Recurring backups. The scheduler polls every 30s and runs the oldest due schedule.',
 			'web.backups.schedulesTab.newSchedule' => 'New schedule',
 			'web.backups.schedulesTab.loadFailedToast' => 'Failed to load schedules',
@@ -17792,6 +18002,8 @@ extension on Translations {
 			'web.backups.targetEditor.webdav.passwordLabel' => 'Password',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => 'Path prefix',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Sub-folder under the base URL (optional)',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.sftp.hostLabel' => 'Host',
 			'web.backups.targetEditor.sftp.hostPlaceholder' => 'vps.example.com',
@@ -17824,8 +18036,6 @@ extension on Translations {
 			'web.serverSettings.sections.general.title' => 'General',
 			'web.serverSettings.sections.general.desc' => 'Listen address, operator account, token TTL.',
 			'web.serverSettings.sections.logging.title' => 'Logging',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.sections.logging.desc' => 'Verbosity, format, and live tail.',
 			'web.serverSettings.sections.sessions.title' => 'Sessions',
 			'web.serverSettings.sections.sessions.desc' => 'Idle detection thresholds.',
@@ -18306,6 +18516,8 @@ extension on Translations {
 			'web.export.history.noTokenToast' => 'No download token (expired?)',
 			'web.export.history.deleteConfirm' => ({required Object id}) => 'Delete export ${id}?',
 			'web.export.history.deletedToast' => 'Export deleted',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.deleteFailedToast' => 'Delete failed',
 			'web.export.history.scopeEmpty' => '(empty)',
 			'web.export.import.intro' => 'Replay an export bundle (zip) into the live database. Conflicts (matching id, or unique route_prefix for integrations) are <1>skipped</1> by default. Memories are tagged <3>embedder=imported_v1</3> and need a re-embed pass before search returns them; trigger re-embed under <5>Memory → Maintenance</5>. Integrations are imported with <7>enabled=false</7> and a non-bcrypt placeholder key — operator must rotate before use.',
@@ -18338,8 +18550,6 @@ extension on Translations {
 			'web.export.imports.listFailedToast' => 'Failed to list imports',
 			'web.knowledge.title' => 'Knowledge',
 			'web.knowledge.subtitle' => 'What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.searchPlaceholder' => 'Search knowledge…',
 			'web.knowledge.search' => 'Search',
 			'web.knowledge.browse' => 'Browse',
@@ -18820,6 +19030,8 @@ extension on Translations {
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.nameHint' => 'e.g. backend-refactor',
 			'sessions.spawnSheet.argsLabel' => 'Extra args (optional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
@@ -18852,8 +19064,6 @@ extension on Translations {
 			'mcp.viewRawConfig' => 'View raw config',
 			'mcp.copyId' => 'Copy id',
 			'mcp.copiedSnack' => ({required Object id}) => 'Copied ${id}',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.deleteServerTitle' => 'Delete MCP server?',
 			'mcp.deleteSecretTitle' => 'Delete secret?',
 			'mcp.errorPrefix.delete' => 'Delete failed',
@@ -19198,6 +19408,10 @@ extension on Translations {
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
 			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
+			'backups.runFullInstance' => 'Full instance',
+			'backups.runFullInstanceHint' => 'Also bundle the vault, secrets.env and config.toml — not just the database.',
+			'backups.kindDbOnly' => 'DB only',
+			'backups.kindFullInstance' => 'Full instance',
 			'backups.run' => 'Run',
 			'backups.runNow' => 'Run now',
 			'backups.queueing' => 'Queueing…',
@@ -19216,6 +19430,7 @@ extension on Translations {
 			'backups.menuSchedules' => 'Schedules',
 			'backups.menuTargets' => 'Targets',
 			'backups.kv.status' => 'Status',
+			'backups.kv.kind' => 'Type',
 			'backups.kv.target' => 'Target',
 			'backups.kv.triggeredBy' => 'Triggered by',
 			'backups.kv.started' => 'Started',
@@ -19226,6 +19441,15 @@ extension on Translations {
 			'backups.kv.error' => 'Error',
 			'backups.kv.yes' => 'yes',
 			'backups.kv.no' => 'no',
+			'backups.recoveryKit.menuLabel' => 'Recovery Kit',
+			'backups.recoveryKit.title' => 'Recovery Kit',
+			'backups.recoveryKit.warning' => 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.',
+			'backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8)',
+			'backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
+			'backups.recoveryKit.generate' => 'Generate',
+			'backups.recoveryKit.copy' => 'Copy kit',
+			'backups.recoveryKit.copied' => 'Recovery Kit copied — store it safely',
+			'backups.recoveryKit.failed' => ({required Object error}) => 'Could not generate Recovery Kit: ${error}',
 			'backups.emptyMissingDeps.headline' => 'Backups can\'t run yet',
 			'backups.emptyMissingDeps.body' => 'Install postgresql-client and restart opendray.',
 			'backups.emptyNoTargets.headline' => 'No backup targets configured',
@@ -19320,6 +19544,8 @@ extension on Translations {
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Target',
 			'backupSchedules.intervalLabel' => 'Interval',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
@@ -19366,8 +19592,6 @@ extension on Translations {
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
 			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
 			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
 			'backupTargetEditor.saving' => 'Saving…',
 			'backupTargetEditor.create' => 'Create',
@@ -19834,6 +20058,8 @@ extension on Translations {
 			'about.gateway.releaseNotes' => 'Release notes',
 			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
+			_ => null,
+		} ?? switch (path) {
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
 			'settings.language.systemSubtitle' => 'Follow your phone\'s language setting',
@@ -19880,8 +20106,6 @@ extension on Translations {
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
 			'settings.logViewer.levels.error' => 'Error',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.title' => 'Server settings',
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
 			'settings.serverSettings.restartTooltip' => 'Restart gateway',

@@ -3752,6 +3752,10 @@
     "title": "Copias de seguridad",
     "runConfirmTitle": "¿Ejecutar copia de seguridad ahora?",
     "runConfirmBody": "Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.",
+    "runFullInstance": "Instancia completa",
+    "runFullInstanceHint": "Incluye también el vault, secrets.env y config.toml, no solo la base de datos.",
+    "kindDbOnly": "Solo BD",
+    "kindFullInstance": "Instancia completa",
     "run": "Ejecutar",
     "runNow": "Ejecutar ahora",
     "queueing": "Encolando…",
@@ -3771,6 +3775,7 @@
     "menuTargets": "Destinos",
     "kv": {
       "status": "Estado",
+      "kind": "Tipo",
       "target": "Destino",
       "triggeredBy": "Lanzado por",
       "started": "Iniciado",
@@ -3781,6 +3786,17 @@
       "error": "Error",
       "yes": "sí",
       "no": "no"
+    },
+    "recoveryKit": {
+      "menuLabel": "Kit de recuperación",
+      "title": "Kit de recuperación",
+      "warning": "La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.",
+      "passphraseLabel": "Frase de recuperación (mín. 8)",
+      "confirmLabel": "Confirmar frase de recuperación",
+      "generate": "Generar",
+      "copy": "Copiar kit",
+      "copied": "Kit de recuperación copiado: guárdalo de forma segura",
+      "failed": "No se pudo generar el kit de recuperación: {error}"
     },
     "emptyMissingDeps": {
       "headline": "Las copias de seguridad aún no pueden ejecutarse",
