@@ -139,6 +139,8 @@ type Backup struct {
 	OpendrayVersion string         `json:"opendray_version,omitempty"`
 	GitSHA          string         `json:"git_sha,omitempty"`
 	Error           string         `json:"error,omitempty"`
+	VerifiedAt      *time.Time     `json:"verified_at,omitempty"`
+	VerifyError     string         `json:"verify_error,omitempty"`
 	Metadata        map[string]any `json:"metadata,omitempty"`
 }
 

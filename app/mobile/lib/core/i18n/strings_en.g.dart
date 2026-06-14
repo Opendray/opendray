@@ -1053,6 +1053,15 @@ class TranslationsBackupsEn {
 	/// en: 'Full instance'
 	String get kindFullInstance => 'Full instance';
 
+	/// en: 'verified'
+	String get verifyOk => 'verified';
+
+	/// en: 'unverified (check failed)'
+	String get verifyFailed => 'unverified (check failed)';
+
+	/// en: 'not verified'
+	String get verifyPending => 'not verified';
+
 	/// en: 'Run'
 	String get run => 'Run';
 
@@ -3028,6 +3037,7 @@ class TranslationsWebBackupsEn {
 	late final TranslationsWebBackupsBackupsTabEn backupsTab = TranslationsWebBackupsBackupsTabEn.internal(_root);
 	late final TranslationsWebBackupsRestoreEn restore = TranslationsWebBackupsRestoreEn.internal(_root);
 	late final TranslationsWebBackupsKindEn kind = TranslationsWebBackupsKindEn.internal(_root);
+	late final TranslationsWebBackupsVerifyEn verify = TranslationsWebBackupsVerifyEn.internal(_root);
 	late final TranslationsWebBackupsTriggerEn trigger = TranslationsWebBackupsTriggerEn.internal(_root);
 	late final TranslationsWebBackupsRecoveryKitEn recoveryKit = TranslationsWebBackupsRecoveryKitEn.internal(_root);
 	late final TranslationsWebBackupsSchedulesTabEn schedulesTab = TranslationsWebBackupsSchedulesTabEn.internal(_root);
@@ -4409,6 +4419,9 @@ class TranslationsBackupsKvEn {
 
 	/// en: 'Status'
 	String get status => 'Status';
+
+	/// en: 'Verified'
+	String get verified => 'Verified';
 
 	/// en: 'Type'
 	String get kind => 'Type';
@@ -9363,6 +9376,24 @@ class TranslationsWebBackupsKindEn {
 
 	/// en: 'Includes the vault, secrets.env and config.toml'
 	String get fullInstanceHint => 'Includes the vault, secrets.env and config.toml';
+}
+
+// Path: web.backups.verify
+class TranslationsWebBackupsVerifyEn {
+	TranslationsWebBackupsVerifyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'verified'
+	String get ok => 'verified';
+
+	/// en: 'Decrypted and confirmed restorable (pg_restore --list)'
+	String get okHint => 'Decrypted and confirmed restorable (pg_restore --list)';
+
+	/// en: 'unverified'
+	String get failed => 'unverified';
 }
 
 // Path: web.backups.trigger
@@ -17896,6 +17927,9 @@ extension on Translations {
 			'web.backups.kind.dbOnly' => 'DB only',
 			'web.backups.kind.fullInstance' => 'Full instance',
 			'web.backups.kind.fullInstanceHint' => 'Includes the vault, secrets.env and config.toml',
+			'web.backups.verify.ok' => 'verified',
+			'web.backups.verify.okHint' => 'Decrypted and confirmed restorable (pg_restore --list)',
+			'web.backups.verify.failed' => 'unverified',
 			'web.backups.trigger.preMigrate' => 'pre-migrate',
 			'web.backups.trigger.preMigrateHint' => 'Automatic snapshot taken before schema migrations ran',
 			'web.backups.trigger.preRestore' => 'pre-restore',
@@ -17999,11 +18033,11 @@ extension on Translations {
 			'web.backups.targetEditor.webdav.baseUrlHint' => 'Full URL including any path. Examples: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)',
 			'web.backups.targetEditor.webdav.baseUrlPlaceholder' => 'https://cloud.example.com/remote.php/dav/files/<user>/',
 			'web.backups.targetEditor.webdav.userLabel' => 'User',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.passwordLabel' => 'Password',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => 'Path prefix',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Sub-folder under the base URL (optional)',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.sftp.hostLabel' => 'Host',
 			'web.backups.targetEditor.sftp.hostPlaceholder' => 'vps.example.com',
@@ -18513,11 +18547,11 @@ extension on Translations {
 			'web.export.history.deleteTooltip' => 'Delete',
 			'web.export.history.listFailedToast' => 'Failed to list exports',
 			'web.export.history.downloadFailedToast' => 'Download failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.noTokenToast' => 'No download token (expired?)',
 			'web.export.history.deleteConfirm' => ({required Object id}) => 'Delete export ${id}?',
 			'web.export.history.deletedToast' => 'Export deleted',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.deleteFailedToast' => 'Delete failed',
 			'web.export.history.scopeEmpty' => '(empty)',
 			'web.export.import.intro' => 'Replay an export bundle (zip) into the live database. Conflicts (matching id, or unique route_prefix for integrations) are <1>skipped</1> by default. Memories are tagged <3>embedder=imported_v1</3> and need a re-embed pass before search returns them; trigger re-embed under <5>Memory → Maintenance</5>. Integrations are imported with <7>enabled=false</7> and a non-bcrypt placeholder key — operator must rotate before use.',
@@ -19027,11 +19061,11 @@ extension on Translations {
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.nameHint' => 'e.g. backend-refactor',
 			'sessions.spawnSheet.argsLabel' => 'Extra args (optional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
@@ -19412,6 +19446,9 @@ extension on Translations {
 			'backups.runFullInstanceHint' => 'Also bundle the vault, secrets.env and config.toml — not just the database.',
 			'backups.kindDbOnly' => 'DB only',
 			'backups.kindFullInstance' => 'Full instance',
+			'backups.verifyOk' => 'verified',
+			'backups.verifyFailed' => 'unverified (check failed)',
+			'backups.verifyPending' => 'not verified',
 			'backups.run' => 'Run',
 			'backups.runNow' => 'Run now',
 			'backups.queueing' => 'Queueing…',
@@ -19430,6 +19467,7 @@ extension on Translations {
 			'backups.menuSchedules' => 'Schedules',
 			'backups.menuTargets' => 'Targets',
 			'backups.kv.status' => 'Status',
+			'backups.kv.verified' => 'Verified',
 			'backups.kv.kind' => 'Type',
 			'backups.kv.target' => 'Target',
 			'backups.kv.triggeredBy' => 'Triggered by',
@@ -19537,6 +19575,8 @@ extension on Translations {
 			'backupTargets.editConfig' => 'Edit config',
 			'backupTargets.viewRawConfig' => 'View raw config',
 			'backupTargets.configDialogTitle' => ({required Object kind}) => '${kind} config',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargets.deleteTitle' => 'Delete target?',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.title' => 'Backup schedules',
@@ -19544,8 +19584,6 @@ extension on Translations {
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Target',
 			'backupSchedules.intervalLabel' => 'Interval',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
@@ -20051,6 +20089,8 @@ extension on Translations {
 			'about.copyLabels.serverUrl' => 'server URL',
 			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray',
 			'about.gateway.version' => 'Version',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Checking for updates…',
 			'about.gateway.upToDate' => 'Up to date',
@@ -20058,8 +20098,6 @@ extension on Translations {
 			'about.gateway.releaseNotes' => 'Release notes',
 			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
-			_ => null,
-		} ?? switch (path) {
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
 			'settings.language.systemSubtitle' => 'Follow your phone\'s language setting',

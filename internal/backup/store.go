@@ -437,6 +437,31 @@ func (s *store) MarkBackupFailed(ctx context.Context, id string, errMsg string) 
 	return nil
 }
 
+// MarkBackupVerified records the outcome of a post-backup
+// verification. On success (empty verifyErr) verified_at is set to now
+// and verify_error cleared. On failure only verify_error is set — a
+// non-NULL verify_error already signals "last check failed", so we keep
+// any prior verified_at rather than destroying a historical success on
+// a transient blip (the UI treats verify_error as taking precedence).
+func (s *store) MarkBackupVerified(ctx context.Context, id, verifyErr string) error {
+	if verifyErr == "" {
+		_, err := s.pool.Exec(ctx, `
+			UPDATE backups SET verified_at=NOW(), verify_error=NULL WHERE id=$1`,
+			id)
+		if err != nil {
+			return fmt.Errorf("mark verified: %w", err)
+		}
+		return nil
+	}
+	_, err := s.pool.Exec(ctx, `
+		UPDATE backups SET verify_error=$1 WHERE id=$2`,
+		verifyErr, id)
+	if err != nil {
+		return fmt.Errorf("mark verify failed: %w", err)
+	}
+	return nil
+}
+
 // MarkBackupDeleted flips status to 'deleted' (soft-delete, kept for
 // audit). The blob removal happens out-of-band via Target.Delete.
 func (s *store) MarkBackupDeleted(ctx context.Context, id string) error {
@@ -515,6 +540,8 @@ const backupSelectStmt = `
 	       COALESCE(opendray_version, ''),
 	       COALESCE(git_sha, ''),
 	       COALESCE(error, ''),
+	       verified_at,
+	       COALESCE(verify_error, ''),
 	       COALESCE(metadata, '{}'::jsonb)
 	  FROM backups`
 
@@ -527,6 +554,7 @@ func scanBackup(row rowScanner) (Backup, error) {
 		b           Backup
 		scheduleID  sql.NullString
 		finishedAt  sql.NullTime
+		verifiedAt  sql.NullTime
 		status      string
 		triggeredBy string
 		kind        string
@@ -537,7 +565,7 @@ func scanBackup(row rowScanner) (Backup, error) {
 		&b.StartedAt, &finishedAt, &b.Bytes,
 		&b.SHA256, &b.Encrypted, &b.KeyFingerprint,
 		&b.TargetPath, &b.PGVersion, &b.OpendrayVersion, &b.GitSHA,
-		&b.Error, &metaRaw,
+		&b.Error, &verifiedAt, &b.VerifyError, &metaRaw,
 	)
 	if err != nil {
 		return Backup{}, err
@@ -549,6 +577,10 @@ func scanBackup(row rowScanner) (Backup, error) {
 	if finishedAt.Valid {
 		t := finishedAt.Time
 		b.FinishedAt = &t
+	}
+	if verifiedAt.Valid {
+		t := verifiedAt.Time
+		b.VerifiedAt = &t
 	}
 	b.Status = BackupStatus(status)
 	b.TriggeredBy = TriggeredBy(triggeredBy)

@@ -1755,6 +1755,11 @@
         "fullInstance": "Full instance",
         "fullInstanceHint": "Includes the vault, secrets.env and config.toml"
       },
+      "verify": {
+        "ok": "verified",
+        "okHint": "Decrypted and confirmed restorable (pg_restore --list)",
+        "failed": "unverified"
+      },
       "trigger": {
         "preMigrate": "pre-migrate",
         "preMigrateHint": "Automatic snapshot taken before schema migrations ran",
@@ -3756,6 +3761,9 @@
     "runFullInstanceHint": "Also bundle the vault, secrets.env and config.toml — not just the database.",
     "kindDbOnly": "DB only",
     "kindFullInstance": "Full instance",
+    "verifyOk": "verified",
+    "verifyFailed": "unverified (check failed)",
+    "verifyPending": "not verified",
     "run": "Run",
     "runNow": "Run now",
     "queueing": "Queueing…",
@@ -3775,6 +3783,7 @@
     "menuTargets": "Targets",
     "kv": {
       "status": "Status",
+      "verified": "Verified",
       "kind": "Type",
       "target": "Target",
       "triggeredBy": "Triggered by",

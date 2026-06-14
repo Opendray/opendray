@@ -947,7 +947,10 @@ function BackupTable({
               </td>
               <td className="px-3 py-2">{b.target_id}</td>
               <td className="px-3 py-2">
-                <StatusBadge status={b.status} />
+                <div className="flex items-center gap-1.5">
+                  <StatusBadge status={b.status} />
+                  {b.status === 'succeeded' && <VerifiedBadge backup={b} />}
+                </div>
                 {b.error && (
                   <span
                     className="ml-2 text-state-failed text-[11px]"
@@ -1002,6 +1005,28 @@ function StatusBadge({ status }: { status: Backup['status'] }) {
     deleted: 'muted',
   }
   return <Badge variant={map[status]}>{status}</Badge>
+}
+
+// VerifiedBadge reflects post-backup verification: green when the blob
+// was decrypted + pg_restore --list succeeded, red when it failed, and
+// nothing while verification hasn't run (older rows / no pg_restore).
+function VerifiedBadge({ backup }: { backup: Backup }) {
+  const { t } = useTranslation()
+  if (backup.verify_error) {
+    return (
+      <Badge variant="danger" title={backup.verify_error}>
+        {t('web.backups.verify.failed')}
+      </Badge>
+    )
+  }
+  if (backup.verified_at) {
+    return (
+      <Badge variant="success" title={t('web.backups.verify.okHint')}>
+        {t('web.backups.verify.ok')}
+      </Badge>
+    )
+  }
+  return null
 }
 
 function KindBadge({ kind }: { kind: BackupKind }) {

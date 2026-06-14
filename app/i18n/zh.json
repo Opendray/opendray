@@ -1755,6 +1755,11 @@
         "fullInstance": "完整实例",
         "fullInstanceHint": "包含 vault、secrets.env 和 config.toml"
       },
+      "verify": {
+        "ok": "已校验",
+        "okHint": "已解密并确认可恢复（pg_restore --list）",
+        "failed": "未校验"
+      },
       "trigger": {
         "preMigrate": "迁移前",
         "preMigrateHint": "schema 迁移前自动拍摄的快照",
@@ -3756,6 +3761,9 @@
     "runFullInstanceHint": "同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。",
     "kindDbOnly": "仅数据库",
     "kindFullInstance": "完整实例",
+    "verifyOk": "已校验",
+    "verifyFailed": "未校验（检查失败）",
+    "verifyPending": "未校验",
     "run": "运行",
     "runNow": "立即运行",
     "queueing": "入队中…",
@@ -3775,6 +3783,7 @@
     "menuTargets": "目标",
     "kv": {
       "status": "状态",
+      "verified": "校验",
       "kind": "类型",
       "target": "目标",
       "triggeredBy": "触发者",

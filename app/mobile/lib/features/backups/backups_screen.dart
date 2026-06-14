@@ -429,6 +429,15 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
               children: [
                 _kv('ID', b.id, mono: true),
                 _kv(t.backups.kv.status, b.status),
+                if (b.status == 'succeeded')
+                  _kv(
+                    t.backups.kv.verified,
+                    b.verifyError != null
+                        ? t.backups.verifyFailed
+                        : b.verifiedAt != null
+                        ? t.backups.verifyOk
+                        : t.backups.verifyPending,
+                  ),
                 _kv(
                   t.backups.kv.kind,
                   b.kind == 'full_instance'

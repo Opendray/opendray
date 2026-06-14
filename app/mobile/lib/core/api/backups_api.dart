@@ -25,6 +25,8 @@ class BackupRow {
     this.finishedAt,
     this.targetPath,
     this.error,
+    this.verifiedAt,
+    this.verifyError,
   });
 
   factory BackupRow.fromJson(Map<String, dynamic> json) => BackupRow(
@@ -44,6 +46,10 @@ class BackupRow {
     encrypted: json['encrypted'] as bool? ?? false,
     targetPath: json['target_path'] as String?,
     error: json['error'] as String?,
+    verifiedAt: DateTime.tryParse(
+      json['verified_at'] as String? ?? '',
+    )?.toUtc(),
+    verifyError: json['verify_error'] as String?,
   );
 
   final String id;
@@ -61,6 +67,11 @@ class BackupRow {
   final bool encrypted;
   final String? targetPath;
   final String? error;
+  // Post-backup verification: verifiedAt set + verifyError null = the
+  // blob decrypted and pg_restore --list passed; verifyError set = it
+  // failed; both null = not verified yet.
+  final DateTime? verifiedAt;
+  final String? verifyError;
 }
 
 class BackupSchedule {

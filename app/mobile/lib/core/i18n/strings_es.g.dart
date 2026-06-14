@@ -520,6 +520,9 @@ class _TranslationsBackupsEs extends TranslationsBackupsEn {
 	@override String get runFullInstanceHint => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.';
 	@override String get kindDbOnly => 'Solo BD';
 	@override String get kindFullInstance => 'Instancia completa';
+	@override String get verifyOk => 'verificada';
+	@override String get verifyFailed => 'sin verificar (falló la comprobación)';
+	@override String get verifyPending => 'sin verificar';
 	@override String get run => 'Ejecutar';
 	@override String get runNow => 'Ejecutar ahora';
 	@override String get queueing => 'Encolando…';
@@ -1464,6 +1467,7 @@ class _TranslationsWebBackupsEs extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsBackupsTabEs backupsTab = _TranslationsWebBackupsBackupsTabEs._(_root);
 	@override late final _TranslationsWebBackupsRestoreEs restore = _TranslationsWebBackupsRestoreEs._(_root);
 	@override late final _TranslationsWebBackupsKindEs kind = _TranslationsWebBackupsKindEs._(_root);
+	@override late final _TranslationsWebBackupsVerifyEs verify = _TranslationsWebBackupsVerifyEs._(_root);
 	@override late final _TranslationsWebBackupsTriggerEs trigger = _TranslationsWebBackupsTriggerEs._(_root);
 	@override late final _TranslationsWebBackupsRecoveryKitEs recoveryKit = _TranslationsWebBackupsRecoveryKitEs._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabEs schedulesTab = _TranslationsWebBackupsSchedulesTabEs._(_root);
@@ -2217,6 +2221,7 @@ class _TranslationsBackupsKvEs extends TranslationsBackupsKvEn {
 
 	// Translations
 	@override String get status => 'Estado';
+	@override String get verified => 'Verificada';
 	@override String get kind => 'Tipo';
 	@override String get target => 'Destino';
 	@override String get triggeredBy => 'Lanzado por';
@@ -4729,6 +4734,18 @@ class _TranslationsWebBackupsKindEs extends TranslationsWebBackupsKindEn {
 	@override String get dbOnly => 'Solo BD';
 	@override String get fullInstance => 'Instancia completa';
 	@override String get fullInstanceHint => 'Incluye el vault, secrets.env y config.toml';
+}
+
+// Path: web.backups.verify
+class _TranslationsWebBackupsVerifyEs extends TranslationsWebBackupsVerifyEn {
+	_TranslationsWebBackupsVerifyEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get ok => 'verificada';
+	@override String get okHint => 'Descifrada y confirmada como restaurable (pg_restore --list)';
+	@override String get failed => 'sin verificar';
 }
 
 // Path: web.backups.trigger
@@ -10210,6 +10227,9 @@ extension on TranslationsEs {
 			'web.backups.kind.dbOnly' => 'Solo BD',
 			'web.backups.kind.fullInstance' => 'Instancia completa',
 			'web.backups.kind.fullInstanceHint' => 'Incluye el vault, secrets.env y config.toml',
+			'web.backups.verify.ok' => 'verificada',
+			'web.backups.verify.okHint' => 'Descifrada y confirmada como restaurable (pg_restore --list)',
+			'web.backups.verify.failed' => 'sin verificar',
 			'web.backups.trigger.preMigrate' => 'pre-migración',
 			'web.backups.trigger.preMigrateHint' => 'Instantánea automática tomada antes de ejecutar las migraciones de esquema',
 			'web.backups.trigger.preRestore' => 'pre-restauración',
@@ -10313,11 +10333,11 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.webdav.baseUrlHint' => 'URL completa incluyendo cualquier ruta. Ejemplos: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)',
 			'web.backups.targetEditor.webdav.baseUrlPlaceholder' => 'https://cloud.example.com/remote.php/dav/files/<user>/',
 			'web.backups.targetEditor.webdav.userLabel' => 'Usuario',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => 'Prefijo de ruta',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Subcarpeta bajo la URL base (opcional)',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.sftp.hostLabel' => 'Host',
 			'web.backups.targetEditor.sftp.hostPlaceholder' => 'vps.example.com',
@@ -10827,11 +10847,11 @@ extension on TranslationsEs {
 			'web.export.history.deleteTooltip' => 'Eliminar',
 			'web.export.history.listFailedToast' => 'No se pudieron listar las exportaciones',
 			'web.export.history.downloadFailedToast' => 'Falló la descarga',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.noTokenToast' => 'Sin token de descarga (¿caducado?)',
 			'web.export.history.deleteConfirm' => ({required Object id}) => '¿Eliminar la exportación ${id}?',
 			'web.export.history.deletedToast' => 'Exportación eliminada',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.deleteFailedToast' => 'Falló la eliminación',
 			'web.export.history.scopeEmpty' => '(vacío)',
 			'web.export.import.intro' => 'Reproduce un paquete de exportación (zip) en la base de datos en vivo. Los conflictos (id coincidente, o route_prefix único para integraciones) se <1>omiten</1> de forma predeterminada. Las memorias se etiquetan con <3>embedder=imported_v1</3> y necesitan una pasada de re-embedding antes de que la búsqueda las devuelva; activa el re-embedding en <5>Memory → Maintenance</5>. Las integraciones se importan con <7>enabled=false</7> y una clave de marcador de posición sin bcrypt; el operador debe rotarla antes de usarla.',
@@ -11341,11 +11361,11 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.disabledSuffix' => ' (desactivado)',
 			'sessions.spawnSheet.cwdLabel' => 'Directorio de trabajo',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => 'Ruta absoluta en el host del gateway.',
 			'sessions.spawnSheet.browse' => 'Examinar',
 			'sessions.spawnSheet.nameLabel' => 'Nombre (opcional)',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.nameHint' => 'p. ej. backend-refactor',
 			'sessions.spawnSheet.argsLabel' => 'Argumentos adicionales (opcional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
@@ -11726,6 +11746,9 @@ extension on TranslationsEs {
 			'backups.runFullInstanceHint' => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.',
 			'backups.kindDbOnly' => 'Solo BD',
 			'backups.kindFullInstance' => 'Instancia completa',
+			'backups.verifyOk' => 'verificada',
+			'backups.verifyFailed' => 'sin verificar (falló la comprobación)',
+			'backups.verifyPending' => 'sin verificar',
 			'backups.run' => 'Ejecutar',
 			'backups.runNow' => 'Ejecutar ahora',
 			'backups.queueing' => 'Encolando…',
@@ -11744,6 +11767,7 @@ extension on TranslationsEs {
 			'backups.menuSchedules' => 'Programaciones',
 			'backups.menuTargets' => 'Destinos',
 			'backups.kv.status' => 'Estado',
+			'backups.kv.verified' => 'Verificada',
 			'backups.kv.kind' => 'Tipo',
 			'backups.kv.target' => 'Destino',
 			'backups.kv.triggeredBy' => 'Lanzado por',
@@ -11851,6 +11875,8 @@ extension on TranslationsEs {
 			'backupTargets.editConfig' => 'Editar configuración',
 			'backupTargets.viewRawConfig' => 'Ver configuración sin procesar',
 			'backupTargets.configDialogTitle' => ({required Object kind}) => 'Configuración de ${kind}',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargets.deleteTitle' => '¿Eliminar destino?',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.title' => 'Programaciones de copia de seguridad',
@@ -11858,8 +11884,6 @@ extension on TranslationsEs {
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
 			'backupSchedules.targetLabel' => 'Destino',
 			'backupSchedules.intervalLabel' => 'Intervalo',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
@@ -12365,6 +12389,8 @@ extension on TranslationsEs {
 			'about.copyLabels.serverUrl' => 'URL del servidor',
 			'about.tagline' => 'opendray móvil, control del gateway multi-CLI.\nFuente: github.com/Opendray/opendray',
 			'about.gateway.version' => 'Versión',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Buscando actualizaciones…',
 			'about.gateway.upToDate' => 'Actualizado',
@@ -12372,8 +12398,6 @@ extension on TranslationsEs {
 			'about.gateway.releaseNotes' => 'Notas de la versión',
 			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
 			'settings.title' => 'Ajustes',
-			_ => null,
-		} ?? switch (path) {
 			'settings.language.section' => 'Idioma',
 			'settings.language.system' => 'Sistema',
 			'settings.language.systemSubtitle' => 'Sigue la configuración de idioma de tu teléfono',

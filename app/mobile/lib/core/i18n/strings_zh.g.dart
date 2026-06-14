@@ -520,6 +520,9 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get runFullInstanceHint => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。';
 	@override String get kindDbOnly => '仅数据库';
 	@override String get kindFullInstance => '完整实例';
+	@override String get verifyOk => '已校验';
+	@override String get verifyFailed => '未校验（检查失败）';
+	@override String get verifyPending => '未校验';
 	@override String get run => '运行';
 	@override String get runNow => '立即运行';
 	@override String get queueing => '入队中…';
@@ -1464,6 +1467,7 @@ class _TranslationsWebBackupsZh extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsBackupsTabZh backupsTab = _TranslationsWebBackupsBackupsTabZh._(_root);
 	@override late final _TranslationsWebBackupsRestoreZh restore = _TranslationsWebBackupsRestoreZh._(_root);
 	@override late final _TranslationsWebBackupsKindZh kind = _TranslationsWebBackupsKindZh._(_root);
+	@override late final _TranslationsWebBackupsVerifyZh verify = _TranslationsWebBackupsVerifyZh._(_root);
 	@override late final _TranslationsWebBackupsTriggerZh trigger = _TranslationsWebBackupsTriggerZh._(_root);
 	@override late final _TranslationsWebBackupsRecoveryKitZh recoveryKit = _TranslationsWebBackupsRecoveryKitZh._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabZh schedulesTab = _TranslationsWebBackupsSchedulesTabZh._(_root);
@@ -2217,6 +2221,7 @@ class _TranslationsBackupsKvZh extends TranslationsBackupsKvEn {
 
 	// Translations
 	@override String get status => '状态';
+	@override String get verified => '校验';
 	@override String get kind => '类型';
 	@override String get target => '目标';
 	@override String get triggeredBy => '触发者';
@@ -4729,6 +4734,18 @@ class _TranslationsWebBackupsKindZh extends TranslationsWebBackupsKindEn {
 	@override String get dbOnly => '仅数据库';
 	@override String get fullInstance => '完整实例';
 	@override String get fullInstanceHint => '包含 vault、secrets.env 和 config.toml';
+}
+
+// Path: web.backups.verify
+class _TranslationsWebBackupsVerifyZh extends TranslationsWebBackupsVerifyEn {
+	_TranslationsWebBackupsVerifyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get ok => '已校验';
+	@override String get okHint => '已解密并确认可恢复（pg_restore --list）';
+	@override String get failed => '未校验';
 }
 
 // Path: web.backups.trigger
@@ -10210,6 +10227,9 @@ extension on TranslationsZh {
 			'web.backups.kind.dbOnly' => '仅数据库',
 			'web.backups.kind.fullInstance' => '完整实例',
 			'web.backups.kind.fullInstanceHint' => '包含 vault、secrets.env 和 config.toml',
+			'web.backups.verify.ok' => '已校验',
+			'web.backups.verify.okHint' => '已解密并确认可恢复（pg_restore --list）',
+			'web.backups.verify.failed' => '未校验',
 			'web.backups.trigger.preMigrate' => '迁移前',
 			'web.backups.trigger.preMigrateHint' => 'schema 迁移前自动拍摄的快照',
 			'web.backups.trigger.preRestore' => '恢复前',
@@ -10313,11 +10333,11 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.webdav.baseUrlHint' => '包含任意路径的完整 URL。示例：https://cloud.example.com/remote.php/dav/files/me/（Nextcloud）、https://nas.local:5006/（群晖）、https://dav.jianguoyun.com/dav/（坚果云）',
 			'web.backups.targetEditor.webdav.baseUrlPlaceholder' => 'https://cloud.example.com/remote.php/dav/files/<user>/',
 			'web.backups.targetEditor.webdav.userLabel' => '用户',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.passwordLabel' => '密码',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => '路径前缀',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Base URL 下的子文件夹（可选）',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.sftp.hostLabel' => '主机',
 			'web.backups.targetEditor.sftp.hostPlaceholder' => 'vps.example.com',
@@ -10827,11 +10847,11 @@ extension on TranslationsZh {
 			'web.export.history.deleteTooltip' => '删除',
 			'web.export.history.listFailedToast' => '加载导出列表失败',
 			'web.export.history.downloadFailedToast' => '下载失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.noTokenToast' => '没有下载 token（已过期？）',
 			'web.export.history.deleteConfirm' => ({required Object id}) => '删除导出 ${id}?',
 			'web.export.history.deletedToast' => '导出已删除',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.deleteFailedToast' => '删除失败',
 			'web.export.history.scopeEmpty' => '(空)',
 			'web.export.import.intro' => '将一个导出 bundle（zip）回放到当前数据库。冲突项（id 一致，或 integrations 的 route_prefix 唯一冲突）默认 <1>跳过</1>。记忆条目会被标记为 <3>embedder=imported_v1</3>，需要做一次重嵌入后搜索才能返回；可在 <5>Memory → 维护</5> 触发。集成以 <7>enabled=false</7> 导入并使用非 bcrypt 的占位 key — 启用前请轮换。',
@@ -11341,11 +11361,11 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.disabledSuffix' => '（已停用）',
 			'sessions.spawnSheet.cwdLabel' => '工作目录',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.nameHint' => '例如：backend-refactor',
 			'sessions.spawnSheet.argsLabel' => '额外参数（可选）',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
@@ -11726,6 +11746,9 @@ extension on TranslationsZh {
 			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
 			'backups.kindDbOnly' => '仅数据库',
 			'backups.kindFullInstance' => '完整实例',
+			'backups.verifyOk' => '已校验',
+			'backups.verifyFailed' => '未校验（检查失败）',
+			'backups.verifyPending' => '未校验',
 			'backups.run' => '运行',
 			'backups.runNow' => '立即运行',
 			'backups.queueing' => '入队中…',
@@ -11744,6 +11767,7 @@ extension on TranslationsZh {
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
 			'backups.kv.status' => '状态',
+			'backups.kv.verified' => '校验',
 			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
 			'backups.kv.triggeredBy' => '触发者',
@@ -11851,6 +11875,8 @@ extension on TranslationsZh {
 			'backupTargets.editConfig' => '编辑配置',
 			'backupTargets.viewRawConfig' => '查看原始配置',
 			'backupTargets.configDialogTitle' => ({required Object kind}) => '${kind} 配置',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargets.deleteTitle' => '删除目标？',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.title' => '备份计划',
@@ -11858,8 +11884,6 @@ extension on TranslationsZh {
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.intervalLabel' => '间隔',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
@@ -12365,6 +12389,8 @@ extension on TranslationsZh {
 			'about.copyLabels.serverUrl' => '服务器 URL',
 			'about.tagline' => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray',
 			'about.gateway.version' => '版本',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.commit' => '提交',
 			'about.gateway.checking' => '正在检查更新…',
 			'about.gateway.upToDate' => '已是最新',
@@ -12372,8 +12398,6 @@ extension on TranslationsZh {
 			'about.gateway.releaseNotes' => '更新说明',
 			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
-			_ => null,
-		} ?? switch (path) {
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
 			'settings.language.systemSubtitle' => '跟随手机的语言设置',

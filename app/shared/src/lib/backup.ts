@@ -101,6 +101,8 @@ export interface Backup {
   opendray_version?: string
   git_sha?: string
   error?: string
+  verified_at?: string | null
+  verify_error?: string
   metadata?: Record<string, unknown>
 }
 

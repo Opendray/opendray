@@ -1,6 +1,8 @@
 package backup
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -774,6 +776,112 @@ func (s *Service) doRunBackup(ctx context.Context, b Backup, target BackupTarget
 		return
 	}
 	log.Info("backup succeeded")
+
+	// Verify the blob we just wrote is actually restorable. Best-effort:
+	// a verify failure is recorded + surfaced, but the backup row stays
+	// 'succeeded' (the blob exists; it's the integrity that's in doubt).
+	if s.pgrestore != nil {
+		if vErr := s.VerifyBackup(ctx, b.ID); vErr != nil {
+			log.Warn("backup verification failed", "backup_id", b.ID, "err", vErr)
+		} else {
+			log.Info("backup verified", "backup_id", b.ID)
+		}
+	}
+}
+
+// VerifyBackup re-reads a stored backup, decrypts it, and confirms the
+// dump is a readable archive via `pg_restore --list`, recording the
+// outcome (verified_at / verify_error). Returns the verification error
+// (if any) after recording it.
+func (s *Service) VerifyBackup(ctx context.Context, id string) error {
+	vErr := s.verifyBackup(ctx, id)
+	msg := ""
+	if vErr != nil {
+		msg = vErr.Error()
+	}
+	if mErr := s.store.MarkBackupVerified(ctx, id, msg); mErr != nil {
+		// Don't let a DB write failure bury the original diagnosis.
+		if vErr != nil {
+			s.log.Error("verify: could not record failed verification",
+				"backup_id", id, "verify_err", vErr, "mark_err", mErr)
+		}
+		return mErr
+	}
+	return vErr
+}
+
+// verifyBackup does the actual fetch → decrypt → extract dump.bin →
+// pg_restore --list. No DB writes (the caller records the outcome).
+func (s *Service) verifyBackup(ctx context.Context, id string) error {
+	if s.pgrestore == nil {
+		return ErrPgRestoreUnavailable
+	}
+	b, err := s.store.GetBackup(ctx, id)
+	if err != nil {
+		return err
+	}
+	target := s.targets.get(b.TargetID)
+	if target == nil {
+		return ErrTargetNotFound
+	}
+	rc, err := target.Get(ctx, TargetRef{
+		Target: b.TargetID,
+		Path:   b.TargetPath,
+		Bytes:  b.Bytes,
+		SHA256: b.SHA256,
+	})
+	if err != nil {
+		return fmt.Errorf("verify: fetch blob: %w", err)
+	}
+	defer rc.Close()
+
+	tmp, err := os.CreateTemp(s.cfg.LocalDir, ".verify-*.bin")
+	if err != nil {
+		return fmt.Errorf("verify: tmp: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+
+	gzr, err := gzip.NewReader(s.cipher.Open(rc))
+	if err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("verify: gzip: %w", err)
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+	found := false
+	for {
+		hdr, terr := tr.Next()
+		if errors.Is(terr, io.EOF) {
+			break
+		}
+		if terr != nil {
+			_ = tmp.Close()
+			return fmt.Errorf("verify: tar: %w", terr)
+		}
+		if hdr.Name == "dump.bin" {
+			// Buffers the whole dump to LocalDir (peak disk ≈ 2× the
+			// dump). If that ever bites on huge DBs, b.Bytes is an upper
+			// bound for an io.LimitReader guard here.
+			if _, cerr := io.Copy(tmp, tr); cerr != nil {
+				_ = tmp.Close()
+				return fmt.Errorf("verify: extract dump: %w", cerr)
+			}
+			found = true
+			break
+		}
+	}
+	if cerr := tmp.Close(); cerr != nil {
+		return fmt.Errorf("verify: close tmp: %w", cerr)
+	}
+	if !found {
+		return ErrRestoreNoDump
+	}
+	if _, lerr := s.pgrestore.List(ctx, tmpName); lerr != nil {
+		return fmt.Errorf("verify: %w", lerr)
+	}
+	return nil
 }
 
 // runPipeline is the actual end-to-end work:
