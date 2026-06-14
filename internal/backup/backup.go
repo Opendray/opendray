@@ -46,6 +46,9 @@ const (
 	// before schema migrations run, so an upgrade is always preceded
 	// by a restorable point.
 	TriggeredPreMigrate TriggeredBy = "pre_migrate"
+	// TriggeredPreRestore marks the safety snapshot taken automatically
+	// before an apply-mode restore overwrites the current instance.
+	TriggeredPreRestore TriggeredBy = "pre_restore"
 )
 
 // BackupKind is how much of an instance a backup captures.
@@ -237,8 +240,25 @@ type RestoreResult struct {
 	TargetDSNUsed   string         `json:"target_dsn_used"`   // redacted (host/db only)
 	FingerprintOK   bool           `json:"fingerprint_ok"`    // matched server cipher
 	PGRestoreOutput string         `json:"pg_restore_output"` // tail of stderr/stdout
+	Plan            RestorePlan    `json:"plan"`
 	StartedAt       time.Time      `json:"started_at"`
 	FinishedAt      time.Time      `json:"finished_at"`
+}
+
+// RestorePlan describes what a restore would do (dry-run) or did
+// (apply). A dry-run never writes a file, never runs pg_restore and
+// never takes a safety snapshot — it only reports what is in the
+// bundle and where each component would land.
+type RestorePlan struct {
+	DryRun           bool     `json:"dry_run"`
+	DumpPresent      bool     `json:"dump_present"`
+	DumpBytes        int64    `json:"dump_bytes"`
+	ConfigPath       string   `json:"config_path,omitempty"`  // where config.toml would land ("" = nowhere to put it)
+	SecretsPath      string   `json:"secrets_path,omitempty"` // where secrets.env would land
+	VaultRoots       []string `json:"vault_roots,omitempty"`  // logical roots present in vault.tar
+	VaultFiles       int      `json:"vault_files"`            // file count in vault.tar
+	SafetySnapshotID string   `json:"safety_snapshot_id,omitempty"`
+	Applied          []string `json:"applied,omitempty"` // components actually written (apply mode)
 }
 
 // Sentinel errors. All errors returned across package boundaries

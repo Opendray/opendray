@@ -121,22 +121,25 @@ func packOne(tw *tar.Writer, src VaultSource) error {
 // Security: entries whose cleaned path would escape the destination
 // are rejected (tar-slip / zip-slip guard), as are absolute paths and
 // non-regular entries (symlinks/hardlinks/devices are never written).
-func UnpackVault(r io.Reader, destFor func(logical string) (dest string, ok bool)) error {
+//
+// Returns the number of files written.
+func UnpackVault(r io.Reader, destFor func(logical string) (dest string, ok bool)) (int, error) {
 	tr := tar.NewReader(r)
+	written := 0
 	for {
 		hdr, err := tr.Next()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("vaulttar: read: %w", err)
+			return written, fmt.Errorf("vaulttar: read: %w", err)
 		}
 		if hdr.Typeflag != tar.TypeReg {
 			continue // only plain files are restored
 		}
 		name := filepath.ToSlash(hdr.Name)
 		if strings.HasPrefix(name, "/") {
-			return fmt.Errorf("vaulttar: absolute path entry %q", hdr.Name)
+			return written, fmt.Errorf("vaulttar: absolute path entry %q", hdr.Name)
 		}
 		logical, rest, ok := strings.Cut(name, "/")
 		if !ok || rest == "" {
@@ -148,13 +151,14 @@ func UnpackVault(r io.Reader, destFor func(logical string) (dest string, ok bool
 		}
 		target := filepath.Join(dest, filepath.FromSlash(rest))
 		if !withinDir(filepath.Clean(dest), target) {
-			return fmt.Errorf("vaulttar: entry %q escapes destination", hdr.Name)
+			return written, fmt.Errorf("vaulttar: entry %q escapes destination", hdr.Name)
 		}
 		if err := writeFileFromTar(target, tr); err != nil {
-			return err
+			return written, err
 		}
+		written++
 	}
-	return nil
+	return written, nil
 }
 
 func writeFileFromTar(target string, tr *tar.Reader) error {

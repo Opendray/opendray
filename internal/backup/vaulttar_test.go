@@ -39,7 +39,7 @@ func TestPackUnpackVault_Roundtrip(t *testing.T) {
 	dstRoot := t.TempDir()
 	dstNotes := filepath.Join(dstRoot, "notes")
 	dstSkills := filepath.Join(dstRoot, "skills")
-	err := UnpackVault(&buf, func(logical string) (string, bool) {
+	n, err := UnpackVault(&buf, func(logical string) (string, bool) {
 		switch logical {
 		case "notes":
 			return dstNotes, true
@@ -50,6 +50,9 @@ func TestPackUnpackVault_Roundtrip(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("UnpackVault: %v", err)
+	}
+	if n != 3 {
+		t.Errorf("UnpackVault wrote %d files, want 3", n)
 	}
 
 	want := map[string]string{
@@ -141,7 +144,7 @@ func TestUnpackVault_RejectsTraversal(t *testing.T) {
 	}
 
 	dst := t.TempDir()
-	err := UnpackVault(&buf, func(string) (string, bool) {
+	_, err := UnpackVault(&buf, func(string) (string, bool) {
 		return filepath.Join(dst, "notes"), true
 	})
 	if err == nil {
@@ -167,7 +170,7 @@ func TestUnpackVault_RejectsAbsolutePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := UnpackVault(&buf, func(string) (string, bool) { return t.TempDir(), true })
+	_, err := UnpackVault(&buf, func(string) (string, bool) { return t.TempDir(), true })
 	if err == nil {
 		t.Fatal("expected absolute path to be rejected")
 	}
@@ -181,8 +184,12 @@ func TestUnpackVault_SkipsUnknownLogical(t *testing.T) {
 		t.Fatalf("PackVault: %v", err)
 	}
 	// destFor never recognises "notes" → entry is skipped, no error.
-	if err := UnpackVault(&buf, func(string) (string, bool) { return "", false }); err != nil {
+	n, err := UnpackVault(&buf, func(string) (string, bool) { return "", false })
+	if err != nil {
 		t.Fatalf("UnpackVault with unknown logical should not fail: %v", err)
+	}
+	if n != 0 {
+		t.Errorf("UnpackVault wrote %d files for unknown logical, want 0", n)
 	}
 }
 

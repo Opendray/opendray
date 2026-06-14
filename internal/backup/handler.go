@@ -434,12 +434,17 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 
 	targetDSN := r.FormValue("target_dsn")
 	clean := r.FormValue("clean") == "true"
+	apply := r.FormValue("apply") == "true"
+	force := r.FormValue("force") == "true"
 	confirm := r.FormValue("confirm")
 	note := r.FormValue("note")
 
-	if targetDSN == "" && confirm != "I understand" {
+	// Any apply mutates a live database (own DB or an external DSN that
+	// could equally be production), so it requires the double-confirm.
+	// A dry-run (the default) changes nothing and never gates.
+	if apply && confirm != "I understand" {
 		writeError(w, http.StatusBadRequest,
-			errors.New("restoring to opendray's own DB requires confirm=\"I understand\""))
+			errors.New("applying a restore requires confirm=\"I understand\""))
 		return
 	}
 
@@ -447,6 +452,8 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 		Source:       file,
 		TargetDSN:    targetDSN,
 		Clean:        clean,
+		Apply:        apply,
+		Force:        force,
 		OperatorNote: note,
 	})
 	if err != nil {
