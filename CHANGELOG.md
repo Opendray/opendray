@@ -10,6 +10,35 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.7.6] — 2026-06-14
+
+### Added
+
+- **Carry context on Claude account switch (opt-in).** Switching a live
+  session to another account starts a fresh conversation (Claude Code
+  can't `--resume` across accounts). A new **"Carry over conversation
+  context"** toggle in the account switcher seeds the new account's
+  session with a recap of the prior conversation — read from the old
+  transcript, injected into the system prompt. Off by default; the
+  toggle's helper text is the consent surface, since carrying context
+  sends prior conversation content to the provider under the new
+  account. Automatic rate-limit failover never carries context. Also
+  fixes the stale switch-confirm copy that still claimed history was
+  preserved via `--resume` (removed in v2.7.x).
+- **Release announcements auto-drafted for X.** Each published release
+  now appends an "Announce on X" block to its GitHub release notes with
+  a one-tap intent link composed from the CHANGELOG, and (when
+  `TYPEFULLY_API_KEY` is configured) queues a Typefully draft.
+
+### Fixed
+
+- **Web self-update no longer dead-ends on live sessions.** When an
+  in-app upgrade would interrupt running sessions, the gateway gates the
+  restart behind a confirmation (the sessions auto-resume). The web
+  About panel previously surfaced that gate as a raw error with no way
+  forward; it now shows an **"Upgrade anyway"** prompt with the live-
+  session count and proceeds on click.
+
 ## [v2.7.5] — 2026-06-11
 
 ### Fixed
