@@ -1133,6 +1133,9 @@ class _EmbedderModelField extends ConsumerStatefulWidget {
 class _EmbedderModelFieldState extends ConsumerState<_EmbedderModelField> {
   AsyncValue<EmbedderProbe> _probe = const AsyncValue.loading();
   bool _manual = false;
+  // Generation counter so a slow probe response can't overwrite a newer one
+  // (user edits base_url and re-probes before the first request returns).
+  int _probeGen = 0;
   late final TextEditingController _manualCtrl;
 
   @override
@@ -1140,6 +1143,16 @@ class _EmbedderModelFieldState extends ConsumerState<_EmbedderModelField> {
     super.initState();
     _manualCtrl = TextEditingController(text: widget.current);
     _runProbe();
+  }
+
+  @override
+  void didUpdateWidget(_EmbedderModelField old) {
+    super.didUpdateWidget(old);
+    // Keep the manual field in sync if `current` is set from outside this
+    // widget's own onChanged path (e.g. a future "reset to saved" action).
+    if (old.current != widget.current && _manualCtrl.text != widget.current) {
+      _manualCtrl.text = widget.current;
+    }
   }
 
   @override
@@ -1152,6 +1165,7 @@ class _EmbedderModelFieldState extends ConsumerState<_EmbedderModelField> {
   String get _apiKey => widget.apiKeyCtrl?.text ?? '';
 
   Future<void> _runProbe() async {
+    final gen = ++_probeGen;
     final base = _baseUrl;
     if (base.isEmpty) {
       setState(() => _probe = AsyncValue.data(
@@ -1163,10 +1177,11 @@ class _EmbedderModelFieldState extends ConsumerState<_EmbedderModelField> {
     try {
       final res =
           await ref.read(memoryApiProvider).probe(baseUrl: base, apiKey: _apiKey);
-      if (!mounted) return;
+      // Discard a stale response — the user re-probed a different URL meanwhile.
+      if (!mounted || gen != _probeGen) return;
       setState(() => _probe = AsyncValue.data(res));
     } on Object catch (e, st) {
-      if (!mounted) return;
+      if (!mounted || gen != _probeGen) return;
       setState(() => _probe = AsyncValue.error(e, st));
     }
   }
