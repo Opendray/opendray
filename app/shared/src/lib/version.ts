@@ -24,6 +24,12 @@ export interface SelfUpdateResponse {
   note?: string
   error?: string
   pending?: boolean
+  // needsForce + liveSessions accompany the 409 the gateway returns when
+  // live sessions would be interrupted by the restart. The body arrives
+  // via the thrown APIError (non-2xx), so callers read these off
+  // APIError.body to offer an "upgrade anyway" retry.
+  needsForce?: boolean
+  liveSessions?: number
 }
 
 export async function getVersionInfo(): Promise<VersionInfo> {
