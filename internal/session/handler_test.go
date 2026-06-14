@@ -19,6 +19,9 @@ type fakeSvc struct {
 	startErr  error
 	switchErr error
 	subCh     chan []byte
+	// lastCarryContext records the carry_context flag the handler
+	// forwarded on the most recent SwitchClaudeAccount call.
+	lastCarryContext bool
 }
 
 func newFakeSvc() *fakeSvc { return &fakeSvc{sessions: map[string]Session{}} }
@@ -114,7 +117,8 @@ func (f *fakeSvc) Subscribe(_ context.Context, id string) (<-chan []byte, func()
 	return f.subCh, func() {}, nil
 }
 
-func (f *fakeSvc) SwitchClaudeAccount(_ context.Context, id, accountID string) (Session, error) {
+func (f *fakeSvc) SwitchClaudeAccount(_ context.Context, id, accountID string, carryContext bool) (Session, error) {
+	f.lastCarryContext = carryContext
 	if f.switchErr != nil {
 		return Session{}, f.switchErr
 	}
@@ -530,6 +534,38 @@ func TestSwitchClaudeAccount_OK(t *testing.T) {
 	if s.ClaudeAccountID != "cla_new" {
 		t.Errorf("account_id=%q", s.ClaudeAccountID)
 	}
+}
+
+func TestSwitchClaudeAccount_CarryContextFlows(t *testing.T) {
+	t.Run("carry_context true is forwarded", func(t *testing.T) {
+		svc := newFakeSvc()
+		svc.sessions["s1"] = Session{ID: "s1", ProviderID: "claude", State: StateRunning}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/claude-account",
+			bytes.NewBufferString(`{"account_id":"cla_new","carry_context":true}`))
+		newRouter(svc).ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status=%d body=%s", rr.Code, rr.Body)
+		}
+		if !svc.lastCarryContext {
+			t.Error("expected carry_context=true forwarded to the service")
+		}
+	})
+
+	t.Run("omitted carry_context defaults to false", func(t *testing.T) {
+		svc := newFakeSvc()
+		svc.sessions["s1"] = Session{ID: "s1", ProviderID: "claude", State: StateRunning}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/claude-account",
+			bytes.NewBufferString(`{"account_id":"cla_new"}`))
+		newRouter(svc).ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status=%d", rr.Code)
+		}
+		if svc.lastCarryContext {
+			t.Error("expected carry_context to default to false when omitted")
+		}
+	})
 }
 
 func TestSwitchClaudeAccount_ClearBinding(t *testing.T) {

@@ -154,3 +154,33 @@ func ResumeClaudeSessionIDFromContext(ctx context.Context) string {
 	}
 	return ""
 }
+
+// carryoverContextCtxKey carries a block of prior-conversation text to
+// seed a freshly spawned session's system prompt. Set ONLY by
+// SwitchClaudeAccount when the operator opts into "carry context":
+// switching accounts can't --resume the old conversation (the UUID
+// isn't in the new account's registry), so instead we read the old
+// transcript and inject a recap via --append-system-prompt. It's a
+// one-shot — present only on the switch respawn, absent on later
+// restarts (which --resume the new account's own UUID, whose
+// transcript already contains the seeded recap).
+type carryoverContextCtxKey struct{}
+
+// WithCarryoverContext returns a derived context carrying the recap
+// text. Empty is a no-op so call sites (the common fresh/restart path)
+// needn't guard.
+func WithCarryoverContext(ctx context.Context, text string) context.Context {
+	if text == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, carryoverContextCtxKey{}, text)
+}
+
+// CarryoverContextFromContext returns the recap set by
+// WithCarryoverContext, or "" when this spawn carries no prior context.
+func CarryoverContextFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(carryoverContextCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}

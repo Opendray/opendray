@@ -36,7 +36,7 @@ type Service interface {
 	Resize(ctx context.Context, id string, cols, rows uint16) error
 	Subscribe(ctx context.Context, id string) (<-chan []byte, func(), error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
-	SwitchClaudeAccount(ctx context.Context, id, accountID string) (Session, error)
+	SwitchClaudeAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
@@ -512,7 +512,7 @@ func (h *Handlers) switchClaudeAccount(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	sess, err := h.svc.SwitchClaudeAccount(r.Context(), id, req.AccountID)
+	sess, err := h.svc.SwitchClaudeAccount(r.Context(), id, req.AccountID, req.CarryContext)
 	if err != nil {
 		h.respondError(w, err)
 		return

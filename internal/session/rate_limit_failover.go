@@ -88,7 +88,11 @@ func (m *Manager) tryRateLimitFailover(rs *runningSession, now time.Time) {
 		return
 	}
 
-	if _, err := m.SwitchClaudeAccount(ctx, sessID, target); err != nil {
+	// Automatic throttle failover keeps the clean-slate switch — no
+	// carry-context. The operator didn't opt in, and a rate-limit
+	// bounce shouldn't silently ship prior conversation to another
+	// account.
+	if _, err := m.SwitchClaudeAccount(ctx, sessID, target, false); err != nil {
 		m.log.Warn("auto-failover switch failed",
 			"session", sessID,
 			"from_account", currentAccountID,

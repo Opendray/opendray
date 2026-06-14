@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, ChevronDown, Loader2, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
@@ -41,9 +42,14 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
     ? current?.display_name || current?.name || session.claude_account_id
     : t('web.sessions.accountSwitcher.currentDefault')
 
+  // Carry-over toggle. When on, the switch seeds the new account's
+  // fresh session with a recap of the prior conversation (sent to the
+  // provider under the new account — see the helper text / confirm).
+  const [carryContext, setCarryContext] = useState(false)
+
   const mutation = useMutation({
     mutationFn: (accountId: string) =>
-      switchClaudeAccount(session.id, accountId),
+      switchClaudeAccount(session.id, accountId, carryContext),
     onSuccess: (next) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
       const account = next.claude_account_id
@@ -65,7 +71,10 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
 
   const pick = (accountId: string) => {
     if (accountId === (session.claude_account_id ?? '')) return
-    if (!confirm(t('web.sessions.accountSwitcher.confirmSwitch'))) {
+    const msg = carryContext
+      ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
+      : t('web.sessions.accountSwitcher.confirmSwitch')
+    if (!confirm(msg)) {
       return
     }
     mutation.mutate(accountId)
@@ -94,6 +103,33 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
           {t('web.sessions.accountSwitcher.menuTitle')}
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {/* Carry-over toggle. Stays open on click (preventDefault) so
+            the operator sets it before picking a destination account.
+            The subtitle is the consent surface for the cross-account
+            data flow. */}
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            setCarryContext((v) => !v)
+          }}
+          className="gap-2"
+        >
+          <Check
+            className={cn(
+              'size-3 shrink-0',
+              carryContext ? 'opacity-100' : 'opacity-0',
+            )}
+          />
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-[12px]">
+              {t('web.sessions.accountSwitcher.carryContext')}
+            </span>
+            <span className="text-[10px] text-muted-foreground whitespace-normal">
+              {t('web.sessions.accountSwitcher.carryContextHelp')}
+            </span>
+          </div>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={(e) => {
