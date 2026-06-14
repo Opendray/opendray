@@ -131,10 +131,10 @@ func scanTarget(row rowScanner) (TargetSpec, error) {
 func (s *store) InsertSchedule(ctx context.Context, sc Schedule) error {
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO backup_schedules
-			(id, target_id, interval_sec, retention, enabled, next_run_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $7)`,
+			(id, target_id, interval_sec, retention, enabled, kind, next_run_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
 		sc.ID, sc.TargetID, sc.IntervalSec, sc.Retention, sc.Enabled,
-		sc.NextRunAt, sc.CreatedAt)
+		string(sc.Kind.orDefault()), sc.NextRunAt, sc.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert schedule: %w", err)
 	}
@@ -268,19 +268,21 @@ func (s *store) ClaimDueSchedule(ctx context.Context) (Schedule, error) {
 }
 
 const scheduleSelectStmt = `
-	SELECT id, target_id, interval_sec, retention, enabled,
+	SELECT id, target_id, COALESCE(kind, 'db_only'), interval_sec, retention, enabled,
 	       last_run_at, next_run_at, created_at, updated_at
 	  FROM backup_schedules`
 
 func scanSchedule(row rowScanner) (Schedule, error) {
 	var (
 		sc        Schedule
+		kind      string
 		lastRunAt sql.NullTime
 	)
-	if err := row.Scan(&sc.ID, &sc.TargetID, &sc.IntervalSec, &sc.Retention,
+	if err := row.Scan(&sc.ID, &sc.TargetID, &kind, &sc.IntervalSec, &sc.Retention,
 		&sc.Enabled, &lastRunAt, &sc.NextRunAt, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 		return Schedule{}, err
 	}
+	sc.Kind = BackupKind(kind)
 	if lastRunAt.Valid {
 		t := lastRunAt.Time
 		sc.LastRunAt = &t
@@ -300,12 +302,12 @@ func (s *store) InsertBackup(ctx context.Context, b Backup) error {
 	}
 	_, err = s.pool.Exec(ctx, `
 		INSERT INTO backups
-			(id, schedule_id, target_id, status, triggered_by, started_at,
+			(id, schedule_id, target_id, status, triggered_by, kind, started_at,
 			 encrypted, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
 		b.ID, scheduleIDOrNil(b.ScheduleID), b.TargetID,
-		string(b.Status), string(b.TriggeredBy), b.StartedAt,
-		b.Encrypted, metaRaw)
+		string(b.Status), string(b.TriggeredBy), string(b.Kind.orDefault()),
+		b.StartedAt, b.Encrypted, metaRaw)
 	if err != nil {
 		return fmt.Errorf("insert backup: %w", err)
 	}
@@ -492,6 +494,7 @@ const backupSelectStmt = `
 	SELECT id, schedule_id,
 	       COALESCE(target_id, '') AS target_id,
 	       status, triggered_by,
+	       COALESCE(kind, 'db_only'),
 	       started_at, finished_at, bytes,
 	       COALESCE(sha256, ''),
 	       encrypted,
@@ -515,10 +518,11 @@ func scanBackup(row rowScanner) (Backup, error) {
 		finishedAt  sql.NullTime
 		status      string
 		triggeredBy string
+		kind        string
 		metaRaw     []byte
 	)
 	err := row.Scan(
-		&b.ID, &scheduleID, &b.TargetID, &status, &triggeredBy,
+		&b.ID, &scheduleID, &b.TargetID, &status, &triggeredBy, &kind,
 		&b.StartedAt, &finishedAt, &b.Bytes,
 		&b.SHA256, &b.Encrypted, &b.KeyFingerprint,
 		&b.TargetPath, &b.PGVersion, &b.OpendrayVersion, &b.GitSHA,
@@ -537,6 +541,7 @@ func scanBackup(row rowScanner) (Backup, error) {
 	}
 	b.Status = BackupStatus(status)
 	b.TriggeredBy = TriggeredBy(triggeredBy)
+	b.Kind = BackupKind(kind)
 	if len(metaRaw) > 0 {
 		_ = json.Unmarshal(metaRaw, &b.Metadata)
 	}

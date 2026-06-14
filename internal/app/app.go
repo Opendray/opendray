@@ -636,6 +636,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		ExportDir:     defaultBackupDir(cfg.Backup.ExportDir, "exports"),
 		PgDumpPath:    cfg.Backup.PgDumpPath,
 		PgRestorePath: cfg.Backup.PgRestorePath,
+		// full_instance bundles capture the vault + MCP secrets so a
+		// restore rebuilds a working instance, not just its DB.
+		VaultSources: []backup.VaultSource{
+			{Logical: "notes", Dir: notesRoot},
+			{Logical: "skills", Dir: skillsRoot},
+			{Logical: "mcp", Dir: mcpRoot},
+		},
+		SecretsFile: secretsFile,
 	}
 	liveBackup := backup.NewLiveBackup(bcfg, st.Pool(), cfg.Database.URL, cfg.FilePath, log)
 	if keyLoad.Passphrase != "" {

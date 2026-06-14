@@ -2,8 +2,10 @@ package backup
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -25,6 +27,14 @@ type Config struct {
 	ExportDir     string
 	PgDumpPath    string
 	PgRestorePath string
+	// VaultSources are the on-disk directories (notes/skills/mcp)
+	// captured into full_instance bundles. Empty for a db_only
+	// deployment. Restore maps each Logical back to a destination.
+	VaultSources []VaultSource
+	// SecretsFile is the absolute path to secrets.env (the MCP
+	// ${KEY} substitution file). Captured into full_instance
+	// bundles; empty disables it.
+	SecretsFile string
 }
 
 // ServiceDeps groups the secrets + pool + logger required to build
@@ -605,6 +615,7 @@ func (s *Service) redactTargetSpec(spec TargetSpec) TargetSpec {
 // CreateScheduleRequest is the body for CreateSchedule.
 type CreateScheduleRequest struct {
 	TargetID    string
+	Kind        BackupKind
 	IntervalSec int
 	Retention   int
 	Enabled     bool
@@ -633,6 +644,7 @@ func (s *Service) CreateSchedule(ctx context.Context, req CreateScheduleRequest)
 	sc := Schedule{
 		ID:          NewScheduleID(),
 		TargetID:    req.TargetID,
+		Kind:        req.Kind.orDefault(),
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,
@@ -668,6 +680,7 @@ func (s *Service) DeleteSchedule(ctx context.Context, id string) error {
 type RunBackupRequest struct {
 	TargetID      string
 	TriggeredBy   TriggeredBy
+	Kind          BackupKind
 	IncludeConfig bool
 	// ScheduleID, when non-empty, is written to the backup row so
 	// the UI can group scheduler-driven runs under their parent
@@ -712,14 +725,19 @@ func (s *Service) newBackupRow(req RunBackupRequest) Backup {
 	if req.TriggeredBy == "" {
 		req.TriggeredBy = TriggeredManual
 	}
+	kind := req.Kind.orDefault()
 	b := Backup{
 		ID:          NewBackupID(),
 		TargetID:    req.TargetID,
 		Status:      BackupPending,
 		TriggeredBy: req.TriggeredBy,
+		Kind:        kind,
 		StartedAt:   time.Now().UTC(),
 		Encrypted:   true,
-		Metadata:    map[string]any{"include_config": req.IncludeConfig},
+		Metadata: map[string]any{
+			"include_config": req.IncludeConfig || kind == KindFullInstance,
+			"kind":           string(kind),
+		},
 	}
 	if req.ScheduleID != "" {
 		id := req.ScheduleID
@@ -791,24 +809,72 @@ func (s *Service) runPipeline(ctx context.Context, b Backup, target BackupTarget
 	}
 	defer dumpFile.Close()
 
+	// A full_instance bundle always carries config.toml (you can't
+	// rebuild an instance without it), regardless of the request flag.
+	fullInstance := b.Kind == KindFullInstance
+	includeConfig = includeConfig || fullInstance
+
 	sources := []BundleSource{}
-	var cfgFile *os.File
 	if includeConfig && s.configPath != "" {
 		cf, err := os.Open(s.configPath)
 		if err != nil {
 			s.log.Warn("backup: skip config (open failed)",
 				"path", s.configPath, "err", err)
+		} else if cfgStat, statErr := cf.Stat(); statErr != nil {
+			// A bad size here would write a tar header that doesn't
+			// match the body and corrupt the bundle — skip instead.
+			_ = cf.Close()
+			s.log.Warn("backup: skip config (stat failed)",
+				"path", s.configPath, "err", statErr)
 		} else {
-			cfgFile = cf
-			defer cfgFile.Close()
-			cfgStat, _ := cfgFile.Stat()
+			defer cf.Close()
 			sources = append(sources, BundleSource{
 				Name: filepath.Base(s.configPath),
-				Body: cfgFile,
+				Body: cf,
 				Size: cfgStat.Size(),
 			})
 		}
 	}
+
+	// Full instance: the vault (notes/skills/mcp) and secrets.env, so a
+	// restore reconstructs a working instance and not just its DB.
+	if fullInstance && len(s.cfg.VaultSources) > 0 {
+		vtarName, vtarSize, err := s.packVaultToTemp()
+		if err != nil {
+			return err
+		}
+		defer os.Remove(vtarName)
+		vf, err := os.Open(vtarName)
+		if err != nil {
+			return fmt.Errorf("reopen vault tar: %w", err)
+		}
+		defer vf.Close()
+		sources = append(sources, BundleSource{Name: "vault.tar", Body: vf, Size: vtarSize})
+	}
+	if fullInstance && s.cfg.SecretsFile != "" {
+		sf, err := os.Open(s.cfg.SecretsFile)
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			// No secrets.env on this host — nothing to capture.
+		case err != nil:
+			s.log.Warn("backup: skip secrets.env (open failed)",
+				"path", s.cfg.SecretsFile, "err", err)
+		default:
+			if sStat, statErr := sf.Stat(); statErr != nil {
+				_ = sf.Close()
+				s.log.Warn("backup: skip secrets.env (stat failed)",
+					"path", s.cfg.SecretsFile, "err", statErr)
+			} else {
+				defer sf.Close()
+				sources = append(sources, BundleSource{
+					Name: "secrets.env",
+					Body: sf,
+					Size: sStat.Size(),
+				})
+			}
+		}
+	}
+
 	sources = append(sources, BundleSource{
 		Name: "dump.bin",
 		Body: dumpFile,
@@ -828,6 +894,14 @@ func (s *Service) runPipeline(ctx context.Context, b Backup, target BackupTarget
 		},
 	}
 
+	// WriteBundle streams every source body in this goroutine. The
+	// synchronous drain chain below (target.Put → cipher.Seal →
+	// bundleR) consumes the whole pipe before target.Put returns, so by
+	// the time runPipeline's deferred file closes / temp removals fire,
+	// the goroutine has finished reading every BundleSource. This
+	// ordering is load-bearing: target.Put MUST be synchronous (it is
+	// for every BackupTarget impl) — a lazy/early-cancelling Put would
+	// let a deferred Close race the still-reading goroutine.
 	bundleR, bundleW := io.Pipe()
 	go func() {
 		err := WriteBundle(bundleW, manifest, sources)
@@ -850,6 +924,33 @@ func (s *Service) runPipeline(ctx context.Context, b Backup, target BackupTarget
 		OpendrayVersion: info.Version,
 		GitSHA:          info.Commit,
 	})
+}
+
+// packVaultToTemp writes a vault tar to a sibling temp file in
+// LocalDir and returns its path + size. tar headers require a known
+// size up front, so (like pg_dump) we buffer to a file first. The
+// caller owns removing the returned path.
+func (s *Service) packVaultToTemp() (name string, size int64, err error) {
+	tmp, err := os.CreateTemp(s.cfg.LocalDir, ".vault-*.tar")
+	if err != nil {
+		return "", 0, fmt.Errorf("create tmp vault tar: %w", err)
+	}
+	name = tmp.Name()
+	if perr := PackVault(tmp, s.cfg.VaultSources); perr != nil {
+		_ = tmp.Close()
+		_ = os.Remove(name)
+		return "", 0, fmt.Errorf("pack vault: %w", perr)
+	}
+	if cerr := tmp.Close(); cerr != nil {
+		_ = os.Remove(name)
+		return "", 0, fmt.Errorf("close vault tar: %w", cerr)
+	}
+	st, err := os.Stat(name)
+	if err != nil {
+		_ = os.Remove(name)
+		return "", 0, fmt.Errorf("stat vault tar: %w", err)
+	}
+	return name, st.Size(), nil
 }
 
 // ─── reads / lifecycle ────────────────────────────────────────────

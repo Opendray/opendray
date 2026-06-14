@@ -84,6 +84,7 @@ func (s *Scheduler) tick(ctx context.Context) {
 	b, err := s.svc.RunBackupSync(ctx, RunBackupRequest{
 		TargetID:      sc.TargetID,
 		TriggeredBy:   TriggeredScheduler,
+		Kind:          sc.Kind,
 		IncludeConfig: true,
 		ScheduleID:    sc.ID,
 	})

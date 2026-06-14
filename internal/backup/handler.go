@@ -131,6 +131,7 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		TargetID      string `json:"target_id"`
+		Kind          string `json:"kind"`
 		IncludeConfig bool   `json:"include_config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
@@ -140,9 +141,15 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	if req.TargetID == "" {
 		req.TargetID = "local"
 	}
+	kind, err := ParseBackupKind(req.Kind)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
 	b, err := h.live.Service().RunBackupNow(r.Context(), RunBackupRequest{
 		TargetID:      req.TargetID,
 		TriggeredBy:   TriggeredAPI,
+		Kind:          kind,
 		IncludeConfig: req.IncludeConfig,
 	})
 	if err != nil {
@@ -232,6 +239,7 @@ func (h *Handlers) getSchedule(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		TargetID    string `json:"target_id"`
+		Kind        string `json:"kind"`
 		IntervalSec int    `json:"interval_sec"`
 		Retention   int    `json:"retention"`
 		Enabled     bool   `json:"enabled"`
@@ -243,8 +251,14 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	if req.Retention == 0 {
 		req.Retention = 7
 	}
+	kind, err := ParseBackupKind(req.Kind)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
 	sc, err := h.live.Service().CreateSchedule(r.Context(), CreateScheduleRequest{
 		TargetID:    req.TargetID,
+		Kind:        kind,
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,

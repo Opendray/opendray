@@ -17,6 +17,7 @@ package backup
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -41,7 +42,45 @@ const (
 	TriggeredScheduler TriggeredBy = "scheduler"
 	TriggeredManual    TriggeredBy = "manual"
 	TriggeredAPI       TriggeredBy = "api"
+	// TriggeredPreMigrate marks a snapshot taken automatically just
+	// before schema migrations run, so an upgrade is always preceded
+	// by a restorable point.
+	TriggeredPreMigrate TriggeredBy = "pre_migrate"
 )
+
+// BackupKind is how much of an instance a backup captures.
+type BackupKind string
+
+const (
+	// KindDBOnly is a plain encrypted pg_dump — the historical default.
+	KindDBOnly BackupKind = "db_only"
+	// KindFullInstance additionally bundles the vault (notes/skills/mcp),
+	// secrets.env and config.toml: everything needed to rebuild a
+	// working instance on a fresh machine, not just its database.
+	KindFullInstance BackupKind = "full_instance"
+)
+
+// orDefault normalises an empty kind to the historical default so old
+// rows and callers that don't set a kind keep behaving as db_only.
+func (k BackupKind) orDefault() BackupKind {
+	if k == "" {
+		return KindDBOnly
+	}
+	return k
+}
+
+// ParseBackupKind validates a kind string from an API request,
+// defaulting empty to db_only and rejecting unknown values.
+func ParseBackupKind(s string) (BackupKind, error) {
+	switch BackupKind(s) {
+	case "", KindDBOnly:
+		return KindDBOnly, nil
+	case KindFullInstance:
+		return KindFullInstance, nil
+	default:
+		return "", fmt.Errorf("backup: unknown kind %q", s)
+	}
+}
 
 // TargetKind identifies the storage backend behind a BackupTarget.
 type TargetKind string
@@ -85,6 +124,7 @@ type Backup struct {
 	TargetID        string         `json:"target_id"`
 	Status          BackupStatus   `json:"status"`
 	TriggeredBy     TriggeredBy    `json:"triggered_by"`
+	Kind            BackupKind     `json:"kind"`
 	StartedAt       time.Time      `json:"started_at"`
 	FinishedAt      *time.Time     `json:"finished_at,omitempty"`
 	Bytes           int64          `json:"bytes"`
@@ -103,6 +143,7 @@ type Backup struct {
 type Schedule struct {
 	ID          string     `json:"id"`
 	TargetID    string     `json:"target_id"`
+	Kind        BackupKind `json:"kind"`
 	IntervalSec int        `json:"interval_sec"`
 	Retention   int        `json:"retention"`
 	Enabled     bool       `json:"enabled"`
