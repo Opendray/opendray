@@ -1,47 +1,62 @@
 name: Announce release
 
-# Fires after release.yml has published the GitHub release. Pulls the
-# relevant CHANGELOG section, drafts a tweet from its first ### Added /
-# ### Fixed bullets, and posts the draft + an intent URL as a comment
-# on the release. That keeps a one-tap "Tweet this" path on the release
-# page so you don't have to copy-paste from CHANGELOG every cut.
+# Fires after the Release workflow finishes. Pulls the relevant
+# CHANGELOG section, drafts a tweet from its first ### Added / ### Fixed
+# bullets, and appends an "Announce on X" block (with a one-tap intent
+# URL) to the release notes, so you don't have to copy-paste from
+# CHANGELOG every cut.
+#
+# IMPORTANT — why `workflow_run`, not `release: published`:
+# release.yml creates the GitHub release with the default GITHUB_TOKEN.
+# GitHub deliberately does NOT fire `release`/`push`/etc. events for
+# actions taken by GITHUB_TOKEN (recursion guard), so a `release:
+# published` trigger here never ran on real releases. `workflow_run`
+# is the documented escape hatch: it fires when the named workflow
+# completes regardless of the token that drove it.
 #
 # Optionally posts the same draft to Typefully if TYPEFULLY_API_KEY is
 # set in repo secrets — the draft lands in your queue and you approve
 # it from the phone app. With no API key configured, the workflow
-# still produces the release comment so the manual path always works.
+# still appends the intent URL so the manual path always works.
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to re-announce (e.g. v2.7.5). Must already be released.'
+        description: 'Tag to re-announce (e.g. v2.7.6). Must already be released.'
         required: true
         type: string
 
 permissions:
-  contents: read
-  # Needed to comment on the release with the tweet draft.
-  issues: write
-  pull-requests: write
+  contents: write
 
 jobs:
   draft:
     name: Draft + announce
     runs-on: ubuntu-latest
+    # On the workflow_run path, only proceed for a SUCCESSFUL release of
+    # a tag (head_branch is the tag name for a tag-push-triggered run).
+    # The manual dispatch path has no workflow_run context, so allow it
+    # through unconditionally.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     steps:
       - uses: actions/checkout@v5
 
       - name: Resolve tag + extract CHANGELOG section
         id: extract
         env:
-          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+          TAG: ${{ github.event.inputs.tag || github.event.workflow_run.head_branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           if [ -z "${TAG:-}" ]; then
-            echo "::error::no tag resolved from release or workflow input"
+            echo "::error::no tag resolved from workflow_run or workflow input"
             exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -56,8 +71,8 @@ jobs:
           ' CHANGELOG.md || true)
 
           if [ -z "$section" ]; then
-            echo "::warning::no CHANGELOG section found for $TAG — falling back to release body"
-            section="${{ github.event.release.body }}"
+            echo "::warning::no CHANGELOG section found for $TAG — falling back to gh release body"
+            section=$(gh release view "$TAG" --json body -q .body 2>/dev/null || true)
           fi
 
           # Stash for the next steps via a file (multi-line outputs are
@@ -70,7 +85,6 @@ jobs:
         env:
           TAG: ${{ steps.extract.outputs.tag }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-          RELEASE_URL: ${{ github.event.release.html_url }}
         run: |
           set -euo pipefail
           # First non-empty bullet under ### Added or ### Fixed becomes
@@ -96,7 +110,7 @@ jobs:
           # Trim trailing punctuation so we can add our own period.
           lede=$(echo "$lede" | sed -E 's/[[:punct:]]*$//')
 
-          url="${RELEASE_URL:-$REPO_URL/releases/tag/$TAG}"
+          url="$REPO_URL/releases/tag/$TAG"
           tweet=$(printf 'opendray %s shipped — %s.\n\n%s' "$TAG" "$lede" "$url")
 
           # Compose intent URL (one-tap "Tweet this" link the release
@@ -146,8 +160,20 @@ jobs:
           TYPEFULLY_URL: ${{ steps.typefully.outputs.draft_url }}
         run: |
           set -euo pipefail
-          # Read existing release notes; we append, never replace.
-          existing=$(gh release view "$TAG" --json body -q .body)
+          # Read existing release notes, then strip any prior
+          # "Announce on X" block plus the trailing --- separator and
+          # blank lines before it, so a re-dispatch refreshes rather
+          # than stacks. Stops buffering at the announce header (exit
+          # runs the END block with the lines collected so far).
+          existing=$(gh release view "$TAG" --json body -q .body | awk '
+            /^## Announce on X$/ { exit }
+            { lines[NR] = $0; n = NR }
+            END {
+              while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--
+              if (n > 0 && lines[n] == "---") n--
+              while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--
+              for (i = 1; i <= n; i++) print lines[i]
+            }')
 
           {
             echo "$existing"
