@@ -1,8 +1,7 @@
-// ProjectWorkspace — a cwd picker that opens ProjectScreen for one project.
-// Reused by two routes (Experience Flywheel deconflation):
-//   /notes          → variant="notes"  (the project's official doc)
-//   /memory/project → variant="memory" (the project's memory hygiene)
-// The picker navigates within its own route so the two never bleed together.
+// ProjectWorkspace — a cwd picker that opens the Cortex ProjectScreen
+// for one project. Backs the /cortex/project route: pick (or browse to)
+// a working directory, then render that project's unified Cortex
+// workspace (doc + journal + inbox + memory hygiene).
 
 import { useState } from 'react'
 import { useSearch, useNavigate } from '@tanstack/react-router'
@@ -16,15 +15,7 @@ import { ProjectScreen } from '@/components/project/ProjectScreen'
 import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 import { listProjects } from '@/lib/projectDocs'
 
-type RoutePath = '/cortex/project' | '/cortex/memory/project'
-
-function ProjectWorkspace({
-  variant,
-  routePath,
-}: {
-  variant: 'notes' | 'memory'
-  routePath: RoutePath
-}) {
+function ProjectWorkspace() {
   const { t } = useTranslation()
   const search = useSearch({ strict: false }) as { cwd?: string }
   const navigate = useNavigate()
@@ -40,9 +31,10 @@ function ProjectWorkspace({
   })
   const knownCwds = (projectsQuery.data ?? []).map((p) => p.cwd)
 
-  const open = (cwd: string) => navigate({ to: routePath, search: { cwd } })
+  const open = (cwd: string) =>
+    navigate({ to: '/cortex/project', search: { cwd } })
 
-  if (search.cwd) return <ProjectScreen cwd={search.cwd} variant={variant} />
+  if (search.cwd) return <ProjectScreen cwd={search.cwd} />
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-6">
@@ -114,15 +106,9 @@ function ProjectWorkspace({
   )
 }
 
-// NotesPage — the Cortex project workspace (flywheel rung ②: the
-// project's official doc, blueprint-shaped).
+// NotesPage — the Cortex project workspace, mounted at /cortex/project.
 export function NotesPage() {
-  return <ProjectWorkspace variant="notes" routePath="/cortex/project" />
-}
-
-// ProjectMemoryPage — the project's memory hygiene (flywheel rung ①, per cwd).
-export function ProjectPage() {
-  return <ProjectWorkspace variant="memory" routePath="/cortex/memory/project" />
+  return <ProjectWorkspace />
 }
 
 // Heuristic: a real project cwd has at least two non-empty path segments;

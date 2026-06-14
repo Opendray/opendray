@@ -13,28 +13,20 @@ import 'package:opendray/features/cortex/blueprint_editor_screen.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
-// Project screen — surfaces memory layers 2-4 (goal / plan / journal)
-// plus the proposal inbox. cwd picker reuses the project scope-keys
-// endpoint from memory so the project list stays consistent with the
-// Memory tab.
-//
-// Layout: cwd picker at top, 4 tabs underneath (Goal / Plan / Journal
-// / Inbox). Wide tabs save the user a button-press compared to a
-// scrollable list of sub-pages.
+// Project screen — the Cortex project workspace: the project's official
+// doc (overview/goal/plan/tech/activity) plus the journal, the proposal
+// inbox, and a memory-hygiene tab (health/conflicts/archived). The cwd
+// picker reuses the project scope-keys endpoint so the list stays
+// consistent with the Memory tab. One unified surface — no legacy
+// memory-only variant (web parity).
 class ProjectScreen extends ConsumerStatefulWidget {
-  const ProjectScreen({super.key, this.initialCwd, this.variant = 'notes'});
+  const ProjectScreen({super.key, this.initialCwd});
 
   /// When set, the screen jumps straight to that cwd's project view
   /// instead of letting the operator pick from the dropdown. Used
   /// when entering from a Session detail screen that already knows
   /// which project the session is bound to.
   final String? initialCwd;
-
-  /// 'notes' → the project's official doc (goal/plan/tech/activity/journal/
-  /// inbox); 'memory' → its memory hygiene (health/conflicts/archived).
-  /// Deconflated per the Experience Flywheel so Notes and Memory never embed
-  /// each other (web parity).
-  final String variant;
 
   @override
   ConsumerState<ProjectScreen> createState() => _ProjectScreenState();
@@ -43,9 +35,8 @@ class ProjectScreen extends ConsumerStatefulWidget {
 class _ProjectScreenState extends ConsumerState<ProjectScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
-  bool get _isMemory => widget.variant == 'memory';
-  // notes tabs: Overview Goal Plan Tech Activity Journal Inbox → Inbox is
-  // index 6 (the proposal banner taps to it). memory variant has no inbox.
+  // Tabs: Overview Goal Plan Tech Activity Journal Inbox Hygiene → Inbox is
+  // index 6 (the proposal banner taps to it).
   int get _inboxTabIndex => 6;
   AsyncValue<List<String>> _projectKeys = const AsyncValue.loading();
   String? _selectedKey;
@@ -62,9 +53,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   @override
   void initState() {
     super.initState();
-    // notes = 7 tabs (overview/goal/plan/tech/activity/journal/inbox);
-    // memory = 3 tabs (health/conflicts/archived).
-    _tabs = TabController(length: _isMemory ? 3 : 7, vsync: this);
+    // 8 tabs: overview/goal/plan/tech/activity/journal/inbox/hygiene
+    // (hygiene rolls up health/conflicts/archived via a nested controller).
+    _tabs = TabController(length: 8, vsync: this);
     _loadKeys();
   }
 
@@ -315,60 +306,49 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         bottom: TabBar(
           controller: _tabs,
           isScrollable: true,
-          tabs: _isMemory
-              ? const [
-                  Tab(text: 'Health'),
-                  Tab(text: 'Conflicts'),
-                  Tab(text: 'Archived'),
-                ]
-              : const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Goal'),
-                  Tab(text: 'Plan'),
-                  Tab(text: 'Tech'),
-                  Tab(text: 'Activity'),
-                  Tab(text: 'Journal'),
-                  Tab(text: 'Inbox'),
-                ],
+          tabs: const [
+            Tab(text: 'Overview'),
+            Tab(text: 'Goal'),
+            Tab(text: 'Plan'),
+            Tab(text: 'Tech'),
+            Tab(text: 'Activity'),
+            Tab(text: 'Journal'),
+            Tab(text: 'Inbox'),
+            Tab(text: 'Hygiene'),
+          ],
         ),
       ),
       body: Column(
         children: [
           _cwdPicker(),
-          // Lifecycle belongs to the project (Notes) view, not memory hygiene.
-          if (!_isMemory && _selectedKey != null && _selectedKey!.isNotEmpty)
+          if (_selectedKey != null && _selectedKey!.isNotEmpty)
             _LifecycleBar(cwd: _selectedKey!),
           const SizedBox(height: 8),
           Expanded(
             child: TabBarView(
               controller: _tabs,
-              children: _isMemory
-                  ? [
-                      _healthTab(),
-                      _conflictsTab(),
-                      _archivedTab(),
-                    ]
-                  : [
-                      _overviewTab(),
-                      _docTab('goal'),
-                      _docTab('plan'),
-                      _readonlyDocTab(
-                        'tech_stack',
-                        emptyText: 'No tech_stack scan yet. '
-                            'Triggered automatically on every session spawn '
-                            '(refreshes every 6h). You can force a refresh '
-                            'via POST /api/v1/project-scan/run.',
-                      ),
-                      _readonlyDocTab(
-                        'recent_activity',
-                        emptyText: 'No git activity summary yet. '
-                            'Generated by the LLM librarian — refreshes '
-                            'automatically every 12h, or you can force it '
-                            'via POST /api/v1/git-activity/run.',
-                      ),
-                      _journalTab(),
-                      _inboxTab(),
-                    ],
+              children: [
+                _overviewTab(),
+                _docTab('goal'),
+                _docTab('plan'),
+                _readonlyDocTab(
+                  'tech_stack',
+                  emptyText: 'No tech_stack scan yet. '
+                      'Triggered automatically on every session spawn '
+                      '(refreshes every 6h). You can force a refresh '
+                      'via POST /api/v1/project-scan/run.',
+                ),
+                _readonlyDocTab(
+                  'recent_activity',
+                  emptyText: 'No git activity summary yet. '
+                      'Generated by the LLM librarian — refreshes '
+                      'automatically every 12h, or you can force it '
+                      'via POST /api/v1/git-activity/run.',
+                ),
+                _journalTab(),
+                _inboxTab(),
+                _hygieneTab(),
+              ],
             ),
           ),
         ],
@@ -1135,6 +1115,36 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   // ── M-PA Health tab ───────────────────────────────────────────
 
+  // _hygieneTab rolls the three memory-hygiene sub-views (health /
+  // conflicts / archived) into one top-level tab, mirroring the web Cortex
+  // workspace's "Hygiene" tab. A nested controller gives the three their own
+  // sub-tabs without bloating the main tab strip.
+  Widget _hygieneTab() {
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        children: [
+          const TabBar(
+            tabs: [
+              Tab(text: 'Health'),
+              Tab(text: 'Conflicts'),
+              Tab(text: 'Archived'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _healthTab(),
+                _conflictsTab(),
+                _archivedTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _healthTab() {
     if (_selectedKey == null) {
       return Center(child: Text(t.project.pickFirst));
@@ -1357,8 +1367,9 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   // M-PD — switch the Project tab bar to plan / goal so the
   // operator can edit the doc that's currently in conflict with
   // a fact. Tab indices follow the order declared in build():
-  // Health(0) / Goal(1) / Plan(2) / Tech(3) / Activity(4) /
-  // Journal(5) / Inbox(6) / Conflicts(7) / Archived(8).
+  // Overview(0) / Goal(1) / Plan(2) / Tech(3) / Activity(4) /
+  // Journal(5) / Inbox(6) / Hygiene(7). Health/Conflicts/Archived
+  // are nested sub-tabs inside Hygiene (its own DefaultTabController).
   void _jumpToLayerTab(ConflictLayer layer) {
     switch (layer) {
       case ConflictLayer.plan:

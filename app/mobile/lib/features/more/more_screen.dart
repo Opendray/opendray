@@ -98,7 +98,7 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.flag_outlined,
             title: t.more.items.projectMemory.title,
             subtitle: t.more.items.projectMemory.subtitle,
-            onTap: () => _push(context, const ProjectScreen(variant: 'memory')),
+            onTap: () => _push(context, const ProjectScreen()),
           ),
           _MenuTile(
             icon: Icons.inventory_2_outlined,

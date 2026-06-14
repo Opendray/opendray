@@ -18,7 +18,7 @@ class NotesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const ProjectScreen(variant: 'notes');
+    return const ProjectScreen();
   }
 }
 

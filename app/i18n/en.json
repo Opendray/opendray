@@ -214,8 +214,24 @@
           "search": "Search",
           "tasks": "Tasks",
           "history": "History",
-          "notes": "Notes",
-          "memory": "Memory"
+          "vault": "Vault",
+          "cortex": "Cortex"
+        },
+        "vaultPanel": {
+          "open": "Open Vault"
+        },
+        "cortexPanel": {
+          "noCwd": "Session has no cwd — Cortex features need a working directory.",
+          "open": "Open Cortex workspace",
+          "docs": "Docs",
+          "journal": "Journal",
+          "inbox": "Inbox",
+          "archived": "Archived",
+          "pending": "pending",
+          "goal": "Goal",
+          "plan": "Plan",
+          "latestJournal": "Latest journal",
+          "empty": "No Cortex memory captured yet for this project. Spawn a session or set a goal to populate."
         }
       },
       "ended": {
@@ -239,14 +255,6 @@
         "createdToast": "Directory created",
         "mkdirFailedToast": "Mkdir failed",
         "homeFailedToast": "Failed to read home"
-      },
-      "notes": {
-        "cortexDoc": {
-          "title": "Project doc (Cortex)",
-          "hint": "The project's official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.",
-          "open": "Open workspace",
-          "empty": "empty"
-        }
       }
     },
     "memory": {
@@ -3134,8 +3142,14 @@
           "git": "Git",
           "tasks": "Tasks",
           "history": "History",
-          "notes": "Notes"
+          "vault": "Vault",
+          "cortex": "Cortex"
         }
+      },
+      "cortex": {
+        "title": "Cortex workspace",
+        "blurb": "Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.",
+        "open": "Open Cortex workspace"
       },
       "shared": {
         "refresh": "Refresh",

@@ -2305,7 +2305,6 @@ class TranslationsWebSessionsEn {
 	late final TranslationsWebSessionsInspectorEn inspector = TranslationsWebSessionsInspectorEn.internal(_root);
 	late final TranslationsWebSessionsEndedEn ended = TranslationsWebSessionsEndedEn.internal(_root);
 	late final TranslationsWebSessionsFileBrowserEn fileBrowser = TranslationsWebSessionsFileBrowserEn.internal(_root);
-	late final TranslationsWebSessionsNotesEn notes = TranslationsWebSessionsNotesEn.internal(_root);
 }
 
 // Path: web.memory
@@ -3705,6 +3704,7 @@ class TranslationsSessionsInspectorEn {
 
 	// Translations
 	late final TranslationsSessionsInspectorShellEn shell = TranslationsSessionsInspectorShellEn.internal(_root);
+	late final TranslationsSessionsInspectorCortexEn cortex = TranslationsSessionsInspectorCortexEn.internal(_root);
 	late final TranslationsSessionsInspectorSharedEn shared = TranslationsSessionsInspectorSharedEn.internal(_root);
 	late final TranslationsSessionsInspectorHistoryEn history = TranslationsSessionsInspectorHistoryEn.internal(_root);
 	late final TranslationsSessionsInspectorFilesEn files = TranslationsSessionsInspectorFilesEn.internal(_root);
@@ -6148,6 +6148,8 @@ class TranslationsWebSessionsInspectorEn {
 
 	// Translations
 	late final TranslationsWebSessionsInspectorTabsEn tabs = TranslationsWebSessionsInspectorTabsEn.internal(_root);
+	late final TranslationsWebSessionsInspectorVaultPanelEn vaultPanel = TranslationsWebSessionsInspectorVaultPanelEn.internal(_root);
+	late final TranslationsWebSessionsInspectorCortexPanelEn cortexPanel = TranslationsWebSessionsInspectorCortexPanelEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -6220,16 +6222,6 @@ class TranslationsWebSessionsFileBrowserEn {
 
 	/// en: 'Failed to read home'
 	String get homeFailedToast => 'Failed to read home';
-}
-
-// Path: web.sessions.notes
-class TranslationsWebSessionsNotesEn {
-	TranslationsWebSessionsNotesEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-	late final TranslationsWebSessionsNotesCortexDocEn cortexDoc = TranslationsWebSessionsNotesCortexDocEn.internal(_root);
 }
 
 // Path: web.conflicts.confirmDelete
@@ -11383,6 +11375,24 @@ class TranslationsSessionsInspectorShellEn {
 	late final TranslationsSessionsInspectorShellTabsEn tabs = TranslationsSessionsInspectorShellTabsEn.internal(_root);
 }
 
+// Path: sessions.inspector.cortex
+class TranslationsSessionsInspectorCortexEn {
+	TranslationsSessionsInspectorCortexEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cortex workspace'
+	String get title => 'Cortex workspace';
+
+	/// en: 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.'
+	String get blurb => 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.';
+
+	/// en: 'Open Cortex workspace'
+	String get open => 'Open Cortex workspace';
+}
+
 // Path: sessions.inspector.shared
 class TranslationsSessionsInspectorSharedEn {
 	TranslationsSessionsInspectorSharedEn.internal(this._root);
@@ -12711,32 +12721,65 @@ class TranslationsWebSessionsInspectorTabsEn {
 	/// en: 'History'
 	String get history => 'History';
 
-	/// en: 'Notes'
-	String get notes => 'Notes';
+	/// en: 'Vault'
+	String get vault => 'Vault';
 
-	/// en: 'Memory'
-	String get memory => 'Memory';
+	/// en: 'Cortex'
+	String get cortex => 'Cortex';
 }
 
-// Path: web.sessions.notes.cortexDoc
-class TranslationsWebSessionsNotesCortexDocEn {
-	TranslationsWebSessionsNotesCortexDocEn.internal(this._root);
+// Path: web.sessions.inspector.vaultPanel
+class TranslationsWebSessionsInspectorVaultPanelEn {
+	TranslationsWebSessionsInspectorVaultPanelEn.internal(this._root);
 
 	final Translations _root; // ignore: unused_field
 
 	// Translations
 
-	/// en: 'Project doc (Cortex)'
-	String get title => 'Project doc (Cortex)';
+	/// en: 'Open Vault'
+	String get open => 'Open Vault';
+}
 
-	/// en: 'The project's official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.'
-	String get hint => 'The project\'s official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.';
+// Path: web.sessions.inspector.cortexPanel
+class TranslationsWebSessionsInspectorCortexPanelEn {
+	TranslationsWebSessionsInspectorCortexPanelEn.internal(this._root);
 
-	/// en: 'Open workspace'
-	String get open => 'Open workspace';
+	final Translations _root; // ignore: unused_field
 
-	/// en: 'empty'
-	String get empty => 'empty';
+	// Translations
+
+	/// en: 'Session has no cwd — Cortex features need a working directory.'
+	String get noCwd => 'Session has no cwd — Cortex features need a working directory.';
+
+	/// en: 'Open Cortex workspace'
+	String get open => 'Open Cortex workspace';
+
+	/// en: 'Docs'
+	String get docs => 'Docs';
+
+	/// en: 'Journal'
+	String get journal => 'Journal';
+
+	/// en: 'Inbox'
+	String get inbox => 'Inbox';
+
+	/// en: 'Archived'
+	String get archived => 'Archived';
+
+	/// en: 'pending'
+	String get pending => 'pending';
+
+	/// en: 'Goal'
+	String get goal => 'Goal';
+
+	/// en: 'Plan'
+	String get plan => 'Plan';
+
+	/// en: 'Latest journal'
+	String get latestJournal => 'Latest journal';
+
+	/// en: 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.'
+	String get empty => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -16016,8 +16059,11 @@ class TranslationsSessionsInspectorShellTabsEn {
 	/// en: 'History'
 	String get history => 'History';
 
-	/// en: 'Notes'
-	String get notes => 'Notes';
+	/// en: 'Vault'
+	String get vault => 'Vault';
+
+	/// en: 'Cortex'
+	String get cortex => 'Cortex';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -16294,8 +16340,20 @@ extension on Translations {
 			'web.sessions.inspector.tabs.search' => 'Search',
 			'web.sessions.inspector.tabs.tasks' => 'Tasks',
 			'web.sessions.inspector.tabs.history' => 'History',
-			'web.sessions.inspector.tabs.notes' => 'Notes',
-			'web.sessions.inspector.tabs.memory' => 'Memory',
+			'web.sessions.inspector.tabs.vault' => 'Vault',
+			'web.sessions.inspector.tabs.cortex' => 'Cortex',
+			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
+			'web.sessions.inspector.cortexPanel.noCwd' => 'Session has no cwd — Cortex features need a working directory.',
+			'web.sessions.inspector.cortexPanel.open' => 'Open Cortex workspace',
+			'web.sessions.inspector.cortexPanel.docs' => 'Docs',
+			'web.sessions.inspector.cortexPanel.journal' => 'Journal',
+			'web.sessions.inspector.cortexPanel.inbox' => 'Inbox',
+			'web.sessions.inspector.cortexPanel.archived' => 'Archived',
+			'web.sessions.inspector.cortexPanel.pending' => 'pending',
+			'web.sessions.inspector.cortexPanel.goal' => 'Goal',
+			'web.sessions.inspector.cortexPanel.plan' => 'Plan',
+			'web.sessions.inspector.cortexPanel.latestJournal' => 'Latest journal',
+			'web.sessions.inspector.cortexPanel.empty' => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -16314,10 +16372,6 @@ extension on Translations {
 			'web.sessions.fileBrowser.createdToast' => 'Directory created',
 			'web.sessions.fileBrowser.mkdirFailedToast' => 'Mkdir failed',
 			'web.sessions.fileBrowser.homeFailedToast' => 'Failed to read home',
-			'web.sessions.notes.cortexDoc.title' => 'Project doc (Cortex)',
-			'web.sessions.notes.cortexDoc.hint' => 'The project\'s official document — read-only here; open the Cortex workspace to edit, chat, or reshape its blueprint.',
-			'web.sessions.notes.cortexDoc.open' => 'Open workspace',
-			'web.sessions.notes.cortexDoc.empty' => 'empty',
 			'web.memory.title' => 'Memory',
 			'web.memory.subtitle' => 'Browse, search and edit memories agents have stored via the opendray-memory MCP server.',
 			'web.memory.navProject' => 'Project',
@@ -16615,6 +16669,8 @@ extension on Translations {
 			'web.project.lifecycle.activate' => 'Activate',
 			'web.project.lifecycle.pause' => 'Pause',
 			'web.project.lifecycle.archive' => 'Archive',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.lifecycle.idleSuggest' => 'Idle — consider archiving',
 			'web.project.lifecycle.idleHint' => ({required Object days}) => 'No activity for ${days} days',
 			'web.project.lifecycle.failedToast' => 'Could not change project status',
@@ -16623,8 +16679,6 @@ extension on Translations {
 			'web.project.lifecycle.applied.archived' => 'Project archived',
 			'web.project.lifecycle.tooltip.badge' => 'Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.',
 			'web.project.lifecycle.tooltip.activate' => 'Re-activate: inject into new sessions and resume AI maintenance.',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.lifecycle.tooltip.pause' => 'Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.',
 			'web.project.lifecycle.tooltip.archive' => 'Archive: shelve this project — frozen and hidden from routine views.',
 			'web.project.docMeta.maintainer.coauthored' => 'You maintain · AI proposes',
@@ -17129,6 +17183,8 @@ extension on Translations {
 			'web.channels.setup.copyHide' => 'Hide',
 			'web.channels.setup.copyShow' => 'Show',
 			'web.channels.setup.copyLabelToast' => ({required Object label}) => '${label} copied',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.setup.copyCode' => 'Copy',
 			'web.channels.setup.copied' => 'Copied',
 			'web.channels.setup.codeCopiedToast' => 'Code copied',
@@ -17137,8 +17193,6 @@ extension on Translations {
 			'web.integrations.register' => 'Register',
 			'web.integrations.loading' => 'Loading…',
 			'web.integrations.tabs.registered' => 'Registered',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.tabs.console' => 'Reverse proxy',
 			'web.integrations.empty.title' => 'No integrations yet',
 			'web.integrations.empty.description' => 'Register an external app to give it a scoped API key. Its code stays out of this repo.',
@@ -17643,6 +17697,8 @@ extension on Translations {
 			'web.serverSettings.loadFailed' => ({required Object message}) => 'Failed to load: ${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray was started without a -config flag. Settings are loaded from environment variables only and cannot be edited here.',
 			'web.serverSettings.resetButton' => 'Reset',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.resetButtonTitle' => 'Discard unsaved changes in this section',
 			'web.serverSettings.resetConfirm' => ({required Object section}) => 'Reset "${section}" to last-saved values?',
 			'web.serverSettings.badgeRestartRequired' => 'restart required',
@@ -17651,8 +17707,6 @@ extension on Translations {
 			'web.serverSettings.saveToastTitle' => 'Settings saved',
 			'web.serverSettings.saveToastDesc' => 'Click Restart to apply.',
 			'web.serverSettings.saveErrorTitle' => 'Save failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.dangerousConfirm' => 'You changed listen address / admin user / admin password. After restart you may need to re-authenticate or use the new address. Continue?',
 			'web.serverSettings.unsavedHint' => 'You have unsaved changes',
 			'web.serverSettings.savedHint' => 'All changes saved',
@@ -18157,6 +18211,8 @@ extension on Translations {
 			'web.knowledge.scopes.domain' => 'Domain',
 			'web.knowledge.kb.tab' => 'Knowledge Base',
 			'web.knowledge.kb.graphTab' => 'Graph',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} nodes · ${edges} links',
 			'web.knowledge.kb.global' => 'Global',
 			'web.knowledge.kb.projectHandbook' => 'Project handbook',
@@ -18165,8 +18221,6 @@ extension on Translations {
 			'web.knowledge.kb.edit' => 'Edit',
 			'web.knowledge.kb.unlock' => 'Unlock (let AI manage)',
 			'web.knowledge.kb.regenerate' => 'Regenerate',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.save' => 'Save',
 			'web.knowledge.kb.cancel' => 'Cancel',
 			'web.knowledge.kb.editHint' => 'Saving locks this page from AI overwrite.',
@@ -18528,7 +18582,11 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.git' => 'Git',
 			'sessions.inspector.shell.tabs.tasks' => 'Tasks',
 			'sessions.inspector.shell.tabs.history' => 'History',
-			'sessions.inspector.shell.tabs.notes' => 'Notes',
+			'sessions.inspector.shell.tabs.vault' => 'Vault',
+			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
+			'sessions.inspector.cortex.title' => 'Cortex workspace',
+			'sessions.inspector.cortex.blurb' => 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.',
+			'sessions.inspector.cortex.open' => 'Open Cortex workspace',
 			'sessions.inspector.shared.refresh' => 'Refresh',
 			'sessions.inspector.shared.inserted' => ({required Object text}) => 'Inserted: ${text}',
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => 'Insert failed (${status}): ${message}',
@@ -18667,6 +18725,8 @@ extension on Translations {
 			'mcp.editor.save' => 'Save',
 			'mcp.editor.create' => 'Create',
 			'mcp.secret.keyLabel' => 'Key',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
 			'mcp.secret.valueLabel' => 'Value',
 			'mcp.secret.keyRequired' => 'Key is required.',
@@ -18679,8 +18739,6 @@ extension on Translations {
 			'mcp.secret.helpRules' => 'Shell-env-var rules: starts with a letter or _, then letters / digits / _ only.',
 			'mcp.secret.replaceHint' => 'Paste new value (the previous one is wiped)',
 			'mcp.secret.addHint' => 'Paste secret value',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.secret.addedSnack' => ({required Object key}) => 'Secret ${key} added.',
 			'mcp.secret.updatedSnack' => ({required Object key}) => 'Secret ${key} updated.',
 			'mcp.secret.deletedSnack' => ({required Object key}) => 'Deleted ${key}.',
@@ -19181,6 +19239,8 @@ extension on Translations {
 			'backupTargetEditor.endpointLabel' => 'Endpoint',
 			'backupTargetEditor.regionLabel' => 'Region',
 			'backupTargetEditor.bucketLabel' => 'Bucket',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.accessKeyLabel' => 'Access key',
 			'backupTargetEditor.secretKeyLabel' => 'Secret key',
 			'backupTargetEditor.secretKeyHintEdit' => 'Leave blank to keep current. Stored AES-256-GCM encrypted.',
@@ -19193,8 +19253,6 @@ extension on Translations {
 			'backupTargetEditor.privateKeyHintEdit' => 'Leave blank to keep. Paste OpenSSH/PEM contents.',
 			'backupTargetEditor.privateKeyHintNew' => 'Paste the contents of an OpenSSH/PEM private key. Multi-line input — keep the BEGIN/END markers.',
 			'backupTargetEditor.hostKeyLabel' => 'Host key (pinning)',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.hostKeyHint' => 'OpenSSH-style server public key. `ssh-keyscan <host>` to obtain. Blank = no pinning (NOT recommended outside LAN).',
 			'backupTargetEditor.rcloneNote' => 'Requires the rclone CLI on the opendray host. First run `rclone config` once interactively to authenticate cloud accounts.',
 			'backupTargetEditor.rcloneRemoteLabel' => 'Remote name',
@@ -19695,6 +19753,8 @@ extension on Translations {
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Vault paths for MCP servers + secrets file.',
 			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
@@ -19707,8 +19767,6 @@ extension on Translations {
 			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
 			'settings.serverSettings.fields.adminPassword' => 'Admin password',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Level',

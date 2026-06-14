@@ -214,8 +214,24 @@
           "search": "Buscar",
           "tasks": "Tareas",
           "history": "Historial",
-          "notes": "Notas",
-          "memory": "Memoria"
+          "vault": "Bóveda",
+          "cortex": "Cortex"
+        },
+        "vaultPanel": {
+          "open": "Abrir Bóveda"
+        },
+        "cortexPanel": {
+          "noCwd": "La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.",
+          "open": "Abrir espacio Cortex",
+          "docs": "Docs",
+          "journal": "Diario",
+          "inbox": "Entrada",
+          "archived": "Archivados",
+          "pending": "pendiente",
+          "goal": "Objetivo",
+          "plan": "Plan",
+          "latestJournal": "Último diario",
+          "empty": "Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla."
         }
       },
       "ended": {
@@ -239,14 +255,6 @@
         "createdToast": "Directorio creado",
         "mkdirFailedToast": "Error al crear el directorio",
         "homeFailedToast": "Error al leer el directorio personal"
-      },
-      "notes": {
-        "cortexDoc": {
-          "title": "Doc del proyecto (Cortex)",
-          "hint": "El documento oficial del proyecto — solo lectura aquí; abre el espacio Cortex para editar, conversar o cambiar el plano.",
-          "open": "Abrir espacio",
-          "empty": "vacío"
-        }
       }
     },
     "memory": {
@@ -3134,8 +3142,14 @@
           "git": "Git",
           "tasks": "Tareas",
           "history": "Historial",
-          "notes": "Notas"
+          "vault": "Bóveda",
+          "cortex": "Cortex"
         }
+      },
+      "cortex": {
+        "title": "Espacio Cortex",
+        "blurb": "Objetivo, plan, diario, bandeja y limpieza de memoria de este proyecto — el Cortex mantenido por IA.",
+        "open": "Abrir espacio Cortex"
       },
       "shared": {
         "refresh": "Actualizar",

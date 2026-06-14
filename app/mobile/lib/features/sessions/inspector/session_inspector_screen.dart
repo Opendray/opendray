@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/sessions/inspector/cortex_tab.dart';
 import 'package:opendray/features/sessions/inspector/files_tab.dart';
 import 'package:opendray/features/sessions/inspector/git_tab.dart';
 import 'package:opendray/features/sessions/inspector/history_tab.dart';
@@ -12,10 +13,11 @@ import 'package:path/path.dart' as p;
 
 // Per-session inspector screen. Mirrors the cwd-scoped panels the
 // web admin shows beside a session (Files / Git / Tasks / History
-// / Notes), but as a full-screen route with a TabBar — phones
-// don't have the lateral space for a side-panel layout. AppBar
-// shows the cwd's last path segment so the user always knows
-// what they're operating on.
+// / Vault / Cortex), but as a full-screen route with a TabBar —
+// phones don't have the lateral space for a side-panel layout.
+// Vault = the markdown notes utility; Cortex = the AI-maintained
+// project memory workspace. AppBar shows the cwd's last path segment
+// so the user always knows what they're operating on.
 class SessionInspectorScreen extends ConsumerWidget {
   const SessionInspectorScreen({required this.sessionId, super.key});
 
@@ -40,7 +42,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastSegment = p.basename(session.cwd);
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: Column(
@@ -79,8 +81,12 @@ class _Body extends StatelessWidget {
                 text: t.sessions.inspector.shell.tabs.history,
               ),
               Tab(
-                icon: const Icon(Icons.description_outlined),
-                text: t.sessions.inspector.shell.tabs.notes,
+                icon: const Icon(Icons.menu_book_outlined),
+                text: t.sessions.inspector.shell.tabs.vault,
+              ),
+              Tab(
+                icon: const Icon(Icons.psychology_outlined),
+                text: t.sessions.inspector.shell.tabs.cortex,
               ),
             ],
           ),
@@ -92,6 +98,7 @@ class _Body extends StatelessWidget {
             TasksTab(sessionId: session.id, cwd: session.cwd),
             HistoryTab(sessionId: session.id),
             NotesTab(sessionId: session.id, cwd: session.cwd),
+            CortexTab(cwd: session.cwd),
           ],
         ),
       ),

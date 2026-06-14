@@ -14,7 +14,7 @@ import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
 import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
-import { ProjectPage, NotesPage } from '@/pages/Project'
+import { NotesPage } from '@/pages/Project'
 import { CortexPage } from '@/pages/Cortex'
 import { QuarantinePage } from '@/pages/Quarantine'
 import { ArchivedPage } from '@/pages/Archived'
@@ -117,15 +117,6 @@ const cortexMemoryRoute = createRoute({
   component: MemoryPage,
 })
 
-const cortexMemoryProjectRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/cortex/memory/project',
-  component: ProjectPage,
-  validateSearch: (search) => ({
-    cwd: typeof search.cwd === 'string' ? search.cwd : '',
-  }),
-})
-
 const cortexMemoryQuarantineRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/cortex/memory/quarantine',
@@ -191,7 +182,7 @@ const memoryProjectRoute = createRoute({
     cwd: typeof search.cwd === 'string' ? search.cwd : '',
   }),
   beforeLoad: ({ search }) => {
-    throw redirect({ to: '/cortex/memory/project', search })
+    throw redirect({ to: '/cortex/project', search })
   },
 })
 
@@ -260,7 +251,6 @@ const routeTree = rootRoute.addChildren([
     cortexKnowledgeRoute,
     cortexSettingsRoute,
     cortexMemoryRoute,
-    cortexMemoryProjectRoute,
     cortexMemoryQuarantineRoute,
     cortexMemoryArchivedRoute,
     cortexMemoryWorkersRoute,

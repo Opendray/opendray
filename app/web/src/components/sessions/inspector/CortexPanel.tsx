@@ -1,14 +1,16 @@
-// MemoryPanel — compact Project-memory glance inside the session
-// inspector. Mirrors the mobile 🏁 icon that jumps from session
-// detail to ProjectScreen, but adds inline stats so the operator
-// doesn't always have to navigate away.
+// CortexPanel — compact Cortex project-workspace glance inside the
+// session inspector. Mirrors the mobile 🏁 shortcut that jumps from
+// session detail to the project workspace, but adds inline stats so
+// the operator doesn't always have to navigate away.
 //
-// All data is scoped to the session's cwd. Edits / approvals
-// happen on the full /memory/project page (kept simple here).
+// "Open Cortex workspace" lands on /cortex/project — the unified
+// project doc (overview / goal / plan / tech / activity) plus journal,
+// inbox, and memory hygiene. All data is scoped to the session's cwd.
 
 import { Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight, Inbox, Loader2, NotebookPen, Target } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,11 +23,12 @@ import {
 } from '@/lib/projectDocs'
 import { listArchived } from '@/lib/memory'
 
-interface MemoryPanelProps {
+interface CortexPanelProps {
   cwd: string
 }
 
-export function MemoryPanel({ cwd }: MemoryPanelProps) {
+export function CortexPanel({ cwd }: CortexPanelProps) {
+  const { t } = useTranslation()
   const docsQ = useQuery({
     queryKey: ['project-docs', cwd],
     queryFn: () => listProjectDocs(cwd),
@@ -54,7 +57,7 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
   if (!cwd) {
     return (
       <p className="text-muted-foreground text-xs">
-        Session has no cwd — memory features need a working directory.
+        {t('web.sessions.inspector.cortexPanel.noCwd')}
       </p>
     )
   }
@@ -72,10 +75,10 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
   return (
     <div className="space-y-3 text-xs">
       <Button asChild size="sm" className="h-8 w-full justify-between">
-        <Link to="/memory/project" search={{ cwd }}>
+        <Link to="/cortex/project" search={{ cwd }}>
           <span className="flex items-center gap-1.5">
             <Target className="size-3" />
-            Open project memory
+            {t('web.sessions.inspector.cortexPanel.open')}
           </span>
           <ArrowUpRight className="size-3" />
         </Link>
@@ -83,23 +86,24 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
 
       <div className="grid grid-cols-2 gap-1.5">
         <StatCell
-          label="Docs"
+          label={t('web.sessions.inspector.cortexPanel.docs')}
           value={(docsQ.data ?? []).length}
           loading={docsQ.isLoading}
         />
         <StatCell
-          label="Journal"
+          label={t('web.sessions.inspector.cortexPanel.journal')}
           value={journalCount}
           loading={logsQ.isLoading}
         />
         <StatCell
-          label="Inbox"
+          label={t('web.sessions.inspector.cortexPanel.inbox')}
           value={inboxCount}
           loading={proposalsQ.isLoading}
           danger={inboxCount > 0}
+          dangerLabel={t('web.sessions.inspector.cortexPanel.pending')}
         />
         <StatCell
-          label="Archived"
+          label={t('web.sessions.inspector.cortexPanel.archived')}
           value={archivedCount}
           loading={archivedQ.isLoading}
         />
@@ -108,14 +112,14 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
       {goal && (
         <SectionPreview
           icon={<Target className="size-3" />}
-          label="Goal"
+          label={t('web.sessions.inspector.cortexPanel.goal')}
           body={goal}
         />
       )}
       {plan && (
         <SectionPreview
           icon={<NotebookPen className="size-3" />}
-          label="Plan"
+          label={t('web.sessions.inspector.cortexPanel.plan')}
           body={plan}
         />
       )}
@@ -124,7 +128,7 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
         <div className="bg-card space-y-1 rounded-md border p-2">
           <div className="text-muted-foreground flex items-center gap-1 text-[10px] tracking-wide uppercase">
             <Inbox className="size-2.5" />
-            Latest journal
+            {t('web.sessions.inspector.cortexPanel.latestJournal')}
             <span className="ml-auto font-mono">
               {new Date(latestJournal.created_at).toLocaleDateString()}
             </span>
@@ -142,8 +146,7 @@ export function MemoryPanel({ cwd }: MemoryPanelProps) {
 
       {!goal && !plan && journalCount === 0 && !docsQ.isLoading && (
         <p className="text-muted-foreground py-2 text-center text-[11px]">
-          No memory captured yet for this project. Spawn a session or set a
-          goal to populate.
+          {t('web.sessions.inspector.cortexPanel.empty')}
         </p>
       )}
     </div>
@@ -155,11 +158,13 @@ function StatCell({
   value,
   loading,
   danger,
+  dangerLabel,
 }: {
   label: string
   value: number
   loading?: boolean
   danger?: boolean
+  dangerLabel?: string
 }) {
   return (
     <div className="bg-card rounded-md border p-2">
@@ -174,7 +179,7 @@ function StatCell({
             <span className="text-sm font-semibold">{value}</span>
             {danger && value > 0 && (
               <Badge variant="danger" className="text-[9px]">
-                pending
+                {dangerLabel}
               </Badge>
             )}
           </>

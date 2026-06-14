@@ -1,12 +1,11 @@
-// ProjectScreen — the Cortex project workspace (Notes rung of the
-// flywheel). The tab set is no longer hardcoded: it renders the
-// project's doc BLUEPRINT — overview front page + whatever sections
-// this project's blueprint declares (a mobile app, a service, and a
-// CLI can each carry a different section set). Per section: an
-// editor / readonly view by maintainer mode, plus a curation chat to
-// actively ask the AI for updates. Journal + Inbox + memory Hygiene
-// complete the workspace. variant='memory' keeps the standalone
-// hygiene view for the legacy route until mobile parity lands.
+// ProjectScreen — the Cortex project workspace. The tab set is no
+// longer hardcoded: it renders the project's doc BLUEPRINT — overview
+// front page + whatever sections this project's blueprint declares (a
+// mobile app, a service, and a CLI can each carry a different section
+// set). Per section: an editor / readonly view by maintainer mode,
+// plus a curation chat to actively ask the AI for updates. Journal +
+// Inbox + memory Hygiene complete the workspace — one unified surface,
+// no legacy memory-only variant.
 
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -34,7 +33,6 @@ import {
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -108,14 +106,12 @@ const MD = {
   hr: () => <hr className="border-border my-3" />,
 }
 
-// ProjectScreen renders one rung of the flywheel for a project (cwd).
-// variant='notes' → the project's official doc (goal/plan/tech/activity/
-// journal/inbox); variant='memory' → its memory hygiene (health/conflicts/
-// archived). Deconflated per the Experience Flywheel architecture so Notes
-// and Memory never embed each other.
+// ProjectScreen renders the Cortex workspace for a project (cwd): the
+// project's official doc (overview/goal/plan/tech/activity) plus the
+// journal, the proposal inbox, and the memory-hygiene tab (health /
+// conflicts / archived rolled into one).
 interface ProjectScreenProps {
   cwd: string
-  variant?: 'notes' | 'memory'
 }
 
 const CLASSIC_LABEL_KINDS = new Set([
@@ -139,27 +135,18 @@ function useDocLabel(section?: BlueprintSection) {
   }
 }
 
-export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
+export function ProjectScreen({ cwd }: ProjectScreenProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState(
-    variant === 'memory' ? 'health' : 'overview',
-  )
+  const [activeTab, setActiveTab] = useState('overview')
   const [blueprintOpen, setBlueprintOpen] = useState(false)
-  // A conflict that implicates goal/plan is resolved by editing the doc — which
-  // lives on the Cortex project workspace. From the memory variant, jump there.
-  const jumpToDoc = (tab: string) =>
-    variant === 'memory'
-      ? navigate({ to: '/cortex/project', search: { cwd } })
-      : setActiveTab(tab)
 
   // The blueprint IS the tab set (Cortex Phase 3) — lazily seeded with
   // the classic overview/goal/plan/tech/activity on first visit.
   const blueprintQuery = useQuery({
     queryKey: ['blueprint', cwd],
     queryFn: () => listBlueprintSections(cwd),
-    enabled: !!cwd && variant === 'notes',
+    enabled: !!cwd,
   })
   const sections = useMemo(
     () => blueprintQuery.data ?? [],
@@ -168,11 +155,11 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
   // If the active section tab disappears (blueprint edit), fall back
   // to the overview front page.
   useEffect(() => {
-    if (variant !== 'notes' || sections.length === 0) return
+    if (sections.length === 0) return
     const fixed = ['journal', 'inbox', 'hygiene']
     if (fixed.includes(activeTab)) return
     if (!sections.some((s) => s.slug === activeTab)) setActiveTab('overview')
-  }, [sections, activeTab, variant])
+  }, [sections, activeTab])
 
   const docsQuery = useQuery({
     queryKey: ['project-docs', cwd],
@@ -261,18 +248,16 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
             </div>
           </div>
           <div className="flex flex-none items-center gap-2">
-            {variant === 'notes' && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-none"
-                onClick={() => setBlueprintOpen(true)}
-                title={t('web.cortex.blueprint.openHint')}
-              >
-                <LayoutList className="mr-1 h-3 w-3" />
-                {t('web.cortex.blueprint.open')}
-              </Button>
-            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-none"
+              onClick={() => setBlueprintOpen(true)}
+              title={t('web.cortex.blueprint.openHint')}
+            >
+              <LayoutList className="mr-1 h-3 w-3" />
+              {t('web.cortex.blueprint.open')}
+            </Button>
             <LifecycleControl cwd={cwd} />
             <ResetButton
               cwd={cwd}
@@ -294,71 +279,45 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
         className="flex flex-1 flex-col overflow-hidden"
       >
         <TabsList className="bg-muted/30 mx-4 mt-3 w-fit max-w-[calc(100%-2rem)] flex-wrap">
-          {variant === 'notes' ? (
-            <>
-              {sections.map((sec) => (
-                <TabsTrigger key={sec.slug} value={sec.slug}>
-                  {sectionTabLabel(sec, t)}
-                </TabsTrigger>
-              ))}
-              <TabsTrigger value="journal">
-                {t('web.project.tabs.journal')}
-              </TabsTrigger>
-              <TabsTrigger value="inbox" className="relative">
-                {t('web.project.tabs.inbox')}
-                {inboxCount > 0 && (
-                  <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
-                    {inboxCount}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="hygiene">
-                {t('web.project.tabs.hygiene')}
-              </TabsTrigger>
-            </>
-          ) : (
-            <>
-              <TabsTrigger value="health">
-                {t('web.project.tabs.health')}
-              </TabsTrigger>
-              <TabsTrigger value="conflicts">
-                {t('web.project.tabs.conflicts')}
-              </TabsTrigger>
-              <TabsTrigger value="archived" className="relative">
-                {t('web.project.tabs.archived')}
-                {archivedCount > 0 && (
-                  <span className="bg-secondary absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
-                    {archivedCount}
-                  </span>
-                )}
-              </TabsTrigger>
-            </>
-          )}
+          {sections.map((sec) => (
+            <TabsTrigger key={sec.slug} value={sec.slug}>
+              {sectionTabLabel(sec, t)}
+            </TabsTrigger>
+          ))}
+          <TabsTrigger value="journal">
+            {t('web.project.tabs.journal')}
+          </TabsTrigger>
+          <TabsTrigger value="inbox" className="relative">
+            {t('web.project.tabs.inbox')}
+            {inboxCount > 0 && (
+              <span className="bg-destructive text-destructive-foreground absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold">
+                {inboxCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="hygiene">
+            {t('web.project.tabs.hygiene')}
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="health" className="flex-1 overflow-auto">
-          <MemoryHealthCard cwd={cwd} />
-        </TabsContent>
-
-        {variant === 'notes' &&
-          sections.map((sec) => (
-            <TabsContent
-              key={sec.slug}
-              value={sec.slug}
-              className="flex-1 overflow-auto p-4"
-            >
-              <SectionTab
-                cwd={cwd}
-                section={sec}
-                doc={docsByKind[sec.slug]}
-                hasPending={pendingByKind.has(sec.slug)}
-                onGoToInbox={() => setActiveTab('inbox')}
-                onSaved={() =>
-                  qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
-                }
-              />
-            </TabsContent>
-          ))}
+        {sections.map((sec) => (
+          <TabsContent
+            key={sec.slug}
+            value={sec.slug}
+            className="flex-1 overflow-auto p-4"
+          >
+            <SectionTab
+              cwd={cwd}
+              section={sec}
+              doc={docsByKind[sec.slug]}
+              hasPending={pendingByKind.has(sec.slug)}
+              onGoToInbox={() => setActiveTab('inbox')}
+              onSaved={() =>
+                qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
+              }
+            />
+          </TabsContent>
+        ))}
 
         <TabsContent value="hygiene" className="flex-1 overflow-auto">
           <MemoryHealthCard cwd={cwd} />
@@ -366,7 +325,7 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
             <h3 className="mb-2 text-sm font-semibold">
               {t('web.project.tabs.conflicts')}
             </h3>
-            <ConflictsPanel cwd={cwd} onJumpTab={jumpToDoc} />
+            <ConflictsPanel cwd={cwd} onJumpTab={setActiveTab} />
             <h3 className="mt-4 mb-2 text-sm font-semibold">
               {t('web.project.tabs.archived')}
             </h3>
@@ -398,34 +357,17 @@ export function ProjectScreen({ cwd, variant = 'notes' }: ProjectScreenProps) {
           />
         </TabsContent>
 
-        <TabsContent value="conflicts" className="flex-1 overflow-auto">
-          <ConflictsPanel cwd={cwd} onJumpTab={jumpToDoc} />
-        </TabsContent>
-
-        <TabsContent value="archived" className="flex-1 overflow-auto p-4">
-          <ArchivedTab
-            records={archivedQuery.data ?? []}
-            loading={archivedQuery.isLoading}
-            onChange={() =>
-              qc.invalidateQueries({
-                queryKey: ['archived-memories', 'project', cwd],
-              })
-            }
-          />
-        </TabsContent>
       </Tabs>
 
-      {variant === 'notes' && (
-        <BlueprintEditor
-          cwd={cwd}
-          open={blueprintOpen}
-          onOpenChange={setBlueprintOpen}
-          onApplied={() => {
-            qc.invalidateQueries({ queryKey: ['blueprint', cwd] })
-            qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
-          }}
-        />
-      )}
+      <BlueprintEditor
+        cwd={cwd}
+        open={blueprintOpen}
+        onOpenChange={setBlueprintOpen}
+        onApplied={() => {
+          qc.invalidateQueries({ queryKey: ['blueprint', cwd] })
+          qc.invalidateQueries({ queryKey: ['project-docs', cwd] })
+        }}
+      />
     </div>
   )
 }

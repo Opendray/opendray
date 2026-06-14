@@ -270,7 +270,7 @@ class _CortexHubScreenState extends ConsumerState<CortexHubScreen> {
                     _BadgeTone.warning)
                 : const Icon(Icons.chevron_right, size: 18),
             onTap: () => _push(
-                ProjectScreen(initialCwd: proj.cwd, variant: 'notes')),
+                ProjectScreen(initialCwd: proj.cwd)),
           ),
         ),
     ];

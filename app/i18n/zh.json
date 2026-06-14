@@ -214,8 +214,24 @@
           "search": "搜索",
           "tasks": "任务",
           "history": "历史",
-          "notes": "笔记",
-          "memory": "记忆"
+          "vault": "文档库",
+          "cortex": "心智中枢"
+        },
+        "vaultPanel": {
+          "open": "打开文档库"
+        },
+        "cortexPanel": {
+          "noCwd": "会话没有工作目录——心智中枢功能需要工作目录。",
+          "open": "打开心智中枢工作区",
+          "docs": "文档",
+          "journal": "日志",
+          "inbox": "收件箱",
+          "archived": "已归档",
+          "pending": "待处理",
+          "goal": "目标",
+          "plan": "计划",
+          "latestJournal": "最新日志",
+          "empty": "该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。"
         }
       },
       "ended": {
@@ -239,14 +255,6 @@
         "createdToast": "文件夹已创建",
         "mkdirFailedToast": "创建失败",
         "homeFailedToast": "读取家目录失败"
-      },
-      "notes": {
-        "cortexDoc": {
-          "title": "项目文档（心智中枢）",
-          "hint": "项目的官方文档——此处只读；进入心智中枢工作区可编辑、对话或调整蓝图。",
-          "open": "打开工作区",
-          "empty": "空"
-        }
       }
     },
     "memory": {
@@ -3134,8 +3142,14 @@
           "git": "Git",
           "tasks": "任务",
           "history": "历史",
-          "notes": "笔记"
+          "vault": "文档库",
+          "cortex": "心智中枢"
         }
+      },
+      "cortex": {
+        "title": "心智中枢工作区",
+        "blurb": "本项目的目标、计划、日志、收件箱与记忆整理 —— 由 AI 维护的心智中枢。",
+        "open": "打开心智中枢工作区"
       },
       "shared": {
         "refresh": "刷新",

@@ -255,7 +255,7 @@ function ArchivedProject({
               size="sm"
               className="text-muted-foreground hover:text-foreground h-7 px-2 text-[11px]"
             >
-              <Link to="/cortex/memory/project" search={{ cwd: group.scopeKey }}>
+              <Link to="/cortex/project" search={{ cwd: group.scopeKey }}>
                 {t('web.archived.openProject')}
                 <ChevronRight className="ml-0.5 h-3 w-3" />
               </Link>

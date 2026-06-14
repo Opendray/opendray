@@ -1076,7 +1076,6 @@ class _TranslationsWebSessionsZh extends TranslationsWebSessionsEn {
 	@override late final _TranslationsWebSessionsInspectorZh inspector = _TranslationsWebSessionsInspectorZh._(_root);
 	@override late final _TranslationsWebSessionsEndedZh ended = _TranslationsWebSessionsEndedZh._(_root);
 	@override late final _TranslationsWebSessionsFileBrowserZh fileBrowser = _TranslationsWebSessionsFileBrowserZh._(_root);
-	@override late final _TranslationsWebSessionsNotesZh notes = _TranslationsWebSessionsNotesZh._(_root);
 }
 
 // Path: web.memory
@@ -1872,6 +1871,7 @@ class _TranslationsSessionsInspectorZh extends TranslationsSessionsInspectorEn {
 
 	// Translations
 	@override late final _TranslationsSessionsInspectorShellZh shell = _TranslationsSessionsInspectorShellZh._(_root);
+	@override late final _TranslationsSessionsInspectorCortexZh cortex = _TranslationsSessionsInspectorCortexZh._(_root);
 	@override late final _TranslationsSessionsInspectorSharedZh shared = _TranslationsSessionsInspectorSharedZh._(_root);
 	@override late final _TranslationsSessionsInspectorHistoryZh history = _TranslationsSessionsInspectorHistoryZh._(_root);
 	@override late final _TranslationsSessionsInspectorFilesZh files = _TranslationsSessionsInspectorFilesZh._(_root);
@@ -3119,6 +3119,8 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 
 	// Translations
 	@override late final _TranslationsWebSessionsInspectorTabsZh tabs = _TranslationsWebSessionsInspectorTabsZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorVaultPanelZh vaultPanel = _TranslationsWebSessionsInspectorVaultPanelZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorCortexPanelZh cortexPanel = _TranslationsWebSessionsInspectorCortexPanelZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -3155,16 +3157,6 @@ class _TranslationsWebSessionsFileBrowserZh extends TranslationsWebSessionsFileB
 	@override String get createdToast => '文件夹已创建';
 	@override String get mkdirFailedToast => '创建失败';
 	@override String get homeFailedToast => '读取家目录失败';
-}
-
-// Path: web.sessions.notes
-class _TranslationsWebSessionsNotesZh extends TranslationsWebSessionsNotesEn {
-	_TranslationsWebSessionsNotesZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override late final _TranslationsWebSessionsNotesCortexDocZh cortexDoc = _TranslationsWebSessionsNotesCortexDocZh._(_root);
 }
 
 // Path: web.conflicts.confirmDelete
@@ -5883,6 +5875,18 @@ class _TranslationsSessionsInspectorShellZh extends TranslationsSessionsInspecto
 	@override late final _TranslationsSessionsInspectorShellTabsZh tabs = _TranslationsSessionsInspectorShellTabsZh._(_root);
 }
 
+// Path: sessions.inspector.cortex
+class _TranslationsSessionsInspectorCortexZh extends TranslationsSessionsInspectorCortexEn {
+	_TranslationsSessionsInspectorCortexZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '心智中枢工作区';
+	@override String get blurb => '本项目的目标、计划、日志、收件箱与记忆整理 —— 由 AI 维护的心智中枢。';
+	@override String get open => '打开心智中枢工作区';
+}
+
 // Path: sessions.inspector.shared
 class _TranslationsSessionsInspectorSharedZh extends TranslationsSessionsInspectorSharedEn {
 	_TranslationsSessionsInspectorSharedZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -6582,21 +6586,38 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get search => '搜索';
 	@override String get tasks => '任务';
 	@override String get history => '历史';
-	@override String get notes => '笔记';
-	@override String get memory => '记忆';
+	@override String get vault => '文档库';
+	@override String get cortex => '心智中枢';
 }
 
-// Path: web.sessions.notes.cortexDoc
-class _TranslationsWebSessionsNotesCortexDocZh extends TranslationsWebSessionsNotesCortexDocEn {
-	_TranslationsWebSessionsNotesCortexDocZh._(TranslationsZh root) : this._root = root, super.internal(root);
+// Path: web.sessions.inspector.vaultPanel
+class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessionsInspectorVaultPanelEn {
+	_TranslationsWebSessionsInspectorVaultPanelZh._(TranslationsZh root) : this._root = root, super.internal(root);
 
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '项目文档（心智中枢）';
-	@override String get hint => '项目的官方文档——此处只读；进入心智中枢工作区可编辑、对话或调整蓝图。';
-	@override String get open => '打开工作区';
-	@override String get empty => '空';
+	@override String get open => '打开文档库';
+}
+
+// Path: web.sessions.inspector.cortexPanel
+class _TranslationsWebSessionsInspectorCortexPanelZh extends TranslationsWebSessionsInspectorCortexPanelEn {
+	_TranslationsWebSessionsInspectorCortexPanelZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get noCwd => '会话没有工作目录——心智中枢功能需要工作目录。';
+	@override String get open => '打开心智中枢工作区';
+	@override String get docs => '文档';
+	@override String get journal => '日志';
+	@override String get inbox => '收件箱';
+	@override String get archived => '已归档';
+	@override String get pending => '待处理';
+	@override String get goal => '目标';
+	@override String get plan => '计划';
+	@override String get latestJournal => '最新日志';
+	@override String get empty => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -8543,7 +8564,8 @@ class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInsp
 	@override String get git => 'Git';
 	@override String get tasks => '任务';
 	@override String get history => '历史';
-	@override String get notes => '笔记';
+	@override String get vault => '文档库';
+	@override String get cortex => '心智中枢';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -8796,8 +8818,20 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.search' => '搜索',
 			'web.sessions.inspector.tabs.tasks' => '任务',
 			'web.sessions.inspector.tabs.history' => '历史',
-			'web.sessions.inspector.tabs.notes' => '笔记',
-			'web.sessions.inspector.tabs.memory' => '记忆',
+			'web.sessions.inspector.tabs.vault' => '文档库',
+			'web.sessions.inspector.tabs.cortex' => '心智中枢',
+			'web.sessions.inspector.vaultPanel.open' => '打开文档库',
+			'web.sessions.inspector.cortexPanel.noCwd' => '会话没有工作目录——心智中枢功能需要工作目录。',
+			'web.sessions.inspector.cortexPanel.open' => '打开心智中枢工作区',
+			'web.sessions.inspector.cortexPanel.docs' => '文档',
+			'web.sessions.inspector.cortexPanel.journal' => '日志',
+			'web.sessions.inspector.cortexPanel.inbox' => '收件箱',
+			'web.sessions.inspector.cortexPanel.archived' => '已归档',
+			'web.sessions.inspector.cortexPanel.pending' => '待处理',
+			'web.sessions.inspector.cortexPanel.goal' => '目标',
+			'web.sessions.inspector.cortexPanel.plan' => '计划',
+			'web.sessions.inspector.cortexPanel.latestJournal' => '最新日志',
+			'web.sessions.inspector.cortexPanel.empty' => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -8816,10 +8850,6 @@ extension on TranslationsZh {
 			'web.sessions.fileBrowser.createdToast' => '文件夹已创建',
 			'web.sessions.fileBrowser.mkdirFailedToast' => '创建失败',
 			'web.sessions.fileBrowser.homeFailedToast' => '读取家目录失败',
-			'web.sessions.notes.cortexDoc.title' => '项目文档（心智中枢）',
-			'web.sessions.notes.cortexDoc.hint' => '项目的官方文档——此处只读；进入心智中枢工作区可编辑、对话或调整蓝图。',
-			'web.sessions.notes.cortexDoc.open' => '打开工作区',
-			'web.sessions.notes.cortexDoc.empty' => '空',
 			'web.memory.title' => '记忆',
 			'web.memory.subtitle' => '浏览、搜索并编辑 Agent 通过 opendray-memory MCP 服务器存储的记忆。',
 			'web.memory.navProject' => '项目',
@@ -9117,6 +9147,8 @@ extension on TranslationsZh {
 			'web.project.lifecycle.activate' => '激活',
 			'web.project.lifecycle.pause' => '暂停',
 			'web.project.lifecycle.archive' => '归档',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.lifecycle.idleSuggest' => '长期闲置 — 建议归档',
 			'web.project.lifecycle.idleHint' => ({required Object days}) => '已有 ${days} 天无活动',
 			'web.project.lifecycle.failedToast' => '无法更改项目状态',
@@ -9125,8 +9157,6 @@ extension on TranslationsZh {
 			'web.project.lifecycle.applied.archived' => '项目已归档',
 			'web.project.lifecycle.tooltip.badge' => '项目生命周期。冻结(暂停/归档)的项目不会被注入新会话,也不参与 AI 蒸馏。',
 			'web.project.lifecycle.tooltip.activate' => '重新激活:注入新会话并恢复 AI 维护。',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.lifecycle.tooltip.pause' => '暂停:冻结此项目——跳过会话注入与 AI 蒸馏,但仍留在活跃列表。',
 			'web.project.lifecycle.tooltip.archive' => '归档:封存此项目——冻结并从常规视图隐藏。',
 			'web.project.docMeta.maintainer.coauthored' => '你维护 · AI 提议',
@@ -9631,6 +9661,8 @@ extension on TranslationsZh {
 			'web.channels.setup.copyHide' => '隐藏',
 			'web.channels.setup.copyShow' => '显示',
 			'web.channels.setup.copyLabelToast' => ({required Object label}) => '已复制 ${label}',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.setup.copyCode' => '复制',
 			'web.channels.setup.copied' => '已复制',
 			'web.channels.setup.codeCopiedToast' => '已复制代码',
@@ -9639,8 +9671,6 @@ extension on TranslationsZh {
 			'web.integrations.register' => '注册',
 			'web.integrations.loading' => '加载中…',
 			'web.integrations.tabs.registered' => '已注册',
-			_ => null,
-		} ?? switch (path) {
 			'web.integrations.tabs.console' => '反向代理',
 			'web.integrations.empty.title' => '暂无集成',
 			'web.integrations.empty.description' => '注册一个外部应用，给它一个受限的 API key。它的代码不需要进入本仓库。',
@@ -10145,6 +10175,8 @@ extension on TranslationsZh {
 			'web.serverSettings.loadFailed' => ({required Object message}) => '加载失败：${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray 启动时未指定 -config，设置仅从环境变量加载，无法在此编辑。',
 			'web.serverSettings.resetButton' => '重置',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.resetButtonTitle' => '丢弃此分区中未保存的修改',
 			'web.serverSettings.resetConfirm' => ({required Object section}) => '将"${section}"重置为上次保存的值？',
 			'web.serverSettings.badgeRestartRequired' => '需要重启',
@@ -10153,8 +10185,6 @@ extension on TranslationsZh {
 			'web.serverSettings.saveToastTitle' => '设置已保存',
 			'web.serverSettings.saveToastDesc' => '点击「重启」以应用。',
 			'web.serverSettings.saveErrorTitle' => '保存失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.dangerousConfirm' => '您更改了监听地址 / 管理员账号 / 管理员密码。重启后可能需要重新登录或使用新地址。是否继续？',
 			'web.serverSettings.unsavedHint' => '有未保存的修改',
 			'web.serverSettings.savedHint' => '所有修改已保存',
@@ -10659,6 +10689,8 @@ extension on TranslationsZh {
 			'web.knowledge.scopes.domain' => '领域',
 			'web.knowledge.kb.tab' => '知识库',
 			'web.knowledge.kb.graphTab' => '图谱',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} 节点 · ${edges} 连接',
 			'web.knowledge.kb.global' => '全局',
 			'web.knowledge.kb.projectHandbook' => '项目手册',
@@ -10667,8 +10699,6 @@ extension on TranslationsZh {
 			'web.knowledge.kb.edit' => '编辑',
 			'web.knowledge.kb.unlock' => '解锁(交还 AI 维护)',
 			'web.knowledge.kb.regenerate' => '重新生成',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.save' => '保存',
 			'web.knowledge.kb.cancel' => '取消',
 			'web.knowledge.kb.editHint' => '保存后此页将锁定,AI 不再覆盖。',
@@ -11030,7 +11060,11 @@ extension on TranslationsZh {
 			'sessions.inspector.shell.tabs.git' => 'Git',
 			'sessions.inspector.shell.tabs.tasks' => '任务',
 			'sessions.inspector.shell.tabs.history' => '历史',
-			'sessions.inspector.shell.tabs.notes' => '笔记',
+			'sessions.inspector.shell.tabs.vault' => '文档库',
+			'sessions.inspector.shell.tabs.cortex' => '心智中枢',
+			'sessions.inspector.cortex.title' => '心智中枢工作区',
+			'sessions.inspector.cortex.blurb' => '本项目的目标、计划、日志、收件箱与记忆整理 —— 由 AI 维护的心智中枢。',
+			'sessions.inspector.cortex.open' => '打开心智中枢工作区',
 			'sessions.inspector.shared.refresh' => '刷新',
 			'sessions.inspector.shared.inserted' => ({required Object text}) => '已插入：${text}',
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => '插入失败（${status}）：${message}',
@@ -11169,6 +11203,8 @@ extension on TranslationsZh {
 			'mcp.editor.save' => '保存',
 			'mcp.editor.create' => '创建',
 			'mcp.secret.keyLabel' => '键',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
 			'mcp.secret.valueLabel' => '值',
 			'mcp.secret.keyRequired' => '必须填写键。',
@@ -11181,8 +11217,6 @@ extension on TranslationsZh {
 			'mcp.secret.helpRules' => 'shell 环境变量规则：字母或 _ 开头，仅含字母 / 数字 / _。',
 			'mcp.secret.replaceHint' => '粘贴新值（旧值被擦除）',
 			'mcp.secret.addHint' => '粘贴密钥值',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.secret.addedSnack' => ({required Object key}) => '已添加密钥 ${key}。',
 			'mcp.secret.updatedSnack' => ({required Object key}) => '已更新密钥 ${key}。',
 			'mcp.secret.deletedSnack' => ({required Object key}) => '已删除 ${key}。',
@@ -11683,6 +11717,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.endpointLabel' => '端点',
 			'backupTargetEditor.regionLabel' => '区域',
 			'backupTargetEditor.bucketLabel' => '存储桶',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.accessKeyLabel' => 'Access Key',
 			'backupTargetEditor.secretKeyLabel' => 'Secret Key',
 			'backupTargetEditor.secretKeyHintEdit' => '留空 = 保留当前值。已 AES-256-GCM 加密存储。',
@@ -11695,8 +11731,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.privateKeyHintEdit' => '留空 = 保留。粘贴 OpenSSH/PEM 内容。',
 			'backupTargetEditor.privateKeyHintNew' => '粘贴 OpenSSH/PEM 私钥内容。多行输入 — 保留 BEGIN/END 标记。',
 			'backupTargetEditor.hostKeyLabel' => 'Host key（pinning）',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.hostKeyHint' => 'OpenSSH 格式的服务器公钥。`ssh-keyscan <host>` 获取。留空 = 不 pinning（局域网外不推荐）。',
 			'backupTargetEditor.rcloneNote' => '需要 opendray 主机上安装 rclone CLI。首次需运行 `rclone config` 交互式认证云账户。',
 			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
@@ -12197,6 +12231,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
 			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
@@ -12209,8 +12245,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
 			'settings.serverSettings.fields.adminPassword' => '管理员密码',
 			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
 			'settings.serverSettings.fields.level' => '级别',
