@@ -2137,7 +2137,9 @@
         "upToDate": "You're on the latest release.",
         "checkUpdates": "Check for updates",
         "checking": "Checking…",
-        "reinstall": "Re-install"
+        "reinstall": "Re-install",
+        "forcePrompt": "{count} live session(s) will be interrupted by the restart (they auto-resume afterward).",
+        "upgradeAnyway": "Upgrade anyway"
       }
     },
     "logViewer": {

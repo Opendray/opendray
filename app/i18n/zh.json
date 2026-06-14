@@ -2137,7 +2137,9 @@
         "upToDate": "已是最新版本。",
         "checkUpdates": "检查更新",
         "checking": "检查中…",
-        "reinstall": "重新安装"
+        "reinstall": "重新安装",
+        "forcePrompt": "重启将中断 {count} 个进行中的会话（之后会自动恢复）。",
+        "upgradeAnyway": "仍然升级"
       }
     },
     "logViewer": {

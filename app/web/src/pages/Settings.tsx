@@ -19,8 +19,13 @@ import type { LucideIcon } from 'lucide-react'
 
 import { toast } from 'sonner'
 
-import { api } from '@/lib/api'
-import { getVersionInfo, requestSelfUpdate, type VersionInfo } from '@/lib/version'
+import { api, APIError } from '@/lib/api'
+import {
+  getVersionInfo,
+  requestSelfUpdate,
+  type VersionInfo,
+  type SelfUpdateResponse,
+} from '@/lib/version'
 import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'
@@ -758,6 +763,11 @@ function AboutSection() {
   // confirmForce distinguishes a normal upgrade from a force re-install
   // (the "Re-install" action shown when already on the latest).
   const [confirmForce, setConfirmForce] = useState(false)
+  // forceCount holds the number of live sessions the gateway reported
+  // would be interrupted by the restart (the 409 needsForce gate). When
+  // non-null we show an "upgrade anyway" prompt instead of dead-ending
+  // on the raw error. null = no pending force prompt.
+  const [forceCount, setForceCount] = useState<number | null>(null)
 
   async function checkNow() {
     setChecking(true)
@@ -774,6 +784,7 @@ function AboutSection() {
   }
 
   async function startUpgrade(force = false) {
+    setForceCount(null)
     try {
       const res = await requestSelfUpdate(force)
       if (res.error) {
@@ -786,8 +797,23 @@ function AboutSection() {
       })
       setPhase('upgrading')
     } catch (e) {
-      toast.error(String(e))
       setPhase('idle')
+      // The gateway gates the restart behind force=true when live
+      // sessions would be interrupted (they auto-resume). Surface an
+      // "upgrade anyway" prompt with the count instead of dumping the
+      // raw error, which previously dead-ended the web upgrade path.
+      if (e instanceof APIError && e.status === 409) {
+        const body = (e.body ?? {}) as SelfUpdateResponse
+        if (body.needsForce) {
+          setForceCount(body.liveSessions ?? 0)
+          return
+        }
+        if (body.error) {
+          toast.error(body.error)
+          return
+        }
+      }
+      toast.error(String(e))
     }
   }
 
@@ -833,7 +859,25 @@ function AboutSection() {
       </div>
 
       {/* Controls — always visible */}
-      {phase === 'confirming' ? (
+      {forceCount !== null ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">
+            {t('web.settings.about.forcePrompt', { count: forceCount })}
+          </span>
+          <button
+            onClick={() => startUpgrade(true)}
+            className="rounded bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground"
+          >
+            {t('web.settings.about.upgradeAnyway')}
+          </button>
+          <button
+            onClick={() => setForceCount(null)}
+            className="rounded border border-border px-2.5 py-1 text-[11px]"
+          >
+            {t('common.cancel')}
+          </button>
+        </div>
+      ) : phase === 'confirming' ? (
         <div className="mt-2 flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground">
             {t('web.settings.about.confirmRestart')}
