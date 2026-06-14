@@ -4439,7 +4439,16 @@
     "archivedToast": "Memory archived — restorable from Archived",
     "quarantinedToast": "Memory quarantined — review under Cortex → Quarantine",
     "archiveFailed": "Archive failed: {error}",
-    "quarantineFailed": "Quarantine failed: {error}"
+    "quarantineFailed": "Quarantine failed: {error}",
+    "reembed": {
+      "menuItem": "Re-embed all",
+      "confirmTitle": "Re-embed all memories?",
+      "confirmBody": "Re-encodes every stored memory and KB page with the current embedding model. Needed after switching models, since the vector dimension changes. This can take a while.",
+      "confirmButton": "Re-embed",
+      "running": "Re-embedding… this may take a while.",
+      "done": "Re-embedded {count} memories.",
+      "failed": "Re-embed failed: {error}"
+    }
   },
   "about": {
     "title": "About",
@@ -4648,7 +4657,14 @@
         "knowledgeHelper": "The structured entities/playbooks/skills layer on top of memory."
       },
       "validateInteger": "\"{field}\" must be an integer",
-      "validateNumber": "\"{field}\" must be a number"
+      "validateNumber": "\"{field}\" must be a number",
+      "embedderModel": {
+        "reprobe": "Re-check endpoint",
+        "unreachable": "Endpoint unreachable — type the model id by hand.",
+        "pickHint": "Select a model",
+        "manual": "Type manually",
+        "pickFromList": "Pick from list"
+      }
     }
   },
   "memoryQuarantine": {

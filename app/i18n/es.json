@@ -4439,7 +4439,16 @@
     "archivedToast": "Memoria archivada — restaurable desde Archivado",
     "quarantinedToast": "Memoria en cuarentena — revísala en Cortex → Cuarentena",
     "archiveFailed": "Error al archivar: {error}",
-    "quarantineFailed": "Error al poner en cuarentena: {error}"
+    "quarantineFailed": "Error al poner en cuarentena: {error}",
+    "reembed": {
+      "menuItem": "Reincrustar todo",
+      "confirmTitle": "¿Reincrustar todas las memorias?",
+      "confirmBody": "Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.",
+      "confirmButton": "Reincrustar",
+      "running": "Reincrustando… esto puede tardar.",
+      "done": "Se reincrustaron {count} memorias.",
+      "failed": "Falló la reincrustación: {error}"
+    }
   },
   "about": {
     "title": "Acerca de",
@@ -4648,7 +4657,14 @@
         "knowledgeHelper": "La capa estructurada de entidades/playbooks/skills sobre la memoria."
       },
       "validateInteger": "\"{field}\" debe ser un entero",
-      "validateNumber": "\"{field}\" debe ser un número"
+      "validateNumber": "\"{field}\" debe ser un número",
+      "embedderModel": {
+        "reprobe": "Volver a comprobar el endpoint",
+        "unreachable": "Endpoint no accesible — escribe el id del modelo a mano.",
+        "pickHint": "Selecciona un modelo",
+        "manual": "Escribir manualmente",
+        "pickFromList": "Elegir de la lista"
+      }
     }
   },
   "memoryQuarantine": {

@@ -311,43 +311,106 @@ class _MemoryScreenState extends ConsumerState<MemoryScreen>
     }
   }
 
-  // Renders the AppBar overflow that exposes "delete every memory in
-  // this scope". Hidden when there's no actionable target (no chip
-  // picked on the Project tab).
+  // Renders the AppBar overflow. "Re-embed all" is always present (it's a
+  // global maintenance action — needed after switching embedding models).
+  // "Delete all in scope" is added only when there's an actionable target
+  // (a project chip picked, or the Global tab).
   Widget _bulkDeleteMenu(BuildContext context) {
     final inProject = _tabs.index == 0;
     final activeKey = _selectedKey;
-    if (inProject && (activeKey == null || activeKey.isEmpty)) {
-      return const SizedBox.shrink();
-    }
+    final canWipe = !inProject || (activeKey != null && activeKey.isNotEmpty);
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
       tooltip: t.memory.more,
       onSelected: (v) {
         if (v == 'wipe') _confirmAndWipe();
+        if (v == 'reembed') _confirmAndReembed();
       },
       itemBuilder: (_) => [
         PopupMenuItem<String>(
-          value: 'wipe',
+          value: 'reembed',
           child: Row(
             children: [
-              Icon(
-                Icons.delete_sweep_outlined,
-                size: 18,
-                color: Theme.of(context).colorScheme.error,
-              ),
+              const Icon(Icons.autorenew, size: 18),
               const SizedBox(width: 8),
-              Text(
-                inProject
-                    ? 'Delete all in this project'
-                    : 'Delete all global memories',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+              Text(t.memory.reembed.menuItem),
             ],
           ),
         ),
+        if (canWipe)
+          PopupMenuItem<String>(
+            value: 'wipe',
+            child: Row(
+              children: [
+                Icon(
+                  Icons.delete_sweep_outlined,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  inProject
+                      ? 'Delete all in this project'
+                      : 'Delete all global memories',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+            ),
+          ),
       ],
     );
+  }
+
+  // _confirmAndReembed re-encodes every stored memory with the currently
+  // configured embedder. The headline use is after switching embedding
+  // models (the vector dimension / space changes), so the operator can
+  // complete the switch entirely from the phone.
+  Future<void> _confirmAndReembed() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.memory.reembed.confirmTitle),
+        content: Text(t.memory.reembed.confirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.memory.reembed.confirmButton),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(t.memory.reembed.running),
+        duration: const Duration(minutes: 10),
+      ),
+    );
+    try {
+      final n = await ref.read(memoryApiProvider).reembed();
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(t.memory.reembed.done(count: n))),
+        );
+    } on ApiException catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(t.memory.reembed.failed(error: e.message))),
+        );
+    } on Object catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(t.memory.reembed.failed(error: e.toString()))),
+        );
+    }
   }
 
   Future<void> _confirmAndWipe() async {

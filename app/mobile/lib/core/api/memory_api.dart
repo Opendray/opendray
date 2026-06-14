@@ -239,6 +239,66 @@ class MemoryApi {
       throw toApiException(e);
     }
   }
+
+  // POST /memory/probe — checks whether an OpenAI-compatible base_url
+  // responds and lists the models it advertises. Powers the embedder
+  // model picker so the operator chooses a model that actually exists
+  // on the endpoint instead of typing one blind.
+  Future<EmbedderProbe> probe({
+    required String baseUrl,
+    String apiKey = '',
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/memory/probe',
+        data: {'base_url': baseUrl, 'api_key': apiKey},
+      );
+      return EmbedderProbe.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /memory/reembed — re-encodes every stored memory with the
+  // currently-configured embedder. Required after switching embedding
+  // models, since the vector dimension / space changes. Returns the
+  // number of memories re-embedded.
+  Future<int> reembed({int? batch}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/memory/reembed',
+        queryParameters: batch != null ? {'batch': batch} : null,
+      );
+      return (res.data?['reembed'] as num?)?.toInt() ?? 0;
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+}
+
+// EmbedderProbe is the result of POST /memory/probe — whether the
+// endpoint is reachable and the model ids it advertises.
+class EmbedderProbe {
+  EmbedderProbe({
+    required this.reachable,
+    required this.models,
+    this.detected,
+    this.error,
+  });
+
+  factory EmbedderProbe.fromJson(Map<String, dynamic> json) => EmbedderProbe(
+        reachable: json['reachable'] as bool? ?? false,
+        models: ((json['models'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        detected: json['detected'] as String?,
+        error: json['error'] as String?,
+      );
+
+  final bool reachable;
+  final List<String> models;
+  final String? detected; // "ollama" | "lmstudio" | "openai-compatible"
+  final String? error;
 }
 
 final memoryApiProvider = Provider<MemoryApi>((ref) {

@@ -19,12 +19,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
+import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/settings_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // ── Field spec table ────────────────────────────────────────────
 
-enum _FieldKind { text, password, switchToggle, numberInt, numberDouble, select }
+enum _FieldKind {
+  text,
+  password,
+  switchToggle,
+  numberInt,
+  numberDouble,
+  select,
+  embedderModel,
+}
 
 class _Field {
   const _Field({
@@ -323,7 +332,7 @@ List<_Section> _buildSections() => <_Section>[
       _Field(
         label: t.settings.serverSettings.fields.httpModel,
         path: 'memory.http.model',
-        kind: _FieldKind.text,
+        kind: _FieldKind.embedderModel,
         monospace: true,
       ),
       _Field(
@@ -812,6 +821,7 @@ class _SectionEditorScreenState
           }
         case _FieldKind.switchToggle:
         case _FieldKind.select:
+        case _FieldKind.embedderModel:
           // Already written into _draft directly on toggle / pick.
           break;
       }
@@ -949,6 +959,16 @@ class _SectionEditorScreenState
 
   Widget _renderField(_Field f) {
     switch (f.kind) {
+      case _FieldKind.embedderModel:
+        return _EmbedderModelField(
+          label: f.label,
+          helper: f.helper,
+          current: _readPath(_draft, f.path)?.toString() ?? '',
+          baseUrlCtrl: _ctrls['memory.http.base_url'],
+          apiKeyCtrl: _ctrls['memory.http.api_key'],
+          enabled: !_submitting,
+          onChanged: (v) => setState(() => _writePath(_draft, f.path, v)),
+        );
       case _FieldKind.text:
       case _FieldKind.password:
       case _FieldKind.numberInt:
@@ -1075,6 +1095,225 @@ class _ErrorView extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// _EmbedderModelField — the embedder model picker. Probes the configured
+// OpenAI-compatible endpoint (base_url + api_key) and offers a dropdown of
+// the models it advertises, so the operator picks a model that actually
+// exists instead of typing one blind. Mirrors the web LocalModelSelect.
+// Falls back to a plain text field when the endpoint is unreachable or the
+// operator wants to type a model id by hand. Tap ↻ to re-probe after
+// editing the base URL.
+class _EmbedderModelField extends ConsumerStatefulWidget {
+  const _EmbedderModelField({
+    required this.label,
+    required this.helper,
+    required this.current,
+    required this.baseUrlCtrl,
+    required this.apiKeyCtrl,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String? helper;
+  final String current;
+  final TextEditingController? baseUrlCtrl;
+  final TextEditingController? apiKeyCtrl;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  @override
+  ConsumerState<_EmbedderModelField> createState() =>
+      _EmbedderModelFieldState();
+}
+
+class _EmbedderModelFieldState extends ConsumerState<_EmbedderModelField> {
+  AsyncValue<EmbedderProbe> _probe = const AsyncValue.loading();
+  bool _manual = false;
+  late final TextEditingController _manualCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _manualCtrl = TextEditingController(text: widget.current);
+    _runProbe();
+  }
+
+  @override
+  void dispose() {
+    _manualCtrl.dispose();
+    super.dispose();
+  }
+
+  String get _baseUrl => widget.baseUrlCtrl?.text.trim() ?? '';
+  String get _apiKey => widget.apiKeyCtrl?.text ?? '';
+
+  Future<void> _runProbe() async {
+    final base = _baseUrl;
+    if (base.isEmpty) {
+      setState(() => _probe = AsyncValue.data(
+            EmbedderProbe(reachable: false, models: const []),
+          ));
+      return;
+    }
+    setState(() => _probe = const AsyncValue.loading());
+    try {
+      final res =
+          await ref.read(memoryApiProvider).probe(baseUrl: base, apiKey: _apiKey);
+      if (!mounted) return;
+      setState(() => _probe = AsyncValue.data(res));
+    } on Object catch (e, st) {
+      if (!mounted) return;
+      setState(() => _probe = AsyncValue.error(e, st));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(widget.label,
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.refresh, size: 18),
+              tooltip: t.settings.serverSettings.embedderModel.reprobe,
+              onPressed: widget.enabled ? _runProbe : null,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        _body(),
+        if (widget.helper != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(widget.helper!,
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.outline)),
+          ),
+      ],
+    );
+  }
+
+  Widget _body() {
+    return _probe.when(
+      loading: () => Row(
+        children: [
+          Expanded(child: _manualField()),
+          const SizedBox(width: 8),
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ],
+      ),
+      error: (_, __) => _manualField(
+        note: t.settings.serverSettings.embedderModel.unreachable,
+      ),
+      data: (p) {
+        final reachable = p.reachable && p.models.isNotEmpty;
+        if (!reachable || _manual) {
+          return _manualField(
+            note: reachable
+                ? null
+                : t.settings.serverSettings.embedderModel.unreachable,
+            switchToList:
+                reachable ? () => setState(() => _manual = false) : null,
+          );
+        }
+        // Keep the current value selectable even if the endpoint doesn't
+        // advertise it (a custom id pinned earlier).
+        final models = [...p.models];
+        if (widget.current.isNotEmpty && !models.contains(widget.current)) {
+          models.insert(0, widget.current);
+        }
+        return Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                initialValue: widget.current.isNotEmpty ? widget.current : null,
+                isExpanded: true,
+                decoration: const InputDecoration(isDense: true),
+                hint: Text(
+                  t.settings.serverSettings.embedderModel.pickHint,
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.outline),
+                ),
+                items: [
+                  for (final m in models)
+                    DropdownMenuItem<String>(
+                      value: m,
+                      child: Text(m,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontFamily: 'monospace', fontSize: 13)),
+                    ),
+                ],
+                onChanged: widget.enabled
+                    ? (v) {
+                        if (v == null) return;
+                        _manualCtrl.text = v;
+                        widget.onChanged(v);
+                      }
+                    : null,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              tooltip: t.settings.serverSettings.embedderModel.manual,
+              onPressed:
+                  widget.enabled ? () => setState(() => _manual = true) : null,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _manualField({String? note, VoidCallback? switchToList}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _manualCtrl,
+                enabled: widget.enabled,
+                autocorrect: false,
+                onChanged: widget.onChanged,
+                decoration: const InputDecoration(isDense: true),
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              ),
+            ),
+            if (switchToList != null)
+              IconButton(
+                icon: const Icon(Icons.list, size: 18),
+                tooltip: t.settings.serverSettings.embedderModel.pickFromList,
+                onPressed: widget.enabled ? switchToList : null,
+                visualDensity: VisualDensity.compact,
+              ),
+          ],
+        ),
+        if (note != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(note,
+                style: TextStyle(
+                    fontSize: 11, color: Theme.of(context).colorScheme.error)),
+          ),
+      ],
     );
   }
 }

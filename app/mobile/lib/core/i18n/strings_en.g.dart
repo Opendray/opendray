@@ -2006,6 +2006,8 @@ class TranslationsMemoryEn {
 
 	/// en: 'Quarantine failed: {error}'
 	String quarantineFailed({required Object error}) => 'Quarantine failed: ${error}';
+
+	late final TranslationsMemoryReembedEn reembed = TranslationsMemoryReembedEn.internal(_root);
 }
 
 // Path: about
@@ -5419,6 +5421,36 @@ class TranslationsMemoryCreateEn {
 	String get submit => 'Create';
 }
 
+// Path: memory.reembed
+class TranslationsMemoryReembedEn {
+	TranslationsMemoryReembedEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Re-embed all'
+	String get menuItem => 'Re-embed all';
+
+	/// en: 'Re-embed all memories?'
+	String get confirmTitle => 'Re-embed all memories?';
+
+	/// en: 'Re-encodes every stored memory and KB page with the current embedding model. Needed after switching models, since the vector dimension changes. This can take a while.'
+	String get confirmBody => 'Re-encodes every stored memory and KB page with the current embedding model. Needed after switching models, since the vector dimension changes. This can take a while.';
+
+	/// en: 'Re-embed'
+	String get confirmButton => 'Re-embed';
+
+	/// en: 'Re-embedding… this may take a while.'
+	String get running => 'Re-embedding… this may take a while.';
+
+	/// en: 'Re-embedded {count} memories.'
+	String done({required Object count}) => 'Re-embedded ${count} memories.';
+
+	/// en: 'Re-embed failed: {error}'
+	String failed({required Object error}) => 'Re-embed failed: ${error}';
+}
+
 // Path: about.sections
 class TranslationsAboutSectionsEn {
 	TranslationsAboutSectionsEn.internal(this._root);
@@ -5753,6 +5785,8 @@ class TranslationsSettingsServerSettingsEn {
 
 	/// en: '"{field}" must be a number'
 	String validateNumber({required Object field}) => '"${field}" must be a number';
+
+	late final TranslationsSettingsServerSettingsEmbedderModelEn embedderModel = TranslationsSettingsServerSettingsEmbedderModelEn.internal(_root);
 }
 
 // Path: web.sessions.list
@@ -12633,6 +12667,30 @@ class TranslationsSettingsServerSettingsFieldsEn {
 
 	/// en: 'The structured entities/playbooks/skills layer on top of memory.'
 	String get knowledgeHelper => 'The structured entities/playbooks/skills layer on top of memory.';
+}
+
+// Path: settings.serverSettings.embedderModel
+class TranslationsSettingsServerSettingsEmbedderModelEn {
+	TranslationsSettingsServerSettingsEmbedderModelEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Re-check endpoint'
+	String get reprobe => 'Re-check endpoint';
+
+	/// en: 'Endpoint unreachable — type the model id by hand.'
+	String get unreachable => 'Endpoint unreachable — type the model id by hand.';
+
+	/// en: 'Select a model'
+	String get pickHint => 'Select a model';
+
+	/// en: 'Type manually'
+	String get manual => 'Type manually';
+
+	/// en: 'Pick from list'
+	String get pickFromList => 'Pick from list';
 }
 
 // Path: web.sessions.list.row
@@ -19744,6 +19802,13 @@ extension on Translations {
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',
+			'memory.reembed.menuItem' => 'Re-embed all',
+			'memory.reembed.confirmTitle' => 'Re-embed all memories?',
+			'memory.reembed.confirmBody' => 'Re-encodes every stored memory and KB page with the current embedding model. Needed after switching models, since the vector dimension changes. This can take a while.',
+			'memory.reembed.confirmButton' => 'Re-embed',
+			'memory.reembed.running' => 'Re-embedding… this may take a while.',
+			'memory.reembed.done' => ({required Object count}) => 'Re-embedded ${count} memories.',
+			'memory.reembed.failed' => ({required Object error}) => 'Re-embed failed: ${error}',
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
@@ -19815,6 +19880,8 @@ extension on Translations {
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
 			'settings.logViewer.levels.error' => 'Error',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.title' => 'Server settings',
 			'settings.serverSettings.reloadTooltip' => 'Reload from server',
 			'settings.serverSettings.restartTooltip' => 'Restart gateway',
@@ -19822,8 +19889,6 @@ extension on Translations {
 			'settings.serverSettings.restartConfirmBody' => 'The gateway will exec itself. The mobile app may briefly lose connection.',
 			'settings.serverSettings.restart' => 'Restart',
 			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
@@ -19922,6 +19987,11 @@ extension on Translations {
 			'settings.serverSettings.fields.knowledgeHelper' => 'The structured entities/playbooks/skills layer on top of memory.',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
+			'settings.serverSettings.embedderModel.reprobe' => 'Re-check endpoint',
+			'settings.serverSettings.embedderModel.unreachable' => 'Endpoint unreachable — type the model id by hand.',
+			'settings.serverSettings.embedderModel.pickHint' => 'Select a model',
+			'settings.serverSettings.embedderModel.manual' => 'Type manually',
+			'settings.serverSettings.embedderModel.pickFromList' => 'Pick from list',
 			'memoryQuarantine.title' => 'Quarantine',
 			'memoryQuarantine.subtitle' => 'Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.',
 			'memoryQuarantine.empty' => 'Nothing in quarantine.',

@@ -4439,7 +4439,16 @@
     "archivedToast": "记忆已归档——可在「已归档」中恢复",
     "quarantinedToast": "记忆已隔离——请在 Cortex → 隔离区 审查",
     "archiveFailed": "归档失败：{error}",
-    "quarantineFailed": "隔离失败：{error}"
+    "quarantineFailed": "隔离失败：{error}",
+    "reembed": {
+      "menuItem": "全部重嵌",
+      "confirmTitle": "重嵌所有记忆？",
+      "confirmBody": "用当前 embedding 模型重新编码所有已存记忆和 KB 页面。切换模型后需要执行（向量维度会变）。可能需要一些时间。",
+      "confirmButton": "重嵌",
+      "running": "重嵌中……可能需要一些时间。",
+      "done": "已重嵌 {count} 条记忆。",
+      "failed": "重嵌失败：{error}"
+    }
   },
   "about": {
     "title": "关于",
@@ -4648,7 +4657,14 @@
         "knowledgeHelper": "建立在记忆之上的结构化实体/手册/技能层。"
       },
       "validateInteger": "「{field}」必须是整数",
-      "validateNumber": "「{field}」必须是数字"
+      "validateNumber": "「{field}」必须是数字",
+      "embedderModel": {
+        "reprobe": "重新检测端点",
+        "unreachable": "端点不可达——请手动填写模型 id。",
+        "pickHint": "选择模型",
+        "manual": "手动输入",
+        "pickFromList": "从列表选择"
+      }
     }
   },
   "memoryQuarantine": {

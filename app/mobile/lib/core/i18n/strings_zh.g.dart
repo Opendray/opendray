@@ -921,6 +921,7 @@ class _TranslationsMemoryZh extends TranslationsMemoryEn {
 	@override String get quarantinedToast => '记忆已隔离——请在 Cortex → 隔离区 审查';
 	@override String archiveFailed({required Object error}) => '归档失败：${error}';
 	@override String quarantineFailed({required Object error}) => '隔离失败：${error}';
+	@override late final _TranslationsMemoryReembedZh reembed = _TranslationsMemoryReembedZh._(_root);
 }
 
 // Path: about
@@ -2754,6 +2755,22 @@ class _TranslationsMemoryCreateZh extends TranslationsMemoryCreateEn {
 	@override String get submit => '创建';
 }
 
+// Path: memory.reembed
+class _TranslationsMemoryReembedZh extends TranslationsMemoryReembedEn {
+	_TranslationsMemoryReembedZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get menuItem => '全部重嵌';
+	@override String get confirmTitle => '重嵌所有记忆？';
+	@override String get confirmBody => '用当前 embedding 模型重新编码所有已存记忆和 KB 页面。切换模型后需要执行（向量维度会变）。可能需要一些时间。';
+	@override String get confirmButton => '重嵌';
+	@override String get running => '重嵌中……可能需要一些时间。';
+	@override String done({required Object count}) => '已重嵌 ${count} 条记忆。';
+	@override String failed({required Object error}) => '重嵌失败：${error}';
+}
+
 // Path: about.sections
 class _TranslationsAboutSectionsZh extends TranslationsAboutSectionsEn {
 	_TranslationsAboutSectionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2932,6 +2949,7 @@ class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSe
 	@override late final _TranslationsSettingsServerSettingsFieldsZh fields = _TranslationsSettingsServerSettingsFieldsZh._(_root);
 	@override String validateInteger({required Object field}) => '「${field}」必须是整数';
 	@override String validateNumber({required Object field}) => '「${field}」必须是数字';
+	@override late final _TranslationsSettingsServerSettingsEmbedderModelZh embedderModel = _TranslationsSettingsServerSettingsEmbedderModelZh._(_root);
 }
 
 // Path: web.sessions.list
@@ -6539,6 +6557,20 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get cleanerHelper => '周期性自动馆员，软归档过期/重复记忆。';
 	@override String get knowledgeEnabled => '知识图谱';
 	@override String get knowledgeHelper => '建立在记忆之上的结构化实体/手册/技能层。';
+}
+
+// Path: settings.serverSettings.embedderModel
+class _TranslationsSettingsServerSettingsEmbedderModelZh extends TranslationsSettingsServerSettingsEmbedderModelEn {
+	_TranslationsSettingsServerSettingsEmbedderModelZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get reprobe => '重新检测端点';
+	@override String get unreachable => '端点不可达——请手动填写模型 id。';
+	@override String get pickHint => '选择模型';
+	@override String get manual => '手动输入';
+	@override String get pickFromList => '从列表选择';
 }
 
 // Path: web.sessions.list.row
@@ -12176,6 +12208,13 @@ extension on TranslationsZh {
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
+			'memory.reembed.menuItem' => '全部重嵌',
+			'memory.reembed.confirmTitle' => '重嵌所有记忆？',
+			'memory.reembed.confirmBody' => '用当前 embedding 模型重新编码所有已存记忆和 KB 页面。切换模型后需要执行（向量维度会变）。可能需要一些时间。',
+			'memory.reembed.confirmButton' => '重嵌',
+			'memory.reembed.running' => '重嵌中……可能需要一些时间。',
+			'memory.reembed.done' => ({required Object count}) => '已重嵌 ${count} 条记忆。',
+			'memory.reembed.failed' => ({required Object error}) => '重嵌失败：${error}',
 			'about.title' => '关于',
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
@@ -12247,6 +12286,8 @@ extension on TranslationsZh {
 			'settings.logViewer.levels.info' => '信息',
 			'settings.logViewer.levels.warn' => '警告',
 			'settings.logViewer.levels.error' => '错误',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.title' => '服务器设置',
 			'settings.serverSettings.reloadTooltip' => '从服务器重新加载',
 			'settings.serverSettings.restartTooltip' => '重启网关',
@@ -12254,8 +12295,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.restartConfirmBody' => '网关将自我 exec。手机应用可能短暂断开连接。',
 			'settings.serverSettings.restart' => '重启',
 			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
@@ -12354,6 +12393,11 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.knowledgeHelper' => '建立在记忆之上的结构化实体/手册/技能层。',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
+			'settings.serverSettings.embedderModel.reprobe' => '重新检测端点',
+			'settings.serverSettings.embedderModel.unreachable' => '端点不可达——请手动填写模型 id。',
+			'settings.serverSettings.embedderModel.pickHint' => '选择模型',
+			'settings.serverSettings.embedderModel.manual' => '手动输入',
+			'settings.serverSettings.embedderModel.pickFromList' => '从列表选择',
 			'memoryQuarantine.title' => '隔离区',
 			'memoryQuarantine.subtitle' => '在被采信为持久记忆前需要审查的事实：integration 捕获按策略落到这里，你也可以手动隔离任何记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
 			'memoryQuarantine.empty' => '隔离区为空。',

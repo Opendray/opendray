@@ -921,6 +921,7 @@ class _TranslationsMemoryEs extends TranslationsMemoryEn {
 	@override String get quarantinedToast => 'Memoria en cuarentena — revísala en Cortex → Cuarentena';
 	@override String archiveFailed({required Object error}) => 'Error al archivar: ${error}';
 	@override String quarantineFailed({required Object error}) => 'Error al poner en cuarentena: ${error}';
+	@override late final _TranslationsMemoryReembedEs reembed = _TranslationsMemoryReembedEs._(_root);
 }
 
 // Path: about
@@ -2754,6 +2755,22 @@ class _TranslationsMemoryCreateEs extends TranslationsMemoryCreateEn {
 	@override String get submit => 'Crear';
 }
 
+// Path: memory.reembed
+class _TranslationsMemoryReembedEs extends TranslationsMemoryReembedEn {
+	_TranslationsMemoryReembedEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get menuItem => 'Reincrustar todo';
+	@override String get confirmTitle => '¿Reincrustar todas las memorias?';
+	@override String get confirmBody => 'Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.';
+	@override String get confirmButton => 'Reincrustar';
+	@override String get running => 'Reincrustando… esto puede tardar.';
+	@override String done({required Object count}) => 'Se reincrustaron ${count} memorias.';
+	@override String failed({required Object error}) => 'Falló la reincrustación: ${error}';
+}
+
 // Path: about.sections
 class _TranslationsAboutSectionsEs extends TranslationsAboutSectionsEn {
 	_TranslationsAboutSectionsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -2932,6 +2949,7 @@ class _TranslationsSettingsServerSettingsEs extends TranslationsSettingsServerSe
 	@override late final _TranslationsSettingsServerSettingsFieldsEs fields = _TranslationsSettingsServerSettingsFieldsEs._(_root);
 	@override String validateInteger({required Object field}) => '"${field}" debe ser un entero';
 	@override String validateNumber({required Object field}) => '"${field}" debe ser un número';
+	@override late final _TranslationsSettingsServerSettingsEmbedderModelEs embedderModel = _TranslationsSettingsServerSettingsEmbedderModelEs._(_root);
 }
 
 // Path: web.sessions.list
@@ -6539,6 +6557,20 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get cleanerHelper => 'Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.';
 	@override String get knowledgeEnabled => 'Grafo de conocimiento';
 	@override String get knowledgeHelper => 'La capa estructurada de entidades/playbooks/skills sobre la memoria.';
+}
+
+// Path: settings.serverSettings.embedderModel
+class _TranslationsSettingsServerSettingsEmbedderModelEs extends TranslationsSettingsServerSettingsEmbedderModelEn {
+	_TranslationsSettingsServerSettingsEmbedderModelEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get reprobe => 'Volver a comprobar el endpoint';
+	@override String get unreachable => 'Endpoint no accesible — escribe el id del modelo a mano.';
+	@override String get pickHint => 'Selecciona un modelo';
+	@override String get manual => 'Escribir manualmente';
+	@override String get pickFromList => 'Elegir de la lista';
 }
 
 // Path: web.sessions.list.row
@@ -12176,6 +12208,13 @@ extension on TranslationsEs {
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',
+			'memory.reembed.menuItem' => 'Reincrustar todo',
+			'memory.reembed.confirmTitle' => '¿Reincrustar todas las memorias?',
+			'memory.reembed.confirmBody' => 'Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.',
+			'memory.reembed.confirmButton' => 'Reincrustar',
+			'memory.reembed.running' => 'Reincrustando… esto puede tardar.',
+			'memory.reembed.done' => ({required Object count}) => 'Se reincrustaron ${count} memorias.',
+			'memory.reembed.failed' => ({required Object error}) => 'Falló la reincrustación: ${error}',
 			'about.title' => 'Acerca de',
 			'about.loading' => 'Cargando…',
 			'about.sections.app' => 'App',
@@ -12247,6 +12286,8 @@ extension on TranslationsEs {
 			'settings.logViewer.levels.info' => 'Info',
 			'settings.logViewer.levels.warn' => 'Warn',
 			'settings.logViewer.levels.error' => 'Error',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.title' => 'Ajustes del servidor',
 			'settings.serverSettings.reloadTooltip' => 'Recargar desde el servidor',
 			'settings.serverSettings.restartTooltip' => 'Reiniciar gateway',
@@ -12254,8 +12295,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.restartConfirmBody' => 'El gateway se ejecutará de nuevo a sí mismo. La app móvil puede perder la conexión brevemente.',
 			'settings.serverSettings.restart' => 'Reiniciar',
 			'settings.serverSettings.restartQueuedSnack' => 'Reinicio solicitado. Desliza para actualizar en un momento.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Falló el reinicio: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Falló el reinicio: ${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Cargado desde: ${path}',
@@ -12354,6 +12393,11 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.knowledgeHelper' => 'La capa estructurada de entidades/playbooks/skills sobre la memoria.',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" debe ser un entero',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" debe ser un número',
+			'settings.serverSettings.embedderModel.reprobe' => 'Volver a comprobar el endpoint',
+			'settings.serverSettings.embedderModel.unreachable' => 'Endpoint no accesible — escribe el id del modelo a mano.',
+			'settings.serverSettings.embedderModel.pickHint' => 'Selecciona un modelo',
+			'settings.serverSettings.embedderModel.manual' => 'Escribir manualmente',
+			'settings.serverSettings.embedderModel.pickFromList' => 'Elegir de la lista',
 			'memoryQuarantine.title' => 'Cuarentena',
 			'memoryQuarantine.subtitle' => 'Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.',
 			'memoryQuarantine.empty' => 'Nada en cuarentena.',
