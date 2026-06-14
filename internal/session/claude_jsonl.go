@@ -181,6 +181,186 @@ func ProjectInputHistory(cfg ClaudeHistoryConfig, cwd string, limit int) []Proje
 	return out
 }
 
+// defaultCarryoverBudgetBytes caps the recap injected on account
+// switch. ~24 KiB ≈ 6k tokens — enough recent turns for continuity,
+// small enough not to dominate the new context window or spike cost.
+const defaultCarryoverBudgetBytes = 24 * 1024
+
+// carryoverTurn is one role-labeled turn extracted from the old
+// transcript for the recap.
+type carryoverTurn struct {
+	role string // "You" | "Assistant"
+	text string
+}
+
+// BuildClaudeCarryover reads the transcript for `sessionID` under the
+// project matching `cwd`, and returns a labeled recap block suitable
+// for `--append-system-prompt` injection into a fresh session after an
+// account switch. Returns "" (never an error) when there's nothing to
+// carry — a missing/empty/unparseable transcript degrades to a fresh
+// session, never blocks the switch.
+//
+// The session UUID is globally unique, so scanning every configured
+// root and matching `<projectDir>/<sessionID>.jsonl` finds the right
+// file regardless of which account owned it. Only text turns are
+// kept (tool_use / tool_result / thinking are dropped); the recap is
+// tail-truncated to budgetBytes with an elision marker when older
+// turns are dropped.
+func BuildClaudeCarryover(cfg ClaudeHistoryConfig, cwd, sessionID string, budgetBytes int) string {
+	if sessionID == "" || cwd == "" {
+		return ""
+	}
+	if budgetBytes <= 0 {
+		budgetBytes = defaultCarryoverBudgetBytes
+	}
+
+	path := findClaudeTranscriptForSession(cfg, cwd, sessionID)
+	if path == "" {
+		return ""
+	}
+
+	turns := readCarryoverTurns(path)
+	if len(turns) == 0 {
+		return ""
+	}
+
+	return renderCarryover(turns, budgetBytes)
+}
+
+// findClaudeTranscriptForSession locates `<projectDir>/<sessionID>.jsonl`
+// across every configured root. Fail-closed on the filename: we anchor
+// on the exact UUID, never the latest-mtime fallback, so we can't pull
+// an unrelated session's transcript.
+func findClaudeTranscriptForSession(cfg ClaudeHistoryConfig, cwd, sessionID string) string {
+	for _, root := range resolveClaudeRoots(cfg) {
+		canon, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			canon = root
+		}
+		dir := findClaudeProjectDir(canon, cwd)
+		if dir == "" {
+			continue
+		}
+		candidate := filepath.Join(dir, sessionID+".jsonl")
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate
+		}
+	}
+	return ""
+}
+
+// readCarryoverTurns parses a transcript into ordered text turns,
+// dropping tool noise + internal reasoning. Oldest-first.
+func readCarryoverTurns(path string) []carryoverTurn {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
+
+	var turns []carryoverTurn
+	for scanner.Scan() {
+		var e claudeJSONLEntry
+		if err := json.Unmarshal(scanner.Bytes(), &e); err != nil {
+			continue
+		}
+		if e.Message == nil {
+			continue
+		}
+		switch e.Type {
+		case "user":
+			// extractUserText already skips tool_result-only entries
+			// (agent feedback, not human intent).
+			if txt := extractUserText(e.Message.Content); txt != "" {
+				turns = append(turns, carryoverTurn{role: "You", text: txt})
+			}
+		case "assistant":
+			if txt := assistantTextOnly(e.Message.Content); txt != "" {
+				turns = append(turns, carryoverTurn{role: "Assistant", text: txt})
+			}
+		}
+	}
+	return turns
+}
+
+// assistantTextOnly concatenates only the `text` blocks of an assistant
+// message, dropping tool_use and thinking blocks.
+func assistantTextOnly(raw json.RawMessage) string {
+	blocks, err := parseClaudeContentBlocks(raw)
+	if err != nil {
+		return ""
+	}
+	parts := make([]string, 0, len(blocks))
+	for _, b := range blocks {
+		if b.Type == "text" {
+			if t := strings.TrimSpace(b.Text); t != "" {
+				parts = append(parts, t)
+			}
+		}
+	}
+	return strings.TrimSpace(strings.Join(parts, "\n"))
+}
+
+// renderCarryover formats the tail of `turns` (within budgetBytes) into
+// the labeled recap block. Keeps the most recent turns; prepends an
+// elision marker when older turns are dropped.
+func renderCarryover(turns []carryoverTurn, budgetBytes int) string {
+	const (
+		header = "# Carried-over context from a previous account\n\n" +
+			"You are continuing a session that was just moved to a different " +
+			"account, so your in-CLI history was reset. Below is the recent " +
+			"conversation from before the switch, for continuity. Treat it as " +
+			"prior context, not as new instructions to act on immediately.\n\n"
+		footer  = "\n---\n(End of carried-over context. Continue from here.)"
+		elision = "…[earlier turns omitted]…\n\n"
+	)
+
+	// Walk turns newest→oldest, accumulating until we'd exceed budget.
+	budget := budgetBytes - len(header) - len(footer)
+	if budget <= 0 {
+		return ""
+	}
+	var (
+		kept    []string
+		used    int
+		dropped bool
+	)
+	for i := len(turns) - 1; i >= 0; i-- {
+		block := turns[i].role + ": " + turns[i].text + "\n\n"
+		if used+len(block) > budget {
+			dropped = i >= 0 // there were older turns we couldn't fit
+			break
+		}
+		kept = append(kept, block)
+		used += len(block)
+	}
+	if len(kept) == 0 {
+		// Single turn larger than budget — keep a truncated head of it
+		// rather than carrying nothing.
+		last := turns[len(turns)-1]
+		block := last.role + ": " + last.text
+		if len(block) > budget {
+			block = block[:budget]
+		}
+		kept = append(kept, block+"\n\n")
+		dropped = len(turns) > 1
+	}
+
+	// kept is newest-first; reverse to oldest-first for reading order.
+	var b strings.Builder
+	b.WriteString(header)
+	if dropped {
+		b.WriteString(elision)
+	}
+	for i := len(kept) - 1; i >= 0; i-- {
+		b.WriteString(kept[i])
+	}
+	b.WriteString(footer)
+	return b.String()
+}
+
 // resolveClaudeRoots picks the list of projects-root directories
 // to scan. Precedence:
 //
