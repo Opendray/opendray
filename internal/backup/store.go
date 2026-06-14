@@ -169,6 +169,7 @@ func (s *store) ListSchedules(ctx context.Context) ([]Schedule, error) {
 
 // SchedulePatch carries partial updates.
 type SchedulePatch struct {
+	Kind        *BackupKind
 	IntervalSec *int
 	Retention   *int
 	Enabled     *bool
@@ -176,6 +177,16 @@ type SchedulePatch struct {
 }
 
 func (s *store) UpdateSchedule(ctx context.Context, id string, p SchedulePatch) error {
+	if p.Kind != nil {
+		if _, err := ParseBackupKind(string(*p.Kind)); err != nil {
+			return err
+		}
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET kind=$1, updated_at=NOW() WHERE id=$2`,
+			string(p.Kind.orDefault()), id); err != nil {
+			return fmt.Errorf("update kind: %w", err)
+		}
+	}
 	if p.IntervalSec != nil {
 		if *p.IntervalSec <= 0 {
 			return fmt.Errorf("interval_sec must be > 0")

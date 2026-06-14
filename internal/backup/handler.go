@@ -316,19 +316,29 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req struct {
-		IntervalSec *int  `json:"interval_sec,omitempty"`
-		Retention   *int  `json:"retention,omitempty"`
-		Enabled     *bool `json:"enabled,omitempty"`
+		Kind        *string `json:"kind,omitempty"`
+		IntervalSec *int    `json:"interval_sec,omitempty"`
+		Retention   *int    `json:"retention,omitempty"`
+		Enabled     *bool   `json:"enabled,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	if err := h.live.Service().UpdateSchedule(r.Context(), id, SchedulePatch{
+	patch := SchedulePatch{
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,
-	}); err != nil {
+	}
+	if req.Kind != nil {
+		kind, err := ParseBackupKind(*req.Kind)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
+		patch.Kind = &kind
+	}
+	if err := h.live.Service().UpdateSchedule(r.Context(), id, patch); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}

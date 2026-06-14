@@ -1695,6 +1695,8 @@
         "backupNow": "Backup now",
         "triggering": "Triggering…",
         "includeConfig": "include config.toml",
+        "fullInstance": "Full instance",
+        "fullInstanceHint": "Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.",
         "restoreFromFile": "Restore from file",
         "refresh": "Refresh",
         "queuedToast": "Backup queued",
@@ -1706,6 +1708,7 @@
         "empty": "No backups yet. Click \"Backup now\" above to take the first one.",
         "columns": {
           "id": "ID",
+          "type": "Type",
           "target": "Target",
           "status": "Status",
           "started": "Started",
@@ -1734,7 +1737,42 @@
         "replayedDescription": "{bytes} replayed from manifest {id}",
         "failedToast": "Restore failed",
         "restoring": "Restoring…",
-        "restore": "Restore"
+        "restore": "Restore",
+        "dryRunToast": "Dry run complete — review the plan, then apply",
+        "planTitle": "Restore plan (dry run — nothing changed)",
+        "planDump": "Database dump: {size}",
+        "planConfig": "config.toml → {path}",
+        "planSecrets": "secrets.env → {path}",
+        "planVault": "vault: {files} files ({roots})",
+        "planApplyHint": "Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.",
+        "preview": "Preview (dry run)",
+        "previewing": "Previewing…",
+        "previewFirstHint": "Run a dry-run preview first",
+        "applyRestore": "Apply restore"
+      },
+      "kind": {
+        "dbOnly": "DB only",
+        "fullInstance": "Full instance",
+        "fullInstanceHint": "Includes the vault, secrets.env and config.toml"
+      },
+      "trigger": {
+        "preMigrate": "pre-migrate",
+        "preMigrateHint": "Automatic snapshot taken before schema migrations ran",
+        "preRestore": "pre-restore",
+        "preRestoreHint": "Automatic safety snapshot taken before a restore was applied"
+      },
+      "recoveryKit": {
+        "button": "Recovery Kit",
+        "title": "Download Recovery Kit",
+        "warning": "The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.",
+        "passphraseLabel": "Recovery passphrase (min 8 chars)",
+        "passphrasePlaceholder": "a strong passphrase you will not lose",
+        "confirmLabel": "Confirm recovery passphrase",
+        "mismatch": "Passphrases don't match",
+        "generating": "Generating…",
+        "download": "Download kit",
+        "downloadedToast": "Recovery Kit downloaded — store it safely",
+        "failedToast": "Could not generate Recovery Kit"
       },
       "schedulesTab": {
         "description": "Recurring backups. The scheduler polls every 30s and runs the oldest due schedule.",

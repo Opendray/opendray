@@ -1695,6 +1695,8 @@
         "backupNow": "Hacer copia ahora",
         "triggering": "Lanzando…",
         "includeConfig": "incluir config.toml",
+        "fullInstance": "Instancia completa",
+        "fullInstanceHint": "Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.",
         "restoreFromFile": "Restaurar desde archivo",
         "refresh": "Actualizar",
         "queuedToast": "Copia de seguridad en cola",
@@ -1706,6 +1708,7 @@
         "empty": "Aún no hay copias de seguridad. Haz clic en \"Hacer copia ahora\" arriba para crear la primera.",
         "columns": {
           "id": "ID",
+          "type": "Tipo",
           "target": "Destino",
           "status": "Estado",
           "started": "Iniciada",
@@ -1734,7 +1737,42 @@
         "replayedDescription": "{bytes} reproducidos desde el manifest {id}",
         "failedToast": "Error en la restauración",
         "restoring": "Restaurando…",
-        "restore": "Restaurar"
+        "restore": "Restaurar",
+        "dryRunToast": "Simulación completa: revisa el plan y luego aplícalo",
+        "planTitle": "Plan de restauración (simulación: nada cambió)",
+        "planDump": "Volcado de base de datos: {size}",
+        "planConfig": "config.toml → {path}",
+        "planSecrets": "secrets.env → {path}",
+        "planVault": "vault: {files} archivos ({roots})",
+        "planApplyHint": "Aplicar toma primero una instantánea de seguridad de instancia completa, luego sobrescribe lo anterior y ejecuta pg_restore.",
+        "preview": "Previsualizar (simulación)",
+        "previewing": "Previsualizando…",
+        "previewFirstHint": "Ejecuta primero una simulación",
+        "applyRestore": "Aplicar restauración"
+      },
+      "kind": {
+        "dbOnly": "Solo BD",
+        "fullInstance": "Instancia completa",
+        "fullInstanceHint": "Incluye el vault, secrets.env y config.toml"
+      },
+      "trigger": {
+        "preMigrate": "pre-migración",
+        "preMigrateHint": "Instantánea automática tomada antes de ejecutar las migraciones de esquema",
+        "preRestore": "pre-restauración",
+        "preRestoreHint": "Instantánea de seguridad automática tomada antes de aplicar una restauración"
+      },
+      "recoveryKit": {
+        "button": "Kit de recuperación",
+        "title": "Descargar kit de recuperación",
+        "warning": "La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.",
+        "passphraseLabel": "Frase de recuperación (mín. 8 caracteres)",
+        "passphrasePlaceholder": "una frase fuerte que no perderás",
+        "confirmLabel": "Confirmar frase de recuperación",
+        "mismatch": "Las frases no coinciden",
+        "generating": "Generando…",
+        "download": "Descargar kit",
+        "downloadedToast": "Kit de recuperación descargado: guárdalo de forma segura",
+        "failedToast": "No se pudo generar el kit de recuperación"
       },
       "schedulesTab": {
         "description": "Copias de seguridad periódicas. El programador consulta cada 30 s y ejecuta la programación pendiente más antigua.",

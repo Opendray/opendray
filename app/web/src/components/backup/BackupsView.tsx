@@ -43,11 +43,14 @@ import {
 
 import {
   type Backup,
+  type BackupKind,
   type BackupSetupResult,
   type BackupStatusReport,
   type InventoryGroup,
+  type RestorePlan,
   type Schedule,
   type TargetSpec,
+  type TriggeredBy,
   backupDownloadURL,
   createBackup,
   createSchedule,
@@ -56,6 +59,7 @@ import {
   deleteTarget,
   fetchBackupInventory,
   fetchBackupStatus,
+  fetchRecoveryKit,
   formatBytes,
   formatInterval,
   listBackups,
@@ -555,7 +559,9 @@ function BackupsTab() {
   const [rows, setRows] = useState<Backup[] | null>(null)
   const [busy, setBusy] = useState(false)
   const [includeConfig, setIncludeConfig] = useState(true)
+  const [fullInstance, setFullInstance] = useState(false)
   const [restoreOpen, setRestoreOpen] = useState(false)
+  const [kitOpen, setKitOpen] = useState(false)
 
   async function refresh() {
     try {
@@ -577,7 +583,10 @@ function BackupsTab() {
   async function trigger() {
     setBusy(true)
     try {
-      await createBackup({ includeConfig })
+      await createBackup({
+        kind: fullInstance ? 'full_instance' : 'db_only',
+        includeConfig,
+      })
       toast.success(t('web.backups.backupsTab.queuedToast'))
       await refresh()
     } catch (err) {
@@ -613,14 +622,35 @@ function BackupsTab() {
             ? t('web.backups.backupsTab.triggering')
             : t('web.backups.backupsTab.backupNow')}
         </Button>
+        <label
+          className="flex items-center gap-2 text-[12px] text-muted-foreground"
+          title={t('web.backups.backupsTab.fullInstanceHint')}
+        >
+          <Switch
+            checked={fullInstance}
+            onCheckedChange={setFullInstance}
+            className="scale-75"
+          />
+          {t('web.backups.backupsTab.fullInstance')}
+        </label>
         <label className="flex items-center gap-2 text-[12px] text-muted-foreground">
           <Switch
-            checked={includeConfig}
+            checked={includeConfig || fullInstance}
             onCheckedChange={setIncludeConfig}
+            disabled={fullInstance}
             className="scale-75"
           />
           {t('web.backups.backupsTab.includeConfig')}
         </label>
+        <Dialog open={kitOpen} onOpenChange={setKitOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="h-8">
+              <KeyRound className="size-3.5 mr-1.5" />
+              {t('web.backups.recoveryKit.button')}
+            </Button>
+          </DialogTrigger>
+          <RecoveryKitDialog />
+        </Dialog>
         <Dialog open={restoreOpen} onOpenChange={setRestoreOpen}>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 ml-auto">
@@ -659,24 +689,59 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [output, setOutput] = useState<string | null>(null)
+  const [plan, setPlan] = useState<RestorePlan | null>(null)
 
   const restoringOwn = targetDsn === ''
   const confirmReady =
     !restoringOwn ||
     confirm.trim() === t('web.backups.restore.confirmSentinel')
 
-  async function submit() {
+  function restoreErr(err: unknown): string {
+    return err instanceof APIError
+      ? msgFromAPI(err)
+      : err instanceof Error
+        ? err.message
+        : 'Unknown error'
+  }
+
+  // Step 1: dry run — validates the bundle and reports a plan; changes
+  // nothing on disk or in the database.
+  async function preview() {
     if (!file) {
       toast.error(t('web.backups.restore.pickFileToast'))
       return
     }
     setBusy(true)
     setOutput(null)
+    setPlan(null)
     try {
       const res = await restoreBackup({
         bundle: file,
         targetDsn: targetDsn || undefined,
         clean,
+        apply: false,
+      })
+      setPlan(res.plan)
+      toast.success(t('web.backups.restore.dryRunToast'))
+    } catch (err) {
+      toast.error(t('web.backups.restore.failedToast'), {
+        description: restoreErr(err),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Step 2: apply — commits the restore (safety snapshot + write + pg_restore).
+  async function apply() {
+    if (!file) return
+    setBusy(true)
+    try {
+      const res = await restoreBackup({
+        bundle: file,
+        targetDsn: targetDsn || undefined,
+        clean,
+        apply: true,
         confirm: restoringOwn ? confirm : undefined,
         note,
       })
@@ -689,13 +754,9 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
       })
       await onDone()
     } catch (err) {
-      const msg =
-        err instanceof APIError
-          ? msgFromAPI(err)
-          : err instanceof Error
-            ? err.message
-            : 'Unknown error'
-      toast.error(t('web.backups.restore.failedToast'), { description: msg })
+      toast.error(t('web.backups.restore.failedToast'), {
+        description: restoreErr(err),
+      })
     } finally {
       setBusy(false)
     }
@@ -771,6 +832,44 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
           </div>
         )}
 
+        {plan && (
+          <div className="rounded-md border border-border bg-card/30 p-3 text-[12px] flex flex-col gap-1.5">
+            <div className="font-medium text-foreground">
+              {t('web.backups.restore.planTitle')}
+            </div>
+            <ul className="flex flex-col gap-1 text-muted-foreground">
+              <li>
+                {t('web.backups.restore.planDump', {
+                  size: formatBytes(plan.dump_bytes),
+                })}
+              </li>
+              {plan.config_path && (
+                <li>
+                  {t('web.backups.restore.planConfig', { path: plan.config_path })}
+                </li>
+              )}
+              {plan.secrets_path && (
+                <li>
+                  {t('web.backups.restore.planSecrets', {
+                    path: plan.secrets_path,
+                  })}
+                </li>
+              )}
+              {plan.vault_files > 0 && (
+                <li>
+                  {t('web.backups.restore.planVault', {
+                    files: plan.vault_files,
+                    roots: (plan.vault_roots ?? []).join(', '),
+                  })}
+                </li>
+              )}
+            </ul>
+            <div className="text-[11px] text-state-warning mt-1">
+              {t('web.backups.restore.planApplyHint')}
+            </div>
+          </div>
+        )}
+
         {output && (
           <details className="rounded-md border border-border bg-card/30 p-2 text-[11px]">
             <summary className="cursor-pointer text-muted-foreground">
@@ -780,11 +879,24 @@ function RestoreDialog({ onDone }: { onDone: () => void | Promise<void> }) {
           </details>
         )}
       </div>
-      <DialogFooter>
-        <Button onClick={submit} disabled={busy || !file || !confirmReady}>
-          {busy
+      <DialogFooter className="gap-2">
+        <Button
+          variant="outline"
+          onClick={preview}
+          disabled={busy || !file}
+        >
+          {busy && !plan
+            ? t('web.backups.restore.previewing')
+            : t('web.backups.restore.preview')}
+        </Button>
+        <Button
+          onClick={apply}
+          disabled={busy || !file || !plan || !confirmReady}
+          title={!plan ? t('web.backups.restore.previewFirstHint') : undefined}
+        >
+          {busy && plan
             ? t('web.backups.restore.restoring')
-            : t('web.backups.restore.restore')}
+            : t('web.backups.restore.applyRestore')}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -815,6 +927,7 @@ function BackupTable({
         <thead className="bg-card/50 text-muted-foreground">
           <tr className="text-left">
             <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.id')}</th>
+            <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.type')}</th>
             <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.target')}</th>
             <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.status')}</th>
             <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.started')}</th>
@@ -826,6 +939,12 @@ function BackupTable({
           {rows.map((b) => (
             <tr key={b.id} className="border-t border-border/60">
               <td className="px-3 py-2 font-mono text-[11px]">{b.id}</td>
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <KindBadge kind={b.kind} />
+                  <TriggerBadge triggeredBy={b.triggered_by} />
+                </div>
+              </td>
               <td className="px-3 py-2">{b.target_id}</td>
               <td className="px-3 py-2">
                 <StatusBadge status={b.status} />
@@ -883,6 +1002,129 @@ function StatusBadge({ status }: { status: Backup['status'] }) {
     deleted: 'muted',
   }
   return <Badge variant={map[status]}>{status}</Badge>
+}
+
+function KindBadge({ kind }: { kind: BackupKind }) {
+  const { t } = useTranslation()
+  if (kind === 'full_instance') {
+    return (
+      <Badge variant="default" title={t('web.backups.kind.fullInstanceHint')}>
+        {t('web.backups.kind.fullInstance')}
+      </Badge>
+    )
+  }
+  return <Badge variant="muted">{t('web.backups.kind.dbOnly')}</Badge>
+}
+
+// TriggerBadge calls out automatic snapshots (pre-migrate / pre-restore)
+// so an operator can tell them apart from manual/scheduled backups.
+function TriggerBadge({ triggeredBy }: { triggeredBy: TriggeredBy }) {
+  const { t } = useTranslation()
+  if (triggeredBy === 'pre_migrate') {
+    return (
+      <Badge variant="warning" title={t('web.backups.trigger.preMigrateHint')}>
+        {t('web.backups.trigger.preMigrate')}
+      </Badge>
+    )
+  }
+  if (triggeredBy === 'pre_restore') {
+    return (
+      <Badge variant="warning" title={t('web.backups.trigger.preRestoreHint')}>
+        {t('web.backups.trigger.preRestore')}
+      </Badge>
+    )
+  }
+  return null
+}
+
+// RecoveryKitDialog asks for a recovery passphrase, fetches the wrapped
+// kit, and downloads it client-side — with a mandatory "store this
+// somewhere safe" warning, since it's the only thing that recovers the
+// backup passphrase if the host is lost.
+function RecoveryKitDialog() {
+  const { t } = useTranslation()
+  const [recoveryPass, setRecoveryPass] = useState('')
+  const [confirmPass, setConfirmPass] = useState('')
+  const [busy, setBusy] = useState(false)
+  const mismatch = confirmPass.length > 0 && recoveryPass !== confirmPass
+  const ready = recoveryPass.length >= 8 && recoveryPass === confirmPass
+
+  async function download() {
+    setBusy(true)
+    try {
+      const kit = await fetchRecoveryKit(recoveryPass)
+      const blob = new Blob([JSON.stringify(kit, null, 2)], {
+        type: 'application/json',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'opendray-recovery-kit.json'
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success(t('web.backups.recoveryKit.downloadedToast'))
+    } catch (err) {
+      const msg =
+        err instanceof APIError
+          ? msgFromAPI(err)
+          : err instanceof Error
+            ? err.message
+            : 'Unknown error'
+      toast.error(t('web.backups.recoveryKit.failedToast'), { description: msg })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{t('web.backups.recoveryKit.title')}</DialogTitle>
+      </DialogHeader>
+      <div className="flex flex-col gap-3">
+        <div className="rounded-md border border-state-warning/40 bg-state-warning/10 p-3 text-[12px] flex gap-2 items-start">
+          <ShieldAlert className="size-4 text-state-warning shrink-0 mt-0.5" />
+          <div>{t('web.backups.recoveryKit.warning')}</div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[12px]">
+            {t('web.backups.recoveryKit.passphraseLabel')}
+          </Label>
+          <Input
+            type="password"
+            value={recoveryPass}
+            onChange={(e) => setRecoveryPass(e.target.value)}
+            placeholder={t('web.backups.recoveryKit.passphrasePlaceholder')}
+            className="h-8"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-[12px]">
+            {t('web.backups.recoveryKit.confirmLabel')}
+          </Label>
+          <Input
+            type="password"
+            value={confirmPass}
+            onChange={(e) => setConfirmPass(e.target.value)}
+            className="h-8"
+          />
+          {mismatch && (
+            <span className="text-[11px] text-state-failed">
+              {t('web.backups.recoveryKit.mismatch')}
+            </span>
+          )}
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={download} disabled={busy || !ready}>
+          <Download className="size-3.5 mr-1.5" />
+          {busy
+            ? t('web.backups.recoveryKit.generating')
+            : t('web.backups.recoveryKit.download')}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  )
 }
 
 // ── Schedules tab ────────────────────────────────────────────────

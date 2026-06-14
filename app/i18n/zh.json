@@ -1695,6 +1695,8 @@
         "backupNow": "立即备份",
         "triggering": "触发中…",
         "includeConfig": "包含 config.toml",
+        "fullInstance": "完整实例",
+        "fullInstanceHint": "同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。",
         "restoreFromFile": "从文件恢复",
         "refresh": "刷新",
         "queuedToast": "备份已排队",
@@ -1706,6 +1708,7 @@
         "empty": "暂无备份。点击上方 \"立即备份\" 进行第一次。",
         "columns": {
           "id": "ID",
+          "type": "类型",
           "target": "目标",
           "status": "状态",
           "started": "开始",
@@ -1734,7 +1737,42 @@
         "replayedDescription": "已回放 {bytes}，来自 manifest {id}",
         "failedToast": "恢复失败",
         "restoring": "恢复中…",
-        "restore": "恢复"
+        "restore": "恢复",
+        "dryRunToast": "试运行完成 —— 查看计划后再应用",
+        "planTitle": "恢复计划（试运行 —— 未改动任何内容）",
+        "planDump": "数据库 dump：{size}",
+        "planConfig": "config.toml → {path}",
+        "planSecrets": "secrets.env → {path}",
+        "planVault": "vault：{files} 个文件（{roots}）",
+        "planApplyHint": "应用前会先做一次完整实例安全快照,再覆盖上述内容并执行 pg_restore。",
+        "preview": "预览（试运行）",
+        "previewing": "预览中…",
+        "previewFirstHint": "请先运行试运行预览",
+        "applyRestore": "应用恢复"
+      },
+      "kind": {
+        "dbOnly": "仅数据库",
+        "fullInstance": "完整实例",
+        "fullInstanceHint": "包含 vault、secrets.env 和 config.toml"
+      },
+      "trigger": {
+        "preMigrate": "迁移前",
+        "preMigrateHint": "schema 迁移前自动拍摄的快照",
+        "preRestore": "恢复前",
+        "preRestoreHint": "应用恢复前自动拍摄的安全快照"
+      },
+      "recoveryKit": {
+        "button": "恢复工具包",
+        "title": "下载恢复工具包",
+        "warning": "备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。",
+        "passphraseLabel": "恢复口令（至少 8 位）",
+        "passphrasePlaceholder": "一个你不会丢失的强口令",
+        "confirmLabel": "确认恢复口令",
+        "mismatch": "两次口令不一致",
+        "generating": "生成中…",
+        "download": "下载工具包",
+        "downloadedToast": "恢复工具包已下载 —— 请妥善保存",
+        "failedToast": "无法生成恢复工具包"
       },
       "schedulesTab": {
         "description": "周期备份。调度器每 30 秒轮询一次，并运行最旧的到期计划。",
