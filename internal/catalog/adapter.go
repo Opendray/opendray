@@ -510,6 +510,16 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		// Carry-over context on account switch: when the operator opted
+		// into "carry context", SwitchClaudeAccount put a recap of the
+		// prior conversation on the context. Inject it through the same
+		// --append-system-prompt channel as ambient memory so the fresh
+		// session under the new account starts with continuity. One-shot
+		// — only present on the switch respawn.
+		if err := injectCarryoverFor(prepareCtx, providerID, baseDir, &out); err != nil {
+			return session.PrepareOutput{}, fmt.Errorf("inject carryover context: %w", err)
+		}
+
 		// Background mirror: pull whatever Claude has already written
 		// to <cwd>/.claude/projects/.../memory/*.md into the shared
 		// store, so the agent's MCP search sees them. Fire-and-forget
@@ -1188,6 +1198,21 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 // injectAmbientMemoryFor injects the rendered "Recent project
 // memory" banner into the agent's system prompt. Same per-CLI
 // dispatch as injectMemoryGuidanceFor.
+// injectCarryoverFor injects the account-switch conversation recap (set
+// by Manager.SwitchClaudeAccount via session.WithCarryoverContext) into
+// the spawn's system-prompt surface. No-op when the context carries no
+// recap (the common path — every spawn except an opted-in switch).
+// Reuses injectAmbientMemoryFor's per-provider dispatch; in practice the
+// recap is only ever set on Claude switches, so this lands as a
+// --append-system-prompt arg.
+func injectCarryoverFor(ctx context.Context, providerID, baseDir string, out *session.PrepareOutput) error {
+	text := session.CarryoverContextFromContext(ctx)
+	if text == "" {
+		return nil
+	}
+	return injectAmbientMemoryFor(providerID, baseDir, text, out)
+}
+
 func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.PrepareOutput) error {
 	if text == "" {
 		return nil

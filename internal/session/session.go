@@ -113,6 +113,13 @@ type ResizeRequest struct {
 // binding, falling back to the CLI's default credential.
 type SwitchAccountRequest struct {
 	AccountID string `json:"account_id"`
+	// CarryContext, when true, seeds the new account's fresh session
+	// with a recap of the prior conversation (read from the old
+	// transcript, injected via --append-system-prompt). Default false
+	// preserves the clean-slate switch. Note this sends prior
+	// conversation content to the provider under the NEW account — the
+	// UI surfaces that as a consent line.
+	CarryContext bool `json:"carry_context,omitempty"`
 }
 
 // Errors used by the manager and surfaced as HTTP status codes by the
