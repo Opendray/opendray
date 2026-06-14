@@ -2134,7 +2134,9 @@
         "upToDate": "Tienes la última versión.",
         "checkUpdates": "Comprobar actualizaciones",
         "checking": "Comprobando…",
-        "reinstall": "Reinstalar"
+        "reinstall": "Reinstalar",
+        "forcePrompt": "El reinicio interrumpirá {count} sesión(es) activa(s) (se reanudan automáticamente después).",
+        "upgradeAnyway": "Actualizar de todos modos"
       }
     },
     "logViewer": {
