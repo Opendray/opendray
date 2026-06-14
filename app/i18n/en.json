@@ -218,7 +218,28 @@
           "cortex": "Cortex"
         },
         "vaultPanel": {
-          "open": "Open Vault"
+          "open": "Open Vault",
+          "projectDocs": "Project docs",
+          "projectDocsHint": "Agent-authored project docs in the vault. Re-bind the folder if this project's notes live elsewhere.",
+          "pinnedHint": "Bound to a custom vault folder for this project.",
+          "bind": "Bind",
+          "changeLocation": "Change the vault folder bound to this project",
+          "newDoc": "New doc",
+          "cancel": "Cancel",
+          "create": "Create",
+          "filenamePlaceholder": "filename.md",
+          "noDocs": "No project docs in this vault folder yet.",
+          "createFailed": "Could not create doc",
+          "mappingTitle": "Bind project vault folder",
+          "mappingHelp": "Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.",
+          "sessionCwd": "Session cwd",
+          "folderLabel": "Vault folder",
+          "mappingStoredHint": "Stored in the vault at .opendray-projects.json, so it syncs with your notes.",
+          "save": "Save",
+          "clearOverride": "Clear override",
+          "boundToast": "Project vault folder bound",
+          "clearedToast": "Override cleared — using the default folder",
+          "saveFailed": "Could not save the mapping"
         },
         "cortexPanel": {
           "noCwd": "Session has no cwd — Cortex features need a working directory.",
@@ -703,6 +724,8 @@
         "placeholderProject": "/path/to/project (cwd)",
         "syncMd": "Sync .md",
         "syncTooltip": "Re-ingest Claude's <cwd>/.claude/memory/*.md files into pgvector",
+        "browse": "Browse",
+        "browseTooltip": "Browse the gateway host's filesystem to pick any project directory",
         "values": {
           "project": "project",
           "global": "global"

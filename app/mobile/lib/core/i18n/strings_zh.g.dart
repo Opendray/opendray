@@ -3550,6 +3550,8 @@ class _TranslationsWebMemoryInspectorScopeZh extends TranslationsWebMemoryInspec
 	@override String get placeholderProject => '/path/to/project (cwd)';
 	@override String get syncMd => '同步 .md';
 	@override String get syncTooltip => '把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector';
+	@override String get browse => '浏览';
+	@override String get browseTooltip => '浏览网关主机的文件系统，选择任意项目目录';
 	@override late final _TranslationsWebMemoryInspectorScopeValuesZh values = _TranslationsWebMemoryInspectorScopeValuesZh._(_root);
 }
 
@@ -6598,6 +6600,27 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 
 	// Translations
 	@override String get open => '打开文档库';
+	@override String get projectDocs => '项目文档';
+	@override String get projectDocsHint => '文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。';
+	@override String get pinnedHint => '已为本项目绑定自定义文档库文件夹。';
+	@override String get bind => '绑定';
+	@override String get changeLocation => '更改绑定到本项目的文档库文件夹';
+	@override String get newDoc => '新建文档';
+	@override String get cancel => '取消';
+	@override String get create => '创建';
+	@override String get filenamePlaceholder => '文件名.md';
+	@override String get noDocs => '该文档库文件夹下暂无项目文档。';
+	@override String get createFailed => '无法创建文档';
+	@override String get mappingTitle => '绑定项目文档库文件夹';
+	@override String get mappingHelp => '选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。';
+	@override String get sessionCwd => '会话工作目录';
+	@override String get folderLabel => '文档库文件夹';
+	@override String get mappingStoredHint => '保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。';
+	@override String get save => '保存';
+	@override String get clearOverride => '清除覆盖';
+	@override String get boundToast => '已绑定项目文档库文件夹';
+	@override String get clearedToast => '已清除覆盖 —— 使用默认文件夹';
+	@override String get saveFailed => '无法保存映射';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -8821,6 +8844,27 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.vault' => '文档库',
 			'web.sessions.inspector.tabs.cortex' => '心智中枢',
 			'web.sessions.inspector.vaultPanel.open' => '打开文档库',
+			'web.sessions.inspector.vaultPanel.projectDocs' => '项目文档',
+			'web.sessions.inspector.vaultPanel.projectDocsHint' => '文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。',
+			'web.sessions.inspector.vaultPanel.pinnedHint' => '已为本项目绑定自定义文档库文件夹。',
+			'web.sessions.inspector.vaultPanel.bind' => '绑定',
+			'web.sessions.inspector.vaultPanel.changeLocation' => '更改绑定到本项目的文档库文件夹',
+			'web.sessions.inspector.vaultPanel.newDoc' => '新建文档',
+			'web.sessions.inspector.vaultPanel.cancel' => '取消',
+			'web.sessions.inspector.vaultPanel.create' => '创建',
+			'web.sessions.inspector.vaultPanel.filenamePlaceholder' => '文件名.md',
+			'web.sessions.inspector.vaultPanel.noDocs' => '该文档库文件夹下暂无项目文档。',
+			'web.sessions.inspector.vaultPanel.createFailed' => '无法创建文档',
+			'web.sessions.inspector.vaultPanel.mappingTitle' => '绑定项目文档库文件夹',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => '选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。',
+			'web.sessions.inspector.vaultPanel.sessionCwd' => '会话工作目录',
+			'web.sessions.inspector.vaultPanel.folderLabel' => '文档库文件夹',
+			'web.sessions.inspector.vaultPanel.mappingStoredHint' => '保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。',
+			'web.sessions.inspector.vaultPanel.save' => '保存',
+			'web.sessions.inspector.vaultPanel.clearOverride' => '清除覆盖',
+			'web.sessions.inspector.vaultPanel.boundToast' => '已绑定项目文档库文件夹',
+			'web.sessions.inspector.vaultPanel.clearedToast' => '已清除覆盖 —— 使用默认文件夹',
+			'web.sessions.inspector.vaultPanel.saveFailed' => '无法保存映射',
 			'web.sessions.inspector.cortexPanel.noCwd' => '会话没有工作目录——心智中枢功能需要工作目录。',
 			'web.sessions.inspector.cortexPanel.open' => '打开心智中枢工作区',
 			'web.sessions.inspector.cortexPanel.docs' => '文档',
@@ -9126,6 +9170,8 @@ extension on TranslationsZh {
 			'web.project.reset.alwaysDeleted' => '始终删除：目标、计划、提案、日志、清理决策。',
 			'web.project.reset.alsoDeleteScannerLabel' => '同时删除 scanner 文档',
 			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity)。',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.alsoDeleteScannerHint' => '下次 spawn 会自动重建 — 通常不勾选即可。',
 			'web.project.reset.alsoDeleteMemoriesLabel' => '同时删除 pgvector 记忆',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
@@ -9147,8 +9193,6 @@ extension on TranslationsZh {
 			'web.project.lifecycle.activate' => '激活',
 			'web.project.lifecycle.pause' => '暂停',
 			'web.project.lifecycle.archive' => '归档',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.lifecycle.idleSuggest' => '长期闲置 — 建议归档',
 			'web.project.lifecycle.idleHint' => ({required Object days}) => '已有 ${days} 天无活动',
 			'web.project.lifecycle.failedToast' => '无法更改项目状态',
@@ -9200,6 +9244,8 @@ extension on TranslationsZh {
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
 			'web.memoryInspector.scope.syncMd' => '同步 .md',
 			'web.memoryInspector.scope.syncTooltip' => '把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector',
+			'web.memoryInspector.scope.browse' => '浏览',
+			'web.memoryInspector.scope.browseTooltip' => '浏览网关主机的文件系统，选择任意项目目录',
 			'web.memoryInspector.scope.values.project' => 'project',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => '语义搜索查询（Enter 运行；为空则浏览）',
@@ -9638,6 +9684,8 @@ extension on TranslationsZh {
 			'web.channels.notifications.snippetCaps.k3000' => '3000 字符',
 			'web.channels.notifications.snippetCaps.k6000' => '6000 字符',
 			'web.channels.notifications.snippetCaps.k12000' => '12000 字符',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.nameLabel' => 'Bridge 名称',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => '适配器的人类可读标签。会显示在频道列表中。',
@@ -9661,8 +9709,6 @@ extension on TranslationsZh {
 			'web.channels.setup.copyHide' => '隐藏',
 			'web.channels.setup.copyShow' => '显示',
 			'web.channels.setup.copyLabelToast' => ({required Object label}) => '已复制 ${label}',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.setup.copyCode' => '复制',
 			'web.channels.setup.copied' => '已复制',
 			'web.channels.setup.codeCopiedToast' => '已复制代码',
@@ -10152,6 +10198,8 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.general.title' => '通用',
 			'web.serverSettings.sections.general.desc' => '监听地址、操作员账号、令牌 TTL。',
 			'web.serverSettings.sections.logging.title' => '日志',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.sections.logging.desc' => '日志级别、格式与实时跟踪。',
 			'web.serverSettings.sections.sessions.title' => '会话',
 			'web.serverSettings.sections.sessions.desc' => '空闲检测阈值。',
@@ -10175,8 +10223,6 @@ extension on TranslationsZh {
 			'web.serverSettings.loadFailed' => ({required Object message}) => '加载失败：${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray 启动时未指定 -config，设置仅从环境变量加载，无法在此编辑。',
 			'web.serverSettings.resetButton' => '重置',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.resetButtonTitle' => '丢弃此分区中未保存的修改',
 			'web.serverSettings.resetConfirm' => ({required Object section}) => '将"${section}"重置为上次保存的值？',
 			'web.serverSettings.badgeRestartRequired' => '需要重启',
@@ -10666,6 +10712,8 @@ extension on TranslationsZh {
 			'web.export.imports.listFailedToast' => '加载导入列表失败',
 			'web.knowledge.title' => '知识',
 			'web.knowledge.subtitle' => '跨所有项目沉淀的知识——基础设施与规约,加上从过往工作蒸馏的教训与可复用功能。开新项目时注入,快速起步、不从头再来。',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.searchPlaceholder' => '搜索知识…',
 			'web.knowledge.search' => '搜索',
 			'web.knowledge.browse' => '浏览',
@@ -10689,8 +10737,6 @@ extension on TranslationsZh {
 			'web.knowledge.scopes.domain' => '领域',
 			'web.knowledge.kb.tab' => '知识库',
 			'web.knowledge.kb.graphTab' => '图谱',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} 节点 · ${edges} 连接',
 			'web.knowledge.kb.global' => '全局',
 			'web.knowledge.kb.projectHandbook' => '项目手册',
@@ -11180,6 +11226,8 @@ extension on TranslationsZh {
 			'mcp.viewRawConfig' => '查看原始配置',
 			'mcp.copyId' => '复制 ID',
 			'mcp.copiedSnack' => ({required Object id}) => '已复制 ${id}',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.deleteServerTitle' => '删除 MCP 服务器？',
 			'mcp.deleteSecretTitle' => '删除密钥？',
 			'mcp.errorPrefix.delete' => '删除失败',
@@ -11203,8 +11251,6 @@ extension on TranslationsZh {
 			'mcp.editor.save' => '保存',
 			'mcp.editor.create' => '创建',
 			'mcp.secret.keyLabel' => '键',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN、OPENAI_KEY、…',
 			'mcp.secret.valueLabel' => '值',
 			'mcp.secret.keyRequired' => '必须填写键。',
@@ -11694,6 +11740,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => '自动：${prefix}-1',
 			'backupTargetEditor.idHelper' => '小写字母、数字、连字符。默认为下一个可用槽。',
 			'backupTargetEditor.enabledOn' => '定期和临时备份可使用此目标。',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.enabledOff' => '服务器将拒绝向此处写入备份。',
 			'backupTargetEditor.saving' => '保存中…',
 			'backupTargetEditor.create' => '创建',
@@ -11717,8 +11765,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.endpointLabel' => '端点',
 			'backupTargetEditor.regionLabel' => '区域',
 			'backupTargetEditor.bucketLabel' => '存储桶',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.accessKeyLabel' => 'Access Key',
 			'backupTargetEditor.secretKeyLabel' => 'Secret Key',
 			'backupTargetEditor.secretKeyHintEdit' => '留空 = 保留当前值。已 AES-256-GCM 加密存储。',
@@ -12208,6 +12254,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.restartConfirmBody' => '网关将自我 exec。手机应用可能短暂断开连接。',
 			'settings.serverSettings.restart' => '重启',
 			'settings.serverSettings.restartQueuedSnack' => '已请求重启。稍后下拉刷新。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => '重启失败：${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => '加载自：${path}',
@@ -12231,8 +12279,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
 			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',

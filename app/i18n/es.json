@@ -218,7 +218,28 @@
           "cortex": "Cortex"
         },
         "vaultPanel": {
-          "open": "Abrir Bóveda"
+          "open": "Abrir Bóveda",
+          "projectDocs": "Docs del proyecto",
+          "projectDocsHint": "Docs del proyecto escritos por el agente en la bóveda. Revincula la carpeta si las notas de este proyecto viven en otro sitio.",
+          "pinnedHint": "Vinculado a una carpeta de bóveda personalizada para este proyecto.",
+          "bind": "Vincular",
+          "changeLocation": "Cambiar la carpeta de bóveda vinculada a este proyecto",
+          "newDoc": "Nuevo doc",
+          "cancel": "Cancelar",
+          "create": "Crear",
+          "filenamePlaceholder": "archivo.md",
+          "noDocs": "Aún no hay docs del proyecto en esta carpeta de la bóveda.",
+          "createFailed": "No se pudo crear el doc",
+          "mappingTitle": "Vincular carpeta de bóveda del proyecto",
+          "mappingHelp": "Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.",
+          "sessionCwd": "cwd de la sesión",
+          "folderLabel": "Carpeta de la bóveda",
+          "mappingStoredHint": "Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.",
+          "save": "Guardar",
+          "clearOverride": "Borrar anulación",
+          "boundToast": "Carpeta de bóveda del proyecto vinculada",
+          "clearedToast": "Anulación borrada — usando la carpeta por defecto",
+          "saveFailed": "No se pudo guardar el mapeo"
         },
         "cortexPanel": {
           "noCwd": "La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.",
@@ -703,6 +724,8 @@
         "placeholderProject": "/path/to/project (cwd)",
         "syncMd": "Sincronizar .md",
         "syncTooltip": "Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector",
+        "browse": "Explorar",
+        "browseTooltip": "Explora el sistema de archivos del host del gateway para elegir cualquier directorio de proyecto",
         "values": {
           "project": "proyecto",
           "global": "global"

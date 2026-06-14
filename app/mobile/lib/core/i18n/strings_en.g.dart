@@ -6938,6 +6938,12 @@ class TranslationsWebMemoryInspectorScopeEn {
 	/// en: 'Re-ingest Claude's <cwd>/.claude/memory/*.md files into pgvector'
 	String get syncTooltip => 'Re-ingest Claude\'s <cwd>/.claude/memory/*.md files into pgvector';
 
+	/// en: 'Browse'
+	String get browse => 'Browse';
+
+	/// en: 'Browse the gateway host's filesystem to pick any project directory'
+	String get browseTooltip => 'Browse the gateway host\'s filesystem to pick any project directory';
+
 	late final TranslationsWebMemoryInspectorScopeValuesEn values = TranslationsWebMemoryInspectorScopeValuesEn.internal(_root);
 }
 
@@ -12738,6 +12744,69 @@ class TranslationsWebSessionsInspectorVaultPanelEn {
 
 	/// en: 'Open Vault'
 	String get open => 'Open Vault';
+
+	/// en: 'Project docs'
+	String get projectDocs => 'Project docs';
+
+	/// en: 'Agent-authored project docs in the vault. Re-bind the folder if this project's notes live elsewhere.'
+	String get projectDocsHint => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.';
+
+	/// en: 'Bound to a custom vault folder for this project.'
+	String get pinnedHint => 'Bound to a custom vault folder for this project.';
+
+	/// en: 'Bind'
+	String get bind => 'Bind';
+
+	/// en: 'Change the vault folder bound to this project'
+	String get changeLocation => 'Change the vault folder bound to this project';
+
+	/// en: 'New doc'
+	String get newDoc => 'New doc';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Create'
+	String get create => 'Create';
+
+	/// en: 'filename.md'
+	String get filenamePlaceholder => 'filename.md';
+
+	/// en: 'No project docs in this vault folder yet.'
+	String get noDocs => 'No project docs in this vault folder yet.';
+
+	/// en: 'Could not create doc'
+	String get createFailed => 'Could not create doc';
+
+	/// en: 'Bind project vault folder'
+	String get mappingTitle => 'Bind project vault folder';
+
+	/// en: 'Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.'
+	String get mappingHelp => 'Pick the vault folder that holds this project\'s notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.';
+
+	/// en: 'Session cwd'
+	String get sessionCwd => 'Session cwd';
+
+	/// en: 'Vault folder'
+	String get folderLabel => 'Vault folder';
+
+	/// en: 'Stored in the vault at .opendray-projects.json, so it syncs with your notes.'
+	String get mappingStoredHint => 'Stored in the vault at .opendray-projects.json, so it syncs with your notes.';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Clear override'
+	String get clearOverride => 'Clear override';
+
+	/// en: 'Project vault folder bound'
+	String get boundToast => 'Project vault folder bound';
+
+	/// en: 'Override cleared — using the default folder'
+	String get clearedToast => 'Override cleared — using the default folder';
+
+	/// en: 'Could not save the mapping'
+	String get saveFailed => 'Could not save the mapping';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -16343,6 +16412,27 @@ extension on Translations {
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
+			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
+			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
+			'web.sessions.inspector.vaultPanel.pinnedHint' => 'Bound to a custom vault folder for this project.',
+			'web.sessions.inspector.vaultPanel.bind' => 'Bind',
+			'web.sessions.inspector.vaultPanel.changeLocation' => 'Change the vault folder bound to this project',
+			'web.sessions.inspector.vaultPanel.newDoc' => 'New doc',
+			'web.sessions.inspector.vaultPanel.cancel' => 'Cancel',
+			'web.sessions.inspector.vaultPanel.create' => 'Create',
+			'web.sessions.inspector.vaultPanel.filenamePlaceholder' => 'filename.md',
+			'web.sessions.inspector.vaultPanel.noDocs' => 'No project docs in this vault folder yet.',
+			'web.sessions.inspector.vaultPanel.createFailed' => 'Could not create doc',
+			'web.sessions.inspector.vaultPanel.mappingTitle' => 'Bind project vault folder',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Pick the vault folder that holds this project\'s notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.',
+			'web.sessions.inspector.vaultPanel.sessionCwd' => 'Session cwd',
+			'web.sessions.inspector.vaultPanel.folderLabel' => 'Vault folder',
+			'web.sessions.inspector.vaultPanel.mappingStoredHint' => 'Stored in the vault at .opendray-projects.json, so it syncs with your notes.',
+			'web.sessions.inspector.vaultPanel.save' => 'Save',
+			'web.sessions.inspector.vaultPanel.clearOverride' => 'Clear override',
+			'web.sessions.inspector.vaultPanel.boundToast' => 'Project vault folder bound',
+			'web.sessions.inspector.vaultPanel.clearedToast' => 'Override cleared — using the default folder',
+			'web.sessions.inspector.vaultPanel.saveFailed' => 'Could not save the mapping',
 			'web.sessions.inspector.cortexPanel.noCwd' => 'Session has no cwd — Cortex features need a working directory.',
 			'web.sessions.inspector.cortexPanel.open' => 'Open Cortex workspace',
 			'web.sessions.inspector.cortexPanel.docs' => 'Docs',
@@ -16648,6 +16738,8 @@ extension on Translations {
 			'web.project.reset.alwaysDeleted' => 'Always deleted: goal, plan, proposals, journal, cleanup decisions.',
 			'web.project.reset.alsoDeleteScannerLabel' => 'Also delete scanner docs',
 			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity).',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.alsoDeleteScannerHint' => 'Auto-rebuild on next spawn anyway — leaving unchecked is usually fine.',
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Also delete pgvector memories',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'for this scope_key.',
@@ -16669,8 +16761,6 @@ extension on Translations {
 			'web.project.lifecycle.activate' => 'Activate',
 			'web.project.lifecycle.pause' => 'Pause',
 			'web.project.lifecycle.archive' => 'Archive',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.lifecycle.idleSuggest' => 'Idle — consider archiving',
 			'web.project.lifecycle.idleHint' => ({required Object days}) => 'No activity for ${days} days',
 			'web.project.lifecycle.failedToast' => 'Could not change project status',
@@ -16722,6 +16812,8 @@ extension on Translations {
 			'web.memoryInspector.scope.placeholderProject' => '/path/to/project (cwd)',
 			'web.memoryInspector.scope.syncMd' => 'Sync .md',
 			'web.memoryInspector.scope.syncTooltip' => 'Re-ingest Claude\'s <cwd>/.claude/memory/*.md files into pgvector',
+			'web.memoryInspector.scope.browse' => 'Browse',
+			'web.memoryInspector.scope.browseTooltip' => 'Browse the gateway host\'s filesystem to pick any project directory',
 			'web.memoryInspector.scope.values.project' => 'project',
 			'web.memoryInspector.scope.values.global' => 'global',
 			'web.memoryInspector.search.placeholder' => 'Semantic search query (Enter to run; empty = browse)',
@@ -17160,6 +17252,8 @@ extension on Translations {
 			'web.channels.notifications.snippetCaps.k3000' => '3000 chars',
 			'web.channels.notifications.snippetCaps.k6000' => '6000 chars',
 			'web.channels.notifications.snippetCaps.k12000' => '12000 chars',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.nameLabel' => 'Bridge name',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Human label for the adapter. Shown in the channels list.',
@@ -17183,8 +17277,6 @@ extension on Translations {
 			'web.channels.setup.copyHide' => 'Hide',
 			'web.channels.setup.copyShow' => 'Show',
 			'web.channels.setup.copyLabelToast' => ({required Object label}) => '${label} copied',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.setup.copyCode' => 'Copy',
 			'web.channels.setup.copied' => 'Copied',
 			'web.channels.setup.codeCopiedToast' => 'Code copied',
@@ -17674,6 +17766,8 @@ extension on Translations {
 			'web.serverSettings.sections.general.title' => 'General',
 			'web.serverSettings.sections.general.desc' => 'Listen address, operator account, token TTL.',
 			'web.serverSettings.sections.logging.title' => 'Logging',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.sections.logging.desc' => 'Verbosity, format, and live tail.',
 			'web.serverSettings.sections.sessions.title' => 'Sessions',
 			'web.serverSettings.sections.sessions.desc' => 'Idle detection thresholds.',
@@ -17697,8 +17791,6 @@ extension on Translations {
 			'web.serverSettings.loadFailed' => ({required Object message}) => 'Failed to load: ${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray was started without a -config flag. Settings are loaded from environment variables only and cannot be edited here.',
 			'web.serverSettings.resetButton' => 'Reset',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.resetButtonTitle' => 'Discard unsaved changes in this section',
 			'web.serverSettings.resetConfirm' => ({required Object section}) => 'Reset "${section}" to last-saved values?',
 			'web.serverSettings.badgeRestartRequired' => 'restart required',
@@ -18188,6 +18280,8 @@ extension on Translations {
 			'web.export.imports.listFailedToast' => 'Failed to list imports',
 			'web.knowledge.title' => 'Knowledge',
 			'web.knowledge.subtitle' => 'What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.searchPlaceholder' => 'Search knowledge…',
 			'web.knowledge.search' => 'Search',
 			'web.knowledge.browse' => 'Browse',
@@ -18211,8 +18305,6 @@ extension on Translations {
 			'web.knowledge.scopes.domain' => 'Domain',
 			'web.knowledge.kb.tab' => 'Knowledge Base',
 			'web.knowledge.kb.graphTab' => 'Graph',
-			_ => null,
-		} ?? switch (path) {
 			'web.knowledge.kb.graphCounts' => ({required Object nodes, required Object edges}) => '${nodes} nodes · ${edges} links',
 			'web.knowledge.kb.global' => 'Global',
 			'web.knowledge.kb.projectHandbook' => 'Project handbook',
@@ -18702,6 +18794,8 @@ extension on Translations {
 			'mcp.viewRawConfig' => 'View raw config',
 			'mcp.copyId' => 'Copy id',
 			'mcp.copiedSnack' => ({required Object id}) => 'Copied ${id}',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.deleteServerTitle' => 'Delete MCP server?',
 			'mcp.deleteSecretTitle' => 'Delete secret?',
 			'mcp.errorPrefix.delete' => 'Delete failed',
@@ -18725,8 +18819,6 @@ extension on Translations {
 			'mcp.editor.save' => 'Save',
 			'mcp.editor.create' => 'Create',
 			'mcp.secret.keyLabel' => 'Key',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.secret.keyHint' => 'GITHUB_TOKEN, OPENAI_KEY, …',
 			'mcp.secret.valueLabel' => 'Value',
 			'mcp.secret.keyRequired' => 'Key is required.',
@@ -19216,6 +19308,8 @@ extension on Translations {
 			'backupTargetEditor.idHintAuto' => ({required Object prefix}) => 'Auto: ${prefix}-1',
 			'backupTargetEditor.idHelper' => 'Lower-case letters, digits, dashes. Defaults to the next available slot.',
 			'backupTargetEditor.enabledOn' => 'Scheduled and ad-hoc backups can target this.',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.enabledOff' => 'Server will refuse to write backups here.',
 			'backupTargetEditor.saving' => 'Saving…',
 			'backupTargetEditor.create' => 'Create',
@@ -19239,8 +19333,6 @@ extension on Translations {
 			'backupTargetEditor.endpointLabel' => 'Endpoint',
 			'backupTargetEditor.regionLabel' => 'Region',
 			'backupTargetEditor.bucketLabel' => 'Bucket',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.accessKeyLabel' => 'Access key',
 			'backupTargetEditor.secretKeyLabel' => 'Secret key',
 			'backupTargetEditor.secretKeyHintEdit' => 'Leave blank to keep current. Stored AES-256-GCM encrypted.',
@@ -19730,6 +19822,8 @@ extension on Translations {
 			'settings.serverSettings.restartConfirmBody' => 'The gateway will exec itself. The mobile app may briefly lose connection.',
 			'settings.serverSettings.restart' => 'Restart',
 			'settings.serverSettings.restartQueuedSnack' => 'Restart requested. Pull-to-refresh in a moment.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.restartFailedApi' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.restartFailedGeneric' => ({required Object error}) => 'Restart failed: ${error}',
 			'settings.serverSettings.loadedFrom' => ({required Object path}) => 'Loaded from: ${path}',
@@ -19753,8 +19847,6 @@ extension on Translations {
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Vault paths for MCP servers + secrets file.',
 			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',

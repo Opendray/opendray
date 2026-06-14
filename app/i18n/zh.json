@@ -218,7 +218,28 @@
           "cortex": "心智中枢"
         },
         "vaultPanel": {
-          "open": "打开文档库"
+          "open": "打开文档库",
+          "projectDocs": "项目文档",
+          "projectDocsHint": "文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。",
+          "pinnedHint": "已为本项目绑定自定义文档库文件夹。",
+          "bind": "绑定",
+          "changeLocation": "更改绑定到本项目的文档库文件夹",
+          "newDoc": "新建文档",
+          "cancel": "取消",
+          "create": "创建",
+          "filenamePlaceholder": "文件名.md",
+          "noDocs": "该文档库文件夹下暂无项目文档。",
+          "createFailed": "无法创建文档",
+          "mappingTitle": "绑定项目文档库文件夹",
+          "mappingHelp": "选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。",
+          "sessionCwd": "会话工作目录",
+          "folderLabel": "文档库文件夹",
+          "mappingStoredHint": "保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。",
+          "save": "保存",
+          "clearOverride": "清除覆盖",
+          "boundToast": "已绑定项目文档库文件夹",
+          "clearedToast": "已清除覆盖 —— 使用默认文件夹",
+          "saveFailed": "无法保存映射"
         },
         "cortexPanel": {
           "noCwd": "会话没有工作目录——心智中枢功能需要工作目录。",
@@ -703,6 +724,8 @@
         "placeholderProject": "/path/to/project (cwd)",
         "syncMd": "同步 .md",
         "syncTooltip": "把 Claude 的 <cwd>/.claude/memory/*.md 重新摄取到 pgvector",
+        "browse": "浏览",
+        "browseTooltip": "浏览网关主机的文件系统，选择任意项目目录",
         "values": {
           "project": "project",
           "global": "global"

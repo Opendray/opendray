@@ -12,6 +12,7 @@ import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/core/memory/ranking.dart';
 import 'package:opendray/features/cortex/cortex_settings_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
+import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
 // Global Memory tab. Browses the cross-session pgvector memory
@@ -837,6 +838,28 @@ class _ProjectPickerSheetState extends State<_ProjectPickerSheet> {
                   ),
                 ),
               ),
+              // Browse the gateway filesystem to bind ANY project directory —
+              // the cached key list never contains every project, and is
+              // unusable at hundreds. Mirrors the project workspace picker.
+              ListTile(
+                dense: true,
+                leading: Icon(
+                  Icons.folder_open_outlined,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: Text(t.project.browseFolder),
+                onTap: () async {
+                  final navigator = Navigator.of(context);
+                  final dir = await DirectoryPickerSheet.show(
+                    context,
+                    initialPath: widget.selected,
+                  );
+                  if (dir == null) return;
+                  navigator.pop(dir);
+                },
+              ),
+              const Divider(height: 1),
               Expanded(
                 child: filtered.isEmpty
                     ? Center(

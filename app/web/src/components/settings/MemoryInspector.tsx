@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Activity,
   FolderSync,
+  FolderSearch,
   EraserIcon,
   Plus,
 } from 'lucide-react'
@@ -57,6 +58,7 @@ import {
 } from '@/lib/memory'
 import { rankingBreakdown } from '@/lib/memoryRanking'
 import { listSessions } from '@/lib/sessions'
+import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 
 // MemoryInspector shows the live state of opendray's memory
 // subsystem: which embedder is active, how many dims it produces,
@@ -71,6 +73,7 @@ export function MemoryInspector() {
   const qc = useQueryClient()
   const [scope, setScope] = useState<Scope>('project')
   const [scopeKey, setScopeKey] = useState<string>('')
+  const [scopeBrowserOpen, setScopeBrowserOpen] = useState(false)
   const [search, setSearch] = useState<string>('')
   const [searchHits, setSearchHits] = useState<SearchHit[] | null>(null)
   const [searchBusy, setSearchBusy] = useState(false)
@@ -463,6 +466,19 @@ export function MemoryInspector() {
                 type="button"
                 variant="outline"
                 size="sm"
+                onClick={() => setScopeBrowserOpen(true)}
+                className="h-8 text-[11px] gap-1"
+                title={t('web.memoryInspector.scope.browseTooltip')}
+              >
+                <FolderSearch className="size-3" />
+                {t('web.memoryInspector.scope.browse')}
+              </Button>
+            )}
+            {scope === 'project' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => sync.mutate()}
                 disabled={!scopeKey.trim() || sync.isPending}
                 className="h-8 text-[11px] gap-1"
@@ -479,6 +495,15 @@ export function MemoryInspector() {
           </div>
         </div>
       </div>
+      <FileBrowserDialog
+        open={scopeBrowserOpen}
+        onOpenChange={setScopeBrowserOpen}
+        initialPath={scopeKey.trim() || undefined}
+        onSelect={(path) => {
+          setScopeKey(path)
+          setSearchHits(null)
+        }}
+      />
 
       {/* Search */}
       <div className="flex gap-2">
