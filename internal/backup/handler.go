@@ -65,7 +65,46 @@ func (h *Handlers) Mount(r chi.Router) {
 		h.MountExports(r)
 		h.MountImports(r)
 		r.Get("/backup-inventory", h.inventory)
+		r.Post("/backup-recovery-kit", h.recoveryKit)
 	})
+}
+
+// recoveryKit serves POST /backup-recovery-kit. Body:
+//
+//	{ "recovery_passphrase": "..." }
+//
+// It returns the Recovery Kit JSON as a downloadable attachment: the
+// backup passphrase wrapped under the operator's recovery passphrase,
+// to be stored out-of-band. Taken over POST (not GET) so the recovery
+// passphrase never lands in a URL / access log.
+func (h *Handlers) recoveryKit(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		RecoveryPassphrase string `json:"recovery_passphrase"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
+		return
+	}
+	kit, err := h.live.Service().ExportRecoveryKit(req.RecoveryPassphrase)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrRecoveryPassphraseTooShort):
+			writeError(w, http.StatusBadRequest, err)
+		case errors.Is(err, ErrCipherUnconfigured):
+			writeError(w, http.StatusServiceUnavailable, err)
+		default:
+			// Don't leak internal crypto error details on this
+			// key-wrapping path; log server-side and return generic.
+			h.live.Service().log.Error("recovery kit export failed", "err", err)
+			writeError(w, http.StatusInternalServerError,
+				errors.New("recovery: could not generate recovery kit"))
+		}
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", `attachment; filename="opendray-recovery-kit.json"`)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(kit)
 }
 
 // requireArmed shortcircuits requests with 503 when the LiveBackup

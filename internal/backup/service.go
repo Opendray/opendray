@@ -60,6 +60,7 @@ type Service struct {
 	targets    *targetRegistry
 	dsn        string
 	configPath string
+	passphrase string // retained for Recovery Kit export; never logged
 	log        *slog.Logger
 }
 
@@ -118,8 +119,21 @@ func NewService(cfg Config, deps ServiceDeps) (*Service, error) {
 		targets:    newTargetRegistry(),
 		dsn:        deps.DSN,
 		configPath: deps.ConfigPath,
+		passphrase: deps.Passphrase,
 		log:        log,
 	}, nil
+}
+
+// ExportRecoveryKit wraps this instance's backup passphrase under a
+// caller-supplied recovery passphrase, returning a serialized kit the
+// operator stores out-of-band. See recovery.go for the rationale.
+func (s *Service) ExportRecoveryKit(recoveryPassphrase string) ([]byte, error) {
+	if s.passphrase == "" {
+		return nil, ErrCipherUnconfigured
+	}
+	// Reuse the already-derived cipher's fingerprint instead of paying
+	// a second PBKDF2 inside ExportRecoveryKit.
+	return ExportRecoveryKit(s.passphrase, recoveryPassphrase, s.cipher.Fingerprint(), time.Now())
 }
 
 // Bootstrap reads target rows from DB, instantiates BackupTarget
