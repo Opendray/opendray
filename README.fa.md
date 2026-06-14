@@ -129,7 +129,7 @@ flowchart LR
 <h2 dir="rtl" align="right">وضعیت نسخه</h2>
 
 <p dir="rtl" align="right">
-نسخه ۲٫۷٫۵ آخرین release فعلی است و development روی v2 همچنان ادامه دارد.
+نسخه ۲٫۷٫۶ آخرین release فعلی است و development روی v2 همچنان ادامه دارد.
 </p>
 
 <p dir="rtl" align="right">
