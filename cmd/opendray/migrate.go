@@ -21,9 +21,11 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
+	"github.com/opendray/opendray-v2/internal/backup"
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/store"
 )
@@ -51,11 +53,55 @@ func runMigrate(args []string) int {
 	}
 	defer st.Close()
 
+	// Pre-migration safety snapshot (fail-closed) before touching the
+	// schema. Set OPENDRAY_SKIP_PREMIGRATE_BACKUP to skip.
+	pending, perr := st.PendingMigrations(ctx)
+	if perr != nil {
+		log.Error("check pending migrations", "err", perr)
+		return 1
+	}
+	if len(pending) > 0 {
+		preKey, kerr := backup.LoadPassphrase()
+		if kerr != nil {
+			// Don't silently fall back to a plaintext snapshot when a
+			// key source is configured but unreadable — fail closed.
+			log.Error("pre-migrate snapshot: backup key load", "err", kerr)
+			return 1
+		}
+		if gerr := backup.GuardPreMigrate(ctx, pending, backup.PreMigrateOptions{
+			DSN:        cfg.Database.URL,
+			Dir:        premigrateDir(cfg.Backup.LocalDir),
+			PgDumpPath: cfg.Backup.PgDumpPath,
+			Passphrase: preKey.Passphrase,
+			Log:        log,
+		}); gerr != nil {
+			log.Error("pre-migrate snapshot", "err", gerr)
+			return 1
+		}
+	}
+
 	if err := st.Migrate(ctx, log); err != nil {
 		log.Error("apply migrations", "err", err)
 		return 1
 	}
 	return 0
+}
+
+// premigrateDir resolves where pre-migration snapshots are written,
+// mirroring app.defaultBackupDir: ~-expand a configured local_dir, or
+// default to ~/.opendray/backups when unset.
+func premigrateDir(configured string) string {
+	base := configured
+	if base != "" {
+		if expanded, err := expandHome(base); err == nil {
+			base = expanded
+		}
+	} else if home, err := os.UserHomeDir(); err == nil {
+		base = filepath.Join(home, ".opendray", "backups")
+	} else {
+		base = "backups"
+	}
+	return filepath.Join(base, "premigrate")
 }
 
 // newMigrateLogger builds a minimal slog.Logger writing to stderr,

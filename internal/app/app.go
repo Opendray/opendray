@@ -341,6 +341,34 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// which upserts seed rows into tables migration 0001 creates (the
 	// fresh-DB ordering bug from #162). `opendray migrate` stays as a
 	// standalone command for operators who prefer to migrate explicitly.
+	// Pre-migration safety snapshot (fail-closed). Runs before the
+	// schema changes so an upgrade always has a restorable point; a
+	// no-op once the DB is already up to date.
+	pending, perr := st.PendingMigrations(ctx)
+	if perr != nil {
+		st.Close()
+		return nil, fmt.Errorf("check pending migrations: %w", perr)
+	}
+	if len(pending) > 0 {
+		preKey, kerr := backup.LoadPassphrase()
+		if kerr != nil {
+			// A configured-but-broken key source must not silently
+			// degrade the snapshot to plaintext — fail closed.
+			st.Close()
+			return nil, fmt.Errorf("pre-migrate snapshot: backup key load: %w", kerr)
+		}
+		if gerr := backup.GuardPreMigrate(ctx, pending, backup.PreMigrateOptions{
+			DSN:        cfg.Database.URL,
+			Dir:        filepath.Join(defaultBackupDir(cfg.Backup.LocalDir, "backups"), "premigrate"),
+			PgDumpPath: cfg.Backup.PgDumpPath,
+			Passphrase: preKey.Passphrase,
+			Log:        log,
+		}); gerr != nil {
+			st.Close()
+			return nil, fmt.Errorf("pre-migrate snapshot: %w", gerr)
+		}
+	}
+
 	if err := st.Migrate(ctx, log); err != nil {
 		st.Close()
 		return nil, fmt.Errorf("apply migrations: %w", err)
