@@ -1136,12 +1136,6 @@ class TranslationsBackupsEn {
 
 	late final TranslationsBackupsWizardEn wizard = TranslationsBackupsWizardEn.internal(_root);
 
-	/// en: 'Backups ready'
-	String get statusReady => 'Backups ready';
-
-	/// en: 'Backups cannot run'
-	String get statusCannot => 'Backups cannot run';
-
 	/// en: 'Targets'
 	String get overviewTargets => 'Targets';
 
@@ -4599,26 +4593,22 @@ class TranslationsBackupsHealthEn {
 
 	// Translations
 
+	/// en: 'Backups healthy'
+	String get headlineHealthy => 'Backups healthy';
+
+	/// en: 'Needs attention'
+	String get headlineAttention => 'Needs attention';
+
+	/// en: 'No backups yet'
+	String get headlineNever => 'No backups yet';
+
 	/// en: 'Last good backup'
 	String get lastSuccess => 'Last good backup';
 
-	/// en: 'no successful backup yet'
-	String get never => 'no successful backup yet';
+	/// en: 'never'
+	String get never => 'never';
 
-	/// en: 'All clear'
-	String get allClear => 'All clear';
-
-	/// en: '{count} failed in the last 24h'
-	String recentFailures({required Object count}) => '${count} failed in the last 24h';
-
-	/// en: '{count} failed verification'
-	String verifyFailures({required Object count}) => '${count} failed verification';
-
-	/// en: '{count} schedule overdue'
-	String overdueSchedules({required Object count}) => '${count} schedule overdue';
-
-	/// en: '{enabled}/{total} schedules enabled'
-	String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled';
+	late final TranslationsBackupsHealthTilesEn tiles = TranslationsBackupsHealthTilesEn.internal(_root);
 }
 
 // Path: backups.encryption
@@ -9266,11 +9256,11 @@ class TranslationsWebBackupsStatusEn {
 
 	// Translations
 
-	/// en: 'Key fingerprint:'
-	String get keyFingerprint => 'Key fingerprint:';
+	/// en: 'pg_dump'
+	String get pgDump => 'pg_dump';
 
-	/// en: 'pg_dump:'
-	String get pgDump => 'pg_dump:';
+	/// en: 'pg_restore'
+	String get pgRestore => 'pg_restore';
 
 	/// en: 'unavailable'
 	String get pgDumpUnavailable => 'unavailable';
@@ -9478,26 +9468,22 @@ class TranslationsWebBackupsHealthEn {
 
 	// Translations
 
+	/// en: 'Backups healthy'
+	String get headlineHealthy => 'Backups healthy';
+
+	/// en: 'Needs attention'
+	String get headlineAttention => 'Needs attention';
+
+	/// en: 'No backups yet'
+	String get headlineNever => 'No backups yet';
+
 	/// en: 'Last good backup'
 	String get lastSuccess => 'Last good backup';
 
-	/// en: 'never — no successful backup yet'
-	String get never => 'never — no successful backup yet';
+	/// en: 'never'
+	String get never => 'never';
 
-	/// en: 'all clear'
-	String get allClear => 'all clear';
-
-	/// en: '{count} failed in the last 24h'
-	String recentFailures({required Object count}) => '${count} failed in the last 24h';
-
-	/// en: '{count} failed verification'
-	String verifyFailures({required Object count}) => '${count} failed verification';
-
-	/// en: '{count} schedule overdue'
-	String overdueSchedules({required Object count}) => '${count} schedule overdue';
-
-	/// en: '{enabled}/{total} schedules enabled'
-	String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled';
+	late final TranslationsWebBackupsHealthTilesEn tiles = TranslationsWebBackupsHealthTilesEn.internal(_root);
 
 	/// en: 'Could not load backup health'
 	String get loadFailedToast => 'Could not load backup health';
@@ -12268,6 +12254,27 @@ class TranslationsProjectConflictsSeverityEn {
 	String get high => 'high';
 }
 
+// Path: backups.health.tiles
+class TranslationsBackupsHealthTilesEn {
+	TranslationsBackupsHealthTilesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Recent failures'
+	String get recentFailures => 'Recent failures';
+
+	/// en: 'Verify failures'
+	String get verifyFailures => 'Verify failures';
+
+	/// en: 'Overdue'
+	String get overdue => 'Overdue';
+
+	/// en: 'Schedules'
+	String get schedules => 'Schedules';
+}
+
 // Path: backupTargetEditor.kinds.local
 class TranslationsBackupTargetEditorKindsLocalEn {
 	TranslationsBackupTargetEditorKindsLocalEn.internal(this._root);
@@ -14487,6 +14494,27 @@ class TranslationsWebBackupsBackupsTabColumnsEn {
 
 	/// en: 'Actions'
 	String get actions => 'Actions';
+}
+
+// Path: web.backups.health.tiles
+class TranslationsWebBackupsHealthTilesEn {
+	TranslationsWebBackupsHealthTilesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Recent failures'
+	String get recentFailures => 'Recent failures';
+
+	/// en: 'Verify failures'
+	String get verifyFailures => 'Verify failures';
+
+	/// en: 'Overdue'
+	String get overdue => 'Overdue';
+
+	/// en: 'Schedules'
+	String get schedules => 'Schedules';
 }
 
 // Path: web.backups.schedulesTab.columns
@@ -18007,8 +18035,8 @@ extension on Translations {
 			'web.backups.generated.savedTo' => 'Saved to:',
 			'web.backups.generated.ack' => 'I have saved this passphrase to my password manager',
 			'web.backups.generated.kContinue' => 'Continue',
-			'web.backups.status.keyFingerprint' => 'Key fingerprint:',
-			'web.backups.status.pgDump' => 'pg_dump:',
+			'web.backups.status.pgDump' => 'pg_dump',
+			'web.backups.status.pgRestore' => 'pg_restore',
 			'web.backups.status.pgDumpUnavailable' => 'unavailable',
 			'web.backups.status.pgDumpHint' => 'Backups can\'t run until pg_dump is on PATH (or its absolute path is set in <1>backup.pg_dump_path</1>). Install <3>postgresql-client</3> matching your server\'s major version and restart.',
 			'web.backups.backupsTab.backupNow' => 'Backup now',
@@ -18069,13 +18097,15 @@ extension on Translations {
 			'web.backups.verify.ok' => 'verified',
 			'web.backups.verify.okHint' => 'Decrypted and confirmed restorable (pg_restore --list)',
 			'web.backups.verify.failed' => 'unverified',
+			'web.backups.health.headlineHealthy' => 'Backups healthy',
+			'web.backups.health.headlineAttention' => 'Needs attention',
+			'web.backups.health.headlineNever' => 'No backups yet',
 			'web.backups.health.lastSuccess' => 'Last good backup',
-			'web.backups.health.never' => 'never — no successful backup yet',
-			'web.backups.health.allClear' => 'all clear',
-			'web.backups.health.recentFailures' => ({required Object count}) => '${count} failed in the last 24h',
-			'web.backups.health.verifyFailures' => ({required Object count}) => '${count} failed verification',
-			'web.backups.health.overdueSchedules' => ({required Object count}) => '${count} schedule overdue',
-			'web.backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled',
+			'web.backups.health.never' => 'never',
+			'web.backups.health.tiles.recentFailures' => 'Recent failures',
+			'web.backups.health.tiles.verifyFailures' => 'Verify failures',
+			'web.backups.health.tiles.overdue' => 'Overdue',
+			'web.backups.health.tiles.schedules' => 'Schedules',
 			'web.backups.health.loadFailedToast' => 'Could not load backup health',
 			'web.backups.trigger.preMigrate' => 'pre-migrate',
 			'web.backups.trigger.preMigrateHint' => 'Automatic snapshot taken before schema migrations ran',
@@ -18171,10 +18201,10 @@ extension on Translations {
 			'web.backups.targetEditor.s3.regionLabel' => 'Region',
 			'web.backups.targetEditor.s3.regionHint' => 'AWS only; R2 use \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
-			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Stored AES-256-GCM encrypted; never echoed back',
@@ -18685,10 +18715,10 @@ extension on Translations {
 			'web.export.form.create' => 'Create export',
 			'web.export.form.readyToast' => 'Export ready',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
-			'web.export.form.failedToast' => 'Export failed',
-			'web.export.history.loading' => 'Loading…',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.failedToast' => 'Export failed',
+			'web.export.history.loading' => 'Loading…',
 			'web.export.history.empty' => 'No exports yet. Use the form above to create one.',
 			'web.export.history.title' => 'History',
 			'web.export.history.columns.id' => 'ID',
@@ -19199,10 +19229,10 @@ extension on Translations {
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
-			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
@@ -19662,18 +19692,18 @@ extension on Translations {
 			'backups.wizard.helperRecommended' => 'Recommended: 40+ chars from a password manager',
 			'backups.wizard.saveNowHeader' => 'Save this passphrase NOW',
 			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
-			'backups.statusReady' => 'Backups ready',
-			'backups.statusCannot' => 'Backups cannot run',
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
 			'backups.overviewBackups' => 'Backups',
+			'backups.health.headlineHealthy' => 'Backups healthy',
+			'backups.health.headlineAttention' => 'Needs attention',
+			'backups.health.headlineNever' => 'No backups yet',
 			'backups.health.lastSuccess' => 'Last good backup',
-			'backups.health.never' => 'no successful backup yet',
-			'backups.health.allClear' => 'All clear',
-			'backups.health.recentFailures' => ({required Object count}) => '${count} failed in the last 24h',
-			'backups.health.verifyFailures' => ({required Object count}) => '${count} failed verification',
-			'backups.health.overdueSchedules' => ({required Object count}) => '${count} schedule overdue',
-			'backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled',
+			'backups.health.never' => 'never',
+			'backups.health.tiles.recentFailures' => 'Recent failures',
+			'backups.health.tiles.verifyFailures' => 'Verify failures',
+			'backups.health.tiles.overdue' => 'Overdue',
+			'backups.health.tiles.schedules' => 'Schedules',
 			'backups.failedToLoad' => 'Failed to load backups',
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
 			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
@@ -19713,10 +19743,10 @@ extension on Translations {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
-			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
-			'backups.restore.succeededTitle' => 'Restore succeeded',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
+			'backups.restore.succeededTitle' => 'Restore succeeded',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
@@ -20227,10 +20257,10 @@ extension on Translations {
 			'memory.deleteOne.body' => 'This cannot be undone.',
 			'memory.scope.project' => 'Project',
 			'memory.scope.global' => 'Global',
-			'memory.create.textLabel' => 'Text',
-			'memory.create.scopeKeyLabel' => 'Scope key (project cwd)',
 			_ => null,
 		} ?? switch (path) {
+			'memory.create.textLabel' => 'Text',
+			'memory.create.scopeKeyLabel' => 'Scope key (project cwd)',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Create',
 			'memory.archive' => 'Archive',

@@ -1686,8 +1686,8 @@
         "continue": "Continue"
       },
       "status": {
-        "keyFingerprint": "Key fingerprint:",
-        "pgDump": "pg_dump:",
+        "pgDump": "pg_dump",
+        "pgRestore": "pg_restore",
         "pgDumpUnavailable": "unavailable",
         "pgDumpHint": "Backups can't run until pg_dump is on PATH (or its absolute path is set in <1>backup.pg_dump_path</1>). Install <3>postgresql-client</3> matching your server's major version and restart."
       },
@@ -1760,13 +1760,17 @@
         "failed": "unverified"
       },
       "health": {
+        "headlineHealthy": "Backups healthy",
+        "headlineAttention": "Needs attention",
+        "headlineNever": "No backups yet",
         "lastSuccess": "Last good backup",
-        "never": "never — no successful backup yet",
-        "allClear": "all clear",
-        "recentFailures": "{count} failed in the last 24h",
-        "verifyFailures": "{count} failed verification",
-        "overdueSchedules": "{count} schedule overdue",
-        "scheduleSummary": "{enabled}/{total} schedules enabled",
+        "never": "never",
+        "tiles": {
+          "recentFailures": "Recent failures",
+          "verifyFailures": "Verify failures",
+          "overdue": "Overdue",
+          "schedules": "Schedules"
+        },
         "loadFailedToast": "Could not load backup health"
       },
       "trigger": {
@@ -3855,19 +3859,21 @@
       "saveNowHeader": "Save this passphrase NOW",
       "saveNowBody": "This is shown ONCE. It will not be retrievable from opendray afterwards."
     },
-    "statusReady": "Backups ready",
-    "statusCannot": "Backups cannot run",
     "overviewTargets": "Targets",
     "overviewSchedules": "Schedules",
     "overviewBackups": "Backups",
     "health": {
+      "headlineHealthy": "Backups healthy",
+      "headlineAttention": "Needs attention",
+      "headlineNever": "No backups yet",
       "lastSuccess": "Last good backup",
-      "never": "no successful backup yet",
-      "allClear": "All clear",
-      "recentFailures": "{count} failed in the last 24h",
-      "verifyFailures": "{count} failed verification",
-      "overdueSchedules": "{count} schedule overdue",
-      "scheduleSummary": "{enabled}/{total} schedules enabled"
+      "never": "never",
+      "tiles": {
+        "recentFailures": "Recent failures",
+        "verifyFailures": "Verify failures",
+        "overdue": "Overdue",
+        "schedules": "Schedules"
+      }
     },
     "failedToLoad": "Failed to load backups",
     "envVarConfigured": "OPENDRAY_BACKUP_KEY env var",

@@ -119,8 +119,7 @@ export function BackupsView() {
 
   return (
     <div className="flex flex-col gap-5">
-      <HealthStrip />
-      <StatusBanner status={status} />
+      <BackupOverview status={status} />
       <InventoryCard />
       <Tabs defaultValue="backups" className="w-full">
         <TabsList>
@@ -515,65 +514,74 @@ function GeneratedPassphrasePanel({
   )
 }
 
-// ── Health strip (at-a-glance: last good backup + what needs attention) ──
+// ── Backup overview (health + status, one coherent panel) ─────────
 
-// HealthStrip is the dashboard's first line: when the last good backup
-// landed and a count of anything currently demanding attention (recent
-// failures, failed restore-verifications, overdue schedules). Green and
-// quiet when all is well, red when not, neutral before the first backup.
-function HealthStrip() {
+// BackupOverview is the dashboard's header: one tinted panel that rolls
+// up the at-a-glance health (last good backup + attention counters as
+// stat tiles) with the live status footer (key fingerprint + pg tooling
+// versions). Replaces the old stacked health-strip + status-banner.
+function BackupOverview({ status }: { status: BackupStatusReport }) {
   const { t } = useTranslation()
   const [health, setHealth] = useState<BackupHealth | null>(null)
 
-  async function refresh() {
-    try {
-      setHealth(await fetchBackupHealth())
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(t('web.backups.health.loadFailedToast'), { description: msg })
-    }
-  }
-
   useEffect(() => {
-    void refresh()
-  }, [])
+    void (async () => {
+      try {
+        setHealth(await fetchBackupHealth())
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        toast.error(t('web.backups.health.loadFailedToast'), {
+          description: msg,
+        })
+      }
+    })()
+  }, [t])
 
-  if (health === null) return null
-
-  const issues =
-    health.recent_failures +
-    health.verify_failures +
-    health.overdue_schedules
-  const neverBackedUp = !health.last_success_at
-  const allClear = issues === 0 && !neverBackedUp
+  const issues = health
+    ? health.recent_failures +
+      health.verify_failures +
+      health.overdue_schedules
+    : 0
+  const neverBackedUp = !health?.last_success_at
+  // A clean health roll-up AND working pg tooling = healthy. A broken
+  // pg_dump is its own kind of "attention", independent of past runs.
+  const healthy = !!health && issues === 0 && !neverBackedUp && status.ok
+  const neutral = !!health && issues === 0 && neverBackedUp && status.ok
 
   return (
     <div
       className={cn(
-        'rounded-md border p-3 text-[12px]',
-        allClear
+        'rounded-md border p-3.5 flex flex-col gap-3',
+        healthy
           ? 'border-state-running/30 bg-state-running/10'
-          : neverBackedUp
+          : neutral
             ? 'border-border bg-card/30'
             : 'border-state-failed/30 bg-state-failed/10',
       )}
     >
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <div className="flex items-center gap-2">
-          {allClear ? (
-            <ShieldCheck className="size-3.5 text-state-running" />
+          {healthy ? (
+            <ShieldCheck className="size-4 text-state-running" />
           ) : (
             <ShieldAlert
               className={cn(
-                'size-3.5',
-                neverBackedUp ? 'text-muted-foreground' : 'text-state-failed',
+                'size-4',
+                neutral ? 'text-muted-foreground' : 'text-state-failed',
               )}
             />
           )}
-          <span className="text-muted-foreground">
-            {t('web.backups.health.lastSuccess')}
+          <span className="text-[13px] font-medium">
+            {healthy
+              ? t('web.backups.health.headlineHealthy')
+              : neutral
+                ? t('web.backups.health.headlineNever')
+                : t('web.backups.health.headlineAttention')}
           </span>
-          {health.last_success_at ? (
+        </div>
+        <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <span>{t('web.backups.health.lastSuccess')}</span>
+          {health?.last_success_at ? (
             <code
               className="text-foreground"
               title={new Date(health.last_success_at).toLocaleString()}
@@ -581,93 +589,105 @@ function HealthStrip() {
               {formatRelative(health.last_success_at)}
             </code>
           ) : (
-            <span className="text-muted-foreground">
-              {t('web.backups.health.never')}
-            </span>
+            <span>{t('web.backups.health.never')}</span>
           )}
         </div>
-
-        {health.recent_failures > 0 && (
-          <span className="text-state-failed">
-            {t('web.backups.health.recentFailures', {
-              count: health.recent_failures,
-            })}
-          </span>
-        )}
-        {health.verify_failures > 0 && (
-          <span className="text-state-failed">
-            {t('web.backups.health.verifyFailures', {
-              count: health.verify_failures,
-            })}
-          </span>
-        )}
-        {health.overdue_schedules > 0 && (
-          <span className="text-state-failed">
-            {t('web.backups.health.overdueSchedules', {
-              count: health.overdue_schedules,
-            })}
-          </span>
-        )}
-
-        {health.schedules > 0 && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <RotateCw className="size-3.5" />
-            <span>
-              {t('web.backups.health.scheduleSummary', {
-                enabled: health.enabled_schedules,
-                total: health.schedules,
-              })}
-            </span>
-          </div>
-        )}
-
-        {allClear && (
-          <span className="text-state-running">
-            {t('web.backups.health.allClear')}
-          </span>
-        )}
       </div>
-    </div>
-  )
-}
 
-function StatusBanner({ status }: { status: BackupStatusReport }) {
-  const { t } = useTranslation()
-  return (
-    <div
-      className={cn(
-        'rounded-md border p-3 text-[12px]',
-        status.ok
-          ? 'border-state-running/30 bg-state-running/10'
-          : 'border-state-failed/30 bg-state-failed/10',
-      )}
-    >
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <div className="flex items-center gap-2">
-          <KeyRound className="size-3.5 text-accent" />
-          <span className="text-muted-foreground">{t('web.backups.status.keyFingerprint')}</span>
-          <code className="text-foreground">{status.key_fingerprint}</code>
+      {health && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <OverviewTile
+            label={t('web.backups.health.tiles.recentFailures')}
+            value={health.recent_failures}
+            bad={health.recent_failures > 0}
+          />
+          <OverviewTile
+            label={t('web.backups.health.tiles.verifyFailures')}
+            value={health.verify_failures}
+            bad={health.verify_failures > 0}
+          />
+          <OverviewTile
+            label={t('web.backups.health.tiles.overdue')}
+            value={health.overdue_schedules}
+            bad={health.overdue_schedules > 0}
+          />
+          <OverviewTile
+            label={t('web.backups.health.tiles.schedules')}
+            value={`${health.enabled_schedules}/${health.schedules}`}
+          />
         </div>
-        <div className="flex items-center gap-2">
-          <HardDrive className="size-3.5 text-accent" />
-          <span className="text-muted-foreground">{t('web.backups.status.pgDump')}</span>
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/50 pt-2.5 text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <KeyRound className="size-3 text-accent" />
+          <code className="text-foreground/80">{status.key_fingerprint}</code>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <HardDrive className="size-3 text-accent" />
+          {t('web.backups.status.pgDump')}{' '}
           {status.ok ? (
-            <code className="text-foreground">{status.pg_dump_version}</code>
+            <code className="text-foreground/80">
+              {status.pg_dump_version}
+            </code>
           ) : (
             <span className="text-state-failed">
-              {status.pg_dump_error || t('web.backups.status.pgDumpUnavailable')}
+              {status.pg_dump_error ||
+                t('web.backups.status.pgDumpUnavailable')}
             </span>
           )}
-        </div>
+        </span>
+        {status.pg_restore_version && (
+          <span className="flex items-center gap-1.5">
+            {t('web.backups.status.pgRestore')}{' '}
+            <code className="text-foreground/80">
+              {status.pg_restore_version}
+            </code>
+          </span>
+        )}
       </div>
+
       {!status.ok && (
-        <div className="mt-2 text-state-failed">
+        <div className="text-[11px] text-state-failed">
           <Trans
             i18nKey="web.backups.status.pgDumpHint"
             components={{ 1: <code />, 3: <code /> }}
           />
         </div>
       )}
+    </div>
+  )
+}
+
+function OverviewTile({
+  label,
+  value,
+  bad,
+}: {
+  label: string
+  value: number | string
+  bad?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        'rounded-md border px-2.5 py-2 flex flex-col gap-0.5',
+        bad
+          ? 'border-state-failed/40 bg-state-failed/10'
+          : 'border-border/60 bg-card/40',
+      )}
+    >
+      <span
+        className={cn(
+          'text-[15px] font-semibold tabular-nums',
+          bad ? 'text-state-failed' : 'text-foreground',
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
     </div>
   )
 }

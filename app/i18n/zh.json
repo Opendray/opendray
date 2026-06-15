@@ -1686,8 +1686,8 @@
         "continue": "继续"
       },
       "status": {
-        "keyFingerprint": "密钥指纹：",
-        "pgDump": "pg_dump：",
+        "pgDump": "pg_dump",
+        "pgRestore": "pg_restore",
         "pgDumpUnavailable": "不可用",
         "pgDumpHint": "备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。"
       },
@@ -1760,13 +1760,17 @@
         "failed": "未校验"
       },
       "health": {
+        "headlineHealthy": "备份正常",
+        "headlineAttention": "需要关注",
+        "headlineNever": "尚无备份",
         "lastSuccess": "最近成功备份",
-        "never": "尚无成功备份",
-        "allClear": "一切正常",
-        "recentFailures": "过去 24 小时内 {count} 次失败",
-        "verifyFailures": "{count} 个备份校验失败",
-        "overdueSchedules": "{count} 个计划已逾期",
-        "scheduleSummary": "已启用 {enabled}/{total} 个计划",
+        "never": "从未",
+        "tiles": {
+          "recentFailures": "近期失败",
+          "verifyFailures": "校验失败",
+          "overdue": "逾期",
+          "schedules": "计划"
+        },
         "loadFailedToast": "无法加载备份健康状态"
       },
       "trigger": {
@@ -3855,19 +3859,21 @@
       "saveNowHeader": "立即保存这个密语",
       "saveNowBody": "此处只显示一次。之后无法从 opendray 取回。"
     },
-    "statusReady": "备份就绪",
-    "statusCannot": "备份无法运行",
     "overviewTargets": "目标",
     "overviewSchedules": "计划",
     "overviewBackups": "备份",
     "health": {
+      "headlineHealthy": "备份正常",
+      "headlineAttention": "需要关注",
+      "headlineNever": "尚无备份",
       "lastSuccess": "最近成功备份",
-      "never": "尚无成功备份",
-      "allClear": "一切正常",
-      "recentFailures": "过去 24 小时内 {count} 次失败",
-      "verifyFailures": "{count} 个备份校验失败",
-      "overdueSchedules": "{count} 个计划已逾期",
-      "scheduleSummary": "已启用 {enabled}/{total} 个计划"
+      "never": "从未",
+      "tiles": {
+        "recentFailures": "近期失败",
+        "verifyFailures": "校验失败",
+        "overdue": "逾期",
+        "schedules": "计划"
+      }
     },
     "failedToLoad": "加载备份失败",
     "envVarConfigured": "OPENDRAY_BACKUP_KEY 环境变量",

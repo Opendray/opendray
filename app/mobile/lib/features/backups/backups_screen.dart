@@ -732,8 +732,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          if (data.health != null) _HealthStrip(health: data.health!),
-          _StatusBanner(status: status),
+          _BackupOverview(status: status, health: data.health),
           const _InventoryCard(),
           _SummaryCard(
             targets: data.targets,
@@ -1371,35 +1370,34 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
 // server), green otherwise with the pg_dump version + cipher key
 // fingerprint so they can confirm "backups can run AND will be
 // encrypted with the key I think they're encrypted with."
-// At-a-glance health strip: when the last good backup landed plus any
-// counts that need attention (recent failures, failed verifications,
-// overdue schedules). Green when all is well, red when not, neutral
-// before the first successful backup.
-class _HealthStrip extends StatelessWidget {
-  const _HealthStrip({required this.health});
-  final BackupHealth health;
+// Unified backup overview: the dashboard header rolling up at-a-glance
+// health (last good backup + attention counters as stat tiles) with the
+// live status footer (key fingerprint + pg tooling). Green when healthy,
+// red when something needs attention, neutral before the first backup.
+class _BackupOverview extends StatelessWidget {
+  const _BackupOverview({required this.status, this.health});
+  final BackupStatusReport status;
+  final BackupHealth? health;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final allClear = health.allClear;
-    final neverBackedUp = health.neverBackedUp;
-    final color = allClear
+    final h = health;
+    final issues = h?.issues ?? 0;
+    final neverBackedUp = h?.neverBackedUp ?? true;
+    final healthy = h != null && issues == 0 && !neverBackedUp && status.ok;
+    final neutral = h != null && issues == 0 && neverBackedUp && status.ok;
+    final color = healthy
         ? Colors.green
-        : neverBackedUp
+        : neutral
         ? theme.colorScheme.outline
         : theme.colorScheme.error;
     final bg = color.withValues(alpha: 0.10);
     final border = color.withValues(alpha: 0.45);
 
-    final attention = <String>[
-      if (health.recentFailures > 0)
-        t.backups.health.recentFailures(count: health.recentFailures),
-      if (health.verifyFailures > 0)
-        t.backups.health.verifyFailures(count: health.verifyFailures),
-      if (health.overdueSchedules > 0)
-        t.backups.health.overdueSchedules(count: health.overdueSchedules),
-    ];
+    final lastLabel = h?.lastSuccessAt != null
+        ? _relTime(h!.lastSuccessAt!)
+        : t.backups.health.never;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -1415,153 +1413,170 @@ class _HealthStrip extends StatelessWidget {
           Row(
             children: [
               Icon(
-                allClear
-                    ? Icons.verified_user_outlined
-                    : Icons.error_outline,
+                healthy ? Icons.verified_user_outlined : Icons.error_outline,
                 size: 18,
                 color: color,
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${t.backups.health.lastSuccess}: ',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      TextSpan(
-                        text: neverBackedUp
-                            ? t.backups.health.never
-                            : _relTime(health.lastSuccessAt!),
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                child: Text(
+                  healthy
+                      ? t.backups.health.headlineHealthy
+                      : neutral
+                      ? t.backups.health.headlineNever
+                      : t.backups.health.headlineAttention,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ),
             ],
           ),
-          if (attention.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            ...attention.map(
-              (line) => Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  line,
-                  style: theme.textTheme.bodySmall?.copyWith(color: color),
+          const SizedBox(height: 4),
+          Text(
+            '${t.backups.health.lastSuccess}: $lastLabel',
+            style: theme.textTheme.bodySmall,
+          ),
+          if (h != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _OverviewTile(
+                  label: t.backups.health.tiles.recentFailures,
+                  value: '${h.recentFailures}',
+                  bad: h.recentFailures > 0,
                 ),
-              ),
-            ),
-          ] else if (allClear)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                t.backups.health.allClear,
-                style: theme.textTheme.bodySmall?.copyWith(color: color),
-              ),
-            ),
-          if (health.schedules > 0) ...[
-            const SizedBox(height: 6),
-            Text(
-              t.backups.health.scheduleSummary(
-                enabled: health.enabledSchedules,
-                total: health.schedules,
-              ),
-              style: theme.textTheme.bodySmall,
+                const SizedBox(width: 6),
+                _OverviewTile(
+                  label: t.backups.health.tiles.verifyFailures,
+                  value: '${h.verifyFailures}',
+                  bad: h.verifyFailures > 0,
+                ),
+                const SizedBox(width: 6),
+                _OverviewTile(
+                  label: t.backups.health.tiles.overdue,
+                  value: '${h.overdueSchedules}',
+                  bad: h.overdueSchedules > 0,
+                ),
+                const SizedBox(width: 6),
+                _OverviewTile(
+                  label: t.backups.health.tiles.schedules,
+                  value: '${h.enabledSchedules}/${h.schedules}',
+                ),
+              ],
             ),
           ],
+          const SizedBox(height: 10),
+          Divider(height: 1, color: theme.dividerColor),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
+            children: [
+              _footerItem(
+                theme,
+                'key',
+                status.keyFingerprint.isEmpty ? '—' : status.keyFingerprint,
+                mono: true,
+              ),
+              if (status.ok)
+                _footerItem(theme, 'pg_dump', status.pgDumpVersion)
+              else
+                _footerItem(
+                  theme,
+                  'pg_dump',
+                  status.pgDumpError ?? t.backups.pgDumpMissing,
+                  error: true,
+                ),
+              if (status.pgRestoreVersion.isNotEmpty)
+                _footerItem(theme, 'pg_restore', status.pgRestoreVersion),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerItem(
+    ThemeData theme,
+    String label,
+    String value, {
+    bool mono = false,
+    bool error = false,
+  }) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: '$label ', style: theme.textTheme.bodySmall),
+          TextSpan(
+            text: value,
+            style: TextStyle(
+              fontSize: 11,
+              fontFamily: mono ? 'monospace' : null,
+              color: error ? theme.colorScheme.error : null,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _StatusBanner extends StatelessWidget {
-  const _StatusBanner({required this.status});
-  final BackupStatusReport status;
+class _OverviewTile extends StatelessWidget {
+  const _OverviewTile({
+    required this.label,
+    required this.value,
+    this.bad = false,
+  });
+  final String label;
+  final String value;
+  final bool bad;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ok = status.ok;
-    final color = ok ? Colors.green : theme.colorScheme.error;
-    final bg = color.withValues(alpha: 0.10);
-    final border = color.withValues(alpha: 0.45);
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                ok ? Icons.check_circle_outline : Icons.error_outline,
-                size: 18,
-                color: color,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                ok ? t.backups.statusReady : t.backups.statusCannot,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+    final c = bad ? theme.colorScheme.error : theme.colorScheme.onSurface;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+        decoration: BoxDecoration(
+          color: bad
+              ? theme.colorScheme.error.withValues(alpha: 0.10)
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (ok) ...[
-            _kvRow(context, 'pg_dump', status.pgDumpVersion),
-            const SizedBox(height: 4),
-            _kvRow(
-              context,
-              'key fingerprint',
-              status.keyFingerprint.isEmpty ? '—' : status.keyFingerprint,
-              mono: true,
-            ),
-          ] else
-            Text(
-              status.pgDumpError ?? t.backups.pgDumpMissing,
-              style: theme.textTheme.bodySmall?.copyWith(color: color),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _kvRow(
-    BuildContext context,
-    String label,
-    String value, {
-    bool mono = false,
-  }) {
-    final muted = Theme.of(context).textTheme.bodySmall;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(width: 110, child: Text(label, style: muted)),
-        Expanded(
-          child: SelectableText(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontFamily: mono ? 'monospace' : null,
-            ),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: bad
+                ? theme.colorScheme.error.withValues(alpha: 0.4)
+                : theme.dividerColor,
           ),
         ),
-      ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: c,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

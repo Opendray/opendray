@@ -551,8 +551,6 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get keyFileLabel => '密钥文件';
 	@override String get configuredViaLabel => '配置方式';
 	@override late final _TranslationsBackupsWizardZh wizard = _TranslationsBackupsWizardZh._(_root);
-	@override String get statusReady => '备份就绪';
-	@override String get statusCannot => '备份无法运行';
 	@override String get overviewTargets => '目标';
 	@override String get overviewSchedules => '计划';
 	@override String get overviewBackups => '备份';
@@ -2319,13 +2317,12 @@ class _TranslationsBackupsHealthZh extends TranslationsBackupsHealthEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
+	@override String get headlineHealthy => '备份正常';
+	@override String get headlineAttention => '需要关注';
+	@override String get headlineNever => '尚无备份';
 	@override String get lastSuccess => '最近成功备份';
-	@override String get never => '尚无成功备份';
-	@override String get allClear => '一切正常';
-	@override String recentFailures({required Object count}) => '过去 24 小时内 ${count} 次失败';
-	@override String verifyFailures({required Object count}) => '${count} 个备份校验失败';
-	@override String overdueSchedules({required Object count}) => '${count} 个计划已逾期';
-	@override String scheduleSummary({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划';
+	@override String get never => '从未';
+	@override late final _TranslationsBackupsHealthTilesZh tiles = _TranslationsBackupsHealthTilesZh._(_root);
 }
 
 // Path: backups.encryption
@@ -4687,8 +4684,8 @@ class _TranslationsWebBackupsStatusZh extends TranslationsWebBackupsStatusEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get keyFingerprint => '密钥指纹：';
-	@override String get pgDump => 'pg_dump：';
+	@override String get pgDump => 'pg_dump';
+	@override String get pgRestore => 'pg_restore';
 	@override String get pgDumpUnavailable => '不可用';
 	@override String get pgDumpHint => '备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。';
 }
@@ -4788,13 +4785,12 @@ class _TranslationsWebBackupsHealthZh extends TranslationsWebBackupsHealthEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
+	@override String get headlineHealthy => '备份正常';
+	@override String get headlineAttention => '需要关注';
+	@override String get headlineNever => '尚无备份';
 	@override String get lastSuccess => '最近成功备份';
-	@override String get never => '尚无成功备份';
-	@override String get allClear => '一切正常';
-	@override String recentFailures({required Object count}) => '过去 24 小时内 ${count} 次失败';
-	@override String verifyFailures({required Object count}) => '${count} 个备份校验失败';
-	@override String overdueSchedules({required Object count}) => '${count} 个计划已逾期';
-	@override String scheduleSummary({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划';
+	@override String get never => '从未';
+	@override late final _TranslationsWebBackupsHealthTilesZh tiles = _TranslationsWebBackupsHealthTilesZh._(_root);
 	@override String get loadFailedToast => '无法加载备份健康状态';
 }
 
@@ -6353,6 +6349,19 @@ class _TranslationsProjectConflictsSeverityZh extends TranslationsProjectConflic
 	@override String get high => '高';
 }
 
+// Path: backups.health.tiles
+class _TranslationsBackupsHealthTilesZh extends TranslationsBackupsHealthTilesEn {
+	_TranslationsBackupsHealthTilesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get recentFailures => '近期失败';
+	@override String get verifyFailures => '校验失败';
+	@override String get overdue => '逾期';
+	@override String get schedules => '计划';
+}
+
 // Path: backupTargetEditor.kinds.local
 class _TranslationsBackupTargetEditorKindsLocalZh extends TranslationsBackupTargetEditorKindsLocalEn {
 	_TranslationsBackupTargetEditorKindsLocalZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7524,6 +7533,19 @@ class _TranslationsWebBackupsBackupsTabColumnsZh extends TranslationsWebBackupsB
 	@override String get started => '开始';
 	@override String get size => '大小';
 	@override String get actions => '操作';
+}
+
+// Path: web.backups.health.tiles
+class _TranslationsWebBackupsHealthTilesZh extends TranslationsWebBackupsHealthTilesEn {
+	_TranslationsWebBackupsHealthTilesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get recentFailures => '近期失败';
+	@override String get verifyFailures => '校验失败';
+	@override String get overdue => '逾期';
+	@override String get schedules => '计划';
 }
 
 // Path: web.backups.schedulesTab.columns
@@ -10240,8 +10262,8 @@ extension on TranslationsZh {
 			'web.backups.generated.savedTo' => '已保存到：',
 			'web.backups.generated.ack' => '我已将此口令保存到密码管理器',
 			'web.backups.generated.kContinue' => '继续',
-			'web.backups.status.keyFingerprint' => '密钥指纹：',
-			'web.backups.status.pgDump' => 'pg_dump：',
+			'web.backups.status.pgDump' => 'pg_dump',
+			'web.backups.status.pgRestore' => 'pg_restore',
 			'web.backups.status.pgDumpUnavailable' => '不可用',
 			'web.backups.status.pgDumpHint' => '备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。',
 			'web.backups.backupsTab.backupNow' => '立即备份',
@@ -10302,13 +10324,15 @@ extension on TranslationsZh {
 			'web.backups.verify.ok' => '已校验',
 			'web.backups.verify.okHint' => '已解密并确认可恢复（pg_restore --list）',
 			'web.backups.verify.failed' => '未校验',
+			'web.backups.health.headlineHealthy' => '备份正常',
+			'web.backups.health.headlineAttention' => '需要关注',
+			'web.backups.health.headlineNever' => '尚无备份',
 			'web.backups.health.lastSuccess' => '最近成功备份',
-			'web.backups.health.never' => '尚无成功备份',
-			'web.backups.health.allClear' => '一切正常',
-			'web.backups.health.recentFailures' => ({required Object count}) => '过去 24 小时内 ${count} 次失败',
-			'web.backups.health.verifyFailures' => ({required Object count}) => '${count} 个备份校验失败',
-			'web.backups.health.overdueSchedules' => ({required Object count}) => '${count} 个计划已逾期',
-			'web.backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划',
+			'web.backups.health.never' => '从未',
+			'web.backups.health.tiles.recentFailures' => '近期失败',
+			'web.backups.health.tiles.verifyFailures' => '校验失败',
+			'web.backups.health.tiles.overdue' => '逾期',
+			'web.backups.health.tiles.schedules' => '计划',
 			'web.backups.health.loadFailedToast' => '无法加载备份健康状态',
 			'web.backups.trigger.preMigrate' => '迁移前',
 			'web.backups.trigger.preMigrateHint' => 'schema 迁移前自动拍摄的快照',
@@ -10404,10 +10428,10 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.s3.regionLabel' => 'Region',
 			'web.backups.targetEditor.s3.regionHint' => '仅 AWS；R2 用 \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
-			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'AES-256-GCM 加密存储；不会被回显',
@@ -10918,10 +10942,10 @@ extension on TranslationsZh {
 			'web.export.form.create' => '创建导出',
 			'web.export.form.readyToast' => '导出就绪',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} 字节',
-			'web.export.form.failedToast' => '导出失败',
-			'web.export.history.loading' => '加载中…',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.failedToast' => '导出失败',
+			'web.export.history.loading' => '加载中…',
 			'web.export.history.empty' => '暂无导出。请使用上面的表单创建一个。',
 			'web.export.history.title' => '历史',
 			'web.export.history.columns.id' => 'ID',
@@ -11432,10 +11456,10 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
-			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
@@ -11895,18 +11919,18 @@ extension on TranslationsZh {
 			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
 			'backups.wizard.saveNowHeader' => '立即保存这个密语',
 			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
-			'backups.statusReady' => '备份就绪',
-			'backups.statusCannot' => '备份无法运行',
 			'backups.overviewTargets' => '目标',
 			'backups.overviewSchedules' => '计划',
 			'backups.overviewBackups' => '备份',
+			'backups.health.headlineHealthy' => '备份正常',
+			'backups.health.headlineAttention' => '需要关注',
+			'backups.health.headlineNever' => '尚无备份',
 			'backups.health.lastSuccess' => '最近成功备份',
-			'backups.health.never' => '尚无成功备份',
-			'backups.health.allClear' => '一切正常',
-			'backups.health.recentFailures' => ({required Object count}) => '过去 24 小时内 ${count} 次失败',
-			'backups.health.verifyFailures' => ({required Object count}) => '${count} 个备份校验失败',
-			'backups.health.overdueSchedules' => ({required Object count}) => '${count} 个计划已逾期',
-			'backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划',
+			'backups.health.never' => '从未',
+			'backups.health.tiles.recentFailures' => '近期失败',
+			'backups.health.tiles.verifyFailures' => '校验失败',
+			'backups.health.tiles.overdue' => '逾期',
+			'backups.health.tiles.schedules' => '计划',
 			'backups.failedToLoad' => '加载备份失败',
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
@@ -11946,10 +11970,10 @@ extension on TranslationsZh {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
-			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
-			'backups.restore.succeededTitle' => '恢复成功',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
+			'backups.restore.succeededTitle' => '恢复成功',
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
@@ -12460,10 +12484,10 @@ extension on TranslationsZh {
 			'memory.deleteOne.body' => '此操作不可撤销。',
 			'memory.scope.project' => '项目',
 			'memory.scope.global' => '全局',
-			'memory.create.textLabel' => '文本',
-			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
 			_ => null,
 		} ?? switch (path) {
+			'memory.create.textLabel' => '文本',
+			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => '创建',
 			'memory.archive' => '归档',

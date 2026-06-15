@@ -1686,8 +1686,8 @@
         "continue": "Continuar"
       },
       "status": {
-        "keyFingerprint": "Huella de la clave:",
-        "pgDump": "pg_dump:",
+        "pgDump": "pg_dump",
+        "pgRestore": "pg_restore",
         "pgDumpUnavailable": "no disponible",
         "pgDumpHint": "Las copias de seguridad no pueden ejecutarse hasta que pg_dump esté en PATH (o se haya definido su ruta absoluta en <1>backup.pg_dump_path</1>). Instala <3>postgresql-client</3> de la misma versión mayor que tu servidor y reinicia."
       },
@@ -1760,13 +1760,17 @@
         "failed": "sin verificar"
       },
       "health": {
+        "headlineHealthy": "Copias correctas",
+        "headlineAttention": "Requiere atención",
+        "headlineNever": "Aún sin copias",
         "lastSuccess": "Última copia correcta",
-        "never": "nunca — aún sin copia correcta",
-        "allClear": "todo en orden",
-        "recentFailures": "{count} fallidas en las últimas 24 h",
-        "verifyFailures": "{count} con verificación fallida",
-        "overdueSchedules": "{count} programación atrasada",
-        "scheduleSummary": "{enabled}/{total} programaciones activas",
+        "never": "nunca",
+        "tiles": {
+          "recentFailures": "Fallos recientes",
+          "verifyFailures": "Verificación fallida",
+          "overdue": "Atrasadas",
+          "schedules": "Programaciones"
+        },
         "loadFailedToast": "No se pudo cargar el estado de las copias"
       },
       "trigger": {
@@ -3855,19 +3859,21 @@
       "saveNowHeader": "Guarda esta passphrase AHORA",
       "saveNowBody": "Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray."
     },
-    "statusReady": "Copias de seguridad listas",
-    "statusCannot": "Las copias de seguridad no pueden ejecutarse",
     "overviewTargets": "Destinos",
     "overviewSchedules": "Programaciones",
     "overviewBackups": "Copias de seguridad",
     "health": {
+      "headlineHealthy": "Copias correctas",
+      "headlineAttention": "Requiere atención",
+      "headlineNever": "Aún sin copias",
       "lastSuccess": "Última copia correcta",
-      "never": "aún sin copia correcta",
-      "allClear": "Todo en orden",
-      "recentFailures": "{count} fallidas en las últimas 24 h",
-      "verifyFailures": "{count} con verificación fallida",
-      "overdueSchedules": "{count} programación atrasada",
-      "scheduleSummary": "{enabled}/{total} programaciones activas"
+      "never": "nunca",
+      "tiles": {
+        "recentFailures": "Fallos recientes",
+        "verifyFailures": "Verificación fallida",
+        "overdue": "Atrasadas",
+        "schedules": "Programaciones"
+      }
     },
     "failedToLoad": "Error al cargar las copias de seguridad",
     "envVarConfigured": "variable de entorno OPENDRAY_BACKUP_KEY",

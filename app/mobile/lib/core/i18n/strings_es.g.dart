@@ -551,8 +551,6 @@ class _TranslationsBackupsEs extends TranslationsBackupsEn {
 	@override String get keyFileLabel => 'Archivo de clave';
 	@override String get configuredViaLabel => 'Configurado mediante';
 	@override late final _TranslationsBackupsWizardEs wizard = _TranslationsBackupsWizardEs._(_root);
-	@override String get statusReady => 'Copias de seguridad listas';
-	@override String get statusCannot => 'Las copias de seguridad no pueden ejecutarse';
 	@override String get overviewTargets => 'Destinos';
 	@override String get overviewSchedules => 'Programaciones';
 	@override String get overviewBackups => 'Copias de seguridad';
@@ -2319,13 +2317,12 @@ class _TranslationsBackupsHealthEs extends TranslationsBackupsHealthEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
+	@override String get headlineHealthy => 'Copias correctas';
+	@override String get headlineAttention => 'Requiere atención';
+	@override String get headlineNever => 'Aún sin copias';
 	@override String get lastSuccess => 'Última copia correcta';
-	@override String get never => 'aún sin copia correcta';
-	@override String get allClear => 'Todo en orden';
-	@override String recentFailures({required Object count}) => '${count} fallidas en las últimas 24 h';
-	@override String verifyFailures({required Object count}) => '${count} con verificación fallida';
-	@override String overdueSchedules({required Object count}) => '${count} programación atrasada';
-	@override String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas';
+	@override String get never => 'nunca';
+	@override late final _TranslationsBackupsHealthTilesEs tiles = _TranslationsBackupsHealthTilesEs._(_root);
 }
 
 // Path: backups.encryption
@@ -4687,8 +4684,8 @@ class _TranslationsWebBackupsStatusEs extends TranslationsWebBackupsStatusEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get keyFingerprint => 'Huella de la clave:';
-	@override String get pgDump => 'pg_dump:';
+	@override String get pgDump => 'pg_dump';
+	@override String get pgRestore => 'pg_restore';
 	@override String get pgDumpUnavailable => 'no disponible';
 	@override String get pgDumpHint => 'Las copias de seguridad no pueden ejecutarse hasta que pg_dump esté en PATH (o se haya definido su ruta absoluta en <1>backup.pg_dump_path</1>). Instala <3>postgresql-client</3> de la misma versión mayor que tu servidor y reinicia.';
 }
@@ -4788,13 +4785,12 @@ class _TranslationsWebBackupsHealthEs extends TranslationsWebBackupsHealthEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
+	@override String get headlineHealthy => 'Copias correctas';
+	@override String get headlineAttention => 'Requiere atención';
+	@override String get headlineNever => 'Aún sin copias';
 	@override String get lastSuccess => 'Última copia correcta';
-	@override String get never => 'nunca — aún sin copia correcta';
-	@override String get allClear => 'todo en orden';
-	@override String recentFailures({required Object count}) => '${count} fallidas en las últimas 24 h';
-	@override String verifyFailures({required Object count}) => '${count} con verificación fallida';
-	@override String overdueSchedules({required Object count}) => '${count} programación atrasada';
-	@override String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas';
+	@override String get never => 'nunca';
+	@override late final _TranslationsWebBackupsHealthTilesEs tiles = _TranslationsWebBackupsHealthTilesEs._(_root);
 	@override String get loadFailedToast => 'No se pudo cargar el estado de las copias';
 }
 
@@ -6353,6 +6349,19 @@ class _TranslationsProjectConflictsSeverityEs extends TranslationsProjectConflic
 	@override String get high => 'alta';
 }
 
+// Path: backups.health.tiles
+class _TranslationsBackupsHealthTilesEs extends TranslationsBackupsHealthTilesEn {
+	_TranslationsBackupsHealthTilesEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get recentFailures => 'Fallos recientes';
+	@override String get verifyFailures => 'Verificación fallida';
+	@override String get overdue => 'Atrasadas';
+	@override String get schedules => 'Programaciones';
+}
+
 // Path: backupTargetEditor.kinds.local
 class _TranslationsBackupTargetEditorKindsLocalEs extends TranslationsBackupTargetEditorKindsLocalEn {
 	_TranslationsBackupTargetEditorKindsLocalEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7524,6 +7533,19 @@ class _TranslationsWebBackupsBackupsTabColumnsEs extends TranslationsWebBackupsB
 	@override String get started => 'Iniciada';
 	@override String get size => 'Tamaño';
 	@override String get actions => 'Acciones';
+}
+
+// Path: web.backups.health.tiles
+class _TranslationsWebBackupsHealthTilesEs extends TranslationsWebBackupsHealthTilesEn {
+	_TranslationsWebBackupsHealthTilesEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get recentFailures => 'Fallos recientes';
+	@override String get verifyFailures => 'Verificación fallida';
+	@override String get overdue => 'Atrasadas';
+	@override String get schedules => 'Programaciones';
 }
 
 // Path: web.backups.schedulesTab.columns
@@ -10240,8 +10262,8 @@ extension on TranslationsEs {
 			'web.backups.generated.savedTo' => 'Guardada en:',
 			'web.backups.generated.ack' => 'He guardado esta frase de contraseña en mi gestor de contraseñas',
 			'web.backups.generated.kContinue' => 'Continuar',
-			'web.backups.status.keyFingerprint' => 'Huella de la clave:',
-			'web.backups.status.pgDump' => 'pg_dump:',
+			'web.backups.status.pgDump' => 'pg_dump',
+			'web.backups.status.pgRestore' => 'pg_restore',
 			'web.backups.status.pgDumpUnavailable' => 'no disponible',
 			'web.backups.status.pgDumpHint' => 'Las copias de seguridad no pueden ejecutarse hasta que pg_dump esté en PATH (o se haya definido su ruta absoluta en <1>backup.pg_dump_path</1>). Instala <3>postgresql-client</3> de la misma versión mayor que tu servidor y reinicia.',
 			'web.backups.backupsTab.backupNow' => 'Hacer copia ahora',
@@ -10302,13 +10324,15 @@ extension on TranslationsEs {
 			'web.backups.verify.ok' => 'verificada',
 			'web.backups.verify.okHint' => 'Descifrada y confirmada como restaurable (pg_restore --list)',
 			'web.backups.verify.failed' => 'sin verificar',
+			'web.backups.health.headlineHealthy' => 'Copias correctas',
+			'web.backups.health.headlineAttention' => 'Requiere atención',
+			'web.backups.health.headlineNever' => 'Aún sin copias',
 			'web.backups.health.lastSuccess' => 'Última copia correcta',
-			'web.backups.health.never' => 'nunca — aún sin copia correcta',
-			'web.backups.health.allClear' => 'todo en orden',
-			'web.backups.health.recentFailures' => ({required Object count}) => '${count} fallidas en las últimas 24 h',
-			'web.backups.health.verifyFailures' => ({required Object count}) => '${count} con verificación fallida',
-			'web.backups.health.overdueSchedules' => ({required Object count}) => '${count} programación atrasada',
-			'web.backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas',
+			'web.backups.health.never' => 'nunca',
+			'web.backups.health.tiles.recentFailures' => 'Fallos recientes',
+			'web.backups.health.tiles.verifyFailures' => 'Verificación fallida',
+			'web.backups.health.tiles.overdue' => 'Atrasadas',
+			'web.backups.health.tiles.schedules' => 'Programaciones',
 			'web.backups.health.loadFailedToast' => 'No se pudo cargar el estado de las copias',
 			'web.backups.trigger.preMigrate' => 'pre-migración',
 			'web.backups.trigger.preMigrateHint' => 'Instantánea automática tomada antes de ejecutar las migraciones de esquema',
@@ -10404,10 +10428,10 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.s3.regionLabel' => 'Región',
 			'web.backups.targetEditor.s3.regionHint' => 'Solo AWS; en R2 usa \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
-			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Clave de acceso',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Clave secreta',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Se almacena cifrada con AES-256-GCM; nunca se devuelve',
@@ -10918,10 +10942,10 @@ extension on TranslationsEs {
 			'web.export.form.create' => 'Crear exportación',
 			'web.export.form.readyToast' => 'Exportación lista',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
-			'web.export.form.failedToast' => 'Falló la exportación',
-			'web.export.history.loading' => 'Cargando…',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.failedToast' => 'Falló la exportación',
+			'web.export.history.loading' => 'Cargando…',
 			'web.export.history.empty' => 'Aún no hay exportaciones. Usa el formulario de arriba para crear una.',
 			'web.export.history.title' => 'Historial',
 			'web.export.history.columns.id' => 'ID',
@@ -11432,10 +11456,10 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.locationDialogHelp' => 'Fija el cwd de esta session a una carpeta específica dentro de tu almacén de notas. Déjalo en blanco para restablecer.',
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
-			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
@@ -11895,18 +11919,18 @@ extension on TranslationsEs {
 			'backups.wizard.helperRecommended' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas',
 			'backups.wizard.saveNowHeader' => 'Guarda esta passphrase AHORA',
 			'backups.wizard.saveNowBody' => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.',
-			'backups.statusReady' => 'Copias de seguridad listas',
-			'backups.statusCannot' => 'Las copias de seguridad no pueden ejecutarse',
 			'backups.overviewTargets' => 'Destinos',
 			'backups.overviewSchedules' => 'Programaciones',
 			'backups.overviewBackups' => 'Copias de seguridad',
+			'backups.health.headlineHealthy' => 'Copias correctas',
+			'backups.health.headlineAttention' => 'Requiere atención',
+			'backups.health.headlineNever' => 'Aún sin copias',
 			'backups.health.lastSuccess' => 'Última copia correcta',
-			'backups.health.never' => 'aún sin copia correcta',
-			'backups.health.allClear' => 'Todo en orden',
-			'backups.health.recentFailures' => ({required Object count}) => '${count} fallidas en las últimas 24 h',
-			'backups.health.verifyFailures' => ({required Object count}) => '${count} con verificación fallida',
-			'backups.health.overdueSchedules' => ({required Object count}) => '${count} programación atrasada',
-			'backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas',
+			'backups.health.never' => 'nunca',
+			'backups.health.tiles.recentFailures' => 'Fallos recientes',
+			'backups.health.tiles.verifyFailures' => 'Verificación fallida',
+			'backups.health.tiles.overdue' => 'Atrasadas',
+			'backups.health.tiles.schedules' => 'Programaciones',
 			'backups.failedToLoad' => 'Error al cargar las copias de seguridad',
 			'backups.envVarConfigured' => 'variable de entorno OPENDRAY_BACKUP_KEY',
 			'backups.savedConfirmCheckbox' => 'He guardado esta passphrase en mi gestor de contraseñas',
@@ -11946,10 +11970,10 @@ extension on TranslationsEs {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
-			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
-			'backups.restore.succeededTitle' => 'Restauración completada',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
+			'backups.restore.succeededTitle' => 'Restauración completada',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
 			'backups.restore.pickFileToast' => 'Primero elige un archivo de paquete.',
@@ -12460,10 +12484,10 @@ extension on TranslationsEs {
 			'memory.deleteOne.body' => 'Esto no se puede deshacer.',
 			'memory.scope.project' => 'Proyecto',
 			'memory.scope.global' => 'Global',
-			'memory.create.textLabel' => 'Texto',
-			'memory.create.scopeKeyLabel' => 'Clave de ámbito (cwd del proyecto)',
 			_ => null,
 		} ?? switch (path) {
+			'memory.create.textLabel' => 'Texto',
+			'memory.create.scopeKeyLabel' => 'Clave de ámbito (cwd del proyecto)',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Crear',
 			'memory.archive' => 'Archivar',
