@@ -42,6 +42,9 @@ func (m *archiveSpyMem) Archive(_ context.Context, id, reason string) error {
 	return nil
 }
 func (m *archiveSpyMem) PurgeArchived(context.Context, time.Time) (int64, error) { return 0, nil }
+func (m *archiveSpyMem) PurgeExpiredQuarantine(context.Context, time.Time) (int64, error) {
+	return 0, nil
+}
 func (m *archiveSpyMem) ArchiveDormantStale(_ context.Context, _ memory.Scope, scopeKey string, _, _ time.Time, _ string) (int64, error) {
 	m.dormantCalls = append(m.dormantCalls, scopeKey)
 	return 0, nil

@@ -231,6 +231,20 @@ Rotate `OPENDRAY_BACKUP_KEY` carefully: backups encrypted with the old
 key remain decryptable only with the old key. Keep the old passphrase
 out of band until those backups are rotated out of retention.
 
+For full-instance backups, the Recovery Kit, the two-step (dry-run →
+apply) restore flow, pre-migrate safety snapshots, and **rebuilding a
+dead host from zero**, see the
+[Disaster Recovery Handbook](disaster-recovery.md).
+
+A backup or schedule can **fan out to several targets at once** (3-2-1)
+— the same sealed bundle is written to each, one row per target sharing
+a fan-out id, with per-target retention. Identical consecutive backups
+are **content-deduped** (the new row points at the existing blob rather
+than re-uploading; retention won't drop a blob a deduped row still
+references). When backups are armed, **git-host API tokens are encrypted
+at rest** with the backup key — rotating the backup passphrase requires
+re-entering those tokens.
+
 ## Process lifecycle
 
 opendray traps `SIGINT` and `SIGTERM` and runs a graceful shutdown

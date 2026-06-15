@@ -37,27 +37,81 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Kind enumerates the project_docs.kind column. Currently goal /
-// plan; future kinds (rationale, decision_index) extend by
-// loosening the DB CHECK + adding constants here.
+// Kind is the project_docs.kind column. Since the blueprint system
+// (Cortex Phase 3, migration 0046) it is a per-project SECTION SLUG —
+// the constants below are the default blueprint's slugs plus the
+// reserved global kb_* pages, not a closed enum. Validation is
+// syntax-level (ValidKind) plus a service-layer blueprint check on
+// writes.
 type Kind string
 
 const (
-	KindGoal           Kind = "goal"
-	KindPlan           Kind = "plan"
-	KindTechStack      Kind = "tech_stack"      // M16b — scanner-managed
-	KindRecentActivity Kind = "recent_activity" // M16c — git-summary-managed
+	KindGoal Kind = "goal"
+	KindPlan Kind = "plan"
+	// KindCurrentObjective is the SHORT-TERM tier: the objective we are
+	// working on right now + its immediate steps. Unlike goal/plan it is
+	// direct-write (write_policy="direct") so the in-session agent — the
+	// writer with the richest context — keeps it current without an
+	// approval round-trip. Expected to churn; completing it = completing
+	// a short-term objective.
+	KindCurrentObjective Kind = "current_objective"
+	KindTechStack        Kind = "tech_stack"      // M16b — scanner-managed
+	KindRecentActivity   Kind = "recent_activity" // M16c — git-summary-managed
+	// KindOverview is the project's rich, AI-maintained OFFICIAL document — the
+	// comprehensive page a developer reads to understand the whole project.
+	// Per-project (Notes), AI-drafted, human-lockable.
+	KindOverview Kind = "overview"
+	// Knowledge pages (AI-drafted, human-lockable) live under GlobalCwd.
+	// They are CROSS-PROJECT only (Experience Flywheel) — there is no
+	// per-project handbook; per-project docs are goal/plan/tech/journal above.
+	KindInfrastructure Kind = "kb_infrastructure"
+	KindConventions    Kind = "kb_conventions"
+	KindLessons        Kind = "kb_lessons"
+	KindReusable       Kind = "kb_reusable" // reusable features/components to lift into new projects
+	// KindHandbook is RETIRED — kept only so the DB CHECK + legacy rows stay
+	// valid until migration 0042 clears them. Not created or injected.
+	KindHandbook Kind = "kb_handbook"
 )
 
-// ValidKind returns true for the supported document kinds.
-// Callers should use this rather than a hardcoded switch so the
-// list stays in one place.
-func ValidKind(k Kind) bool {
+// GlobalCwd is the sentinel cwd under which cross-project (global) KB pages are
+// stored, so they reuse the existing (cwd, kind) document model unchanged.
+const GlobalCwd = "__global__"
+
+// IsGlobalKBKind reports whether k is one of the fixed cross-project
+// Knowledge pages stored under GlobalCwd. The retired kb_handbook is
+// intentionally excluded.
+func IsGlobalKBKind(k Kind) bool {
 	switch k {
-	case KindGoal, KindPlan, KindTechStack, KindRecentActivity:
+	case KindInfrastructure, KindConventions, KindLessons, KindReusable:
 		return true
 	}
 	return false
+}
+
+// ValidKind is the syntax-level check: either a global knowledge page
+// slug (kb_*, extensible since the knowledge blueprint) or a
+// well-formed per-project section slug. Whether a slug actually exists
+// in its blueprint is checked on the write paths (PutDoc / ProposeDoc)
+// — reads stay permissive so content of a removed-then-re-added
+// section is never unreachable.
+func ValidKind(k Kind) bool {
+	return ValidGlobalKBSlug(string(k)) || ValidSectionSlug(string(k))
+}
+
+// validateKindForCwd enforces the kind↔cwd pairing: kb_* pages live
+// only under GlobalCwd, and per-project slugs never under it.
+func validateKindForCwd(cwd string, k Kind) error {
+	if !ValidKind(k) {
+		return ErrInvalidKind
+	}
+	isKB := ValidGlobalKBSlug(string(k))
+	if isKB != (cwd == GlobalCwd) {
+		if isKB {
+			return fmt.Errorf("%w: %s is a global knowledge page (cwd must be %s)", ErrInvalidKind, k, GlobalCwd)
+		}
+		return fmt.Errorf("%w: %s is not a global knowledge page", ErrInvalidKind, k)
+	}
+	return nil
 }
 
 // LogKind enumerates session_logs.kind. session_summary covers the
@@ -168,6 +222,26 @@ type Service struct {
 	// Tests flip this on via DisableMirror() so they don't dirty
 	// arbitrary directories on the host.
 	mirrorDisabled bool
+
+	// spawnMode resolves the operator's spawn injection mode at render
+	// time ("full"|"lean", Cortex settings). Nil = full (legacy).
+	spawnMode SpawnModeSource
+
+	// onStatusChange fires after a successful lifecycle transition
+	// (see WithStatusChangeHook). The app bridges project archive /
+	// unarchive to the memory store through this. Nil = no bridge.
+	onStatusChange func(ctx context.Context, cwd string, old, new ProjectStatus)
+}
+
+// SpawnModeSource resolves the spawn injection mode per render —
+// "full" injects everything inject-flagged, "lean" injects guardrails
+// plus a compact index and lets agents fetch the rest on demand.
+type SpawnModeSource func(ctx context.Context) string
+
+// WithSpawnMode installs the spawn-mode resolver (Cortex settings).
+func (s *Service) WithSpawnMode(src SpawnModeSource) *Service {
+	s.spawnMode = src
+	return s
 }
 
 // NewService wires a Service against an existing pgx pool.
@@ -250,11 +324,11 @@ func (s *Service) ListDocsForCwd(ctx context.Context, cwd string) ([]Doc, error)
 // string replaces what was there — there is no incremental patch
 // surface. Operator UI binds the field to a markdown textarea.
 func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content string, author Author) (Doc, error) {
-	if !ValidKind(kind) {
-		return Doc{}, ErrInvalidKind
-	}
 	if strings.TrimSpace(cwd) == "" {
 		return Doc{}, ErrEmptyCwd
+	}
+	if err := s.validateWriteTarget(ctx, cwd, kind); err != nil {
+		return Doc{}, err
 	}
 	if author == "" {
 		author = AuthorOperator
@@ -290,11 +364,11 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 // plan; the change lands here in 'pending' state until the
 // operator approves via ApproveProposal.
 func (s *Service) ProposeDoc(ctx context.Context, cwd string, kind Kind, proposedContent, reason, sessionID string) (Proposal, error) {
-	if !ValidKind(kind) {
-		return Proposal{}, ErrInvalidKind
-	}
 	if strings.TrimSpace(cwd) == "" {
 		return Proposal{}, ErrEmptyCwd
+	}
+	if err := s.validateWriteTarget(ctx, cwd, kind); err != nil {
+		return Proposal{}, err
 	}
 	id := newID("pdp_")
 	var byID any
@@ -308,6 +382,72 @@ func (s *Service) ProposeDoc(ctx context.Context, cwd string, kind Kind, propose
 		          reason, COALESCE(decision, ''), decided_at, COALESCE(prior_content, ''), created_at`,
 		id, cwd, string(kind), proposedContent, byID, reason)
 	return scanProposal(row)
+}
+
+// SetOutcome is the result of SetDocByPolicy: the live doc was either
+// written directly (Action="applied", Doc set) or filed as a proposal
+// (Action="proposed", Proposal set).
+type SetOutcome struct {
+	Action   string    `json:"action"` // "applied" | "proposed"
+	Doc      *Doc      `json:"doc,omitempty"`
+	Proposal *Proposal `json:"proposal,omitempty"`
+}
+
+// SetDocByPolicy is the agent-facing write that routes on the section's
+// blueprint write_policy:
+//
+//   - "direct" + the live doc is NOT human-locked → PutDoc as the agent
+//     (the in-session writer keeps the short-term objective current with
+//     no approval round-trip).
+//   - "proposal", OR a human has hand-edited the live doc (updated_by =
+//     operator) → ProposeDoc (the operator approves before it lands).
+//
+// The lock check mirrors the post-session drift path (journaler): a human
+// edit re-gates the next agent write back to a proposal, so a value you
+// typed is never silently clobbered. An unknown section / lookup failure
+// degrades to the safe proposal path.
+func (s *Service) SetDocByPolicy(ctx context.Context, cwd string, kind Kind, content, reason, sessionID string) (SetOutcome, error) {
+	if strings.TrimSpace(cwd) == "" {
+		return SetOutcome{}, ErrEmptyCwd
+	}
+
+	policy := "proposal"
+	if sections, err := s.ListSections(ctx, cwd); err == nil {
+		for _, sec := range sections {
+			if sec.Slug == string(kind) {
+				policy = normalizeWritePolicy(sec.WritePolicy)
+				break
+			}
+		}
+	} else {
+		s.log.Warn("projectdoc: set policy lookup failed — using proposal gate",
+			"cwd", cwd, "kind", kind, "err", err)
+	}
+
+	if policy == "direct" {
+		// Default to the safe gate: only direct-write when we can POSITIVELY
+		// confirm the live doc is absent or not human-authored. An unknown
+		// read error → fall through to a proposal rather than risk clobbering.
+		locked := true
+		if cur, err := s.GetDoc(ctx, cwd, kind); err == nil {
+			locked = cur.UpdatedBy == AuthorOperator
+		} else if errors.Is(err, ErrNotFound) {
+			locked = false // no doc yet — free to seed it directly
+		}
+		if !locked {
+			doc, err := s.PutDoc(ctx, cwd, kind, content, AuthorAgent)
+			if err != nil {
+				return SetOutcome{}, err
+			}
+			return SetOutcome{Action: "applied", Doc: &doc}, nil
+		}
+	}
+
+	prop, err := s.ProposeDoc(ctx, cwd, kind, content, reason, sessionID)
+	if err != nil {
+		return SetOutcome{}, err
+	}
+	return SetOutcome{Action: "proposed", Proposal: &prop}, nil
 }
 
 // ListPendingProposals returns un-decided proposals for one cwd,
@@ -452,6 +592,9 @@ func (s *Service) AppendLog(ctx context.Context, e LogEntry) (LogEntry, error) {
 	if strings.TrimSpace(e.Cwd) == "" {
 		return LogEntry{}, ErrEmptyCwd
 	}
+	if IsEphemeralCwd(e.Cwd) {
+		return LogEntry{}, ErrEphemeralCwd
+	}
 	if e.Kind == "" {
 		e.Kind = LogKindManual
 	}
@@ -522,18 +665,17 @@ func (s *Service) embedLogBestEffort(ctx context.Context, e LogEntry) {
 	}
 }
 
-// embedDocBestEffort computes + persists an embedding for a goal /
-// plan doc so cross-layer search can match them semantically instead of
-// by substring. No-op for non-searchable kinds (tech_stack /
-// recent_activity) and when no embedder is wired. Soft-fails: on error
-// the embedding stays NULL and the backfill loop retries. The vector
-// lives in the same space as memories.embedding / session_logs.embedding
-// (same embedder), so cosines are directly comparable across layers.
+// embedDocBestEffort computes + persists an embedding for a doc so
+// cross-layer search can match it semantically instead of by
+// substring. Since the knowledge blueprint EVERY doc embeds — custom
+// project sections and global kb_* pages included — so agents can
+// retrieve exactly the section a task needs instead of swallowing
+// whole injected pages. Soft-fails: on error the embedding stays NULL
+// and the backfill loop retries. The vector lives in the same space
+// as memories.embedding / session_logs.embedding (same embedder), so
+// cosines are directly comparable across layers.
 func (s *Service) embedDocBestEffort(ctx context.Context, d Doc) {
 	if s.embedder == nil {
-		return
-	}
-	if d.Kind != KindGoal && d.Kind != KindPlan {
 		return
 	}
 	text := strings.TrimSpace(d.Content)
@@ -830,6 +972,13 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		recentLogs = 5
 	}
 
+	// Lean mode (Cortex settings): guardrails + a compact index;
+	// agents pull full sections/pages on demand instead of paying
+	// for the whole corpus in every spawn.
+	if s.spawnMode != nil && s.spawnMode(ctx) == "lean" {
+		return s.renderLeanSpawn(ctx, cwd)
+	}
+
 	docs, err := s.ListDocsForCwd(ctx, cwd)
 	if err != nil {
 		return "", fmt.Errorf("projectdoc: render spawn docs: %w", err)
@@ -839,21 +988,55 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		return "", fmt.Errorf("projectdoc: render spawn logs: %w", err)
 	}
 
-	var goal, plan, techStack, recentActivity string
+	// The blueprint decides WHICH sections inject and in what order
+	// (Cortex Phase 3). Lookup failure degrades to the default
+	// blueprint so spawn never breaks on blueprint plumbing.
+	sections, bErr := s.ListSections(ctx, cwd)
+	if bErr != nil {
+		s.log.Warn("projectdoc: render spawn blueprint failed — using defaults", "cwd", cwd, "err", bErr)
+		sections = defaultSections(cwd)
+	}
+	content := make(map[string]string, len(docs))
 	for _, d := range docs {
-		switch d.Kind {
-		case KindGoal:
-			goal = strings.TrimSpace(d.Content)
-		case KindPlan:
-			plan = strings.TrimSpace(d.Content)
-		case KindTechStack:
-			techStack = strings.TrimSpace(d.Content)
-		case KindRecentActivity:
-			recentActivity = strings.TrimSpace(d.Content)
+		content[string(d.Kind)] = strings.TrimSpace(d.Content)
+	}
+
+	// P-D — a frozen project (paused/archived) is shelved: drop its
+	// project-specific Notes + journal so a session spawned in it isn't primed
+	// with stale state. Cross-project Knowledge (global KB) still injects — it's
+	// transferable expertise, useful regardless of this project's lifecycle.
+	if status, _ := s.GetStatus(ctx, cwd); status.IsFrozen() {
+		content = map[string]string{}
+		logs = nil
+	}
+
+	// Knowledge (cross-project) splits into two natures (Experience
+	// Flywheel), and since the knowledge blueprint the page set is
+	// dynamic: foundational pages inject as binding guardrails,
+	// emergent pages as reference — each only when its inject flag is
+	// on. Pages with inject=false are reached on demand via
+	// cross-layer search instead.
+	kbSections := s.globalKBSections(ctx)
+	foundational := s.foundationalRules(ctx, kbSections)
+	type kbRef struct{ title, body string }
+	var emergent []kbRef
+	for _, sec := range kbSections {
+		if sec.Nature != "emergent" || !sec.Inject {
+			continue
+		}
+		if body := s.globalKBDoc(ctx, Kind(sec.Slug)); body != "" {
+			emergent = append(emergent, kbRef{title: sec.Title + " (reference)", body: body})
 		}
 	}
 
-	if goal == "" && plan == "" && techStack == "" && recentActivity == "" && len(logs) == 0 {
+	anySection := false
+	for _, sec := range sections {
+		if sec.Inject && content[sec.Slug] != "" {
+			anySection = true
+			break
+		}
+	}
+	if !anySection && foundational == "" && len(emergent) == 0 && len(logs) == 0 {
 		return "", nil
 	}
 
@@ -863,7 +1046,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	// markers, last-scanned timestamps). Saves ~15-25% spawn tokens.
 	var b strings.Builder
 	header := "## Project context (cross-agent shared, read-only)\n\n"
-	footer := "If your work changes the goal or plan, do **not** silently overwrite them. Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal that the operator approves before the live doc updates.\n"
+	footer := "Keep the project docs current as you work. For the short-term objective we're working on right now, use `current_objective_set` — it writes the live doc directly: call it when a new immediate objective is set, when the current one is finished, or when its steps shift. For the long-term `project_goal_set` / medium-term `project_plan_set`, do **not** silently overwrite — those file a proposal the operator approves first.\n"
 	b.WriteString(header)
 
 	// Reserve room for the footer when a budget is active; without
@@ -886,10 +1069,19 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 		b.WriteString(section)
 	}
 
-	appendSection("Project plan", plan)
-	appendSection("Tech stack & structure", techStack)
-	appendSection("Project goal", goal)
-	appendSection("Recent activity", recentActivity)
+	// Binding guardrails FIRST so a tight budget never truncates them away.
+	appendSection("Foundational knowledge — RULES you MUST follow", foundational)
+	// Blueprint sections in blueprint order (pinned first, then
+	// position) — the operator controls spawn priority by reordering.
+	for _, sec := range sections {
+		if !sec.Inject {
+			continue
+		}
+		appendSection(sec.Title, content[sec.Slug])
+	}
+	for _, ref := range emergent {
+		appendSection(ref.title, ref.body)
+	}
 
 	if len(logs) > 0 && !truncated {
 		jb, jTrunc := renderJournalSection(logs, maxBytes-b.Len()-footerReserve)
@@ -907,6 +1099,153 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 
 	b.WriteString(footer)
 	return b.String(), nil
+}
+
+// renderLeanSpawn is the lean-mode banner: binding foundational rules
+// in full (they are the guardrails — never indexed away), then a
+// compact INDEX of the project's doc sections and the knowledge pages
+// with instructions to fetch content on demand through the memory MCP.
+// One screen instead of the whole corpus: spawn stays cheap and the
+// agent's context window stays available for actual work.
+func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, error) {
+	frozen := false
+	if status, _ := s.GetStatus(ctx, cwd); status.IsFrozen() {
+		frozen = true
+	}
+
+	kbSections := s.globalKBSections(ctx)
+	foundational := s.foundationalRules(ctx, kbSections)
+
+	var b strings.Builder
+	b.WriteString("## Project context (cross-agent shared, read-only)\n\n")
+	if foundational != "" {
+		b.WriteString("### Foundational knowledge — RULES you MUST follow\n\n")
+		b.WriteString(foundational)
+		b.WriteString("\n\n")
+	}
+
+	if !frozen {
+		sections, err := s.ListSections(ctx, cwd)
+		if err != nil {
+			sections = defaultSections(cwd)
+		}
+		docs, _ := s.ListDocsForCwd(ctx, cwd)
+		filled := make(map[string]Doc, len(docs))
+		for _, d := range docs {
+			filled[string(d.Kind)] = d
+		}
+		b.WriteString("### Project doc index\n\n")
+		for _, sec := range sections {
+			d, has := filled[sec.Slug]
+			state := "empty"
+			if has && strings.TrimSpace(d.Content) != "" {
+				state = "updated " + d.UpdatedAt.Format("2006-01-02") + " by " + string(d.UpdatedBy)
+			}
+			fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, state)
+			if desc := strings.TrimSpace(sec.Description); desc != "" {
+				b.WriteString(" — " + desc)
+			}
+			b.WriteString("\n")
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString("### Knowledge index (cross-project)\n\n")
+	for _, sec := range kbSections {
+		if sec.Nature == "foundational" && sec.Inject {
+			continue // already injected in full above
+		}
+		authority := "reference"
+		if sec.Nature == "foundational" {
+			authority = "binding"
+		}
+		fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, authority)
+		if desc := strings.TrimSpace(sec.Description); desc != "" {
+			b.WriteString(" — " + desc)
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+
+	b.WriteString("The indexes above are NOT loaded — fetch on demand via the opendray-memory MCP tools: " +
+		"`doc_read` (pass a section slug or kb_* page slug) for a specific document, " +
+		"`project_search` for cross-layer semantic search (facts, journal, docs, knowledge), " +
+		"`memory_search` for episodic facts. Fetch ONLY what the task needs.\n\n" +
+		"Keep the project docs current. Use `current_objective_set` for the short-term " +
+		"objective we're working on right now — it writes the live doc directly (new " +
+		"objective set / current one finished / steps shift). For the long-term " +
+		"`project_goal_set` and medium-term `project_plan_set`, do **not** silently " +
+		"overwrite — those file a proposal the operator approves first.\n")
+	return b.String(), nil
+}
+
+// globalKBDoc fetches a global Knowledge page for spawn injection. Empty on
+// absence or error — never blocks spawn.
+func (s *Service) globalKBDoc(ctx context.Context, kind Kind) string {
+	d, err := s.GetDoc(ctx, GlobalCwd, kind)
+	if err != nil {
+		return ""
+	}
+	return stripKBSig(d.Content)
+}
+
+// globalKBSections returns the knowledge blueprint (lazily seeded with
+// the classic four). Empty on error — spawn must never block on it.
+func (s *Service) globalKBSections(ctx context.Context) []Section {
+	sections, err := s.ListSections(ctx, GlobalCwd)
+	if err != nil {
+		s.log.Warn("projectdoc: knowledge blueprint unavailable — using classics", "err", err)
+		return kbDefaultSections()
+	}
+	return sections
+}
+
+// foundationalRules assembles the binding Foundational knowledge — every
+// foundational-nature page with inject=true (classically infrastructure +
+// conventions; extensible since the knowledge blueprint) — into one block
+// injected as guardrails. An operator-locked page is ratified; an
+// AI-drafted one is flagged so the agent treats it with care.
+func (s *Service) foundationalRules(ctx context.Context, kbSections []Section) string {
+	var b strings.Builder
+	for _, sec := range kbSections {
+		if sec.Nature != "foundational" || !sec.Inject {
+			continue
+		}
+		d, err := s.GetDoc(ctx, GlobalCwd, Kind(sec.Slug))
+		if err != nil {
+			continue
+		}
+		body := stripKBSig(d.Content)
+		if body == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteString("\n\n")
+		}
+		b.WriteString(body)
+		if d.UpdatedBy != AuthorOperator {
+			b.WriteString("\n_(AI-drafted — verify before relying on it)_")
+		}
+	}
+	if b.Len() == 0 {
+		return ""
+	}
+	return b.String() +
+		"\n\nThese are the home-lab's standing rules. Follow them exactly; never deviate without the operator's say-so."
+}
+
+// stripKBSig removes the KB drafter's hidden signature marker line so it never
+// leaks into a spawn prompt or a rendered page.
+func stripKBSig(content string) string {
+	var b strings.Builder
+	for _, line := range strings.Split(content, "\n") {
+		if strings.Contains(line, "kb-sig:") {
+			continue
+		}
+		b.WriteString(line)
+		b.WriteByte('\n')
+	}
+	return strings.TrimSpace(b.String())
 }
 
 // renderJournalSection assembles the journal block, stopping when

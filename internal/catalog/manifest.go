@@ -62,7 +62,7 @@ type ConfigField struct {
 	Key           string   `json:"key"`
 	Label         string   `json:"label"`
 	LabelZh       string   `json:"label_zh,omitempty"`
-	Type          string   `json:"type"` // string | number | boolean | select | secret | args
+	Type          string   `json:"type"` // string | number | boolean | select | secret | args | note (note = read-only hint, no input/args)
 	Group         string   `json:"group,omitempty"`
 	Default       any      `json:"default,omitempty"`
 	Options       []string `json:"options,omitempty"`

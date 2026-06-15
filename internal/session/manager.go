@@ -146,6 +146,13 @@ func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
 	return func(m *Manager) { m.geminiHistoryCfg = cfg }
 }
 
+// WithAntigravityHistoryConfig overrides the agy conversations root used
+// by Manager.Transcript. Empty config = ~/.gemini/antigravity-cli/
+// conversations default.
+func WithAntigravityHistoryConfig(cfg AntigravityHistoryConfig) ManagerOption {
+	return func(m *Manager) { m.antigravityHistoryCfg = cfg }
+}
+
 // Manager owns the lifecycle of all live sessions in this process.
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
@@ -162,9 +169,10 @@ type Manager struct {
 	turnThreshold time.Duration
 	turnInterval  time.Duration
 
-	claudeHistoryCfg ClaudeHistoryConfig
-	codexHistoryCfg  CodexHistoryConfig
-	geminiHistoryCfg GeminiHistoryConfig
+	claudeHistoryCfg      ClaudeHistoryConfig
+	codexHistoryCfg       CodexHistoryConfig
+	geminiHistoryCfg      GeminiHistoryConfig
+	antigravityHistoryCfg AntigravityHistoryConfig
 
 	mu       sync.RWMutex
 	closed   bool
@@ -521,6 +529,13 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 	if name == "" {
 		name = defaultSessionName(req.ProviderID, req.Cwd)
 	}
+	origin := req.origin
+	if origin == "" {
+		// Callers that bypass the HTTP handler (tests, internal spawns)
+		// default to operator — matching the DB default and the truth
+		// for every pre-0044 row.
+		origin = OriginOperator
+	}
 	sess := Session{
 		ID:              sessID,
 		Name:            name,
@@ -530,6 +545,8 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		State:           StateRunning,
 		ClaudeAccountID: req.ClaudeAccountID,
 		ParentSessionID: req.ParentSessionID,
+		Origin:          origin,
+		IntegrationID:   req.integrationID,
 		StartedAt:       time.Now().UTC(),
 	}
 	if sess.Args == nil {
@@ -627,6 +644,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	var (
 		extraArgs []string
 		extraEnv  map[string]string
+		notices   []string
 	)
 	var preparedClaudeSessionID string
 	if p.Prepare != nil {
@@ -645,6 +663,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		}
 		extraArgs = out.Args
 		extraEnv = out.Env
+		notices = out.Notices
 		// Capture the agent-side session UUID so the M18 transcript
 		// reader can anchor the right *.jsonl file. For fresh spawns
 		// this lands in the Insert below via sess.ClaudeSessionID;
@@ -717,6 +736,18 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		subs:         make(map[chan []byte]struct{}),
 		lastActivity: sess.StartedAt,
 		endedCh:      make(chan struct{}),
+	}
+
+	// Provider prepare-time notices render once at the top of the
+	// terminal stream, before any CLI output. Seeded straight into the
+	// ring + virtual terminal (pumpStdout hasn't started yet, so order
+	// is deterministic); every attached client replays the ring.
+	for _, n := range notices {
+		line := "\x1b[33m⚠ " + n + "\x1b[0m\r\n\r\n"
+		_, _ = rs.ring.Write([]byte(line))
+		if rs.vt != nil {
+			_, _ = rs.vt.Write([]byte(line))
+		}
 	}
 
 	m.mu.Lock()

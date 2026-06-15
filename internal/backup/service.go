@@ -1,9 +1,13 @@
 package backup
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -13,6 +17,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/opendray/opendray-v2/internal/eventbus"
 	"github.com/opendray/opendray-v2/internal/version"
 )
 
@@ -25,15 +30,24 @@ type Config struct {
 	ExportDir     string
 	PgDumpPath    string
 	PgRestorePath string
+	// VaultSources are the on-disk directories (notes/skills/mcp)
+	// captured into full_instance bundles. Empty for a db_only
+	// deployment. Restore maps each Logical back to a destination.
+	VaultSources []VaultSource
+	// SecretsFile is the absolute path to secrets.env (the MCP
+	// ${KEY} substitution file). Captured into full_instance
+	// bundles; empty disables it.
+	SecretsFile string
 }
 
 // ServiceDeps groups the secrets + pool + logger required to build
 // a Service. Distinct from Config so Config can be JSON-logged.
 type ServiceDeps struct {
 	Pool       *pgxpool.Pool
-	Passphrase string // from OPENDRAY_BACKUP_KEY
-	DSN        string // libpq conninfo for pg_dump
-	ConfigPath string // optional; cfg.toml path to include in bundles
+	Bus        *eventbus.Hub // optional; nil disables failure notifications
+	Passphrase string        // from OPENDRAY_BACKUP_KEY
+	DSN        string        // libpq conninfo for pg_dump
+	ConfigPath string        // optional; cfg.toml path to include in bundles
 	Log        *slog.Logger
 }
 
@@ -50,7 +64,18 @@ type Service struct {
 	targets    *targetRegistry
 	dsn        string
 	configPath string
+	passphrase string        // retained for Recovery Kit export; never logged
+	bus        *eventbus.Hub // optional; nil disables failure notifications
 	log        *slog.Logger
+}
+
+// notify publishes a backup event to the bus (operator notifications
+// are dispatched by the channel hub). No-op when no bus is wired.
+func (s *Service) notify(topic string, data map[string]any) {
+	if s.bus == nil {
+		return
+	}
+	s.bus.Publish(eventbus.Event{Topic: topic, Data: data})
 }
 
 // NewService validates config + deps and constructs the Service.
@@ -108,8 +133,22 @@ func NewService(cfg Config, deps ServiceDeps) (*Service, error) {
 		targets:    newTargetRegistry(),
 		dsn:        deps.DSN,
 		configPath: deps.ConfigPath,
+		passphrase: deps.Passphrase,
+		bus:        deps.Bus,
 		log:        log,
 	}, nil
+}
+
+// ExportRecoveryKit wraps this instance's backup passphrase under a
+// caller-supplied recovery passphrase, returning a serialized kit the
+// operator stores out-of-band. See recovery.go for the rationale.
+func (s *Service) ExportRecoveryKit(recoveryPassphrase string) ([]byte, error) {
+	if s.passphrase == "" {
+		return nil, ErrCipherUnconfigured
+	}
+	// Reuse the already-derived cipher's fingerprint instead of paying
+	// a second PBKDF2 inside ExportRecoveryKit.
+	return ExportRecoveryKit(s.passphrase, recoveryPassphrase, s.cipher.Fingerprint(), time.Now())
 }
 
 // Bootstrap reads target rows from DB, instantiates BackupTarget
@@ -604,7 +643,12 @@ func (s *Service) redactTargetSpec(spec TargetSpec) TargetSpec {
 
 // CreateScheduleRequest is the body for CreateSchedule.
 type CreateScheduleRequest struct {
-	TargetID    string
+	TargetID string
+	// TargetIDs is the fan-out destination set (3-2-1). When empty the
+	// single TargetID is used; when set its first element becomes the
+	// primary TargetID.
+	TargetIDs   []string
+	Kind        BackupKind
 	IntervalSec int
 	Retention   int
 	Enabled     bool
@@ -614,11 +658,17 @@ type CreateScheduleRequest struct {
 }
 
 func (s *Service) CreateSchedule(ctx context.Context, req CreateScheduleRequest) (Schedule, error) {
-	if req.TargetID == "" {
+	ids := dedupeStrings(req.TargetIDs)
+	if len(ids) == 0 && req.TargetID != "" {
+		ids = []string{req.TargetID}
+	}
+	if len(ids) == 0 {
 		return Schedule{}, fmt.Errorf("target_id required")
 	}
-	if s.targets.get(req.TargetID) == nil {
-		return Schedule{}, ErrTargetNotFound
+	for _, id := range ids {
+		if s.targets.get(id) == nil {
+			return Schedule{}, fmt.Errorf("%w: %s", ErrTargetNotFound, id)
+		}
 	}
 	if req.IntervalSec <= 0 {
 		return Schedule{}, fmt.Errorf("interval_sec must be > 0")
@@ -632,7 +682,9 @@ func (s *Service) CreateSchedule(ctx context.Context, req CreateScheduleRequest)
 	}
 	sc := Schedule{
 		ID:          NewScheduleID(),
-		TargetID:    req.TargetID,
+		TargetID:    ids[0],
+		TargetIDs:   ids,
+		Kind:        req.Kind.orDefault(),
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,
@@ -655,6 +707,21 @@ func (s *Service) ListSchedules(ctx context.Context) ([]Schedule, error) {
 }
 
 func (s *Service) UpdateSchedule(ctx context.Context, id string, p SchedulePatch) error {
+	// Validate fan-out targets exist before persisting — the store layer
+	// only checks non-emptiness, and a schedule pointing at an unknown
+	// target would fail at run time instead of at edit time.
+	if p.TargetIDs != nil {
+		ids := dedupeStrings(*p.TargetIDs)
+		if len(ids) == 0 {
+			return fmt.Errorf("target_ids must not be empty")
+		}
+		for _, tid := range ids {
+			if s.targets.get(tid) == nil {
+				return fmt.Errorf("%w: %s", ErrTargetNotFound, tid)
+			}
+		}
+		p.TargetIDs = &ids
+	}
 	return s.store.UpdateSchedule(ctx, id, p)
 }
 
@@ -666,8 +733,13 @@ func (s *Service) DeleteSchedule(ctx context.Context, id string) error {
 
 // RunBackupRequest controls a single backup invocation.
 type RunBackupRequest struct {
-	TargetID      string
+	TargetID string
+	// TargetIDs fans the same bundle out to several targets (3-2-1).
+	// When set it takes precedence over TargetID; when empty TargetID
+	// (or "local") is used.
+	TargetIDs     []string
 	TriggeredBy   TriggeredBy
+	Kind          BackupKind
 	IncludeConfig bool
 	// ScheduleID, when non-empty, is written to the backup row so
 	// the UI can group scheduler-driven runs under their parent
@@ -676,50 +748,99 @@ type RunBackupRequest struct {
 	ScheduleID string
 }
 
-// RunBackupNow inserts a backup row, kicks off the backup pipeline
-// in a goroutine, and returns the freshly-inserted row immediately.
-// The HTTP layer responds 202 + ID; clients poll GetBackup for status.
+// RunBackupNow inserts one backup row per fan-out target, kicks off the
+// pipeline in a goroutine, and returns the primary (first-target) row
+// immediately. The HTTP layer responds 202 + ID; clients poll for status.
 func (s *Service) RunBackupNow(ctx context.Context, req RunBackupRequest) (Backup, error) {
-	target := s.targets.get(req.TargetID)
-	if target == nil {
-		return Backup{}, ErrTargetNotFound
-	}
-	backup := s.newBackupRow(req)
-	if err := s.store.InsertBackup(ctx, backup); err != nil {
+	rows, targets, err := s.prepareGroup(ctx, req)
+	if err != nil {
 		return Backup{}, err
 	}
-	go s.doRunBackup(context.Background(), backup, target, req.IncludeConfig)
-	return backup, nil
+	go s.doRunBackupGroup(context.Background(), rows, targets, req.IncludeConfig)
+	return rows[0], nil
 }
 
-// RunBackupSync is the synchronous variant used by the scheduler:
-// it returns only after the pipeline finishes (success or failure)
-// so retention + last_run_at can be updated atomically afterwards.
+// RunBackupSync is the synchronous variant used by the scheduler and
+// the pre-restore safety snapshot: it returns the primary row only
+// after every target's write finishes, so retention + last_run_at can
+// be updated atomically afterwards.
 func (s *Service) RunBackupSync(ctx context.Context, req RunBackupRequest) (Backup, error) {
-	target := s.targets.get(req.TargetID)
-	if target == nil {
-		return Backup{}, ErrTargetNotFound
-	}
-	backup := s.newBackupRow(req)
-	if err := s.store.InsertBackup(ctx, backup); err != nil {
+	rows, targets, err := s.prepareGroup(ctx, req)
+	if err != nil {
 		return Backup{}, err
 	}
-	s.doRunBackup(ctx, backup, target, req.IncludeConfig)
-	return s.store.GetBackup(ctx, backup.ID)
+	s.doRunBackupGroup(ctx, rows, targets, req.IncludeConfig)
+	return s.store.GetBackup(ctx, rows[0].ID)
 }
 
-func (s *Service) newBackupRow(req RunBackupRequest) Backup {
+// prepareGroup resolves the request's fan-out targets, allocates a
+// shared group_id when there's more than one, and inserts a pending
+// backup row per target. Returns the rows and their targets in matching
+// order.
+func (s *Service) prepareGroup(ctx context.Context, req RunBackupRequest) ([]Backup, []BackupTarget, error) {
+	ids := dedupeStrings(req.targetIDs())
+	targets := make([]BackupTarget, len(ids))
+	for i, id := range ids {
+		t := s.targets.get(id)
+		if t == nil {
+			return nil, nil, fmt.Errorf("%w: %s", ErrTargetNotFound, id)
+		}
+		targets[i] = t
+	}
+	groupID := ""
+	if len(ids) > 1 {
+		groupID = NewGroupID()
+	}
+	rows := make([]Backup, 0, len(ids))
+	for i, id := range ids {
+		b := s.newBackupRow(req, id, groupID)
+		if err := s.store.InsertBackup(ctx, b); err != nil {
+			// Don't leave the rows inserted before this one stuck in
+			// 'pending' forever — flip them to failed so retention and
+			// the health roll-up account for them.
+			for _, done := range rows {
+				if mErr := s.store.MarkBackupFailed(ctx, done.ID,
+					fmt.Sprintf("fan-out aborted: sibling insert failed: %v", err)); mErr != nil {
+					s.log.Error("prepareGroup: cleanup mark failed", "backup_id", done.ID, "err", mErr)
+				}
+			}
+			return nil, nil, fmt.Errorf("insert backup row %d/%d: %w", i+1, len(ids), err)
+		}
+		rows = append(rows, b)
+	}
+	return rows, targets, nil
+}
+
+// targetIDs returns the destination list for a request: the explicit
+// TargetIDs, or a one-element fallback from TargetID, or ["local"].
+func (req RunBackupRequest) targetIDs() []string {
+	if len(req.TargetIDs) > 0 {
+		return req.TargetIDs
+	}
+	if req.TargetID != "" {
+		return []string{req.TargetID}
+	}
+	return []string{"local"}
+}
+
+func (s *Service) newBackupRow(req RunBackupRequest, targetID, groupID string) Backup {
 	if req.TriggeredBy == "" {
 		req.TriggeredBy = TriggeredManual
 	}
+	kind := req.Kind.orDefault()
 	b := Backup{
 		ID:          NewBackupID(),
-		TargetID:    req.TargetID,
+		TargetID:    targetID,
+		GroupID:     groupID,
 		Status:      BackupPending,
 		TriggeredBy: req.TriggeredBy,
+		Kind:        kind,
 		StartedAt:   time.Now().UTC(),
 		Encrypted:   true,
-		Metadata:    map[string]any{"include_config": req.IncludeConfig},
+		Metadata: map[string]any{
+			"include_config": req.IncludeConfig || kind == KindFullInstance,
+			"kind":           string(kind),
+		},
 	}
 	if req.ScheduleID != "" {
 		id := req.ScheduleID
@@ -728,38 +849,216 @@ func (s *Service) newBackupRow(req RunBackupRequest) Backup {
 	return b
 }
 
-func (s *Service) doRunBackup(ctx context.Context, b Backup, target BackupTarget, includeConfig bool) {
-	log := s.log.With("backup_id", b.ID, "target", b.TargetID)
-	if err := s.store.MarkBackupRunning(ctx, b.ID); err != nil {
-		log.Error("mark running", "err", err)
-		return
+// doRunBackupGroup builds the sealed bundle ONCE and writes it to every
+// target's row. A build failure fails every row; a per-target Put
+// failure fails only that row — so a 3-2-1 fan-out still succeeds to the
+// reachable targets when one is temporarily down.
+func (s *Service) doRunBackupGroup(ctx context.Context, rows []Backup, targets []BackupTarget, includeConfig bool) {
+	for _, b := range rows {
+		if err := s.store.MarkBackupRunning(ctx, b.ID); err != nil {
+			s.log.Error("mark running", "backup_id", b.ID, "err", err)
+		}
 	}
-	if err := s.runPipeline(ctx, b, target, includeConfig); err != nil {
-		log.Error("backup pipeline failed", "err", err)
-		if mErr := s.store.MarkBackupFailed(ctx, b.ID, err.Error()); mErr != nil {
-			log.Error("mark failed", "err", mErr)
+
+	bundle, err := s.buildSealedBundle(ctx, rows[0], includeConfig)
+	if err != nil {
+		s.log.Error("backup build failed", "err", err, "group", rows[0].GroupID)
+		for _, b := range rows {
+			s.failRow(ctx, b, err)
 		}
 		return
 	}
-	log.Info("backup succeeded")
+	defer bundle.cleanup()
+
+	for i := range rows {
+		b, target := rows[i], targets[i]
+		log := s.log.With("backup_id", b.ID, "target", b.TargetID)
+		deduped, err := s.uploadOrDedup(ctx, b, target, bundle)
+		if err != nil {
+			log.Error("backup write failed", "err", err)
+			s.failRow(ctx, b, err)
+			continue
+		}
+		log.Info("backup succeeded", "deduped", deduped)
+
+		// Verify the blob is restorable. Best-effort: a verify failure is
+		// recorded + surfaced, but the row stays 'succeeded' (the blob
+		// exists; it's the integrity that's in doubt). A deduped row
+		// points at an already-verified blob, so skip the redundant pass.
+		if !deduped && s.pgrestore != nil {
+			if vErr := s.VerifyBackup(ctx, b.ID); vErr != nil {
+				log.Warn("backup verification failed", "err", vErr)
+				s.notify("backup.verify_failed", map[string]any{
+					"backup_id": b.ID,
+					"target_id": b.TargetID,
+					"error":     vErr.Error(),
+				})
+			} else {
+				log.Info("backup verified")
+			}
+		}
+	}
 }
 
-// runPipeline is the actual end-to-end work:
+// dedupeStrings returns the input with empty entries dropped and later
+// duplicates removed, preserving first-seen order. Used to normalise a
+// fan-out target list so the same target is never written twice.
+func dedupeStrings(in []string) []string {
+	seen := make(map[string]bool, len(in))
+	out := make([]string, 0, len(in))
+	for _, v := range in {
+		if v == "" || seen[v] {
+			continue
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+	return out
+}
+
+// failRow marks a backup row failed and publishes a backup.failed event.
+func (s *Service) failRow(ctx context.Context, b Backup, cause error) {
+	if mErr := s.store.MarkBackupFailed(ctx, b.ID, cause.Error()); mErr != nil {
+		s.log.Error("mark failed", "backup_id", b.ID, "err", mErr)
+	}
+	s.notify("backup.failed", map[string]any{
+		"backup_id": b.ID,
+		"target_id": b.TargetID,
+		"kind":      string(b.Kind),
+		"error":     cause.Error(),
+	})
+}
+
+// VerifyBackup re-reads a stored backup, decrypts it, and confirms the
+// dump is a readable archive via `pg_restore --list`, recording the
+// outcome (verified_at / verify_error). Returns the verification error
+// (if any) after recording it.
+func (s *Service) VerifyBackup(ctx context.Context, id string) error {
+	vErr := s.verifyBackup(ctx, id)
+	msg := ""
+	if vErr != nil {
+		msg = vErr.Error()
+	}
+	if mErr := s.store.MarkBackupVerified(ctx, id, msg); mErr != nil {
+		// Don't let a DB write failure bury the original diagnosis.
+		if vErr != nil {
+			s.log.Error("verify: could not record failed verification",
+				"backup_id", id, "verify_err", vErr, "mark_err", mErr)
+		}
+		return mErr
+	}
+	return vErr
+}
+
+// verifyBackup does the actual fetch → decrypt → extract dump.bin →
+// pg_restore --list. No DB writes (the caller records the outcome).
+func (s *Service) verifyBackup(ctx context.Context, id string) error {
+	if s.pgrestore == nil {
+		return ErrPgRestoreUnavailable
+	}
+	b, err := s.store.GetBackup(ctx, id)
+	if err != nil {
+		return err
+	}
+	target := s.targets.get(b.TargetID)
+	if target == nil {
+		return ErrTargetNotFound
+	}
+	rc, err := target.Get(ctx, TargetRef{
+		Target: b.TargetID,
+		Path:   b.TargetPath,
+		Bytes:  b.Bytes,
+		SHA256: b.SHA256,
+	})
+	if err != nil {
+		return fmt.Errorf("verify: fetch blob: %w", err)
+	}
+	defer rc.Close()
+
+	tmp, err := os.CreateTemp(s.cfg.LocalDir, ".verify-*.bin")
+	if err != nil {
+		return fmt.Errorf("verify: tmp: %w", err)
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+
+	gzr, err := gzip.NewReader(s.cipher.Open(rc))
+	if err != nil {
+		_ = tmp.Close()
+		return fmt.Errorf("verify: gzip: %w", err)
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+	found := false
+	for {
+		hdr, terr := tr.Next()
+		if errors.Is(terr, io.EOF) {
+			break
+		}
+		if terr != nil {
+			_ = tmp.Close()
+			return fmt.Errorf("verify: tar: %w", terr)
+		}
+		if hdr.Name == "dump.bin" {
+			// Buffers the whole dump to LocalDir (peak disk ≈ 2× the
+			// dump). If that ever bites on huge DBs, b.Bytes is an upper
+			// bound for an io.LimitReader guard here.
+			if _, cerr := io.Copy(tmp, tr); cerr != nil {
+				_ = tmp.Close()
+				return fmt.Errorf("verify: extract dump: %w", cerr)
+			}
+			found = true
+			break
+		}
+	}
+	if cerr := tmp.Close(); cerr != nil {
+		return fmt.Errorf("verify: close tmp: %w", cerr)
+	}
+	if !found {
+		return ErrRestoreNoDump
+	}
+	if _, lerr := s.pgrestore.List(ctx, tmpName); lerr != nil {
+		return fmt.Errorf("verify: %w", lerr)
+	}
+	return nil
+}
+
+// sealedBundle is the encrypted backup bundle staged to a temp file,
+// ready to upload to one or more targets. Building it is the expensive
+// part (pg_dump + vault pack + seal); a 3-2-1 fan-out does it once and
+// then uploads the same file to each target.
+type sealedBundle struct {
+	path      string // sealed ciphertext temp file in cfg.LocalDir
+	size      int64  // bytes of the sealed file
+	pgVersion string // ParsePGMajorMinor(pg_dump --version)
+	// contentHash fingerprints the restorable content (dump +
+	// full-instance sources), with per-run framing excluded so identical
+	// data hashes the same across runs — content-dedup keys on it. See
+	// dedupContentHash.
+	contentHash string
+	cleanup     func()
+}
+
+// buildSealedBundle is the expensive, target-independent half of a
+// backup:
 //
-//	pg_dump → temp file → tar(manifest, [config], dump) → cipher.Seal → target.Put
+//	pg_dump → temp file → tar(manifest, [config], [vault], [secrets], dump)
+//	  → cipher.Seal → sealed temp file
 //
-// pg_dump is buffered to a sibling temp file because tar headers
-// require knowing entry sizes up front. The temp file lives in
-// cfg.LocalDir (which we already enforce as opendray-writable).
-func (s *Service) runPipeline(ctx context.Context, b Backup, target BackupTarget, includeConfig bool) error {
+// Everything is buffered to temp files because tar headers require entry
+// sizes up front; the sealed file is produced once and then uploaded to
+// each fan-out target by writeBundleToTarget. The caller owns
+// bundle.cleanup() (removes the sealed temp file).
+func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig bool) (*sealedBundle, error) {
 	pgVerStr, err := s.pgdump.Version(ctx)
 	if err != nil {
-		return fmt.Errorf("pg_dump --version: %w", err)
+		return nil, fmt.Errorf("pg_dump --version: %w", err)
 	}
 
 	tmpDump, err := os.CreateTemp(s.cfg.LocalDir, ".dump-*.bin")
 	if err != nil {
-		return fmt.Errorf("create tmp dump: %w", err)
+		return nil, fmt.Errorf("create tmp dump: %w", err)
 	}
 	tmpName := tmpDump.Name()
 	defer os.Remove(tmpName)
@@ -767,53 +1066,119 @@ func (s *Service) runPipeline(ctx context.Context, b Backup, target BackupTarget
 	res, err := s.pgdump.Dump(ctx, s.dsn)
 	if err != nil {
 		_ = tmpDump.Close()
-		return fmt.Errorf("pg_dump start: %w", err)
+		return nil, fmt.Errorf("pg_dump start: %w", err)
 	}
 	if _, copyErr := io.Copy(tmpDump, res.Reader); copyErr != nil {
 		_ = tmpDump.Close()
-		return fmt.Errorf("pg_dump copy: %w", copyErr)
+		return nil, fmt.Errorf("pg_dump copy: %w", copyErr)
 	}
 	if waitErr := res.Wait(); waitErr != nil {
 		_ = tmpDump.Close()
-		return waitErr
+		return nil, waitErr
 	}
 	if err := tmpDump.Close(); err != nil {
-		return fmt.Errorf("close tmp dump: %w", err)
+		return nil, fmt.Errorf("close tmp dump: %w", err)
 	}
 
 	dumpStat, err := os.Stat(tmpName)
 	if err != nil {
-		return fmt.Errorf("stat dump: %w", err)
+		return nil, fmt.Errorf("stat dump: %w", err)
 	}
 	dumpFile, err := os.Open(tmpName)
 	if err != nil {
-		return fmt.Errorf("reopen dump: %w", err)
+		return nil, fmt.Errorf("reopen dump: %w", err)
 	}
 	defer dumpFile.Close()
 
+	// A full_instance bundle always carries config.toml (you can't
+	// rebuild an instance without it), regardless of the request flag.
+	fullInstance := b.Kind == KindFullInstance
+	includeConfig = includeConfig || fullInstance
+
 	sources := []BundleSource{}
-	var cfgFile *os.File
+	// hashParts mirrors `sources` by on-disk path: the content
+	// fingerprint is computed from the source files directly (not the
+	// bundle stream) so it excludes the per-run manifest and can
+	// timestamp-normalise the dump — see dedupContentHash.
+	hashParts := []dedupPart{}
 	if includeConfig && s.configPath != "" {
 		cf, err := os.Open(s.configPath)
 		if err != nil {
 			s.log.Warn("backup: skip config (open failed)",
 				"path", s.configPath, "err", err)
+		} else if cfgStat, statErr := cf.Stat(); statErr != nil {
+			// A bad size here would write a tar header that doesn't
+			// match the body and corrupt the bundle — skip instead.
+			_ = cf.Close()
+			s.log.Warn("backup: skip config (stat failed)",
+				"path", s.configPath, "err", statErr)
 		} else {
-			cfgFile = cf
-			defer cfgFile.Close()
-			cfgStat, _ := cfgFile.Stat()
+			defer cf.Close()
 			sources = append(sources, BundleSource{
 				Name: filepath.Base(s.configPath),
-				Body: cfgFile,
+				Body: cf,
 				Size: cfgStat.Size(),
 			})
+			hashParts = append(hashParts, dedupPart{path: s.configPath})
 		}
 	}
+
+	// Full instance: the vault (notes/skills/mcp) and secrets.env, so a
+	// restore reconstructs a working instance and not just its DB.
+	if fullInstance && len(s.cfg.VaultSources) > 0 {
+		vtarName, vtarSize, err := s.packVaultToTemp()
+		if err != nil {
+			return nil, err
+		}
+		defer os.Remove(vtarName)
+		vf, err := os.Open(vtarName)
+		if err != nil {
+			return nil, fmt.Errorf("reopen vault tar: %w", err)
+		}
+		defer vf.Close()
+		sources = append(sources, BundleSource{Name: "vault.tar", Body: vf, Size: vtarSize})
+		hashParts = append(hashParts, dedupPart{path: vtarName})
+	}
+	if fullInstance && s.cfg.SecretsFile != "" {
+		sf, err := os.Open(s.cfg.SecretsFile)
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			// No secrets.env on this host — nothing to capture.
+		case err != nil:
+			s.log.Warn("backup: skip secrets.env (open failed)",
+				"path", s.cfg.SecretsFile, "err", err)
+		default:
+			if sStat, statErr := sf.Stat(); statErr != nil {
+				_ = sf.Close()
+				s.log.Warn("backup: skip secrets.env (stat failed)",
+					"path", s.cfg.SecretsFile, "err", statErr)
+			} else {
+				defer sf.Close()
+				sources = append(sources, BundleSource{
+					Name: "secrets.env",
+					Body: sf,
+					Size: sStat.Size(),
+				})
+				hashParts = append(hashParts, dedupPart{path: s.cfg.SecretsFile})
+			}
+		}
+	}
+
 	sources = append(sources, BundleSource{
 		Name: "dump.bin",
 		Body: dumpFile,
 		Size: dumpStat.Size(),
 	})
+	hashParts = append(hashParts, dedupPart{path: tmpName, isDump: true})
+
+	// Fingerprint the restorable content (timestamp-normalised dump +
+	// any full-instance sources, manifest excluded) before the temp
+	// files are streamed/removed. A failure here only forgoes dedup.
+	contentHash, err := dedupContentHash(hashParts)
+	if err != nil {
+		s.log.Warn("backup: content-hash failed; this backup won't dedup", "err", err)
+		contentHash = ""
+	}
 
 	info := version.Current()
 	manifest := BundleManifest{
@@ -828,28 +1193,122 @@ func (s *Service) runPipeline(ctx context.Context, b Backup, target BackupTarget
 		},
 	}
 
+	sealedFile, err := os.CreateTemp(s.cfg.LocalDir, ".sealed-*.enc")
+	if err != nil {
+		return nil, fmt.Errorf("create sealed temp: %w", err)
+	}
+	sealedName := sealedFile.Name()
+	cleanup := func() { _ = os.Remove(sealedName) }
+
+	// WriteBundle streams every source body in this goroutine; the
+	// synchronous io.Copy below drains the whole pipe before returning,
+	// so by the time the deferred file closes / temp removals fire the
+	// goroutine has finished reading every BundleSource. (The content
+	// fingerprint is computed separately from the source files above, so
+	// the per-run manifest never taints it.)
 	bundleR, bundleW := io.Pipe()
 	go func() {
 		err := WriteBundle(bundleW, manifest, sources)
 		_ = bundleW.CloseWithError(err)
 	}()
 	sealed := s.cipher.Seal(bundleR)
+	if _, err := io.Copy(sealedFile, sealed); err != nil {
+		_ = sealedFile.Close()
+		cleanup()
+		return nil, fmt.Errorf("seal bundle: %w", err)
+	}
+	if err := sealedFile.Close(); err != nil {
+		cleanup()
+		return nil, fmt.Errorf("close sealed temp: %w", err)
+	}
+	sealedStat, err := os.Stat(sealedName)
+	if err != nil {
+		cleanup()
+		return nil, fmt.Errorf("stat sealed temp: %w", err)
+	}
+
+	return &sealedBundle{
+		path:        sealedName,
+		size:        sealedStat.Size(),
+		pgVersion:   ParsePGMajorMinor(pgVerStr),
+		contentHash: contentHash,
+		cleanup:     cleanup,
+	}, nil
+}
+
+// writeBundleToTarget uploads an already-sealed bundle to one target
+// and marks the row succeeded. Called once per fan-out target.
+func (s *Service) writeBundleToTarget(ctx context.Context, b Backup, target BackupTarget, bundle *sealedBundle) error {
+	f, err := os.Open(bundle.path)
+	if err != nil {
+		return fmt.Errorf("reopen sealed bundle: %w", err)
+	}
+	defer f.Close()
 
 	targetPath := fmt.Sprintf("%s/%s.tar.gz.enc", b.StartedAt.Format("2006/01"), b.ID)
-	ref, err := target.Put(ctx, targetPath, sealed, -1)
+	ref, err := target.Put(ctx, targetPath, f, bundle.size)
 	if err != nil {
 		return fmt.Errorf("target.Put: %w", err)
 	}
 
+	info := version.Current()
 	return s.store.MarkBackupSucceeded(ctx, b.ID, BackupResult{
 		Bytes:           ref.Bytes,
 		SHA256:          ref.SHA256,
 		KeyFingerprint:  s.cipher.Fingerprint(),
 		TargetPath:      ref.Path,
-		PGVersion:       ParsePGMajorMinor(pgVerStr),
+		PGVersion:       bundle.pgVersion,
 		OpendrayVersion: info.Version,
 		GitSHA:          info.Commit,
+		ContentHash:     bundle.contentHash,
 	})
+}
+
+// uploadOrDedup writes the bundle to a target unless an identical bundle
+// (same plaintext content hash) already lives there, in which case it
+// records a dedup pointer to the existing blob instead of re-uploading.
+// Returns whether it deduped so the caller can skip a redundant verify.
+func (s *Service) uploadOrDedup(ctx context.Context, b Backup, target BackupTarget, bundle *sealedBundle) (bool, error) {
+	prior, ok, err := s.store.FindDedupTarget(ctx, b.TargetID, bundle.contentHash)
+	if err != nil {
+		// A dedup-lookup failure must never block a backup — fall back to
+		// a normal upload (correct, just not space-optimised).
+		s.log.Warn("backup: dedup lookup failed; uploading fresh copy",
+			"backup_id", b.ID, "err", err)
+	} else if ok {
+		if err := s.store.MarkBackupDeduped(ctx, b.ID, bundle.contentHash, bundle.pgVersion, prior); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, s.writeBundleToTarget(ctx, b, target, bundle)
+}
+
+// packVaultToTemp writes a vault tar to a sibling temp file in
+// LocalDir and returns its path + size. tar headers require a known
+// size up front, so (like pg_dump) we buffer to a file first. The
+// caller owns removing the returned path.
+func (s *Service) packVaultToTemp() (name string, size int64, err error) {
+	tmp, err := os.CreateTemp(s.cfg.LocalDir, ".vault-*.tar")
+	if err != nil {
+		return "", 0, fmt.Errorf("create tmp vault tar: %w", err)
+	}
+	name = tmp.Name()
+	if perr := PackVault(tmp, s.cfg.VaultSources); perr != nil {
+		_ = tmp.Close()
+		_ = os.Remove(name)
+		return "", 0, fmt.Errorf("pack vault: %w", perr)
+	}
+	if cerr := tmp.Close(); cerr != nil {
+		_ = os.Remove(name)
+		return "", 0, fmt.Errorf("close vault tar: %w", cerr)
+	}
+	st, err := os.Stat(name)
+	if err != nil {
+		_ = os.Remove(name)
+		return "", 0, fmt.Errorf("stat vault tar: %w", err)
+	}
+	return name, st.Size(), nil
 }
 
 // ─── reads / lifecycle ────────────────────────────────────────────
@@ -860,6 +1319,12 @@ func (s *Service) GetBackup(ctx context.Context, id string) (Backup, error) {
 
 func (s *Service) ListBackups(ctx context.Context, f BackupListFilter) ([]Backup, error) {
 	return s.store.ListBackups(ctx, f)
+}
+
+// Health returns the at-a-glance backup health roll-up the dashboard
+// renders as a strip. Read-only; safe to poll.
+func (s *Service) Health(ctx context.Context) (BackupHealth, error) {
+	return s.store.BackupHealth(ctx)
 }
 
 // DownloadBackup opens the blob via the backup's target. The caller

@@ -15,6 +15,9 @@ export interface McpServer {
   url?: string
   headers?: Record<string, string>
   enabled: boolean
+  /** Gateway-provided servers (e.g. opendray-memory) — auto-attached to
+   * every session, read-only in the registry (no edit / delete / test). */
+  builtin?: boolean
 }
 
 export interface McpSecretsState {

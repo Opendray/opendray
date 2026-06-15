@@ -15,7 +15,18 @@ export type BackupStatus =
   | 'failed'
   | 'deleted'
 
-export type TriggeredBy = 'scheduler' | 'manual' | 'api'
+export type TriggeredBy =
+  | 'scheduler'
+  | 'manual'
+  | 'api'
+  | 'pre_migrate'
+  | 'pre_restore'
+
+// BackupKind is how much of an instance a backup captures: a plain
+// encrypted pg_dump ('db_only', the default), or a 'full_instance'
+// bundle that also carries the vault (notes/skills/mcp), secrets.env
+// and config.toml — everything needed to rebuild a working instance.
+export type BackupKind = 'db_only' | 'full_instance'
 
 export type TargetKind =
   | 'local'
@@ -76,8 +87,12 @@ export interface Backup {
   id: string
   schedule_id?: string | null
   target_id: string
+  /** Correlates rows from one fan-out invocation (same bundle, many
+   * targets). Empty for a plain single-target backup. */
+  group_id?: string
   status: BackupStatus
   triggered_by: TriggeredBy
+  kind: BackupKind
   started_at: string
   finished_at?: string | null
   bytes: number
@@ -89,12 +104,22 @@ export interface Backup {
   opendray_version?: string
   git_sha?: string
   error?: string
+  verified_at?: string | null
+  verify_error?: string
+  /** True when this backup reused a prior identical blob (content-dedup)
+   * instead of uploading a fresh copy. */
+  deduped?: boolean
+  content_hash?: string
   metadata?: Record<string, unknown>
 }
 
 export interface Schedule {
   id: string
   target_id: string
+  /** Full fan-out destination set (3-2-1). Always includes target_id
+   * as its first element; a single-target schedule has one entry. */
+  target_ids: string[]
+  kind: BackupKind
   interval_sec: number
   retention: number
   enabled: boolean
@@ -136,6 +161,23 @@ export interface BackupStatusReport {
 
 export async function fetchBackupStatus(): Promise<BackupStatusReport> {
   return api<BackupStatusReport>('/api/v1/backup-status')
+}
+
+// BackupHealth is the at-a-glance roll-up the dashboard renders as a
+// health strip. Mirrors backup.BackupHealth in Go. All counts are
+// "needs attention" signals — non-zero means something to look at.
+export interface BackupHealth {
+  last_success_at?: string | null
+  last_success_id?: string
+  recent_failures: number // failed runs in the last 24h
+  verify_failures: number // succeeded backups whose last restore-verify failed
+  overdue_schedules: number // enabled schedules >5min past their next_run_at
+  schedules: number // total schedules
+  enabled_schedules: number // enabled schedules
+}
+
+export async function fetchBackupHealth(): Promise<BackupHealth> {
+  return api<BackupHealth>('/api/v1/backup-health')
 }
 
 export interface BackupSetupResult {
@@ -194,12 +236,19 @@ export async function getBackup(id: string): Promise<Backup> {
 
 export async function createBackup(opts: {
   targetId?: string
+  /** Fan-out destinations (3-2-1). When set, takes precedence over
+   * targetId and the same bundle is written to every target. */
+  targetIds?: string[]
+  kind?: BackupKind
   includeConfig?: boolean
 }): Promise<Backup> {
   return api<Backup>('/api/v1/backups', {
     method: 'POST',
     body: {
-      target_id: opts.targetId ?? 'local',
+      ...(opts.targetIds && opts.targetIds.length > 0
+        ? { target_ids: opts.targetIds }
+        : { target_id: opts.targetId ?? 'local' }),
+      kind: opts.kind ?? 'db_only',
       include_config: opts.includeConfig ?? false,
     },
   })
@@ -270,7 +319,11 @@ export async function listSchedules(): Promise<Schedule[]> {
 }
 
 export async function createSchedule(opts: {
-  targetId: string
+  targetId?: string
+  /** Fan-out destination set (3-2-1). When set, its first element
+   * becomes the primary target_id. */
+  targetIds?: string[]
+  kind?: BackupKind
   intervalSec: number
   retention: number
   enabled: boolean
@@ -278,7 +331,10 @@ export async function createSchedule(opts: {
   return api<Schedule>('/api/v1/backup-schedules', {
     method: 'POST',
     body: {
-      target_id: opts.targetId,
+      ...(opts.targetIds && opts.targetIds.length > 0
+        ? { target_ids: opts.targetIds }
+        : { target_id: opts.targetId }),
+      kind: opts.kind ?? 'db_only',
       interval_sec: opts.intervalSec,
       retention: opts.retention,
       enabled: opts.enabled,
@@ -288,11 +344,19 @@ export async function createSchedule(opts: {
 
 export async function updateSchedule(
   id: string,
-  patch: { intervalSec?: number; retention?: number; enabled?: boolean },
+  patch: {
+    kind?: BackupKind
+    targetIds?: string[]
+    intervalSec?: number
+    retention?: number
+    enabled?: boolean
+  },
 ): Promise<Schedule> {
   return api<Schedule>(`/api/v1/backup-schedules/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     body: {
+      ...(patch.kind !== undefined && { kind: patch.kind }),
+      ...(patch.targetIds !== undefined && { target_ids: patch.targetIds }),
       ...(patch.intervalSec !== undefined && {
         interval_sec: patch.intervalSec,
       }),
@@ -398,6 +462,20 @@ export async function fetchBackupInventory(): Promise<InventoryGroup[]> {
 
 // ── restore (A) ──────────────────────────────────────────────────
 
+// RestorePlan describes what a restore would do (dry-run) or did
+// (apply). Mirrors backup.RestorePlan in Go.
+export interface RestorePlan {
+  dry_run: boolean
+  dump_present: boolean
+  dump_bytes: number
+  config_path?: string
+  secrets_path?: string
+  vault_roots?: string[]
+  vault_files: number
+  safety_snapshot_id?: string
+  applied?: string[]
+}
+
 export interface RestoreResult {
   manifest: {
     version: string
@@ -411,14 +489,21 @@ export interface RestoreResult {
   target_dsn_used: string
   fingerprint_ok: boolean
   pg_restore_output: string
+  plan: RestorePlan
   started_at: string
   finished_at: string
 }
 
+// restoreBackup defaults to a DRY RUN: it validates the bundle and
+// returns a plan without changing anything. Pass apply=true (plus the
+// confirm phrase) to commit; force=true proceeds even if the
+// pre-restore safety snapshot fails.
 export async function restoreBackup(opts: {
   bundle: File
   targetDsn?: string
   clean: boolean
+  apply?: boolean
+  force?: boolean
   confirm?: string
   note?: string
 }): Promise<RestoreResult> {
@@ -426,11 +511,35 @@ export async function restoreBackup(opts: {
   fd.set('bundle', opts.bundle)
   if (opts.targetDsn) fd.set('target_dsn', opts.targetDsn)
   fd.set('clean', String(opts.clean))
+  fd.set('apply', String(opts.apply ?? false))
+  if (opts.force) fd.set('force', 'true')
   if (opts.confirm) fd.set('confirm', opts.confirm)
   if (opts.note) fd.set('note', opts.note)
   return api<RestoreResult>('/api/v1/backups/restore', {
     method: 'POST',
     body: fd,
+  })
+}
+
+// ── recovery kit ─────────────────────────────────────────────────
+
+export interface RecoveryKit {
+  version: number
+  created_at: string
+  key_fingerprint: string
+  wrapped_key: string
+}
+
+/** POST /backup-recovery-kit. Wraps the backup passphrase under a
+ *  separate recovery passphrase the operator stores out-of-band. The
+ *  returned kit + that recovery passphrase are what recover a dead
+ *  host (see `opendray recover-key`). */
+export async function fetchRecoveryKit(
+  recoveryPassphrase: string,
+): Promise<RecoveryKit> {
+  return api<RecoveryKit>('/api/v1/backup-recovery-kit', {
+    method: 'POST',
+    body: { recovery_passphrase: recoveryPassphrase },
   })
 }
 

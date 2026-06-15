@@ -45,33 +45,49 @@ class AuthController extends StateNotifier<AuthState> {
   final FlutterSecureStorage _storage;
 
   Future<void> _bootstrap() async {
-    final serverUrl = await _storage.read(key: SecureKeys.serverUrl);
-    if (serverUrl == null || serverUrl.isEmpty) {
+    try {
+      final serverUrl = await _storage.read(key: SecureKeys.serverUrl);
+      if (serverUrl == null || serverUrl.isEmpty) {
+        state = const AuthOnboarding();
+        return;
+      }
+      final token = await _storage.read(key: SecureKeys.token);
+      final username = await _storage.read(key: SecureKeys.username);
+      final expiresAtRaw = await _storage.read(key: SecureKeys.tokenExpiresAt);
+      if (token == null ||
+          token.isEmpty ||
+          username == null ||
+          expiresAtRaw == null) {
+        state = AuthLoggedOut(serverUrl);
+        return;
+      }
+      final expiresAt = DateTime.tryParse(expiresAtRaw);
+      if (expiresAt == null || expiresAt.isBefore(DateTime.now())) {
+        await _clearTokenOnly();
+        state = AuthLoggedOut(serverUrl);
+        return;
+      }
+      state = AuthLoggedIn(
+        serverUrl: serverUrl,
+        token: token,
+        username: username,
+        expiresAt: expiresAt,
+      );
+    } on Object catch (_) {
+      // Secure storage can fail to decrypt on Android when the
+      // Keystore key and EncryptedSharedPreferences data fall out
+      // of sync (app reinstall, OS upgrade, or Auto Backup
+      // restoring prefs without the key). If the exception escapes,
+      // _bootstrap's future fails silently and the app is stuck on
+      // the splash forever. Wipe the corrupted store and fall back
+      // to onboarding so the user can always recover.
+      try {
+        await _storage.deleteAll();
+      } on Object catch (_) {
+        // Nothing more we can do; still drop to a usable screen.
+      }
       state = const AuthOnboarding();
-      return;
     }
-    final token = await _storage.read(key: SecureKeys.token);
-    final username = await _storage.read(key: SecureKeys.username);
-    final expiresAtRaw = await _storage.read(key: SecureKeys.tokenExpiresAt);
-    if (token == null ||
-        token.isEmpty ||
-        username == null ||
-        expiresAtRaw == null) {
-      state = AuthLoggedOut(serverUrl);
-      return;
-    }
-    final expiresAt = DateTime.tryParse(expiresAtRaw);
-    if (expiresAt == null || expiresAt.isBefore(DateTime.now())) {
-      await _clearTokenOnly();
-      state = AuthLoggedOut(serverUrl);
-      return;
-    }
-    state = AuthLoggedIn(
-      serverUrl: serverUrl,
-      token: token,
-      username: username,
-      expiresAt: expiresAt,
-    );
   }
 
   Future<void> setServerUrl(String url) async {

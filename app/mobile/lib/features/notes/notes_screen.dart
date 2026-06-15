@@ -6,25 +6,38 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
+import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
-// Global Notes tab — vault drill-down browser.
-//
-// A flat list mixes personal scratchpads with every project's docs
-// in one stream — usable when the vault has 10 notes, unreadable
-// at 200. Mirrors the web admin's NotesTreeView pattern: the user
-// starts at the vault root, sees top-level folders + any root-level
-// .md files, and drills down level by level. Search collapses the
-// tree into a flat result list across the whole vault. Quick chips
-// jump to common roots (`personal/`, `projects/`).
-class NotesScreen extends ConsumerStatefulWidget {
+// NotesScreen (Notes tab) is the project's official doc — goal/plan/tech/
+// activity/journal/inbox. Deconflated per the Experience Flywheel: memory
+// hygiene lives under Memory, the freeform markdown vault under More.
+// Memory = facts; Knowledge = cross-project; Notes = where this project is.
+class NotesScreen extends ConsumerWidget {
   const NotesScreen({super.key});
 
   @override
-  ConsumerState<NotesScreen> createState() => _NotesScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const ProjectScreen();
+  }
 }
 
-class _NotesScreenState extends ConsumerState<NotesScreen> {
+// NotesVaultScreen — the markdown/Obsidian-sync vault, demoted out of the
+// core triad (reachable from the More menu).
+//
+// A flat list mixes personal scratchpads with every project's docs in one
+// stream — usable at 10 notes, unreadable at 200. Mirrors the web vault: the
+// user starts at the root, sees top-level folders + root-level .md files, and
+// drills down level by level. Search collapses the tree into a flat result
+// list; quick chips jump to common roots (`personal/`, `projects/`).
+class NotesVaultScreen extends ConsumerStatefulWidget {
+  const NotesVaultScreen({super.key});
+
+  @override
+  ConsumerState<NotesVaultScreen> createState() => _NotesScreenState();
+}
+
+class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   AsyncValue<List<NoteSummary>> _state = const AsyncValue.loading();
   // Vault-relative directory the user is currently viewing. '' means
   // the vault root. Never has a trailing slash.

@@ -7,7 +7,7 @@ import { api } from './api'
 
 export type TaskKind = 'gatekeeper' | 'cleaner' | 'gitactivity' | 'transcript'
 export type WorkerKind = 'summarizer' | 'agent'
-export type AgentProviderID = 'claude' | 'gemini'
+export type AgentProviderID = 'claude' | 'gemini' | 'codex' | 'antigravity'
 
 export interface WorkerConfig {
   task: TaskKind
@@ -18,6 +18,8 @@ export interface WorkerConfig {
   provider_id?: AgentProviderID | ''
   /** When provider_id === 'claude': which multi-account row. */
   account_id?: string
+  /** Agent-CLI model pin (claude --model / gemini --model); empty = CLI default. */
+  model?: string
   enabled: boolean
   updated_at: string
 }
@@ -40,6 +42,7 @@ export interface UpsertWorkerInput {
   summarizer_id?: string
   provider_id?: AgentProviderID | ''
   account_id?: string
+  model?: string
   enabled?: boolean
 }
 
@@ -134,4 +137,24 @@ export function taskDescription(t: TaskKind): string {
  *  design (latency budget) even though the row exists. */
 export function taskAgentSupported(t: TaskKind): boolean {
   return t !== 'gatekeeper'
+}
+
+// ── agent model catalog ───────────────────────────────────────
+
+export interface ModelOption {
+  id: string
+  label: string
+  /** Stable aliases that track the latest version — safe defaults. */
+  recommended?: boolean
+}
+
+/** Lists selectable models for an agent CLI (claude | gemini). Local
+ * HTTP providers list models live via the memory probe instead. */
+export async function listAgentModels(
+  providerId: AgentProviderID,
+): Promise<ModelOption[]> {
+  const res = await api<{ models: ModelOption[] }>(
+    `/api/v1/memory/workers/models?provider_id=${providerId}`,
+  )
+  return res.models ?? []
 }

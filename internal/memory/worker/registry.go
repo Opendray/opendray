@@ -63,6 +63,12 @@ func (r *Registry) WorkerFor(ctx context.Context, task TaskKind) (Worker, error)
 	if !cfg.Enabled {
 		return nil, ErrNoWorkerConfigured
 	}
+	return r.buildWorker(cfg)
+}
+
+// buildWorker constructs the Worker impl for an explicit config. Shared
+// by WorkerFor (stored config) and RunWith (caller-supplied override).
+func (r *Registry) buildWorker(cfg Config) (Worker, error) {
 	switch cfg.Kind {
 	case WorkerSummarizer:
 		if r.summarizerReg == nil {
@@ -77,14 +83,33 @@ func (r *Registry) WorkerFor(ctx context.Context, task TaskKind) (Worker, error)
 }
 
 // Run is the convenience entry point most callers use. It
-// resolves the worker, calls Run, and records a metrics row.
-// On error returns the worker error verbatim (caller decides
-// how to degrade).
+// resolves the worker from the task's stored config, calls Run,
+// and records a metrics row. On error returns the worker error
+// verbatim (caller decides how to degrade).
 func (r *Registry) Run(ctx context.Context, req Request) (Response, error) {
 	worker, err := r.WorkerFor(ctx, req.Task)
 	if err != nil {
 		return Response{}, err
 	}
+	return r.runWorker(ctx, worker, req)
+}
+
+// RunWith runs a request against a CALLER-SUPPLIED config instead of the
+// task's stored row — used for per-call overrides (e.g. a curation
+// conversation that pins its own cloud-agent provider + model). Metrics
+// are still recorded under req.Task. The override must be self-contained
+// (Kind + ProviderID/Model as appropriate); Enabled is ignored.
+func (r *Registry) RunWith(ctx context.Context, override Config, req Request) (Response, error) {
+	worker, err := r.buildWorker(override)
+	if err != nil {
+		return Response{}, err
+	}
+	return r.runWorker(ctx, worker, req)
+}
+
+// runWorker invokes a constructed worker and records a best-effort
+// metrics row around the call.
+func (r *Registry) runWorker(ctx context.Context, worker Worker, req Request) (Response, error) {
 	t0 := time.Now()
 	resp, runErr := worker.Run(ctx, req)
 	dur := time.Since(t0).Milliseconds()

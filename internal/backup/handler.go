@@ -65,7 +65,47 @@ func (h *Handlers) Mount(r chi.Router) {
 		h.MountExports(r)
 		h.MountImports(r)
 		r.Get("/backup-inventory", h.inventory)
+		r.Get("/backup-health", h.health)
+		r.Post("/backup-recovery-kit", h.recoveryKit)
 	})
+}
+
+// recoveryKit serves POST /backup-recovery-kit. Body:
+//
+//	{ "recovery_passphrase": "..." }
+//
+// It returns the Recovery Kit JSON as a downloadable attachment: the
+// backup passphrase wrapped under the operator's recovery passphrase,
+// to be stored out-of-band. Taken over POST (not GET) so the recovery
+// passphrase never lands in a URL / access log.
+func (h *Handlers) recoveryKit(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		RecoveryPassphrase string `json:"recovery_passphrase"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
+		return
+	}
+	kit, err := h.live.Service().ExportRecoveryKit(req.RecoveryPassphrase)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrRecoveryPassphraseTooShort):
+			writeError(w, http.StatusBadRequest, err)
+		case errors.Is(err, ErrCipherUnconfigured):
+			writeError(w, http.StatusServiceUnavailable, err)
+		default:
+			// Don't leak internal crypto error details on this
+			// key-wrapping path; log server-side and return generic.
+			h.live.Service().log.Error("recovery kit export failed", "err", err)
+			writeError(w, http.StatusInternalServerError,
+				errors.New("recovery: could not generate recovery kit"))
+		}
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", `attachment; filename="opendray-recovery-kit.json"`)
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(kit)
 }
 
 // requireArmed shortcircuits requests with 503 when the LiveBackup
@@ -130,19 +170,30 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 // Returns 202 + the freshly-inserted Backup row (status='pending').
 func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TargetID      string `json:"target_id"`
-		IncludeConfig bool   `json:"include_config"`
+		TargetID      string   `json:"target_id"`
+		TargetIDs     []string `json:"target_ids"`
+		Kind          string   `json:"kind"`
+		IncludeConfig bool     `json:"include_config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	if req.TargetID == "" {
+	// Default to the local target when neither a single nor a fan-out
+	// list of targets is given.
+	if req.TargetID == "" && len(req.TargetIDs) == 0 {
 		req.TargetID = "local"
+	}
+	kind, err := ParseBackupKind(req.Kind)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
 	}
 	b, err := h.live.Service().RunBackupNow(r.Context(), RunBackupRequest{
 		TargetID:      req.TargetID,
+		TargetIDs:     req.TargetIDs,
 		TriggeredBy:   TriggeredAPI,
+		Kind:          kind,
 		IncludeConfig: req.IncludeConfig,
 	})
 	if err != nil {
@@ -231,10 +282,12 @@ func (h *Handlers) getSchedule(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TargetID    string `json:"target_id"`
-		IntervalSec int    `json:"interval_sec"`
-		Retention   int    `json:"retention"`
-		Enabled     bool   `json:"enabled"`
+		TargetID    string   `json:"target_id"`
+		TargetIDs   []string `json:"target_ids"`
+		Kind        string   `json:"kind"`
+		IntervalSec int      `json:"interval_sec"`
+		Retention   int      `json:"retention"`
+		Enabled     bool     `json:"enabled"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
@@ -243,8 +296,15 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	if req.Retention == 0 {
 		req.Retention = 7
 	}
+	kind, err := ParseBackupKind(req.Kind)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
 	sc, err := h.live.Service().CreateSchedule(r.Context(), CreateScheduleRequest{
 		TargetID:    req.TargetID,
+		TargetIDs:   req.TargetIDs,
+		Kind:        kind,
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,
@@ -263,19 +323,31 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req struct {
-		IntervalSec *int  `json:"interval_sec,omitempty"`
-		Retention   *int  `json:"retention,omitempty"`
-		Enabled     *bool `json:"enabled,omitempty"`
+		Kind        *string   `json:"kind,omitempty"`
+		TargetIDs   *[]string `json:"target_ids,omitempty"`
+		IntervalSec *int      `json:"interval_sec,omitempty"`
+		Retention   *int      `json:"retention,omitempty"`
+		Enabled     *bool     `json:"enabled,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid body: %w", err))
 		return
 	}
-	if err := h.live.Service().UpdateSchedule(r.Context(), id, SchedulePatch{
+	patch := SchedulePatch{
+		TargetIDs:   req.TargetIDs,
 		IntervalSec: req.IntervalSec,
 		Retention:   req.Retention,
 		Enabled:     req.Enabled,
-	}); err != nil {
+	}
+	if req.Kind != nil {
+		kind, err := ParseBackupKind(*req.Kind)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
+		patch.Kind = &kind
+	}
+	if err := h.live.Service().UpdateSchedule(r.Context(), id, patch); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -420,12 +492,17 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 
 	targetDSN := r.FormValue("target_dsn")
 	clean := r.FormValue("clean") == "true"
+	apply := r.FormValue("apply") == "true"
+	force := r.FormValue("force") == "true"
 	confirm := r.FormValue("confirm")
 	note := r.FormValue("note")
 
-	if targetDSN == "" && confirm != "I understand" {
+	// Any apply mutates a live database (own DB or an external DSN that
+	// could equally be production), so it requires the double-confirm.
+	// A dry-run (the default) changes nothing and never gates.
+	if apply && confirm != "I understand" {
 		writeError(w, http.StatusBadRequest,
-			errors.New("restoring to opendray's own DB requires confirm=\"I understand\""))
+			errors.New("applying a restore requires confirm=\"I understand\""))
 		return
 	}
 
@@ -433,6 +510,8 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 		Source:       file,
 		TargetDSN:    targetDSN,
 		Clean:        clean,
+		Apply:        apply,
+		Force:        force,
 		OperatorNote: note,
 	})
 	if err != nil {
@@ -467,6 +546,17 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"groups": groups})
+}
+
+// health serves GET /backup-health — the dashboard roll-up of last
+// success and attention-needing counts. Read-only.
+func (h *Handlers) health(w http.ResponseWriter, r *http.Request) {
+	hh, err := h.live.Service().Health(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, hh)
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

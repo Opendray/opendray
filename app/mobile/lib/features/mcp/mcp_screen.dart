@@ -139,15 +139,18 @@ class _McpScreenState extends ConsumerState<McpScreen> {
               ),
             ),
             const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: Text(t.mcp.editConfig),
-              subtitle: Text(
-                t.mcp.popup.editConfigSubtitle,
-                style: const TextStyle(fontSize: 11),
+            // Built-in servers (opendray-memory) are gateway-provided:
+            // read-only — no edit/delete, only view + copy id.
+            if (!s.builtin)
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(t.mcp.editConfig),
+                subtitle: Text(
+                  t.mcp.popup.editConfigSubtitle,
+                  style: const TextStyle(fontSize: 11),
+                ),
+                onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.edit),
               ),
-              onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.edit),
-            ),
             ListTile(
               leading: const Icon(Icons.code),
               title: Text(t.mcp.viewRawConfig),
@@ -163,18 +166,20 @@ class _McpScreenState extends ConsumerState<McpScreen> {
               title: Text(t.mcp.copyId),
               onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.copyId),
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Icon(
-                Icons.delete_outline,
-                color: Theme.of(sheetCtx).colorScheme.error,
+            if (!s.builtin) ...[
+              const Divider(height: 1),
+              ListTile(
+                leading: Icon(
+                  Icons.delete_outline,
+                  color: Theme.of(sheetCtx).colorScheme.error,
+                ),
+                title: Text(
+                  t.mcp.popup.deleteLabel,
+                  style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
+                ),
+                onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.delete),
               ),
-              title: Text(
-                t.mcp.popup.deleteLabel,
-                style: TextStyle(color: Theme.of(sheetCtx).colorScheme.error),
-              ),
-              onTap: () => Navigator.of(sheetCtx).pop(_ServerAction.delete),
-            ),
+            ],
             const SizedBox(height: 4),
           ],
         ),
@@ -617,6 +622,13 @@ class _ServerTile extends StatelessWidget {
             label: server.transport,
             color: Theme.of(context).colorScheme.tertiary,
           ),
+          if (server.builtin) ...[
+            const SizedBox(width: 4),
+            _MiniBadge(
+              label: t.mcp.builtinBadge,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ],
         ],
       ),
       subtitle: DefaultTextStyle.merge(
@@ -629,24 +641,35 @@ class _ServerTile extends StatelessWidget {
               server.id,
               style: const TextStyle(fontFamily: 'monospace'),
             ),
-            if ((server.description ?? '').isNotEmpty)
+            if (server.builtin)
+              Text('· ${t.mcp.builtinHint}')
+            else if ((server.description ?? '').isNotEmpty)
               Text('· ${server.description}'),
           ],
         ),
       ),
-      trailing: busy
-          ? const SizedBox(
-              width: 32,
-              height: 32,
-              child: Padding(
-                padding: EdgeInsets.all(8),
-                child: CircularProgressIndicator(strokeWidth: 2),
+      trailing: server.builtin
+          ? Text(
+              t.mcp.builtinAlwaysOn,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
               ),
             )
-          : Switch(
-              value: server.enabled,
-              onChanged: onToggle,
-            ),
+          : busy
+              ? const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : Switch(
+                  value: server.enabled,
+                  onChanged: onToggle,
+                ),
     );
   }
 }

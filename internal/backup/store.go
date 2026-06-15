@@ -10,6 +10,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/opendray/opendray-v2/internal/version"
 )
 
 // store wraps the pgxpool with backup-specific CRUD. Unexported per
@@ -131,10 +133,10 @@ func scanTarget(row rowScanner) (TargetSpec, error) {
 func (s *store) InsertSchedule(ctx context.Context, sc Schedule) error {
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO backup_schedules
-			(id, target_id, interval_sec, retention, enabled, next_run_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $7)`,
-		sc.ID, sc.TargetID, sc.IntervalSec, sc.Retention, sc.Enabled,
-		sc.NextRunAt, sc.CreatedAt)
+			(id, target_id, target_ids, interval_sec, retention, enabled, kind, next_run_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`,
+		sc.ID, sc.TargetID, scheduleTargetIDs(sc), sc.IntervalSec, sc.Retention, sc.Enabled,
+		string(sc.Kind.orDefault()), sc.NextRunAt, sc.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert schedule: %w", err)
 	}
@@ -169,6 +171,8 @@ func (s *store) ListSchedules(ctx context.Context) ([]Schedule, error) {
 
 // SchedulePatch carries partial updates.
 type SchedulePatch struct {
+	Kind        *BackupKind
+	TargetIDs   *[]string
 	IntervalSec *int
 	Retention   *int
 	Enabled     *bool
@@ -176,6 +180,29 @@ type SchedulePatch struct {
 }
 
 func (s *store) UpdateSchedule(ctx context.Context, id string, p SchedulePatch) error {
+	if p.Kind != nil {
+		if _, err := ParseBackupKind(string(*p.Kind)); err != nil {
+			return err
+		}
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET kind=$1, updated_at=NOW() WHERE id=$2`,
+			string(p.Kind.orDefault()), id); err != nil {
+			return fmt.Errorf("update kind: %w", err)
+		}
+	}
+	if p.TargetIDs != nil {
+		ids := *p.TargetIDs
+		if len(ids) == 0 {
+			return fmt.Errorf("target_ids must not be empty")
+		}
+		// Keep target_id (the FK-backed primary) in sync with the first
+		// element so the legacy column stays meaningful.
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET target_ids=$1, target_id=$2, updated_at=NOW() WHERE id=$3`,
+			ids, ids[0], id); err != nil {
+			return fmt.Errorf("update target_ids: %w", err)
+		}
+	}
 	if p.IntervalSec != nil {
 		if *p.IntervalSec <= 0 {
 			return fmt.Errorf("interval_sec must be > 0")
@@ -268,24 +295,47 @@ func (s *store) ClaimDueSchedule(ctx context.Context) (Schedule, error) {
 }
 
 const scheduleSelectStmt = `
-	SELECT id, target_id, interval_sec, retention, enabled,
+	SELECT id, target_id, COALESCE(target_ids, '{}'), COALESCE(kind, 'db_only'),
+	       interval_sec, retention, enabled,
 	       last_run_at, next_run_at, created_at, updated_at
 	  FROM backup_schedules`
 
 func scanSchedule(row rowScanner) (Schedule, error) {
 	var (
 		sc        Schedule
+		targetIDs []string
+		kind      string
 		lastRunAt sql.NullTime
 	)
-	if err := row.Scan(&sc.ID, &sc.TargetID, &sc.IntervalSec, &sc.Retention,
+	if err := row.Scan(&sc.ID, &sc.TargetID, &targetIDs, &kind, &sc.IntervalSec, &sc.Retention,
 		&sc.Enabled, &lastRunAt, &sc.NextRunAt, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 		return Schedule{}, err
 	}
+	sc.Kind = BackupKind(kind)
+	// Old rows predating fan-out have an empty array; fall back to the
+	// single target so callers always see at least one destination.
+	if len(targetIDs) == 0 && sc.TargetID != "" {
+		targetIDs = []string{sc.TargetID}
+	}
+	sc.TargetIDs = targetIDs
 	if lastRunAt.Valid {
 		t := lastRunAt.Time
 		sc.LastRunAt = &t
 	}
 	return sc, nil
+}
+
+// scheduleTargetIDs returns the target_ids to persist for a schedule:
+// its explicit list, or a one-element fallback from TargetID so the
+// column is never empty for a valid schedule.
+func scheduleTargetIDs(sc Schedule) []string {
+	if len(sc.TargetIDs) > 0 {
+		return sc.TargetIDs
+	}
+	if sc.TargetID != "" {
+		return []string{sc.TargetID}
+	}
+	return []string{}
 }
 
 // ─── backups ──────────────────────────────────────────────────────
@@ -300,12 +350,12 @@ func (s *store) InsertBackup(ctx context.Context, b Backup) error {
 	}
 	_, err = s.pool.Exec(ctx, `
 		INSERT INTO backups
-			(id, schedule_id, target_id, status, triggered_by, started_at,
+			(id, schedule_id, target_id, group_id, status, triggered_by, kind, started_at,
 			 encrypted, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
-		b.ID, scheduleIDOrNil(b.ScheduleID), b.TargetID,
-		string(b.Status), string(b.TriggeredBy), b.StartedAt,
-		b.Encrypted, metaRaw)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)`,
+		b.ID, scheduleIDOrNil(b.ScheduleID), b.TargetID, nullIfEmpty(b.GroupID),
+		string(b.Status), string(b.TriggeredBy), string(b.Kind.orDefault()),
+		b.StartedAt, b.Encrypted, metaRaw)
 	if err != nil {
 		return fmt.Errorf("insert backup: %w", err)
 	}
@@ -388,6 +438,9 @@ type BackupResult struct {
 	PGVersion       string
 	OpendrayVersion string
 	GitSHA          string
+	// ContentHash is the sha256 of the plaintext bundle; recorded on
+	// every success so later runs can content-dedup against it.
+	ContentHash string
 }
 
 func (s *store) MarkBackupSucceeded(ctx context.Context, id string, r BackupResult) error {
@@ -401,15 +454,102 @@ func (s *store) MarkBackupSucceeded(ctx context.Context, id string, r BackupResu
 		       target_path=$4,
 		       pg_version=$5,
 		       opendray_version=$6,
-		       git_sha=$7
-		 WHERE id=$8`,
+		       git_sha=$7,
+		       content_hash=$8,
+		       deduped=FALSE
+		 WHERE id=$9`,
 		r.Bytes, nullIfEmpty(r.SHA256), nullIfEmpty(r.KeyFingerprint),
 		nullIfEmpty(r.TargetPath), nullIfEmpty(r.PGVersion),
-		nullIfEmpty(r.OpendrayVersion), nullIfEmpty(r.GitSHA), id)
+		nullIfEmpty(r.OpendrayVersion), nullIfEmpty(r.GitSHA),
+		nullIfEmpty(r.ContentHash), id)
 	if err != nil {
 		return fmt.Errorf("mark succeeded: %w", err)
 	}
 	return nil
+}
+
+// FindDedupTarget returns the most recent backup on targetID we can
+// safely dedup against: a succeeded, non-deduped (i.e. it actually
+// uploaded the blob) row with a matching plaintext content_hash, a
+// usable target_path, and no failed verification. The bool is false when
+// nothing qualifies — the caller then uploads normally.
+//
+// Requiring deduped=FALSE means every dedup points at the ONE canonical
+// blob, never at another pointer, so a dedup chain can't be left
+// dangling when intermediate rows age out (reference-aware retention
+// keeps the canonical blob alive while any pointer references it).
+// Excluding verify-failed rows avoids reusing a blob that's proven
+// un-restorable.
+func (s *store) FindDedupTarget(ctx context.Context, targetID, contentHash string) (Backup, bool, error) {
+	if contentHash == "" {
+		return Backup{}, false, nil
+	}
+	row := s.pool.QueryRow(ctx, backupSelectStmt+`
+		WHERE target_id=$1 AND status='succeeded' AND content_hash=$2
+		  AND deduped=FALSE
+		  AND COALESCE(target_path,'')<>''
+		  AND COALESCE(verify_error,'')=''
+		ORDER BY started_at DESC
+		LIMIT 1`, targetID, contentHash)
+	b, err := scanBackup(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Backup{}, false, nil
+	}
+	if err != nil {
+		return Backup{}, false, fmt.Errorf("find dedup target: %w", err)
+	}
+	return b, true, nil
+}
+
+// MarkBackupDeduped finalises a backup row that reused prior's blob
+// instead of uploading: it points at prior's target_path/bytes/sha256/
+// fingerprint, copies prior's verification outcome (the identical blob
+// was already proven restorable), and flags deduped=true.
+func (s *store) MarkBackupDeduped(ctx context.Context, id, contentHash, pgVersion string, prior Backup) error {
+	var verifiedAt any
+	if prior.VerifiedAt != nil {
+		verifiedAt = *prior.VerifiedAt
+	}
+	info := version.Current()
+	_, err := s.pool.Exec(ctx, `
+		UPDATE backups
+		   SET status='succeeded',
+		       finished_at=NOW(),
+		       bytes=$1,
+		       sha256=$2,
+		       key_fingerprint=$3,
+		       target_path=$4,
+		       pg_version=$5,
+		       opendray_version=$6,
+		       git_sha=$7,
+		       content_hash=$8,
+		       deduped=TRUE,
+		       verified_at=$9,
+		       verify_error=$10
+		 WHERE id=$11`,
+		prior.Bytes, nullIfEmpty(prior.SHA256), nullIfEmpty(prior.KeyFingerprint),
+		nullIfEmpty(prior.TargetPath), nullIfEmpty(pgVersion),
+		nullIfEmpty(info.Version), nullIfEmpty(info.Commit),
+		nullIfEmpty(contentHash), verifiedAt, nullIfEmpty(prior.VerifyError), id)
+	if err != nil {
+		return fmt.Errorf("mark deduped: %w", err)
+	}
+	return nil
+}
+
+// CountOtherActiveByTargetPath counts non-deleted backups (other than
+// excludeID) on targetID that reference targetPath. Retention uses it to
+// keep a shared blob alive while any deduped row still points at it.
+func (s *store) CountOtherActiveByTargetPath(ctx context.Context, targetID, targetPath, excludeID string) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*) FROM backups
+		 WHERE target_id=$1 AND target_path=$2 AND status<>'deleted' AND id<>$3`,
+		targetID, targetPath, excludeID).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("count refs to path: %w", err)
+	}
+	return n, nil
 }
 
 func (s *store) MarkBackupFailed(ctx context.Context, id string, errMsg string) error {
@@ -420,6 +560,31 @@ func (s *store) MarkBackupFailed(ctx context.Context, id string, errMsg string) 
 		errMsg, id)
 	if err != nil {
 		return fmt.Errorf("mark failed: %w", err)
+	}
+	return nil
+}
+
+// MarkBackupVerified records the outcome of a post-backup
+// verification. On success (empty verifyErr) verified_at is set to now
+// and verify_error cleared. On failure only verify_error is set — a
+// non-NULL verify_error already signals "last check failed", so we keep
+// any prior verified_at rather than destroying a historical success on
+// a transient blip (the UI treats verify_error as taking precedence).
+func (s *store) MarkBackupVerified(ctx context.Context, id, verifyErr string) error {
+	if verifyErr == "" {
+		_, err := s.pool.Exec(ctx, `
+			UPDATE backups SET verified_at=NOW(), verify_error=NULL WHERE id=$1`,
+			id)
+		if err != nil {
+			return fmt.Errorf("mark verified: %w", err)
+		}
+		return nil
+	}
+	_, err := s.pool.Exec(ctx, `
+		UPDATE backups SET verify_error=$1 WHERE id=$2`,
+		verifyErr, id)
+	if err != nil {
+		return fmt.Errorf("mark verify failed: %w", err)
 	}
 	return nil
 }
@@ -491,7 +656,9 @@ func (s *store) ResetStaleRunning(ctx context.Context, cutoff time.Duration) (in
 const backupSelectStmt = `
 	SELECT id, schedule_id,
 	       COALESCE(target_id, '') AS target_id,
+	       COALESCE(group_id, ''),
 	       status, triggered_by,
+	       COALESCE(kind, 'db_only'),
 	       started_at, finished_at, bytes,
 	       COALESCE(sha256, ''),
 	       encrypted,
@@ -501,6 +668,10 @@ const backupSelectStmt = `
 	       COALESCE(opendray_version, ''),
 	       COALESCE(git_sha, ''),
 	       COALESCE(error, ''),
+	       verified_at,
+	       COALESCE(verify_error, ''),
+	       COALESCE(content_hash, ''),
+	       COALESCE(deduped, FALSE),
 	       COALESCE(metadata, '{}'::jsonb)
 	  FROM backups`
 
@@ -513,16 +684,18 @@ func scanBackup(row rowScanner) (Backup, error) {
 		b           Backup
 		scheduleID  sql.NullString
 		finishedAt  sql.NullTime
+		verifiedAt  sql.NullTime
 		status      string
 		triggeredBy string
+		kind        string
 		metaRaw     []byte
 	)
 	err := row.Scan(
-		&b.ID, &scheduleID, &b.TargetID, &status, &triggeredBy,
+		&b.ID, &scheduleID, &b.TargetID, &b.GroupID, &status, &triggeredBy, &kind,
 		&b.StartedAt, &finishedAt, &b.Bytes,
 		&b.SHA256, &b.Encrypted, &b.KeyFingerprint,
 		&b.TargetPath, &b.PGVersion, &b.OpendrayVersion, &b.GitSHA,
-		&b.Error, &metaRaw,
+		&b.Error, &verifiedAt, &b.VerifyError, &b.ContentHash, &b.Deduped, &metaRaw,
 	)
 	if err != nil {
 		return Backup{}, err
@@ -535,8 +708,13 @@ func scanBackup(row rowScanner) (Backup, error) {
 		t := finishedAt.Time
 		b.FinishedAt = &t
 	}
+	if verifiedAt.Valid {
+		t := verifiedAt.Time
+		b.VerifiedAt = &t
+	}
 	b.Status = BackupStatus(status)
 	b.TriggeredBy = TriggeredBy(triggeredBy)
+	b.Kind = BackupKind(kind)
 	if len(metaRaw) > 0 {
 		_ = json.Unmarshal(metaRaw, &b.Metadata)
 	}
@@ -544,6 +722,78 @@ func scanBackup(row rowScanner) (Backup, error) {
 		b.Metadata = map[string]any{}
 	}
 	return b, nil
+}
+
+// ─── health ───────────────────────────────────────────────────────
+
+// BackupHealth rolls up the at-a-glance signals the dashboard renders
+// as a health strip: the most recent successful backup (staleness),
+// plus counts of things needing attention — recent failures, failed
+// restore-verifications, and overdue schedules. Three small aggregate
+// queries, cheap enough to hit on every dashboard poll.
+func (s *store) BackupHealth(ctx context.Context) (BackupHealth, error) {
+	var h BackupHealth
+
+	// Most recent successful backup (staleness signal). No rows yet is
+	// a valid "never backed up" state, not an error.
+	var (
+		lastID sql.NullString
+		lastAt sql.NullTime
+	)
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, finished_at
+		  FROM backups
+		 WHERE status='succeeded' AND finished_at IS NOT NULL
+		 ORDER BY finished_at DESC
+		 LIMIT 1`).Scan(&lastID, &lastAt)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return BackupHealth{}, fmt.Errorf("health: last success: %w", err)
+	}
+	if lastID.Valid {
+		h.LastSuccessID = lastID.String
+	}
+	if lastAt.Valid {
+		t := lastAt.Time
+		h.LastSuccessAt = &t
+	}
+
+	// Backup-row counts: recent failures + failed verifications.
+	//   • recent_failures uses COALESCE(finished_at, started_at) so a
+	//     failed row missing finished_at (shouldn't happen — every
+	//     MarkBackupFailed path sets it — but be defensive) still gets
+	//     a timestamp to window on.
+	//   • verify_failures counts succeeded rows whose restore-verify
+	//     ran and failed. The "<> ''" guard mirrors the empty-string
+	//     "no error" sentinel the Go/UI layer uses (scanBackup
+	//     COALESCEs NULL→''), so the count stays consistent with the
+	//     VerifiedBadge, not just with the raw NULL column.
+	if err := s.pool.QueryRow(ctx, `
+		SELECT
+			COUNT(*) FILTER (
+				WHERE status='failed'
+				  AND COALESCE(finished_at, started_at) > NOW() - INTERVAL '24 hours') AS recent_failures,
+			COUNT(*) FILTER (
+				WHERE status='succeeded'
+				  AND verify_error IS NOT NULL AND verify_error <> '') AS verify_failures
+		  FROM backups`).Scan(&h.RecentFailures, &h.VerifyFailures); err != nil {
+		return BackupHealth{}, fmt.Errorf("health: backup counts: %w", err)
+	}
+
+	// Schedule counts: total, enabled, overdue. The 5-minute grace
+	// matches ClaimDueSchedule's jitter so a schedule that's merely
+	// mid-claim isn't flagged.
+	if err := s.pool.QueryRow(ctx, `
+		SELECT
+			COUNT(*) AS total,
+			COUNT(*) FILTER (WHERE enabled) AS enabled,
+			COUNT(*) FILTER (
+				WHERE enabled
+				  AND next_run_at < NOW() - INTERVAL '5 minutes') AS overdue
+		  FROM backup_schedules`).Scan(&h.Schedules, &h.EnabledSchedules, &h.OverdueSchedules); err != nil {
+		return BackupHealth{}, fmt.Errorf("health: schedule counts: %w", err)
+	}
+
+	return h, nil
 }
 
 // ─── exports ──────────────────────────────────────────────────────

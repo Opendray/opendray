@@ -77,6 +77,11 @@ type SessionProvider struct {
 	// injection (e.g. older builds without memory layers 2-4).
 	projectDocInjector ProjectDocInjector
 
+	// knowledgeInjector, when set, prepends a compact "Project
+	// knowledge" banner (skills + playbooks) at spawn. Backed by
+	// internal/knowledge.Service. Nil → no injection ([knowledge] off).
+	knowledgeInjector KnowledgeInjector
+
 	// projectDocBudget caps the rendered banner size in bytes. 0
 	// disables the cap (legacy behaviour). Operators dial this via
 	// WithProjectDocBudget; the catalog adapter calls
@@ -121,6 +126,13 @@ type AmbientInjector interface {
 type ProjectDocInjector interface {
 	RenderForSpawn(ctx context.Context, cwd string, recentLogs int) (string, error)
 	RenderForSpawnWithBudget(ctx context.Context, cwd string, recentLogs, maxBytes int) (string, error)
+}
+
+// KnowledgeInjector is the contract internal/knowledge.Service satisfies —
+// renders a compact "Project knowledge" banner (skills + playbooks) for the
+// spawning agent. Empty string means nothing to inject.
+type KnowledgeInjector interface {
+	RenderForSpawn(ctx context.Context, cwd string, maxBytes int) (string, error)
 }
 
 // ProjectScanner is the contract internal/projectscan.Service
@@ -220,6 +232,13 @@ func (sp *SessionProvider) WithAmbientInjector(inj AmbientInjector) *SessionProv
 // recent journal) to the agent's system prompt at spawn time.
 func (sp *SessionProvider) WithProjectDocInjector(inj ProjectDocInjector) *SessionProvider {
 	sp.projectDocInjector = inj
+	return sp
+}
+
+// WithKnowledgeInjector installs the M-KG knowledge injector — prepends a
+// compact "Project knowledge" (skills + playbooks) banner at spawn time.
+func (sp *SessionProvider) WithKnowledgeInjector(inj KnowledgeInjector) *SessionProvider {
+	sp.knowledgeInjector = inj
 	return sp
 }
 
@@ -510,6 +529,21 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		// M-KG — prepend the project's distilled knowledge (skills +
+		// playbooks). Best-effort; active only when the injector is wired
+		// (i.e. [knowledge] enabled). Nil/empty → skip silently.
+		if sp.knowledgeInjector != nil {
+			if cwd := session.Cwd(prepareCtx); cwd != "" {
+				if text, err := sp.knowledgeInjector.RenderForSpawn(prepareCtx, cwd, 4096); err != nil {
+					sp.log.Warn("knowledge render failed; skipping inject", "cwd", cwd, "err", err)
+				} else if text != "" {
+					if err := injectAmbientMemoryFor(providerID, baseDir, text, &out); err != nil {
+						return session.PrepareOutput{}, fmt.Errorf("inject knowledge: %w", err)
+					}
+				}
+			}
+		}
+
 		// Carry-over context on account switch: when the operator opted
 		// into "carry context", SwitchClaudeAccount put a recap of the
 		// prior conversation on the context. Inject it through the same
@@ -558,7 +592,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				sp.log.Warn("MCP servers reference unset secrets",
 					"provider", providerID, "missing", missing)
 			}
-			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, resolved)
+			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, cwd, resolved)
 			if err != nil {
 				return session.PrepareOutput{}, err
 			}
@@ -569,23 +603,34 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			for k, v := range mcpEnv {
 				out.Env[k] = v
 			}
+		}
 
-			// Gemini mirroring: if renderMCP set GEMINI_CONFIG_DIR,
-			// symlink the user's real ~/.gemini into the scratch dir
-			// so they stay logged in.
-			if providerID == "gemini" && out.Env["GEMINI_CONFIG_DIR"] != "" {
-				home := out.Env["GEMINI_CONFIG_DIR"]
-				userHome := os.Getenv("GEMINI_CONFIG_DIR")
-				if userHome == "" {
-					if h, err := os.UserHomeDir(); err == nil {
-						userHome = filepath.Join(h, ".gemini")
-					}
+		// gemini + antigravity both render MCP into <cwd>/.gemini/
+		// settings.json (agy reads the same workspace file gemini does).
+		// Clean up stale entries when MCP is off this spawn so removed
+		// servers (and their credentials) don't linger.
+		if providerID == "gemini" || providerID == "antigravity" {
+			cwd := session.Cwd(prepareCtx)
+			if cwd != "" && !mcpEnabled {
+				if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
+					sp.log.Warn("workspace MCP cleanup failed",
+						"provider", providerID, "cwd", cwd, "err", err)
 				}
-				if userHome != "" && userHome != home {
-					if err := mirrorGeminiHome(userHome, home); err != nil {
-						return session.PrepareOutput{}, fmt.Errorf("mirror gemini home: %w", err)
-					}
-				}
+			}
+			// Folder-trust disabling is a gemini-cli feature; agy's trust
+			// model is unverified, so only gemini gets the hint.
+			if providerID == "gemini" && cwd != "" && mcpEnabled && geminiFolderUntrusted(cwd) {
+				// Folder trust would silently disable everything we just
+				// rendered. Surface a one-time spawn hint in the session
+				// terminal + gateway log; we deliberately do NOT edit the
+				// user's trust store.
+				out.Notices = append(out.Notices,
+					"opendray: Gemini marks this folder as untrusted, so it disables ALL MCP servers "+
+						"(including opendray-memory) and workspace settings here. "+
+						"Trust the folder once — accept Gemini's folder-trust prompt or run /trust — "+
+						"then restart the session to attach MCP.")
+				sp.log.Warn("gemini folder untrusted; gemini will disable MCP servers for this session",
+					"cwd", cwd)
 			}
 		}
 
@@ -610,6 +655,9 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 //	gemini — writes a GEMINI.md inside the per-session scratch dir
 //	         and adds it to the workspace via --include-directories;
 //	         does NOT override ~/.gemini, so auth is preserved
+//	antigravity — same as gemini but AGENTS.md + --add-dir (agy's
+//	         workspace-context convention; verified it reads AGENTS.md
+//	         from added dirs)
 //
 // codex is intentionally NOT in the default list: it has no system-
 // prompt CLI flag, so the only path is `<CODEX_HOME>/instructions.md`,
@@ -621,11 +669,27 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 // Adding a new provider here requires a matching arm in injectSkillsFor.
 func providerSupportsSkills(id string) bool {
 	switch id {
-	case "claude", "gemini":
+	case "claude", "gemini", "antigravity":
 		return true
 	default:
 		return false
 	}
+}
+
+// injectAgyContext appends content to <baseDir>/AGENTS.md and ensures
+// `--add-dir <baseDir>` is set (idempotent). Antigravity (agy) reads
+// AGENTS.md from directories added via --add-dir — verified live — which
+// mirrors gemini's GEMINI.md + --include-directories convention without
+// touching the user's real ~/.gemini or cwd AGENTS.md.
+func injectAgyContext(baseDir, content string, out *session.PrepareOutput) error {
+	path := filepath.Join(baseDir, "AGENTS.md")
+	if err := appendToFile(path, content); err != nil {
+		return err
+	}
+	if !hasArgPair(out.Args, "--add-dir", baseDir) {
+		out.Args = append(out.Args, "--add-dir", baseDir)
+	}
+	return nil
 }
 
 // injectSkillsFor dispatches to the per-CLI Tier 1 index injection
@@ -709,6 +773,9 @@ func injectSkillsFor(providerID, baseDir string, loaded []skills.Skill, out *ses
 		}
 		out.Args = append(out.Args, "--include-directories", baseDir)
 		return nil
+	case "antigravity":
+		// agy reads AGENTS.md from --add-dir'd workspace dirs.
+		return injectAgyContext(baseDir, index, out)
 	default:
 		return fmt.Errorf("no skill injection path for provider %s", providerID)
 	}
@@ -1189,6 +1256,8 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 			out.Args = append(out.Args, "--include-directories", baseDir)
 		}
 		return nil
+	case "antigravity":
+		return injectAgyContext(baseDir, "\n\n---\n\n"+memoryGuidanceText, out)
 	}
 	// Other providers: silently skip — they don't have an MCP
 	// surface yet so the memory MCP wouldn't be attached anyway.
@@ -1241,6 +1310,8 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 			out.Args = append(out.Args, "--include-directories", baseDir)
 		}
 		return nil
+	case "antigravity":
+		return injectAgyContext(baseDir, "\n\n---\n\n"+text, out)
 	}
 	return nil
 }
@@ -1257,36 +1328,6 @@ func appendToFile(path, content string) error {
 	defer f.Close()
 	if _, err := f.WriteString(content); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
-	}
-	return nil
-}
-
-func mirrorGeminiHome(src, dest string) error {
-	if err := os.MkdirAll(dest, 0o700); err != nil {
-		return err
-	}
-	entries, err := os.ReadDir(src)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	skip := map[string]bool{
-		"settings.json": true,
-	}
-	for _, e := range entries {
-		if skip[e.Name()] {
-			continue
-		}
-		srcPath := filepath.Join(src, e.Name())
-		dstPath := filepath.Join(dest, e.Name())
-		if err := os.Symlink(srcPath, dstPath); err != nil {
-			if os.IsExist(err) {
-				continue
-			}
-			return fmt.Errorf("symlink %s: %w", e.Name(), err)
-		}
 	}
 	return nil
 }

@@ -47,11 +47,11 @@ const LS_OUTLINE_OPEN = 'opendray.notes.outlineOpen'
 
 type LeftMode = 'tree' | 'tags'
 
-// NotesPage is the top-level vault browser/editor. Two-pane layout:
-// left = navigation (tree or tag picker, with title/path filter at
-// top), right = NoteEditor for the selected note. Independent of any
-// session — works even when no sessions are running.
-export function NotesPage() {
+// VaultPage is the markdown-vault browser/editor (demoted out of the
+// core triad — a freeform/Obsidian-sync utility). Two-pane layout: left = navigation (tree or
+// tag picker, with title/path filter at top), right = NoteEditor for the
+// selected note. Independent of any session.
+export function VaultPage() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: info } = useQuery({

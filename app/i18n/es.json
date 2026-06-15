@@ -39,6 +39,9 @@
     "backups": "Copias de seguridad",
     "settings": "Ajustes",
     "workspace": "Espacio de trabajo",
+    "knowledge": "Conocimiento",
+    "vault": "Bóveda",
+    "cortex": "Cortex",
     "updateAvailable": "Actualización disponible"
   },
   "web": {
@@ -179,6 +182,7 @@
         "bypassClaude": "Omitir las confirmaciones de permisos",
         "bypassCodex": "Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "Modo YOLO (--yolo)",
+        "bypassAntigravity": "Omitir permisos / YOLO (--dangerously-skip-permissions)",
         "bypassOnHint": "Esta session se ejecutará con autonomía elevada.",
         "bypassOffHint": "Desactivado. Las confirmaciones y los prompts se comportan con normalidad.",
         "errorPickProvider": "Elige un proveedor.",
@@ -213,8 +217,45 @@
           "search": "Buscar",
           "tasks": "Tareas",
           "history": "Historial",
-          "notes": "Notas",
-          "memory": "Memoria"
+          "vault": "Bóveda",
+          "cortex": "Cortex"
+        },
+        "vaultPanel": {
+          "open": "Abrir Bóveda",
+          "projectDocs": "Docs del proyecto",
+          "projectDocsHint": "Docs del proyecto escritos por el agente en la bóveda. Revincula la carpeta si las notas de este proyecto viven en otro sitio.",
+          "pinnedHint": "Vinculado a una carpeta de bóveda personalizada para este proyecto.",
+          "bind": "Vincular",
+          "changeLocation": "Cambiar la carpeta de bóveda vinculada a este proyecto",
+          "newDoc": "Nuevo doc",
+          "cancel": "Cancelar",
+          "create": "Crear",
+          "filenamePlaceholder": "archivo.md",
+          "noDocs": "Aún no hay docs del proyecto en esta carpeta de la bóveda.",
+          "createFailed": "No se pudo crear el doc",
+          "mappingTitle": "Vincular carpeta de bóveda del proyecto",
+          "mappingHelp": "Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.",
+          "sessionCwd": "cwd de la sesión",
+          "folderLabel": "Carpeta de la bóveda",
+          "mappingStoredHint": "Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.",
+          "save": "Guardar",
+          "clearOverride": "Borrar anulación",
+          "boundToast": "Carpeta de bóveda del proyecto vinculada",
+          "clearedToast": "Anulación borrada — usando la carpeta por defecto",
+          "saveFailed": "No se pudo guardar el mapeo"
+        },
+        "cortexPanel": {
+          "noCwd": "La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.",
+          "open": "Abrir espacio Cortex",
+          "docs": "Docs",
+          "journal": "Diario",
+          "inbox": "Entrada",
+          "archived": "Archivados",
+          "pending": "pendiente",
+          "goal": "Objetivo",
+          "plan": "Plan",
+          "latestJournal": "Último diario",
+          "empty": "Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla."
         }
       },
       "ended": {
@@ -245,8 +286,9 @@
       "subtitle": "Explora, busca y edita las memorias que los agentes han almacenado a través del servidor MCP opendray-memory.",
       "navProject": "Proyecto",
       "navArchived": "Archivadas",
-      "navWorkers": "Workers",
-      "navConfiguration": "Configuración →"
+      "navWorkers": "Ajustes de Cortex",
+      "navConfiguration": "Almacenamiento y embedder →",
+      "navQuarantine": "Cuarentena"
     },
     "journalStale": {
       "title": "Purgar entradas obsoletas",
@@ -324,8 +366,8 @@
       "daysAgo_other": "hace {count} días"
     },
     "memoryConfig": {
-      "title": "Configuración de memoria",
-      "subtitle": "Todos los ajustes relacionados con la memoria en un solo lugar: providers HTTP, enrutamiento de workers por tarea, disparadores de captura, inyección al iniciar y costes de auditoría.",
+      "title": "Ajustes de Cortex",
+      "subtitle": "Todos los mandos de runtime del ciclo de IA en un solo lugar — inyección de spawn, providers LLM, workers por tarea, triggers de captura, perfiles de inyección, costes de tokens. Los cambios aplican al instante; sin reinicio.",
       "sections": {
         "providers": "Providers",
         "workers": "Workers",
@@ -344,6 +386,17 @@
         "title": "La configuración de memoria se ha movido",
         "body": "Todos los ajustes relacionados con la memoria (providers / reglas de captura / perfiles de inyección / coste) ahora conviven con Workers en una sola página para que los ajustes relacionados estén juntos.",
         "openButton": "Abrir Configuración de memoria →"
+      },
+      "infra": {
+        "title": "Almacenamiento y embedder (infraestructura)",
+        "hint": "La otra mitad de la config de memoria — backend de embeddings, ajuste de recuperación, puertas de gatekeeper/cleaner y el flag del grafo de conocimiento — vive en Server Settings y requiere reinicio.",
+        "openSettings": "Server Settings →",
+        "embedder": "embedder",
+        "gatekeeper": "gatekeeper",
+        "cleaner": "cleaner",
+        "knowledge": "grafo de conocimiento",
+        "on": "on",
+        "off": "off"
       }
     },
     "memoryWorkers": {
@@ -387,41 +440,84 @@
       "tasks": {
         "gatekeeper": {
           "label": "Gatekeeper",
-          "description": "Filtro previo a la escritura en cada memory_store. Alta frecuencia (objetivo <500ms), solo-summarizer."
+          "description": "Filtro previo a la escritura en cada memory_store. Alta frecuencia (objetivo <500ms), solo-summarizer.",
+          "modelAdvice": "Juicio sí/no de alta frecuencia — un modelo ligero (haiku / flash-lite / codex-mini / local) basta."
         },
         "cleaner": {
           "label": "Bibliotecario de limpieza",
-          "description": "Bibliotecario LLM periódico. Evalúa los recuerdos antiguos como conservar / obsoleto / duplicado."
+          "description": "Bibliotecario LLM periódico. Evalúa los recuerdos antiguos como conservar / obsoleto / duplicado.",
+          "modelAdvice": "Veredictos por lotes sobre hechos viejos — modelo ligero recomendado; corre programado."
         },
         "gitactivity": {
           "label": "Resumidor de actividad de git",
-          "description": "git log → narrativa de 2-3 párrafos cada 24h. Encaja de forma natural con un worker de agente."
+          "description": "git log → narrativa de 2-3 párrafos cada 24h. Encaja de forma natural con un worker de agente.",
+          "modelAdvice": "Resumen narrativo del historial git — un modelo equilibrado (sonnet / flash) se lee mejor."
         },
         "transcript": {
           "label": "Resumidor de transcript de sesión",
-          "description": "Resumen al final de la sesión sobre \"qué hizo el agente\". Encaja de forma natural con un worker de agente."
+          "description": "Resumen al final de la sesión sobre \"qué hizo el agente\". Encaja de forma natural con un worker de agente.",
+          "modelAdvice": "Resúmenes de sesión — modelo equilibrado recomendado; alimenta el diario y la detección de deriva."
         },
         "plan_drift": {
           "label": "Detector de desviación del plan",
-          "description": "Al terminar cada sesión, comprueba si el plan del proyecto necesita actualizarse y presenta una propuesta. Encaja con un worker de agente para un razonamiento más completo."
+          "description": "Al terminar cada sesión, comprueba si el plan del proyecto necesita actualizarse y presenta una propuesta. Encaja con un worker de agente para un razonamiento más completo.",
+          "modelAdvice": "Reescribe goal/plan/secciones — exige criterio; un modelo fuerte (sonnet/opus) evita malas actualizaciones."
         },
         "conflict_detector": {
           "label": "Detector de conflictos entre capas",
-          "description": "Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos."
+          "description": "Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.",
+          "modelAdvice": "Escaneo diario de contradicciones — un modelo equilibrado basta."
         },
         "capture": {
           "label": "Motor de captura",
-          "description": "Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local."
+          "description": "Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.",
+          "modelAdvice": "La tarea más frecuente: extracción de hechos — usa el modelo MÁS BARATO que funcione (haiku / local)."
+        },
+        "blueprint": {
+          "modelAdvice": "Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.",
+          "label": "Proponedor de planos",
+          "description": "Clasifica un proyecto y propone su conjunto de secciones. Disparado por el operador."
+        },
+        "curation": {
+          "modelAdvice": "Tu editor conversacional de docs/políticas — modelo fuerte recomendado (sonnet/opus).",
+          "label": "Chat de curación",
+          "description": "Impulsa el canal conversacional que actualiza secciones y re-redacta páginas de conocimiento."
         }
-      }
+      },
+      "modelLabel": "Modelo",
+      "modelHint": "Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI.",
+      "modelCliDefault": "Predeterminado del CLI (último)",
+      "modelCustom": "Personalizado…",
+      "modelCustomPlaceholder": "id exacto del modelo",
+      "modelBackToList": "Lista",
+      "cliCodex": "Codex (codex exec)",
+      "cliAntigravity": "Antigravity (agy --print)",
+      "infraGateOff": "El enrutado de {label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.",
+      "infraGateOpen": "Activarla",
+      "providerModel": "modelo:"
     },
     "archived": {
       "loading": "Cargando…",
       "emptyTitle": "Nada archivado",
       "emptyDescription": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
       "title": "Memorias archivadas",
-      "subtitle": "Memorias que el limpiador automático y el barrido de ciclo de vida archivaron en todos los proyectos. Se excluyen de la recuperación pero son restaurables hasta que la ventana de gracia de 30 días las purgue. Restaura cualquier falso positivo abajo.",
+      "subtitle": "Memorias archivadas (reversibles) hasta que la ventana de gracia de 30 días las purgue. Fuentes: los veredictos del auto-cleaner, el archivado manual por memoria, y los proyectos que archivas — las memorias de un proyecto llegan juntas y vuelven juntas al desarchivarlo (los archivados de proyecto están exentos de la purga).",
       "globalScope": "(global)",
+      "summary": "{projects} proyectos · {memories} memorias archivadas",
+      "memCount": "{count} memorias",
+      "restoreAll": "Restaurar todo",
+      "restoreAllTooltip": "Restaurar todas las memorias archivadas de este proyecto",
+      "restoreAllConfirm": "¿Restaurar las {count} memorias archivadas de {project}?",
+      "restoredAllToast": "{count} memorias restauradas",
+      "deleteButton": "Eliminar",
+      "deleteTooltip": "Eliminar permanentemente ahora — omite la ventana de gracia de 30 días, no se puede deshacer",
+      "deleteConfirm": "¿Eliminar permanentemente esta memoria ahora? Omite la ventana de gracia de 30 días y no se puede deshacer.",
+      "deletedToast": "Eliminada permanentemente",
+      "deleteFailedToast": "Error al eliminar",
+      "deleteAll": "Eliminar todo",
+      "deleteAllTooltip": "Eliminar permanentemente ahora todas las memorias archivadas de este proyecto",
+      "deleteAllConfirm": "¿Eliminar permanentemente ahora las {count} memorias archivadas de {project}? Omite la ventana de gracia de 30 días y no se puede deshacer.",
+      "deletedAllToast": "{count} memorias eliminadas",
       "openProject": "Abrir proyecto",
       "archivedAtPrefix": "Archivado",
       "restoreButton": "Restaurar",
@@ -454,16 +550,20 @@
         "health": "Estado",
         "goal": "Objetivo",
         "plan": "Plan",
+        "current_objective": "Objetivo",
         "tech": "Tecnología",
         "activity": "Actividad",
         "journal": "Diario",
         "inbox": "Bandeja de entrada",
         "conflicts": "Conflictos",
-        "archived": "Archivadas"
+        "archived": "Archivadas",
+        "overview": "Resumen",
+        "hygiene": "Higiene"
       },
       "docLabel": {
         "goal": "Objetivo",
         "plan": "Plan",
+        "current_objective": "Objetivo actual",
         "tech_stack": "Stack tecnológico",
         "recent_activity": "Actividad reciente"
       },
@@ -474,7 +574,8 @@
         "saveFailedToast": "Error al guardar",
         "savedToast": "{label} guardado",
         "goalPlaceholder": "¿Qué estamos construyendo? Un párrafo. Lo lee cada agente al iniciarse.",
-        "planPlaceholder": "Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo."
+        "planPlaceholder": "Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo.",
+        "sectionPlaceholder": "Escribe esta sección en markdown…"
       },
       "readonly": {
         "tech_stack": {
@@ -487,7 +588,8 @@
         },
         "noneCaptured": "Aún no se ha capturado ningún {label}.",
         "generatedBy": "Generado por",
-        "lastRefresh": "última actualización"
+        "lastRefresh": "última actualización",
+        "customEmpty": "Sección gestionada por el escáner; se rellena cuando éste corre."
       },
       "journal": {
         "loading": "Cargando…",
@@ -546,6 +648,65 @@
           "memories": "{count} memorias"
         },
         "failedToast": "Error al restablecer"
+      },
+      "lifecycle": {
+        "status": {
+          "active": "Activo",
+          "paused": "Pausado",
+          "archived": "Archivado"
+        },
+        "activate": "Activar",
+        "pause": "Pausar",
+        "archive": "Archivar",
+        "idleSuggest": "Inactivo — considera archivar",
+        "idleHint": "Sin actividad durante {days} días",
+        "failedToast": "No se pudo cambiar el estado del proyecto",
+        "applied": {
+          "active": "Proyecto reactivado",
+          "paused": "Proyecto pausado",
+          "archived": "Proyecto archivado"
+        },
+        "tooltip": {
+          "badge": "Ciclo de vida del proyecto. Los proyectos congelados (pausados/archivados) se excluyen de la inyección en nuevas sesiones y de la destilación por IA.",
+          "activate": "Reactivar: inyectar en nuevas sesiones y reanudar el mantenimiento por IA.",
+          "pause": "Pausar: congelar este proyecto — omitir inyección y destilación, pero mantenerlo en la lista activa.",
+          "archive": "Archivar: archivar este proyecto — congelado y oculto de las vistas habituales."
+        }
+      },
+      "docMeta": {
+        "maintainer": {
+          "coauthored": "Tú mantienes · IA propone",
+          "auto": "Autogenerado · solo lectura",
+          "human": "Autoría humana"
+        },
+        "purpose": {
+          "goal": "La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.",
+          "plan": "La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.",
+          "current_objective": "El objetivo a corto plazo en el que trabajamos ahora y sus pasos inmediatos. El agente lo escribe directamente durante la sesión y se renueva al completarse.",
+          "tech_stack": "Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).",
+          "recent_activity": "Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).",
+          "overview": "El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo."
+        }
+      },
+      "proposalBanner": {
+        "text": "La IA ha propuesto una actualización de este documento, a la espera de tu aprobación.",
+        "button": "Revisar en la Bandeja"
+      },
+      "overview": {
+        "aiManaged": "Mantenido por IA (se actualiza desde el proyecto)",
+        "locked": "Bloqueado — lo editaste; las actualizaciones de IA llegan como propuestas",
+        "edit": "Editar",
+        "save": "Guardar (bloquea)",
+        "cancel": "Cancelar",
+        "unlock": "Desbloquear (devolver a la IA)",
+        "regenerate": "Regenerar",
+        "generate": "Generar ahora",
+        "regenerateHint": "Pide a la IA que redacte el resumen con el estado más reciente",
+        "editHint": "Guardar bloquea la página; desbloquear deja que la IA la redacte.",
+        "empty": "Aún no hay resumen. El motor en segundo plano lo redacta desde el objetivo/plan, el escaneo de stack, el registro y la memoria — o genéralo ahora.",
+        "saved": "Resumen guardado",
+        "unlocked": "Desbloqueado — la IA volverá a gestionarlo",
+        "regenerating": "Regenerando el resumen…"
       }
     },
     "memoryInspector": {
@@ -569,6 +730,8 @@
         "placeholderProject": "/path/to/project (cwd)",
         "syncMd": "Sincronizar .md",
         "syncTooltip": "Reimportar los archivos <cwd>/.claude/memory/*.md de Claude a pgvector",
+        "browse": "Explorar",
+        "browseTooltip": "Explora el sistema de archivos del host del gateway para elegir cualquier directorio de proyecto",
         "values": {
           "project": "proyecto",
           "global": "global"
@@ -610,7 +773,9 @@
         "editTooltip": "Editar esta memoria",
         "deleteTooltip": "Eliminar esta memoria",
         "emptyError": "El texto de la memoria no puede estar vacío",
-        "deleteConfirm": "¿Eliminar la memoria {id}? Esto es permanente."
+        "deleteConfirm": "¿Eliminar la memoria {id}? Esto es permanente.",
+        "archiveTooltip": "Archivar (reversible) — va a la vista Archivado",
+        "quarantineTooltip": "Cuarentena — va a la cola de revisión hasta promoverla o que expire"
       },
       "toasts": {
         "deleted": "Memoria eliminada",
@@ -628,7 +793,11 @@
         "syncIngested_other": "Se importaron {count} nuevos archivos de memoria",
         "syncEmpty": "No hay nuevos archivos .md que sincronizar",
         "syncEmptyDescription": "Ya está sincronizado, o no hay directorio de memoria de Claude para este cwd.",
-        "syncFailed": "La sincronización falló"
+        "syncFailed": "La sincronización falló",
+        "archived": "Memoria archivada — restaurable desde la vista Archivado",
+        "archiveFailed": "Fallo al archivar",
+        "quarantined": "Memoria en cuarentena — revísala en Cortex → Cuarentena",
+        "quarantineFailed": "Fallo al poner en cuarentena"
       },
       "bulkDelete": {
         "title": "¿Eliminar todas las memorias de este scope?",
@@ -1283,6 +1452,10 @@
         "toggleFailedToast": "Error al alternar",
         "codexUnsupportedBadge": "Codex: no compatible",
         "codexUnsupportedTooltip": "El CLI de codex solo admite el transport stdio. Este servidor se omitirá en las sessions de codex; claude y gemini lo seguirán usando.",
+        "builtinBadge": "Integrado",
+        "builtinTooltip": "Provisto por el propio opendray — se adjunta automáticamente a cada session que admite MCP. No se puede editar ni eliminar.",
+        "builtinDescription": "El servidor compartido de memoria y conocimiento de opendray: memory_search / memory_store, project_goal y project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Se adjunta automáticamente a cada session de Claude / Codex / Gemini.",
+        "builtinAutoAttach": "siempre activo",
         "editor": {
           "createTitle": "Nuevo servidor MCP",
           "editTitle": "Editar MCP: {id}",
@@ -1369,12 +1542,6 @@
         "deleteConfirm": "¿Eliminar la habilidad \"{id}\" de tu vault? Esto elimina el archivo SKILL.md.",
         "removedToast": "Habilidad eliminada",
         "deleteFailedToast": "Error al eliminar",
-        "dropHint": "O suelta un SKILL.md aquí para instalarlo.",
-        "dropToInstall": "Suelta el SKILL.md para instalar",
-        "uploading": "Instalando habilidad…",
-        "uploadedToast": "Habilidad \"{id}\" instalada",
-        "uploadFailedToast": "Error al subir la habilidad",
-        "uploadInvalidTypeToast": "Solo se pueden instalar archivos SKILL.md por arrastre",
         "editor": {
           "createTitle": "Nueva habilidad",
           "customizeTitle": "Personalizar la integrada: {id}",
@@ -1391,7 +1558,13 @@
           "createFailedToast": "Error al crear",
           "saveFailedToast": "Error al guardar",
           "saveAsOverride": "Guardar como anulación del vault"
-        }
+        },
+        "dropHint": "O suelta un SKILL.md aquí para instalarlo.",
+        "dropToInstall": "Suelta el SKILL.md para instalar",
+        "uploading": "Instalando habilidad…",
+        "uploadedToast": "Habilidad \"{id}\" instalada",
+        "uploadFailedToast": "Error al subir la habilidad",
+        "uploadInvalidTypeToast": "Solo se pueden instalar archivos SKILL.md por arrastre"
       },
       "customTasks": {
         "title": "Tareas personalizadas",
@@ -1519,8 +1692,8 @@
         "continue": "Continuar"
       },
       "status": {
-        "keyFingerprint": "Huella de la clave:",
-        "pgDump": "pg_dump:",
+        "pgDump": "pg_dump",
+        "pgRestore": "pg_restore",
         "pgDumpUnavailable": "no disponible",
         "pgDumpHint": "Las copias de seguridad no pueden ejecutarse hasta que pg_dump esté en PATH (o se haya definido su ruta absoluta en <1>backup.pg_dump_path</1>). Instala <3>postgresql-client</3> de la misma versión mayor que tu servidor y reinicia."
       },
@@ -1528,6 +1701,8 @@
         "backupNow": "Hacer copia ahora",
         "triggering": "Lanzando…",
         "includeConfig": "incluir config.toml",
+        "fullInstance": "Instancia completa",
+        "fullInstanceHint": "Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.",
         "restoreFromFile": "Restaurar desde archivo",
         "refresh": "Actualizar",
         "queuedToast": "Copia de seguridad en cola",
@@ -1539,6 +1714,7 @@
         "empty": "Aún no hay copias de seguridad. Haz clic en \"Hacer copia ahora\" arriba para crear la primera.",
         "columns": {
           "id": "ID",
+          "type": "Tipo",
           "target": "Destino",
           "status": "Estado",
           "started": "Iniciada",
@@ -1567,7 +1743,60 @@
         "replayedDescription": "{bytes} reproducidos desde el manifest {id}",
         "failedToast": "Error en la restauración",
         "restoring": "Restaurando…",
-        "restore": "Restaurar"
+        "dryRunToast": "Simulación completa: revisa el plan y luego aplícalo",
+        "planTitle": "Plan de restauración (simulación: nada cambió)",
+        "planDump": "Volcado de base de datos: {size}",
+        "planConfig": "config.toml → {path}",
+        "planSecrets": "secrets.env → {path}",
+        "planVault": "vault: {files} archivos ({roots})",
+        "planApplyHint": "Aplicar toma primero una instantánea de seguridad de instancia completa, luego sobrescribe lo anterior y ejecuta pg_restore.",
+        "preview": "Previsualizar (simulación)",
+        "previewing": "Previsualizando…",
+        "previewFirstHint": "Ejecuta primero una simulación",
+        "applyRestore": "Aplicar restauración"
+      },
+      "kind": {
+        "dbOnly": "Solo BD",
+        "fullInstance": "Instancia completa",
+        "fullInstanceHint": "Incluye el vault, secrets.env y config.toml"
+      },
+      "verify": {
+        "ok": "verificada",
+        "okHint": "Descifrada y confirmada como restaurable (pg_restore --list)",
+        "failed": "sin verificar"
+      },
+      "health": {
+        "headlineHealthy": "Copias correctas",
+        "headlineAttention": "Requiere atención",
+        "headlineNever": "Aún sin copias",
+        "lastSuccess": "Última copia correcta",
+        "never": "nunca",
+        "tiles": {
+          "recentFailures": "Fallos recientes",
+          "verifyFailures": "Verificación fallida",
+          "overdue": "Atrasadas",
+          "schedules": "Programaciones"
+        },
+        "loadFailedToast": "No se pudo cargar el estado de las copias"
+      },
+      "trigger": {
+        "preMigrate": "pre-migración",
+        "preMigrateHint": "Instantánea automática tomada antes de ejecutar las migraciones de esquema",
+        "preRestore": "pre-restauración",
+        "preRestoreHint": "Instantánea de seguridad automática tomada antes de aplicar una restauración"
+      },
+      "recoveryKit": {
+        "button": "Kit de recuperación",
+        "title": "Descargar kit de recuperación",
+        "warning": "La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.",
+        "passphraseLabel": "Frase de recuperación (mín. 8 caracteres)",
+        "passphrasePlaceholder": "una frase fuerte que no perderás",
+        "confirmLabel": "Confirmar frase de recuperación",
+        "mismatch": "Las frases no coinciden",
+        "generating": "Generando…",
+        "download": "Descargar kit",
+        "downloadedToast": "Kit de recuperación descargado: guárdalo de forma segura",
+        "failedToast": "No se pudo generar el kit de recuperación"
       },
       "schedulesTab": {
         "description": "Copias de seguridad periódicas. El programador consulta cada 30 s y ejecuta la programación pendiente más antigua.",
@@ -1592,7 +1821,8 @@
       },
       "newSchedule": {
         "title": "Nueva programación de copia de seguridad",
-        "targetLabel": "Destino",
+        "targetLabel": "Destinos",
+        "targetsHint": "Elige uno o más: la misma copia se escribe en cada destino (3-2-1).",
         "everyHoursLabel": "Cada (horas)",
         "keepLastNLabel": "Conservar las últimas N",
         "enableImmediately": "Habilitar inmediatamente",
@@ -1600,6 +1830,14 @@
         "createFailedToast": "Error al crear",
         "creating": "Creando…",
         "create": "Crear"
+      },
+      "fanout": {
+        "badge": "difusión",
+        "hint": "Parte de una difusión a varios destinos (grupo {group})"
+      },
+      "dedup": {
+        "badge": "deduplicada",
+        "hint": "Idéntica a una copia anterior: reutilizó el blob existente en lugar de subir una copia"
       },
       "targetsTab": {
         "description": "Destinos de almacenamiento. v1 admite <1>local</1> (disco en el host de opendray) y <3>smb</3> (cualquier recurso compartido SMB / CIFS, p. ej. UNAS o Synology).",
@@ -1737,8 +1975,8 @@
           "desc": "Registro de servidores + secretos."
         },
         "memory": {
-          "title": "Memory",
-          "desc": "Subsistema de memoria persistente entre CLI."
+          "title": "Memoria · almacenamiento y embedder",
+          "desc": "La mitad de infraestructura del subsistema de memoria: backend de embeddings, ajuste de recuperación y gobernanza de fondo. Reinicia para aplicar. El comportamiento en runtime (workers, captura, inyección) vive en los ajustes de Cortex."
         },
         "backup": {
           "title": "Backup",
@@ -1755,6 +1993,10 @@
         "gemini": {
           "title": "Almacenamiento · Gemini",
           "desc": "Carpeta tmp por proyecto de Gemini + projects.json."
+        },
+        "antigravity": {
+          "title": "Almacenamiento · Antigravity",
+          "desc": "Almacén SQLite por conversación de Antigravity (agy)."
         }
       },
       "loading": "Cargando ajustes del servidor…",
@@ -1793,7 +2035,10 @@
         "backupStatus": "Estado",
         "backupWhere": "Dónde van las copias de seguridad",
         "backupSchedules": "Programaciones",
-        "backupWhatsInside": "¿Qué contiene una copia de seguridad?"
+        "backupWhatsInside": "¿Qué contiene una copia de seguridad?",
+        "memoryGovernance": "Gobernanza de fondo (gatekeeper / cleaner)",
+        "knowledgeGraph": "Grafo de conocimiento",
+        "database": "Base de datos"
       },
       "fields": {
         "listenAddress": {
@@ -1938,6 +2183,10 @@
           "label": "projects.json",
           "hint": "Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json."
         },
+        "antigravityConversationsRoot": {
+          "label": "Directorio de conversaciones",
+          "hint": "Raíz con los archivos .db por conversación de agy. Por defecto ~/.gemini/antigravity-cli/conversations."
+        },
         "backupLocalDir": {
           "label": "Directorio local de copias de seguridad",
           "hint": "Raíz por defecto para el destino `local` creado automáticamente. Vacío = ~/.opendray/backups. Requiere reinicio."
@@ -1953,6 +2202,50 @@
         "backupPgRestorePath": {
           "label": "Ruta de pg_restore",
           "hint": "Ruta absoluta a pg_restore para el flujo /backups/restore. Misma regla de versión mayor."
+        },
+        "memoryDedup": {
+          "label": "Umbral de dedup",
+          "hint": "Umbral de plegado al escribir: una similitud superior actualiza la memoria existente en vez de insertar un casi-duplicado. 0 = valor por defecto relativo al embedder; negativo desactiva el plegado."
+        },
+        "gatekeeperEnabled": {
+          "label": "Gatekeeper",
+          "hint": "Juez LLM pre-escritura: decide si un memory_store trae un hecho durable o ruido. Qué LLM lo ejecuta se enruta en ajustes de Cortex → Workers."
+        },
+        "gatekeeperLatency": {
+          "label": "Latencia máx. del gatekeeper (ms)",
+          "hint": "Por encima de esto el gatekeeper degrada a \"permitir\" en vez de bloquear la escritura por un LLM lento. Por defecto 2000."
+        },
+        "cleanerEnabled": {
+          "label": "Cleaner (auto-bibliotecario)",
+          "hint": "Barrido periódico que archiva (reversible, con periodo de gracia) memorias obsoletas o duplicadas. Qué LLM lo ejecuta se enruta en ajustes de Cortex → Workers."
+        },
+        "cleanerInterval": {
+          "label": "Intervalo del cleaner (s)",
+          "hint": "Segundos entre barridos automáticos. Por defecto 86400 (24h)."
+        },
+        "cleanerGlobalScope": {
+          "label": "Cleaner barre el scope global",
+          "hint": "Revisar también memorias de scope global (normalmente curadas por el operador). Por defecto off hasta que confíes en el cleaner."
+        },
+        "knowledgeEnabled": {
+          "label": "Grafo de conocimiento",
+          "hint": "La capa de conocimiento estructurada y auto-evolutiva (entidades / playbooks / skills) sobre la memoria episódica. Alimenta la pestaña Cortex → Knowledge."
+        },
+        "claudeWatcher": {
+          "label": "Watcher de cuentas",
+          "hint": "Vigila accounts_dir y auto-registra una cuenta nueva cuando aparece un .credentials.json (resultado de CLAUDE_CONFIG_DIR=<dir> claude login)."
+        },
+        "claudeAutoFailover": {
+          "label": "Auto-failover por rate limit",
+          "hint": "Cambia una session viva a otra cuenta de Claude al chocar con un rate limit. Opt-in: cambia la atribución de facturación sin un clic."
+        },
+        "mobileTokenTTL": {
+          "label": "TTL del token móvil",
+          "hint": "Vida de los tokens emitidos a la app móvil. Por defecto 720h (30 días)."
+        },
+        "dbMaxConns": {
+          "label": "Conexiones máx.",
+          "hint": "Tope del pool de conexiones pgx. 0 = valor por defecto (16)."
         }
       },
       "liveTail": {
@@ -2039,7 +2332,15 @@
         "deleteSuccess": "Destino eliminado",
         "deleteFailedTitle": "Error al eliminar",
         "unknownError": "Error desconocido"
-      }
+      },
+      "toggle": {
+        "on": "Activado",
+        "off": "Desactivado",
+        "defaultOn": "Por defecto (on)",
+        "defaultOff": "Por defecto (off)"
+      },
+      "memoryRuntimeBanner": "El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).",
+      "memoryRuntimeBannerButton": "Abrir ajustes de Cortex"
     },
     "settings": {
       "title": "Ajustes",
@@ -2206,6 +2507,18 @@
           "nameRequiredToast": "El nombre es obligatorio",
           "createdToast": "Proveedor {name} creado",
           "createFailedToast": "La creación falló"
+        },
+        "modelSelect": {
+          "editTitle": "Cambiar modelo",
+          "dialogTitle": "Cambiar modelo — {name}",
+          "custom": "Personalizado…",
+          "backToList": "Elegir de la lista",
+          "refresh": "Volver a escanear los modelos del endpoint",
+          "unreachable": "Endpoint no alcanzable — escribe el nombre del modelo a mano; la lista aparece cuando el servicio esté arriba.",
+          "none": "El endpoint responde pero no anuncia modelos — carga uno en LM Studio / haz pull en Ollama y vuelve a escanear.",
+          "notOnEndpoint": "no está en el endpoint",
+          "save": "Guardar modelo",
+          "savedToast": "{name} ahora usa {model}"
         }
       },
       "rules": {
@@ -2391,6 +2704,285 @@
         "noneCounts": "(ninguno)",
         "listFailedToast": "No se pudieron listar las importaciones"
       }
+    },
+    "knowledge": {
+      "title": "Conocimiento",
+      "subtitle": "Lo que sabemos en todos los proyectos: infraestructura y reglas fundacionales, más lecciones y funciones reutilizables destiladas del trabajo previo. Se inyecta para arrancar cada proyecto nuevo.",
+      "searchPlaceholder": "Buscar conocimiento…",
+      "search": "Buscar",
+      "browse": "Explorar",
+      "cwdPlaceholder": "Ruta del proyecto (cwd) para búsqueda con ámbito",
+      "noResults": "Sin resultados.",
+      "empty": "Aún no hay nada. El conocimiento se destila automáticamente mientras trabajas.",
+      "neighbors": "Conexiones",
+      "promote": "Promover a global",
+      "skillify": "Crear habilidad",
+      "promoted": "Promovido a global",
+      "skillified": "Habilidad creada: {title}",
+      "actionFailed": "La acción falló",
+      "selectHint": "Selecciona un nodo para ver los detalles.",
+      "scope": "Ámbito",
+      "delete": "Eliminar",
+      "deleted": "Eliminado",
+      "deleteConfirm": "¿Eliminar este nodo? Las habilidades quedan eliminadas; los hechos/entidades derivados automáticamente pueden reaparecer en el próximo barrido.",
+      "scopes": {
+        "all": "Todos",
+        "global": "Global",
+        "project": "Proyecto",
+        "domain": "Dominio"
+      },
+      "kb": {
+        "tab": "Base de conocimiento",
+        "graphTab": "Grafo",
+        "graphCounts": "{nodes} nodos · {edges} enlaces",
+        "global": "Global",
+        "projectHandbook": "Manual del proyecto",
+        "locked": "Editado por ti",
+        "aiDrafted": "Redactado por IA",
+        "edit": "Editar",
+        "unlock": "Desbloquear (que lo gestione la IA)",
+        "regenerate": "Regenerar",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "editHint": "Guardar bloquea esta página para que la IA no la sobrescriba.",
+        "empty": "Aún no generada. Pulsa Regenerar, o se construye automáticamente mientras trabajas.",
+        "saved": "Guardado",
+        "unlocked": "Desbloqueada — la IA volverá a gestionar esta página",
+        "regenerating": "Regenerando en segundo plano…",
+        "kinds": {
+          "kb_infrastructure": "Infraestructura",
+          "kb_conventions": "Convenciones",
+          "kb_lessons": "Lecciones",
+          "kb_reusable": "Funciones reutilizables"
+        },
+        "foundational": "Fundacional",
+        "foundationalHint": "Infraestructura y convenciones — reglas vinculantes inyectadas en cada proyecto.",
+        "emergent": "Emergente",
+        "emergentHint": "Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.",
+        "bindingBadge": "Vinculante · obligatorio",
+        "referenceBadge": "Referencia",
+        "proposal": {
+          "text": "La IA propuso una actualización de esta página (evidencia nueva divergente).",
+          "preview": "Vista previa",
+          "hide": "Ocultar",
+          "approve": "Aprobar",
+          "reject": "Rechazar",
+          "approved": "Actualización aprobada",
+          "rejected": "Propuesta rechazada"
+        },
+        "discuss": "Hablar con la IA",
+        "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras",
+        "onDemand": "bajo demanda",
+        "removePage": "Quitar página",
+        "removePageHint": "Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)",
+        "pageRemovedToast": "Página quitada",
+        "newPage": {
+          "button": "Nueva página de conocimiento",
+          "title": "Nueva página de conocimiento",
+          "description": "Da a cada dominio de conocimiento su propia página de grano fino en vez de engordar las clásicas — los agentes indexan páginas individualmente y recuperan solo lo que una tarea necesita.",
+          "slugPlaceholder": "network_topology",
+          "titlePlaceholder": "Título (p. ej. Topología de red)",
+          "descPlaceholder": "Una frase: qué va en esta página",
+          "inject": "inyectar en cada arranque",
+          "injectHint": "Apagado (recomendado): la página queda fuera del banner de arranque y los agentes la alcanzan bajo demanda vía búsqueda. Encendido: las fundacionales se inyectan como reglas vinculantes, las emergentes como referencia.",
+          "create": "Crear página",
+          "createdToast": "Página de conocimiento creada"
+        }
+      },
+      "kinds": {
+        "all": "Todos",
+        "entity": "Entidades",
+        "fact": "Hechos",
+        "playbook": "Guías",
+        "skill": "Habilidades"
+      },
+      "distill": {
+        "tab": "Destilación",
+        "intro": "Un SKILL es un PROCEDIMIENTO probado y repetible destilado de tu trabajo real. El compilador de experiencia mina los diarios de sesión de TODOS los proyectos, agrupa trabajo similar y solo redacta un candidato cuando el mismo procedimiento TUVO ÉXITO en 2+ sesiones — cada cita de evidencia se verifica literalmente contra el diario. Los candidatos se ordenan por recurrencia × el coste en tiempo del procedimiento manual; los procedimientos totalmente mecánicos también se compilan a un run.sh ejecutable con paso de validación.",
+        "playbooks": "Playbooks — destilados, pendientes de revisión",
+        "playbooksHint": "Cada candidato pasó las puertas: ≥2 sesiones exitosas, citas de evidencia verificadas, ≥3 pasos concretos. Ordenados por tiempo ahorrado (recurrencia × minutos manuales). Promueve lo reutilizable, descarta el resto.",
+        "playbooksEmpty": "Nada minado aún — los candidatos aparecen cuando el mismo procedimiento tiene éxito en dos o más sesiones.",
+        "skills": "Skills — activos, inyectados al arranque",
+        "skillsHint": "Playbooks promovidos. Cada sesión nueva los recibe como skills.",
+        "skillsEmpty": "Sin skills aún — promueve un playbook para crear el primero.",
+        "skillify": "Promover a skill",
+        "skillifyHint": "Renderizar como skill e inyectar en cada arranque",
+        "discard": "Descartar",
+        "retire": "Retirar skill",
+        "injectedBadge": "inyectado",
+        "skillifiedToast": "Promovido — publicado en Plugins → Agent Skills; las nuevas sessions reciben esta skill",
+        "removedToast": "Eliminado",
+        "usage": "usado en {count} sesiones",
+        "lastUsed": "último {date}",
+        "enabledToast": "Skill activado — las sesiones nuevas lo cargan",
+        "disabledToast": "Skill desactivado — fuera del conjunto cargado",
+        "disabledBadge": "off",
+        "toggleHint": "Solo los skills activados se cargan; desactiva lo que esta etapa no necesita",
+        "viewHint": "Clic para ver el procedimiento completo",
+        "inAgentSkills": "en Plugins → Agent Skills",
+        "agentSkillsHint": "El SKILL.md renderizado vive en el vault de skills — míralo o gestiónalo en Plugins → Agent Skills.",
+        "notInVault": "desactivado — SKILL.md retirado del vault",
+        "compiledBadge": "compilado",
+        "compiledHint": "Incluye un run.sh ejecutable con paso de validación; al promover también se registra como tarea personalizada",
+        "recurrence": "exitoso ×{count}",
+        "timeCost": "~{minutes} min manual",
+        "projectSpan": "{count} proyectos",
+        "scoreHint": "Ordenado por recurrencia × coste de tiempo manual — lo que más tiempo ahorra se destila primero",
+        "outcomes": "{ok} ok / {failed} fallidas tras cargarlo",
+        "retirement": {
+          "never_used": "nunca usado",
+          "never_usedHint": "Inyectado 14+ días sin que ninguna sesión lo refiera — el bucle de resultados propone retirarlo",
+          "low_success": "poco éxito",
+          "low_successHint": "Las sesiones que cargan este skill siguen terminando en fallo — el bucle de resultados propone retirarlo",
+          "dormant": "inactivo",
+          "dormantHint": "Se usó alguna vez, pero lleva 45+ días sin referencias — el bucle de resultados propone retirarlo"
+        },
+        "retirementEmpty": "Sin candidatos a retiro: todas las habilidades aportan.",
+        "retirementHint": "Habilidades que el bucle de resultados propone descartar; desactiva las que consideres.",
+        "retirementTitle": "Candidatos a retiro"
+      },
+      "graph": {
+        "tab": "Grafo",
+        "intro": "El mapa de relaciones de todo lo que la IA ha aprendido: qué proyectos comparten tecnología, qué skills y trampas se asocian a qué entidades. Comprueba aquí el radio de impacto de un nodo ANTES de tocar infraestructura compartida.",
+        "empty": "Sin conocimiento aún — el grafo se construye solo mientras corren las sessions: el barrido de anclaje extrae entidades del trabajo de proyecto y la destilación añade playbooks y skills. Vuelve tras unas cuantas sesiones de trabajo.",
+        "hint": "Rueda para zoom · arrastra el fondo para desplazarte · arrastra un nodo para desenredar · clic en un nodo para inspeccionarlo",
+        "legend": {
+          "project": "Proyecto",
+          "entity": "Entidad",
+          "playbook": "Playbook",
+          "skill": "Skill"
+        },
+        "connections": "{count} nodos conectados",
+        "noLinks": "Nada enlaza con este nodo todavía."
+      }
+    },
+    "cortex": {
+      "home": {
+        "title": "Cortex",
+        "subtitle": "Un módulo, tres peldaños, un ciclo: la memoria bruta cristaliza en el documento oficial de cada proyecto, se destila en conocimiento entre proyectos y se inyecta en cada nueva sesión.",
+        "disabled": "desactivado",
+        "pendingProposals": "{count} pendientes",
+        "loopHint": "Memoria → Notas → Conocimiento → inyectado en cada arranque. Ascender es transformar, nunca copiar.",
+        "activeProjects": "Proyectos activos",
+        "idle": "inactivo {days}d",
+        "memory": {
+          "title": "Memoria",
+          "description": "Hechos episódicos capturados de tus sesiones — recuperados por relevancia, en cuarentena si vienen de terceros.",
+          "quarantine": "{count} en cuarentena"
+        },
+        "notes": {
+          "title": "Notas",
+          "description": "El documento oficial de cada proyecto — secciones según su plano, mantenidas por la IA mientras trabajas.",
+          "projects": "{count} activos"
+        },
+        "knowledge": {
+          "title": "Conocimiento",
+          "description": "Experiencia iterable entre proyectos: reglas fundacionales vinculantes + lecciones emergentes, inyectadas en cada arranque."
+        },
+        "settings": "Ajustes",
+        "proposals": {
+          "title": "Propuestas pendientes ({count})",
+          "hint": "Actualizaciones propuestas por la IA para notas de proyecto y páginas KB, a la espera de tu veredicto. Aprueba para publicar, rechaza para descartar.",
+          "kbLabel": "Base de conocimiento",
+          "preview": "Vista previa",
+          "hide": "Ocultar",
+          "approve": "Aprobar",
+          "reject": "Rechazar",
+          "open": "Abrir la página correspondiente",
+          "approvedToast": "Propuesta aprobada — documento actualizado",
+          "rejectedToast": "Propuesta rechazada",
+          "failedToast": "La acción falló"
+        }
+      },
+      "chat": {
+        "title": "Chat de curación",
+        "show": "Hablar con la IA",
+        "hide": "Ocultar chat",
+        "emptyHint": "Pide a la IA actualizar, reestructurar o reescribir este documento. Los cambios se aplican directamente si lo mantiene la IA, o llegan a la bandeja si lo bloqueaste.",
+        "placeholder": "p. ej. actualiza esto con el trabajo reciente · ⌘↵ para enviar",
+        "thinking": "La IA está trabajando…",
+        "sendFailed": "Error al enviar",
+        "escalate": "Escalar a sesión",
+        "escalated": "Escalado",
+        "escalateHint": "Lanza una sesión de agente completa, fundamentada en el código, con esta conversación",
+        "escalateFailed": "Error al escalar",
+        "escalatedToast": "Sesión de agente lanzada",
+        "closeHint": "Cerrar esta conversación",
+        "revisionApplied": "Documento actualizado",
+        "revisionProposed": "Propuesta creada — revísala en la bandeja",
+        "modelLabel": "Modelo:",
+        "modelHint": "Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el worker de curación global.",
+        "modelGlobalDefault": "Predeterminado (global)",
+        "modelCliDefault": "Predeterminado del CLI",
+        "modelChangeFailed": "No se pudo cambiar el modelo de la conversación",
+        "modelGroupCloud": "Agentes en la nube",
+        "modelGroupLocal": "Modelos locales",
+        "modelProviderDefault": "Predeterminado del proveedor",
+        "modelProbeFailed": "No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria."
+      },
+      "blueprint": {
+        "open": "Plano",
+        "openHint": "Edita qué secciones documenta este proyecto",
+        "title": "Plano del documento",
+        "description": "El conjunto de secciones del documento oficial. Cada tipo de proyecto merece secciones distintas — dale forma tú o deja que la IA proponga.",
+        "propose": "Proponer (IA)",
+        "proposeHint": "Clasifica el proyecto y propone un conjunto de secciones a medida",
+        "proposeFailed": "Propuesta fallida",
+        "proposalNote": "La IA lo clasificó como: {type} — {reason} Revísalo, edítalo y aplica.",
+        "addSection": "Añadir sección",
+        "slugPlaceholder": "slug",
+        "titlePlaceholder": "Título",
+        "hintPlaceholder": "Pista para el mantenedor — una frase que guíe a la IA (opcional)",
+        "mode": {
+          "ai": "IA",
+          "human": "Humano",
+          "scanner": "Escáner"
+        },
+        "inject": "inyectar",
+        "reserved": "reservada",
+        "deleteNote": "Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.",
+        "cancel": "Cancelar",
+        "apply": "Aplicar plano",
+        "applyFailed": "Error al aplicar",
+        "appliedToast": "Plano aplicado",
+        "writePolicy": {
+          "direct": "Escritura directa",
+          "proposal": "Propuesta",
+          "hint": "Directa: el agente escribe el documento en vivo cuando está desbloqueado. Propuesta: las escrituras del agente requieren tu aprobación primero."
+        }
+      },
+      "quarantine": {
+        "title": "Cuarentena",
+        "subtitle": "Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones de terceros llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano desde el inspector de Memoria. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.",
+        "empty": "Nada en cuarentena. Las filas llegan desde sessions de origen integración (política “quarantine”) o cuando pones una memoria en cuarentena manualmente en el inspector de Memoria.",
+        "promote": "Promocionar",
+        "promoteHint": "Mover a memoria duradera (entra en la recuperación y consolidación)",
+        "discard": "Descartar",
+        "promotedToast": "Promocionada a memoria duradera",
+        "discardedToast": "Descartada",
+        "actionFailed": "Acción fallida",
+        "expires": "expira {date}"
+      },
+      "settings": {
+        "injection": {
+          "title": "Inyección al arranque",
+          "hint": "Cuánto contexto de Cortex carga cada SESIÓN NUEVA por adelantado. El cambio aplica de inmediato a las sesiones creadas después — el backend nunca necesita reiniciarse.",
+          "active": "activo",
+          "mode": {
+            "lean": {
+              "label": "Ligero — índice + bajo demanda (recomendado)",
+              "description": "Inyecta solo las reglas fundacionales vinculantes más un índice compacto de secciones y páginas de conocimiento. Los agentes recuperan exactamente lo que necesitan vía doc_read / project_search. Ahorra tokens y evita ahogar las sesiones largas."
+            },
+            "full": {
+              "label": "Completo — inyectar todo",
+              "description": "Inyecta al arranque cada sección y página marcada para inyección, completa (comportamiento clásico). Simple, pero cuesta tokens en cada sesión y satura la ventana de contexto."
+            }
+          },
+          "savedToast": "Modo guardado — las sesiones nuevas lo usan de inmediato (sin reiniciar el backend)",
+          "saveFailed": "Error al guardar",
+          "note": "En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice."
+        }
+      }
     }
   },
   "more": {
@@ -2402,6 +2994,7 @@
     },
     "sections": {
       "gateway": "Gateway",
+      "plugins": "Complementos",
       "memory": "Memoria",
       "system": "Sistema"
     },
@@ -2409,6 +3002,14 @@
       "integrations": {
         "title": "Integraciones",
         "subtitle": "Llamadores de la API: actividad reciente y tasas de error"
+      },
+      "activity": {
+        "title": "Actividad",
+        "subtitle": "Auditoría de llamadas API de integraciones"
+      },
+      "memoryAmbient": {
+        "title": "Captura e inyección",
+        "subtitle": "Reglas de captura + perfiles de inyección"
       },
       "channels": {
         "title": "Canales",
@@ -2434,6 +3035,10 @@
         "title": "Tareas personalizadas",
         "subtitle": "Comandos slash que se muestran en el selector de tareas de la session"
       },
+      "cortexHub": {
+        "title": "Cortex",
+        "subtitle": "Hub Memoria → Notas → Conocimiento + propuestas pendientes"
+      },
       "projectMemory": {
         "title": "Objetivo / plan / diario del proyecto",
         "subtitle": "Capas de memoria 2-4 por cwd + propuestas del agente"
@@ -2441,6 +3046,10 @@
       "archived": {
         "title": "Memorias archivadas",
         "subtitle": "Restaura memorias que el limpiador automático archivó (gracia de 30 días)"
+      },
+      "quarantine": {
+        "title": "Cuarentena",
+        "subtitle": "Revisa memorias capturadas antes de que sean durables"
       },
       "backups": {
         "title": "Copias de seguridad",
@@ -2457,9 +3066,70 @@
       "about": {
         "title": "Acerca de",
         "subtitle": "Versión de compilación e información del servidor"
+      },
+      "vault": {
+        "title": "Bóveda",
+        "subtitle": "Notas markdown libres (sincronización Obsidian)"
       }
     },
     "signOut": "Cerrar sesión"
+  },
+  "activity": {
+    "title": "Actividad",
+    "empty": "Aún no hay llamadas de integración registradas.",
+    "loadFailed": "Error al cargar la actividad",
+    "callsCount": "{count} llamadas",
+    "directionInbound": "entrante",
+    "directionOutbound": "saliente",
+    "filter": {
+      "title": "Filtrar llamadas",
+      "direction": "Dirección",
+      "directionAll": "Todas",
+      "status": "Estado",
+      "statusAll": "Todos",
+      "integration": "Integración",
+      "integrationAll": "Todas las integraciones",
+      "apply": "Aplicar",
+      "clear": "Limpiar",
+      "activeCount": "{count} activos"
+    },
+    "detail": {
+      "title": "Detalle de llamada",
+      "integration": "Integración",
+      "direction": "Dirección",
+      "status": "Estado",
+      "duration": "Duración",
+      "bytes": "Bytes",
+      "requestId": "ID de solicitud",
+      "resource": "Recurso",
+      "timestamp": "Marca de tiempo"
+    }
+  },
+  "memoryAmbient": {
+    "title": "Captura e inyección",
+    "intro": "Cómo se resumen las sesiones en memoria y qué contexto se precarga. La creación de reglas y la edición detallada están en el panel web.",
+    "captureSection": "Reglas de captura",
+    "injectionSection": "Perfiles de inyección",
+    "empty": "Nada configurado aún.",
+    "loadFailed": "Error al cargar",
+    "runNow": "Ejecutar ahora",
+    "ranSnack": "Ejecutado en {count} sesión(es)",
+    "actionFailed": "Acción fallida: {error}",
+    "strategyLabel": "Estrategia",
+    "scopeProject": "proyecto",
+    "scopeGlobal": "global",
+    "triggerAfterMessages": "Tras N mensajes",
+    "triggerOnIdle": "En inactividad",
+    "triggerKChars": "Tras K caracteres",
+    "triggerManual": "Manual",
+    "triggerUnknown": "Desconocido",
+    "strategyNone": "Ninguna (búsqueda bajo demanda)",
+    "strategyTopKRecent": "Top-K recientes",
+    "strategyTopKRelevant": "Top-K relevantes",
+    "strategyOnKeyword": "Por palabra clave",
+    "strategyManualOnly": "Solo manual",
+    "strategyHybrid": "Resumen híbrido",
+    "strategyUnknown": "Desconocido"
   },
   "sessions": {
     "title": "Sesiones",
@@ -2582,8 +3252,14 @@
           "git": "Git",
           "tasks": "Tareas",
           "history": "Historial",
-          "notes": "Notas"
+          "vault": "Bóveda",
+          "cortex": "Cortex"
         }
+      },
+      "cortex": {
+        "title": "Espacio Cortex",
+        "blurb": "Objetivo, plan, diario, bandeja y limpieza de memoria de este proyecto — el Cortex mantenido por IA.",
+        "open": "Abrir espacio Cortex"
       },
       "shared": {
         "refresh": "Actualizar",
@@ -2690,6 +3366,7 @@
         "labelClaude": "Omitir permisos",
         "labelCodex": "Omitir aprobaciones y sandbox",
         "labelGemini": "Modo YOLO",
+        "labelAntigravity": "Omitir permisos / YOLO",
         "subtitleOn": "Esta session se ejecutará con autonomía elevada.",
         "subtitleOff": "Desactivado. Las confirmaciones y los prompts se comportan de forma normal."
       },
@@ -2796,7 +3473,10 @@
     "encryptionAes": "Cifrado AES-GCM (clave en el keychain del SO)",
     "encryptionPlaintext": "PLAINTEXT, keychain no disponible",
     "toggleEnabledSnack": "{name} activado.",
-    "toggleDisabledSnack": "{name} desactivado."
+    "toggleDisabledSnack": "{name} desactivado.",
+    "builtinBadge": "integrado",
+    "builtinAlwaysOn": "siempre activo",
+    "builtinHint": "Provisto por opendray — se adjunta a cada session. No se puede editar ni eliminar."
   },
   "providers": {
     "title": "Proveedores",
@@ -2951,6 +3631,13 @@
     "cliLabel": "CLI",
     "cliClaude": "Claude",
     "cliGemini": "Gemini",
+    "cliCodex": "Codex (codex exec)",
+    "cliAntigravity": "Antigravity (agy --print)",
+    "modelLabel": "Modelo",
+    "modelCliDefault": "Predeterminado del CLI (último)",
+    "modelCustom": "Personalizado…",
+    "modelCustomPlaceholder": "id de modelo exacto",
+    "modelBackToList": "Lista",
     "claudeAccountLabel": "Cuenta de Claude",
     "claudeAccountDefault": "Predeterminada",
     "test": "Probar",
@@ -3004,7 +3691,19 @@
     "emptyBody": "No hay memorias archivadas en ningún proyecto. El limpiador automático archiva aquí los hechos obsoletos y duplicados (restaurables durante 30 días); todavía no se ha eliminado nada.",
     "globalScope": "(global)",
     "countBadge": "{count} archivadas",
-    "restore": "Restaurar"
+    "restore": "Restaurar",
+    "restoreAll": "Restaurar todo",
+    "deleteAll": "Eliminar todo",
+    "restoreAllConfirm": "¿Restaurar las {count} memorias archivadas de {project}?",
+    "deleteAllConfirm": "¿Eliminar permanentemente las {count} memorias archivadas de {project}? Omite la ventana de gracia de 30 días y no se puede deshacer.",
+    "deletePermanently": "Eliminar",
+    "deleteConfirm": "¿Eliminar permanentemente esta memoria ahora? Omite la ventana de gracia de 30 días y no se puede deshacer.",
+    "restoredToast": "Restaurada",
+    "restoredAllToast": "{count} memorias restauradas",
+    "deletedToast": "Eliminada permanentemente",
+    "deletedAllToast": "{count} memorias eliminadas",
+    "deleteFailed": "Error al eliminar: {error}",
+    "summary": "{projects} proyectos · {memories} archivadas"
   },
   "project": {
     "title": "Proyecto",
@@ -3067,6 +3766,7 @@
     "loadFailed": "Error al cargar: {error}",
     "projectsLoadFailed": "Error al cargar los proyectos: {error}",
     "projectLabel": "Proyecto",
+    "browseFolder": "Explorar carpeta…",
     "resetTooltip": "Restablecer la memoria del proyecto",
     "append": "Añadir",
     "appendDialogTitle": "Añadir entrada de diario",
@@ -3101,6 +3801,14 @@
     "title": "Copias de seguridad",
     "runConfirmTitle": "¿Ejecutar copia de seguridad ahora?",
     "runConfirmBody": "Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.",
+    "runFullInstance": "Instancia completa",
+    "runFullInstanceHint": "Incluye también el vault, secrets.env y config.toml, no solo la base de datos.",
+    "kindDbOnly": "Solo BD",
+    "kindFullInstance": "Instancia completa",
+    "dedupValue": "reutilizó el blob existente (contenido idéntico)",
+    "verifyOk": "verificada",
+    "verifyFailed": "sin verificar (falló la comprobación)",
+    "verifyPending": "sin verificar",
     "run": "Ejecutar",
     "runNow": "Ejecutar ahora",
     "queueing": "Encolando…",
@@ -3120,7 +3828,11 @@
     "menuTargets": "Destinos",
     "kv": {
       "status": "Estado",
+      "verified": "Verificada",
+      "kind": "Tipo",
       "target": "Destino",
+      "dedup": "Deduplicación",
+      "fanout": "Grupo de difusión",
       "triggeredBy": "Lanzado por",
       "started": "Iniciado",
       "finished": "Finalizado",
@@ -3130,6 +3842,17 @@
       "error": "Error",
       "yes": "sí",
       "no": "no"
+    },
+    "recoveryKit": {
+      "menuLabel": "Kit de recuperación",
+      "title": "Kit de recuperación",
+      "warning": "La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.",
+      "passphraseLabel": "Frase de recuperación (mín. 8)",
+      "confirmLabel": "Confirmar frase de recuperación",
+      "generate": "Generar",
+      "copy": "Copiar kit",
+      "copied": "Kit de recuperación copiado: guárdalo de forma segura",
+      "failed": "No se pudo generar el kit de recuperación: {error}"
     },
     "emptyMissingDeps": {
       "headline": "Las copias de seguridad aún no pueden ejecutarse",
@@ -3158,11 +3881,22 @@
       "saveNowHeader": "Guarda esta passphrase AHORA",
       "saveNowBody": "Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray."
     },
-    "statusReady": "Copias de seguridad listas",
-    "statusCannot": "Las copias de seguridad no pueden ejecutarse",
     "overviewTargets": "Destinos",
     "overviewSchedules": "Programaciones",
     "overviewBackups": "Copias de seguridad",
+    "health": {
+      "headlineHealthy": "Copias correctas",
+      "headlineAttention": "Requiere atención",
+      "headlineNever": "Aún sin copias",
+      "lastSuccess": "Última copia correcta",
+      "never": "nunca",
+      "tiles": {
+        "recentFailures": "Fallos recientes",
+        "verifyFailures": "Verificación fallida",
+        "overdue": "Atrasadas",
+        "schedules": "Programaciones"
+      }
+    },
     "failedToLoad": "Error al cargar las copias de seguridad",
     "envVarConfigured": "variable de entorno OPENDRAY_BACKUP_KEY",
     "savedConfirmCheckbox": "He guardado esta passphrase en mi gestor de contraseñas",
@@ -3195,7 +3929,17 @@
       "confirmPlaceholder": "Escribe \"I understand\"",
       "confirmSentinel": "I understand",
       "restoring": "Restaurando…",
-      "restore": "Restaurar",
+      "preview": "Vista previa (simulación)",
+      "previewing": "Generando vista previa…",
+      "previewFirstHint": "Ejecuta primero una vista previa en simulación",
+      "applyRestore": "Aplicar restauración",
+      "dryRunToast": "Simulación completada — revisa el plan y luego aplícalo",
+      "planTitle": "Plan de restauración (simulación — no se cambió nada)",
+      "planDump": "Volcado de base de datos: {size}",
+      "planConfig": "config.toml → {path}",
+      "planSecrets": "secrets.env → {path}",
+      "planVault": "vault: {files} archivos ({roots})",
+      "planApplyHint": "Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.",
       "succeededTitle": "Restauración completada",
       "succeededBody": "Se reprodujeron {bytes} de la copia de seguridad {id}.",
       "failedTitle": "Error en la restauración",
@@ -3241,7 +3985,8 @@
     "title": "Programaciones de copia de seguridad",
     "newButton": "Nueva",
     "deleteTitle": "¿Eliminar programación?",
-    "targetLabel": "Destino",
+    "targetLabel": "Destinos",
+    "targetsHint": "Elige uno o más: la misma copia se escribe en cada destino (3-2-1).",
     "intervalLabel": "Intervalo",
     "retentionLabel": "Retención (conservar las N más recientes)",
     "errorWithMessage": "{prefix}: {error}",
@@ -3542,6 +4287,9 @@
   "skills": {
     "title": "Skills",
     "newSkill": "Nuevo skill",
+    "install": "Instalar SKILL.md",
+    "installedSnack": "Instalado {name}",
+    "installFailed": "Instalación fallida: {error}",
     "customizingBuiltin": "Personalizando {id} integrado",
     "idLabel": "Id (slug)",
     "idHint": "p. ej. tdd-guide",
@@ -3817,6 +4565,21 @@
       "scopeKeyLabel": "Clave de ámbito (cwd del proyecto)",
       "scopeKeyHint": "/Users/you/projects/foo",
       "submit": "Crear"
+    },
+    "archive": "Archivar",
+    "quarantine": "Cuarentena",
+    "archivedToast": "Memoria archivada — restaurable desde Archivado",
+    "quarantinedToast": "Memoria en cuarentena — revísala en Cortex → Cuarentena",
+    "archiveFailed": "Error al archivar: {error}",
+    "quarantineFailed": "Error al poner en cuarentena: {error}",
+    "reembed": {
+      "menuItem": "Reincrustar todo",
+      "confirmTitle": "¿Reincrustar todas las memorias?",
+      "confirmBody": "Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.",
+      "confirmButton": "Reincrustar",
+      "running": "Reincrustando… esto puede tardar.",
+      "done": "Se reincrustaron {count} memorias.",
+      "failed": "Falló la reincrustación: {error}"
     }
   },
   "about": {
@@ -3941,7 +4704,8 @@
         "backup": "Copia de seguridad",
         "storageClaude": "Almacenamiento · Claude",
         "storageCodex": "Almacenamiento · Codex",
-        "storageGemini": "Almacenamiento · Gemini"
+        "storageGemini": "Almacenamiento · Gemini",
+        "storageAntigravity": "Almacenamiento · Antigravity"
       },
       "sectionDescriptions": {
         "general": "Dirección de escucha, cuenta del operador, TTL del token.",
@@ -3953,7 +4717,8 @@
         "backup": "Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).",
         "storageClaude": "Dónde viven los transcripts de Claude en disco.",
         "storageCodex": "Raíz de las sessions de Codex.",
-        "storageGemini": "Rutas de tmp por proyecto + projects.json."
+        "storageGemini": "Rutas de tmp por proyecto + projects.json.",
+        "storageAntigravity": "Almacén SQLite por conversación de agy."
       },
       "fields": {
         "listenAddress": "Dirección de escucha",
@@ -4012,10 +4777,79 @@
         "pgDumpPath": "Ruta de pg_dump",
         "pgRestorePath": "Ruta de pg_restore",
         "tmpRoot": "Raíz de tmp",
-        "projectsJson": "projects.json"
+        "projectsJson": "projects.json",
+        "conversationsRoot": "Directorio de conversaciones",
+        "dedupThreshold": "Umbral de dedup",
+        "dedupHelper": "Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.",
+        "gatekeeperEnabled": "Gatekeeper",
+        "gatekeeperHelper": "Juez LLM pre-escritura para memory_store. Provider en ajustes de Cortex.",
+        "cleanerEnabled": "Cleaner",
+        "cleanerHelper": "Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.",
+        "knowledgeEnabled": "Grafo de conocimiento",
+        "knowledgeHelper": "La capa estructurada de entidades/playbooks/skills sobre la memoria."
       },
       "validateInteger": "\"{field}\" debe ser un entero",
-      "validateNumber": "\"{field}\" debe ser un número"
+      "validateNumber": "\"{field}\" debe ser un número",
+      "embedderModel": {
+        "reprobe": "Volver a comprobar el endpoint",
+        "unreachable": "Endpoint no accesible — escribe el id del modelo a mano.",
+        "pickHint": "Selecciona un modelo",
+        "manual": "Escribir manualmente",
+        "pickFromList": "Elegir de la lista"
+      }
     }
+  },
+  "memoryQuarantine": {
+    "title": "Cuarentena",
+    "subtitle": "Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.",
+    "empty": "Nada en cuarentena.",
+    "loadFailed": "Error al cargar: {error}",
+    "promote": "Promover",
+    "discard": "Descartar",
+    "promotedToast": "Promovida a memoria durable",
+    "discardedToast": "Descartada",
+    "actionFailed": "La acción falló: {error}",
+    "expires": "expira {date}",
+    "countBadge": "{count} pendientes"
+  },
+  "cortexHub": {
+    "title": "Cortex",
+    "subtitle": "El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.",
+    "idleBadge": "inactivo {days}d",
+    "activeProjectsBadge": "{count} activos",
+    "activeProjectsTitle": "Proyectos activos",
+    "loopHint": "Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.",
+    "settings": "Ajustes",
+    "memory": "Memoria",
+    "memoryDesc": "Hechos crudos entre sessions que los agentes guardan y recuerdan.",
+    "notes": "Notas",
+    "notesDesc": "El objetivo / plan / diario oficial de cada proyecto.",
+    "knowledge": "Conocimiento",
+    "knowledgeDesc": "Experiencia destilada entre proyectos.",
+    "quarantineBadge": "{count} por revisar",
+    "pendingBadge": "{count} pendientes",
+    "disabled": "desactivado",
+    "inboxTitle": "Propuestas pendientes ({count})",
+    "inboxHint": "Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.",
+    "kbLabel": "Base de conocimiento",
+    "preview": "Vista previa",
+    "hide": "Ocultar",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "approvedToast": "Propuesta aprobada",
+    "rejectedToast": "Propuesta rechazada",
+    "actionFailed": "La acción falló: {error}",
+    "loadFailed": "Error al cargar: {error}"
+  },
+  "cortexSettings": {
+    "title": "Ajustes de Cortex",
+    "tabWorkers": "Workers",
+    "tabCapture": "Captura e inyección",
+    "tabProviders": "Proveedores",
+    "providersHint": "Endpoints LLM a los que enrutan los workers de resumen/agente.",
+    "providersEmpty": "Sin proveedores configurados.",
+    "providersManageOnWeb": "Añade o edita proveedores en el panel web.",
+    "providersLoadFailed": "Error al cargar proveedores",
+    "defaultBadge": "predeterminado"
   }
 }

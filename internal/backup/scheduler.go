@@ -78,12 +78,17 @@ func (s *Scheduler) tick(ctx context.Context) {
 		return
 	}
 
-	log := s.log.With("schedule_id", sc.ID, "target_id", sc.TargetID)
+	targetIDs := sc.TargetIDs
+	if len(targetIDs) == 0 {
+		targetIDs = []string{sc.TargetID}
+	}
+	log := s.log.With("schedule_id", sc.ID, "targets", targetIDs)
 	log.Info("running scheduled backup")
 
 	b, err := s.svc.RunBackupSync(ctx, RunBackupRequest{
-		TargetID:      sc.TargetID,
+		TargetIDs:     targetIDs,
 		TriggeredBy:   TriggeredScheduler,
+		Kind:          sc.Kind,
 		IncludeConfig: true,
 		ScheduleID:    sc.ID,
 	})
@@ -94,9 +99,12 @@ func (s *Scheduler) tick(ctx context.Context) {
 	log.Info("scheduled backup completed",
 		"backup_id", b.ID, "status", b.Status, "bytes", b.Bytes)
 
+	// Retention is per-target — each destination keeps its own last-N.
 	if sc.Retention > 0 {
-		if err := s.svc.RunRetention(ctx, sc.TargetID, sc.Retention); err != nil {
-			log.Warn("retention failed", "err", err)
+		for _, tid := range targetIDs {
+			if err := s.svc.RunRetention(ctx, tid, sc.Retention); err != nil {
+				log.Warn("retention failed", "target_id", tid, "err", err)
+			}
 		}
 	}
 }

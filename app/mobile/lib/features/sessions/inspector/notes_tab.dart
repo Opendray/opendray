@@ -61,10 +61,15 @@ class _NotesTabState extends ConsumerState<NotesTab>
       final projectsList = projectsRel.isEmpty
           ? <NoteSummary>[]
           : await api.list(prefix: projectsRel);
-      // Server already filters to prefix, but be defensive.
+      // Server already filters to prefix, but be defensive — and match folder
+      // CHILDREN only, so a project bound to projects/app doesn't pull in a
+      // sibling like projects/app-old/.
       final scoped = projectsRel.isEmpty
           ? projectsList
-          : projectsList.where((n) => n.path.startsWith(projectsRel)).toList();
+          : projectsList
+              .where((n) =>
+                  n.path.startsWith('$projectsRel/') || n.path == projectsRel)
+              .toList();
       if (!mounted) return;
       setState(() => _state = AsyncValue.data(
             _NotesView(
@@ -81,63 +86,23 @@ class _NotesTabState extends ConsumerState<NotesTab>
     }
   }
 
-  // Vault-relative project docs prefix. Tries three sources in order:
-  //   1. mapping.path with vault root stripped — respects custom
-  //      overrides AND the default when both paths agree on
-  //      normalization.
-  //   2. mapping.path with the home tilde prefix swapped against
-  //      info.root — handles the macOS /Users vs /private/Users
-  //      symlink case where startsWith fails on otherwise-equal
-  //      paths.
-  //   3. <projects_prefix>/<slug(basename(cwd))> — matches the
-  //      web admin convention (app/shared/src/lib/notes.ts
-  //      projectNoteDir()) and works even when info.root is empty
-  //      because notes is misconfigured server-side.
+  // Vault-relative project docs prefix. The backend resolves the mapping to a
+  // VAULT-RELATIVE path — the override, or the auto-derived
+  // <projects_prefix>/<basename> — so use mapping.path AS-IS.
+  //
+  // The previous version tried to strip the absolute vault root (info.root)
+  // off mapping.path, but mapping.path is already relative, so the strip
+  // always failed and silently dropped CUSTOM overrides to the convention
+  // fallback (the project bind never took effect). Fall back to the
+  // convention only when the server returns nothing (notes misconfigured /
+  // empty root).
   String _projectsRel(NotesInfo info, ProjectMapping mapping, String cwd) {
-    // 1. literal startsWith strip
-    if (info.root.isNotEmpty && mapping.path.isNotEmpty) {
-      final r1 = _stripPrefix(mapping.path, info.root);
-      if (r1 != null) return r1;
-
-      // 2. /private prefix tolerance for macOS
-      const privatePrefix = '/private';
-      if (mapping.path.startsWith(privatePrefix) &&
-          !info.root.startsWith(privatePrefix)) {
-        final r2 = _stripPrefix(
-          mapping.path.substring(privatePrefix.length),
-          info.root,
-        );
-        if (r2 != null) return r2;
-      }
-      if (info.root.startsWith(privatePrefix) &&
-          !mapping.path.startsWith(privatePrefix)) {
-        final r3 = _stripPrefix(
-          mapping.path,
-          info.root.substring(privatePrefix.length),
-        );
-        if (r3 != null) return r3;
-      }
-    }
-    // 3. convention fallback
+    final p = mapping.path.trim().replaceAll(RegExp(r'^/+|/+$'), '');
+    if (p.isNotEmpty) return p;
     final prefix = info.projectsPrefix.isNotEmpty
         ? info.projectsPrefix
         : 'projects';
     return '$prefix/${_cwdSlug(cwd)}';
-  }
-
-  // Returns the substring of [absPath] after [root], or null if
-  // [absPath] is not under [root]. Tolerates trailing-slash mismatch
-  // on either side.
-  String? _stripPrefix(String absPath, String root) {
-    if (root.isEmpty || absPath.isEmpty) return null;
-    final r = root.endsWith('/') ? root : '$root/';
-    if (absPath == root || absPath == r.substring(0, r.length - 1)) {
-      return '';
-    }
-    if (absPath.startsWith(r)) {
-      return absPath.substring(r.length);
-    }
-    return null;
   }
 
   @override

@@ -17,6 +17,7 @@ class BackupRow {
     required this.targetId,
     required this.status,
     required this.triggeredBy,
+    required this.kind,
     required this.startedAt,
     required this.bytes,
     required this.encrypted,
@@ -24,6 +25,10 @@ class BackupRow {
     this.finishedAt,
     this.targetPath,
     this.error,
+    this.verifiedAt,
+    this.verifyError,
+    this.groupId,
+    this.deduped = false,
   });
 
   factory BackupRow.fromJson(Map<String, dynamic> json) => BackupRow(
@@ -32,6 +37,7 @@ class BackupRow {
     targetId: json['target_id'] as String? ?? '',
     status: json['status'] as String? ?? '',
     triggeredBy: json['triggered_by'] as String? ?? '',
+    kind: json['kind'] as String? ?? 'db_only',
     startedAt:
         DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
         DateTime.now().toUtc(),
@@ -42,6 +48,12 @@ class BackupRow {
     encrypted: json['encrypted'] as bool? ?? false,
     targetPath: json['target_path'] as String?,
     error: json['error'] as String?,
+    verifiedAt: DateTime.tryParse(
+      json['verified_at'] as String? ?? '',
+    )?.toUtc(),
+    verifyError: json['verify_error'] as String?,
+    groupId: json['group_id'] as String?,
+    deduped: json['deduped'] as bool? ?? false,
   );
 
   final String id;
@@ -49,20 +61,32 @@ class BackupRow {
   final String targetId;
   // pending | running | succeeded | failed | deleted
   final String status;
-  // scheduler | manual | api
+  // scheduler | manual | api | pre_migrate | pre_restore
   final String triggeredBy;
+  // db_only | full_instance
+  final String kind;
   final DateTime startedAt;
   final DateTime? finishedAt;
   final int bytes;
   final bool encrypted;
   final String? targetPath;
   final String? error;
+  // Post-backup verification: verifiedAt set + verifyError null = the
+  // blob decrypted and pg_restore --list passed; verifyError set = it
+  // failed; both null = not verified yet.
+  final DateTime? verifiedAt;
+  final String? verifyError;
+  // Correlates rows from one fan-out invocation; null for single-target.
+  final String? groupId;
+  // True when this row reused a prior identical blob (content-dedup).
+  final bool deduped;
 }
 
 class BackupSchedule {
   BackupSchedule({
     required this.id,
     required this.targetId,
+    required this.targetIds,
     required this.intervalSec,
     required this.retention,
     required this.enabled,
@@ -71,23 +95,38 @@ class BackupSchedule {
     this.lastRunAt,
   });
 
-  factory BackupSchedule.fromJson(Map<String, dynamic> json) => BackupSchedule(
-    id: json['id'] as String? ?? '',
-    targetId: json['target_id'] as String? ?? '',
-    intervalSec: (json['interval_sec'] as num?)?.toInt() ?? 0,
-    retention: (json['retention'] as num?)?.toInt() ?? 0,
-    enabled: json['enabled'] as bool? ?? false,
-    lastRunAt: DateTime.tryParse(json['last_run_at'] as String? ?? '')?.toUtc(),
-    nextRunAt:
-        DateTime.tryParse(json['next_run_at'] as String? ?? '')?.toUtc() ??
-        DateTime.now().toUtc(),
-    createdAt:
-        DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
-        DateTime.fromMillisecondsSinceEpoch(0),
-  );
+  factory BackupSchedule.fromJson(Map<String, dynamic> json) {
+    final rawIds = json['target_ids'];
+    final ids = rawIds is List
+        ? rawIds.whereType<String>().toList()
+        : <String>[];
+    final targetId = json['target_id'] as String? ?? '';
+    return BackupSchedule(
+      id: json['id'] as String? ?? '',
+      targetId: targetId,
+      // Old rows predating fan-out have no array; fall back to the single
+      // target so the UI always shows at least one destination.
+      targetIds: ids.isNotEmpty
+          ? ids
+          : (targetId.isNotEmpty ? [targetId] : const <String>[]),
+      intervalSec: (json['interval_sec'] as num?)?.toInt() ?? 0,
+      retention: (json['retention'] as num?)?.toInt() ?? 0,
+      enabled: json['enabled'] as bool? ?? false,
+      lastRunAt: DateTime.tryParse(
+        json['last_run_at'] as String? ?? '',
+      )?.toUtc(),
+      nextRunAt:
+          DateTime.tryParse(json['next_run_at'] as String? ?? '')?.toUtc() ??
+          DateTime.now().toUtc(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
 
   final String id;
   final String targetId;
+  final List<String> targetIds;
   final int intervalSec;
   // Number of backups to retain — older runs auto-pruned.
   final int retention;
@@ -157,6 +196,45 @@ class BackupStatusReport {
   final String pgDumpVersion;
   final String pgRestoreVersion;
   final String? pgDumpError;
+}
+
+// At-a-glance backup health roll-up (GET /backup-health). Mirrors
+// backup.BackupHealth in Go. Every count is a "needs attention"
+// signal; non-zero means something to look at.
+class BackupHealth {
+  BackupHealth({
+    required this.lastSuccessAt,
+    required this.lastSuccessId,
+    required this.recentFailures,
+    required this.verifyFailures,
+    required this.overdueSchedules,
+    required this.schedules,
+    required this.enabledSchedules,
+  });
+
+  factory BackupHealth.fromJson(Map<String, dynamic> json) => BackupHealth(
+    lastSuccessAt: DateTime.tryParse(
+      json['last_success_at'] as String? ?? '',
+    )?.toUtc(),
+    lastSuccessId: json['last_success_id'] as String? ?? '',
+    recentFailures: (json['recent_failures'] as num?)?.toInt() ?? 0,
+    verifyFailures: (json['verify_failures'] as num?)?.toInt() ?? 0,
+    overdueSchedules: (json['overdue_schedules'] as num?)?.toInt() ?? 0,
+    schedules: (json['schedules'] as num?)?.toInt() ?? 0,
+    enabledSchedules: (json['enabled_schedules'] as num?)?.toInt() ?? 0,
+  );
+
+  final DateTime? lastSuccessAt;
+  final String lastSuccessId;
+  final int recentFailures;
+  final int verifyFailures;
+  final int overdueSchedules;
+  final int schedules;
+  final int enabledSchedules;
+
+  bool get neverBackedUp => lastSuccessAt == null;
+  int get issues => recentFailures + verifyFailures + overdueSchedules;
+  bool get allClear => issues == 0 && !neverBackedUp;
 }
 
 // Result of /api/v1/backup-setup. When `passphrase` is non-null it
@@ -268,6 +346,55 @@ class RestoreManifest {
 // with a nested `result` carrying this same shape; the API
 // client surfaces that as ApiException and the caller is on its
 // own to inspect the body.
+// RestorePlan describes what a restore would do (dry-run) or did
+// (apply). Mirrors backup.RestorePlan in Go. A dry-run never writes a
+// file, runs pg_restore, or takes a safety snapshot — it only reports
+// what's in the bundle and where each component would land.
+class RestorePlan {
+  RestorePlan({
+    required this.dryRun,
+    required this.dumpPresent,
+    required this.dumpBytes,
+    required this.configPath,
+    required this.secretsPath,
+    required this.vaultRoots,
+    required this.vaultFiles,
+    required this.safetySnapshotId,
+    required this.applied,
+  });
+
+  factory RestorePlan.fromJson(Map<String, dynamic> json) {
+    final roots = json['vault_roots'];
+    final applied = json['applied'];
+    return RestorePlan(
+      dryRun: json['dry_run'] as bool? ?? false,
+      dumpPresent: json['dump_present'] as bool? ?? false,
+      dumpBytes: (json['dump_bytes'] as num?)?.toInt() ?? 0,
+      configPath: json['config_path'] as String? ?? '',
+      secretsPath: json['secrets_path'] as String? ?? '',
+      vaultRoots: roots is List
+          ? roots.whereType<String>().toList()
+          : const <String>[],
+      vaultFiles: (json['vault_files'] as num?)?.toInt() ?? 0,
+      safetySnapshotId: json['safety_snapshot_id'] as String? ?? '',
+      applied: applied is List
+          ? applied.whereType<String>().toList()
+          : const <String>[],
+    );
+  }
+
+  final bool dryRun;
+  final bool dumpPresent;
+  final int dumpBytes;
+  // Empty when there's nothing of that kind to write.
+  final String configPath;
+  final String secretsPath;
+  final List<String> vaultRoots;
+  final int vaultFiles;
+  final String safetySnapshotId;
+  final List<String> applied;
+}
+
 class RestoreResult {
   RestoreResult({
     required this.manifest,
@@ -275,6 +402,7 @@ class RestoreResult {
     required this.targetDsnUsed,
     required this.fingerprintOk,
     required this.pgRestoreOutput,
+    required this.plan,
     required this.startedAt,
     required this.finishedAt,
   });
@@ -284,12 +412,17 @@ class RestoreResult {
     final manifestMap = manifest is Map
         ? Map<String, dynamic>.from(manifest)
         : <String, dynamic>{};
+    final plan = json['plan'];
+    final planMap = plan is Map
+        ? Map<String, dynamic>.from(plan)
+        : <String, dynamic>{};
     return RestoreResult(
       manifest: RestoreManifest.fromJson(manifestMap),
       bytesRead: (json['bytes_read'] as num?)?.toInt() ?? 0,
       targetDsnUsed: json['target_dsn_used'] as String? ?? '',
       fingerprintOk: json['fingerprint_ok'] as bool? ?? false,
       pgRestoreOutput: json['pg_restore_output'] as String? ?? '',
+      plan: RestorePlan.fromJson(planMap),
       startedAt:
           DateTime.tryParse(json['started_at'] as String? ?? '')?.toUtc() ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -306,6 +439,7 @@ class RestoreResult {
   final String targetDsnUsed;
   final bool fingerprintOk;
   final String pgRestoreOutput;
+  final RestorePlan plan;
   final DateTime startedAt;
   final DateTime finishedAt;
 }
@@ -557,6 +691,17 @@ class BackupsApi {
     }
   }
 
+  // GET /backup-health — at-a-glance roll-up for the overview strip:
+  // last good backup plus counts of things needing attention.
+  Future<BackupHealth> health() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/api/v1/backup-health');
+      return BackupHealth.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // POST /backup-setup. mode is either 'generate' (server picks
   // random key, returns it once) or 'paste' (caller supplies it).
   // Returns the key file path and requires_restart=true; the
@@ -611,14 +756,34 @@ class BackupsApi {
   // to watch the row transition to running → succeeded/failed.
   Future<BackupRow> runNow({
     String targetId = 'local',
+    String kind = 'db_only',
     bool includeConfig = false,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/backups',
-        data: {'target_id': targetId, 'include_config': includeConfig},
+        data: {
+          'target_id': targetId,
+          'kind': kind,
+          'include_config': includeConfig,
+        },
       );
       return BackupRow.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /backup-recovery-kit → the backup passphrase wrapped under a
+  // recovery passphrase the operator stores out-of-band. Returns the
+  // raw kit JSON (caller copies/saves it).
+  Future<Map<String, dynamic>> recoveryKit(String recoveryPassphrase) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/backup-recovery-kit',
+        data: {'recovery_passphrase': recoveryPassphrase},
+      );
+      return res.data ?? <String, dynamic>{};
     } on Object catch (e) {
       throw toApiException(e);
     }
@@ -653,7 +818,7 @@ class BackupsApi {
   }
 
   Future<BackupSchedule> createSchedule({
-    required String targetId,
+    required List<String> targetIds,
     required int intervalSec,
     required int retention,
     required bool enabled,
@@ -662,7 +827,7 @@ class BackupsApi {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/backup-schedules',
         data: {
-          'target_id': targetId,
+          'target_ids': targetIds,
           'interval_sec': intervalSec,
           'retention': retention,
           'enabled': enabled,
@@ -817,10 +982,15 @@ class BackupsApi {
   //
   // Cap is 256 MiB (server-side ParseMultipartForm); the mobile
   // client honors that by streaming via MultipartFile.fromFile.
+  // [apply] defaults to false (a dry run that validates the bundle and
+  // returns a plan, changing nothing). Pass apply=true to commit. This
+  // mirrors the server, whose restore now defaults to dry-run.
   Future<RestoreResult> restore({
     required File bundle,
     String? targetDsn,
     bool clean = false,
+    bool apply = false,
+    bool force = false,
     String? confirm,
     String? note,
   }) async {
@@ -834,6 +1004,8 @@ class BackupsApi {
         ),
         if (targetDsn != null && targetDsn.isNotEmpty) 'target_dsn': targetDsn,
         'clean': clean ? 'true' : 'false',
+        'apply': apply ? 'true' : 'false',
+        if (force) 'force': 'true',
         if (confirm != null && confirm.isNotEmpty) 'confirm': confirm,
         if (note != null && note.isNotEmpty) 'note': note,
       });

@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -57,6 +58,43 @@ class _SkillsScreenState extends ConsumerState<SkillsScreen> {
     }
   }
 
+  // Install a SKILL.md from device storage — the mobile counterpart of
+  // the web Plugins drag-and-drop install. The server derives the id from
+  // the file's frontmatter `name:`.
+  Future<void> _install() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['md'],
+      withData: true,
+    );
+    if (picked == null || picked.files.isEmpty || !mounted) return;
+    final f = picked.files.first;
+    final bytes = f.bytes;
+    if (bytes == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final skill =
+          await ref.read(skillsApiProvider).upload(filename: f.name, bytes: bytes);
+      if (!mounted) return;
+      final label =
+          skill.summary.name.isEmpty ? skill.summary.id : skill.summary.name;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.skills.installedSnack(name: label))),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.skills.installFailed(error: e.message))),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.skills.installFailed(error: e.toString()))),
+      );
+    }
+  }
+
   Future<void> _openEditor({SkillSummary? existing}) async {
     final res = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -74,6 +112,11 @@ class _SkillsScreenState extends ConsumerState<SkillsScreen> {
       appBar: AppBar(
         title: Text(t.skills.title),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file_outlined),
+            tooltip: t.skills.install,
+            onPressed: _state is AsyncLoading ? null : _install,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: t.sessions.inspector.shared.refresh,

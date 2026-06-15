@@ -98,6 +98,24 @@ func (p *PgRestore) Restore(ctx context.Context, dumpPath, dsn string, opts Rest
 	return tail, nil
 }
 
+// List runs `pg_restore --list` against a dump file to confirm it is a
+// readable archive, WITHOUT restoring anything or needing a database.
+// Used to verify a freshly-written backup. A non-nil error means the
+// dump is unreadable / corrupt (or pg_restore is incompatible); the
+// returned string is the tail of pg_restore's output either way.
+func (p *PgRestore) List(ctx context.Context, dumpPath string) (string, error) {
+	if dumpPath == "" {
+		return "", errors.New("pg_restore: dumpPath required")
+	}
+	cmd := exec.CommandContext(ctx, p.binPath, "--list", dumpPath)
+	out, err := cmd.CombinedOutput()
+	tail := tailString(string(out), 8<<10)
+	if err != nil {
+		return tail, fmt.Errorf("pg_restore --list: %w", err)
+	}
+	return tail, nil
+}
+
 // tailString returns the last n bytes of s (UTF-8 unaware — that's
 // fine for pg_restore output which is ASCII / English-locale).
 func tailString(s string, n int) string {

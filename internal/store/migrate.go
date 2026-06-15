@@ -21,12 +21,8 @@ func (s *Store) Migrate(ctx context.Context, log *slog.Logger) error {
 	if log == nil {
 		log = slog.Default()
 	}
-	if _, err := s.pool.Exec(ctx, `
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    version    TEXT PRIMARY KEY,
-    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-)`); err != nil {
-		return fmt.Errorf("store: ensure schema_migrations: %w", err)
+	if err := s.ensureMigrationsTable(ctx); err != nil {
+		return err
 	}
 
 	files, err := loadMigrations()
@@ -49,6 +45,41 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 		}
 	}
 	return nil
+}
+
+func (s *Store) ensureMigrationsTable(ctx context.Context) error {
+	if _, err := s.pool.Exec(ctx, `
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version    TEXT PRIMARY KEY,
+    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+)`); err != nil {
+		return fmt.Errorf("store: ensure schema_migrations: %w", err)
+	}
+	return nil
+}
+
+// PendingMigrations returns the versions of embedded migrations not yet
+// applied, in apply order. Used to decide whether a pre-migration
+// snapshot is warranted before Migrate mutates the schema.
+func (s *Store) PendingMigrations(ctx context.Context) ([]string, error) {
+	if err := s.ensureMigrationsTable(ctx); err != nil {
+		return nil, err
+	}
+	files, err := loadMigrations()
+	if err != nil {
+		return nil, err
+	}
+	applied, err := s.appliedVersions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var pending []string
+	for _, f := range files {
+		if !applied[f.version] {
+			pending = append(pending, f.version)
+		}
+	}
+	return pending, nil
 }
 
 type migrationFile struct {

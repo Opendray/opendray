@@ -21,6 +21,7 @@ class McpServer {
     this.env,
     this.url,
     this.headers,
+    this.builtin = false,
   });
 
   factory McpServer.fromJson(Map<String, dynamic> json) {
@@ -50,6 +51,7 @@ class McpServer {
       url: json['url'] as String?,
       headers: headers.isEmpty ? null : headers,
       enabled: json['enabled'] as bool? ?? false,
+      builtin: json['builtin'] as bool? ?? false,
     );
   }
 
@@ -63,6 +65,9 @@ class McpServer {
   final String? url;
   final Map<String, String>? headers;
   final bool enabled;
+  // Gateway-provided servers (opendray-memory) — auto-attached to every
+  // session, read-only in the registry (no edit / delete / toggle).
+  final bool builtin;
 }
 
 class McpSecretsState {

@@ -482,6 +482,11 @@ func NewService(docs *projectdoc.Service, log *slog.Logger) *Service {
 // returning the resulting project_doc row. HTTP handlers call this
 // when they want to echo the new doc back in the response.
 func (s *Service) RunAndReturn(ctx context.Context, cwd string) (projectdoc.Doc, error) {
+	if projectdoc.IsEphemeralCwd(cwd) {
+		// Temp dirs (third-party consumers, tests) are not projects —
+		// no tech_stack doc, no scan cost.
+		return projectdoc.Doc{}, nil
+	}
 	info, err := s.scanner.Scan(ctx, cwd)
 	if err != nil {
 		return projectdoc.Doc{}, err
@@ -489,6 +494,13 @@ func (s *Service) RunAndReturn(ctx context.Context, cwd string) (projectdoc.Doc,
 	body := RenderMarkdown(info)
 	doc, err := s.docs.PutDoc(ctx, cwd, projectdoc.KindTechStack, body, projectdoc.AuthorScanner)
 	if err != nil {
+		// Cortex Phase 3 — the operator removed the tech_stack section
+		// from this project's blueprint; the scanner respects that and
+		// silently stops writing it.
+		if errors.Is(err, projectdoc.ErrInvalidKind) {
+			s.log.Debug("projectscan: tech_stack section not in blueprint — skipped", "cwd", cwd)
+			return projectdoc.Doc{}, nil
+		}
 		return projectdoc.Doc{}, fmt.Errorf("projectscan: persist: %w", err)
 	}
 	s.log.Info("projectscan.scanned",

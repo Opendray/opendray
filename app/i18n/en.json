@@ -39,6 +39,9 @@
     "backups": "Backups",
     "settings": "Settings",
     "workspace": "Workspace",
+    "knowledge": "Knowledge",
+    "vault": "Vault",
+    "cortex": "Cortex",
     "updateAvailable": "Update available"
   },
   "web": {
@@ -179,6 +182,7 @@
         "bypassClaude": "Bypass permission prompts",
         "bypassCodex": "Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "YOLO mode (--yolo)",
+        "bypassAntigravity": "Bypass permissions / YOLO (--dangerously-skip-permissions)",
         "bypassOnHint": "This session will run with elevated autonomy.",
         "bypassOffHint": "Off — confirmations and prompts behave normally.",
         "errorPickProvider": "Pick a provider.",
@@ -213,8 +217,45 @@
           "search": "Search",
           "tasks": "Tasks",
           "history": "History",
-          "notes": "Notes",
-          "memory": "Memory"
+          "vault": "Vault",
+          "cortex": "Cortex"
+        },
+        "vaultPanel": {
+          "open": "Open Vault",
+          "projectDocs": "Project docs",
+          "projectDocsHint": "Agent-authored project docs in the vault. Re-bind the folder if this project's notes live elsewhere.",
+          "pinnedHint": "Bound to a custom vault folder for this project.",
+          "bind": "Bind",
+          "changeLocation": "Change the vault folder bound to this project",
+          "newDoc": "New doc",
+          "cancel": "Cancel",
+          "create": "Create",
+          "filenamePlaceholder": "filename.md",
+          "noDocs": "No project docs in this vault folder yet.",
+          "createFailed": "Could not create doc",
+          "mappingTitle": "Bind project vault folder",
+          "mappingHelp": "Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.",
+          "sessionCwd": "Session cwd",
+          "folderLabel": "Vault folder",
+          "mappingStoredHint": "Stored in the vault at .opendray-projects.json, so it syncs with your notes.",
+          "save": "Save",
+          "clearOverride": "Clear override",
+          "boundToast": "Project vault folder bound",
+          "clearedToast": "Override cleared — using the default folder",
+          "saveFailed": "Could not save the mapping"
+        },
+        "cortexPanel": {
+          "noCwd": "Session has no cwd — Cortex features need a working directory.",
+          "open": "Open Cortex workspace",
+          "docs": "Docs",
+          "journal": "Journal",
+          "inbox": "Inbox",
+          "archived": "Archived",
+          "pending": "pending",
+          "goal": "Goal",
+          "plan": "Plan",
+          "latestJournal": "Latest journal",
+          "empty": "No Cortex memory captured yet for this project. Spawn a session or set a goal to populate."
         }
       },
       "ended": {
@@ -245,8 +286,9 @@
       "subtitle": "Browse, search and edit memories agents have stored via the opendray-memory MCP server.",
       "navProject": "Project",
       "navArchived": "Archived",
-      "navWorkers": "Workers",
-      "navConfiguration": "Configuration →"
+      "navWorkers": "Cortex settings",
+      "navConfiguration": "Storage & embedder →",
+      "navQuarantine": "Quarantine"
     },
     "journalStale": {
       "title": "Prune stale entries",
@@ -324,8 +366,8 @@
       "daysAgo_other": "{count} days ago"
     },
     "memoryConfig": {
-      "title": "Memory configuration",
-      "subtitle": "All memory-related knobs in one place: HTTP providers, per-task worker routing, capture triggers, spawn-time injection, and audit costs.",
+      "title": "Cortex settings",
+      "subtitle": "Every runtime knob of the AI loop in one place — spawn injection, LLM providers, per-task workers, capture triggers, injection profiles, token costs. Changes apply immediately; no restart.",
       "sections": {
         "providers": "Providers",
         "workers": "Workers",
@@ -344,6 +386,17 @@
         "title": "Memory configuration has moved",
         "body": "All memory-related settings (providers / capture rules / injection profiles / cost) now live alongside Workers in one page so related knobs sit together.",
         "openButton": "Open Memory configuration →"
+      },
+      "infra": {
+        "title": "Storage & embedder (infrastructure)",
+        "hint": "The other half of memory config — embedding backend, retrieval tuning, gatekeeper/cleaner gates and the knowledge graph flag — lives in Server Settings and needs a restart.",
+        "openSettings": "Server Settings →",
+        "embedder": "embedder",
+        "gatekeeper": "gatekeeper",
+        "cleaner": "cleaner",
+        "knowledge": "knowledge graph",
+        "on": "on",
+        "off": "off"
       }
     },
     "memoryWorkers": {
@@ -387,41 +440,84 @@
       "tasks": {
         "gatekeeper": {
           "label": "Gatekeeper",
-          "description": "Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only."
+          "description": "Pre-write filter on every memory_store. High frequency (<500ms target) — summarizer-only.",
+          "modelAdvice": "High-frequency yes/no judgement — a light model (haiku / flash-lite / codex-mini / local) is plenty."
         },
         "cleaner": {
           "label": "Cleaner librarian",
-          "description": "Periodic LLM librarian. Judges aged memories as keep / stale / duplicate."
+          "description": "Periodic LLM librarian. Judges aged memories as keep / stale / duplicate.",
+          "modelAdvice": "Batch keep/stale verdicts on old facts — light model recommended; runs on a schedule."
         },
         "gitactivity": {
           "label": "Git activity summariser",
-          "description": "git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker."
+          "description": "git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.",
+          "modelAdvice": "Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better."
         },
         "transcript": {
           "label": "Session transcript summariser",
-          "description": "Session-end \"what did the agent do\" summary. Naturally fits an agent worker."
+          "description": "Session-end \"what did the agent do\" summary. Naturally fits an agent worker.",
+          "modelAdvice": "Session 'what the agent did' summaries — balanced model recommended; feeds the journal and drift detection."
         },
         "plan_drift": {
           "label": "Plan drift detector",
-          "description": "After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning."
+          "description": "After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.",
+          "modelAdvice": "Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates."
         },
         "conflict_detector": {
           "label": "Cross-layer conflict detector",
-          "description": "Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives."
+          "description": "Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.",
+          "modelAdvice": "Daily cross-layer contradiction scan — balanced model is enough."
         },
         "capture": {
           "label": "Capture engine",
-          "description": "Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local."
+          "description": "Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.",
+          "modelAdvice": "Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local)."
+        },
+        "blueprint": {
+          "modelAdvice": "Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.",
+          "label": "Blueprint proposer",
+          "description": "Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor."
+        },
+        "curation": {
+          "modelAdvice": "Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.",
+          "label": "Curation chat",
+          "description": "Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state."
         }
-      }
+      },
+      "modelLabel": "Model",
+      "modelHint": "Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.",
+      "modelCliDefault": "CLI default (latest)",
+      "modelCustom": "Custom…",
+      "modelCustomPlaceholder": "exact model id",
+      "modelBackToList": "List",
+      "cliCodex": "Codex (codex exec)",
+      "cliAntigravity": "Antigravity (agy --print)",
+      "infraGateOff": "{label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.",
+      "infraGateOpen": "Enable it",
+      "providerModel": "model:"
     },
     "archived": {
       "loading": "Loading…",
       "emptyTitle": "Nothing archived",
       "emptyDescription": "No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.",
       "title": "Archived memories",
-      "subtitle": "Memories the auto-cleaner and lifecycle pass soft-archived across every project. They are excluded from recall but restorable until the 30-day grace window purges them. Restore any false positive below.",
+      "subtitle": "Soft-archived memories, restorable until the 30-day grace window purges them. Sources: the auto-cleaner’s verdicts, manual per-memory archive, and whole projects you archive — a project’s memories land here together and return together when you unarchive it (project archives are exempt from the purge).",
       "globalScope": "(global)",
+      "summary": "{projects} projects · {memories} archived memories",
+      "memCount": "{count} memories",
+      "restoreAll": "Restore all",
+      "restoreAllTooltip": "Restore every archived memory in this project",
+      "restoreAllConfirm": "Restore all {count} archived memories in {project}?",
+      "restoredAllToast": "Restored {count} memories",
+      "deleteButton": "Delete",
+      "deleteTooltip": "Delete permanently now — skips the 30-day grace window, cannot be undone",
+      "deleteConfirm": "Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.",
+      "deletedToast": "Deleted permanently",
+      "deleteFailedToast": "Delete failed",
+      "deleteAll": "Delete all",
+      "deleteAllTooltip": "Permanently delete every archived memory in this project now",
+      "deleteAllConfirm": "Permanently delete all {count} archived memories in {project} now? This skips the 30-day grace window and cannot be undone.",
+      "deletedAllToast": "Deleted {count} memories",
       "openProject": "Open project",
       "archivedAtPrefix": "Archived",
       "restoreButton": "Restore",
@@ -454,16 +550,20 @@
         "health": "Health",
         "goal": "Goal",
         "plan": "Plan",
+        "current_objective": "Objective",
         "tech": "Tech",
         "activity": "Activity",
         "journal": "Journal",
         "inbox": "Inbox",
         "conflicts": "Conflicts",
-        "archived": "Archived"
+        "archived": "Archived",
+        "overview": "Overview",
+        "hygiene": "Hygiene"
       },
       "docLabel": {
         "goal": "Goal",
         "plan": "Plan",
+        "current_objective": "Current objective",
         "tech_stack": "Tech stack",
         "recent_activity": "Recent activity"
       },
@@ -474,7 +574,8 @@
         "saveFailedToast": "Save failed",
         "savedToast": "{label} saved",
         "goalPlaceholder": "What are we building? One paragraph. Read by every agent on spawn.",
-        "planPlaceholder": "Active plan — what we are doing right now and what is next. Updated as work progresses."
+        "planPlaceholder": "Active plan — what we are doing right now and what is next. Updated as work progresses.",
+        "sectionPlaceholder": "Write this section in markdown…"
       },
       "readonly": {
         "tech_stack": {
@@ -487,7 +588,8 @@
         },
         "noneCaptured": "No {label} captured yet.",
         "generatedBy": "Generated by",
-        "lastRefresh": "last refresh"
+        "lastRefresh": "last refresh",
+        "customEmpty": "This section is scanner-managed; it fills in when its scanner runs."
       },
       "journal": {
         "loading": "Loading…",
@@ -546,6 +648,65 @@
           "memories": "{count} memories"
         },
         "failedToast": "Reset failed"
+      },
+      "lifecycle": {
+        "status": {
+          "active": "Active",
+          "paused": "Paused",
+          "archived": "Archived"
+        },
+        "activate": "Activate",
+        "pause": "Pause",
+        "archive": "Archive",
+        "idleSuggest": "Idle — consider archiving",
+        "idleHint": "No activity for {days} days",
+        "failedToast": "Could not change project status",
+        "applied": {
+          "active": "Project re-activated",
+          "paused": "Project paused",
+          "archived": "Project archived"
+        },
+        "tooltip": {
+          "badge": "Project lifecycle. Frozen (paused/archived) projects are excluded from new-session injection and AI distillation.",
+          "activate": "Re-activate: inject into new sessions and resume AI maintenance.",
+          "pause": "Pause: freeze this project — skip session injection + AI distillation, but keep it in the active list.",
+          "archive": "Archive: shelve this project — frozen and hidden from routine views."
+        }
+      },
+      "docMeta": {
+        "maintainer": {
+          "coauthored": "You maintain · AI proposes",
+          "auto": "Auto-generated · read-only",
+          "human": "Human-authored"
+        },
+        "purpose": {
+          "goal": "The project's long-term intent — what we're ultimately building and why. When a session shifts the direction, AI proposes an update to your Inbox for approval.",
+          "plan": "The current roadmap / work in progress. AI proposes an update to your Inbox after a session moves it forward; you approve.",
+          "current_objective": "The short-term objective we're working on right now and its immediate steps. The in-session agent writes this directly as work progresses, and it rolls over once finished.",
+          "tech_stack": "Tech stack & structure, auto-generated by the project scanner (refreshes every 6h).",
+          "recent_activity": "An AI summary of recent Git activity, refreshed automatically (every 12h).",
+          "overview": "The project's official document — what it is, its features, architecture, how to build/run, and the foundations it relies on. AI-drafted from the project's own signals; you can edit (which locks it) or regenerate."
+        }
+      },
+      "proposalBanner": {
+        "text": "AI has proposed an update to this document, awaiting your approval.",
+        "button": "Review in Inbox"
+      },
+      "overview": {
+        "aiManaged": "AI-maintained (refreshes from the project)",
+        "locked": "Locked — you edited it; AI updates arrive as proposals",
+        "edit": "Edit",
+        "save": "Save (locks)",
+        "cancel": "Cancel",
+        "unlock": "Unlock (hand back to AI)",
+        "regenerate": "Regenerate",
+        "generate": "Generate now",
+        "regenerateHint": "Ask AI to redraft the overview from the latest project state",
+        "editHint": "Saving locks the page; unlocking lets AI redraft it.",
+        "empty": "No overview yet. The background engine drafts it from the project’s goal/plan, tech-stack scan, journal, and memory — or generate it now.",
+        "saved": "Overview saved",
+        "unlocked": "Unlocked — AI will manage it again",
+        "regenerating": "Regenerating the overview…"
       }
     },
     "memoryInspector": {
@@ -569,6 +730,8 @@
         "placeholderProject": "/path/to/project (cwd)",
         "syncMd": "Sync .md",
         "syncTooltip": "Re-ingest Claude's <cwd>/.claude/memory/*.md files into pgvector",
+        "browse": "Browse",
+        "browseTooltip": "Browse the gateway host's filesystem to pick any project directory",
         "values": {
           "project": "project",
           "global": "global"
@@ -610,7 +773,9 @@
         "editTooltip": "Edit this memory",
         "deleteTooltip": "Delete this memory",
         "emptyError": "Memory text cannot be empty",
-        "deleteConfirm": "Delete memory {id}? This is permanent."
+        "deleteConfirm": "Delete memory {id}? This is permanent.",
+        "archiveTooltip": "Archive (reversible) — moves to the Archived view",
+        "quarantineTooltip": "Quarantine — moves to the review queue until promoted or expired"
       },
       "toasts": {
         "deleted": "Memory deleted",
@@ -628,7 +793,11 @@
         "syncIngested_other": "Ingested {count} new memory files",
         "syncEmpty": "No new .md files to sync",
         "syncEmptyDescription": "Already in sync, or no Claude memory dir for this cwd.",
-        "syncFailed": "Sync failed"
+        "syncFailed": "Sync failed",
+        "archived": "Memory archived — restorable from the Archived view",
+        "archiveFailed": "Archive failed",
+        "quarantined": "Memory quarantined — review it under Cortex → Quarantine",
+        "quarantineFailed": "Quarantine failed"
       },
       "bulkDelete": {
         "title": "Delete every memory in this scope?",
@@ -1283,6 +1452,10 @@
         "toggleFailedToast": "Toggle failed",
         "codexUnsupportedBadge": "Codex: unsupported",
         "codexUnsupportedTooltip": "The codex CLI supports stdio transport only. This server will be skipped for codex sessions; claude and gemini will still use it.",
+        "builtinBadge": "Built-in",
+        "builtinTooltip": "Provided by opendray itself — attached automatically to every session that supports MCP. Cannot be edited or deleted.",
+        "builtinDescription": "opendray's shared memory & knowledge server: memory_search / memory_store, project_goal & project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Auto-attaches to every Claude / Codex / Gemini session.",
+        "builtinAutoAttach": "always on",
         "editor": {
           "createTitle": "New MCP server",
           "editTitle": "Edit MCP: {id}",
@@ -1369,12 +1542,6 @@
         "deleteConfirm": "Delete skill \"{id}\" from your vault? This removes the SKILL.md file.",
         "removedToast": "Skill removed",
         "deleteFailedToast": "Delete failed",
-        "dropHint": "Or drop a SKILL.md here to install it.",
-        "dropToInstall": "Drop SKILL.md to install",
-        "uploading": "Installing skill…",
-        "uploadedToast": "Skill \"{id}\" installed",
-        "uploadFailedToast": "Skill upload failed",
-        "uploadInvalidTypeToast": "Only SKILL.md files can be installed by drop",
         "editor": {
           "createTitle": "New skill",
           "customizeTitle": "Customize built-in: {id}",
@@ -1391,7 +1558,13 @@
           "createFailedToast": "Create failed",
           "saveFailedToast": "Save failed",
           "saveAsOverride": "Save as vault override"
-        }
+        },
+        "dropHint": "Or drop a SKILL.md here to install it.",
+        "dropToInstall": "Drop SKILL.md to install",
+        "uploading": "Installing skill…",
+        "uploadedToast": "Skill \"{id}\" installed",
+        "uploadFailedToast": "Skill upload failed",
+        "uploadInvalidTypeToast": "Only SKILL.md files can be installed by drop"
       },
       "customTasks": {
         "title": "Custom tasks",
@@ -1519,8 +1692,8 @@
         "continue": "Continue"
       },
       "status": {
-        "keyFingerprint": "Key fingerprint:",
-        "pgDump": "pg_dump:",
+        "pgDump": "pg_dump",
+        "pgRestore": "pg_restore",
         "pgDumpUnavailable": "unavailable",
         "pgDumpHint": "Backups can't run until pg_dump is on PATH (or its absolute path is set in <1>backup.pg_dump_path</1>). Install <3>postgresql-client</3> matching your server's major version and restart."
       },
@@ -1528,6 +1701,8 @@
         "backupNow": "Backup now",
         "triggering": "Triggering…",
         "includeConfig": "include config.toml",
+        "fullInstance": "Full instance",
+        "fullInstanceHint": "Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.",
         "restoreFromFile": "Restore from file",
         "refresh": "Refresh",
         "queuedToast": "Backup queued",
@@ -1539,6 +1714,7 @@
         "empty": "No backups yet. Click \"Backup now\" above to take the first one.",
         "columns": {
           "id": "ID",
+          "type": "Type",
           "target": "Target",
           "status": "Status",
           "started": "Started",
@@ -1567,7 +1743,60 @@
         "replayedDescription": "{bytes} replayed from manifest {id}",
         "failedToast": "Restore failed",
         "restoring": "Restoring…",
-        "restore": "Restore"
+        "dryRunToast": "Dry run complete — review the plan, then apply",
+        "planTitle": "Restore plan (dry run — nothing changed)",
+        "planDump": "Database dump: {size}",
+        "planConfig": "config.toml → {path}",
+        "planSecrets": "secrets.env → {path}",
+        "planVault": "vault: {files} files ({roots})",
+        "planApplyHint": "Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.",
+        "preview": "Preview (dry run)",
+        "previewing": "Previewing…",
+        "previewFirstHint": "Run a dry-run preview first",
+        "applyRestore": "Apply restore"
+      },
+      "kind": {
+        "dbOnly": "DB only",
+        "fullInstance": "Full instance",
+        "fullInstanceHint": "Includes the vault, secrets.env and config.toml"
+      },
+      "verify": {
+        "ok": "verified",
+        "okHint": "Decrypted and confirmed restorable (pg_restore --list)",
+        "failed": "unverified"
+      },
+      "health": {
+        "headlineHealthy": "Backups healthy",
+        "headlineAttention": "Needs attention",
+        "headlineNever": "No backups yet",
+        "lastSuccess": "Last good backup",
+        "never": "never",
+        "tiles": {
+          "recentFailures": "Recent failures",
+          "verifyFailures": "Verify failures",
+          "overdue": "Overdue",
+          "schedules": "Schedules"
+        },
+        "loadFailedToast": "Could not load backup health"
+      },
+      "trigger": {
+        "preMigrate": "pre-migrate",
+        "preMigrateHint": "Automatic snapshot taken before schema migrations ran",
+        "preRestore": "pre-restore",
+        "preRestoreHint": "Automatic safety snapshot taken before a restore was applied"
+      },
+      "recoveryKit": {
+        "button": "Recovery Kit",
+        "title": "Download Recovery Kit",
+        "warning": "The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.",
+        "passphraseLabel": "Recovery passphrase (min 8 chars)",
+        "passphrasePlaceholder": "a strong passphrase you will not lose",
+        "confirmLabel": "Confirm recovery passphrase",
+        "mismatch": "Passphrases don't match",
+        "generating": "Generating…",
+        "download": "Download kit",
+        "downloadedToast": "Recovery Kit downloaded — store it safely",
+        "failedToast": "Could not generate Recovery Kit"
       },
       "schedulesTab": {
         "description": "Recurring backups. The scheduler polls every 30s and runs the oldest due schedule.",
@@ -1592,7 +1821,8 @@
       },
       "newSchedule": {
         "title": "New backup schedule",
-        "targetLabel": "Target",
+        "targetLabel": "Targets",
+        "targetsHint": "Pick one or more — the same backup is written to each (3-2-1).",
         "everyHoursLabel": "Every (hours)",
         "keepLastNLabel": "Keep last N",
         "enableImmediately": "Enable immediately",
@@ -1600,6 +1830,14 @@
         "createFailedToast": "Create failed",
         "creating": "Creating…",
         "create": "Create"
+      },
+      "fanout": {
+        "badge": "fan-out",
+        "hint": "Part of a multi-target fan-out (group {group})"
+      },
+      "dedup": {
+        "badge": "deduped",
+        "hint": "Identical to a previous backup — reused the existing blob instead of uploading a copy"
       },
       "targetsTab": {
         "description": "Storage destinations. v1 supports <1>local</1> (disk on the opendray host) and <3>smb</3> (any SMB / CIFS share, e.g. UNAS or Synology).",
@@ -1737,8 +1975,8 @@
           "desc": "Server registry + secrets."
         },
         "memory": {
-          "title": "Memory",
-          "desc": "Cross-CLI persistent memory subsystem."
+          "title": "Memory · storage & embedder",
+          "desc": "Infrastructure half of the memory subsystem: embedding backend, retrieval tuning and background governance. Restart to apply. Runtime behaviour (workers, capture, injection) lives in Cortex settings."
         },
         "backup": {
           "title": "Backup",
@@ -1755,6 +1993,10 @@
         "gemini": {
           "title": "Storage · Gemini",
           "desc": "Gemini per-project tmp + projects.json."
+        },
+        "antigravity": {
+          "title": "Storage · Antigravity",
+          "desc": "Antigravity (agy) per-conversation SQLite store."
         }
       },
       "loading": "Loading server settings…",
@@ -1793,7 +2035,10 @@
         "backupStatus": "Status",
         "backupWhere": "Where backups go",
         "backupSchedules": "Schedules",
-        "backupWhatsInside": "What's in a backup?"
+        "backupWhatsInside": "What's in a backup?",
+        "memoryGovernance": "Background governance (gatekeeper / cleaner)",
+        "knowledgeGraph": "Knowledge graph",
+        "database": "Database"
       },
       "fields": {
         "listenAddress": {
@@ -1938,6 +2183,10 @@
           "label": "projects.json",
           "hint": "Path to Gemini's cwd→short-name mapping file. Default ~/.gemini/projects.json."
         },
+        "antigravityConversationsRoot": {
+          "label": "Conversations directory",
+          "hint": "Root holding agy's per-conversation .db files. Default ~/.gemini/antigravity-cli/conversations."
+        },
         "backupLocalDir": {
           "label": "Local backup directory",
           "hint": "Default root for the auto-created `local` target. Empty = ~/.opendray/backups. Restart required."
@@ -1953,6 +2202,50 @@
         "backupPgRestorePath": {
           "label": "pg_restore path",
           "hint": "Absolute path to pg_restore for the /backups/restore flow. Same major-version rule."
+        },
+        "memoryDedup": {
+          "label": "Dedup threshold",
+          "hint": "Write-time fold threshold: similarity above this updates the existing memory instead of inserting a near-duplicate. 0 = embedder-relative default; negative disables folding."
+        },
+        "gatekeeperEnabled": {
+          "label": "Gatekeeper",
+          "hint": "Pre-write LLM judge: decides whether a memory_store call carries a durable fact or noise. Which LLM runs it is routed in Cortex settings → Workers."
+        },
+        "gatekeeperLatency": {
+          "label": "Gatekeeper max latency (ms)",
+          "hint": "Above this the gatekeeper degrades to \"allow\" rather than blocking the write on a slow LLM. Default 2000."
+        },
+        "cleanerEnabled": {
+          "label": "Cleaner (auto-librarian)",
+          "hint": "Periodic sweep that soft-archives stale / duplicate memories (reversible, grace period applies). Which LLM runs it is routed in Cortex settings → Workers."
+        },
+        "cleanerInterval": {
+          "label": "Cleaner interval (s)",
+          "hint": "Seconds between automatic sweeps. Default 86400 (24h)."
+        },
+        "cleanerGlobalScope": {
+          "label": "Cleaner sweeps global scope",
+          "hint": "Also review global-scope memories (usually operator-curated). Default off until you trust the cleaner."
+        },
+        "knowledgeEnabled": {
+          "label": "Knowledge graph",
+          "hint": "The structured, self-evolving knowledge layer (entities / playbooks / skills) built on top of episodic memory. Powers the Cortex → Knowledge tab."
+        },
+        "claudeWatcher": {
+          "label": "Accounts watcher",
+          "hint": "Watch accounts_dir and auto-register a new account when a .credentials.json appears (the result of CLAUDE_CONFIG_DIR=<dir> claude login)."
+        },
+        "claudeAutoFailover": {
+          "label": "Rate-limit auto-failover",
+          "hint": "Switch a live session to another Claude account when it hits a rate limit. Opt-in: it changes billing attribution without a click."
+        },
+        "mobileTokenTTL": {
+          "label": "Mobile token TTL",
+          "hint": "Lifetime of bearer tokens issued to the mobile app. Default 720h (30 days)."
+        },
+        "dbMaxConns": {
+          "label": "Max connections",
+          "hint": "pgx connection pool cap. 0 = store default (16)."
         }
       },
       "liveTail": {
@@ -2039,7 +2332,15 @@
         "deleteSuccess": "Target deleted",
         "deleteFailedTitle": "Delete failed",
         "unknownError": "Unknown error"
-      }
+      },
+      "toggle": {
+        "on": "On",
+        "off": "Off",
+        "defaultOn": "Default (on)",
+        "defaultOff": "Default (off)"
+      },
+      "memoryRuntimeBanner": "Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).",
+      "memoryRuntimeBannerButton": "Open Cortex settings"
     },
     "settings": {
       "title": "Settings",
@@ -2206,6 +2507,18 @@
           "nameRequiredToast": "Name is required",
           "createdToast": "Provider {name} created",
           "createFailedToast": "Create failed"
+        },
+        "modelSelect": {
+          "editTitle": "Change model",
+          "dialogTitle": "Change model — {name}",
+          "custom": "Custom…",
+          "backToList": "Pick from list",
+          "refresh": "Re-scan the endpoint for models",
+          "unreachable": "Endpoint not reachable — type the model name manually; the list appears once the service is up.",
+          "none": "The endpoint responded but advertises no models — load one in LM Studio / pull one in Ollama, then re-scan.",
+          "notOnEndpoint": "not on endpoint",
+          "save": "Save model",
+          "savedToast": "{name} now uses {model}"
         }
       },
       "rules": {
@@ -2391,6 +2704,285 @@
         "noneCounts": "(none)",
         "listFailedToast": "Failed to list imports"
       }
+    },
+    "knowledge": {
+      "title": "Knowledge",
+      "subtitle": "What we know across all projects — foundational infrastructure & rules, plus lessons and reusable features distilled from past work. Injected to bootstrap each new project.",
+      "searchPlaceholder": "Search knowledge…",
+      "search": "Search",
+      "browse": "Browse",
+      "cwdPlaceholder": "Project path (cwd) for scoped search",
+      "noResults": "No results.",
+      "empty": "Nothing here yet. Knowledge is distilled automatically as you work.",
+      "neighbors": "Connections",
+      "promote": "Promote to global",
+      "skillify": "Make skill",
+      "promoted": "Promoted to global",
+      "skillified": "Skill created: {title}",
+      "actionFailed": "Action failed",
+      "selectHint": "Select a node to see details.",
+      "scope": "Scope",
+      "delete": "Delete",
+      "deleted": "Deleted",
+      "deleteConfirm": "Delete this node? Skills stay deleted; auto-derived facts/entities may re-appear on the next sweep.",
+      "scopes": {
+        "all": "All",
+        "global": "Global",
+        "project": "Project",
+        "domain": "Domain"
+      },
+      "kb": {
+        "tab": "Knowledge Base",
+        "graphTab": "Graph",
+        "graphCounts": "{nodes} nodes · {edges} links",
+        "global": "Global",
+        "projectHandbook": "Project handbook",
+        "locked": "Edited by you",
+        "aiDrafted": "AI-drafted",
+        "edit": "Edit",
+        "unlock": "Unlock (let AI manage)",
+        "regenerate": "Regenerate",
+        "save": "Save",
+        "cancel": "Cancel",
+        "editHint": "Saving locks this page from AI overwrite.",
+        "empty": "Not generated yet. Click Regenerate, or it builds automatically as you work.",
+        "saved": "Saved",
+        "unlocked": "Unlocked — AI will manage this page again",
+        "regenerating": "Regenerating in the background…",
+        "kinds": {
+          "kb_infrastructure": "Infrastructure",
+          "kb_conventions": "Conventions",
+          "kb_lessons": "Lessons",
+          "kb_reusable": "Reusable features"
+        },
+        "foundational": "Foundational",
+        "foundationalHint": "Infrastructure & conventions — binding rules injected into every project.",
+        "emergent": "Emergent",
+        "emergentHint": "Lessons & reusable features distilled from past work — guidance.",
+        "bindingBadge": "Binding · must follow",
+        "referenceBadge": "Reference",
+        "proposal": {
+          "text": "AI proposed an update to this page (new evidence diverged).",
+          "preview": "Preview",
+          "hide": "Hide",
+          "approve": "Approve",
+          "reject": "Reject",
+          "approved": "Update approved",
+          "rejected": "Proposal rejected"
+        },
+        "discuss": "Discuss with AI",
+        "discussHint": "Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites",
+        "onDemand": "on-demand",
+        "removePage": "Remove page",
+        "removePageHint": "Remove this page from the knowledge base (its content is kept and resurrects if the slug is re-added)",
+        "pageRemovedToast": "Page removed",
+        "newPage": {
+          "button": "New knowledge page",
+          "title": "New knowledge page",
+          "description": "Give each knowledge domain its own fine-grained page instead of growing the classics forever — agents index pages individually and retrieve only what a task needs.",
+          "slugPlaceholder": "network_topology",
+          "titlePlaceholder": "Title (e.g. Network topology)",
+          "descPlaceholder": "One sentence: what belongs on this page",
+          "inject": "inject into every spawn",
+          "injectHint": "Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.",
+          "create": "Create page",
+          "createdToast": "Knowledge page created"
+        }
+      },
+      "kinds": {
+        "all": "All",
+        "entity": "Entities",
+        "fact": "Facts",
+        "playbook": "Playbooks",
+        "skill": "Skills"
+      },
+      "distill": {
+        "tab": "Distillation",
+        "intro": "A SKILL is a proven, repeatable PROCEDURE distilled from your real work. The experience compiler mines session journals ACROSS projects, clusters similar work, and only drafts a candidate when the same procedure SUCCEEDED in 2+ sessions — every evidence quote is verified verbatim against the journal. Candidates are ranked by recurrence × the manual procedure's time cost, so what saves the most time distills first; fully mechanical procedures also compile to an executable run.sh with a validation step.",
+        "playbooks": "Playbooks — distilled, awaiting review",
+        "playbooksHint": "Every candidate passed the gates: ≥2 successful sessions, verified evidence quotes, ≥3 concrete steps. Ranked by time saved (recurrence × manual minutes). Promote what you'll reuse, discard the rest.",
+        "playbooksEmpty": "Nothing mined yet — candidates appear once the same procedure succeeds in two or more sessions.",
+        "skills": "Skills — active, injected at spawn",
+        "skillsHint": "Promoted playbooks. Every new session receives these as skills.",
+        "skillsEmpty": "No skills yet — promote a playbook to create the first one.",
+        "skillify": "Promote to skill",
+        "skillifyHint": "Render as a skill file and inject into every spawn",
+        "discard": "Discard",
+        "retire": "Retire skill",
+        "injectedBadge": "injected",
+        "skillifiedToast": "Promoted — published to Plugins → Agent Skills; new sessions receive this skill",
+        "removedToast": "Removed",
+        "usage": "used in {count} sessions",
+        "lastUsed": "last {date}",
+        "enabledToast": "Skill enabled — new sessions load it",
+        "disabledToast": "Skill disabled — removed from the loaded set",
+        "disabledBadge": "off",
+        "toggleHint": "Enabled skills are loadable by sessions; disable what this period of work doesn't need",
+        "viewHint": "Click to view the full procedure",
+        "inAgentSkills": "in Plugins → Agent Skills",
+        "agentSkillsHint": "The rendered SKILL.md lives in the skills vault — view or manage it under Plugins → Agent Skills.",
+        "notInVault": "disabled — SKILL.md removed from the vault",
+        "compiledBadge": "compiled",
+        "compiledHint": "Ships an executable run.sh with a validation step; promotion also registers it as a custom task",
+        "recurrence": "succeeded ×{count}",
+        "timeCost": "~{minutes} min manual",
+        "projectSpan": "{count} projects",
+        "scoreHint": "Ranked by recurrence × manual time cost — what saves the most operator time distills first",
+        "outcomes": "{ok} ok / {failed} failed after loading",
+        "retirement": {
+          "never_used": "never used",
+          "never_usedHint": "Injected for 14+ days without any session referencing it — the outcome loop proposes retirement",
+          "low_success": "low success",
+          "low_successHint": "Sessions that load this skill keep ending in failure — the outcome loop proposes retirement",
+          "dormant": "dormant",
+          "dormantHint": "Once used, but not referenced for 45+ days — the outcome loop proposes retirement"
+        },
+        "retirementEmpty": "No retirement candidates — all skills are pulling their weight.",
+        "retirementHint": "Skills the outcome loop proposes dropping — disable the ones you agree with.",
+        "retirementTitle": "Retirement candidates"
+      },
+      "graph": {
+        "tab": "Graph",
+        "intro": "The relationship map of everything the AI has learned: which projects share tech, which skills and pitfalls attach to which entities. Check a node’s blast radius here BEFORE touching shared infrastructure.",
+        "empty": "No knowledge yet — the graph builds itself as sessions run: the anchor sweep lifts entities out of project work, and distillation adds playbooks and skills. Come back after a few working sessions.",
+        "hint": "Scroll to zoom · drag the background to pan · drag a node to untangle · click a node to inspect it",
+        "legend": {
+          "project": "Project",
+          "entity": "Entity",
+          "playbook": "Playbook",
+          "skill": "Skill"
+        },
+        "connections": "{count} connected nodes",
+        "noLinks": "Nothing links to this node yet."
+      }
+    },
+    "cortex": {
+      "home": {
+        "title": "Cortex",
+        "subtitle": "One module, three rungs, one loop: raw memory crystallises into each project's official doc, distils into cross-project knowledge, and is injected back into every new session.",
+        "disabled": "disabled",
+        "pendingProposals": "{count} pending",
+        "loopHint": "Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.",
+        "activeProjects": "Active projects",
+        "idle": "idle {days}d",
+        "memory": {
+          "title": "Memory",
+          "description": "Raw episodic facts captured from your sessions — recalled by relevance, quarantined when third-party.",
+          "quarantine": "{count} quarantined"
+        },
+        "notes": {
+          "title": "Notes",
+          "description": "Each project's official document — blueprint-shaped sections the AI keeps current as you work.",
+          "projects": "{count} active"
+        },
+        "knowledge": {
+          "title": "Knowledge",
+          "description": "Cross-project, iterable expertise: binding foundational rules + emergent lessons, injected into every spawn."
+        },
+        "settings": "Settings",
+        "proposals": {
+          "title": "Pending proposals ({count})",
+          "hint": "AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.",
+          "kbLabel": "Knowledge Base",
+          "preview": "Preview",
+          "hide": "Hide",
+          "approve": "Approve",
+          "reject": "Reject",
+          "open": "Open the owning page",
+          "approvedToast": "Proposal approved — document updated",
+          "rejectedToast": "Proposal rejected",
+          "failedToast": "Action failed"
+        }
+      },
+      "chat": {
+        "title": "Curation chat",
+        "show": "Discuss with AI",
+        "hide": "Hide chat",
+        "emptyHint": "Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you've locked it.",
+        "placeholder": "e.g. update this from the latest work · ⌘↵ to send",
+        "thinking": "AI is working…",
+        "sendFailed": "Send failed",
+        "escalate": "Escalate to session",
+        "escalated": "Escalated",
+        "escalateHint": "Spawn a full agent session, grounded in the codebase, seeded with this conversation",
+        "escalateFailed": "Escalation failed",
+        "escalatedToast": "Agent session launched",
+        "closeHint": "Close this conversation",
+        "revisionApplied": "Document updated",
+        "revisionProposed": "Proposal filed — review in Inbox",
+        "modelLabel": "Model:",
+        "modelHint": "Pick a cloud-agent provider + model for THIS discussion. Default uses the global curation worker.",
+        "modelGlobalDefault": "Default (global)",
+        "modelCliDefault": "CLI default",
+        "modelChangeFailed": "Couldn't change the discussion model",
+        "modelGroupCloud": "Cloud agents",
+        "modelGroupLocal": "Local models",
+        "modelProviderDefault": "Provider default",
+        "modelProbeFailed": "Couldn't reach the endpoint to list models — pick the provider default or configure it in Memory settings."
+      },
+      "blueprint": {
+        "open": "Blueprint",
+        "openHint": "Edit which doc sections this project carries",
+        "title": "Doc blueprint",
+        "description": "The section set of this project's official document. Different kinds of projects deserve different sections — shape it yourself or let the AI propose one.",
+        "propose": "AI propose",
+        "proposeHint": "Classify this project and propose a tailored section set",
+        "proposeFailed": "Proposal failed",
+        "proposalNote": "AI classified this as: {type} — {reason} Review below, edit freely, then Apply.",
+        "addSection": "Add section",
+        "slugPlaceholder": "slug",
+        "titlePlaceholder": "Title",
+        "hintPlaceholder": "Maintainer hint — one sentence steering the AI for this section (optional)",
+        "mode": {
+          "ai": "AI",
+          "human": "Human",
+          "scanner": "Scanner"
+        },
+        "inject": "inject",
+        "reserved": "reserved",
+        "deleteNote": "Removing a section hides it without deleting its content — re-add the same slug to resurrect it.",
+        "cancel": "Cancel",
+        "apply": "Apply blueprint",
+        "applyFailed": "Apply failed",
+        "appliedToast": "Blueprint applied",
+        "writePolicy": {
+          "direct": "Direct write",
+          "proposal": "Proposal",
+          "hint": "Direct: the in-session agent writes the live doc when unlocked. Proposal: the agent's writes file an approval request first."
+        }
+      },
+      "quarantine": {
+        "title": "Quarantine",
+        "subtitle": "Facts that need review before they count as durable memory: third-party-integration captures land here by policy, and you can quarantine any memory by hand from the Memory inspector. Promote what is true; discard the rest — unreviewed rows expire on their own.",
+        "empty": "Nothing in quarantine. Rows arrive here from integration-origin sessions (memory policy “quarantine”) or when you quarantine a memory manually in the Memory inspector.",
+        "promote": "Promote",
+        "promoteHint": "Move into durable memory (joins recall + consolidation)",
+        "discard": "Discard",
+        "promotedToast": "Promoted to durable memory",
+        "discardedToast": "Discarded",
+        "actionFailed": "Action failed",
+        "expires": "expires {date}"
+      },
+      "settings": {
+        "injection": {
+          "title": "Spawn injection",
+          "hint": "How much Cortex context each NEW SESSION loads upfront. Switching takes effect immediately for sessions spawned afterwards — the backend never needs a restart.",
+          "active": "active",
+          "mode": {
+            "lean": {
+              "label": "Lean — index + fetch on demand (recommended)",
+              "description": "Inject only the binding foundational rules plus a compact index of doc sections and knowledge pages. Agents pull exactly what a task needs via the doc_read / project_search MCP tools. Saves tokens and keeps long sessions from drowning in upfront context."
+            },
+            "full": {
+              "label": "Full — inject everything",
+              "description": "Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window."
+            }
+          },
+          "savedToast": "Injection mode saved — new sessions use it immediately (no backend restart)",
+          "saveFailed": "Save failed",
+          "note": "Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed."
+        }
+      }
     }
   },
   "more": {
@@ -2402,6 +2994,7 @@
     },
     "sections": {
       "gateway": "Gateway",
+      "plugins": "Plugins",
       "memory": "Memory",
       "system": "System"
     },
@@ -2409,6 +3002,14 @@
       "integrations": {
         "title": "Integrations",
         "subtitle": "API callers — recent activity & error rates"
+      },
+      "activity": {
+        "title": "Activity",
+        "subtitle": "Integration API call audit"
+      },
+      "memoryAmbient": {
+        "title": "Capture & injection",
+        "subtitle": "Memory capture rules + injection profiles"
       },
       "channels": {
         "title": "Channels",
@@ -2434,6 +3035,10 @@
         "title": "Custom tasks",
         "subtitle": "Slash commands shown in the session task picker"
       },
+      "cortexHub": {
+        "title": "Cortex",
+        "subtitle": "Memory → Notes → Knowledge hub + pending proposals"
+      },
       "projectMemory": {
         "title": "Project goal / plan / journal",
         "subtitle": "Per-cwd memory layers 2-4 + agent proposals"
@@ -2441,6 +3046,10 @@
       "archived": {
         "title": "Archived memories",
         "subtitle": "Restore memories the auto-cleaner soft-archived (30-day grace)"
+      },
+      "quarantine": {
+        "title": "Quarantine",
+        "subtitle": "Review captured memories before they count as durable"
       },
       "backups": {
         "title": "Backups",
@@ -2457,9 +3066,70 @@
       "about": {
         "title": "About",
         "subtitle": "Build version & server info"
+      },
+      "vault": {
+        "title": "Vault",
+        "subtitle": "Freeform markdown notes (Obsidian-sync)"
       }
     },
     "signOut": "Sign out"
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "No integration calls recorded yet.",
+    "loadFailed": "Failed to load activity",
+    "callsCount": "{count} calls",
+    "directionInbound": "inbound",
+    "directionOutbound": "outbound",
+    "filter": {
+      "title": "Filter calls",
+      "direction": "Direction",
+      "directionAll": "All",
+      "status": "Status",
+      "statusAll": "All",
+      "integration": "Integration",
+      "integrationAll": "All integrations",
+      "apply": "Apply",
+      "clear": "Clear",
+      "activeCount": "{count} active"
+    },
+    "detail": {
+      "title": "Call detail",
+      "integration": "Integration",
+      "direction": "Direction",
+      "status": "Status",
+      "duration": "Duration",
+      "bytes": "Bytes",
+      "requestId": "Request ID",
+      "resource": "Resource",
+      "timestamp": "Timestamp"
+    }
+  },
+  "memoryAmbient": {
+    "title": "Capture & injection",
+    "intro": "How sessions are summarised into memory, and what context is pre-loaded. Creating rules and detailed editing live on the web admin.",
+    "captureSection": "Capture rules",
+    "injectionSection": "Injection profiles",
+    "empty": "None configured yet.",
+    "loadFailed": "Failed to load",
+    "runNow": "Run now",
+    "ranSnack": "Ran on {count} session(s)",
+    "actionFailed": "Action failed: {error}",
+    "strategyLabel": "Strategy",
+    "scopeProject": "project",
+    "scopeGlobal": "global",
+    "triggerAfterMessages": "After N messages",
+    "triggerOnIdle": "On idle",
+    "triggerKChars": "After K chars",
+    "triggerManual": "Manual",
+    "triggerUnknown": "Unknown",
+    "strategyNone": "None (on-demand search)",
+    "strategyTopKRecent": "Top-K recent",
+    "strategyTopKRelevant": "Top-K relevant",
+    "strategyOnKeyword": "On keyword",
+    "strategyManualOnly": "Manual only",
+    "strategyHybrid": "Hybrid summary",
+    "strategyUnknown": "Unknown"
   },
   "sessions": {
     "title": "Sessions",
@@ -2582,8 +3252,14 @@
           "git": "Git",
           "tasks": "Tasks",
           "history": "History",
-          "notes": "Notes"
+          "vault": "Vault",
+          "cortex": "Cortex"
         }
+      },
+      "cortex": {
+        "title": "Cortex workspace",
+        "blurb": "Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.",
+        "open": "Open Cortex workspace"
       },
       "shared": {
         "refresh": "Refresh",
@@ -2690,6 +3366,7 @@
         "labelClaude": "Bypass permissions",
         "labelCodex": "Bypass approvals & sandbox",
         "labelGemini": "YOLO mode",
+        "labelAntigravity": "Bypass permissions / YOLO",
         "subtitleOn": "This session will run with elevated autonomy.",
         "subtitleOff": "Off — confirmations and prompts behave normally."
       },
@@ -2796,7 +3473,10 @@
     "encryptionAes": "AES-GCM encrypted (key in OS keychain)",
     "encryptionPlaintext": "PLAINTEXT — keychain unavailable",
     "toggleEnabledSnack": "{name} enabled.",
-    "toggleDisabledSnack": "{name} disabled."
+    "toggleDisabledSnack": "{name} disabled.",
+    "builtinBadge": "built-in",
+    "builtinAlwaysOn": "always on",
+    "builtinHint": "Provided by opendray — auto-attached to every session. Cannot be edited or deleted."
   },
   "providers": {
     "title": "Providers",
@@ -2951,6 +3631,13 @@
     "cliLabel": "CLI",
     "cliClaude": "Claude",
     "cliGemini": "Gemini",
+    "cliCodex": "Codex (codex exec)",
+    "cliAntigravity": "Antigravity (agy --print)",
+    "modelLabel": "Model",
+    "modelCliDefault": "CLI default (latest)",
+    "modelCustom": "Custom…",
+    "modelCustomPlaceholder": "exact model id",
+    "modelBackToList": "List",
     "claudeAccountLabel": "Claude account",
     "claudeAccountDefault": "Default",
     "test": "Test",
@@ -3004,7 +3691,19 @@
     "emptyBody": "No archived memories across any project. The auto-cleaner soft-archives stale and duplicate facts here (restorable for 30 days) — nothing has been removed yet.",
     "globalScope": "(global)",
     "countBadge": "{count} archived",
-    "restore": "Restore"
+    "restore": "Restore",
+    "restoreAll": "Restore all",
+    "deleteAll": "Delete all",
+    "restoreAllConfirm": "Restore all {count} archived memories in {project}?",
+    "deleteAllConfirm": "Permanently delete all {count} archived memories in {project}? This skips the 30-day grace window and cannot be undone.",
+    "deletePermanently": "Delete",
+    "deleteConfirm": "Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.",
+    "restoredToast": "Restored",
+    "restoredAllToast": "Restored {count} memories",
+    "deletedToast": "Deleted permanently",
+    "deletedAllToast": "Deleted {count} memories",
+    "deleteFailed": "Delete failed: {error}",
+    "summary": "{projects} projects · {memories} archived"
   },
   "project": {
     "title": "Project",
@@ -3067,6 +3766,7 @@
     "loadFailed": "Failed to load: {error}",
     "projectsLoadFailed": "Failed to load projects: {error}",
     "projectLabel": "Project",
+    "browseFolder": "Browse folder…",
     "resetTooltip": "Reset project memory",
     "append": "Append",
     "appendDialogTitle": "Append journal entry",
@@ -3101,6 +3801,14 @@
     "title": "Backups",
     "runConfirmTitle": "Run backup now?",
     "runConfirmBody": "Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.",
+    "runFullInstance": "Full instance",
+    "runFullInstanceHint": "Also bundle the vault, secrets.env and config.toml — not just the database.",
+    "kindDbOnly": "DB only",
+    "kindFullInstance": "Full instance",
+    "dedupValue": "reused existing blob (content identical)",
+    "verifyOk": "verified",
+    "verifyFailed": "unverified (check failed)",
+    "verifyPending": "not verified",
     "run": "Run",
     "runNow": "Run now",
     "queueing": "Queueing…",
@@ -3120,7 +3828,11 @@
     "menuTargets": "Targets",
     "kv": {
       "status": "Status",
+      "verified": "Verified",
+      "kind": "Type",
       "target": "Target",
+      "dedup": "Dedup",
+      "fanout": "Fan-out group",
       "triggeredBy": "Triggered by",
       "started": "Started",
       "finished": "Finished",
@@ -3130,6 +3842,17 @@
       "error": "Error",
       "yes": "yes",
       "no": "no"
+    },
+    "recoveryKit": {
+      "menuLabel": "Recovery Kit",
+      "title": "Recovery Kit",
+      "warning": "The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.",
+      "passphraseLabel": "Recovery passphrase (min 8)",
+      "confirmLabel": "Confirm recovery passphrase",
+      "generate": "Generate",
+      "copy": "Copy kit",
+      "copied": "Recovery Kit copied — store it safely",
+      "failed": "Could not generate Recovery Kit: {error}"
     },
     "emptyMissingDeps": {
       "headline": "Backups can't run yet",
@@ -3158,11 +3881,22 @@
       "saveNowHeader": "Save this passphrase NOW",
       "saveNowBody": "This is shown ONCE. It will not be retrievable from opendray afterwards."
     },
-    "statusReady": "Backups ready",
-    "statusCannot": "Backups cannot run",
     "overviewTargets": "Targets",
     "overviewSchedules": "Schedules",
     "overviewBackups": "Backups",
+    "health": {
+      "headlineHealthy": "Backups healthy",
+      "headlineAttention": "Needs attention",
+      "headlineNever": "No backups yet",
+      "lastSuccess": "Last good backup",
+      "never": "never",
+      "tiles": {
+        "recentFailures": "Recent failures",
+        "verifyFailures": "Verify failures",
+        "overdue": "Overdue",
+        "schedules": "Schedules"
+      }
+    },
     "failedToLoad": "Failed to load backups",
     "envVarConfigured": "OPENDRAY_BACKUP_KEY env var",
     "savedConfirmCheckbox": "I have saved this passphrase to my password manager",
@@ -3195,7 +3929,17 @@
       "confirmPlaceholder": "Type \"I understand\"",
       "confirmSentinel": "I understand",
       "restoring": "Restoring…",
-      "restore": "Restore",
+      "preview": "Preview (dry run)",
+      "previewing": "Previewing…",
+      "previewFirstHint": "Run a dry-run preview first",
+      "applyRestore": "Apply restore",
+      "dryRunToast": "Dry run complete — review the plan, then apply",
+      "planTitle": "Restore plan (dry run — nothing changed)",
+      "planDump": "Database dump: {size}",
+      "planConfig": "config.toml → {path}",
+      "planSecrets": "secrets.env → {path}",
+      "planVault": "vault: {files} files ({roots})",
+      "planApplyHint": "Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.",
       "succeededTitle": "Restore succeeded",
       "succeededBody": "Replayed {bytes} from backup {id}.",
       "failedTitle": "Restore failed",
@@ -3241,7 +3985,8 @@
     "title": "Backup schedules",
     "newButton": "New",
     "deleteTitle": "Delete schedule?",
-    "targetLabel": "Target",
+    "targetLabel": "Targets",
+    "targetsHint": "Pick one or more — the same backup is written to each (3-2-1).",
     "intervalLabel": "Interval",
     "retentionLabel": "Retention (keep N most recent)",
     "errorWithMessage": "{prefix}: {error}",
@@ -3542,6 +4287,9 @@
   "skills": {
     "title": "Skills",
     "newSkill": "New skill",
+    "install": "Install SKILL.md",
+    "installedSnack": "Installed {name}",
+    "installFailed": "Install failed: {error}",
     "customizingBuiltin": "Customizing built-in {id}",
     "idLabel": "Id (slug)",
     "idHint": "e.g. tdd-guide",
@@ -3817,6 +4565,21 @@
       "scopeKeyLabel": "Scope key (project cwd)",
       "scopeKeyHint": "/Users/you/projects/foo",
       "submit": "Create"
+    },
+    "archive": "Archive",
+    "quarantine": "Quarantine",
+    "archivedToast": "Memory archived — restorable from Archived",
+    "quarantinedToast": "Memory quarantined — review under Cortex → Quarantine",
+    "archiveFailed": "Archive failed: {error}",
+    "quarantineFailed": "Quarantine failed: {error}",
+    "reembed": {
+      "menuItem": "Re-embed all",
+      "confirmTitle": "Re-embed all memories?",
+      "confirmBody": "Re-encodes every stored memory and KB page with the current embedding model. Needed after switching models, since the vector dimension changes. This can take a while.",
+      "confirmButton": "Re-embed",
+      "running": "Re-embedding… this may take a while.",
+      "done": "Re-embedded {count} memories.",
+      "failed": "Re-embed failed: {error}"
     }
   },
   "about": {
@@ -3941,7 +4704,8 @@
         "backup": "Backup",
         "storageClaude": "Storage · Claude",
         "storageCodex": "Storage · Codex",
-        "storageGemini": "Storage · Gemini"
+        "storageGemini": "Storage · Gemini",
+        "storageAntigravity": "Storage · Antigravity"
       },
       "sectionDescriptions": {
         "general": "Listen address, operator account, token TTL.",
@@ -3953,7 +4717,8 @@
         "backup": "Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).",
         "storageClaude": "Where Claude transcripts live on disk.",
         "storageCodex": "Codex sessions root.",
-        "storageGemini": "Per-project tmp + projects.json paths."
+        "storageGemini": "Per-project tmp + projects.json paths.",
+        "storageAntigravity": "agy per-conversation SQLite store."
       },
       "fields": {
         "listenAddress": "Listen address",
@@ -4012,10 +4777,79 @@
         "pgDumpPath": "pg_dump path",
         "pgRestorePath": "pg_restore path",
         "tmpRoot": "tmp root",
-        "projectsJson": "projects.json"
+        "projectsJson": "projects.json",
+        "conversationsRoot": "Conversations directory",
+        "dedupThreshold": "Dedup threshold",
+        "dedupHelper": "Write-time fold threshold; 0 = embedder default, negative disables folding.",
+        "gatekeeperEnabled": "Gatekeeper",
+        "gatekeeperHelper": "Pre-write LLM judge for memory_store. Provider routed in Cortex settings.",
+        "cleanerEnabled": "Cleaner",
+        "cleanerHelper": "Periodic auto-librarian that soft-archives stale / duplicate memories.",
+        "knowledgeEnabled": "Knowledge graph",
+        "knowledgeHelper": "The structured entities/playbooks/skills layer on top of memory."
       },
       "validateInteger": "\"{field}\" must be an integer",
-      "validateNumber": "\"{field}\" must be a number"
+      "validateNumber": "\"{field}\" must be a number",
+      "embedderModel": {
+        "reprobe": "Re-check endpoint",
+        "unreachable": "Endpoint unreachable — type the model id by hand.",
+        "pickHint": "Select a model",
+        "manual": "Type manually",
+        "pickFromList": "Pick from list"
+      }
     }
+  },
+  "memoryQuarantine": {
+    "title": "Quarantine",
+    "subtitle": "Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.",
+    "empty": "Nothing in quarantine.",
+    "loadFailed": "Failed to load: {error}",
+    "promote": "Promote",
+    "discard": "Discard",
+    "promotedToast": "Promoted to durable memory",
+    "discardedToast": "Discarded",
+    "actionFailed": "Action failed: {error}",
+    "expires": "expires {date}",
+    "countBadge": "{count} pending"
+  },
+  "cortexHub": {
+    "title": "Cortex",
+    "subtitle": "The experience flywheel: Memory → Notes → Knowledge, fed back into every session.",
+    "idleBadge": "idle {days}d",
+    "activeProjectsBadge": "{count} active",
+    "activeProjectsTitle": "Active projects",
+    "loopHint": "Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.",
+    "settings": "Settings",
+    "memory": "Memory",
+    "memoryDesc": "Raw cross-session facts the agents store and recall.",
+    "notes": "Notes",
+    "notesDesc": "Each project’s official goal / plan / journal.",
+    "knowledge": "Knowledge",
+    "knowledgeDesc": "Cross-project, distilled expertise.",
+    "quarantineBadge": "{count} to review",
+    "pendingBadge": "{count} pending",
+    "disabled": "disabled",
+    "inboxTitle": "Pending proposals ({count})",
+    "inboxHint": "AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.",
+    "kbLabel": "Knowledge Base",
+    "preview": "Preview",
+    "hide": "Hide",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approvedToast": "Proposal approved",
+    "rejectedToast": "Proposal rejected",
+    "actionFailed": "Action failed: {error}",
+    "loadFailed": "Failed to load: {error}"
+  },
+  "cortexSettings": {
+    "title": "Cortex settings",
+    "tabWorkers": "Workers",
+    "tabCapture": "Capture & injection",
+    "tabProviders": "Providers",
+    "providersHint": "LLM endpoints that summarizer/agent workers route to.",
+    "providersEmpty": "No providers configured.",
+    "providersManageOnWeb": "Add or edit providers on the web admin.",
+    "providersLoadFailed": "Failed to load providers",
+    "defaultBadge": "default"
   }
 }

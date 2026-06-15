@@ -105,6 +105,7 @@ class WorkerConfig {
     this.summarizerId,
     this.providerId,
     this.accountId,
+    this.model,
   });
 
   factory WorkerConfig.fromJson(Map<String, dynamic> j) {
@@ -136,6 +137,7 @@ class WorkerConfig {
       summarizerId: (j['SummarizerID'] ?? j['summarizer_id']) as String?,
       providerId: (j['ProviderID'] ?? j['provider_id']) as String?,
       accountId: (j['AccountID'] ?? j['account_id']) as String?,
+      model: (j['Model'] ?? j['model']) as String?,
       enabled: (j['Enabled'] ?? j['enabled']) as bool? ?? true,
       updatedAt: DateTime.tryParse(
               (j['UpdatedAt'] ?? j['updated_at']) as String? ?? '') ??
@@ -148,8 +150,26 @@ class WorkerConfig {
   final String? summarizerId;
   final String? providerId;
   final String? accountId;
+  // Agent-CLI model pin (claude --model / gemini --model); empty = CLI default.
+  final String? model;
   final bool enabled;
   final DateTime updatedAt;
+}
+
+// ModelOption is one selectable model for an agent CLI worker. Mirrors
+// app/shared/src/lib/memoryWorkers.ts ModelOption.
+class ModelOption {
+  ModelOption({required this.id, required this.label, this.recommended = false});
+
+  factory ModelOption.fromJson(Map<String, dynamic> j) => ModelOption(
+        id: j['id'] as String? ?? '',
+        label: j['label'] as String? ?? (j['id'] as String? ?? ''),
+        recommended: j['recommended'] as bool? ?? false,
+      );
+
+  final String id;
+  final String label;
+  final bool recommended;
 }
 
 class CallSummary {
@@ -268,6 +288,7 @@ class MemoryWorkersApi {
     String? summarizerId,
     String? providerId,
     String? accountId,
+    String? model,
     bool enabled = true,
   }) async {
     try {
@@ -278,10 +299,32 @@ class MemoryWorkersApi {
           if (summarizerId != null) 'summarizer_id': summarizerId,
           if (providerId != null) 'provider_id': providerId,
           if (accountId != null) 'account_id': accountId,
+          if (model != null) 'model': model,
           'enabled': enabled,
         },
       );
       return WorkerConfig.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // Selectable models for an agent-CLI worker (claude / gemini / codex /
+  // antigravity). Empty for local HTTP summarizers. Mirrors web
+  // listAgentModels → GET /api/v1/memory/workers/models?provider_id=X.
+  Future<List<ModelOption>> listAgentModels(String providerId) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/memory/workers/models',
+        queryParameters: {'provider_id': providerId},
+      );
+      final raw = res.data?['models'];
+      return raw is List
+          ? raw
+              .whereType<Map<String, dynamic>>()
+              .map(ModelOption.fromJson)
+              .toList()
+          : <ModelOption>[];
     } on Object catch (e) {
       throw toApiException(e);
     }

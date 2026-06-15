@@ -208,6 +208,10 @@ function RenderInput({
           className="font-mono"
         />
       )
+    case 'note':
+      // Informational only — the Field wrapper renders the label +
+      // description; there is no input to collect.
+      return null
     default:
       return (
         <Input

@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 
+	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/wsutil"
 )
 
@@ -162,6 +163,17 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 		}
 		// Auto-assign errors are non-fatal: we still try to spawn
 		// with the CLI default rather than failing the create call.
+	}
+	// Provenance — derived from the authenticated principal, never the
+	// JSON body (Cortex Phase 2). Integration-created sessions are
+	// tagged so the memory capture pipeline can route their facts by
+	// the integration's memory_policy instead of polluting durable
+	// memory. No principal (route not behind auth middleware, e.g. in
+	// tests) falls through to the operator default.
+	if p, ok := integration.CurrentPrincipal(r.Context()); ok && p.Kind == integration.KindIntegration {
+		req.SetOrigin(OriginIntegration, p.ID)
+	} else if ok {
+		req.SetOrigin(OriginOperator, "")
 	}
 	sess, err := h.svc.Create(r.Context(), req)
 	if err != nil {

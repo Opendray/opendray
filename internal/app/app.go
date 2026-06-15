@@ -34,6 +34,7 @@ import (
 	_ "github.com/opendray/opendray-v2/internal/channel/wecom"    // register kind=wecom
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/config"
+	"github.com/opendray/opendray-v2/internal/cortex"
 	customtask "github.com/opendray/opendray-v2/internal/customtask"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	fsapi "github.com/opendray/opendray-v2/internal/fs"
@@ -42,6 +43,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/gitactivity"
 	githost "github.com/opendray/opendray-v2/internal/githost"
 	"github.com/opendray/opendray-v2/internal/integration"
+	"github.com/opendray/opendray-v2/internal/knowledge"
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/memconflict"
 	"github.com/opendray/opendray-v2/internal/memhealth"
@@ -92,6 +94,229 @@ type App struct {
 	prWatcher            *prwatcher.Service     // polls open PRs' CI checks and emits pr.checks_completed
 	cliacctWatcher       *cliacct.Watcher       // optional; nil when [providers.claude] watcher_enabled = false
 	server               *http.Server
+	knowledgeAnchorer    *knowledge.Anchorer            // M-KG Phase 1 anchor sweep; nil when [knowledge] disabled
+	knowledgeCompiler    *knowledge.ExperienceCompiler  // experience compiler: cross-project recurrence mining; nil when disabled
+	knowledgeSvc         *knowledge.Service             // M-KG Phase 6 embed backfill; nil when disabled
+	knowledgeKBDrafter   *knowledge.KBDrafter           // M-KB curated KB-page drafting; nil when disabled
+	knowledgeConsolidate *knowledge.ConsolidationEngine // P-C unified anchor→compile→KB loop; nil when disabled
+}
+
+// knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
+// the knowledge tier reads episodic memory through an interface it owns
+// (one-way dependency: knowledge never imports internal/memory).
+type knowledgeMemorySource struct{ mem *memory.Service }
+
+func (a knowledgeMemorySource) ListProjectKeys(ctx context.Context) ([]string, error) {
+	return a.mem.ListScopeKeys(ctx, memory.ScopeProject)
+}
+
+func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey string, limit int) ([]knowledge.MemoryRow, error) {
+	mems, err := a.mem.List(ctx, memory.ScopeProject, scopeKey, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]knowledge.MemoryRow, 0, len(mems))
+	for _, m := range mems {
+		out = append(out, knowledge.MemoryRow{ID: m.ID, Text: m.Text, ScopeKey: m.ScopeKey, CreatedAt: m.CreatedAt})
+	}
+	return out, nil
+}
+
+// ListAllMemories gathers project-scoped memories across every project key so
+// the cross-project KB pages distil straight from Memory (P-G). Per-key
+// failures are skipped; the overall cap bounds the total returned.
+func (a knowledgeMemorySource) ListAllMemories(ctx context.Context, limit int) ([]knowledge.MemoryRow, error) {
+	keys, err := a.mem.ListScopeKeys(ctx, memory.ScopeProject)
+	if err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 400
+	}
+	// Spread the budget across projects so one large project can't crowd out
+	// the rest of the ecosystem's facts; at least a handful per project.
+	perKey := limit
+	if n := len(keys); n > 0 {
+		if perKey = limit / n; perKey < 20 {
+			perKey = 20
+		}
+	}
+	out := make([]knowledge.MemoryRow, 0, limit)
+	for _, k := range keys {
+		if len(out) >= limit {
+			break
+		}
+		rows, rerr := a.ListProjectMemories(ctx, k, perKey)
+		if rerr != nil {
+			continue
+		}
+		out = append(out, rows...)
+	}
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	return out, nil
+}
+
+// knowledgeJournalSource adapts *projectdoc.Service to knowledge.JournalSource
+// so reflection distills playbooks from real session work-traces (the project
+// journal), not just declarative memory facts. One-way dependency: knowledge
+// owns the interface; the app adapts projectdoc to it.
+type knowledgeJournalSource struct{ pd *projectdoc.Service }
+
+func (a knowledgeJournalSource) ListJournal(ctx context.Context, scopeKey string, limit int) ([]knowledge.JournalEntry, error) {
+	logs, err := a.pd.ListLogs(ctx, scopeKey, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]knowledge.JournalEntry, 0, len(logs))
+	for _, l := range logs {
+		out = append(out, knowledge.JournalEntry{
+			Title:     l.Title,
+			Content:   l.Content,
+			Kind:      string(l.Kind),
+			CreatedAt: l.CreatedAt,
+		})
+	}
+	return out, nil
+}
+
+// knowledgeDocSink adapts *projectdoc.Service to knowledge.DocSink so the KB
+// drafter writes curated pages INTO the note system (project_docs). A page the
+// operator has edited (updated_by=operator) is reported HumanLocked so the
+// drafter never overwrites it. One-way dependency (knowledge owns the interface).
+type knowledgeDocSink struct{ pd *projectdoc.Service }
+
+func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowledge.KBDoc, error) {
+	d, err := a.pd.GetDoc(ctx, cwd, projectdoc.Kind(kind))
+	if errors.Is(err, projectdoc.ErrNotFound) {
+		return knowledge.KBDoc{}, nil
+	}
+	if err != nil {
+		return knowledge.KBDoc{}, err
+	}
+	return knowledge.KBDoc{
+		Content:     d.Content,
+		HumanLocked: d.UpdatedBy == projectdoc.AuthorOperator,
+		Exists:      true,
+	}, nil
+}
+
+func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content string) error {
+	_, err := a.pd.PutDoc(ctx, cwd, projectdoc.Kind(kind), content, projectdoc.AuthorAgent)
+	return err
+}
+
+// knowledgeLifecycle adapts *projectdoc.Service to knowledge.LifecycleFilter so
+// the reflector skips frozen (paused/archived) projects during distillation
+// (P-D). A status lookup error defaults to "not frozen" — we'd rather
+// over-distill than silently drop an active project.
+type knowledgeLifecycle struct{ pd *projectdoc.Service }
+
+func (a knowledgeLifecycle) IsFrozen(ctx context.Context, cwd string) bool {
+	status, err := a.pd.GetStatus(ctx, cwd)
+	if err != nil {
+		return false
+	}
+	return status.IsFrozen()
+}
+
+// knowledgeProposalSink adapts *projectdoc.Service to knowledge.ProposalSink so
+// the KB drafter files an update PROPOSAL for a human-locked Knowledge page
+// instead of overwriting it (B3 — Iterate). One-way dependency.
+type knowledgeProposalSink struct{ pd *projectdoc.Service }
+
+func (a knowledgeProposalSink) HasPendingKBProposal(ctx context.Context, cwd, kind string) (bool, error) {
+	props, err := a.pd.ListPendingProposals(ctx, cwd)
+	if err != nil {
+		return false, err
+	}
+	for _, p := range props {
+		if string(p.Kind) == kind {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (a knowledgeProposalSink) ProposeKBDoc(ctx context.Context, cwd, kind, content, reason string) error {
+	_, err := a.pd.ProposeDoc(ctx, cwd, projectdoc.Kind(kind), content, reason, "")
+	return err
+}
+
+// knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
+// Phase 1B entity extractor gets a general completion path. It borrows the
+// TaskCapture worker config (the closest existing touchpoint: extract
+// structure from text) rather than introducing a dedicated worker TaskKind +
+// migration. A missing/disabled worker surfaces as an error, which the
+// anchorer treats as "skip fine-entity extraction" (degrades to 1A).
+type knowledgeLLM struct {
+	reg       *memworker.Registry
+	maxTokens int                // 0 → 512 (small extraction default)
+	timeout   time.Duration      // 0 → 20s
+	task      memworker.TaskKind // 0-value → TaskCapture
+}
+
+func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string, error) {
+	maxTokens := a.maxTokens
+	if maxTokens == 0 {
+		maxTokens = 512 // small entity-extraction default
+	}
+	timeout := a.timeout
+	if timeout == 0 {
+		timeout = 20 * time.Second
+	}
+	task := a.task
+	if task == "" {
+		task = memworker.TaskCapture
+	}
+	resp, err := a.reg.Run(ctx, memworker.Request{
+		Task:         task,
+		SystemPrompt: system,
+		UserInput:    user,
+		MaxTokens:    maxTokens,
+		Timeout:      timeout,
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Content, nil
+}
+
+// knowledgeSkillSink writes a rendered SKILL.md into the vault skills dir so
+// the skills loader picks up AI-promoted skills (one-way: knowledge owns the
+// SkillSink interface; the app provides this filesystem impl).
+type knowledgeSkillSink struct{ dir string }
+
+func (s knowledgeSkillSink) WriteSkill(_ context.Context, id, markdown string) error {
+	d := filepath.Join(s.dir, id)
+	if err := os.MkdirAll(d, 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(d, "SKILL.md"), []byte(markdown), 0o600)
+}
+
+// WriteSkillAsset places an extra file next to SKILL.md — the experience
+// compiler ships a skill's executable form as run.sh. Scripts get the
+// executable bit; everything else stays 0600. The id/name are slugs minted
+// server-side (never operator input), so the join stays inside the vault.
+func (s knowledgeSkillSink) WriteSkillAsset(_ context.Context, id, name, content string) error {
+	d := filepath.Join(s.dir, id)
+	if err := os.MkdirAll(d, 0o700); err != nil {
+		return err
+	}
+	mode := os.FileMode(0o600)
+	if strings.HasSuffix(name, ".sh") {
+		mode = 0o700
+	}
+	return os.WriteFile(filepath.Join(d, name), []byte(content), mode)
+}
+
+func (s knowledgeSkillSink) DeleteSkill(_ context.Context, id string) error {
+	if id == "" {
+		return nil
+	}
+	return os.RemoveAll(filepath.Join(s.dir, id))
 }
 
 // New wires the runtime dependencies but does not start any goroutines.
@@ -116,6 +341,34 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// which upserts seed rows into tables migration 0001 creates (the
 	// fresh-DB ordering bug from #162). `opendray migrate` stays as a
 	// standalone command for operators who prefer to migrate explicitly.
+	// Pre-migration safety snapshot (fail-closed). Runs before the
+	// schema changes so an upgrade always has a restorable point; a
+	// no-op once the DB is already up to date.
+	pending, perr := st.PendingMigrations(ctx)
+	if perr != nil {
+		st.Close()
+		return nil, fmt.Errorf("check pending migrations: %w", perr)
+	}
+	if len(pending) > 0 {
+		preKey, kerr := backup.LoadPassphrase()
+		if kerr != nil {
+			// A configured-but-broken key source must not silently
+			// degrade the snapshot to plaintext — fail closed.
+			st.Close()
+			return nil, fmt.Errorf("pre-migrate snapshot: backup key load: %w", kerr)
+		}
+		if gerr := backup.GuardPreMigrate(ctx, pending, backup.PreMigrateOptions{
+			DSN:        cfg.Database.URL,
+			Dir:        filepath.Join(defaultBackupDir(cfg.Backup.LocalDir, "backups"), "premigrate"),
+			PgDumpPath: cfg.Backup.PgDumpPath,
+			Passphrase: preKey.Passphrase,
+			Log:        log,
+		}); gerr != nil {
+			st.Close()
+			return nil, fmt.Errorf("pre-migrate snapshot: %w", gerr)
+		}
+	}
+
 	if err := st.Migrate(ctx, log); err != nil {
 		st.Close()
 		return nil, fmt.Errorf("apply migrations: %w", err)
@@ -193,6 +446,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithClaudeHistoryConfig(resolveClaudeHistoryConfig(cfg.Providers.Claude)),
 		session.WithCodexHistoryConfig(resolveCodexHistoryConfig(cfg.Providers.Codex)),
 		session.WithGeminiHistoryConfig(resolveGeminiHistoryConfig(cfg.Providers.Gemini)),
+		session.WithAntigravityHistoryConfig(resolveAntigravityHistoryConfig(cfg.Providers.Antigravity)),
 		// Lets Manager.SwitchClaudeAccount migrate the conversation
 		// transcript JSONL into the new account's projects/ tree
 		// before respawning, so --resume actually finds the
@@ -351,6 +605,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 					"bin", binPath,
 					"base_url", listenLoopback(cfg.Listen))
 
+				// Surface the auto-attached server in the Plugins → MCP
+				// registry list so operators can see it exists. Command
+				// only — the integration key is injected at spawn time
+				// and never exposed through the registry API.
+				mcpHandlers.SetBuiltins([]mcpapi.Server{{
+					ID:        "opendray-memory",
+					Name:      "opendray-memory",
+					Transport: "stdio",
+					Command:   binPath,
+					Args:      []string{"mcp-memory"},
+					Enabled:   true,
+				}})
+
 				// Wire the local-memory mirror so each session spawn
 				// pulls Claude's <cwd>/.claude/projects/.../memory/*.md
 				// files into the shared store. Cross-CLI search picks
@@ -365,7 +632,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			}
 		}
 	}
-	memoryHandlers := memory.NewHandlers(memorySvc, log)
+	memoryHandlers := memory.NewHandlers(memorySvc, log).
+		// Cortex Phase 2 — direct /memory/store calls from integration
+		// keys route into the tier their memory_policy declares.
+		WithPolicyLookup(&capturePolicyAdapter{svc: intgrSvc})
 
 	// Backup subsystem — opt-in. The passphrase resolution chain
 	// (env > KEY_FILE > default keyfile, see internal/backup/keyfile.go)
@@ -394,14 +664,23 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		ExportDir:     defaultBackupDir(cfg.Backup.ExportDir, "exports"),
 		PgDumpPath:    cfg.Backup.PgDumpPath,
 		PgRestorePath: cfg.Backup.PgRestorePath,
+		// full_instance bundles capture the vault + MCP secrets so a
+		// restore rebuilds a working instance, not just its DB.
+		VaultSources: []backup.VaultSource{
+			{Logical: "notes", Dir: notesRoot},
+			{Logical: "skills", Dir: skillsRoot},
+			{Logical: "mcp", Dir: mcpRoot},
+		},
+		SecretsFile: secretsFile,
 	}
-	liveBackup := backup.NewLiveBackup(bcfg, st.Pool(), cfg.Database.URL, cfg.FilePath, log)
+	liveBackup := backup.NewLiveBackup(bcfg, st.Pool(), bus, cfg.Database.URL, cfg.FilePath, log)
 	if keyLoad.Passphrase != "" {
 		// Boot-time Arm: build the service eagerly so init errors
 		// (DB migration failure, etc.) crash boot rather than wait
 		// for the first /backups request.
 		bsvc, berr := backup.NewService(bcfg, backup.ServiceDeps{
 			Pool:       st.Pool(),
+			Bus:        bus,
 			Passphrase: keyLoad.Passphrase,
 			DSN:        cfg.Database.URL,
 			ConfigPath: cfg.FilePath,
@@ -435,6 +714,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// Works as soon as the operator arms backups via /backup-setup
 	// — no restart required for anthropic provider creation either.
 	ambientCipher := backup.NewLiveCipher(liveBackup)
+	// Encrypt git-host API tokens at rest with the same live cipher
+	// (no-op until the operator arms backups; tokens stay plaintext
+	// until then, matching the historical trust model).
+	gitHostSvc.SetCipher(ambientCipher)
+	// Same at-rest encryption for channel config secrets (bot tokens,
+	// app secrets, webhook keys).
+	channelHub.SetCipher(ambientCipher)
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
 	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
@@ -495,12 +781,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if memorySvc != nil {
 		cc := cfg.Memory.Cleaner
 		// M25 — cleaner dispatch goes through the memory worker
-		// registry; SummarizerID config is now ignored (lives in
-		// memory_workers.cleaner.summarizer_id instead).
+		// registry (memory_workers.cleaner picks the provider).
 		cleanerSvc = cleaner.NewService(
 			st.Pool(), memorySvc, memoryWorkerRegistry,
 			cleaner.Config{
-				SummarizerID:         cc.SummarizerID,
 				BatchSize:            cc.BatchSize,
 				MinAge:               time.Duration(cc.MinAgeHours) * time.Hour,
 				SkipIfDecidedWithin:  time.Duration(cc.SkipIfDecidedWithinHours) * time.Hour,
@@ -542,6 +826,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// SummarizerProviderID still win (pre-M-PE behaviour).
 		WorkerProvider: memworker.NewSummarizerProvider(
 			memoryWorkerRegistry, memworker.TaskCapture),
+		// Cortex Phase 2 — integration-created sessions route their
+		// facts by the integration's declared memory_policy.
+		Policy: &capturePolicyAdapter{svc: intgrSvc},
 	})
 	if ceErr != nil {
 		st.Close()
@@ -565,6 +852,60 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// then compares cosines apples-to-apples; otherwise BM25-vs-
 	// bge-m3 hits would rank against each other meaninglessly.
 	projectDocSvc.WithEmbedder(projectdocEmbedderAdapter{emb: memorySvc.Embedder()})
+
+	// Lifecycle ⇄ memory bridge: archiving a project soft-archives its
+	// project-scoped memories (they appear in the Archived view, exempt
+	// from the grace purge), and unarchiving restores exactly those rows.
+	// Without this the Archived view stayed empty after a project
+	// archive — the two features looked broken when they were just
+	// unwired.
+	if memorySvc != nil {
+		projectDocSvc.WithStatusChangeHook(func(ctx context.Context, cwd string, old, new projectdoc.ProjectStatus) {
+			switch {
+			case new == projectdoc.StatusArchived && old != projectdoc.StatusArchived:
+				n, err := memorySvc.ArchiveByScope(ctx, memory.ScopeProject, cwd, memory.ReasonProjectArchived)
+				if err != nil {
+					log.Warn("project archive: memory archive failed", "cwd", cwd, "err", err)
+					return
+				}
+				log.Info("project archived — memories soft-archived", "cwd", cwd, "count", n)
+			case old == projectdoc.StatusArchived && new != projectdoc.StatusArchived:
+				n, err := memorySvc.RestoreByScope(ctx, memory.ScopeProject, cwd, memory.ReasonProjectArchived)
+				if err != nil {
+					log.Warn("project unarchive: memory restore failed", "cwd", cwd, "err", err)
+					return
+				}
+				log.Info("project unarchived — memories restored", "cwd", cwd, "count", n)
+			}
+		})
+
+		// Backfill: projects archived before the bridge existed never
+		// had their memories shelved (the hook only fires on a live
+		// transition). Sweep every currently-archived project once at
+		// startup and archive its still-active rows. Idempotent —
+		// ArchiveByScope only touches archived_at IS NULL — so this is
+		// safe to run on every boot; best-effort in the background so
+		// it never blocks startup.
+		go func() {
+			ctx := context.Background()
+			cwds, err := projectDocSvc.ListArchivedCwds(ctx)
+			if err != nil {
+				log.Warn("archive reconcile: list archived projects failed", "err", err)
+				return
+			}
+			for _, cwd := range cwds {
+				n, err := memorySvc.ArchiveByScope(ctx, memory.ScopeProject, cwd, memory.ReasonProjectArchived)
+				if err != nil {
+					log.Warn("archive reconcile failed", "cwd", cwd, "err", err)
+					continue
+				}
+				if n > 0 {
+					log.Info("archive reconcile — shelved memories of already-archived project",
+						"cwd", cwd, "count", n)
+				}
+			}
+		}()
+	}
 
 	// M-PB — now that projectDocSvc exists, build the cross-layer
 	// search service. memquery.New is strict about nil deps so we
@@ -590,6 +931,126 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		memconflict.SchedulerConfig{},
 	)
 	projectDocHandlers := projectdoc.NewHandlers(projectDocSvc, log)
+	// M-KG Phase 0 — structured knowledge graph (arc: knowledge-graph-redesign).
+	// OFF by default. Decoupled: reads memory, never the reverse; disabling
+	// returns exact memory-only (M-U) behaviour.
+	var knowledgeHandlers *knowledge.Handlers
+	var knowledgeAnchorer *knowledge.Anchorer
+	var knowledgeCompiler *knowledge.ExperienceCompiler
+	var knowledgeSvc *knowledge.Service
+	var knowledgeKBDrafter *knowledge.KBDrafter
+	var knowledgeConsolidate *knowledge.ConsolidationEngine
+	if cfg.Knowledge.Enabled {
+		knowledgeSvc = knowledge.NewService(st.Pool(), log)
+		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
+		// Compiled skills (experience compiler) also land as click-runnable
+		// custom tasks pointing at the rendered run.sh.
+		knowledgeSvc.WithTaskSink(knowledgeTaskSink{tasks: customTaskSvc, skillsRoot: skillsRoot})
+		// Skill promotion drafts a full structured SKILL.md via the
+		// curation worker (overview / when-to-use / procedure /
+		// pitfalls / verification) instead of copying the playbook
+		// body verbatim.
+		knowledgeSvc.WithSkillifyLLM(knowledgeLLM{
+			reg: memoryWorkerRegistry, maxTokens: 4000, timeout: 180 * time.Second,
+			task: memworker.TaskCuration,
+		})
+		sessionProvider.WithKnowledgeInjector(knowledgeSvc) // feed the brain into every spawn
+		if memorySvc != nil {
+			// Phase 1 — the anchorer reads episodic memory and lifts facts
+			// into the graph. Needs memory; without it we still serve CRUD.
+			knowledgeSvc.WithEmbedder(memorySvc.Embedder()) // Phase 6 — reuse memory's embedder
+			kgLLM := knowledgeLLM{reg: memoryWorkerRegistry}
+			// Playbooks + KB pages need bigger output and more time than the
+			// small, frequent entity-extraction calls (which keep 512 tok/20s).
+			kbLLM := knowledgeLLM{reg: memoryWorkerRegistry, maxTokens: 4000, timeout: 180 * time.Second}
+			knowledgeAnchorer = knowledge.NewAnchorer(st.Pool(), knowledgeMemorySource{mem: memorySvc}, log).
+				WithLLM(kgLLM).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // Cortex P2 — frozen projects stop feeding the graph
+			// The experience compiler — outcome-driven distillation. It mines
+			// session episodes ACROSS projects, clusters them by embedding
+			// similarity, and only drafts a candidate when the same procedure
+			// SUCCEEDED in ≥2 sessions (repetition + success evidence; never a
+			// single session). Candidates are ranked by recurrence × manual
+			// time cost so what saves the most operator time distills first.
+			knowledgeCompiler = knowledge.NewExperienceCompiler(st.Pool(), kbLLM, log).
+				WithEpisodes(knowledgeEpisodeSource{pool: st.Pool()}).
+				WithEmbedder(memorySvc.Embedder()).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc}) // P-D — frozen projects leave the feedstock
+			knowledgeSvc.WithReanchor(func(c context.Context) error {
+				return knowledgeAnchorer.AnchorAll(c, 500)
+			})
+			// Knowledge — the global cross-project KB pages (Experience Flywheel:
+			// per-project docs live in Notes, so there is no handbook here).
+			knowledgeKBDrafter = knowledge.NewKBDrafter(
+				knowledge.NewStore(st.Pool()), kbLLM,
+				knowledgeDocSink{pd: projectDocSvc}, log).
+				WithMemory(knowledgeMemorySource{mem: memorySvc}).       // P-G — facts from Memory
+				WithProposals(knowledgeProposalSink{pd: projectDocSvc}). // B3 — propose updates to locked pages
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc})     // Cortex P2 — frozen projects leave the feedstock
+			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
+			// The per-project Overview — the rich official document. Reads the
+			// project's own goal/plan/tech + journal + memory and writes a
+			// comprehensive Notes doc (kind=overview), lock-aware + propose-on-lock.
+			knowledgeOverview := knowledge.NewOverviewDrafter(
+				knowledge.NewStore(st.Pool()), kbLLM,
+				knowledgeDocSink{pd: projectDocSvc}, log).
+				WithMemory(knowledgeMemorySource{mem: memorySvc}).
+				WithJournal(knowledgeJournalSource{pd: projectDocSvc}).
+				WithProposals(knowledgeProposalSink{pd: projectDocSvc}).
+				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc})
+			knowledgeSvc.WithOverviewDrafter(knowledgeOverview)
+			// P-C — one ordered loop (anchor → compile → KB → overview) replaces
+			// the independent sweep goroutines so each stage drafts from the prior
+			// stage's fresh output instead of racing on separate timers.
+			knowledgeConsolidate = knowledge.NewConsolidationEngine(
+				knowledgeAnchorer, knowledgeCompiler, knowledgeKBDrafter,
+				knowledgeOverview, log).
+				// Hermes-style curator: skill lifecycle sweep
+				// (active → stale 30d → auto-disabled 90d).
+				WithCurator(knowledgeSvc)
+		}
+		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
+		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
+	}
+	// Cortex — the unified module governing the Memory → Notes →
+	// Knowledge flywheel. A facade only: re-mounts the three layer
+	// handler sets under /api/v1/cortex and adds cross-layer endpoints
+	// (status aggregation; quarantine/blueprint/conversations follow).
+	// Legacy mounts stay for integrations + the not-yet-migrated mobile.
+	cortexOpts := []cortex.Option{
+		cortex.WithMemoryEnabled(memorySvc != nil),
+		cortex.WithKnowledgeEnabled(knowledgeSvc != nil),
+	}
+	if memorySvc != nil {
+		cortexOpts = append(cortexOpts, cortex.WithQuarantineCounter(memorySvc.CountQuarantined))
+	}
+	cortexSvc := cortex.NewService(projectDocSvc, log, cortexOpts...)
+	// Phase 4 — curation conversations: the channel for actively
+	// maintaining docs + re-drafting Foundational knowledge with the
+	// AI. Lightweight worker LLM turns; escalation spawns a real
+	// session in the project cwd (or the gateway's own workspace for
+	// global knowledge pages).
+	cortexConvStore := cortex.NewConversationStore(st.Pool())
+	workspaceCwd, _ := os.Getwd()
+	cortexCuration := cortex.NewCurationService(cortexConvStore, projectDocSvc, memoryWorkerRegistry, bus, log).
+		WithSessionLauncher(&curationSessionLauncher{mgr: sessionMgr}, workspaceCwd)
+	if memquerySvc != nil {
+		cortexCuration.WithContextSource(&curationContextAdapter{mq: memquerySvc})
+	}
+	// Runtime settings (spawn injection mode) — the projectdoc renderer
+	// resolves the mode per spawn, so flipping full↔lean needs no restart.
+	cortexSettings := cortex.NewSettingsStore(st.Pool())
+	projectDocSvc.WithSpawnMode(cortexSettings.SpawnModeSource())
+	cortexHandlers := cortex.NewHandlers(cortexSvc, projectDocHandlers, memoryHandlers, knowledgeHandlers, log).
+		WithDocs(projectDocSvc).
+		WithBlueprintProposer(cortex.NewBlueprintProposer(projectDocSvc, memoryWorkerRegistry)).
+		WithCuration(cortexCuration, cortexConvStore).
+		WithSettings(cortexSettings)
+	if memorySvc != nil {
+		// Guarded: assigning a nil *memory.Service to the interface
+		// field would dodge the handler's nil check (typed nil).
+		cortexHandlers.WithQuarantine(memorySvc)
+	}
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -667,6 +1128,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// whether the project plan needs updating and files a proposal
 	// when so.
 	journaler.WithPlanDetector(newPlanDriftDetector(memoryWorkerRegistry))
+	// Skill usage + outcome tracking — bump use counters for skills the
+	// session's transcript referenced AND record whether that session
+	// succeeded, so the workbench can propose retiring skills that are
+	// never used or that keep getting loaded into failing sessions.
+	if cfg.Knowledge.Enabled {
+		knowledgeUsageStore := knowledge.NewStore(st.Pool())
+		journaler.WithSkillUsage(func(c context.Context, transcript string, success bool) {
+			if _, err := knowledgeUsageStore.RecordSkillUsage(c, transcript, success); err != nil {
+				log.Debug("skill usage recording failed", "err", err)
+			}
+		})
+	}
 	log.Info("transcript-aware journaler enabled (worker-registry routing)",
 		"plan_drift_enabled", true)
 
@@ -756,6 +1229,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)
+				if knowledgeHandlers != nil {
+					knowledgeHandlers.Mount(r)
+				}
+				cortexHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
@@ -791,6 +1268,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		prWatcher:            prWatcher,
 		cliacctWatcher:       cliacctWatcher,
 		server:               srv,
+		knowledgeAnchorer:    knowledgeAnchorer,
+		knowledgeCompiler:    knowledgeCompiler,
+		knowledgeSvc:         knowledgeSvc,
+		knowledgeKBDrafter:   knowledgeKBDrafter,
+		knowledgeConsolidate: knowledgeConsolidate,
 	}, nil
 }
 
@@ -864,6 +1346,17 @@ func (a *App) Run(ctx context.Context) error {
 		a.journaler.Run(ctx)
 		close(journalerDone)
 	}()
+
+	// P-C — one ordered consolidation loop (anchor → reflect → KB draft)
+	// replaces the three independent M-KG/M-KB sweep goroutines, so each stage
+	// distils from the prior stage's fresh output instead of racing on its own
+	// timer. nil when the [knowledge] feature flag is off (no-op for M-U builds).
+	if a.knowledgeConsolidate != nil {
+		go a.knowledgeConsolidate.Run(ctx, knowledge.ConsolidateConfig{})
+	}
+	if a.knowledgeSvc != nil {
+		go a.knowledgeSvc.RunEmbedBackfill(ctx, knowledge.EmbedBackfillConfig{})
+	}
 
 	// M-PB — backfill missing embeddings on the journal so the new
 	// cross-layer project_search hits historical entries, not just
@@ -1603,6 +2096,15 @@ func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHis
 	return out
 }
 
+// resolveAntigravityHistoryConfig expands ~/ in [providers.antigravity].
+func resolveAntigravityHistoryConfig(c config.AntigravityProviderConfig) session.AntigravityHistoryConfig {
+	out := session.AntigravityHistoryConfig{}
+	if c.ConversationsRoot != "" {
+		out.ConversationsRoot = expandPath(c.ConversationsRoot)
+	}
+	return out
+}
+
 // summarizerIntegrationLookup adapts integration.Service to the
 // summarizer.IntegrationLookup interface so the summarizer
 // registry can resolve integration-kind providers.
@@ -1624,6 +2126,83 @@ func (a *summarizerIntegrationLookup) LookupBaseURL(ctx context.Context, id stri
 	return row.BaseURL, row.Enabled, nil
 }
 
+// curationContextAdapter implements cortex.ContextSource over the
+// cross-layer memquery service: top-K facts/journal/doc hits rendered
+// as a compact bullet list for the curation prompt.
+type curationContextAdapter struct {
+	mq *memquery.Service
+}
+
+func (a *curationContextAdapter) RelevantContext(ctx context.Context, cwd, query string, topK int) (string, error) {
+	hits, err := a.mq.Search(ctx, memquery.SearchRequest{Cwd: cwd, Query: query, TopK: topK})
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for _, h := range hits {
+		text := strings.TrimSpace(h.Text)
+		if len(text) > 400 {
+			text = text[:400] + "…"
+		}
+		if h.Title != "" {
+			fmt.Fprintf(&b, "- [%s] **%s** — %s\n", h.Source, h.Title, text)
+		} else {
+			fmt.Fprintf(&b, "- [%s] %s\n", h.Source, text)
+		}
+	}
+	return b.String(), nil
+}
+
+// curationSessionLauncher implements cortex.SessionLauncher over the
+// session manager: spawn a claude session in cwd, give the CLI a
+// moment to boot, then type the seed prompt and submit it.
+type curationSessionLauncher struct {
+	mgr *session.Manager
+}
+
+func (l *curationSessionLauncher) Launch(ctx context.Context, cwd, name, seedPrompt string) (string, error) {
+	sess, err := l.mgr.Create(ctx, session.CreateRequest{
+		Name:       name,
+		ProviderID: "claude",
+		Cwd:        cwd,
+	})
+	if err != nil {
+		return "", err
+	}
+	// Seed the prompt once the CLI has had a moment to draw its input
+	// box. Detached goroutine: the conversation row already links the
+	// session; a failed seed leaves a usable (just unprimed) session.
+	go func(sid, prompt string) {
+		time.Sleep(4 * time.Second)
+		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := l.mgr.Input(bg, sid, []byte(prompt)); err != nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+	}(sess.ID, seedPrompt)
+	return sess.ID, nil
+}
+
+// capturePolicyAdapter implements capture.PolicyResolver against the
+// integration registry. Unknown integrations resolve to "" so the
+// runner applies its quarantine default.
+type capturePolicyAdapter struct {
+	svc *integration.Service
+}
+
+func (a *capturePolicyAdapter) MemoryPolicy(ctx context.Context, integrationID string) (string, error) {
+	if integrationID == "" {
+		return "", nil
+	}
+	i, err := a.svc.Get(ctx, integrationID)
+	if err != nil {
+		return "", err
+	}
+	return string(i.MemoryPolicy), nil
+}
+
 // captureSessionAdapter implements capture.SessionLister by
 // translating session.Manager.List into capture.SessionInfo.
 type captureSessionAdapter struct {
@@ -1638,10 +2217,12 @@ func (a *captureSessionAdapter) List(ctx context.Context) ([]capture.SessionInfo
 	out := make([]capture.SessionInfo, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, capture.SessionInfo{
-			ID:         r.ID,
-			ProviderID: r.ProviderID,
-			Cwd:        r.Cwd,
-			State:      string(r.State),
+			ID:            r.ID,
+			ProviderID:    r.ProviderID,
+			Cwd:           r.Cwd,
+			State:         string(r.State),
+			Origin:        string(r.Origin),
+			IntegrationID: r.IntegrationID,
 		})
 	}
 	return out, nil

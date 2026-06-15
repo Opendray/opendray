@@ -34,6 +34,11 @@ export interface MemoryRecord {
   archived_at?: string | null
   /** Why the row was archived (e.g. "duplicate", "stale", "dormant-project"). */
   archived_reason?: string
+  /** Memory tier (Cortex): 'durable' | 'quarantine'. Standard reads only
+   * return durable rows; populated by the quarantine review queue + Get. */
+  tier?: string
+  /** TTL deadline for quarantined rows; absent on durable rows. */
+  quarantine_expires_at?: string | null
 }
 
 export interface SearchHit {
@@ -248,6 +253,22 @@ export async function listArchived(
 // Mirrors POST /api/v1/memory/{id}/restore.
 export async function restoreMemory(id: string): Promise<void> {
   await api(`/api/v1/memory/${encodeURIComponent(id)}/restore`, {
+    method: 'POST',
+  })
+}
+
+/** Soft-archives one memory by hand (admin only) — reversible from the
+ * Archived view until the grace window purges it. */
+export async function archiveMemory(id: string): Promise<void> {
+  await api(`/api/v1/memory/${encodeURIComponent(id)}/archive`, {
+    method: 'POST',
+  })
+}
+
+/** Moves a durable memory into the quarantine review queue (admin
+ * only) — release it from Cortex → Quarantine, or the TTL expires it. */
+export async function quarantineMemory(id: string): Promise<void> {
+  await api(`/api/v1/memory/${encodeURIComponent(id)}/quarantine`, {
     method: 'POST',
   })
 }

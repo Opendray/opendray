@@ -25,14 +25,18 @@ func (s *store) Insert(ctx context.Context, i Integration) error {
 	if scopesJSON == nil {
 		scopesJSON = []byte("[]")
 	}
+	policy := i.MemoryPolicy
+	if policy == "" {
+		policy = MemoryPolicyQuarantine
+	}
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO integrations
             (id, name, base_url, route_prefix, api_key_hash, scopes, version,
-             enabled, health_status, created_at, is_system)
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11)`,
+             enabled, health_status, created_at, is_system, memory_policy)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12)`,
 		i.ID, i.Name, i.BaseURL, i.RoutePrefix, i.apiKeyHash, scopesJSON,
 		nullIfEmpty(i.Version), i.Enabled, string(i.HealthStatus), i.CreatedAt,
-		i.IsSystem)
+		i.IsSystem, string(policy))
 	if err != nil {
 		return fmt.Errorf("insert integration: %w", err)
 	}
@@ -114,6 +118,13 @@ func (s *store) Update(ctx context.Context, id string, patch UpdatePatch) error 
 			return fmt.Errorf("update enabled: %w", err)
 		}
 	}
+	if patch.MemoryPolicy != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET memory_policy=$1 WHERE id=$2`,
+			string(*patch.MemoryPolicy), id); err != nil {
+			return fmt.Errorf("update memory_policy: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -169,7 +180,8 @@ const selectStmt = `
            COALESCE(scopes, '[]'::jsonb), COALESCE(version, ''),
            enabled, health_status, health_payload,
            health_last_seen, created_at, rotated_at,
-           COALESCE(is_system, FALSE)
+           COALESCE(is_system, FALSE),
+           COALESCE(memory_policy, 'quarantine')
     FROM integrations`
 
 type rowScanner interface {
@@ -192,15 +204,18 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 		healthRaw      []byte
 		healthLastSeen sql.NullTime
 		rotatedAt      sql.NullTime
+		memoryPolicy   string
 	)
 	err := row.Scan(
 		&i.ID, &i.Name, &i.BaseURL, &i.RoutePrefix, &i.apiKeyHash,
 		&scopesRaw, &i.Version, &i.Enabled, &healthStatus, &healthRaw,
 		&healthLastSeen, &i.CreatedAt, &rotatedAt, &i.IsSystem,
+		&memoryPolicy,
 	)
 	if err != nil {
 		return Integration{}, err
 	}
+	i.MemoryPolicy = MemoryPolicy(memoryPolicy)
 	_ = json.Unmarshal(scopesRaw, &i.Scopes)
 	if i.Scopes == nil {
 		i.Scopes = []string{}
@@ -236,8 +251,9 @@ func nullIfEmpty(s string) any {
 
 // UpdatePatch carries the optional fields for store.Update.
 type UpdatePatch struct {
-	BaseURL *string
-	Scopes  *[]string
-	Version *string
-	Enabled *bool
+	BaseURL      *string
+	Scopes       *[]string
+	Version      *string
+	Enabled      *bool
+	MemoryPolicy *MemoryPolicy
 }

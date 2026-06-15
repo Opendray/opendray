@@ -14,11 +14,14 @@ import { IntegrationsPage } from '@/pages/Integrations'
 import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
 import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
-import { ProjectPage } from '@/pages/Project'
+import { NotesPage } from '@/pages/Project'
+import { CortexPage } from '@/pages/Cortex'
+import { QuarantinePage } from '@/pages/Quarantine'
 import { ArchivedPage } from '@/pages/Archived'
 import { BackupsPage } from '@/pages/Backups'
 import { ExportPage } from '@/pages/Export'
-import { NotesPage } from '@/pages/Notes'
+import { VaultPage } from '@/pages/Notes'
+import { KnowledgePage } from '@/pages/Knowledge'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
 import { useAuth } from '@/stores/auth'
@@ -81,37 +84,130 @@ const activityRoute = createRoute({
   component: ActivityPage,
 })
 
-const notesRoute = createRoute({
+// ── Cortex — the unified Memory → Notes → Knowledge module ──────
+// One nav entry, layered inside: home (the flywheel), project
+// workspace (Notes), knowledge (global), memory (raw + hygiene +
+// quarantine). The old /notes /memory /knowledge routes redirect so
+// bookmarks survive.
+
+const cortexRoute = createRoute({
   getParentRoute: () => protectedRoute,
-  path: '/notes',
+  path: '/cortex',
+  component: CortexPage,
+})
+
+const cortexProjectRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/project',
   component: NotesPage,
-})
-
-const memoryRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/memory',
-  component: MemoryPage,
-})
-
-const memoryProjectRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/memory/project',
-  component: ProjectPage,
   validateSearch: (search) => ({
     cwd: typeof search.cwd === 'string' ? search.cwd : '',
   }),
 })
 
+const cortexKnowledgeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/knowledge',
+  component: KnowledgePage,
+})
+
+const cortexMemoryRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory',
+  component: MemoryPage,
+})
+
+const cortexMemoryQuarantineRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/quarantine',
+  component: QuarantinePage,
+})
+
+const cortexMemoryArchivedRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/archived',
+  component: ArchivedPage,
+})
+
+// The Cortex settings page — every AI-drive knob in one place
+// (spawn injection mode, per-task workers + models, capture rules,
+// ambient profiles, cost audit). The old "memory workers" page grew
+// into this; its route redirects.
+const cortexSettingsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/settings',
+  component: MemoryWorkersPage,
+})
+
+const cortexMemoryWorkersRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/cortex/memory/workers',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/settings' })
+  },
+})
+
+// Legacy redirects — the silo tabs are gone, the data is not.
+const notesRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/notes',
+  validateSearch: (search) => ({
+    cwd: typeof search.cwd === 'string' ? search.cwd : '',
+  }),
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/cortex/project', search })
+  },
+})
+
+const knowledgeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/knowledge',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/knowledge' })
+  },
+})
+
+const memoryRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory',
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/memory' })
+  },
+})
+
+const memoryProjectRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/memory/project',
+  validateSearch: (search) => ({
+    cwd: typeof search.cwd === 'string' ? search.cwd : '',
+  }),
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/cortex/project', search })
+  },
+})
+
 const memoryArchivedRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/memory/archived',
-  component: ArchivedPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/memory/archived' })
+  },
 })
 
 const memoryWorkersRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/memory/workers',
-  component: MemoryWorkersPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/cortex/settings' })
+  },
+})
+
+// Vault — the markdown/Obsidian-sync utility, demoted out of the core
+// Memory/Notes/Knowledge triad (Experience Flywheel §7).
+const vaultRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/vault',
+  component: VaultPage,
 })
 
 const pluginsRoute = createRoute({
@@ -150,7 +246,17 @@ const routeTree = rootRoute.addChildren([
     channelsRoute,
     integrationsRoute,
     activityRoute,
+    cortexRoute,
+    cortexProjectRoute,
+    cortexKnowledgeRoute,
+    cortexSettingsRoute,
+    cortexMemoryRoute,
+    cortexMemoryQuarantineRoute,
+    cortexMemoryArchivedRoute,
+    cortexMemoryWorkersRoute,
     notesRoute,
+    vaultRoute,
+    knowledgeRoute,
     memoryRoute,
     memoryProjectRoute,
     memoryArchivedRoute,

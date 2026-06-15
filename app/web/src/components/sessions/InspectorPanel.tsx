@@ -1,11 +1,11 @@
 import { useCallback, useRef } from 'react'
 import {
   Brain,
+  BookText,
   Folder,
   GitBranch,
   Search,
   Play,
-  NotebookPen,
   History as HistoryIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -23,8 +23,8 @@ import type { Session } from '@/lib/types'
 import { FilesPanel } from './inspector/FilesPanel'
 import { GitPanel } from './inspector/GitPanel'
 import { HistoryPanel } from './inspector/HistoryPanel'
-import { MemoryPanel } from './inspector/MemoryPanel'
-import { NotesPanel } from './inspector/NotesPanel'
+import { CortexPanel } from './inspector/CortexPanel'
+import { VaultPanel } from './inspector/VaultPanel'
 import { SearchPanel } from './inspector/SearchPanel'
 import { TaskRunnerPanel } from './inspector/TaskRunnerPanel'
 
@@ -105,9 +105,12 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
       <Tabs defaultValue="files" className="flex-1 flex flex-col min-h-0">
         <div className="px-2 py-2 border-b border-border shrink-0">
           {/* 7 tabs in a 4-col grid → row 1: Files / Git / Search / Tasks,
-              row 2: History (2) + Notes (2),
-              row 3: Memory (4) — mirrors mobile's 🏁 Project memory
-              shortcut that jumps from session detail to ProjectScreen. */}
+              row 2: History (2) + Vault (2),
+              row 3: Cortex (4) — the project's Cortex workspace glance;
+              "Open" jumps to /cortex/project (the unified doc + journal +
+              inbox + memory hygiene), mirroring mobile's 🏁 shortcut.
+              Vault and Cortex are kept in separate lanes: Vault is the
+              markdown notes utility, Cortex is the AI-maintained memory. */}
           <TabsList className="bg-transparent border-0 p-0 gap-0.5 w-full grid grid-cols-4 gap-y-0.5">
             <TabsTrigger
               value="files"
@@ -145,18 +148,18 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               {t('web.sessions.inspector.tabs.history')}
             </TabsTrigger>
             <TabsTrigger
-              value="notes"
+              value="vault"
               className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
-              <NotebookPen className="size-3" />
-              {t('web.sessions.inspector.tabs.notes')}
+              <BookText className="size-3" />
+              {t('web.sessions.inspector.tabs.vault')}
             </TabsTrigger>
             <TabsTrigger
-              value="memory"
+              value="cortex"
               className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
             >
               <Brain className="size-3" />
-              {t('web.sessions.inspector.tabs.memory')}
+              {t('web.sessions.inspector.tabs.cortex')}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -177,11 +180,11 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           <TabsContent value="history" className="m-0 p-3">
             <HistoryPanel session={session} />
           </TabsContent>
-          <TabsContent value="notes" className="m-0 p-3">
-            <NotesPanel cwd={session.cwd} />
+          <TabsContent value="vault" className="m-0 p-3">
+            <VaultPanel cwd={session.cwd} />
           </TabsContent>
-          <TabsContent value="memory" className="m-0 p-3">
-            <MemoryPanel cwd={session.cwd} />
+          <TabsContent value="cortex" className="m-0 p-3">
+            <CortexPanel cwd={session.cwd} />
           </TabsContent>
         </ScrollArea>
       </Tabs>

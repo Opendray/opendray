@@ -24,6 +24,7 @@ type Config struct {
 	Providers ProvidersConfig `toml:"providers" json:"providers"`
 	Memory    MemoryConfig    `toml:"memory" json:"memory"`
 	Backup    BackupConfig    `toml:"backup" json:"backup"`
+	Knowledge KnowledgeConfig `toml:"knowledge" json:"knowledge"`
 
 	// FilePath is the path config.toml was loaded from. Set by Load
 	// after a successful read so the runtime can find the same file
@@ -175,13 +176,12 @@ type MemoryCleanerConfig struct {
 	// Enabled toggles the auto-run scheduler (periodic sweep +
 	// dormant-archive + purge). The on-demand POST /memory/cleanup/run
 	// works either way.
+	//
+	// Note: the legacy `summarizer_id` key was removed in the settings
+	// consolidation — cleaner dispatch goes through the memory worker
+	// registry (memory_workers.cleaner) since M25, and BurntSushi/toml
+	// ignores the stale key in older config files.
 	Enabled bool `toml:"enabled" json:"enabled"`
-
-	// SummarizerID is DEPRECATED and ignored since M25 — cleaner
-	// dispatch now goes through the memory worker registry instead
-	// (memory_workers.cleaner.summarizer_id). Kept only so existing
-	// configs still decode without error.
-	SummarizerID string `toml:"summarizer_id" json:"summarizer_id"`
 
 	// IntervalSeconds between automatic sweeps. Empty / 0 → 86400
 	// (24h). Set to a small value (e.g. 300 = 5 min) for testing.
@@ -249,9 +249,10 @@ type MemoryGatekeeperConfig struct {
 }
 
 type ProvidersConfig struct {
-	Claude ClaudeProviderConfig `toml:"claude" json:"claude"`
-	Codex  CodexProviderConfig  `toml:"codex" json:"codex"`
-	Gemini GeminiProviderConfig `toml:"gemini" json:"gemini"`
+	Claude      ClaudeProviderConfig      `toml:"claude" json:"claude"`
+	Codex       CodexProviderConfig       `toml:"codex" json:"codex"`
+	Gemini      GeminiProviderConfig      `toml:"gemini" json:"gemini"`
+	Antigravity AntigravityProviderConfig `toml:"antigravity" json:"antigravity"`
 }
 
 // ClaudeProviderConfig points at where Claude Code CLI persists
@@ -316,6 +317,16 @@ type CodexProviderConfig struct {
 type GeminiProviderConfig struct {
 	TmpRoot      string `toml:"tmp_root" json:"tmp_root"`
 	ProjectsFile string `toml:"projects_file" json:"projects_file"`
+}
+
+// AntigravityProviderConfig points at the Antigravity (agy) CLI's
+// per-conversation SQLite store. Each conversation is a standalone
+// <trajectory-uuid>.db; opendray reads them read-only to reconstruct
+// the session transcript.
+//
+// Default: ~/.gemini/antigravity-cli/conversations.
+type AntigravityProviderConfig struct {
+	ConversationsRoot string `toml:"conversations_root" json:"conversations_root"`
 }
 
 // MCPConfig points at the MCP server registry directory and the
@@ -393,6 +404,18 @@ type BackupConfig struct {
 	ExportDir     string `toml:"export_dir" json:"export_dir"`
 	PgDumpPath    string `toml:"pg_dump_path" json:"pg_dump_path"`
 	PgRestorePath string `toml:"pg_restore_path" json:"pg_restore_path"`
+}
+
+// KnowledgeConfig gates the M-KG structured knowledge graph (see
+// docs/knowledge-graph-redesign.md). The tier is DB-native and grows on top
+// of the memory system; it is OFF by default, so when disabled the gateway
+// behaves exactly like the memory-only (M-U) build. Decoupling rule:
+// internal/knowledge reads internal/memory, never the reverse.
+type KnowledgeConfig struct {
+	// Enabled turns the whole knowledge tier on. When false the
+	// knowledge_* tables exist but stay empty and no routes are mounted.
+	// Default false.
+	Enabled bool `toml:"enabled" json:"enabled"`
 }
 
 type AdminConfig struct {
@@ -540,6 +563,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_BACKUP_PG_RESTORE_PATH"); v != "" {
 		cfg.Backup.PgRestorePath = v
+	}
+	if v := os.Getenv("OPENDRAY_KNOWLEDGE_ENABLED"); v == "1" || v == "true" {
+		cfg.Knowledge.Enabled = true
 	}
 }
 

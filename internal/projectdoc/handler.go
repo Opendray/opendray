@@ -49,9 +49,21 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/project-docs", func(r chi.Router) {
 		r.Get("/", h.listDocs)
+		// Static segments must register before the {kind} wildcard so
+		// /projects + /lifecycle + /blueprint aren't swallowed as a
+		// doc kind.
+		r.Get("/projects", h.listProjects)
+		r.Post("/lifecycle", h.setLifecycle)
+		r.Post("/reset", h.resetCwd)
+		// Blueprint (Cortex Phase 3) — the per-project section set.
+		r.Get("/blueprint", h.listSections)
+		r.Put("/blueprint/{slug}", h.putSection)
+		r.Delete("/blueprint/{slug}", h.deleteSection)
 		r.Get("/{kind}", h.getDoc)
 		r.Put("/{kind}", h.putDoc)
-		r.Post("/reset", h.resetCwd)
+		// Agent-side policy-routed write: direct-write for direct sections
+		// (when unlocked), proposal otherwise. See Service.SetDocByPolicy.
+		r.Post("/{kind}/set", h.setDoc)
 	})
 	r.Route("/project-doc-proposals", func(r chi.Router) {
 		r.Get("/pending", h.listPending)
@@ -92,6 +104,50 @@ func (h *Handlers) listStale(w http.ResponseWriter, r *http.Request) {
 		out = []LogEntry{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"stale": out})
+}
+
+// ─── blueprint (Cortex Phase 3) ────────────────────────────────────
+
+func (h *Handlers) listSections(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	sections, err := h.svc.ListSections(r.Context(), cwd)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	if sections == nil {
+		sections = []Section{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"sections": sections})
+}
+
+func (h *Handlers) putSection(w http.ResponseWriter, r *http.Request) {
+	var body Section
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	body.Slug = chi.URLParam(r, "slug")
+	sec, err := h.svc.PutSection(r.Context(), body)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sec)
+}
+
+func (h *Handlers) deleteSection(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	slug := chi.URLParam(r, "slug")
+	if err := h.svc.DeleteSection(r.Context(), cwd, slug); err != nil {
+		if errors.Is(err, ErrReservedSection) {
+			writeError(w, http.StatusForbidden, err)
+			return
+		}
+		h.respondErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // ─── project_docs ─────────────────────────────────────────────────
@@ -154,6 +210,32 @@ func (h *Handlers) putDoc(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, doc)
 }
 
+// setDoc is the agent-facing write that respects the section's blueprint
+// write_policy: a "direct" section (e.g. current_objective) writes the
+// live doc directly when it is unlocked; "proposal" sections (goal/plan)
+// — or any section a human has hand-edited — file a proposal instead.
+// The response carries the action taken so the caller can tell the agent
+// whether the doc updated live or is waiting for approval.
+func (h *Handlers) setDoc(w http.ResponseWriter, r *http.Request) {
+	kind := Kind(chi.URLParam(r, "kind"))
+	var body struct {
+		Cwd       string `json:"cwd"`
+		Content   string `json:"content"`
+		Reason    string `json:"reason,omitempty"`
+		SessionID string `json:"session_id,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	out, err := h.svc.SetDocByPolicy(r.Context(), body.Cwd, kind, body.Content, body.Reason, body.SessionID)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
 // resetCwd wipes per-cwd project memory state — goal/plan
 // (optionally scanner-managed docs too), proposals queue, journal,
 // and the M13 cleanup decisions for this cwd. Memories (pgvector
@@ -199,6 +281,58 @@ func (h *Handlers) resetCwd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, counts)
+}
+
+// ─── lifecycle (P-D) ──────────────────────────────────────────────
+
+// defaultIdleSuggestDays is the staleness threshold for the
+// "consider archiving" hint. 45 days ≈ a project untouched for a month
+// and a half — long enough to avoid nagging on active work, short
+// enough to surface genuinely dormant projects.
+const defaultIdleSuggestDays = 45
+
+// listProjects returns every known project (cwd) with its lifecycle
+// status + last activity, for the operator's project list. The
+// ?idle_days= query overrides the auto-suggest threshold (0 disables).
+func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
+	idleDays := defaultIdleSuggestDays
+	if v := r.URL.Query().Get("idle_days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			idleDays = n
+		}
+	}
+	projects, err := h.svc.ListProjects(r.Context(), idleDays)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	if projects == nil {
+		projects = []ProjectSummary{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})
+}
+
+// setLifecycle sets a project's status (active/paused/archived).
+// Body: {cwd, status}. updated_by defaults to operator.
+func (h *Handlers) setLifecycle(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Cwd       string        `json:"cwd"`
+		Status    ProjectStatus `json:"status"`
+		UpdatedBy Author        `json:"updated_by,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	author := body.UpdatedBy
+	if author == "" {
+		author = AuthorOperator
+	}
+	if err := h.svc.SetStatus(r.Context(), body.Cwd, body.Status, author); err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"cwd": body.Cwd, "status": body.Status})
 }
 
 // ─── proposals ────────────────────────────────────────────────────
@@ -311,6 +445,8 @@ func (h *Handlers) respondErr(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, err)
 	case errors.Is(err, ErrInvalidKind),
 		errors.Is(err, ErrInvalidLogKind),
+		errors.Is(err, ErrInvalidStatus),
+		errors.Is(err, ErrEphemeralCwd),
 		errors.Is(err, ErrEmptyCwd):
 		writeError(w, http.StatusBadRequest, err)
 	default:

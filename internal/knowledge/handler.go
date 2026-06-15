@@ -1,0 +1,336 @@
+package knowledge
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"log/slog"
+	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
+)
+
+// Handlers exposes the knowledge graph over HTTP. Mounted under the gateway's
+// dual-auth group (admin OR integration token) so both operators and the
+// auto-attached opendray-memory MCP can reach it once later phases wire the
+// agent surface. Phase 0 ships CRUD only.
+type Handlers struct {
+	svc *Service
+	log *slog.Logger
+}
+
+// NewHandlers wraps a Service for HTTP.
+func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
+	if log == nil {
+		log = slog.Default()
+	}
+	return &Handlers{svc: svc, log: log.With("component", "knowledge.http")}
+}
+
+// Mount registers the /knowledge routes.
+func (h *Handlers) Mount(r chi.Router) {
+	r.Route("/knowledge", func(r chi.Router) {
+		r.Get("/nodes", h.listNodes)
+		r.Post("/nodes", h.createNode)
+		r.Get("/nodes/{id}", h.getNode)
+		r.Delete("/nodes/{id}", h.deleteNode)
+		r.Get("/nodes/{id}/edges", h.listEdges)
+		r.Get("/nodes/{id}/graph", h.neighborhood)
+		r.Post("/nodes/{id}/promote", h.promote)
+		r.Post("/nodes/{id}/skillify", h.skillify)
+		r.Post("/nodes/{id}/enable", h.setEnabled)
+		r.Post("/skills/distill", h.distillSkill)
+		r.Post("/edges", h.createEdge)
+		r.Get("/brain", h.projectBrain)
+		r.Get("/graph-all", h.graphAll)
+		r.Get("/impact", h.impact)
+		r.Get("/skills/retirement", h.retirement)
+		r.Get("/search", h.search)
+		r.Post("/reset", h.reset)
+		r.Post("/kb/draft", h.draftKB)
+	})
+}
+
+// retirement returns the skills the closed feedback loop proposes to retire
+// (never used / loaded-but-failing / dormant) for the workbench.
+func (h *Handlers) retirement(w http.ResponseWriter, r *http.Request) {
+	out, err := h.svc.RetirementCandidates(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if out == nil {
+		out = []RetirementCandidate{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"candidates": out})
+}
+
+// graphAll returns every live node + edge (capped, most-connected first)
+// for the network graph view's initial render.
+func (h *Handlers) graphAll(w http.ResponseWriter, r *http.Request) {
+	limit, _ := strconv.Atoi(r.URL.Query().Get("n"))
+	out, err := h.svc.GraphAll(r.Context(), limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// impact returns entities ordered by blast radius for the Impact view.
+func (h *Handlers) impact(w http.ResponseWriter, r *http.Request) {
+	limit, _ := strconv.Atoi(r.URL.Query().Get("n"))
+	out, err := h.svc.ImpactEntities(r.Context(), limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if out == nil {
+		out = []ImpactEntity{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"entities": out})
+}
+
+func (h *Handlers) listNodes(w http.ResponseWriter, r *http.Request) {
+	f := NodeFilter{
+		Kind:     NodeKind(r.URL.Query().Get("kind")),
+		Scope:    Scope(r.URL.Query().Get("scope")),
+		ScopeKey: r.URL.Query().Get("scope_key"),
+	}
+	nodes, err := h.svc.ListNodes(r.Context(), f)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"nodes": nodes})
+}
+
+func (h *Handlers) createNode(w http.ResponseWriter, r *http.Request) {
+	var n Node
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&n); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	created, err := h.svc.CreateNode(r.Context(), n)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, created)
+}
+
+func (h *Handlers) getNode(w http.ResponseWriter, r *http.Request) {
+	n, err := h.svc.GetNode(r.Context(), chi.URLParam(r, "id"))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, n)
+}
+
+func (h *Handlers) listEdges(w http.ResponseWriter, r *http.Request) {
+	edges, err := h.svc.ListEdges(r.Context(), chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"edges": edges})
+}
+
+func (h *Handlers) createEdge(w http.ResponseWriter, r *http.Request) {
+	var e Edge
+	if err := json.NewDecoder(io.LimitReader(r.Body, 64<<10)).Decode(&e); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := h.svc.CreateEdge(r.Context(), e); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) neighborhood(w http.ResponseWriter, r *http.Request) {
+	center, neighbors, err := h.svc.Neighborhood(r.Context(), chi.URLParam(r, "id"))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"node": center, "neighbors": neighbors})
+}
+
+func (h *Handlers) projectBrain(w http.ResponseWriter, r *http.Request) {
+	cwd := r.URL.Query().Get("cwd")
+	if cwd == "" {
+		writeError(w, http.StatusBadRequest, errors.New("cwd is required"))
+		return
+	}
+	view, err := h.svc.ProjectBrain(r.Context(), cwd)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, view)
+}
+
+func (h *Handlers) promote(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Scope    string `json:"scope"`
+		ScopeKey string `json:"scope_key"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 8<<10)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	scope := Scope(req.Scope)
+	if !scope.Valid() {
+		writeError(w, http.StatusBadRequest, errors.New("invalid scope (project|domain|global)"))
+		return
+	}
+	if err := h.svc.PromoteNode(r.Context(), chi.URLParam(r, "id"), scope, req.ScopeKey); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) skillify(w http.ResponseWriter, r *http.Request) {
+	skill, err := h.svc.Skillify(r.Context(), chi.URLParam(r, "id"))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, skill)
+}
+
+// distillSkill is the manual-trigger distillation path (Hermes: the
+// operator tells the in-session agent "save this procedure as a
+// skill"). The agent authors the draft from its live context; the
+// structural gate validates it; it lands DISABLED awaiting the
+// operator's enable click in the workbench.
+func (h *Handlers) distillSkill(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Title       string   `json:"title"`
+		AppliesWhen string   `json:"applies_when"`
+		Steps       []string `json:"steps"`
+		Pitfalls    []string `json:"pitfalls"`
+		Evidence    []string `json:"evidence"`
+		SessionID   string   `json:"session_id"`
+		Cwd         string   `json:"cwd"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	node, err := h.svc.DistillSkillFromAgent(r.Context(), draftPlaybook{
+		Title:       body.Title,
+		AppliesWhen: body.AppliesWhen,
+		Steps:       body.Steps,
+		Pitfalls:    body.Pitfalls,
+		Evidence:    body.Evidence,
+	}, body.SessionID, body.Cwd)
+	if err != nil {
+		writeError(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, node)
+}
+
+// setEnabled flips a node's enabled flag. For skills this also
+// writes/removes the vault SKILL.md so sessions only ever load
+// enabled skills.
+func (h *Handlers) setEnabled(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	n, err := h.svc.SetSkillEnabled(r.Context(), chi.URLParam(r, "id"), body.Enabled)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, n)
+}
+
+func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("q")
+	if q == "" {
+		writeError(w, http.StatusBadRequest, errors.New("q is required"))
+		return
+	}
+	topK, _ := strconv.Atoi(r.URL.Query().Get("top_k"))
+	hits, err := h.svc.SearchNodes(r.Context(), q, r.URL.Query().Get("cwd"), topK)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"hits": hits})
+}
+
+func (h *Handlers) deleteNode(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.DeleteNode(r.Context(), chi.URLParam(r, "id")); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) draftKB(w http.ResponseWriter, r *http.Request) {
+	// Drafting all pages can take minutes (one LLM call each), so run it
+	// detached on a background context — far past any HTTP request deadline.
+	go func() {
+		if _, err := h.svc.DraftKB(context.Background()); err != nil {
+			h.log.Warn("kb manual draft failed", "err", err)
+		}
+	}()
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (h *Handlers) reset(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.Reset(r.Context()); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeJSON(w http.ResponseWriter, code int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeError(w http.ResponseWriter, code int, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+}

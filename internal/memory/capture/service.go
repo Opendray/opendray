@@ -10,7 +10,12 @@ import (
 
 	"github.com/opendray/opendray-v2/internal/memory"
 	"github.com/opendray/opendray-v2/internal/memory/summarizer"
+	"github.com/opendray/opendray-v2/internal/projectdoc"
 )
+
+// isEphemeralCwd delegates to the canonical predicate so capture and
+// the Notes layer agree on what counts as a throwaway temp dir.
+func isEphemeralCwd(cwd string) bool { return projectdoc.IsEphemeralCwd(cwd) }
 
 // MemoryWriter is the slice of memory.Service the capture pipeline
 // needs. Defined locally so tests can pass a mock.
@@ -20,13 +25,31 @@ type MemoryWriter interface {
 }
 
 // SessionInfo is the minimal session shape capture needs — id +
-// provider id + cwd. Real impl wraps session.Manager.Get/List.
+// provider id + cwd + provenance. Real impl wraps session.Manager.
 type SessionInfo struct {
 	ID         string
 	ProviderID string
 	Cwd        string
 	State      string // "running" / "idle" / etc.
+	// Origin is who created the session ("operator"|"integration"|
+	// "cli"; empty = operator). IntegrationID is set for
+	// origin=integration. Cortex Phase 2: the runner routes captured
+	// facts by the integration's memory_policy.
+	Origin        string
+	IntegrationID string
 }
+
+// PolicyResolver answers "what memory policy does this integration
+// declare?" — backed by integration.Service. Returned values are
+// "none" | "quarantine" | "full"; errors degrade to quarantine
+// (safe-by-default).
+type PolicyResolver interface {
+	MemoryPolicy(ctx context.Context, integrationID string) (string, error)
+}
+
+// DefaultQuarantineTTL bounds how long un-reviewed quarantined facts
+// live before the cleaner purges them.
+const DefaultQuarantineTTL = 30 * 24 * time.Hour
 
 // SessionLister is what capture needs from session.Manager.
 type SessionLister interface {
@@ -81,6 +104,49 @@ type runner struct {
 	state          *stateMap
 	historyLimit   int
 	log            *slog.Logger
+	// policy + quarantineTTL route integration-created sessions'
+	// facts into the right memory tier. Nil policy treats every
+	// integration session as quarantine (safe-by-default).
+	policy        PolicyResolver
+	quarantineTTL time.Duration
+}
+
+// routeForSession resolves the memory tier for a session's captured
+// facts from its origin + the integration's declared policy.
+// skip=true means the session must produce no memory at all.
+func (r *runner) routeForSession(ctx context.Context, sess SessionInfo) (tier string, expiry *time.Time, skip bool) {
+	// Sessions running in throwaway temp dirs (third-party consumers,
+	// tests) are not project work — they leave no memory at all,
+	// regardless of origin. Mirrors projectdoc.IsEphemeralCwd.
+	if isEphemeralCwd(sess.Cwd) {
+		return "", nil, true
+	}
+	if sess.Origin != "integration" {
+		return memory.TierDurable, nil, false
+	}
+	policy := "quarantine"
+	if r.policy != nil {
+		p, err := r.policy.MemoryPolicy(ctx, sess.IntegrationID)
+		if err != nil {
+			r.log.Warn("capture: memory policy lookup failed — quarantining",
+				"session_id", sess.ID, "integration_id", sess.IntegrationID, "err", err)
+		} else if p != "" {
+			policy = p
+		}
+	}
+	switch policy {
+	case "none":
+		return "", nil, true
+	case "full":
+		return memory.TierDurable, nil, false
+	default: // quarantine
+		ttl := r.quarantineTTL
+		if ttl <= 0 {
+			ttl = DefaultQuarantineTTL
+		}
+		t := time.Now().UTC().Add(ttl)
+		return memory.TierQuarantine, &t, false
+	}
 }
 
 // runForceForSession bypasses trigger evaluation and pause state,
@@ -100,6 +166,14 @@ func (r *runner) runForSessionWithForce(ctx context.Context, rule Rule, sess Ses
 		return // shouldn't happen but cheap to defend
 	}
 	if !force && r.state.IsPaused(rule.ID, sess.ID) {
+		return
+	}
+
+	// Provenance routing (Cortex Phase 2) — decided up front so a
+	// policy=none session skips the transcript read + summarizer call
+	// entirely, not just the store.
+	tier, quarantineExpiry, skip := r.routeForSession(ctx, sess)
+	if skip {
 		return
 	}
 
@@ -217,19 +291,25 @@ func (r *runner) runForSessionWithForce(ctx context.Context, rule Rule, sess Ses
 			continue
 		}
 		conf := fact.Confidence // copy local for pointer
+		meta := map[string]any{
+			"summarizer_category": string(fact.Category),
+			"provider_kind":       prov.Kind(),
+			"provider_name":       prov.Name(),
+		}
+		if sess.Origin == "integration" && sess.IntegrationID != "" {
+			meta["integration_id"] = sess.IntegrationID
+		}
 		_, err := r.memory.Store(ctx, memory.StoreRequest{
-			Text:              fact.Text,
-			Scope:             memory.Scope(rule.TargetScope),
-			ScopeKey:          scopeKey,
-			SourceKind:        "summarizer",
-			SourceRef:         rule.ID,
-			SummarizerSession: sess.ID,
-			Confidence:        &conf,
-			Metadata: map[string]any{
-				"summarizer_category": string(fact.Category),
-				"provider_kind":       prov.Kind(),
-				"provider_name":       prov.Name(),
-			},
+			Text:                fact.Text,
+			Scope:               memory.Scope(rule.TargetScope),
+			ScopeKey:            scopeKey,
+			SourceKind:          "summarizer",
+			SourceRef:           rule.ID,
+			SummarizerSession:   sess.ID,
+			Confidence:          &conf,
+			Tier:                tier,
+			QuarantineExpiresAt: quarantineExpiry,
+			Metadata:            meta,
 		})
 		if err != nil {
 			r.log.Warn("capture: memory store failed",

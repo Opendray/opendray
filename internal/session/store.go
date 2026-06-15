@@ -22,6 +22,7 @@ const sessionSelect = `
            COALESCE(pid, 0),
            COALESCE(claude_account_id, ''), COALESCE(claude_session_id, ''),
            COALESCE(parent_session_id, ''),
+           COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
            started_at, ended_at, exit_code
     FROM sessions`
 
@@ -33,16 +34,21 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 	if argsJSON == nil {
 		argsJSON = []byte("[]")
 	}
+	origin := sess.Origin
+	if origin == "" {
+		origin = OriginOperator
+	}
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO sessions
             (id, name, provider_id, cwd, args, state, pid,
              claude_account_id, claude_session_id, parent_session_id,
-             started_at)
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11)`,
+             origin, integration_id, started_at)
+        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13)`,
 		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Cwd,
 		argsJSON, string(sess.State), nullableInt(sess.PID),
 		nullableString(sess.ClaudeAccountID), nullableString(sess.ClaudeSessionID),
 		nullableString(sess.ParentSessionID),
+		string(origin), nullableString(sess.IntegrationID),
 		sess.StartedAt)
 	if err != nil {
 		return fmt.Errorf("insert session: %w", err)
@@ -224,15 +230,16 @@ type rowScanner interface {
 
 func scanSession(row rowScanner) (Session, error) {
 	var (
-		s        Session
-		argsJSON []byte
-		endedAt  sql.NullTime
-		exitCode sql.NullInt32
-		stateStr string
+		s         Session
+		argsJSON  []byte
+		endedAt   sql.NullTime
+		exitCode  sql.NullInt32
+		stateStr  string
+		originStr string
 	)
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Cwd, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
-		&s.ParentSessionID,
+		&s.ParentSessionID, &originStr, &s.IntegrationID,
 		&s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound
@@ -241,6 +248,7 @@ func scanSession(row rowScanner) (Session, error) {
 		return Session{}, fmt.Errorf("scan session: %w", err)
 	}
 	s.State = State(stateStr)
+	s.Origin = Origin(originStr)
 	_ = json.Unmarshal(argsJSON, &s.Args)
 	if endedAt.Valid {
 		t := endedAt.Time

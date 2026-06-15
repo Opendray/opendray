@@ -74,6 +74,7 @@ class ProviderDetail {
     required this.config,
     required this.configSchema,
     required this.enabled,
+    this.icon = '',
   });
 
   factory ProviderDetail.fromJson(Map<String, dynamic> json) {
@@ -99,6 +100,7 @@ class ProviderDetail {
               .toList()
           : <ConfigField>[],
       enabled: json['enabled'] as bool? ?? false,
+      icon: manifest['icon'] as String? ?? '',
     );
   }
 
@@ -110,6 +112,9 @@ class ProviderDetail {
   final Map<String, dynamic> config;
   final List<ConfigField> configSchema;
   final bool enabled;
+  // Manifest emoji glyph (e.g. 🪐 for Antigravity). Mobile renders this
+  // as the provider avatar; the web uses brand SVGs.
+  final String icon;
 }
 
 // ProviderRuntime is the live, probed CLI state (not from the manifest):

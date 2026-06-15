@@ -64,21 +64,26 @@ func (s *Service) Mirror(ctx context.Context, cwd string) error {
 		return fmt.Errorf("projectdoc: mirror list logs: %w", err)
 	}
 
-	var goal, plan string
+	// Cortex Phase 3 — every blueprint section mirrors to its own
+	// `<SLUG>.md` (GOAL.md / PLAN.md keep their historical names for
+	// free since the slugs match). Sections currently in the blueprint
+	// always get a file (empty content = empty file) so deleting the
+	// content empties the mirror instead of leaving a stale copy.
+	sections, sErr := s.ListSections(ctx, cwd)
+	if sErr != nil {
+		// Blueprint unavailable (e.g. un-migrated test DB): fall back
+		// to the default set so GOAL/PLAN keep mirroring.
+		sections = defaultSections(cwd)
+	}
+	content := make(map[string]string, len(docs))
 	for _, d := range docs {
-		switch d.Kind {
-		case KindGoal:
-			goal = d.Content
-		case KindPlan:
-			plan = d.Content
+		content[string(d.Kind)] = d.Content
+	}
+	for _, sec := range sections {
+		name := strings.ToUpper(sec.Slug) + ".md"
+		if err := writeIfDifferent(filepath.Join(dir, name), content[sec.Slug]); err != nil {
+			return fmt.Errorf("projectdoc: mirror %s: %w", name, err)
 		}
-	}
-
-	if err := writeIfDifferent(filepath.Join(dir, "GOAL.md"), goal); err != nil {
-		return fmt.Errorf("projectdoc: mirror GOAL.md: %w", err)
-	}
-	if err := writeIfDifferent(filepath.Join(dir, "PLAN.md"), plan); err != nil {
-		return fmt.Errorf("projectdoc: mirror PLAN.md: %w", err)
 	}
 	if err := writeIfDifferent(filepath.Join(dir, "JOURNAL.md"), renderJournalFile(logs)); err != nil {
 		return fmt.Errorf("projectdoc: mirror JOURNAL.md: %w", err)

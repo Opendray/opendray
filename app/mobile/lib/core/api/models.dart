@@ -141,6 +141,7 @@ class ProviderSummary {
     required this.name,
     required this.manifestHash,
     required this.enabled,
+    this.icon = '',
   });
 
   factory ProviderSummary.fromGatewayJson(Map<String, dynamic> json) {
@@ -160,6 +161,7 @@ class ProviderSummary {
       name: name,
       manifestHash: json['manifest_hash'] as String? ?? '',
       enabled: json['enabled'] as bool? ?? false,
+      icon: manifest['icon'] as String? ?? '',
     );
   }
 
@@ -167,6 +169,9 @@ class ProviderSummary {
   final String name;
   final String manifestHash;
   final bool enabled;
+  // Manifest emoji glyph (🪐 Antigravity, 🟣 Claude, …). Rendered as the
+  // mobile provider avatar; the web uses brand SVGs.
+  final String icon;
 }
 
 // One row from the gateway's audit log. Mirrors
@@ -279,6 +284,7 @@ class Memory {
     this.confidence,
     this.archivedAt,
     this.archivedReason,
+    this.quarantineExpiresAt,
   });
 
   factory Memory.fromJson(Map<String, dynamic> json) => Memory(
@@ -308,6 +314,9 @@ class Memory {
             ? DateTime.tryParse(json['archived_at'] as String)
             : null,
         archivedReason: json['archived_reason'] as String?,
+        quarantineExpiresAt: (json['quarantine_expires_at'] is String)
+            ? DateTime.tryParse(json['quarantine_expires_at'] as String)
+            : null,
       );
 
   final String id;
@@ -328,6 +337,8 @@ class Memory {
   // list/search never returns archived rows.
   final DateTime? archivedAt;
   final String? archivedReason;
+  // TTL deadline for quarantine-tier rows; null for durable memories.
+  final DateTime? quarantineExpiresAt;
 }
 
 // SearchHit pairs a Memory with its cosine similarity score so the

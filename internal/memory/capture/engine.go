@@ -42,6 +42,11 @@ type Deps struct {
 	// dispatch through the worker fabric so operators can choose
 	// Agent (CLI --print) for capture from the Memory → Workers UI.
 	WorkerProvider summarizer.Provider
+	// Policy resolves integration memory policies (Cortex Phase 2).
+	// Nil quarantines every integration-created session's facts.
+	Policy PolicyResolver
+	// QuarantineTTL — 0 falls back to DefaultQuarantineTTL.
+	QuarantineTTL time.Duration
 }
 
 // Engine drives the ambient capture loop: every TickInterval, list
@@ -99,6 +104,8 @@ func NewEngine(deps Deps) (*Engine, error) {
 		state:          state,
 		historyLimit:   deps.HistoryLimit,
 		log:            deps.Log.With("component", "capture-runner"),
+		policy:         deps.Policy,
+		quarantineTTL:  deps.QuarantineTTL,
 	}
 	return &Engine{
 		deps:   deps,

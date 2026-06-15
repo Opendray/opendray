@@ -44,15 +44,12 @@ class ProjectDocsApi {
     required String cwd,
     required String kind,
     required String content,
+    String updatedBy = 'operator',
   }) async {
     try {
       final res = await _dio.put<Map<String, dynamic>>(
         '/api/v1/project-docs/$kind',
-        data: {
-          'cwd': cwd,
-          'content': content,
-          'updated_by': 'operator',
-        },
+        data: {'cwd': cwd, 'content': content, 'updated_by': updatedBy},
       );
       return ProjectDoc.fromJson(res.data ?? {});
     } on Object catch (e) {
@@ -89,15 +86,48 @@ class ProjectDocsApi {
     }
   }
 
+  // ── lifecycle (P-D) ────────────────────────────────────────────
+
+  /// Lists every known project with its lifecycle status + last activity.
+  /// [idleDays] overrides the auto-suggest threshold (0 disables).
+  Future<List<ProjectSummary>> listProjects({int? idleDays}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/project-docs/projects',
+        queryParameters: {if (idleDays != null) 'idle_days': idleDays},
+      );
+      final raw = res.data?['projects'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(ProjectSummary.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// Sets a project's lifecycle status (active / paused / archived).
+  /// Frozen (paused/archived) projects are excluded from spawn injection
+  /// and cross-project Knowledge distillation.
+  Future<void> setLifecycle(String cwd, String status) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/api/v1/project-docs/lifecycle',
+        data: {'cwd': cwd, 'status': status},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // ── proposals ──────────────────────────────────────────────────
 
   Future<List<DocProposal>> listPendingProposals({String? cwd}) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/api/v1/project-doc-proposals/pending',
-        queryParameters: {
-          if (cwd != null && cwd.isNotEmpty) 'cwd': cwd,
-        },
+        queryParameters: {if (cwd != null && cwd.isNotEmpty) 'cwd': cwd},
       );
       final raw = res.data?['proposals'];
       if (raw is! List) return const [];
@@ -183,8 +213,10 @@ class ProjectDocsApi {
   // than `days` (default 90) that aren't referenced by any pending
   // memory_conflicts row. Used by the mobile Journal tab's bulk-
   // prune panel.
-  Future<List<SessionLogEntry>> listStaleLogs(String cwd,
-      {int days = 90}) async {
+  Future<List<SessionLogEntry>> listStaleLogs(
+    String cwd, {
+    int days = 90,
+  }) async {
     try {
       final res = await _dio.get<Map<String, dynamic>>(
         '/api/v1/session-logs/stale',
@@ -214,12 +246,12 @@ class ProjectDoc {
   });
 
   factory ProjectDoc.fromJson(Map<String, dynamic> j) => ProjectDoc(
-        id: j['id']?.toString() ?? '',
-        cwd: j['cwd']?.toString() ?? '',
-        kind: j['kind']?.toString() ?? '',
-        content: j['content']?.toString() ?? '',
-        updatedBy: j['updated_by']?.toString() ?? '',
-      );
+    id: j['id']?.toString() ?? '',
+    cwd: j['cwd']?.toString() ?? '',
+    kind: j['kind']?.toString() ?? '',
+    content: j['content']?.toString() ?? '',
+    updatedBy: j['updated_by']?.toString() ?? '',
+  );
 
   final String id;
   final String cwd;
@@ -228,6 +260,33 @@ class ProjectDoc {
   final String updatedBy;
 
   bool get isPersisted => id.isNotEmpty;
+}
+
+class ProjectSummary {
+  ProjectSummary({
+    required this.cwd,
+    required this.status,
+    required this.updatedBy,
+    required this.lastActivityAt,
+    required this.idleDays,
+    required this.suggestArchive,
+  });
+
+  factory ProjectSummary.fromJson(Map<String, dynamic> j) => ProjectSummary(
+    cwd: j['cwd']?.toString() ?? '',
+    status: j['status']?.toString() ?? 'active',
+    updatedBy: j['updated_by']?.toString() ?? 'operator',
+    lastActivityAt: DateTime.tryParse(j['last_activity_at']?.toString() ?? ''),
+    idleDays: (j['idle_days'] is int) ? j['idle_days'] as int : 0,
+    suggestArchive: j['suggest_archive'] == true,
+  );
+
+  final String cwd;
+  final String status;
+  final String updatedBy;
+  final DateTime? lastActivityAt;
+  final int idleDays;
+  final bool suggestArchive;
 }
 
 class DocProposal {
@@ -242,15 +301,15 @@ class DocProposal {
   });
 
   factory DocProposal.fromJson(Map<String, dynamic> j) => DocProposal(
-        id: j['id']?.toString() ?? '',
-        cwd: j['cwd']?.toString() ?? '',
-        kind: j['kind']?.toString() ?? '',
-        proposedContent: j['proposed_content']?.toString() ?? '',
-        reason: j['reason']?.toString() ?? '',
-        proposedBySession: j['proposed_by_session']?.toString() ?? '',
-        createdAt: DateTime.tryParse(j['created_at']?.toString() ?? '') ??
-            DateTime.now(),
-      );
+    id: j['id']?.toString() ?? '',
+    cwd: j['cwd']?.toString() ?? '',
+    kind: j['kind']?.toString() ?? '',
+    proposedContent: j['proposed_content']?.toString() ?? '',
+    reason: j['reason']?.toString() ?? '',
+    proposedBySession: j['proposed_by_session']?.toString() ?? '',
+    createdAt:
+        DateTime.tryParse(j['created_at']?.toString() ?? '') ?? DateTime.now(),
+  );
 
   final String id;
   final String cwd;
@@ -274,16 +333,16 @@ class SessionLogEntry {
   });
 
   factory SessionLogEntry.fromJson(Map<String, dynamic> j) => SessionLogEntry(
-        id: j['id']?.toString() ?? '',
-        cwd: j['cwd']?.toString() ?? '',
-        sessionId: j['session_id']?.toString() ?? '',
-        kind: j['kind']?.toString() ?? '',
-        title: j['title']?.toString() ?? '',
-        content: j['content']?.toString() ?? '',
-        updatedBy: j['updated_by']?.toString() ?? '',
-        createdAt: DateTime.tryParse(j['created_at']?.toString() ?? '') ??
-            DateTime.now(),
-      );
+    id: j['id']?.toString() ?? '',
+    cwd: j['cwd']?.toString() ?? '',
+    sessionId: j['session_id']?.toString() ?? '',
+    kind: j['kind']?.toString() ?? '',
+    title: j['title']?.toString() ?? '',
+    content: j['content']?.toString() ?? '',
+    updatedBy: j['updated_by']?.toString() ?? '',
+    createdAt:
+        DateTime.tryParse(j['created_at']?.toString() ?? '') ?? DateTime.now(),
+  );
 
   final String id;
   final String cwd;

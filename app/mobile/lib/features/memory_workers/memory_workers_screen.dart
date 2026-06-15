@@ -16,7 +16,11 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // Reachable from Memory screen AppBar → 🛠 Workers icon (added in
 // the same PR).
 class MemoryWorkersScreen extends ConsumerStatefulWidget {
-  const MemoryWorkersScreen({super.key});
+  const MemoryWorkersScreen({super.key, this.embedded = false});
+
+  /// When embedded inside the unified Cortex settings tabs, drop the
+  /// Scaffold/AppBar and render just the body.
+  final bool embedded;
 
   @override
   ConsumerState<MemoryWorkersScreen> createState() =>
@@ -47,6 +51,8 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _body();
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.memoryWorkers.title),
@@ -57,7 +63,12 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<WorkerConfig>>(
+      body: body,
+    );
+  }
+
+  Widget _body() {
+    return FutureBuilder<List<WorkerConfig>>(
         future: _workersFuture,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
@@ -122,8 +133,7 @@ class _MemoryWorkersScreenState extends ConsumerState<MemoryWorkersScreen> {
             ],
           );
         },
-      ),
-    );
+      );
   }
 }
 
@@ -151,8 +161,13 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
   late String _summarizerId;
   late String _providerId;
   late String _accountId;
+  late String _model;
   late bool _enabled;
   bool _busy = false;
+  // Cached per-provider model catalog (rebuilt when the provider changes
+  // so FutureBuilder doesn't refetch on every rebuild).
+  Future<List<ModelOption>>? _modelsFuture;
+  bool _modelCustom = false;
 
   @override
   void initState() {
@@ -161,7 +176,15 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
     _summarizerId = widget.config.summarizerId ?? '';
     _providerId = widget.config.providerId ?? '';
     _accountId = widget.config.accountId ?? '';
+    _model = widget.config.model ?? '';
     _enabled = widget.config.enabled;
+    _refreshModels();
+  }
+
+  void _refreshModels() {
+    _modelsFuture = _providerId.isEmpty
+        ? null
+        : ref.read(memoryWorkersApiProvider).listAgentModels(_providerId);
   }
 
   bool get _dirty =>
@@ -169,6 +192,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
       _summarizerId != (widget.config.summarizerId ?? '') ||
       _providerId != (widget.config.providerId ?? '') ||
       _accountId != (widget.config.accountId ?? '') ||
+      _model != (widget.config.model ?? '') ||
       _enabled != widget.config.enabled;
 
   Future<void> _save() async {
@@ -182,6 +206,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
             accountId: _kind == WorkerKind.agent && _providerId == 'claude'
                 ? _accountId
                 : '',
+            model: _kind == WorkerKind.agent ? _model : '',
             enabled: _enabled,
           );
       if (!mounted) return;
@@ -340,6 +365,10 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
                 const SizedBox(height: 8),
                 _accountSelector(),
               ],
+              if (_providerId.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _modelSelector(),
+              ],
               const SizedBox(height: 8),
               _agentWarning(),
             ],
@@ -441,8 +470,90 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           value: 'gemini',
           child: Text(t.memoryWorkers.cliGemini),
         ),
+        DropdownMenuItem(
+          value: 'codex',
+          child: Text(t.memoryWorkers.cliCodex),
+        ),
+        DropdownMenuItem(
+          value: 'antigravity',
+          child: Text(t.memoryWorkers.cliAntigravity),
+        ),
       ],
-      onChanged: (v) => setState(() => _providerId = v ?? ''),
+      onChanged: (v) => setState(() {
+        _providerId = v ?? '';
+        // Models + account are provider-scoped — reset on switch.
+        _model = '';
+        _modelCustom = false;
+        _refreshModels();
+      }),
+    );
+  }
+
+  // Per-agent model pin (claude --model / gemini --model). Dropdown of the
+  // provider's catalog + "CLI default" + a custom-entry escape hatch, so an
+  // unlisted/newer model id can still be pinned. Mirrors web ModelPicker.
+  Widget _modelSelector() {
+    return FutureBuilder<List<ModelOption>>(
+      future: _modelsFuture,
+      builder: (context, snap) {
+        final options = snap.data ?? const <ModelOption>[];
+        final listed = _model.isEmpty || options.any((m) => m.id == _model);
+        final custom = _modelCustom || (snap.hasData && !listed);
+        if (custom) {
+          return Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: _model,
+                  decoration: InputDecoration(
+                    labelText: t.memoryWorkers.modelLabel,
+                    hintText: t.memoryWorkers.modelCustomPlaceholder,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                  onChanged: (v) => setState(() => _model = v.trim()),
+                ),
+              ),
+              TextButton(
+                onPressed: () => setState(() {
+                  _modelCustom = false;
+                  _model = '';
+                }),
+                child: Text(t.memoryWorkers.modelBackToList),
+              ),
+            ],
+          );
+        }
+        return DropdownButtonFormField<String>(
+          initialValue: _model.isEmpty ? '__default__' : _model,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: t.memoryWorkers.modelLabel,
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+          items: [
+            DropdownMenuItem(
+              value: '__default__',
+              child: Text(t.memoryWorkers.modelCliDefault),
+            ),
+            for (final m in options)
+              DropdownMenuItem(value: m.id, child: Text(m.label)),
+            DropdownMenuItem(
+              value: '__custom__',
+              child: Text(t.memoryWorkers.modelCustom),
+            ),
+          ],
+          onChanged: (v) => setState(() {
+            if (v == '__custom__') {
+              _modelCustom = true;
+              return;
+            }
+            _model = v == '__default__' ? '' : (v ?? '');
+          }),
+        );
+      },
     );
   }
 

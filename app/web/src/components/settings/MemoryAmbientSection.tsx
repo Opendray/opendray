@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Brain, Plus, Wand2 } from 'lucide-react'
+import { Brain, Loader2, Pencil, Plus, RefreshCw, Wand2 } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -58,6 +58,7 @@ import {
   testProvider,
   updateProvider,
 } from '@/lib/memoryAmbient'
+import { probeEmbeddingEndpoint } from '@/lib/memory'
 import { APIError } from '@/lib/api'
 
 export function MemoryAmbientSection() {
@@ -235,6 +236,7 @@ function ProviderRow({
           {t('web.memoryAmbient.providers.row.makeDefault')}
         </Button>
       )}
+      <ChangeModelDialog provider={provider} onSaved={onChanged} />
       <Button
         onClick={onTest}
         variant="outline"
@@ -255,6 +257,234 @@ function ProviderRow({
         {t('web.memoryAmbient.providers.row.delete')}
       </Button>
     </div>
+  )
+}
+
+// localModelKinds are the provider kinds whose base_url points at a
+// local OpenAI-compatible server we can enumerate models from
+// (LM Studio / Ollama). Cloud kinds keep the plain text input — their
+// catalogs are huge and key-gated.
+function isLocalModelKind(kind: ProviderKind): boolean {
+  return kind === 'ollama' || kind === 'lmstudio'
+}
+
+// LocalModelSelect — pick a model that actually exists on the local
+// endpoint instead of typing a name blind, mirroring the Agent
+// workers' ModelPicker. Probes <base_url>/models (with the Ollama
+// /api/tags fallback the backend probe already implements); endpoint
+// unreachable → plain input with a hint, so nothing is ever blocked
+// on the probe. Shared by the summarizer-provider dialogs and the
+// embedder config in Settings → Server → Memory.
+export function LocalModelSelect({
+  baseURL,
+  apiKey = '',
+  value,
+  onChange,
+  autoFill = true,
+}: {
+  baseURL: string
+  apiKey?: string
+  value: string
+  onChange: (v: string) => void
+  /** Auto-pick the first advertised model when the field is empty.
+   * Disable where a wrong guess is costly (embedder config — chat
+   * models also appear in the list). */
+  autoFill?: boolean
+}) {
+  const { t } = useTranslation()
+  const qc = useQueryClient()
+  const [customMode, setCustomMode] = useState(false)
+  const probe = useQuery({
+    queryKey: ['endpoint-models', baseURL, apiKey !== ''],
+    queryFn: () => probeEmbeddingEndpoint(baseURL, apiKey),
+    enabled: baseURL.trim() !== '',
+    staleTime: 30_000,
+    retry: false,
+  })
+  const reachable = probe.data?.reachable === true
+  const models = reachable ? (probe.data?.models ?? []) : []
+
+  // Default to the first advertised model when the field is empty —
+  // saves the "type a guess, watch the call fail" round-trip.
+  useEffect(() => {
+    if (autoFill && reachable && models.length > 0 && value === '') {
+      onChange(models[0])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reachable, models.length])
+
+  if (probe.isLoading && baseURL.trim() !== '') {
+    return (
+      <div className="flex items-center gap-2">
+        <Input value={value} onChange={(e) => onChange(e.target.value)} />
+        <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (!reachable || models.length === 0 || customMode) {
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            autoFocus={customMode}
+          />
+          {reachable && models.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 shrink-0 text-[11px]"
+              onClick={() => setCustomMode(false)}
+            >
+              {t('web.memoryAmbient.providers.modelSelect.backToList')}
+            </Button>
+          )}
+        </div>
+        {baseURL.trim() !== '' && !reachable && (
+          <p className="text-[10.5px] text-muted-foreground">
+            {t('web.memoryAmbient.providers.modelSelect.unreachable')}
+          </p>
+        )}
+        {reachable && models.length === 0 && (
+          <p className="text-[10.5px] text-muted-foreground">
+            {t('web.memoryAmbient.providers.modelSelect.none')}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  const listed = models.includes(value)
+  return (
+    <div className="flex items-center gap-2">
+      <select
+        value={listed ? value : '__keep__'}
+        onChange={(e) => {
+          if (e.target.value === '__custom__') {
+            setCustomMode(true)
+            return
+          }
+          if (e.target.value !== '__keep__') onChange(e.target.value)
+        }}
+        className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2"
+      >
+        {!listed && value !== '' && (
+          <option value="__keep__">
+            {value} · {t('web.memoryAmbient.providers.modelSelect.notOnEndpoint')}
+          </option>
+        )}
+        {value === '' && <option value="__keep__"></option>}
+        {models.map((m) => (
+          <option key={m} value={m}>
+            {m}
+          </option>
+        ))}
+        <option value="__custom__">
+          {t('web.memoryAmbient.providers.modelSelect.custom')}
+        </option>
+      </select>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 w-8 shrink-0 p-0"
+        title={t('web.memoryAmbient.providers.modelSelect.refresh')}
+        onClick={() =>
+          qc.invalidateQueries({ queryKey: ['endpoint-models', baseURL, apiKey !== ''] })
+        }
+      >
+        <RefreshCw className="size-3" />
+      </Button>
+    </div>
+  )
+}
+
+// ChangeModelDialog — per-row model switch for an existing provider.
+// Before this the only way to change a provider's model was delete +
+// recreate; with local endpoints the picker lists what's installed.
+// Also reused by the Cortex settings worker cards, so the model is
+// switchable right where the provider is being routed.
+export function ChangeModelDialog({
+  provider,
+  onSaved,
+}: {
+  provider: SummarizerProvider
+  onSaved: () => void
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [model, setModel] = useState(provider.model)
+  const [busy, setBusy] = useState(false)
+
+  async function submit() {
+    setBusy(true)
+    try {
+      await updateProvider(provider.id, { model })
+      toast.success(
+        t('web.memoryAmbient.providers.modelSelect.savedToast', {
+          name: provider.name,
+          model,
+        }),
+      )
+      setOpen(false)
+      onSaved()
+    } catch (err) {
+      toast.error(t('web.memoryAmbient.providers.row.updateFailedToast'), {
+        description: errMsg(err),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v)
+        if (v) setModel(provider.model)
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[11px]"
+          title={t('web.memoryAmbient.providers.modelSelect.editTitle')}
+        >
+          <Pencil className="size-3" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t('web.memoryAmbient.providers.modelSelect.dialogTitle', {
+              name: provider.name,
+            })}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 text-[12px]">
+          <Label>{t('web.memoryAmbient.providers.dialog.modelLabel')}</Label>
+          {isLocalModelKind(provider.kind) && provider.base_url ? (
+            <LocalModelSelect
+              baseURL={provider.base_url}
+              value={model}
+              onChange={setModel}
+            />
+          ) : (
+            <Input value={model} onChange={(e) => setModel(e.target.value)} />
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={submit} disabled={busy || model.trim() === ''}>
+            {t('web.memoryAmbient.providers.modelSelect.save')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -345,8 +575,6 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setName(e.target.value)}
           placeholder={t('web.memoryAmbient.providers.dialog.namePlaceholder')}
         />
-        <Label>{t('web.memoryAmbient.providers.dialog.modelLabel')}</Label>
-        <Input value={model} onChange={(e) => setModel(e.target.value)} />
         {kind !== 'anthropic' && kind !== 'openai' && kind !== 'integration' && (
           <>
             <Label>{t('web.memoryAmbient.providers.dialog.baseUrlLabel')}</Label>
@@ -355,6 +583,12 @@ function NewProviderDialog({ onCreated }: { onCreated: () => void }) {
               onChange={(e) => setBaseURL(e.target.value)}
             />
           </>
+        )}
+        <Label>{t('web.memoryAmbient.providers.dialog.modelLabel')}</Label>
+        {isLocalModelKind(kind) ? (
+          <LocalModelSelect baseURL={baseURL} value={model} onChange={setModel} />
+        ) : (
+          <Input value={model} onChange={(e) => setModel(e.target.value)} />
         )}
         {kind === 'integration' && (
           <p className="text-[11px] text-muted-foreground">

@@ -55,6 +55,14 @@ const (
 	// Gemini agent for capture (higher quality but slower and
 	// more expensive), matching the other 5 touchpoints.
 	TaskCapture TaskKind = "capture"
+	// TaskBlueprint is the Cortex doc-blueprint proposer: classify a
+	// project from repo signals, propose a doc section set
+	// (operator-triggered, applied only on operator accept).
+	TaskBlueprint TaskKind = "blueprint"
+	// TaskCuration is the Cortex curation-conversation channel: the
+	// operator discusses a doc section or knowledge page with the AI
+	// and the AI produces a revision (apply or proposal).
+	TaskCuration TaskKind = "curation"
 )
 
 // AllTasks returns every recognised TaskKind in a stable order.
@@ -64,6 +72,7 @@ func AllTasks() []TaskKind {
 	return []TaskKind{
 		TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
 		TaskPlanDrift, TaskConflictDetector, TaskCapture,
+		TaskBlueprint, TaskCuration,
 	}
 }
 
@@ -163,8 +172,14 @@ type Config struct {
 	SummarizerID string     `json:"summarizer_id"` // when Kind==WorkerSummarizer; "" → registry default
 	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: "claude" | "gemini"
 	AccountID    string     `json:"account_id"`    // when ProviderID=="claude"; "" → catalog's default account
-	Enabled      bool       `json:"enabled"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	// Model pins the agent CLI's model (`claude --model …` /
+	// `gemini --model …`) so cheap chores run on cheap models
+	// (e.g. haiku) and only the judgement-heavy touchpoints pay for
+	// frontier quality. Empty keeps the CLI default. Ignored for
+	// summarizer-kind workers (their model lives on the provider row).
+	Model     string    `json:"model"`
+	Enabled   bool      `json:"enabled"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Valid returns nil if the config is internally consistent.
@@ -172,7 +187,8 @@ type Config struct {
 func (c Config) Valid() error {
 	switch c.Task {
 	case TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
-		TaskPlanDrift, TaskConflictDetector, TaskCapture:
+		TaskPlanDrift, TaskConflictDetector, TaskCapture,
+		TaskBlueprint, TaskCuration:
 	default:
 		return errors.New("memory worker: invalid task")
 	}
@@ -181,12 +197,10 @@ func (c Config) Valid() error {
 		return nil
 	case WorkerAgent:
 		switch c.ProviderID {
-		case "claude", "gemini":
+		case "claude", "gemini", "codex":
 			return nil
-		case "codex":
-			return ErrAgentUnsupported
 		default:
-			return errors.New("memory worker: agent provider_id required (claude or gemini)")
+			return errors.New("memory worker: agent provider_id required (claude, gemini, or codex)")
 		}
 	default:
 		return errors.New("memory worker: invalid kind")

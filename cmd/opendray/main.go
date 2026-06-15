@@ -75,6 +75,8 @@ func main() {
 		os.Exit(runDoctor(args))
 	case "setup-macos":
 		os.Exit(runSetupMacos(args))
+	case "recover-key":
+		os.Exit(runRecoverKey(args))
 	case "version":
 		fmt.Printf("opendray %s (%s, %s)\n", version.Version, version.Commit, version.Date)
 	case "-h", "--help", "help":
@@ -147,5 +149,7 @@ usage:
   opendray doctor                         (read-only health check: signature stability, config location)
   opendray setup-macos                    (macOS: stabilise the code signature so a one-time Full Disk
                                            Access grant survives rebuilds/updates)
+  opendray recover-key --kit FILE         (reconstruct the backup passphrase from a Recovery Kit;
+                                           --install writes it to the keyfile)
   opendray version`)
 }

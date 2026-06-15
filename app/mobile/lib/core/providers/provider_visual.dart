@@ -60,6 +60,15 @@ const _palette = <String, ProviderVisual>{
     label: 'Gemini',
     fallbackLetter: 'G',
   ),
+  'antigravity': ProviderVisual(
+    // Antigravity (agy) ships its own multi-colour Google mark. Tint
+    // uses the lighter brand blue so the tile reads distinct from
+    // Gemini's. Keep in sync with web's PROVIDER_ICON_MAP.
+    iconAsset: 'assets/provider_icons/antigravity.svg',
+    brandColor: Color(0xFF749BFF),
+    label: 'Antigravity',
+    fallbackLetter: 'A',
+  ),
   'shell': ProviderVisual(
     iconAsset: 'assets/provider_icons/shell.svg',
     brandColor: Color(0xFF4D4D4D),

@@ -9,7 +9,7 @@ import {
   Activity,
   Settings,
   Boxes,
-  NotebookPen,
+  BookText,
   Brain,
   Archive,
   type LucideIcon,
@@ -43,8 +43,10 @@ interface NavItem {
 const groups: NavItem[][] = [
   [
     { to: '/sessions', icon: Layers, labelKey: 'nav.sessions', shortcut: 'g s' },
-    { to: '/notes', icon: NotebookPen, labelKey: 'nav.notes', shortcut: 'g n' },
-    { to: '/memory', icon: Brain, labelKey: 'nav.memory', shortcut: 'g m' },
+    // Cortex — the unified Memory → Notes → Knowledge module. One
+    // entry; the three rungs are layered inside (they are one loop,
+    // not three silos).
+    { to: '/cortex', icon: Brain, labelKey: 'nav.cortex', shortcut: 'g x' },
     { to: '/activity', icon: Activity, labelKey: 'nav.activity', shortcut: 'g a' },
   ],
   [
@@ -53,6 +55,7 @@ const groups: NavItem[][] = [
     { to: '/integrations', icon: Plug, labelKey: 'nav.integrations', shortcut: 'g i' },
   ],
   [
+    { to: '/vault', icon: BookText, labelKey: 'nav.vault', shortcut: 'g v' },
     { to: '/plugins', icon: Boxes, labelKey: 'nav.plugins', shortcut: 'g l' },
     { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b' },
     { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: 'g ,' },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:opendray/core/api/version_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
@@ -9,10 +10,11 @@ import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
-import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
+import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
+import 'package:opendray/features/notes/notes_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
 import 'package:opendray/features/settings/settings_screen.dart';
@@ -34,6 +36,8 @@ class MoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final updateAvailable =
+        ref.watch(versionInfoProvider).asData?.value.updateAvailable ?? false;
     if (auth is! AuthLoggedIn) {
       return const Scaffold(body: SizedBox.shrink());
     }
@@ -43,13 +47,9 @@ class MoreScreen extends ConsumerWidget {
         children: [
           _IdentityCard(auth: auth),
           const SizedBox(height: 8),
+          // Activity + Integrations are top-level bottom-nav tabs now; the
+          // gateway section keeps the lower-frequency destinations.
           _SectionHeader(label: t.more.sections.gateway),
-          _MenuTile(
-            icon: Icons.api_outlined,
-            title: t.more.items.integrations.title,
-            subtitle: t.more.items.integrations.subtitle,
-            onTap: () => _push(context, const IntegrationsScreen()),
-          ),
           _MenuTile(
             icon: Icons.notifications_outlined,
             title: t.more.items.channels.title,
@@ -62,6 +62,8 @@ class MoreScreen extends ConsumerWidget {
             subtitle: t.more.items.providers.subtitle,
             onTap: () => _push(context, const ProvidersScreen()),
           ),
+          const SizedBox(height: 8),
+          _SectionHeader(label: t.more.sections.plugins),
           _MenuTile(
             icon: Icons.extension_outlined,
             title: t.more.items.mcp.title,
@@ -87,6 +89,10 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => _push(context, const CustomTasksScreen()),
           ),
           const SizedBox(height: 8),
+          // Cortex hub is the bottom-nav "Cortex" tab and its ⚙ opens the
+          // unified Cortex settings (workers + capture/injection +
+          // providers) — so capture/injection no longer needs its own More
+          // entry. This section keeps the deeper, lower-frequency tools.
           _SectionHeader(label: t.more.sections.memory),
           _MenuTile(
             icon: Icons.flag_outlined,
@@ -99,6 +105,18 @@ class MoreScreen extends ConsumerWidget {
             title: t.more.items.archived.title,
             subtitle: t.more.items.archived.subtitle,
             onTap: () => _push(context, const ArchivedMemoriesScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.shield_outlined,
+            title: t.more.items.quarantine.title,
+            subtitle: t.more.items.quarantine.subtitle,
+            onTap: () => _push(context, const QuarantineScreen()),
+          ),
+          _MenuTile(
+            icon: Icons.folder_outlined,
+            title: t.more.items.vault.title,
+            subtitle: t.more.items.vault.subtitle,
+            onTap: () => _push(context, const NotesVaultScreen()),
           ),
           const SizedBox(height: 8),
           _SectionHeader(label: t.more.sections.system),
@@ -118,6 +136,7 @@ class MoreScreen extends ConsumerWidget {
             icon: Icons.tune_outlined,
             title: t.more.items.settings.title,
             subtitle: t.more.items.settings.subtitle,
+            badge: updateAvailable,
             onTap: () => _push(context, const SettingsScreen()),
           ),
           _MenuTile(
@@ -219,12 +238,15 @@ class _MenuTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badge = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  // When true, shows an "update available" dot before the chevron.
+  final bool badge;
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +255,22 @@ class _MenuTile extends StatelessWidget {
       leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
       title: Text(title),
       subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (badge)
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error,
+                shape: BoxShape.circle,
+              ),
+            ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
     );
   }
 }

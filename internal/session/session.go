@@ -69,11 +69,31 @@ type Session struct {
 	// (e.g. the Inspector's Tasks tab spawns shell children of an
 	// AI session). Empty for top-level sessions. Used purely for UI
 	// grouping — children are independent processes.
-	ParentSessionID string     `json:"parent_session_id,omitempty"`
-	StartedAt       time.Time  `json:"started_at"`
-	EndedAt         *time.Time `json:"ended_at,omitempty"`
-	ExitCode        *int       `json:"exit_code,omitempty"`
+	ParentSessionID string `json:"parent_session_id,omitempty"`
+	// Origin records who created the session — derived from the
+	// authenticated principal at create time, never client-supplied.
+	// The memory capture pipeline routes on it (Cortex Phase 2) so
+	// third-party temp sessions can't pollute durable memory.
+	Origin Origin `json:"origin,omitempty"`
+	// IntegrationID is set when Origin == OriginIntegration: the id
+	// of the integration whose API key created the session.
+	IntegrationID string     `json:"integration_id,omitempty"`
+	StartedAt     time.Time  `json:"started_at"`
+	EndedAt       *time.Time `json:"ended_at,omitempty"`
+	ExitCode      *int       `json:"exit_code,omitempty"`
 }
+
+// Origin identifies the kind of principal that created a session.
+type Origin string
+
+const (
+	// OriginOperator — the human operator (admin token; web/mobile UI).
+	OriginOperator Origin = "operator"
+	// OriginIntegration — a third-party app via a scoped API key.
+	OriginIntegration Origin = "integration"
+	// OriginCLI — the local opendray CLI.
+	OriginCLI Origin = "cli"
+)
 
 // CreateRequest is the JSON body for POST /api/v1/sessions.
 type CreateRequest struct {
@@ -83,6 +103,19 @@ type CreateRequest struct {
 	ParentSessionID string   `json:"parent_session_id,omitempty"`
 	Cwd             string   `json:"cwd"`
 	Args            []string `json:"args"`
+
+	// origin/integrationID are unexported on purpose: they are derived
+	// from the authenticated principal by the HTTP handler (SetOrigin)
+	// and must never be settable from the JSON body.
+	origin        Origin
+	integrationID string
+}
+
+// SetOrigin stamps the provenance derived from the authenticated
+// principal. integrationID is only meaningful for OriginIntegration.
+func (r *CreateRequest) SetOrigin(o Origin, integrationID string) {
+	r.origin = o
+	r.integrationID = integrationID
 }
 
 func (r CreateRequest) Validate() error {

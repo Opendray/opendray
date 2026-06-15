@@ -44,9 +44,14 @@ if (!REPO) { console.error('GH_REPO env var (owner/repo) is required'); process.
 const gh = (args, input) =>
   execFileSync('gh', args, { encoding: 'utf8', input, stdio: ['pipe', 'pipe', 'inherit'] })
 
-// Files changed in this PR (paths only).
+// Files changed in this PR (paths only). Use the paginated files API rather
+// than `gh pr diff --name-only`: the latter fetches the unified diff, which the
+// GitHub API refuses with HTTP 406 once it exceeds 20,000 lines (large PRs —
+// e.g. regenerated lockfiles / i18n bundles). The files endpoint paginates by
+// file count, so it scales to any PR size.
 const changed = new Set(
-  gh(['pr', 'diff', PR, '--name-only']).split('\n').map((s) => s.trim()).filter(Boolean),
+  gh(['api', `repos/${REPO}/pulls/${PR}/files`, '--paginate', '--jq', '.[].filename'])
+    .split('\n').map((s) => s.trim()).filter(Boolean),
 )
 
 // Locate an existing advisory comment by its hidden marker so we can edit or

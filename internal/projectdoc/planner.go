@@ -24,10 +24,21 @@ type PlanDriftDetector interface {
 // short-circuit and return ShouldPropose=false rather than
 // hallucinating an initial plan.
 type DriftInput struct {
+	// Kind is the blueprint section slug the detector is reviewing.
+	// CurrentPlan holds that section doc's current content.
+	Kind              Kind
 	Cwd               string
 	CurrentPlan       string
 	TranscriptSummary string
 	RecentJournal     []LogEntry
+
+	// Section metadata (Cortex Phase 3) — for custom blueprint
+	// sections the prompt is parameterized by the section's title,
+	// description, and the operator's prompt hint. Empty for the
+	// built-in goal/plan slugs, which keep their tuned prompts.
+	SectionTitle       string
+	SectionDescription string
+	SectionPromptHint  string
 }
 
 // DriftOutput is the detector's verdict. NewPlan is the full
@@ -77,6 +88,105 @@ code fences, no commentary):
 
 If should_propose is false, new_plan and reason MUST still be present
 but may be empty strings.`
+
+// GoalDriftSystemPrompt is the goal-document variant. The GOAL is the
+// project's long-term intent — it changes rarely, so the bar is higher
+// than for the plan.
+const GoalDriftSystemPrompt = `You are a project goal reviewer.
+
+Given a project's CURRENT GOAL document (its long-term intent — what we
+are ultimately building and why), a summary of the session that just
+ended, and recent journal entries, decide whether the GOAL should be
+updated.
+
+UPDATE the goal ONLY when the session reveals a genuine shift in
+long-term intent or scope:
+1. The project's purpose / target audience changed.
+2. A major capability entered or left the project's scope.
+3. The goal as written is now inaccurate about what we are building.
+
+DO NOT update for routine progress, tactics, or step-by-step work —
+that belongs in the PLAN, not the goal. The goal changes rarely; when
+in doubt, do NOT propose.
+
+When updating, REWRITE the goal in full — your output replaces the
+document. Preserve unchanged parts verbatim.
+
+Respond ONLY with a JSON object (no prose, no code fences):
+
+{
+  "should_propose": <boolean>,
+  "new_plan":       <full markdown of the proposed replacement goal>,
+  "reason":         <one short sentence shown to the operator>
+}
+
+If should_propose is false, new_plan and reason MUST still be present
+but may be empty strings.`
+
+// DriftSystemPrompt returns the role block for the given doc kind
+// (goal vs plan). Defaults to the plan prompt.
+func DriftSystemPrompt(kind Kind) string {
+	if kind == KindGoal {
+		return GoalDriftSystemPrompt
+	}
+	return PlanDriftSystemPrompt
+}
+
+// SectionDriftSystemPrompt builds the role block for an arbitrary
+// blueprint section (Cortex Phase 3). The built-in goal/plan slugs
+// keep their hand-tuned prompts; everything else gets this prompt
+// parameterized by the section's own metadata, so a "Public API",
+// "Data model", or "Release notes" section is reviewed on its own
+// terms.
+func SectionDriftSystemPrompt(in DriftInput) string {
+	switch in.Kind {
+	case KindGoal:
+		return GoalDriftSystemPrompt
+	case KindPlan, "":
+		return PlanDriftSystemPrompt
+	}
+	title := strings.TrimSpace(in.SectionTitle)
+	if title == "" {
+		title = string(in.Kind)
+	}
+	var b strings.Builder
+	b.WriteString("You maintain the \"")
+	b.WriteString(title)
+	b.WriteString("\" section of a project's official document.\n\n")
+	if d := strings.TrimSpace(in.SectionDescription); d != "" {
+		b.WriteString("Section purpose: ")
+		b.WriteString(d)
+		b.WriteString("\n\n")
+	}
+	if h := strings.TrimSpace(in.SectionPromptHint); h != "" {
+		b.WriteString("Maintainer instructions from the operator: ")
+		b.WriteString(h)
+		b.WriteString("\n\n")
+	}
+	b.WriteString(`Given the section's CURRENT content, a summary of the agent session
+that just ended, and recent journal entries, decide whether this
+section should be updated to stay accurate.
+
+UPDATE only when the session genuinely changed what this section
+describes — completed/added/obsoleted something it covers, or made
+its statements inaccurate. DO NOT update for exploratory sessions or
+work outside this section's scope.
+
+When updating, REWRITE the section in full — your output replaces the
+existing content. Preserve unchanged parts verbatim.
+
+Respond ONLY with a JSON object (no prose, no code fences):
+
+{
+  "should_propose": <boolean>,
+  "new_plan":       <full markdown of the proposed replacement content>,
+  "reason":         <one short sentence shown to the operator>
+}
+
+If should_propose is false, new_plan and reason MUST still be present
+but may be empty strings.`)
+	return b.String()
+}
 
 // ErrDetectorParse is returned when the LLM response cannot be
 // decoded into DriftOutput. Callers should treat it like any other

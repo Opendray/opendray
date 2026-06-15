@@ -1,12 +1,14 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -81,6 +83,19 @@ func globalWriteAllowed(scope Scope, p integration.Principal) bool {
 type Handlers struct {
 	svc *Service
 	log *slog.Logger
+	// policy resolves an integration's memory_policy so direct
+	// /memory/store calls from integration keys route into the same
+	// tier as their sessions' captured facts (Cortex Phase 2). Nil
+	// keeps the legacy behaviour (all stores durable).
+	policy IntegrationPolicyLookup
+}
+
+// IntegrationPolicyLookup answers "what memory policy does this
+// integration declare?" — "none" | "quarantine" | "full". Declared
+// here (where it is consumed); app wiring backs it with
+// integration.Service.
+type IntegrationPolicyLookup interface {
+	MemoryPolicy(ctx context.Context, integrationID string) (string, error)
 }
 
 // NewHandlers builds the HTTP wrapper around svc. svc may be nil
@@ -92,6 +107,13 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 		log = slog.Default()
 	}
 	return &Handlers{svc: svc, log: log.With("component", "memory.http")}
+}
+
+// WithPolicyLookup wires integration memory-policy routing for the
+// direct /memory/store path.
+func (h *Handlers) WithPolicyLookup(l IntegrationPolicyLookup) *Handlers {
+	h.policy = l
+	return h
 }
 
 // Mount registers all /memory/* routes on r. r should already have
@@ -114,6 +136,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.With(h.requireAdmin).Patch("/{id}", h.update)
 		r.With(h.requireAdmin).Delete("/{id}", h.delete)
 		r.With(h.requireAdmin).Post("/{id}/restore", h.restore)
+		r.With(h.requireAdmin).Post("/{id}/archive", h.archive)
+		r.With(h.requireAdmin).Post("/{id}/quarantine", h.quarantine)
 		r.With(h.requireAdmin).Post("/delete-by-scope", h.deleteByScope)
 		r.With(h.requireAdmin).Post("/test", h.test)
 		r.With(h.requireAdmin).Post("/probe", h.probe)
@@ -269,6 +293,37 @@ func (h *Handlers) store(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, errors.New("global memory writes require admin"))
 		return
 	}
+	// Tier routing (Cortex Phase 2). Tier is never client-settable
+	// (json:"-"); integration principals get the tier their declared
+	// memory_policy dictates. The system opendray-memory integration
+	// is policy=full (0044 backfill), so operator agent sessions'
+	// MCP stores stay durable. Policy lookup errors quarantine —
+	// safe-by-default.
+	req.Tier = ""
+	req.QuarantineExpiresAt = nil
+	if p.Kind == integration.KindIntegration {
+		policy := "quarantine"
+		if h.policy != nil {
+			if got, perr := h.policy.MemoryPolicy(r.Context(), p.ID); perr != nil {
+				h.log.Warn("memory.store: policy lookup failed — quarantining",
+					"integration_id", p.ID, "err", perr)
+			} else if got != "" {
+				policy = got
+			}
+		}
+		switch policy {
+		case "none":
+			writeError(w, http.StatusForbidden,
+				errors.New("memory writes disabled by this integration's memory_policy"))
+			return
+		case "full":
+			// durable — leave Tier empty.
+		default:
+			expiry := time.Now().UTC().Add(30 * 24 * time.Hour)
+			req.Tier = TierQuarantine
+			req.QuarantineExpiresAt = &expiry
+		}
+	}
 	id, err := h.svc.Store(r.Context(), req)
 	if err != nil {
 		// Gatekeeper rejections get their own status so MCP / UI
@@ -375,6 +430,41 @@ func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"restored": id})
+}
+
+// archive soft-deletes one memory by hand (admin only) — same
+// reversible mechanism the auto-cleaner uses; the row moves to the
+// Archived view until restored or the grace window purges it.
+func (h *Handlers) archive(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Archive(r.Context(), id, "operator"); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"archived": id})
+}
+
+// quarantine moves a durable memory into the quarantine review queue
+// (admin only) — the manual counterpart of the integration capture
+// path. Release it via the Cortex quarantine promote, or let the TTL
+// expire it.
+func (h *Handlers) quarantine(w http.ResponseWriter, r *http.Request) {
+	if !h.ensure(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	if err := h.svc.Quarantine(r.Context(), id); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeError(w, http.StatusNotFound, err)
+			return
+		}
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"quarantined": id})
 }
 
 // scopeKeys returns distinct scope_key values stored under the given

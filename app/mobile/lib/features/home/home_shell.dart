@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/api/version_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
-import 'package:opendray/features/memory/memory_screen.dart';
+import 'package:opendray/features/activity/activity_screen.dart';
+import 'package:opendray/features/cortex/cortex_hub_screen.dart';
+import 'package:opendray/features/integrations/integrations_screen.dart';
 import 'package:opendray/features/more/more_screen.dart';
-import 'package:opendray/features/notes/notes_screen.dart';
 import 'package:opendray/features/sessions/sessions_screen.dart';
 
-// Home scaffold: 4 bottom-nav tabs — Sessions / Memory / Notes /
-// More. Uses IndexedStack so each tab keeps its own state across
-// switches; important for in-progress forms and scroll position.
+// Home scaffold: 5 bottom-nav tabs — Sessions / Cortex / Activity /
+// Integrations / More. Uses IndexedStack so each tab keeps its own
+// state across switches; important for in-progress forms and scroll
+// position.
 //
-// Activity was removed in PR #54 — it surfaced the raw audit_log
-// stream which is >95% routine noise (idle polls, login self-pings,
-// successful sends). The operator has no daily "look at events"
-// workflow on a phone — moves are taken on Sessions / Memory / More
-// instead. If a future use case appears (e.g. an Inbox of events
-// that demand operator action), it earns its own tab with explicit
-// action surfaces rather than a generic log dump.
+// Cortex is the single front door to the experience flywheel: the
+// former Memory / Notes / Knowledge silo tabs are now rung detail
+// screens pushed from the CortexHubScreen, mirroring the web's unified
+// /cortex page ("one module, three rungs, one loop — no more silo
+// tabs"). The two freed slots go to the gateway's highest-signal
+// operator views: Activity (per-call integration audit) and
+// Integrations (who's calling me) — both promoted out of More.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -32,25 +35,37 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   Widget build(BuildContext context) {
     const pages = [
       SessionsScreen(),
-      MemoryScreen(),
-      NotesScreen(),
+      CortexHubScreen(),
+      ActivityScreen(),
+      IntegrationsScreen(),
       MoreScreen(),
     ];
     final tabs = <_TabSpec>[
       _TabSpec(icon: Icons.terminal_outlined, label: t.nav.sessions),
-      _TabSpec(icon: Icons.psychology_outlined, label: t.nav.memory),
-      _TabSpec(icon: Icons.description_outlined, label: t.nav.notes),
+      _TabSpec(icon: Icons.psychology_outlined, label: t.nav.cortex),
+      _TabSpec(icon: Icons.timeline_outlined, label: t.nav.activity),
+      _TabSpec(icon: Icons.api_outlined, label: t.nav.integrations),
       _TabSpec(icon: Icons.more_horiz, label: t.nav.more),
     ];
+    // Badge the More tab (which leads to Settings) when the gateway has an
+    // update waiting — the mobile mirror of the web's Settings-icon badge.
+    final updateAvailable =
+        ref.watch(versionInfoProvider).asData?.value.updateAvailable ?? false;
 
     return Scaffold(
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _index,
         onTap: (i) => setState(() => _index = i),
         items: [
-          for (final tab in tabs)
-            BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label),
+          for (var i = 0; i < tabs.length; i++)
+            BottomNavigationBarItem(
+              icon: (i == tabs.length - 1 && updateAvailable)
+                  ? Badge(smallSize: 8, child: Icon(tabs[i].icon))
+                  : Icon(tabs[i].icon),
+              label: tabs[i].label,
+            ),
         ],
       ),
     );

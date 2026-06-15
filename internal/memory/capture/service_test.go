@@ -112,7 +112,7 @@ func TestRunner_RunForSession_HappyPath(t *testing.T) {
 		DedupThreshold: 0.85,
 		TargetScope:    "project",
 	}
-	sess := SessionInfo{ID: "sess-1", ProviderID: "claude", Cwd: "/tmp/proj"}
+	sess := SessionInfo{ID: "sess-1", ProviderID: "claude", Cwd: "/home/dev/proj"}
 
 	// Inject the provider via the runner field shim — we replace
 	// pickProvider's job with a closure using a fakeRegistry-like
