@@ -1109,6 +1109,12 @@ func (s *Service) ListBackups(ctx context.Context, f BackupListFilter) ([]Backup
 	return s.store.ListBackups(ctx, f)
 }
 
+// Health returns the at-a-glance backup health roll-up the dashboard
+// renders as a strip. Read-only; safe to poll.
+func (s *Service) Health(ctx context.Context) (BackupHealth, error) {
+	return s.store.BackupHealth(ctx)
+}
+
 // DownloadBackup opens the blob via the backup's target. The caller
 // owns the returned ReadCloser. Returns the backup row alongside so
 // the HTTP layer can set Content-Length / filename headers.

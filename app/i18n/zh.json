@@ -1760,6 +1760,16 @@
         "okHint": "已解密并确认可恢复（pg_restore --list）",
         "failed": "未校验"
       },
+      "health": {
+        "lastSuccess": "最近成功备份",
+        "never": "尚无成功备份",
+        "allClear": "一切正常",
+        "recentFailures": "过去 24 小时内 {count} 次失败",
+        "verifyFailures": "{count} 个备份校验失败",
+        "overdueSchedules": "{count} 个计划已逾期",
+        "scheduleSummary": "已启用 {enabled}/{total} 个计划",
+        "loadFailedToast": "无法加载备份健康状态"
+      },
       "trigger": {
         "preMigrate": "迁移前",
         "preMigrateHint": "schema 迁移前自动拍摄的快照",
@@ -3839,6 +3849,15 @@
     "overviewTargets": "目标",
     "overviewSchedules": "计划",
     "overviewBackups": "备份",
+    "health": {
+      "lastSuccess": "最近成功备份",
+      "never": "尚无成功备份",
+      "allClear": "一切正常",
+      "recentFailures": "过去 24 小时内 {count} 次失败",
+      "verifyFailures": "{count} 个备份校验失败",
+      "overdueSchedules": "{count} 个计划已逾期",
+      "scheduleSummary": "已启用 {enabled}/{total} 个计划"
+    },
     "failedToLoad": "加载备份失败",
     "envVarConfigured": "OPENDRAY_BACKUP_KEY 环境变量",
     "savedConfirmCheckbox": "我已将密语保存到密码管理器",

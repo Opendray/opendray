@@ -17,6 +17,7 @@ import {
   RefreshCw,
   RotateCw,
   ShieldAlert,
+  ShieldCheck,
   Trash2,
   Upload,
 } from 'lucide-react'
@@ -43,6 +44,7 @@ import {
 
 import {
   type Backup,
+  type BackupHealth,
   type BackupKind,
   type BackupSetupResult,
   type BackupStatusReport,
@@ -57,6 +59,7 @@ import {
   deleteBackup,
   deleteSchedule,
   deleteTarget,
+  fetchBackupHealth,
   fetchBackupInventory,
   fetchBackupStatus,
   fetchRecoveryKit,
@@ -116,6 +119,7 @@ export function BackupsView() {
 
   return (
     <div className="flex flex-col gap-5">
+      <HealthStrip />
       <StatusBanner status={status} />
       <InventoryCard />
       <Tabs defaultValue="backups" className="w-full">
@@ -506,6 +510,122 @@ function GeneratedPassphrasePanel({
         <Button size="sm" onClick={onContinue} disabled={!ackSaved}>
           {t('web.backups.generated.continue')}
         </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── Health strip (at-a-glance: last good backup + what needs attention) ──
+
+// HealthStrip is the dashboard's first line: when the last good backup
+// landed and a count of anything currently demanding attention (recent
+// failures, failed restore-verifications, overdue schedules). Green and
+// quiet when all is well, red when not, neutral before the first backup.
+function HealthStrip() {
+  const { t } = useTranslation()
+  const [health, setHealth] = useState<BackupHealth | null>(null)
+
+  async function refresh() {
+    try {
+      setHealth(await fetchBackupHealth())
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      toast.error(t('web.backups.health.loadFailedToast'), { description: msg })
+    }
+  }
+
+  useEffect(() => {
+    void refresh()
+  }, [])
+
+  if (health === null) return null
+
+  const issues =
+    health.recent_failures +
+    health.verify_failures +
+    health.overdue_schedules
+  const neverBackedUp = !health.last_success_at
+  const allClear = issues === 0 && !neverBackedUp
+
+  return (
+    <div
+      className={cn(
+        'rounded-md border p-3 text-[12px]',
+        allClear
+          ? 'border-state-running/30 bg-state-running/10'
+          : neverBackedUp
+            ? 'border-border bg-card/30'
+            : 'border-state-failed/30 bg-state-failed/10',
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div className="flex items-center gap-2">
+          {allClear ? (
+            <ShieldCheck className="size-3.5 text-state-running" />
+          ) : (
+            <ShieldAlert
+              className={cn(
+                'size-3.5',
+                neverBackedUp ? 'text-muted-foreground' : 'text-state-failed',
+              )}
+            />
+          )}
+          <span className="text-muted-foreground">
+            {t('web.backups.health.lastSuccess')}
+          </span>
+          {health.last_success_at ? (
+            <code
+              className="text-foreground"
+              title={new Date(health.last_success_at).toLocaleString()}
+            >
+              {formatRelative(health.last_success_at)}
+            </code>
+          ) : (
+            <span className="text-muted-foreground">
+              {t('web.backups.health.never')}
+            </span>
+          )}
+        </div>
+
+        {health.recent_failures > 0 && (
+          <span className="text-state-failed">
+            {t('web.backups.health.recentFailures', {
+              count: health.recent_failures,
+            })}
+          </span>
+        )}
+        {health.verify_failures > 0 && (
+          <span className="text-state-failed">
+            {t('web.backups.health.verifyFailures', {
+              count: health.verify_failures,
+            })}
+          </span>
+        )}
+        {health.overdue_schedules > 0 && (
+          <span className="text-state-failed">
+            {t('web.backups.health.overdueSchedules', {
+              count: health.overdue_schedules,
+            })}
+          </span>
+        )}
+
+        {health.schedules > 0 && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <RotateCw className="size-3.5" />
+            <span>
+              {t('web.backups.health.scheduleSummary', {
+                enabled: health.enabled_schedules,
+                total: health.schedules,
+              })}
+            </span>
+          </div>
+        )}
+
+        {allClear && (
+          <span className="text-state-running">
+            {t('web.backups.health.allClear')}
+          </span>
+        )}
       </div>
     </div>
   )

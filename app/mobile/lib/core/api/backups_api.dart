@@ -174,6 +174,45 @@ class BackupStatusReport {
   final String? pgDumpError;
 }
 
+// At-a-glance backup health roll-up (GET /backup-health). Mirrors
+// backup.BackupHealth in Go. Every count is a "needs attention"
+// signal; non-zero means something to look at.
+class BackupHealth {
+  BackupHealth({
+    required this.lastSuccessAt,
+    required this.lastSuccessId,
+    required this.recentFailures,
+    required this.verifyFailures,
+    required this.overdueSchedules,
+    required this.schedules,
+    required this.enabledSchedules,
+  });
+
+  factory BackupHealth.fromJson(Map<String, dynamic> json) => BackupHealth(
+    lastSuccessAt: DateTime.tryParse(
+      json['last_success_at'] as String? ?? '',
+    )?.toUtc(),
+    lastSuccessId: json['last_success_id'] as String? ?? '',
+    recentFailures: (json['recent_failures'] as num?)?.toInt() ?? 0,
+    verifyFailures: (json['verify_failures'] as num?)?.toInt() ?? 0,
+    overdueSchedules: (json['overdue_schedules'] as num?)?.toInt() ?? 0,
+    schedules: (json['schedules'] as num?)?.toInt() ?? 0,
+    enabledSchedules: (json['enabled_schedules'] as num?)?.toInt() ?? 0,
+  );
+
+  final DateTime? lastSuccessAt;
+  final String lastSuccessId;
+  final int recentFailures;
+  final int verifyFailures;
+  final int overdueSchedules;
+  final int schedules;
+  final int enabledSchedules;
+
+  bool get neverBackedUp => lastSuccessAt == null;
+  int get issues => recentFailures + verifyFailures + overdueSchedules;
+  bool get allClear => issues == 0 && !neverBackedUp;
+}
+
 // Result of /api/v1/backup-setup. When `passphrase` is non-null it
 // was server-generated (mode=generate) and MUST be saved by the
 // operator before continuing — there's no recovery path if they
@@ -567,6 +606,17 @@ class BackupsApi {
     try {
       final res = await _dio.get<Map<String, dynamic>>('/api/v1/backup-status');
       return BackupStatusReport.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // GET /backup-health — at-a-glance roll-up for the overview strip:
+  // last good backup plus counts of things needing attention.
+  Future<BackupHealth> health() async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/api/v1/backup-health');
+      return BackupHealth.fromJson(res.data ?? {});
     } on Object catch (e) {
       throw toApiException(e);
     }

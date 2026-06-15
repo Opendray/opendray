@@ -1148,6 +1148,8 @@ class TranslationsBackupsEn {
 	/// en: 'Backups'
 	String get overviewBackups => 'Backups';
 
+	late final TranslationsBackupsHealthEn health = TranslationsBackupsHealthEn.internal(_root);
+
 	/// en: 'Failed to load backups'
 	String get failedToLoad => 'Failed to load backups';
 
@@ -3038,6 +3040,7 @@ class TranslationsWebBackupsEn {
 	late final TranslationsWebBackupsRestoreEn restore = TranslationsWebBackupsRestoreEn.internal(_root);
 	late final TranslationsWebBackupsKindEn kind = TranslationsWebBackupsKindEn.internal(_root);
 	late final TranslationsWebBackupsVerifyEn verify = TranslationsWebBackupsVerifyEn.internal(_root);
+	late final TranslationsWebBackupsHealthEn health = TranslationsWebBackupsHealthEn.internal(_root);
 	late final TranslationsWebBackupsTriggerEn trigger = TranslationsWebBackupsTriggerEn.internal(_root);
 	late final TranslationsWebBackupsRecoveryKitEn recoveryKit = TranslationsWebBackupsRecoveryKitEn.internal(_root);
 	late final TranslationsWebBackupsSchedulesTabEn schedulesTab = TranslationsWebBackupsSchedulesTabEn.internal(_root);
@@ -4572,6 +4575,36 @@ class TranslationsBackupsWizardEn {
 
 	/// en: 'This is shown ONCE. It will not be retrievable from opendray afterwards.'
 	String get saveNowBody => 'This is shown ONCE. It will not be retrievable from opendray afterwards.';
+}
+
+// Path: backups.health
+class TranslationsBackupsHealthEn {
+	TranslationsBackupsHealthEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Last good backup'
+	String get lastSuccess => 'Last good backup';
+
+	/// en: 'no successful backup yet'
+	String get never => 'no successful backup yet';
+
+	/// en: 'All clear'
+	String get allClear => 'All clear';
+
+	/// en: '{count} failed in the last 24h'
+	String recentFailures({required Object count}) => '${count} failed in the last 24h';
+
+	/// en: '{count} failed verification'
+	String verifyFailures({required Object count}) => '${count} failed verification';
+
+	/// en: '{count} schedule overdue'
+	String overdueSchedules({required Object count}) => '${count} schedule overdue';
+
+	/// en: '{enabled}/{total} schedules enabled'
+	String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled';
 }
 
 // Path: backups.encryption
@@ -9394,6 +9427,39 @@ class TranslationsWebBackupsVerifyEn {
 
 	/// en: 'unverified'
 	String get failed => 'unverified';
+}
+
+// Path: web.backups.health
+class TranslationsWebBackupsHealthEn {
+	TranslationsWebBackupsHealthEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Last good backup'
+	String get lastSuccess => 'Last good backup';
+
+	/// en: 'never — no successful backup yet'
+	String get never => 'never — no successful backup yet';
+
+	/// en: 'all clear'
+	String get allClear => 'all clear';
+
+	/// en: '{count} failed in the last 24h'
+	String recentFailures({required Object count}) => '${count} failed in the last 24h';
+
+	/// en: '{count} failed verification'
+	String verifyFailures({required Object count}) => '${count} failed verification';
+
+	/// en: '{count} schedule overdue'
+	String overdueSchedules({required Object count}) => '${count} schedule overdue';
+
+	/// en: '{enabled}/{total} schedules enabled'
+	String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled';
+
+	/// en: 'Could not load backup health'
+	String get loadFailedToast => 'Could not load backup health';
 }
 
 // Path: web.backups.trigger
@@ -17930,6 +17996,14 @@ extension on Translations {
 			'web.backups.verify.ok' => 'verified',
 			'web.backups.verify.okHint' => 'Decrypted and confirmed restorable (pg_restore --list)',
 			'web.backups.verify.failed' => 'unverified',
+			'web.backups.health.lastSuccess' => 'Last good backup',
+			'web.backups.health.never' => 'never — no successful backup yet',
+			'web.backups.health.allClear' => 'all clear',
+			'web.backups.health.recentFailures' => ({required Object count}) => '${count} failed in the last 24h',
+			'web.backups.health.verifyFailures' => ({required Object count}) => '${count} failed verification',
+			'web.backups.health.overdueSchedules' => ({required Object count}) => '${count} schedule overdue',
+			'web.backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled',
+			'web.backups.health.loadFailedToast' => 'Could not load backup health',
 			'web.backups.trigger.preMigrate' => 'pre-migrate',
 			'web.backups.trigger.preMigrateHint' => 'Automatic snapshot taken before schema migrations ran',
 			'web.backups.trigger.preRestore' => 'pre-restore',
@@ -18025,6 +18099,8 @@ extension on Translations {
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Stored AES-256-GCM encrypted; never echoed back',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Path prefix',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.pathPrefixHint' => 'Object-key prefix (optional)',
 			'web.backups.targetEditor.s3.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.useHttps' => 'Use HTTPS',
@@ -18033,8 +18109,6 @@ extension on Translations {
 			'web.backups.targetEditor.webdav.baseUrlHint' => 'Full URL including any path. Examples: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)',
 			'web.backups.targetEditor.webdav.baseUrlPlaceholder' => 'https://cloud.example.com/remote.php/dav/files/<user>/',
 			'web.backups.targetEditor.webdav.userLabel' => 'User',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.passwordLabel' => 'Password',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => 'Path prefix',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Sub-folder under the base URL (optional)',
@@ -18539,6 +18613,8 @@ extension on Translations {
 			'web.export.history.title' => 'History',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => 'Status',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.columns.scope' => 'Scope',
 			'web.export.history.columns.size' => 'Size',
 			'web.export.history.columns.expires' => 'Expires',
@@ -18547,8 +18623,6 @@ extension on Translations {
 			'web.export.history.deleteTooltip' => 'Delete',
 			'web.export.history.listFailedToast' => 'Failed to list exports',
 			'web.export.history.downloadFailedToast' => 'Download failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.noTokenToast' => 'No download token (expired?)',
 			'web.export.history.deleteConfirm' => ({required Object id}) => 'Delete export ${id}?',
 			'web.export.history.deletedToast' => 'Export deleted',
@@ -19053,6 +19127,8 @@ extension on Translations {
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancel',
@@ -19061,8 +19137,6 @@ extension on Translations {
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
@@ -19512,6 +19586,13 @@ extension on Translations {
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
 			'backups.overviewBackups' => 'Backups',
+			'backups.health.lastSuccess' => 'Last good backup',
+			'backups.health.never' => 'no successful backup yet',
+			'backups.health.allClear' => 'All clear',
+			'backups.health.recentFailures' => ({required Object count}) => '${count} failed in the last 24h',
+			'backups.health.verifyFailures' => ({required Object count}) => '${count} failed verification',
+			'backups.health.overdueSchedules' => ({required Object count}) => '${count} schedule overdue',
+			'backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} schedules enabled',
 			'backups.failedToLoad' => 'Failed to load backups',
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
 			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
@@ -19560,6 +19641,8 @@ extension on Translations {
 			'backups.restore.encryptionAlgo' => 'Encryption',
 			'backups.restore.bytesRead' => 'Bytes read',
 			'backups.restore.targetDsnUsed' => 'Target DSN',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.targetDsnSelfLabel' => '(opendray\'s own DB)',
 			'backups.restore.done' => 'Done',
 			'backups.inventory.title' => 'What\'s in a backup',
@@ -19575,8 +19658,6 @@ extension on Translations {
 			'backupTargets.editConfig' => 'Edit config',
 			'backupTargets.viewRawConfig' => 'View raw config',
 			'backupTargets.configDialogTitle' => ({required Object kind}) => '${kind} config',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargets.deleteTitle' => 'Delete target?',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.title' => 'Backup schedules',
@@ -20074,6 +20155,8 @@ extension on Translations {
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
+			_ => null,
+		} ?? switch (path) {
 			'about.sections.server' => 'Server',
 			'about.sections.gateway' => 'Gateway',
 			'about.fields.app' => 'App',
@@ -20089,8 +20172,6 @@ extension on Translations {
 			'about.copyLabels.serverUrl' => 'server URL',
 			'about.tagline' => 'opendray mobile — multi-CLI gateway control.\nSource: github.com/Opendray/opendray',
 			'about.gateway.version' => 'Version',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Checking for updates…',
 			'about.gateway.upToDate' => 'Up to date',

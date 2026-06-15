@@ -40,12 +40,17 @@ class _PageData {
     required this.rows,
     required this.targets,
     required this.schedules,
+    this.health,
   });
 
   final BackupStatusReport status;
   final List<BackupRow> rows;
   final List<BackupTarget> targets;
   final List<BackupSchedule> schedules;
+  // At-a-glance roll-up for the overview strip. Null when the feature
+  // is off or the health endpoint transiently failed — the strip just
+  // isn't rendered in that case.
+  final BackupHealth? health;
 
   // True when the backup feature isn't running this process — i.e.
   // the operator hasn't set it up yet, or set it up but hasn't
@@ -101,11 +106,20 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         );
         return;
       }
+      // Kick health off concurrently with the lists; tolerate its
+      // failure (the strip just hides) rather than fail the whole page.
+      final healthFut = api.health();
       final results = await Future.wait<Object>([
         api.list(limit: 50).catchError((_) => <BackupRow>[]),
         api.listTargets().catchError((_) => <BackupTarget>[]),
         api.listSchedules().catchError((_) => <BackupSchedule>[]),
       ]);
+      BackupHealth? health;
+      try {
+        health = await healthFut;
+      } on Object {
+        health = null;
+      }
       if (!mounted) return;
       final rows = (results[0] as List<BackupRow>)
         ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
@@ -116,6 +130,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
             rows: rows,
             targets: results[1] as List<BackupTarget>,
             schedules: results[2] as List<BackupSchedule>,
+            health: health,
           ),
         ),
       );
@@ -159,7 +174,14 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
         );
         return;
       }
+      final healthFut = api.health();
       final list = await api.list(limit: 50);
+      BackupHealth? health;
+      try {
+        health = await healthFut;
+      } on Object {
+        health = current.health;
+      }
       if (!mounted) return;
       list.sort((a, b) => b.startedAt.compareTo(a.startedAt));
       setState(
@@ -169,6 +191,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
             rows: list,
             targets: current.targets,
             schedules: current.schedules,
+            health: health,
           ),
         ),
       );
@@ -706,6 +729,7 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
+          if (data.health != null) _HealthStrip(health: data.health!),
           _StatusBanner(status: status),
           const _InventoryCard(),
           _SummaryCard(
@@ -1344,6 +1368,116 @@ class _SetupWizardViewState extends ConsumerState<_SetupWizardView> {
 // server), green otherwise with the pg_dump version + cipher key
 // fingerprint so they can confirm "backups can run AND will be
 // encrypted with the key I think they're encrypted with."
+// At-a-glance health strip: when the last good backup landed plus any
+// counts that need attention (recent failures, failed verifications,
+// overdue schedules). Green when all is well, red when not, neutral
+// before the first successful backup.
+class _HealthStrip extends StatelessWidget {
+  const _HealthStrip({required this.health});
+  final BackupHealth health;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allClear = health.allClear;
+    final neverBackedUp = health.neverBackedUp;
+    final color = allClear
+        ? Colors.green
+        : neverBackedUp
+        ? theme.colorScheme.outline
+        : theme.colorScheme.error;
+    final bg = color.withValues(alpha: 0.10);
+    final border = color.withValues(alpha: 0.45);
+
+    final attention = <String>[
+      if (health.recentFailures > 0)
+        t.backups.health.recentFailures(count: health.recentFailures),
+      if (health.verifyFailures > 0)
+        t.backups.health.verifyFailures(count: health.verifyFailures),
+      if (health.overdueSchedules > 0)
+        t.backups.health.overdueSchedules(count: health.overdueSchedules),
+    ];
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                allClear
+                    ? Icons.verified_user_outlined
+                    : Icons.error_outline,
+                size: 18,
+                color: color,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${t.backups.health.lastSuccess}: ',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      TextSpan(
+                        text: neverBackedUp
+                            ? t.backups.health.never
+                            : _relTime(health.lastSuccessAt!),
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (attention.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            ...attention.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  line,
+                  style: theme.textTheme.bodySmall?.copyWith(color: color),
+                ),
+              ),
+            ),
+          ] else if (allClear)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                t.backups.health.allClear,
+                style: theme.textTheme.bodySmall?.copyWith(color: color),
+              ),
+            ),
+          if (health.schedules > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              t.backups.health.scheduleSummary(
+                enabled: health.enabledSchedules,
+                total: health.schedules,
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusBanner extends StatelessWidget {
   const _StatusBanner({required this.status});
   final BackupStatusReport status;

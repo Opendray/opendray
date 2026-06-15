@@ -594,6 +594,78 @@ func scanBackup(row rowScanner) (Backup, error) {
 	return b, nil
 }
 
+// ─── health ───────────────────────────────────────────────────────
+
+// BackupHealth rolls up the at-a-glance signals the dashboard renders
+// as a health strip: the most recent successful backup (staleness),
+// plus counts of things needing attention — recent failures, failed
+// restore-verifications, and overdue schedules. Three small aggregate
+// queries, cheap enough to hit on every dashboard poll.
+func (s *store) BackupHealth(ctx context.Context) (BackupHealth, error) {
+	var h BackupHealth
+
+	// Most recent successful backup (staleness signal). No rows yet is
+	// a valid "never backed up" state, not an error.
+	var (
+		lastID sql.NullString
+		lastAt sql.NullTime
+	)
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, finished_at
+		  FROM backups
+		 WHERE status='succeeded' AND finished_at IS NOT NULL
+		 ORDER BY finished_at DESC
+		 LIMIT 1`).Scan(&lastID, &lastAt)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return BackupHealth{}, fmt.Errorf("health: last success: %w", err)
+	}
+	if lastID.Valid {
+		h.LastSuccessID = lastID.String
+	}
+	if lastAt.Valid {
+		t := lastAt.Time
+		h.LastSuccessAt = &t
+	}
+
+	// Backup-row counts: recent failures + failed verifications.
+	//   • recent_failures uses COALESCE(finished_at, started_at) so a
+	//     failed row missing finished_at (shouldn't happen — every
+	//     MarkBackupFailed path sets it — but be defensive) still gets
+	//     a timestamp to window on.
+	//   • verify_failures counts succeeded rows whose restore-verify
+	//     ran and failed. The "<> ''" guard mirrors the empty-string
+	//     "no error" sentinel the Go/UI layer uses (scanBackup
+	//     COALESCEs NULL→''), so the count stays consistent with the
+	//     VerifiedBadge, not just with the raw NULL column.
+	if err := s.pool.QueryRow(ctx, `
+		SELECT
+			COUNT(*) FILTER (
+				WHERE status='failed'
+				  AND COALESCE(finished_at, started_at) > NOW() - INTERVAL '24 hours') AS recent_failures,
+			COUNT(*) FILTER (
+				WHERE status='succeeded'
+				  AND verify_error IS NOT NULL AND verify_error <> '') AS verify_failures
+		  FROM backups`).Scan(&h.RecentFailures, &h.VerifyFailures); err != nil {
+		return BackupHealth{}, fmt.Errorf("health: backup counts: %w", err)
+	}
+
+	// Schedule counts: total, enabled, overdue. The 5-minute grace
+	// matches ClaimDueSchedule's jitter so a schedule that's merely
+	// mid-claim isn't flagged.
+	if err := s.pool.QueryRow(ctx, `
+		SELECT
+			COUNT(*) AS total,
+			COUNT(*) FILTER (WHERE enabled) AS enabled,
+			COUNT(*) FILTER (
+				WHERE enabled
+				  AND next_run_at < NOW() - INTERVAL '5 minutes') AS overdue
+		  FROM backup_schedules`).Scan(&h.Schedules, &h.EnabledSchedules, &h.OverdueSchedules); err != nil {
+		return BackupHealth{}, fmt.Errorf("health: schedule counts: %w", err)
+	}
+
+	return h, nil
+}
+
 // ─── exports ──────────────────────────────────────────────────────
 
 func (s *store) InsertExport(ctx context.Context, e Export) error {

@@ -555,6 +555,7 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get overviewTargets => '目标';
 	@override String get overviewSchedules => '计划';
 	@override String get overviewBackups => '备份';
+	@override late final _TranslationsBackupsHealthZh health = _TranslationsBackupsHealthZh._(_root);
 	@override String get failedToLoad => '加载备份失败';
 	@override String get envVarConfigured => 'OPENDRAY_BACKUP_KEY 环境变量';
 	@override String get savedConfirmCheckbox => '我已将密语保存到密码管理器';
@@ -1468,6 +1469,7 @@ class _TranslationsWebBackupsZh extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsRestoreZh restore = _TranslationsWebBackupsRestoreZh._(_root);
 	@override late final _TranslationsWebBackupsKindZh kind = _TranslationsWebBackupsKindZh._(_root);
 	@override late final _TranslationsWebBackupsVerifyZh verify = _TranslationsWebBackupsVerifyZh._(_root);
+	@override late final _TranslationsWebBackupsHealthZh health = _TranslationsWebBackupsHealthZh._(_root);
 	@override late final _TranslationsWebBackupsTriggerZh trigger = _TranslationsWebBackupsTriggerZh._(_root);
 	@override late final _TranslationsWebBackupsRecoveryKitZh recoveryKit = _TranslationsWebBackupsRecoveryKitZh._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabZh schedulesTab = _TranslationsWebBackupsSchedulesTabZh._(_root);
@@ -2302,6 +2304,22 @@ class _TranslationsBackupsWizardZh extends TranslationsBackupsWizardEn {
 	@override String get helperRecommended => '建议：从密码管理器生成 40+ 字符';
 	@override String get saveNowHeader => '立即保存这个密语';
 	@override String get saveNowBody => '此处只显示一次。之后无法从 opendray 取回。';
+}
+
+// Path: backups.health
+class _TranslationsBackupsHealthZh extends TranslationsBackupsHealthEn {
+	_TranslationsBackupsHealthZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get lastSuccess => '最近成功备份';
+	@override String get never => '尚无成功备份';
+	@override String get allClear => '一切正常';
+	@override String recentFailures({required Object count}) => '过去 24 小时内 ${count} 次失败';
+	@override String verifyFailures({required Object count}) => '${count} 个备份校验失败';
+	@override String overdueSchedules({required Object count}) => '${count} 个计划已逾期';
+	@override String scheduleSummary({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划';
 }
 
 // Path: backups.encryption
@@ -4746,6 +4764,23 @@ class _TranslationsWebBackupsVerifyZh extends TranslationsWebBackupsVerifyEn {
 	@override String get ok => '已校验';
 	@override String get okHint => '已解密并确认可恢复（pg_restore --list）';
 	@override String get failed => '未校验';
+}
+
+// Path: web.backups.health
+class _TranslationsWebBackupsHealthZh extends TranslationsWebBackupsHealthEn {
+	_TranslationsWebBackupsHealthZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get lastSuccess => '最近成功备份';
+	@override String get never => '尚无成功备份';
+	@override String get allClear => '一切正常';
+	@override String recentFailures({required Object count}) => '过去 24 小时内 ${count} 次失败';
+	@override String verifyFailures({required Object count}) => '${count} 个备份校验失败';
+	@override String overdueSchedules({required Object count}) => '${count} 个计划已逾期';
+	@override String scheduleSummary({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划';
+	@override String get loadFailedToast => '无法加载备份健康状态';
 }
 
 // Path: web.backups.trigger
@@ -10230,6 +10265,14 @@ extension on TranslationsZh {
 			'web.backups.verify.ok' => '已校验',
 			'web.backups.verify.okHint' => '已解密并确认可恢复（pg_restore --list）',
 			'web.backups.verify.failed' => '未校验',
+			'web.backups.health.lastSuccess' => '最近成功备份',
+			'web.backups.health.never' => '尚无成功备份',
+			'web.backups.health.allClear' => '一切正常',
+			'web.backups.health.recentFailures' => ({required Object count}) => '过去 24 小时内 ${count} 次失败',
+			'web.backups.health.verifyFailures' => ({required Object count}) => '${count} 个备份校验失败',
+			'web.backups.health.overdueSchedules' => ({required Object count}) => '${count} 个计划已逾期',
+			'web.backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划',
+			'web.backups.health.loadFailedToast' => '无法加载备份健康状态',
 			'web.backups.trigger.preMigrate' => '迁移前',
 			'web.backups.trigger.preMigrateHint' => 'schema 迁移前自动拍摄的快照',
 			'web.backups.trigger.preRestore' => '恢复前',
@@ -10325,6 +10368,8 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'AES-256-GCM 加密存储；不会被回显',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Path prefix',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.pathPrefixHint' => 'Object-key 前缀（可选）',
 			'web.backups.targetEditor.s3.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.useHttps' => '使用 HTTPS',
@@ -10333,8 +10378,6 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.webdav.baseUrlHint' => '包含任意路径的完整 URL。示例：https://cloud.example.com/remote.php/dav/files/me/（Nextcloud）、https://nas.local:5006/（群晖）、https://dav.jianguoyun.com/dav/（坚果云）',
 			'web.backups.targetEditor.webdav.baseUrlPlaceholder' => 'https://cloud.example.com/remote.php/dav/files/<user>/',
 			'web.backups.targetEditor.webdav.userLabel' => '用户',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.passwordLabel' => '密码',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => '路径前缀',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Base URL 下的子文件夹（可选）',
@@ -10839,6 +10882,8 @@ extension on TranslationsZh {
 			'web.export.history.title' => '历史',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => '状态',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.columns.scope' => '范围',
 			'web.export.history.columns.size' => '大小',
 			'web.export.history.columns.expires' => '过期',
@@ -10847,8 +10892,6 @@ extension on TranslationsZh {
 			'web.export.history.deleteTooltip' => '删除',
 			'web.export.history.listFailedToast' => '加载导出列表失败',
 			'web.export.history.downloadFailedToast' => '下载失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.noTokenToast' => '没有下载 token（已过期？）',
 			'web.export.history.deleteConfirm' => ({required Object id}) => '删除导出 ${id}?',
 			'web.export.history.deletedToast' => '导出已删除',
@@ -11353,6 +11396,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
 			'sessions.spawnSheet.cancel' => '取消',
@@ -11361,8 +11406,6 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.disabledSuffix' => '（已停用）',
 			'sessions.spawnSheet.cwdLabel' => '工作目录',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
@@ -11812,6 +11855,13 @@ extension on TranslationsZh {
 			'backups.overviewTargets' => '目标',
 			'backups.overviewSchedules' => '计划',
 			'backups.overviewBackups' => '备份',
+			'backups.health.lastSuccess' => '最近成功备份',
+			'backups.health.never' => '尚无成功备份',
+			'backups.health.allClear' => '一切正常',
+			'backups.health.recentFailures' => ({required Object count}) => '过去 24 小时内 ${count} 次失败',
+			'backups.health.verifyFailures' => ({required Object count}) => '${count} 个备份校验失败',
+			'backups.health.overdueSchedules' => ({required Object count}) => '${count} 个计划已逾期',
+			'backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '已启用 ${enabled}/${total} 个计划',
 			'backups.failedToLoad' => '加载备份失败',
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
@@ -11860,6 +11910,8 @@ extension on TranslationsZh {
 			'backups.restore.encryptionAlgo' => '加密算法',
 			'backups.restore.bytesRead' => '已读字节',
 			'backups.restore.targetDsnUsed' => '目标 DSN',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.targetDsnSelfLabel' => '（opendray 自身数据库）',
 			'backups.restore.done' => '完成',
 			'backups.inventory.title' => '备份里有什么',
@@ -11875,8 +11927,6 @@ extension on TranslationsZh {
 			'backupTargets.editConfig' => '编辑配置',
 			'backupTargets.viewRawConfig' => '查看原始配置',
 			'backupTargets.configDialogTitle' => ({required Object kind}) => '${kind} 配置',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargets.deleteTitle' => '删除目标？',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.title' => '备份计划',
@@ -12374,6 +12424,8 @@ extension on TranslationsZh {
 			'about.title' => '关于',
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
+			_ => null,
+		} ?? switch (path) {
 			'about.sections.server' => '服务器',
 			'about.sections.gateway' => '网关',
 			'about.fields.app' => '应用',
@@ -12389,8 +12441,6 @@ extension on TranslationsZh {
 			'about.copyLabels.serverUrl' => '服务器 URL',
 			'about.tagline' => 'opendray mobile — 多 CLI 网关控制。\n源码：github.com/Opendray/opendray',
 			'about.gateway.version' => '版本',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.commit' => '提交',
 			'about.gateway.checking' => '正在检查更新…',
 			'about.gateway.upToDate' => '已是最新',

@@ -1760,6 +1760,16 @@
         "okHint": "Descifrada y confirmada como restaurable (pg_restore --list)",
         "failed": "sin verificar"
       },
+      "health": {
+        "lastSuccess": "Última copia correcta",
+        "never": "nunca — aún sin copia correcta",
+        "allClear": "todo en orden",
+        "recentFailures": "{count} fallidas en las últimas 24 h",
+        "verifyFailures": "{count} con verificación fallida",
+        "overdueSchedules": "{count} programación atrasada",
+        "scheduleSummary": "{enabled}/{total} programaciones activas",
+        "loadFailedToast": "No se pudo cargar el estado de las copias"
+      },
       "trigger": {
         "preMigrate": "pre-migración",
         "preMigrateHint": "Instantánea automática tomada antes de ejecutar las migraciones de esquema",
@@ -3839,6 +3849,15 @@
     "overviewTargets": "Destinos",
     "overviewSchedules": "Programaciones",
     "overviewBackups": "Copias de seguridad",
+    "health": {
+      "lastSuccess": "Última copia correcta",
+      "never": "aún sin copia correcta",
+      "allClear": "Todo en orden",
+      "recentFailures": "{count} fallidas en las últimas 24 h",
+      "verifyFailures": "{count} con verificación fallida",
+      "overdueSchedules": "{count} programación atrasada",
+      "scheduleSummary": "{enabled}/{total} programaciones activas"
+    },
     "failedToLoad": "Error al cargar las copias de seguridad",
     "envVarConfigured": "variable de entorno OPENDRAY_BACKUP_KEY",
     "savedConfirmCheckbox": "He guardado esta passphrase en mi gestor de contraseñas",

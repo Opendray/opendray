@@ -1760,6 +1760,16 @@
         "okHint": "Decrypted and confirmed restorable (pg_restore --list)",
         "failed": "unverified"
       },
+      "health": {
+        "lastSuccess": "Last good backup",
+        "never": "never — no successful backup yet",
+        "allClear": "all clear",
+        "recentFailures": "{count} failed in the last 24h",
+        "verifyFailures": "{count} failed verification",
+        "overdueSchedules": "{count} schedule overdue",
+        "scheduleSummary": "{enabled}/{total} schedules enabled",
+        "loadFailedToast": "Could not load backup health"
+      },
       "trigger": {
         "preMigrate": "pre-migrate",
         "preMigrateHint": "Automatic snapshot taken before schema migrations ran",
@@ -3839,6 +3849,15 @@
     "overviewTargets": "Targets",
     "overviewSchedules": "Schedules",
     "overviewBackups": "Backups",
+    "health": {
+      "lastSuccess": "Last good backup",
+      "never": "no successful backup yet",
+      "allClear": "All clear",
+      "recentFailures": "{count} failed in the last 24h",
+      "verifyFailures": "{count} failed verification",
+      "overdueSchedules": "{count} schedule overdue",
+      "scheduleSummary": "{enabled}/{total} schedules enabled"
+    },
     "failedToLoad": "Failed to load backups",
     "envVarConfigured": "OPENDRAY_BACKUP_KEY env var",
     "savedConfirmCheckbox": "I have saved this passphrase to my password manager",

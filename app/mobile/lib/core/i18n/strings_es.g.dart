@@ -555,6 +555,7 @@ class _TranslationsBackupsEs extends TranslationsBackupsEn {
 	@override String get overviewTargets => 'Destinos';
 	@override String get overviewSchedules => 'Programaciones';
 	@override String get overviewBackups => 'Copias de seguridad';
+	@override late final _TranslationsBackupsHealthEs health = _TranslationsBackupsHealthEs._(_root);
 	@override String get failedToLoad => 'Error al cargar las copias de seguridad';
 	@override String get envVarConfigured => 'variable de entorno OPENDRAY_BACKUP_KEY';
 	@override String get savedConfirmCheckbox => 'He guardado esta passphrase en mi gestor de contraseñas';
@@ -1468,6 +1469,7 @@ class _TranslationsWebBackupsEs extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsRestoreEs restore = _TranslationsWebBackupsRestoreEs._(_root);
 	@override late final _TranslationsWebBackupsKindEs kind = _TranslationsWebBackupsKindEs._(_root);
 	@override late final _TranslationsWebBackupsVerifyEs verify = _TranslationsWebBackupsVerifyEs._(_root);
+	@override late final _TranslationsWebBackupsHealthEs health = _TranslationsWebBackupsHealthEs._(_root);
 	@override late final _TranslationsWebBackupsTriggerEs trigger = _TranslationsWebBackupsTriggerEs._(_root);
 	@override late final _TranslationsWebBackupsRecoveryKitEs recoveryKit = _TranslationsWebBackupsRecoveryKitEs._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabEs schedulesTab = _TranslationsWebBackupsSchedulesTabEs._(_root);
@@ -2302,6 +2304,22 @@ class _TranslationsBackupsWizardEs extends TranslationsBackupsWizardEn {
 	@override String get helperRecommended => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas';
 	@override String get saveNowHeader => 'Guarda esta passphrase AHORA';
 	@override String get saveNowBody => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.';
+}
+
+// Path: backups.health
+class _TranslationsBackupsHealthEs extends TranslationsBackupsHealthEn {
+	_TranslationsBackupsHealthEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get lastSuccess => 'Última copia correcta';
+	@override String get never => 'aún sin copia correcta';
+	@override String get allClear => 'Todo en orden';
+	@override String recentFailures({required Object count}) => '${count} fallidas en las últimas 24 h';
+	@override String verifyFailures({required Object count}) => '${count} con verificación fallida';
+	@override String overdueSchedules({required Object count}) => '${count} programación atrasada';
+	@override String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas';
 }
 
 // Path: backups.encryption
@@ -4746,6 +4764,23 @@ class _TranslationsWebBackupsVerifyEs extends TranslationsWebBackupsVerifyEn {
 	@override String get ok => 'verificada';
 	@override String get okHint => 'Descifrada y confirmada como restaurable (pg_restore --list)';
 	@override String get failed => 'sin verificar';
+}
+
+// Path: web.backups.health
+class _TranslationsWebBackupsHealthEs extends TranslationsWebBackupsHealthEn {
+	_TranslationsWebBackupsHealthEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get lastSuccess => 'Última copia correcta';
+	@override String get never => 'nunca — aún sin copia correcta';
+	@override String get allClear => 'todo en orden';
+	@override String recentFailures({required Object count}) => '${count} fallidas en las últimas 24 h';
+	@override String verifyFailures({required Object count}) => '${count} con verificación fallida';
+	@override String overdueSchedules({required Object count}) => '${count} programación atrasada';
+	@override String scheduleSummary({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas';
+	@override String get loadFailedToast => 'No se pudo cargar el estado de las copias';
 }
 
 // Path: web.backups.trigger
@@ -10230,6 +10265,14 @@ extension on TranslationsEs {
 			'web.backups.verify.ok' => 'verificada',
 			'web.backups.verify.okHint' => 'Descifrada y confirmada como restaurable (pg_restore --list)',
 			'web.backups.verify.failed' => 'sin verificar',
+			'web.backups.health.lastSuccess' => 'Última copia correcta',
+			'web.backups.health.never' => 'nunca — aún sin copia correcta',
+			'web.backups.health.allClear' => 'todo en orden',
+			'web.backups.health.recentFailures' => ({required Object count}) => '${count} fallidas en las últimas 24 h',
+			'web.backups.health.verifyFailures' => ({required Object count}) => '${count} con verificación fallida',
+			'web.backups.health.overdueSchedules' => ({required Object count}) => '${count} programación atrasada',
+			'web.backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas',
+			'web.backups.health.loadFailedToast' => 'No se pudo cargar el estado de las copias',
 			'web.backups.trigger.preMigrate' => 'pre-migración',
 			'web.backups.trigger.preMigrateHint' => 'Instantánea automática tomada antes de ejecutar las migraciones de esquema',
 			'web.backups.trigger.preRestore' => 'pre-restauración',
@@ -10325,6 +10368,8 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Clave secreta',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Se almacena cifrada con AES-256-GCM; nunca se devuelve',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Prefijo de ruta',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.pathPrefixHint' => 'Prefijo de clave de objeto (opcional)',
 			'web.backups.targetEditor.s3.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.useHttps' => 'Usar HTTPS',
@@ -10333,8 +10378,6 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.webdav.baseUrlHint' => 'URL completa incluyendo cualquier ruta. Ejemplos: https://cloud.example.com/remote.php/dav/files/me/ (Nextcloud), https://nas.local:5006/ (Synology), https://dav.jianguoyun.com/dav/ (Jianguoyun / 坚果云)',
 			'web.backups.targetEditor.webdav.baseUrlPlaceholder' => 'https://cloud.example.com/remote.php/dav/files/<user>/',
 			'web.backups.targetEditor.webdav.userLabel' => 'Usuario',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.webdav.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.webdav.pathPrefixLabel' => 'Prefijo de ruta',
 			'web.backups.targetEditor.webdav.pathPrefixHint' => 'Subcarpeta bajo la URL base (opcional)',
@@ -10839,6 +10882,8 @@ extension on TranslationsEs {
 			'web.export.history.title' => 'Historial',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => 'Estado',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.columns.scope' => 'Alcance',
 			'web.export.history.columns.size' => 'Tamaño',
 			'web.export.history.columns.expires' => 'Caduca',
@@ -10847,8 +10892,6 @@ extension on TranslationsEs {
 			'web.export.history.deleteTooltip' => 'Eliminar',
 			'web.export.history.listFailedToast' => 'No se pudieron listar las exportaciones',
 			'web.export.history.downloadFailedToast' => 'Falló la descarga',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.noTokenToast' => 'Sin token de descarga (¿caducado?)',
 			'web.export.history.deleteConfirm' => ({required Object id}) => '¿Eliminar la exportación ${id}?',
 			'web.export.history.deletedToast' => 'Exportación eliminada',
@@ -11353,6 +11396,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.spawnSheet.title' => 'Nueva session',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancelar',
@@ -11361,8 +11406,6 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.disabledSuffix' => ' (desactivado)',
 			'sessions.spawnSheet.cwdLabel' => 'Directorio de trabajo',
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHelper' => 'Ruta absoluta en el host del gateway.',
 			'sessions.spawnSheet.browse' => 'Examinar',
 			'sessions.spawnSheet.nameLabel' => 'Nombre (opcional)',
@@ -11812,6 +11855,13 @@ extension on TranslationsEs {
 			'backups.overviewTargets' => 'Destinos',
 			'backups.overviewSchedules' => 'Programaciones',
 			'backups.overviewBackups' => 'Copias de seguridad',
+			'backups.health.lastSuccess' => 'Última copia correcta',
+			'backups.health.never' => 'aún sin copia correcta',
+			'backups.health.allClear' => 'Todo en orden',
+			'backups.health.recentFailures' => ({required Object count}) => '${count} fallidas en las últimas 24 h',
+			'backups.health.verifyFailures' => ({required Object count}) => '${count} con verificación fallida',
+			'backups.health.overdueSchedules' => ({required Object count}) => '${count} programación atrasada',
+			'backups.health.scheduleSummary' => ({required Object enabled, required Object total}) => '${enabled}/${total} programaciones activas',
 			'backups.failedToLoad' => 'Error al cargar las copias de seguridad',
 			'backups.envVarConfigured' => 'variable de entorno OPENDRAY_BACKUP_KEY',
 			'backups.savedConfirmCheckbox' => 'He guardado esta passphrase en mi gestor de contraseñas',
@@ -11860,6 +11910,8 @@ extension on TranslationsEs {
 			'backups.restore.encryptionAlgo' => 'Cifrado',
 			'backups.restore.bytesRead' => 'Bytes leídos',
 			'backups.restore.targetDsnUsed' => 'DSN de destino',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.targetDsnSelfLabel' => '(la propia base de datos de opendray)',
 			'backups.restore.done' => 'Hecho',
 			'backups.inventory.title' => 'Qué contiene una copia de seguridad',
@@ -11875,8 +11927,6 @@ extension on TranslationsEs {
 			'backupTargets.editConfig' => 'Editar configuración',
 			'backupTargets.viewRawConfig' => 'Ver configuración sin procesar',
 			'backupTargets.configDialogTitle' => ({required Object kind}) => 'Configuración de ${kind}',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargets.deleteTitle' => '¿Eliminar destino?',
 			'backupTargets.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.title' => 'Programaciones de copia de seguridad',
@@ -12374,6 +12424,8 @@ extension on TranslationsEs {
 			'about.title' => 'Acerca de',
 			'about.loading' => 'Cargando…',
 			'about.sections.app' => 'App',
+			_ => null,
+		} ?? switch (path) {
 			'about.sections.server' => 'Servidor',
 			'about.sections.gateway' => 'Gateway',
 			'about.fields.app' => 'App',
@@ -12389,8 +12441,6 @@ extension on TranslationsEs {
 			'about.copyLabels.serverUrl' => 'URL del servidor',
 			'about.tagline' => 'opendray móvil, control del gateway multi-CLI.\nFuente: github.com/Opendray/opendray',
 			'about.gateway.version' => 'Versión',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.commit' => 'Commit',
 			'about.gateway.checking' => 'Buscando actualizaciones…',
 			'about.gateway.upToDate' => 'Actualizado',

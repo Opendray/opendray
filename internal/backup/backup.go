@@ -158,6 +158,20 @@ type Schedule struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
+// BackupHealth is an at-a-glance roll-up the dashboard renders as a
+// health strip: when the last good backup landed, plus counts of
+// things that currently need an operator's attention. All fields are
+// derived (no stored row) and cheap to recompute on every poll.
+type BackupHealth struct {
+	LastSuccessAt    *time.Time `json:"last_success_at,omitempty"`
+	LastSuccessID    string     `json:"last_success_id,omitempty"`
+	RecentFailures   int        `json:"recent_failures"`   // failed runs in the last 24h
+	VerifyFailures   int        `json:"verify_failures"`   // succeeded backups whose last restore-verify failed
+	OverdueSchedules int        `json:"overdue_schedules"` // enabled schedules >5min past their next_run_at
+	Schedules        int        `json:"schedules"`         // total schedules
+	EnabledSchedules int        `json:"enabled_schedules"` // enabled schedules
+}
+
 // TargetSpec is the public view of a stored BackupTarget config.
 // Sensitive fields inside Config (e.g. SMB password) are returned
 // redacted; the raw form is only used internally.

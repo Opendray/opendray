@@ -65,6 +65,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		h.MountExports(r)
 		h.MountImports(r)
 		r.Get("/backup-inventory", h.inventory)
+		r.Get("/backup-health", h.health)
 		r.Post("/backup-recovery-kit", h.recoveryKit)
 	})
 }
@@ -537,6 +538,17 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"groups": groups})
+}
+
+// health serves GET /backup-health — the dashboard roll-up of last
+// success and attention-needing counts. Read-only.
+func (h *Handlers) health(w http.ResponseWriter, r *http.Request) {
+	hh, err := h.live.Service().Health(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, hh)
 }
 
 func writeJSON(w http.ResponseWriter, code int, body any) {

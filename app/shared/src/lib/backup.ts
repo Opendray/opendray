@@ -153,6 +153,23 @@ export async function fetchBackupStatus(): Promise<BackupStatusReport> {
   return api<BackupStatusReport>('/api/v1/backup-status')
 }
 
+// BackupHealth is the at-a-glance roll-up the dashboard renders as a
+// health strip. Mirrors backup.BackupHealth in Go. All counts are
+// "needs attention" signals — non-zero means something to look at.
+export interface BackupHealth {
+  last_success_at?: string | null
+  last_success_id?: string
+  recent_failures: number // failed runs in the last 24h
+  verify_failures: number // succeeded backups whose last restore-verify failed
+  overdue_schedules: number // enabled schedules >5min past their next_run_at
+  schedules: number // total schedules
+  enabled_schedules: number // enabled schedules
+}
+
+export async function fetchBackupHealth(): Promise<BackupHealth> {
+  return api<BackupHealth>('/api/v1/backup-health')
+}
+
 export interface BackupSetupResult {
   ok: boolean
   key_file_path: string
