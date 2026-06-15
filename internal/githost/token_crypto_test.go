@@ -48,8 +48,12 @@ func TestEncodeDecodeToken_RoundTrip(t *testing.T) {
 	if enc == tok {
 		t.Fatal("token was not encrypted")
 	}
-	if got := s.decodeToken(enc); got != tok {
+	got, locked := s.decodeToken(enc)
+	if got != tok {
 		t.Errorf("decodeToken round-trip = %q, want %q", got, tok)
+	}
+	if locked {
+		t.Error("round-trip token should not be locked")
 	}
 }
 
@@ -64,24 +68,36 @@ func TestEncodeToken_NoCipher_Plaintext(t *testing.T) {
 func TestDecodeToken_LegacyPlaintextPassthrough(t *testing.T) {
 	s := newTestService(fakeCipher{})
 	const legacy = "ghp_plaintextlegacy" // no v1: prefix
-	if got := s.decodeToken(legacy); got != legacy {
+	got, locked := s.decodeToken(legacy)
+	if got != legacy {
 		t.Errorf("legacy plaintext should pass through, got %q", got)
 	}
-}
-
-func TestDecodeToken_DecryptFailure_ReturnsEmpty(t *testing.T) {
-	enc := fakeCipher{}.mustEncrypt(t, "tok")
-	s := newTestService(fakeCipher{broken: true})
-	if got := s.decodeToken(enc); got != "" {
-		t.Errorf("decrypt failure should yield empty token, got %q", got)
+	if locked {
+		t.Error("legacy plaintext should not be locked")
 	}
 }
 
-func TestDecodeToken_EncryptedButNoCipher_ReturnsEmpty(t *testing.T) {
+func TestDecodeToken_DecryptFailure_Locked(t *testing.T) {
+	enc := fakeCipher{}.mustEncrypt(t, "tok")
+	s := newTestService(fakeCipher{broken: true})
+	got, locked := s.decodeToken(enc)
+	if got != "" {
+		t.Errorf("decrypt failure should yield empty token, got %q", got)
+	}
+	if !locked {
+		t.Error("decrypt failure should report locked=true")
+	}
+}
+
+func TestDecodeToken_EncryptedButNoCipher_Locked(t *testing.T) {
 	enc := fakeCipher{}.mustEncrypt(t, "tok")
 	s := newTestService(nil)
-	if got := s.decodeToken(enc); got != "" {
+	got, locked := s.decodeToken(enc)
+	if got != "" {
 		t.Errorf("encrypted value with no cipher should yield empty, got %q", got)
+	}
+	if !locked {
+		t.Error("encrypted value with no cipher should report locked=true")
 	}
 }
 

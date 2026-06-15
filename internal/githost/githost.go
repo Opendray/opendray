@@ -59,15 +59,19 @@ const (
 // Host is the row stored in `git_hosts`. Token is exposed in JSON only
 // when the caller is creating/updating; List/Get redact via TokenMask.
 type Host struct {
-	ID        string    `json:"id"`
-	Kind      Kind      `json:"kind"`
-	Host      string    `json:"host"`
-	Name      string    `json:"name"`
-	Token     string    `json:"token,omitempty"`
-	TokenMask string    `json:"token_mask,omitempty"`
-	Enabled   bool      `json:"enabled"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        string `json:"id"`
+	Kind      Kind   `json:"kind"`
+	Host      string `json:"host"`
+	Name      string `json:"name"`
+	Token     string `json:"token,omitempty"`
+	TokenMask string `json:"token_mask,omitempty"`
+	// TokenLocked is true when a token is stored but encrypted under a
+	// key we can't currently open (backup key rotated / not armed). The
+	// token isn't lost — it just needs re-entering.
+	TokenLocked bool      `json:"token_locked,omitempty"`
+	Enabled     bool      `json:"enabled"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // CreateRequest / UpdateRequest are the JSON bodies for POST / PUT.
@@ -140,35 +144,40 @@ func (s *Service) encodeToken(plain string) string {
 	return enc
 }
 
-// decodeToken reverses encodeToken. Legacy plaintext (no envelope
-// prefix) passes through untouched. An encrypted value that can't be
-// decrypted (cipher gone, or the backup key rotated) yields "" with a
-// warning — the operator must re-enter the token — rather than handing
-// an unusable ciphertext to an upstream API.
-func (s *Service) decodeToken(stored string) string {
+// decodeToken reverses encodeToken. It returns the plaintext plus a
+// "locked" flag distinguishing three states:
+//
+//   - "", false       → no token configured
+//   - plaintext, false → legacy plaintext (no envelope) or decrypted OK
+//   - "", true        → an encrypted value we couldn't open (cipher gone
+//     or the backup key rotated). The token still exists in the DB but
+//     is currently unusable; the operator must re-enter it. We never
+//     hand the raw ciphertext to an upstream API.
+func (s *Service) decodeToken(stored string) (plain string, locked bool) {
 	if stored == "" || !strings.HasPrefix(stored, encryptedTokenPrefix) {
-		return stored
+		return stored, false
 	}
 	if s.cipher == nil {
-		s.log.Warn("git host token is encrypted but no cipher is configured; token unusable until backups are armed")
-		return ""
+		s.log.Warn("git host token is encrypted but no cipher is configured; token locked until backups are armed")
+		return "", true
 	}
-	plain, err := s.cipher.DecryptField(stored)
+	dec, err := s.cipher.DecryptField(stored)
 	if err != nil {
 		s.log.Warn("git host token decrypt failed (backup key changed?); re-enter the token", "err", err)
-		return ""
+		return "", true
 	}
-	return plain
+	return dec, false
 }
 
 // scanHostDecoded scans a row and decrypts its token in place, so every
-// CRUD path sees plaintext regardless of how the column was stored.
+// CRUD path sees plaintext regardless of how the column was stored. A
+// token that's present but undecryptable surfaces as TokenLocked.
 func (s *Service) scanHostDecoded(row rowScanner) (Host, error) {
 	h, err := scanHost(row)
 	if err != nil {
 		return Host{}, err
 	}
-	h.Token = s.decodeToken(h.Token)
+	h.Token, h.TokenLocked = s.decodeToken(h.Token)
 	return h, nil
 }
 
@@ -359,7 +368,12 @@ type Remote struct {
 	Repo     string `json:"repo"`
 	Kind     Kind   `json:"kind,omitempty"`
 	HasToken bool   `json:"has_token"`
-	WebURL   string `json:"web_url,omitempty"`
+	// TokenLocked is true when a token row exists for this host but its
+	// stored value can't be decrypted (backup key changed). HasToken is
+	// false in that case; the UI uses TokenLocked to prompt a re-entry
+	// rather than a first-time "configure a token".
+	TokenLocked bool   `json:"token_locked,omitempty"`
+	WebURL      string `json:"web_url,omitempty"`
 }
 
 // DetectRemote reads `git remote get-url origin` from `dir` and parses
@@ -386,6 +400,7 @@ func (s *Service) DetectRemote(ctx context.Context, dir string) (Remote, error) 
 	if err == nil {
 		rem.Kind = hostRow.Kind
 		rem.HasToken = hostRow.Token != ""
+		rem.TokenLocked = hostRow.TokenLocked
 	}
 	return rem, nil
 }

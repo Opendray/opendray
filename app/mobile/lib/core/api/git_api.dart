@@ -158,6 +158,7 @@ class GitPullRequestList {
   GitPullRequestList({
     required this.prs,
     required this.needsToken,
+    required this.tokenLocked,
     required this.host,
     required this.errorMessage,
   });
@@ -174,9 +175,13 @@ class GitPullRequestList {
     final host = remote is Map<String, dynamic>
         ? (remote['host'] as String? ?? '')
         : '';
+    final tokenLocked =
+        remote is Map<String, dynamic> &&
+        (remote['token_locked'] as bool? ?? false);
     return GitPullRequestList(
       prs: prs,
       needsToken: json['need_token'] as bool? ?? false,
+      tokenLocked: tokenLocked,
       host: host,
       errorMessage: json['error'] as String? ?? '',
     );
@@ -186,6 +191,9 @@ class GitPullRequestList {
   // True when the remote is detected but no git_hosts row has a
   // token for it. UI shows "Configure git host" deep link.
   final bool needsToken;
+  // True when a token row exists but can't be decrypted (backup key
+  // changed). UI prompts re-entry instead of first-time config.
+  final bool tokenLocked;
   final String host;
   // Non-empty when upstream returned a transport error (e.g.
   // rate limit). Distinct from needsToken which is a config gap.
@@ -431,6 +439,7 @@ class GitIssueList {
   GitIssueList({
     required this.issues,
     required this.needsToken,
+    required this.tokenLocked,
     required this.host,
     required this.errorMessage,
   });
@@ -444,9 +453,13 @@ class GitIssueList {
     final host = remote is Map<String, dynamic>
         ? (remote['host'] as String? ?? '')
         : '';
+    final tokenLocked =
+        remote is Map<String, dynamic> &&
+        (remote['token_locked'] as bool? ?? false);
     return GitIssueList(
       issues: issues,
       needsToken: json['need_token'] as bool? ?? false,
+      tokenLocked: tokenLocked,
       host: host,
       errorMessage: json['error'] as String? ?? '',
     );
@@ -454,6 +467,7 @@ class GitIssueList {
 
   final List<GitIssue> issues;
   final bool needsToken;
+  final bool tokenLocked;
   final String host;
   final String errorMessage;
 }

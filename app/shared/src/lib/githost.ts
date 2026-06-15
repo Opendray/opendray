@@ -62,6 +62,10 @@ export interface GitRemote {
   repo: string
   kind?: GitHostKind
   has_token: boolean
+  /** A token row exists but its stored value can't be decrypted (the
+   * backup key changed / isn't armed). has_token is false; prompt the
+   * operator to re-enter rather than to configure a first token. */
+  token_locked?: boolean
   web_url?: string
 }
 

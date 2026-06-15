@@ -136,7 +136,10 @@ class _GitPRSectionState extends ConsumerState<GitPRSection> {
               ),
             )
           else if (_list?.needsToken ?? false)
-            _NeedTokenHint(host: _list!.host)
+            _NeedTokenHint(
+              host: _list!.host,
+              locked: _list!.tokenLocked,
+            )
           else if ((_list?.errorMessage ?? '').isNotEmpty)
             Text(
               _list!.errorMessage,
@@ -373,8 +376,9 @@ class _CreatePRSheetState extends ConsumerState<_CreatePRSheet> {
 }
 
 class _NeedTokenHint extends StatelessWidget {
-  const _NeedTokenHint({required this.host});
+  const _NeedTokenHint({required this.host, this.locked = false});
   final String host;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +396,10 @@ class _NeedTokenHint extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'No token configured for $host. Add one in Plugins → Git hosts.',
+              locked
+                  ? "The token for $host can't be decrypted — the backup key "
+                        'changed. Re-enter it in Plugins → Git hosts.'
+                  : 'No token configured for $host. Add one in Plugins → Git hosts.',
               style: theme.textTheme.bodySmall,
             ),
           ),

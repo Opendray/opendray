@@ -132,7 +132,12 @@ export function PullRequestsSection({ cwd }: PullRequestsSectionProps) {
           {data.error}
         </div>
       )}
-      {data && data.need_token && <NeedTokenHint host={data.remote.host} />}
+      {data && data.need_token && (
+        <NeedTokenHint
+          host={data.remote.host}
+          locked={data.remote.token_locked}
+        />
+      )}
       {data && !data.error && !data.need_token && data.prs.length === 0 && (
         <div className="text-[11px] text-muted-foreground/60 px-1 py-1">
           No {state === 'all' ? '' : `${state} `}PRs.
@@ -999,21 +1004,35 @@ function aggregateChecks(checks: CheckRun[]): {
   }
 }
 
-function NeedTokenHint({ host }: { host: string }) {
+function NeedTokenHint({
+  host,
+  locked,
+}: {
+  host: string
+  locked?: boolean
+}) {
   return (
     <div className="rounded-md border border-dashed border-border bg-card/40 p-2.5 flex flex-col gap-2">
       <div className="flex items-start gap-2 text-[11px] text-muted-foreground">
         <KeyRound className="size-3.5 mt-0.5 text-muted-foreground/60 shrink-0" />
-        <span>
-          No token configured for <span className="font-mono">{host}</span>. Add
-          one to fetch pull requests.
-        </span>
+        {locked ? (
+          <span>
+            The token for <span className="font-mono">{host}</span> can&apos;t
+            be decrypted — the backup key changed. Re-enter it to fetch pull
+            requests.
+          </span>
+        ) : (
+          <span>
+            No token configured for <span className="font-mono">{host}</span>.
+            Add one to fetch pull requests.
+          </span>
+        )}
       </div>
       <Link
         to="/plugins"
         className="text-[11px] text-state-running hover:underline self-start"
       >
-        Configure git host →
+        {locked ? 'Re-enter git host token →' : 'Configure git host →'}
       </Link>
     </div>
   )
