@@ -6,9 +6,14 @@
 //  2. Detect-remote + list-PRs endpoints used by the Inspector's Git
 //     tab to render an "open PRs" section for the session's repo.
 //
-// Tokens are stored plaintext in `git_hosts` — same trust model as the
-// claude_accounts on-disk OAuth tokens. The handlers mount under the
-// admin-only middleware group.
+// Tokens are encrypted at rest in `git_hosts.token` with the backup
+// cipher (AES-GCM, the same key that protects backups) when the backup
+// feature is armed; otherwise they fall back to plaintext — the
+// historical trust model, shared with the claude_accounts on-disk OAuth
+// tokens. Encrypted values carry a "v1:" envelope prefix, so the column
+// self-identifies and a plaintext token written before backups were
+// armed is re-encrypted the next time it's saved. The handlers mount
+// under the admin-only middleware group.
 package githost
 
 import (
@@ -81,12 +86,26 @@ type UpdateRequest struct {
 	Enabled *bool   `json:"enabled,omitempty"`
 }
 
+// FieldCipher wraps a short secret (the git host token) at rest. The
+// backup cipher satisfies it; a nil cipher (or one whose backup feature
+// isn't armed) means tokens stay plaintext — the historical behaviour.
+type FieldCipher interface {
+	EncryptField(plain string) (string, error)
+	DecryptField(envelope string) (string, error)
+}
+
+// encryptedTokenPrefix marks a token value that's been wrapped by
+// FieldCipher.EncryptField. A stored value without it is legacy
+// plaintext.
+const encryptedTokenPrefix = "v1:"
+
 // Service owns the DB layer and the HTTP client used for upstream API
 // calls. Held by the app for its lifetime.
 type Service struct {
-	pool *pgxpool.Pool
-	log  *slog.Logger
-	http *http.Client
+	pool   *pgxpool.Pool
+	log    *slog.Logger
+	http   *http.Client
+	cipher FieldCipher // nil = tokens stored plaintext
 }
 
 func NewService(pool *pgxpool.Pool, log *slog.Logger) *Service {
@@ -98,6 +117,59 @@ func NewService(pool *pgxpool.Pool, log *slog.Logger) *Service {
 		log:  log.With("component", "githost"),
 		http: &http.Client{Timeout: httpTimeout},
 	}
+}
+
+// SetCipher injects the at-rest token cipher. Called once at boot after
+// the backup subsystem is wired; safe to pass a cipher whose backup
+// feature isn't armed yet (writes fall back to plaintext until it is).
+func (s *Service) SetCipher(c FieldCipher) { s.cipher = c }
+
+// encodeToken returns the value to persist for a token: AES-GCM-wrapped
+// when a cipher is available and armed, else the plaintext unchanged
+// (e.g. backups not configured). Encryption failure is never fatal —
+// the token is too important to drop over a key-availability hiccup.
+func (s *Service) encodeToken(plain string) string {
+	if s.cipher == nil || plain == "" {
+		return plain
+	}
+	enc, err := s.cipher.EncryptField(plain)
+	if err != nil || enc == "" {
+		// Not armed / no key — store plaintext (prior trust model).
+		return plain
+	}
+	return enc
+}
+
+// decodeToken reverses encodeToken. Legacy plaintext (no envelope
+// prefix) passes through untouched. An encrypted value that can't be
+// decrypted (cipher gone, or the backup key rotated) yields "" with a
+// warning — the operator must re-enter the token — rather than handing
+// an unusable ciphertext to an upstream API.
+func (s *Service) decodeToken(stored string) string {
+	if stored == "" || !strings.HasPrefix(stored, encryptedTokenPrefix) {
+		return stored
+	}
+	if s.cipher == nil {
+		s.log.Warn("git host token is encrypted but no cipher is configured; token unusable until backups are armed")
+		return ""
+	}
+	plain, err := s.cipher.DecryptField(stored)
+	if err != nil {
+		s.log.Warn("git host token decrypt failed (backup key changed?); re-enter the token", "err", err)
+		return ""
+	}
+	return plain
+}
+
+// scanHostDecoded scans a row and decrypts its token in place, so every
+// CRUD path sees plaintext regardless of how the column was stored.
+func (s *Service) scanHostDecoded(row rowScanner) (Host, error) {
+	h, err := scanHost(row)
+	if err != nil {
+		return Host{}, err
+	}
+	h.Token = s.decodeToken(h.Token)
+	return h, nil
 }
 
 // ── CRUD ────────────────────────────────────────────────────────
@@ -114,7 +186,7 @@ func (s *Service) List(ctx context.Context) ([]Host, error) {
 	defer rows.Close()
 	out := []Host{}
 	for rows.Next() {
-		h, err := scanHost(rows)
+		h, err := s.scanHostDecoded(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +198,7 @@ func (s *Service) List(ctx context.Context) ([]Host, error) {
 
 func (s *Service) Get(ctx context.Context, id string) (Host, error) {
 	row := s.pool.QueryRow(ctx, hostSelect+` WHERE id=$1`, id)
-	h, err := scanHost(row)
+	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
 	}
@@ -138,7 +210,7 @@ func (s *Service) Get(ctx context.Context, id string) (Host, error) {
 // need it to authenticate upstream.
 func (s *Service) GetByHost(ctx context.Context, host string) (Host, error) {
 	row := s.pool.QueryRow(ctx, hostSelect+` WHERE host=$1`, host)
-	h, err := scanHost(row)
+	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
 	}
@@ -160,8 +232,8 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Host, error) {
         VALUES ($1, $2, $3, $4)
         RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
 		string(req.Kind), strings.TrimSpace(req.Host),
-		strings.TrimSpace(req.Name), req.Token)
-	h, err := scanHost(row)
+		strings.TrimSpace(req.Name), s.encodeToken(req.Token))
+	h, err := s.scanHostDecoded(row)
 	if err != nil {
 		return Host{}, fmt.Errorf("insert git host: %w", err)
 	}
@@ -196,9 +268,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
         SET kind=$1, host=$2, name=$3, token=$4, enabled=$5, updated_at=NOW()
         WHERE id=$6
         RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
-		string(current.Kind), current.Host, current.Name, current.Token,
+		string(current.Kind), current.Host, current.Name, s.encodeToken(current.Token),
 		current.Enabled, id)
-	h, err := scanHost(row)
+	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
 	}
@@ -212,7 +284,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 // internal use during update / PR listing. Not exposed via HTTP.
 func (s *Service) GetByID(ctx context.Context, id string) (Host, error) {
 	row := s.pool.QueryRow(ctx, hostSelect+` WHERE id=$1`, id)
-	h, err := scanHost(row)
+	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
 	}

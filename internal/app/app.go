@@ -714,6 +714,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// Works as soon as the operator arms backups via /backup-setup
 	// — no restart required for anthropic provider creation either.
 	ambientCipher := backup.NewLiveCipher(liveBackup)
+	// Encrypt git-host API tokens at rest with the same live cipher
+	// (no-op until the operator arms backups; tokens stay plaintext
+	// until then, matching the historical trust model).
+	gitHostSvc.SetCipher(ambientCipher)
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
 	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
