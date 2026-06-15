@@ -6,6 +6,7 @@ import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/knowledge_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/cortex/curation_chat_screen.dart';
 import 'package:opendray/features/knowledge/force_graph.dart';
 
 // Knowledge tab — read-mostly browser over the M-KG knowledge graph.
@@ -551,6 +552,20 @@ class _KbViewState extends ConsumerState<_KbView> {
                                 MaterialTapTargetSize.shrinkWrap,
                           ),
                         if (!_editing) ...[
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => CurationChatScreen(
+                                      targetKind: 'kb_page',
+                                      targetCwd: _global,
+                                      targetSlug: _kind,
+                                      onRevision: _load,
+                                    ),
+                                  ),
+                                ),
+                            child: Text(t.web.cortex.chat.title),
+                          ),
                           TextButton(
                             onPressed: () {
                               _editCtrl.text = content;
