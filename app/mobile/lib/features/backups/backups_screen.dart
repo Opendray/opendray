@@ -468,6 +468,9 @@ class _BackupsScreenState extends ConsumerState<BackupsScreen> {
                       : t.backups.kindDbOnly,
                 ),
                 _kv(t.backups.kv.target, b.targetId),
+                if (b.deduped) _kv(t.backups.kv.dedup, t.backups.dedupValue),
+                if (b.groupId != null && b.groupId!.isNotEmpty)
+                  _kv(t.backups.kv.fanout, b.groupId!, mono: true),
                 _kv(t.backups.kv.triggeredBy, b.triggeredBy),
                 _kv(
                   t.backups.kv.started,

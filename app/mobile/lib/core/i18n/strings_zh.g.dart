@@ -520,6 +520,7 @@ class _TranslationsBackupsZh extends TranslationsBackupsEn {
 	@override String get runFullInstanceHint => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。';
 	@override String get kindDbOnly => '仅数据库';
 	@override String get kindFullInstance => '完整实例';
+	@override String get dedupValue => '复用已有 blob（内容相同）';
 	@override String get verifyOk => '已校验';
 	@override String get verifyFailed => '未校验（检查失败）';
 	@override String get verifyPending => '未校验';
@@ -1476,6 +1477,7 @@ class _TranslationsWebBackupsZh extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsSchedulesTabZh schedulesTab = _TranslationsWebBackupsSchedulesTabZh._(_root);
 	@override late final _TranslationsWebBackupsNewScheduleZh newSchedule = _TranslationsWebBackupsNewScheduleZh._(_root);
 	@override late final _TranslationsWebBackupsFanoutZh fanout = _TranslationsWebBackupsFanoutZh._(_root);
+	@override late final _TranslationsWebBackupsDedupZh dedup = _TranslationsWebBackupsDedupZh._(_root);
 	@override late final _TranslationsWebBackupsTargetsTabZh targetsTab = _TranslationsWebBackupsTargetsTabZh._(_root);
 	@override late final _TranslationsWebBackupsTargetEditorZh targetEditor = _TranslationsWebBackupsTargetEditorZh._(_root);
 }
@@ -2228,6 +2230,8 @@ class _TranslationsBackupsKvZh extends TranslationsBackupsKvEn {
 	@override String get verified => '校验';
 	@override String get kind => '类型';
 	@override String get target => '目标';
+	@override String get dedup => '去重';
+	@override String get fanout => '扇出组';
 	@override String get triggeredBy => '触发者';
 	@override String get started => '开始';
 	@override String get finished => '完成';
@@ -4877,6 +4881,17 @@ class _TranslationsWebBackupsFanoutZh extends TranslationsWebBackupsFanoutEn {
 	// Translations
 	@override String get badge => '扇出';
 	@override String hint({required Object group}) => '属于一次多目标扇出（组 ${group}）';
+}
+
+// Path: web.backups.dedup
+class _TranslationsWebBackupsDedupZh extends TranslationsWebBackupsDedupEn {
+	_TranslationsWebBackupsDedupZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get badge => '已去重';
+	@override String get hint => '与之前的备份内容相同 —— 复用已有 blob，未重复上传';
 }
 
 // Path: web.backups.targetsTab
@@ -10342,6 +10357,8 @@ extension on TranslationsZh {
 			'web.backups.newSchedule.create' => '创建',
 			'web.backups.fanout.badge' => '扇出',
 			'web.backups.fanout.hint' => ({required Object group}) => '属于一次多目标扇出（组 ${group}）',
+			'web.backups.dedup.badge' => '已去重',
+			'web.backups.dedup.hint' => '与之前的备份内容相同 —— 复用已有 blob，未重复上传',
 			'web.backups.targetsTab.description' => '存储目标。v1 支持 <1>local</1>（opendray 主机磁盘）与 <3>smb</3>（任意 SMB / CIFS 共享，如 UNAS 或群晖）。',
 			'web.backups.targetsTab.newTarget' => '新建目标',
 			'web.backups.targetsTab.listFailedToast' => '加载目标列表失败',
@@ -10391,10 +10408,10 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.s3.regionHint' => '仅 AWS；R2 用 \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
-			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
+			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'AES-256-GCM 加密存储；不会被回显',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Path prefix',
@@ -10905,10 +10922,10 @@ extension on TranslationsZh {
 			'web.export.form.readyToast' => '导出就绪',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} 字节',
 			'web.export.form.failedToast' => '导出失败',
-			'web.export.history.loading' => '加载中…',
-			'web.export.history.empty' => '暂无导出。请使用上面的表单创建一个。',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.history.loading' => '加载中…',
+			'web.export.history.empty' => '暂无导出。请使用上面的表单创建一个。',
 			'web.export.history.title' => '历史',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => '状态',
@@ -11419,10 +11436,10 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
-			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
+			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
@@ -11817,6 +11834,7 @@ extension on TranslationsZh {
 			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
 			'backups.kindDbOnly' => '仅数据库',
 			'backups.kindFullInstance' => '完整实例',
+			'backups.dedupValue' => '复用已有 blob（内容相同）',
 			'backups.verifyOk' => '已校验',
 			'backups.verifyFailed' => '未校验（检查失败）',
 			'backups.verifyPending' => '未校验',
@@ -11841,6 +11859,8 @@ extension on TranslationsZh {
 			'backups.kv.verified' => '校验',
 			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
+			'backups.kv.dedup' => '去重',
+			'backups.kv.fanout' => '扇出组',
 			'backups.kv.triggeredBy' => '触发者',
 			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
@@ -11930,13 +11950,13 @@ extension on TranslationsZh {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
 			'backups.restore.succeededTitle' => '恢复成功',
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			'backups.restore.manifestTitle' => '清单',
@@ -12444,13 +12464,13 @@ extension on TranslationsZh {
 			'memory.deleteOne.body' => '此操作不可撤销。',
 			'memory.scope.project' => '项目',
 			'memory.scope.global' => '全局',
+			_ => null,
+		} ?? switch (path) {
 			'memory.create.textLabel' => '文本',
 			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => '创建',
 			'memory.archive' => '归档',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantine' => '隔离',
 			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',

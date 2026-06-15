@@ -27,10 +27,25 @@ func (s *Service) RunRetention(ctx context.Context, targetID string, keep int) e
 	target := s.targets.get(targetID)
 	for _, b := range toDelete {
 		if target != nil && b.TargetPath != "" {
-			ref := TargetRef{Target: targetID, Path: b.TargetPath}
-			if err := target.Delete(ctx, ref); err != nil {
-				s.log.Warn("retention: target.Delete failed; flipping row anyway",
-					"backup_id", b.ID, "err", err)
+			// A content-deduped backup shares a blob with the row it
+			// pointed at. Only remove the blob once no other live row
+			// still references this target_path — otherwise a retained
+			// deduped backup would be left dangling. On lookup error, err
+			// on the side of keeping the blob.
+			refs, cErr := s.store.CountOtherActiveByTargetPath(ctx, targetID, b.TargetPath, b.ID)
+			switch {
+			case cErr != nil:
+				s.log.Warn("retention: ref-count failed; keeping blob",
+					"backup_id", b.ID, "err", cErr)
+			case refs > 0:
+				s.log.Info("retention: blob still referenced; keeping it",
+					"backup_id", b.ID, "path", b.TargetPath, "refs", refs)
+			default:
+				ref := TargetRef{Target: targetID, Path: b.TargetPath}
+				if err := target.Delete(ctx, ref); err != nil {
+					s.log.Warn("retention: target.Delete failed; flipping row anyway",
+						"backup_id", b.ID, "err", err)
+				}
 			}
 		}
 		if err := s.store.MarkBackupDeleted(ctx, b.ID); err != nil {

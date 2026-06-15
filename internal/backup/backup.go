@@ -128,24 +128,30 @@ type Backup struct {
 	// GroupID correlates the rows produced by one fan-out invocation —
 	// the same bundle written to multiple targets. Empty for a plain
 	// single-target backup.
-	GroupID         string         `json:"group_id,omitempty"`
-	Status          BackupStatus   `json:"status"`
-	TriggeredBy     TriggeredBy    `json:"triggered_by"`
-	Kind            BackupKind     `json:"kind"`
-	StartedAt       time.Time      `json:"started_at"`
-	FinishedAt      *time.Time     `json:"finished_at,omitempty"`
-	Bytes           int64          `json:"bytes"`
-	SHA256          string         `json:"sha256,omitempty"`
-	Encrypted       bool           `json:"encrypted"`
-	KeyFingerprint  string         `json:"key_fingerprint,omitempty"`
-	TargetPath      string         `json:"target_path,omitempty"`
-	PGVersion       string         `json:"pg_version,omitempty"`
-	OpendrayVersion string         `json:"opendray_version,omitempty"`
-	GitSHA          string         `json:"git_sha,omitempty"`
-	Error           string         `json:"error,omitempty"`
-	VerifiedAt      *time.Time     `json:"verified_at,omitempty"`
-	VerifyError     string         `json:"verify_error,omitempty"`
-	Metadata        map[string]any `json:"metadata,omitempty"`
+	GroupID         string       `json:"group_id,omitempty"`
+	Status          BackupStatus `json:"status"`
+	TriggeredBy     TriggeredBy  `json:"triggered_by"`
+	Kind            BackupKind   `json:"kind"`
+	StartedAt       time.Time    `json:"started_at"`
+	FinishedAt      *time.Time   `json:"finished_at,omitempty"`
+	Bytes           int64        `json:"bytes"`
+	SHA256          string       `json:"sha256,omitempty"`
+	Encrypted       bool         `json:"encrypted"`
+	KeyFingerprint  string       `json:"key_fingerprint,omitempty"`
+	TargetPath      string       `json:"target_path,omitempty"`
+	PGVersion       string       `json:"pg_version,omitempty"`
+	OpendrayVersion string       `json:"opendray_version,omitempty"`
+	GitSHA          string       `json:"git_sha,omitempty"`
+	Error           string       `json:"error,omitempty"`
+	VerifiedAt      *time.Time   `json:"verified_at,omitempty"`
+	VerifyError     string       `json:"verify_error,omitempty"`
+	// ContentHash is the sha256 of the plaintext bundle; identical data
+	// across runs yields the same hash, which content-dedup keys on.
+	ContentHash string `json:"content_hash,omitempty"`
+	// Deduped is true when this row reused a prior identical blob on the
+	// same target instead of uploading a fresh copy.
+	Deduped  bool           `json:"deduped,omitempty"`
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // Schedule is a recurring backup spec.

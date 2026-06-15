@@ -1826,6 +1826,10 @@
         "badge": "fan-out",
         "hint": "Part of a multi-target fan-out (group {group})"
       },
+      "dedup": {
+        "badge": "deduped",
+        "hint": "Identical to a previous backup — reused the existing blob instead of uploading a copy"
+      },
       "targetsTab": {
         "description": "Storage destinations. v1 supports <1>local</1> (disk on the opendray host) and <3>smb</3> (any SMB / CIFS share, e.g. UNAS or Synology).",
         "newTarget": "New target",
@@ -3776,6 +3780,7 @@
     "runFullInstanceHint": "Also bundle the vault, secrets.env and config.toml — not just the database.",
     "kindDbOnly": "DB only",
     "kindFullInstance": "Full instance",
+    "dedupValue": "reused existing blob (content identical)",
     "verifyOk": "verified",
     "verifyFailed": "unverified (check failed)",
     "verifyPending": "not verified",
@@ -3801,6 +3806,8 @@
       "verified": "Verified",
       "kind": "Type",
       "target": "Target",
+      "dedup": "Dedup",
+      "fanout": "Fan-out group",
       "triggeredBy": "Triggered by",
       "started": "Started",
       "finished": "Finished",

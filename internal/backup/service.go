@@ -851,17 +851,19 @@ func (s *Service) doRunBackupGroup(ctx context.Context, rows []Backup, targets [
 	for i := range rows {
 		b, target := rows[i], targets[i]
 		log := s.log.With("backup_id", b.ID, "target", b.TargetID)
-		if err := s.writeBundleToTarget(ctx, b, target, bundle); err != nil {
+		deduped, err := s.uploadOrDedup(ctx, b, target, bundle)
+		if err != nil {
 			log.Error("backup write failed", "err", err)
 			s.failRow(ctx, b, err)
 			continue
 		}
-		log.Info("backup succeeded")
+		log.Info("backup succeeded", "deduped", deduped)
 
 		// Verify the blob is restorable. Best-effort: a verify failure is
 		// recorded + surfaced, but the row stays 'succeeded' (the blob
-		// exists; it's the integrity that's in doubt).
-		if s.pgrestore != nil {
+		// exists; it's the integrity that's in doubt). A deduped row
+		// points at an already-verified blob, so skip the redundant pass.
+		if !deduped && s.pgrestore != nil {
 			if vErr := s.VerifyBackup(ctx, b.ID); vErr != nil {
 				log.Warn("backup verification failed", "err", vErr)
 				s.notify("backup.verify_failed", map[string]any{
@@ -1220,7 +1222,28 @@ func (s *Service) writeBundleToTarget(ctx context.Context, b Backup, target Back
 		PGVersion:       bundle.pgVersion,
 		OpendrayVersion: info.Version,
 		GitSHA:          info.Commit,
+		ContentHash:     bundle.contentHash,
 	})
+}
+
+// uploadOrDedup writes the bundle to a target unless an identical bundle
+// (same plaintext content hash) already lives there, in which case it
+// records a dedup pointer to the existing blob instead of re-uploading.
+// Returns whether it deduped so the caller can skip a redundant verify.
+func (s *Service) uploadOrDedup(ctx context.Context, b Backup, target BackupTarget, bundle *sealedBundle) (bool, error) {
+	prior, ok, err := s.store.FindDedupTarget(ctx, b.TargetID, bundle.contentHash)
+	if err != nil {
+		// A dedup-lookup failure must never block a backup — fall back to
+		// a normal upload (correct, just not space-optimised).
+		s.log.Warn("backup: dedup lookup failed; uploading fresh copy",
+			"backup_id", b.ID, "err", err)
+	} else if ok {
+		if err := s.store.MarkBackupDeduped(ctx, b.ID, bundle.contentHash, bundle.pgVersion, prior); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, s.writeBundleToTarget(ctx, b, target, bundle)
 }
 
 // packVaultToTemp writes a vault tar to a sibling temp file in

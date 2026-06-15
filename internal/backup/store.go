@@ -10,6 +10,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/opendray/opendray-v2/internal/version"
 )
 
 // store wraps the pgxpool with backup-specific CRUD. Unexported per
@@ -436,6 +438,9 @@ type BackupResult struct {
 	PGVersion       string
 	OpendrayVersion string
 	GitSHA          string
+	// ContentHash is the sha256 of the plaintext bundle; recorded on
+	// every success so later runs can content-dedup against it.
+	ContentHash string
 }
 
 func (s *store) MarkBackupSucceeded(ctx context.Context, id string, r BackupResult) error {
@@ -449,15 +454,92 @@ func (s *store) MarkBackupSucceeded(ctx context.Context, id string, r BackupResu
 		       target_path=$4,
 		       pg_version=$5,
 		       opendray_version=$6,
-		       git_sha=$7
-		 WHERE id=$8`,
+		       git_sha=$7,
+		       content_hash=$8,
+		       deduped=FALSE
+		 WHERE id=$9`,
 		r.Bytes, nullIfEmpty(r.SHA256), nullIfEmpty(r.KeyFingerprint),
 		nullIfEmpty(r.TargetPath), nullIfEmpty(r.PGVersion),
-		nullIfEmpty(r.OpendrayVersion), nullIfEmpty(r.GitSHA), id)
+		nullIfEmpty(r.OpendrayVersion), nullIfEmpty(r.GitSHA),
+		nullIfEmpty(r.ContentHash), id)
 	if err != nil {
 		return fmt.Errorf("mark succeeded: %w", err)
 	}
 	return nil
+}
+
+// FindDedupTarget returns the most recent succeeded, non-deleted backup
+// on targetID whose plaintext content_hash matches and which still has a
+// usable blob (non-empty target_path). The bool is false when nothing
+// matches — the caller then uploads normally.
+func (s *store) FindDedupTarget(ctx context.Context, targetID, contentHash string) (Backup, bool, error) {
+	if contentHash == "" {
+		return Backup{}, false, nil
+	}
+	row := s.pool.QueryRow(ctx, backupSelectStmt+`
+		WHERE target_id=$1 AND status='succeeded' AND content_hash=$2
+		  AND COALESCE(target_path,'')<>''
+		ORDER BY started_at DESC
+		LIMIT 1`, targetID, contentHash)
+	b, err := scanBackup(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Backup{}, false, nil
+	}
+	if err != nil {
+		return Backup{}, false, fmt.Errorf("find dedup target: %w", err)
+	}
+	return b, true, nil
+}
+
+// MarkBackupDeduped finalises a backup row that reused prior's blob
+// instead of uploading: it points at prior's target_path/bytes/sha256/
+// fingerprint, copies prior's verification outcome (the identical blob
+// was already proven restorable), and flags deduped=true.
+func (s *store) MarkBackupDeduped(ctx context.Context, id, contentHash, pgVersion string, prior Backup) error {
+	var verifiedAt any
+	if prior.VerifiedAt != nil {
+		verifiedAt = *prior.VerifiedAt
+	}
+	info := version.Current()
+	_, err := s.pool.Exec(ctx, `
+		UPDATE backups
+		   SET status='succeeded',
+		       finished_at=NOW(),
+		       bytes=$1,
+		       sha256=$2,
+		       key_fingerprint=$3,
+		       target_path=$4,
+		       pg_version=$5,
+		       opendray_version=$6,
+		       git_sha=$7,
+		       content_hash=$8,
+		       deduped=TRUE,
+		       verified_at=$9,
+		       verify_error=NULL
+		 WHERE id=$10`,
+		prior.Bytes, nullIfEmpty(prior.SHA256), nullIfEmpty(prior.KeyFingerprint),
+		nullIfEmpty(prior.TargetPath), nullIfEmpty(pgVersion),
+		nullIfEmpty(info.Version), nullIfEmpty(info.Commit),
+		nullIfEmpty(contentHash), verifiedAt, id)
+	if err != nil {
+		return fmt.Errorf("mark deduped: %w", err)
+	}
+	return nil
+}
+
+// CountOtherActiveByTargetPath counts non-deleted backups (other than
+// excludeID) on targetID that reference targetPath. Retention uses it to
+// keep a shared blob alive while any deduped row still points at it.
+func (s *store) CountOtherActiveByTargetPath(ctx context.Context, targetID, targetPath, excludeID string) (int, error) {
+	var n int
+	err := s.pool.QueryRow(ctx, `
+		SELECT COUNT(*) FROM backups
+		 WHERE target_id=$1 AND target_path=$2 AND status<>'deleted' AND id<>$3`,
+		targetID, targetPath, excludeID).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("count refs to path: %w", err)
+	}
+	return n, nil
 }
 
 func (s *store) MarkBackupFailed(ctx context.Context, id string, errMsg string) error {
@@ -578,6 +660,8 @@ const backupSelectStmt = `
 	       COALESCE(error, ''),
 	       verified_at,
 	       COALESCE(verify_error, ''),
+	       COALESCE(content_hash, ''),
+	       COALESCE(deduped, FALSE),
 	       COALESCE(metadata, '{}'::jsonb)
 	  FROM backups`
 
@@ -601,7 +685,7 @@ func scanBackup(row rowScanner) (Backup, error) {
 		&b.StartedAt, &finishedAt, &b.Bytes,
 		&b.SHA256, &b.Encrypted, &b.KeyFingerprint,
 		&b.TargetPath, &b.PGVersion, &b.OpendrayVersion, &b.GitSHA,
-		&b.Error, &verifiedAt, &b.VerifyError, &metaRaw,
+		&b.Error, &verifiedAt, &b.VerifyError, &b.ContentHash, &b.Deduped, &metaRaw,
 	)
 	if err != nil {
 		return Backup{}, err

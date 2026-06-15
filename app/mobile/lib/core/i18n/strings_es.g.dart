@@ -520,6 +520,7 @@ class _TranslationsBackupsEs extends TranslationsBackupsEn {
 	@override String get runFullInstanceHint => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.';
 	@override String get kindDbOnly => 'Solo BD';
 	@override String get kindFullInstance => 'Instancia completa';
+	@override String get dedupValue => 'reutilizó el blob existente (contenido idéntico)';
 	@override String get verifyOk => 'verificada';
 	@override String get verifyFailed => 'sin verificar (falló la comprobación)';
 	@override String get verifyPending => 'sin verificar';
@@ -1476,6 +1477,7 @@ class _TranslationsWebBackupsEs extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsSchedulesTabEs schedulesTab = _TranslationsWebBackupsSchedulesTabEs._(_root);
 	@override late final _TranslationsWebBackupsNewScheduleEs newSchedule = _TranslationsWebBackupsNewScheduleEs._(_root);
 	@override late final _TranslationsWebBackupsFanoutEs fanout = _TranslationsWebBackupsFanoutEs._(_root);
+	@override late final _TranslationsWebBackupsDedupEs dedup = _TranslationsWebBackupsDedupEs._(_root);
 	@override late final _TranslationsWebBackupsTargetsTabEs targetsTab = _TranslationsWebBackupsTargetsTabEs._(_root);
 	@override late final _TranslationsWebBackupsTargetEditorEs targetEditor = _TranslationsWebBackupsTargetEditorEs._(_root);
 }
@@ -2228,6 +2230,8 @@ class _TranslationsBackupsKvEs extends TranslationsBackupsKvEn {
 	@override String get verified => 'Verificada';
 	@override String get kind => 'Tipo';
 	@override String get target => 'Destino';
+	@override String get dedup => 'Deduplicación';
+	@override String get fanout => 'Grupo de difusión';
 	@override String get triggeredBy => 'Lanzado por';
 	@override String get started => 'Iniciado';
 	@override String get finished => 'Finalizado';
@@ -4877,6 +4881,17 @@ class _TranslationsWebBackupsFanoutEs extends TranslationsWebBackupsFanoutEn {
 	// Translations
 	@override String get badge => 'difusión';
 	@override String hint({required Object group}) => 'Parte de una difusión a varios destinos (grupo ${group})';
+}
+
+// Path: web.backups.dedup
+class _TranslationsWebBackupsDedupEs extends TranslationsWebBackupsDedupEn {
+	_TranslationsWebBackupsDedupEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get badge => 'deduplicada';
+	@override String get hint => 'Idéntica a una copia anterior: reutilizó el blob existente en lugar de subir una copia';
 }
 
 // Path: web.backups.targetsTab
@@ -10342,6 +10357,8 @@ extension on TranslationsEs {
 			'web.backups.newSchedule.create' => 'Crear',
 			'web.backups.fanout.badge' => 'difusión',
 			'web.backups.fanout.hint' => ({required Object group}) => 'Parte de una difusión a varios destinos (grupo ${group})',
+			'web.backups.dedup.badge' => 'deduplicada',
+			'web.backups.dedup.hint' => 'Idéntica a una copia anterior: reutilizó el blob existente en lugar de subir una copia',
 			'web.backups.targetsTab.description' => 'Destinos de almacenamiento. v1 admite <1>local</1> (disco en el host de opendray) y <3>smb</3> (cualquier recurso compartido SMB / CIFS, p. ej. UNAS o Synology).',
 			'web.backups.targetsTab.newTarget' => 'Nuevo destino',
 			'web.backups.targetsTab.listFailedToast' => 'No se pudieron listar los destinos',
@@ -10391,10 +10408,10 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.s3.regionHint' => 'Solo AWS; en R2 usa \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
-			'web.backups.targetEditor.s3.accessKeyLabel' => 'Clave de acceso',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
+			'web.backups.targetEditor.s3.accessKeyLabel' => 'Clave de acceso',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Clave secreta',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Se almacena cifrada con AES-256-GCM; nunca se devuelve',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Prefijo de ruta',
@@ -10905,10 +10922,10 @@ extension on TranslationsEs {
 			'web.export.form.readyToast' => 'Exportación lista',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
 			'web.export.form.failedToast' => 'Falló la exportación',
-			'web.export.history.loading' => 'Cargando…',
-			'web.export.history.empty' => 'Aún no hay exportaciones. Usa el formulario de arriba para crear una.',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.history.loading' => 'Cargando…',
+			'web.export.history.empty' => 'Aún no hay exportaciones. Usa el formulario de arriba para crear una.',
 			'web.export.history.title' => 'Historial',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => 'Estado',
@@ -11419,10 +11436,10 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
-			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
+			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.spawnSheet.title' => 'Nueva session',
@@ -11817,6 +11834,7 @@ extension on TranslationsEs {
 			'backups.runFullInstanceHint' => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.',
 			'backups.kindDbOnly' => 'Solo BD',
 			'backups.kindFullInstance' => 'Instancia completa',
+			'backups.dedupValue' => 'reutilizó el blob existente (contenido idéntico)',
 			'backups.verifyOk' => 'verificada',
 			'backups.verifyFailed' => 'sin verificar (falló la comprobación)',
 			'backups.verifyPending' => 'sin verificar',
@@ -11841,6 +11859,8 @@ extension on TranslationsEs {
 			'backups.kv.verified' => 'Verificada',
 			'backups.kv.kind' => 'Tipo',
 			'backups.kv.target' => 'Destino',
+			'backups.kv.dedup' => 'Deduplicación',
+			'backups.kv.fanout' => 'Grupo de difusión',
 			'backups.kv.triggeredBy' => 'Lanzado por',
 			'backups.kv.started' => 'Iniciado',
 			'backups.kv.finished' => 'Finalizado',
@@ -11930,13 +11950,13 @@ extension on TranslationsEs {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
 			'backups.restore.succeededTitle' => 'Restauración completada',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
 			'backups.restore.pickFileToast' => 'Primero elige un archivo de paquete.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
 			'backups.restore.manifestTitle' => 'Manifiesto',
@@ -12444,13 +12464,13 @@ extension on TranslationsEs {
 			'memory.deleteOne.body' => 'Esto no se puede deshacer.',
 			'memory.scope.project' => 'Proyecto',
 			'memory.scope.global' => 'Global',
+			_ => null,
+		} ?? switch (path) {
 			'memory.create.textLabel' => 'Texto',
 			'memory.create.scopeKeyLabel' => 'Clave de ámbito (cwd del proyecto)',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Crear',
 			'memory.archive' => 'Archivar',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantine' => 'Cuarentena',
 			'memory.archivedToast' => 'Memoria archivada — restaurable desde Archivado',
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',

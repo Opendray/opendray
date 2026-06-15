@@ -1084,6 +1084,14 @@ function BackupTable({
                 <div className="flex items-center gap-1.5">
                   <StatusBadge status={b.status} />
                   {b.status === 'succeeded' && <VerifiedBadge backup={b} />}
+                  {b.deduped && (
+                    <Badge
+                      variant="muted"
+                      title={t('web.backups.dedup.hint')}
+                    >
+                      {t('web.backups.dedup.badge')}
+                    </Badge>
+                  )}
                 </div>
                 {b.error && (
                   <span

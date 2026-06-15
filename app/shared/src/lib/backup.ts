@@ -106,6 +106,10 @@ export interface Backup {
   error?: string
   verified_at?: string | null
   verify_error?: string
+  /** True when this backup reused a prior identical blob (content-dedup)
+   * instead of uploading a fresh copy. */
+  deduped?: boolean
+  content_hash?: string
   metadata?: Record<string, unknown>
 }
 

@@ -27,6 +27,8 @@ class BackupRow {
     this.error,
     this.verifiedAt,
     this.verifyError,
+    this.groupId,
+    this.deduped = false,
   });
 
   factory BackupRow.fromJson(Map<String, dynamic> json) => BackupRow(
@@ -50,6 +52,8 @@ class BackupRow {
       json['verified_at'] as String? ?? '',
     )?.toUtc(),
     verifyError: json['verify_error'] as String?,
+    groupId: json['group_id'] as String?,
+    deduped: json['deduped'] as bool? ?? false,
   );
 
   final String id;
@@ -72,6 +76,10 @@ class BackupRow {
   // failed; both null = not verified yet.
   final DateTime? verifiedAt;
   final String? verifyError;
+  // Correlates rows from one fan-out invocation; null for single-target.
+  final String? groupId;
+  // True when this row reused a prior identical blob (content-dedup).
+  final bool deduped;
 }
 
 class BackupSchedule {

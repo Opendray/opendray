@@ -1826,6 +1826,10 @@
         "badge": "difusión",
         "hint": "Parte de una difusión a varios destinos (grupo {group})"
       },
+      "dedup": {
+        "badge": "deduplicada",
+        "hint": "Idéntica a una copia anterior: reutilizó el blob existente en lugar de subir una copia"
+      },
       "targetsTab": {
         "description": "Destinos de almacenamiento. v1 admite <1>local</1> (disco en el host de opendray) y <3>smb</3> (cualquier recurso compartido SMB / CIFS, p. ej. UNAS o Synology).",
         "newTarget": "Nuevo destino",
@@ -3776,6 +3780,7 @@
     "runFullInstanceHint": "Incluye también el vault, secrets.env y config.toml, no solo la base de datos.",
     "kindDbOnly": "Solo BD",
     "kindFullInstance": "Instancia completa",
+    "dedupValue": "reutilizó el blob existente (contenido idéntico)",
     "verifyOk": "verificada",
     "verifyFailed": "sin verificar (falló la comprobación)",
     "verifyPending": "sin verificar",
@@ -3801,6 +3806,8 @@
       "verified": "Verificada",
       "kind": "Tipo",
       "target": "Destino",
+      "dedup": "Deduplicación",
+      "fanout": "Grupo de difusión",
       "triggeredBy": "Lanzado por",
       "started": "Iniciado",
       "finished": "Finalizado",

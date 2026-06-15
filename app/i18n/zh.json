@@ -1826,6 +1826,10 @@
         "badge": "扇出",
         "hint": "属于一次多目标扇出（组 {group}）"
       },
+      "dedup": {
+        "badge": "已去重",
+        "hint": "与之前的备份内容相同 —— 复用已有 blob，未重复上传"
+      },
       "targetsTab": {
         "description": "存储目标。v1 支持 <1>local</1>（opendray 主机磁盘）与 <3>smb</3>（任意 SMB / CIFS 共享，如 UNAS 或群晖）。",
         "newTarget": "新建目标",
@@ -3776,6 +3780,7 @@
     "runFullInstanceHint": "同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。",
     "kindDbOnly": "仅数据库",
     "kindFullInstance": "完整实例",
+    "dedupValue": "复用已有 blob（内容相同）",
     "verifyOk": "已校验",
     "verifyFailed": "未校验（检查失败）",
     "verifyPending": "未校验",
@@ -3801,6 +3806,8 @@
       "verified": "校验",
       "kind": "类型",
       "target": "目标",
+      "dedup": "去重",
+      "fanout": "扇出组",
       "triggeredBy": "触发者",
       "started": "开始",
       "finished": "完成",

@@ -1053,6 +1053,9 @@ class TranslationsBackupsEn {
 	/// en: 'Full instance'
 	String get kindFullInstance => 'Full instance';
 
+	/// en: 'reused existing blob (content identical)'
+	String get dedupValue => 'reused existing blob (content identical)';
+
 	/// en: 'verified'
 	String get verifyOk => 'verified';
 
@@ -3049,6 +3052,7 @@ class TranslationsWebBackupsEn {
 	late final TranslationsWebBackupsSchedulesTabEn schedulesTab = TranslationsWebBackupsSchedulesTabEn.internal(_root);
 	late final TranslationsWebBackupsNewScheduleEn newSchedule = TranslationsWebBackupsNewScheduleEn.internal(_root);
 	late final TranslationsWebBackupsFanoutEn fanout = TranslationsWebBackupsFanoutEn.internal(_root);
+	late final TranslationsWebBackupsDedupEn dedup = TranslationsWebBackupsDedupEn.internal(_root);
 	late final TranslationsWebBackupsTargetsTabEn targetsTab = TranslationsWebBackupsTargetsTabEn.internal(_root);
 	late final TranslationsWebBackupsTargetEditorEn targetEditor = TranslationsWebBackupsTargetEditorEn.internal(_root);
 }
@@ -4435,6 +4439,12 @@ class TranslationsBackupsKvEn {
 
 	/// en: 'Target'
 	String get target => 'Target';
+
+	/// en: 'Dedup'
+	String get dedup => 'Dedup';
+
+	/// en: 'Fan-out group'
+	String get fanout => 'Fan-out group';
 
 	/// en: 'Triggered by'
 	String get triggeredBy => 'Triggered by';
@@ -9655,6 +9665,21 @@ class TranslationsWebBackupsFanoutEn {
 
 	/// en: 'Part of a multi-target fan-out (group {group})'
 	String hint({required Object group}) => 'Part of a multi-target fan-out (group ${group})';
+}
+
+// Path: web.backups.dedup
+class TranslationsWebBackupsDedupEn {
+	TranslationsWebBackupsDedupEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'deduped'
+	String get badge => 'deduped';
+
+	/// en: 'Identical to a previous backup — reused the existing blob instead of uploading a copy'
+	String get hint => 'Identical to a previous backup — reused the existing blob instead of uploading a copy';
 }
 
 // Path: web.backups.targetsTab
@@ -18103,6 +18128,8 @@ extension on Translations {
 			'web.backups.newSchedule.create' => 'Create',
 			'web.backups.fanout.badge' => 'fan-out',
 			'web.backups.fanout.hint' => ({required Object group}) => 'Part of a multi-target fan-out (group ${group})',
+			'web.backups.dedup.badge' => 'deduped',
+			'web.backups.dedup.hint' => 'Identical to a previous backup — reused the existing blob instead of uploading a copy',
 			'web.backups.targetsTab.description' => 'Storage destinations. v1 supports <1>local</1> (disk on the opendray host) and <3>smb</3> (any SMB / CIFS share, e.g. UNAS or Synology).',
 			'web.backups.targetsTab.newTarget' => 'New target',
 			'web.backups.targetsTab.listFailedToast' => 'Failed to list targets',
@@ -18152,10 +18179,10 @@ extension on Translations {
 			'web.backups.targetEditor.s3.regionHint' => 'AWS only; R2 use \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
-			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
+			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Stored AES-256-GCM encrypted; never echoed back',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Path prefix',
@@ -18666,10 +18693,10 @@ extension on Translations {
 			'web.export.form.readyToast' => 'Export ready',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
 			'web.export.form.failedToast' => 'Export failed',
-			'web.export.history.loading' => 'Loading…',
-			'web.export.history.empty' => 'No exports yet. Use the form above to create one.',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.history.loading' => 'Loading…',
+			'web.export.history.empty' => 'No exports yet. Use the form above to create one.',
 			'web.export.history.title' => 'History',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => 'Status',
@@ -19180,10 +19207,10 @@ extension on Translations {
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
-			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
+			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
@@ -19578,6 +19605,7 @@ extension on Translations {
 			'backups.runFullInstanceHint' => 'Also bundle the vault, secrets.env and config.toml — not just the database.',
 			'backups.kindDbOnly' => 'DB only',
 			'backups.kindFullInstance' => 'Full instance',
+			'backups.dedupValue' => 'reused existing blob (content identical)',
 			'backups.verifyOk' => 'verified',
 			'backups.verifyFailed' => 'unverified (check failed)',
 			'backups.verifyPending' => 'not verified',
@@ -19602,6 +19630,8 @@ extension on Translations {
 			'backups.kv.verified' => 'Verified',
 			'backups.kv.kind' => 'Type',
 			'backups.kv.target' => 'Target',
+			'backups.kv.dedup' => 'Dedup',
+			'backups.kv.fanout' => 'Fan-out group',
 			'backups.kv.triggeredBy' => 'Triggered by',
 			'backups.kv.started' => 'Started',
 			'backups.kv.finished' => 'Finished',
@@ -19691,13 +19721,13 @@ extension on Translations {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
 			'backups.restore.succeededTitle' => 'Restore succeeded',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
@@ -20205,13 +20235,13 @@ extension on Translations {
 			'memory.deleteOne.body' => 'This cannot be undone.',
 			'memory.scope.project' => 'Project',
 			'memory.scope.global' => 'Global',
+			_ => null,
+		} ?? switch (path) {
 			'memory.create.textLabel' => 'Text',
 			'memory.create.scopeKeyLabel' => 'Scope key (project cwd)',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Create',
 			'memory.archive' => 'Archive',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantine' => 'Quarantine',
 			'memory.archivedToast' => 'Memory archived — restorable from Archived',
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
