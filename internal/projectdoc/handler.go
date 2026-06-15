@@ -61,6 +61,9 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Delete("/blueprint/{slug}", h.deleteSection)
 		r.Get("/{kind}", h.getDoc)
 		r.Put("/{kind}", h.putDoc)
+		// Agent-side policy-routed write: direct-write for direct sections
+		// (when unlocked), proposal otherwise. See Service.SetDocByPolicy.
+		r.Post("/{kind}/set", h.setDoc)
 	})
 	r.Route("/project-doc-proposals", func(r chi.Router) {
 		r.Get("/pending", h.listPending)
@@ -205,6 +208,32 @@ func (h *Handlers) putDoc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, doc)
+}
+
+// setDoc is the agent-facing write that respects the section's blueprint
+// write_policy: a "direct" section (e.g. current_objective) writes the
+// live doc directly when it is unlocked; "proposal" sections (goal/plan)
+// — or any section a human has hand-edited — file a proposal instead.
+// The response carries the action taken so the caller can tell the agent
+// whether the doc updated live or is waiting for approval.
+func (h *Handlers) setDoc(w http.ResponseWriter, r *http.Request) {
+	kind := Kind(chi.URLParam(r, "kind"))
+	var body struct {
+		Cwd       string `json:"cwd"`
+		Content   string `json:"content"`
+		Reason    string `json:"reason,omitempty"`
+		SessionID string `json:"session_id,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	out, err := h.svc.SetDocByPolicy(r.Context(), body.Cwd, kind, body.Content, body.Reason, body.SessionID)
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 // resetCwd wipes per-cwd project memory state — goal/plan

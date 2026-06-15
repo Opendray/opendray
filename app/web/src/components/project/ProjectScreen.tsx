@@ -118,6 +118,7 @@ const CLASSIC_LABEL_KINDS = new Set([
   'overview',
   'goal',
   'plan',
+  'current_objective',
   'tech_stack',
   'recent_activity',
   'kb_infrastructure',
@@ -379,6 +380,7 @@ const CLASSIC_TAB_KEY: Record<string, string> = {
   overview: 'web.project.tabs.overview',
   goal: 'web.project.tabs.goal',
   plan: 'web.project.tabs.plan',
+  current_objective: 'web.project.tabs.current_objective',
   tech_stack: 'web.project.tabs.tech',
   recent_activity: 'web.project.tabs.activity',
 }
@@ -476,6 +478,7 @@ const CLASSIC_PURPOSE_KEY: Record<string, string> = {
   overview: 'web.project.docMeta.purpose.overview',
   goal: 'web.project.docMeta.purpose.goal',
   plan: 'web.project.docMeta.purpose.plan',
+  current_objective: 'web.project.docMeta.purpose.current_objective',
   tech_stack: 'web.project.docMeta.purpose.tech_stack',
   recent_activity: 'web.project.docMeta.purpose.recent_activity',
 }

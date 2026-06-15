@@ -3402,6 +3402,7 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get health => '健康';
 	@override String get goal => '目标';
 	@override String get plan => '计划';
+	@override String get current_objective => '当前目标';
 	@override String get tech => '技术栈';
 	@override String get activity => '活动';
 	@override String get journal => '日志';
@@ -3421,6 +3422,7 @@ class _TranslationsWebProjectDocLabelZh extends TranslationsWebProjectDocLabelEn
 	// Translations
 	@override String get goal => '目标';
 	@override String get plan => '计划';
+	@override String get current_objective => '当前目标';
 	@override String get tech_stack => '技术栈';
 	@override String get recent_activity => '最近活动';
 }
@@ -5695,6 +5697,15 @@ class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
 	@override String get closeHint => '关闭此对话';
 	@override String get revisionApplied => '文档已更新';
 	@override String get revisionProposed => '已生成提案——请到收件箱审阅';
+	@override String get modelLabel => '模型：';
+	@override String get modelHint => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局 curation worker。';
+	@override String get modelGlobalDefault => '默认（全局）';
+	@override String get modelCliDefault => 'CLI 默认';
+	@override String get modelChangeFailed => '切换讨论模型失败';
+	@override String get modelGroupCloud => '云端 agent';
+	@override String get modelGroupLocal => '本地模型';
+	@override String get modelProviderDefault => '供应商默认';
+	@override String get modelProbeFailed => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。';
 }
 
 // Path: web.cortex.blueprint
@@ -5724,6 +5735,7 @@ class _TranslationsWebCortexBlueprintZh extends TranslationsWebCortexBlueprintEn
 	@override String get apply => '应用蓝图';
 	@override String get applyFailed => '应用失败';
 	@override String get appliedToast => '蓝图已应用';
+	@override late final _TranslationsWebCortexBlueprintWritePolicyZh writePolicy = _TranslationsWebCortexBlueprintWritePolicyZh._(_root);
 }
 
 // Path: web.cortex.quarantine
@@ -7063,6 +7075,7 @@ class _TranslationsWebProjectDocMetaPurposeZh extends TranslationsWebProjectDocM
 	// Translations
 	@override String get goal => '项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。';
 	@override String get plan => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。';
+	@override String get current_objective => '我们当前正在做的短期目标及其即时步骤。会话中的 AI 会随着进展直接写入，完成后滚动到下一个。';
 	@override String get tech_stack => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。';
 	@override String get recent_activity => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。';
 	@override String get overview => '项目的官方文档——它是什么、有哪些功能、架构、如何构建/运行、依赖的基础设施。AI 从项目自身信号起草;你可编辑(即锁定)或重新生成。';
@@ -8790,6 +8803,18 @@ class _TranslationsWebCortexBlueprintModeZh extends TranslationsWebCortexBluepri
 	@override String get scanner => '扫描器';
 }
 
+// Path: web.cortex.blueprint.writePolicy
+class _TranslationsWebCortexBlueprintWritePolicyZh extends TranslationsWebCortexBlueprintWritePolicyEn {
+	_TranslationsWebCortexBlueprintWritePolicyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get direct => '直接写入';
+	@override String get proposal => '提案';
+	@override String get hint => '直接写入：会话中的 AI 在文档未锁定时直接更新实时文档。提案：AI 的写入需先经你批准。';
+}
+
 // Path: web.cortex.settings.injection
 class _TranslationsWebCortexSettingsInjectionZh extends TranslationsWebCortexSettingsInjectionEn {
 	_TranslationsWebCortexSettingsInjectionZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9339,6 +9364,7 @@ extension on TranslationsZh {
 			'web.project.tabs.health' => '健康',
 			'web.project.tabs.goal' => '目标',
 			'web.project.tabs.plan' => '计划',
+			'web.project.tabs.current_objective' => '当前目标',
 			'web.project.tabs.tech' => '技术栈',
 			'web.project.tabs.activity' => '活动',
 			'web.project.tabs.journal' => '日志',
@@ -9349,6 +9375,7 @@ extension on TranslationsZh {
 			'web.project.tabs.hygiene' => '记忆卫生',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
+			'web.project.docLabel.current_objective' => '当前目标',
 			'web.project.docLabel.tech_stack' => '技术栈',
 			'web.project.docLabel.recent_activity' => '最近活动',
 			'web.project.editor.updatedBy' => '更新者',
@@ -9398,10 +9425,10 @@ extension on TranslationsZh {
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
 			'web.project.reset.alwaysDeleted' => '始终删除：目标、计划、提案、日志、清理决策。',
-			'web.project.reset.alsoDeleteScannerLabel' => '同时删除 scanner 文档',
-			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity)。',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.alsoDeleteScannerLabel' => '同时删除 scanner 文档',
+			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity)。',
 			'web.project.reset.alsoDeleteScannerHint' => '下次 spawn 会自动重建 — 通常不勾选即可。',
 			'web.project.reset.alsoDeleteMemoriesLabel' => '同时删除 pgvector 记忆',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
@@ -9438,6 +9465,7 @@ extension on TranslationsZh {
 			'web.project.docMeta.maintainer.human' => '人工撰写',
 			'web.project.docMeta.purpose.goal' => '项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。',
 			'web.project.docMeta.purpose.plan' => '当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。',
+			'web.project.docMeta.purpose.current_objective' => '我们当前正在做的短期目标及其即时步骤。会话中的 AI 会随着进展直接写入，完成后滚动到下一个。',
 			'web.project.docMeta.purpose.tech_stack' => '技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。',
 			'web.project.docMeta.purpose.recent_activity' => '近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。',
 			'web.project.docMeta.purpose.overview' => '项目的官方文档——它是什么、有哪些功能、架构、如何构建/运行、依赖的基础设施。AI 从项目自身信号起草;你可编辑(即锁定)或重新生成。',
@@ -9911,11 +9939,11 @@ extension on TranslationsZh {
 			'web.channels.notifications.cooldowns.k3600' => '1 小时',
 			'web.channels.notifications.snippetCaps.k0' => '不限制 — 拆分到多条消息（默认）',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 字符（精简）',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.snippetCaps.k3000' => '3000 字符',
 			'web.channels.notifications.snippetCaps.k6000' => '6000 字符',
 			'web.channels.notifications.snippetCaps.k12000' => '12000 字符',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.nameLabel' => 'Bridge 名称',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => '适配器的人类可读标签。会显示在频道列表中。',
@@ -10425,11 +10453,11 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => '主机（不要带协议）。AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.regionLabel' => 'Region',
 			'web.backups.targetEditor.s3.regionHint' => '仅 AWS；R2 用 \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
 			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
@@ -10939,11 +10967,11 @@ extension on TranslationsZh {
 			'web.export.form.confirmSentinel' => 'i understand',
 			'web.export.form.footnote' => '审计日志与会话记录不在范围内 — 由 /backups（运维 dump）覆盖。',
 			'web.export.form.building' => '构建中…',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.create' => '创建导出',
 			'web.export.form.readyToast' => '导出就绪',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} 字节',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.failedToast' => '导出失败',
 			'web.export.history.loading' => '加载中…',
 			'web.export.history.empty' => '暂无导出。请使用上面的表单创建一个。',
@@ -11162,6 +11190,15 @@ extension on TranslationsZh {
 			'web.cortex.chat.closeHint' => '关闭此对话',
 			'web.cortex.chat.revisionApplied' => '文档已更新',
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
+			'web.cortex.chat.modelLabel' => '模型：',
+			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局 curation worker。',
+			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
+			'web.cortex.chat.modelCliDefault' => 'CLI 默认',
+			'web.cortex.chat.modelChangeFailed' => '切换讨论模型失败',
+			'web.cortex.chat.modelGroupCloud' => '云端 agent',
+			'web.cortex.chat.modelGroupLocal' => '本地模型',
+			'web.cortex.chat.modelProviderDefault' => '供应商默认',
+			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
 			'web.cortex.blueprint.openHint' => '编辑本项目文档包含哪些章节',
 			'web.cortex.blueprint.title' => '文档蓝图',
@@ -11184,6 +11221,9 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.apply' => '应用蓝图',
 			'web.cortex.blueprint.applyFailed' => '应用失败',
 			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
+			'web.cortex.blueprint.writePolicy.direct' => '直接写入',
+			'web.cortex.blueprint.writePolicy.proposal' => '提案',
+			'web.cortex.blueprint.writePolicy.hint' => '直接写入：会话中的 AI 在文档未锁定时直接更新实时文档。提案：AI 的写入需先经你批准。',
 			'web.cortex.quarantine.title' => '隔离区',
 			'web.cortex.quarantine.subtitle' => '在被采信为持久记忆之前需要审查的事实：第三方 integration 的捕获会按策略落到这里，你也可以在记忆检查器中手动隔离任何一条记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
 			'web.cortex.quarantine.empty' => '隔离区为空。条目来源：integration 来源会话（记忆策略为 “quarantine”），或你在记忆检查器中手动隔离的记忆。',
@@ -11441,6 +11481,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
@@ -11456,8 +11498,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
@@ -11955,6 +11995,8 @@ extension on TranslationsZh {
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
 			'backups.restore.cleanHint' => '重新创建之前先删除已存在的对象。',
 			'backups.restore.auditNoteLabel' => '审计备注（可选）',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.auditNotePlaceholder' => '例如：恢复 #INC-481',
 			'backups.restore.ownDbWarning' => '恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 "I understand" 以确认。',
 			'backups.restore.confirmPlaceholder' => '输入 "I understand"',
@@ -11970,8 +12012,6 @@ extension on TranslationsZh {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
 			'backups.restore.succeededTitle' => '恢复成功',
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
@@ -12469,6 +12509,8 @@ extension on TranslationsZh {
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
 			'memory.rank.close' => '关闭',
 			'memory.kNew' => '新建',
+			_ => null,
+		} ?? switch (path) {
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
 			'memory.filterHint' => '按名称或路径筛选…',
@@ -12484,8 +12526,6 @@ extension on TranslationsZh {
 			'memory.deleteOne.body' => '此操作不可撤销。',
 			'memory.scope.project' => '项目',
 			'memory.scope.global' => '全局',
-			_ => null,
-		} ?? switch (path) {
 			'memory.create.textLabel' => '文本',
 			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',

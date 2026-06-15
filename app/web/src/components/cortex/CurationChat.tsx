@@ -34,7 +34,19 @@ import {
   getConversation,
   listConversations,
   sendConversationMessage,
+  setConversationProvider,
 } from '@/lib/cortex'
+import { type AgentProviderID, listAgentModels } from '@/lib/memoryWorkers'
+import { listProviders } from '@/lib/memoryAmbient'
+import { probeEmbeddingEndpoint } from '@/lib/memory'
+
+// Cloud-agent providers selectable for a discussion. Mirrors the backend's
+// curation override set (claude | gemini | codex); '' = global curation worker.
+const CURATION_PROVIDERS: { id: AgentProviderID; label: string }[] = [
+  { id: 'claude', label: 'Claude' },
+  { id: 'gemini', label: 'Gemini' },
+  { id: 'codex', label: 'Codex' },
+]
 
 interface CurationChatProps {
   targetKind: ConversationTargetKind
@@ -55,6 +67,17 @@ export function CurationChat({
   const navigate = useNavigate()
   const [draft, setDraft] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // The picker selection encodes which model backs the discussion:
+  //   ''           → global `curation` worker config
+  //   'agent:<id>' → cloud-agent CLI (claude/gemini/codex) + a model
+  //   'local:<id>' → a configured summarizer/HTTP provider (local model)
+  // Seeded from the active conversation once it loads (sync effect below).
+  const [selection, setSelection] = useState('')
+  const [model, setModel] = useState('')
+  const agentProvider: AgentProviderID | '' = selection.startsWith('agent:')
+    ? (selection.slice('agent:'.length) as AgentProviderID)
+    : ''
 
   // The open conversation for this target (newest wins); created lazily
   // on the first send.
@@ -104,6 +127,83 @@ export function CurationChat({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
+  // Configured local/HTTP models (summarizer providers) selectable here.
+  const summarizersQuery = useQuery({
+    queryKey: ['memory-summarizer-providers'],
+    queryFn: listProviders,
+    staleTime: 5 * 60 * 1000,
+  })
+  const localProviders = (summarizersQuery.data ?? []).filter((p) => p.enabled)
+
+  // Seed the picker from the active conversation when it changes (so a
+  // reopened thread shows its pinned model), without clobbering an
+  // in-progress selection on the same conversation.
+  const syncedConvId = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    if (active && active.id !== syncedConvId.current) {
+      syncedConvId.current = active.id
+      if (active.summarizer_id) setSelection(`local:${active.summarizer_id}`)
+      else if (active.provider_id) setSelection(`agent:${active.provider_id}`)
+      else setSelection('')
+      setModel(active.model ?? '')
+    }
+  }, [active])
+
+  // Model catalog for the selected cloud-agent provider.
+  const modelsQuery = useQuery({
+    queryKey: ['agent-models', agentProvider],
+    queryFn: () => listAgentModels(agentProvider as AgentProviderID),
+    enabled: agentProvider !== '',
+    staleTime: 60 * 60 * 1000,
+  })
+
+  // The selected local provider (when 'local:<id>') + the models its
+  // endpoint actually serves (probed live; LM Studio/Ollama expose many).
+  const localSelected = selection.startsWith('local:')
+    ? localProviders.find((p) => p.id === selection.slice('local:'.length))
+    : undefined
+  const localModelsQuery = useQuery({
+    queryKey: ['endpoint-models', localSelected?.base_url],
+    queryFn: () => probeEmbeddingEndpoint(localSelected?.base_url ?? ''),
+    enabled: !!localSelected?.base_url,
+    staleTime: 5 * 60 * 1000,
+  })
+  const localModels = localModelsQuery.data?.reachable
+    ? (localModelsQuery.data.models ?? [])
+    : []
+
+  // Map a selection + agent model to the backend override shape.
+  const overrideFor = (sel: string, m: string) => {
+    if (sel.startsWith('agent:'))
+      return { provider_id: sel.slice('agent:'.length), model: m }
+    if (sel.startsWith('local:'))
+      return { summarizer_id: sel.slice('local:'.length) }
+    return {}
+  }
+
+  // Persist an override change. When no conversation exists yet the
+  // selection is held locally and applied at creation time (see send).
+  const persistOverride = useMutation({
+    mutationFn: (next: { sel: string; model: string }) =>
+      setConversationProvider(active!.id, overrideFor(next.sel, next.model)),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cortex-conversations', targetCwd, targetSlug] })
+      if (active) qc.invalidateQueries({ queryKey: ['cortex-conversation', active.id] })
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.cortex.chat.modelChangeFailed'), { description: e.message }),
+  })
+
+  const changeSelection = (sel: string) => {
+    setSelection(sel)
+    setModel('')
+    if (active) persistOverride.mutate({ sel, model: '' })
+  }
+  const changeModel = (m: string) => {
+    setModel(m)
+    if (active) persistOverride.mutate({ sel: selection, model: m })
+  }
+
   const send = useMutation({
     mutationFn: async (text: string) => {
       let conv = active
@@ -112,6 +212,7 @@ export function CurationChat({
           target_kind: targetKind,
           target_cwd: targetCwd,
           target_slug: targetSlug,
+          ...overrideFor(selection, model),
         })
       }
       await sendConversationMessage(conv.id, text)
@@ -185,6 +286,72 @@ export function CurationChat({
             </>
           )}
         </div>
+      </div>
+
+      <div className="text-muted-foreground flex items-center gap-2 border-b px-3 py-1.5 text-[11px]">
+        <span className="shrink-0">{t('web.cortex.chat.modelLabel')}</span>
+        <select
+          value={selection}
+          onChange={(e) => changeSelection(e.target.value)}
+          className="bg-background min-w-0 flex-1 rounded border px-1.5 py-0.5 text-[11px]"
+          title={t('web.cortex.chat.modelHint')}
+        >
+          <option value="">{t('web.cortex.chat.modelGlobalDefault')}</option>
+          <optgroup label={t('web.cortex.chat.modelGroupCloud')}>
+            {CURATION_PROVIDERS.map((p) => (
+              <option key={p.id} value={`agent:${p.id}`}>
+                {p.label}
+              </option>
+            ))}
+          </optgroup>
+          {localProviders.length > 0 && (
+            <optgroup label={t('web.cortex.chat.modelGroupLocal')}>
+              {localProviders.map((p) => (
+                <option key={p.id} value={`local:${p.id}`}>
+                  {p.name}
+                  {p.model ? ` · ${p.model}` : ''}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+        {agentProvider !== '' && (
+          <select
+            value={model}
+            onChange={(e) => changeModel(e.target.value)}
+            className="bg-background min-w-0 flex-1 rounded border px-1.5 py-0.5 text-[11px]"
+          >
+            <option value="">{t('web.cortex.chat.modelCliDefault')}</option>
+            {(modelsQuery.data ?? []).map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        )}
+        {selection.startsWith('local:') && (
+          <select
+            value={model}
+            onChange={(e) => changeModel(e.target.value)}
+            className="bg-background min-w-0 flex-1 rounded border px-1.5 py-0.5 text-[11px]"
+            title={
+              localModelsQuery.isError
+                ? t('web.cortex.chat.modelProbeFailed')
+                : undefined
+            }
+          >
+            <option value="">
+              {localSelected?.model
+                ? `${t('web.cortex.chat.modelProviderDefault')} · ${localSelected.model}`
+                : t('web.cortex.chat.modelCliDefault')}
+            </option>
+            {localModels.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="flex-1 space-y-2.5 overflow-auto px-3 py-2.5">

@@ -32,6 +32,17 @@ type Section struct {
 	// PromptHint steers the AI maintainer ("track the public API
 	// surface", "keep this a one-page pitch").
 	PromptHint string `json:"prompt_hint,omitempty"`
+	// WritePolicy governs the AGENT-SIDE explicit MCP write
+	// (project_*_set / current_objective_set):
+	//   "proposal" — the write lands as a proposal the operator approves
+	//                (goal/plan — long-term, deliberate changes).
+	//   "direct"   — the in-session agent writes the live doc directly
+	//                when it is unlocked (current_objective — short-term,
+	//                high-context, churns every session). A human edit
+	//                still re-gates the next write back to a proposal.
+	// Empty defaults to "proposal". Does NOT affect the post-session
+	// drift path, which keeps its own ai+unlocked→apply rule.
+	WritePolicy string `json:"write_policy,omitempty"`
 	// Pinned sections sort first and cannot be deleted (overview; the
 	// four classic knowledge pages).
 	Pinned bool `json:"pinned"`
@@ -78,6 +89,20 @@ func ValidMaintainerMode(m string) bool {
 	return m == "ai" || m == "human" || m == "scanner"
 }
 
+// ValidWritePolicy reports whether p is direct|proposal.
+func ValidWritePolicy(p string) bool {
+	return p == "direct" || p == "proposal"
+}
+
+// normalizeWritePolicy defaults an empty/unknown policy to the safe
+// "proposal" gate so a section never silently grants direct write.
+func normalizeWritePolicy(p string) string {
+	if p == "direct" {
+		return "direct"
+	}
+	return "proposal"
+}
+
 // ValidNature reports whether n is a legal knowledge nature.
 func ValidNature(n string) bool {
 	return n == "foundational" || n == "emergent"
@@ -92,15 +117,18 @@ var ErrReservedSection = errors.New("projectdoc: the overview section is reserve
 // preserved exactly until the operator (or the AI proposer) reshapes it.
 func defaultSections(cwd string) []Section {
 	return []Section{
-		{Cwd: cwd, Slug: SlugOverview, Title: "Overview", Position: 0, MaintainerMode: "ai", Pinned: true, Inject: false,
+		{Cwd: cwd, Slug: SlugOverview, Title: "Overview", Position: 0, MaintainerMode: "ai", WritePolicy: "proposal", Pinned: true, Inject: false,
 			Description: "The project's official document — the comprehensive page a developer reads to understand the whole project."},
-		{Cwd: cwd, Slug: "goal", Title: "Goal", Position: 1, MaintainerMode: "ai", Inject: true,
+		{Cwd: cwd, Slug: "goal", Title: "Goal", Position: 1, MaintainerMode: "ai", WritePolicy: "proposal", Inject: true,
 			Description: "Long-term intent: what this project is for and what done looks like."},
-		{Cwd: cwd, Slug: "plan", Title: "Plan", Position: 2, MaintainerMode: "ai", Inject: true,
+		{Cwd: cwd, Slug: "plan", Title: "Plan", Position: 2, MaintainerMode: "ai", WritePolicy: "proposal", Inject: true,
 			Description: "The current roadmap / work-in-progress arc."},
-		{Cwd: cwd, Slug: "tech_stack", Title: "Tech stack", Position: 3, MaintainerMode: "scanner", Inject: true,
+		{Cwd: cwd, Slug: "current_objective", Title: "Current Objective", Position: 3, MaintainerMode: "ai", WritePolicy: "direct", Inject: true,
+			Description: "The short-term objective we are working on right now and its immediate steps — set in-session, completed, then rolled to the next. Not permanent.",
+			PromptHint:  "This is the CURRENT short-term objective plus its immediate steps. It is expected to change FREQUENTLY: when a session establishes a new immediate objective, replace this with it; when a session completes it, roll it forward to the next objective and note what was just finished. Do NOT treat it as long-term intent — that is the Goal."},
+		{Cwd: cwd, Slug: "tech_stack", Title: "Tech stack", Position: 4, MaintainerMode: "scanner", WritePolicy: "proposal", Inject: true,
 			Description: "Architecture, stack and repo structure — rebuilt mechanically by the project scanner."},
-		{Cwd: cwd, Slug: "recent_activity", Title: "Recent activity", Position: 4, MaintainerMode: "scanner", Inject: true,
+		{Cwd: cwd, Slug: "recent_activity", Title: "Recent activity", Position: 5, MaintainerMode: "scanner", WritePolicy: "proposal", Inject: true,
 			Description: "Narrative summary of recent git history — rebuilt mechanically by the activity scanner."},
 	}
 }
@@ -111,13 +139,13 @@ func defaultSections(cwd string) []Section {
 // the 0050 seed.
 func kbDefaultSections() []Section {
 	return []Section{
-		{Cwd: GlobalCwd, Slug: string(KindInfrastructure), Title: "Infrastructure", Position: 0, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "foundational",
+		{Cwd: GlobalCwd, Slug: string(KindInfrastructure), Title: "Infrastructure", Position: 0, MaintainerMode: "ai", WritePolicy: "proposal", Pinned: true, Inject: true, Nature: "foundational",
 			Description: "Standing ground truth about the home-lab/ecosystem: hosts, networks, databases, gateways — plus the binding rules for using them."},
-		{Cwd: GlobalCwd, Slug: string(KindConventions), Title: "Conventions", Position: 1, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "foundational",
+		{Cwd: GlobalCwd, Slug: string(KindConventions), Title: "Conventions", Position: 1, MaintainerMode: "ai", WritePolicy: "proposal", Pinned: true, Inject: true, Nature: "foundational",
 			Description: "The binding development conventions & policies: stack, source control, coding rules, release process."},
-		{Cwd: GlobalCwd, Slug: string(KindLessons), Title: "Lessons", Position: 2, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "emergent",
+		{Cwd: GlobalCwd, Slug: string(KindLessons), Title: "Lessons", Position: 2, MaintainerMode: "ai", WritePolicy: "proposal", Pinned: true, Inject: true, Nature: "emergent",
 			Description: "Distilled playbooks and hard-won lessons from past work — reference guidance, not law."},
-		{Cwd: GlobalCwd, Slug: string(KindReusable), Title: "Reusable features", Position: 3, MaintainerMode: "ai", Pinned: true, Inject: true, Nature: "emergent",
+		{Cwd: GlobalCwd, Slug: string(KindReusable), Title: "Reusable features", Position: 3, MaintainerMode: "ai", WritePolicy: "proposal", Pinned: true, Inject: true, Nature: "emergent",
 			Description: "Catalog of features/components/patterns liftable into new projects."},
 	}
 }
@@ -154,7 +182,8 @@ func (s *Service) ListSections(ctx context.Context, cwd string) ([]Section, erro
 func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT cwd, slug, title, description, position, maintainer_mode,
-		       prompt_hint, pinned, inject, COALESCE(nature, ''), created_at, updated_at
+		       COALESCE(write_policy, 'proposal'), prompt_hint, pinned, inject,
+		       COALESCE(nature, ''), created_at, updated_at
 		  FROM doc_blueprint_sections
 		 WHERE cwd = $1
 		 ORDER BY pinned DESC, position ASC, slug ASC`, cwd)
@@ -166,7 +195,7 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 	for rows.Next() {
 		var sec Section
 		if err := rows.Scan(&sec.Cwd, &sec.Slug, &sec.Title, &sec.Description,
-			&sec.Position, &sec.MaintainerMode, &sec.PromptHint,
+			&sec.Position, &sec.MaintainerMode, &sec.WritePolicy, &sec.PromptHint,
 			&sec.Pinned, &sec.Inject, &sec.Nature, &sec.CreatedAt, &sec.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("projectdoc: scan section: %w", err)
 		}
@@ -183,11 +212,11 @@ func (s *Service) seedSections(ctx context.Context, cwd string) error {
 	for _, sec := range defaults {
 		if _, err := s.pool.Exec(ctx, `
 			INSERT INTO doc_blueprint_sections
-				(cwd, slug, title, description, position, maintainer_mode, prompt_hint, pinned, inject, nature)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+				(cwd, slug, title, description, position, maintainer_mode, write_policy, prompt_hint, pinned, inject, nature)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 			ON CONFLICT (cwd, slug) DO NOTHING`,
 			sec.Cwd, sec.Slug, sec.Title, sec.Description, sec.Position,
-			sec.MaintainerMode, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature); err != nil {
+			sec.MaintainerMode, normalizeWritePolicy(sec.WritePolicy), sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature); err != nil {
 			return fmt.Errorf("projectdoc: seed section %s: %w", sec.Slug, err)
 		}
 	}
@@ -228,6 +257,12 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 	if !ValidMaintainerMode(sec.MaintainerMode) {
 		return Section{}, fmt.Errorf("projectdoc: maintainer_mode must be ai|human|scanner, got %q", sec.MaintainerMode)
 	}
+	// Empty defaults to the safe proposal gate; a bad explicit value is
+	// rejected so a caller can't silently mistype direct-write away.
+	if sec.WritePolicy != "" && !ValidWritePolicy(sec.WritePolicy) {
+		return Section{}, fmt.Errorf("projectdoc: write_policy must be direct|proposal, got %q", sec.WritePolicy)
+	}
+	sec.WritePolicy = normalizeWritePolicy(sec.WritePolicy)
 	if strings.TrimSpace(sec.Title) == "" {
 		return Section{}, errors.New("projectdoc: section title is required")
 	}
@@ -238,25 +273,27 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO doc_blueprint_sections
-			(cwd, slug, title, description, position, maintainer_mode, prompt_hint, pinned, inject, nature)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			(cwd, slug, title, description, position, maintainer_mode, write_policy, prompt_hint, pinned, inject, nature)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		ON CONFLICT (cwd, slug) DO UPDATE SET
 			title = EXCLUDED.title,
 			description = EXCLUDED.description,
 			position = EXCLUDED.position,
 			maintainer_mode = EXCLUDED.maintainer_mode,
+			write_policy = EXCLUDED.write_policy,
 			prompt_hint = EXCLUDED.prompt_hint,
 			pinned = EXCLUDED.pinned,
 			inject = EXCLUDED.inject,
 			nature = EXCLUDED.nature,
 			updated_at = NOW()
 		RETURNING cwd, slug, title, description, position, maintainer_mode,
-		          prompt_hint, pinned, inject, COALESCE(nature, ''), created_at, updated_at`,
+		          COALESCE(write_policy, 'proposal'), prompt_hint, pinned, inject,
+		          COALESCE(nature, ''), created_at, updated_at`,
 		sec.Cwd, sec.Slug, sec.Title, sec.Description, sec.Position,
-		sec.MaintainerMode, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature)
+		sec.MaintainerMode, sec.WritePolicy, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature)
 	var out Section
 	if err := row.Scan(&out.Cwd, &out.Slug, &out.Title, &out.Description,
-		&out.Position, &out.MaintainerMode, &out.PromptHint,
+		&out.Position, &out.MaintainerMode, &out.WritePolicy, &out.PromptHint,
 		&out.Pinned, &out.Inject, &out.Nature, &out.CreatedAt, &out.UpdatedAt); err != nil {
 		return Section{}, fmt.Errorf("projectdoc: put section: %w", err)
 	}

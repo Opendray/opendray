@@ -37,6 +37,7 @@ import {
 import {
   type BlueprintSection,
   type MaintainerMode,
+  type WritePolicy,
   listBlueprintSections,
 } from '@/lib/projectDocs'
 import { applyBlueprint, proposeBlueprint } from '@/lib/cortex'
@@ -121,6 +122,7 @@ export function BlueprintEditor({ cwd, open, onOpenChange, onApplied }: Blueprin
         description: '',
         position: d.length,
         maintainer_mode: 'ai' as MaintainerMode,
+        write_policy: 'proposal' as WritePolicy,
         prompt_hint: '',
         pinned: false,
         inject: true,
@@ -200,6 +202,25 @@ export function BlueprintEditor({ cwd, open, onOpenChange, onApplied }: Blueprin
                       <SelectItem value="ai">{t('web.cortex.blueprint.mode.ai')}</SelectItem>
                       <SelectItem value="human">{t('web.cortex.blueprint.mode.human')}</SelectItem>
                       <SelectItem value="scanner">{t('web.cortex.blueprint.mode.scanner')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={s.write_policy ?? 'proposal'}
+                    onValueChange={(v) => update(i, { write_policy: v as WritePolicy })}
+                  >
+                    <SelectTrigger
+                      className="h-7 w-28 text-xs"
+                      title={t('web.cortex.blueprint.writePolicy.hint')}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="proposal">
+                        {t('web.cortex.blueprint.writePolicy.proposal')}
+                      </SelectItem>
+                      <SelectItem value="direct">
+                        {t('web.cortex.blueprint.writePolicy.direct')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <label className="text-muted-foreground flex items-center gap-1 text-[11px]">

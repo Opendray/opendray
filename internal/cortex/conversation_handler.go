@@ -25,6 +25,7 @@ func (h *Handlers) mountConversations(r chi.Router) {
 		r.Get("/", h.listConversations)
 		r.Get("/{id}", h.getConversation)
 		r.Post("/{id}/messages", h.sendConversationMessage)
+		r.Post("/{id}/provider", h.setConversationProvider)
 		r.Post("/{id}/escalate", h.escalateConversation)
 		r.Post("/{id}/close", h.closeConversation)
 	})
@@ -43,20 +44,55 @@ func (h *Handlers) createConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		TargetKind string `json:"target_kind"`
-		TargetCwd  string `json:"target_cwd"`
-		TargetSlug string `json:"target_slug"`
+		TargetKind   string `json:"target_kind"`
+		TargetCwd    string `json:"target_cwd"`
+		TargetSlug   string `json:"target_slug"`
+		ProviderID   string `json:"provider_id"`
+		Model        string `json:"model"`
+		SummarizerID string `json:"summarizer_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	conv, err := h.convStore.Create(r.Context(), body.TargetKind, body.TargetCwd, body.TargetSlug)
+	conv, err := h.convStore.Create(r.Context(), body.TargetKind, body.TargetCwd, body.TargetSlug, body.ProviderID, body.Model, body.SummarizerID)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 	writeJSON(w, http.StatusCreated, conv)
+}
+
+// setConversationProvider pins (or clears with empty provider_id) the
+// conversation's cloud-agent model override. Returns the updated row.
+func (h *Handlers) setConversationProvider(w http.ResponseWriter, r *http.Request) {
+	if !h.curationReady(w) {
+		return
+	}
+	id := chi.URLParam(r, "id")
+	var body struct {
+		ProviderID   string `json:"provider_id"`
+		Model        string `json:"model"`
+		SummarizerID string `json:"summarizer_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if err := h.convStore.SetProvider(r.Context(), id, body.ProviderID, body.Model, body.SummarizerID); err != nil {
+		if errors.Is(err, ErrConversationNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	conv, err := h.convStore.Get(r.Context(), id)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, conv)
 }
 
 func (h *Handlers) listConversations(w http.ResponseWriter, r *http.Request) {

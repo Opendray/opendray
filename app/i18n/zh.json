@@ -547,6 +547,7 @@
         "health": "健康",
         "goal": "目标",
         "plan": "计划",
+        "current_objective": "当前目标",
         "tech": "技术栈",
         "activity": "活动",
         "journal": "日志",
@@ -559,6 +560,7 @@
       "docLabel": {
         "goal": "目标",
         "plan": "计划",
+        "current_objective": "当前目标",
         "tech_stack": "技术栈",
         "recent_activity": "最近活动"
       },
@@ -677,6 +679,7 @@
         "purpose": {
           "goal": "项目的长期目标与意图——我们最终在做什么、为什么做。当某次会话改变了方向,AI 会向 Inbox 提议更新,由你批准。",
           "plan": "当前的路线图 / 进行中的工作。会话推进后 AI 会向 Inbox 提议更新,由你批准。",
+          "current_objective": "我们当前正在做的短期目标及其即时步骤。会话中的 AI 会随着进展直接写入，完成后滚动到下一个。",
           "tech_stack": "技术栈与结构,由项目扫描器自动生成(每 6 小时刷新)。",
           "recent_activity": "近期 Git 活动的 AI 摘要,自动刷新(每 12 小时)。",
           "overview": "项目的官方文档——它是什么、有哪些功能、架构、如何构建/运行、依赖的基础设施。AI 从项目自身信号起草;你可编辑(即锁定)或重新生成。"
@@ -2901,7 +2904,16 @@
         "escalatedToast": "Agent 会话已启动",
         "closeHint": "关闭此对话",
         "revisionApplied": "文档已更新",
-        "revisionProposed": "已生成提案——请到收件箱审阅"
+        "revisionProposed": "已生成提案——请到收件箱审阅",
+        "modelLabel": "模型：",
+        "modelHint": "为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局 curation worker。",
+        "modelGlobalDefault": "默认（全局）",
+        "modelCliDefault": "CLI 默认",
+        "modelChangeFailed": "切换讨论模型失败",
+        "modelGroupCloud": "云端 agent",
+        "modelGroupLocal": "本地模型",
+        "modelProviderDefault": "供应商默认",
+        "modelProbeFailed": "无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。"
       },
       "blueprint": {
         "open": "蓝图",
@@ -2927,7 +2939,12 @@
         "cancel": "取消",
         "apply": "应用蓝图",
         "applyFailed": "应用失败",
-        "appliedToast": "蓝图已应用"
+        "appliedToast": "蓝图已应用",
+        "writePolicy": {
+          "direct": "直接写入",
+          "proposal": "提案",
+          "hint": "直接写入：会话中的 AI 在文档未锁定时直接更新实时文档。提案：AI 的写入需先经你批准。"
+        }
       },
       "quarantine": {
         "title": "隔离区",

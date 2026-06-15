@@ -46,10 +46,17 @@ import (
 type Kind string
 
 const (
-	KindGoal           Kind = "goal"
-	KindPlan           Kind = "plan"
-	KindTechStack      Kind = "tech_stack"      // M16b — scanner-managed
-	KindRecentActivity Kind = "recent_activity" // M16c — git-summary-managed
+	KindGoal Kind = "goal"
+	KindPlan Kind = "plan"
+	// KindCurrentObjective is the SHORT-TERM tier: the objective we are
+	// working on right now + its immediate steps. Unlike goal/plan it is
+	// direct-write (write_policy="direct") so the in-session agent — the
+	// writer with the richest context — keeps it current without an
+	// approval round-trip. Expected to churn; completing it = completing
+	// a short-term objective.
+	KindCurrentObjective Kind = "current_objective"
+	KindTechStack        Kind = "tech_stack"      // M16b — scanner-managed
+	KindRecentActivity   Kind = "recent_activity" // M16c — git-summary-managed
 	// KindOverview is the project's rich, AI-maintained OFFICIAL document — the
 	// comprehensive page a developer reads to understand the whole project.
 	// Per-project (Notes), AI-drafted, human-lockable.
@@ -375,6 +382,72 @@ func (s *Service) ProposeDoc(ctx context.Context, cwd string, kind Kind, propose
 		          reason, COALESCE(decision, ''), decided_at, COALESCE(prior_content, ''), created_at`,
 		id, cwd, string(kind), proposedContent, byID, reason)
 	return scanProposal(row)
+}
+
+// SetOutcome is the result of SetDocByPolicy: the live doc was either
+// written directly (Action="applied", Doc set) or filed as a proposal
+// (Action="proposed", Proposal set).
+type SetOutcome struct {
+	Action   string    `json:"action"` // "applied" | "proposed"
+	Doc      *Doc      `json:"doc,omitempty"`
+	Proposal *Proposal `json:"proposal,omitempty"`
+}
+
+// SetDocByPolicy is the agent-facing write that routes on the section's
+// blueprint write_policy:
+//
+//   - "direct" + the live doc is NOT human-locked → PutDoc as the agent
+//     (the in-session writer keeps the short-term objective current with
+//     no approval round-trip).
+//   - "proposal", OR a human has hand-edited the live doc (updated_by =
+//     operator) → ProposeDoc (the operator approves before it lands).
+//
+// The lock check mirrors the post-session drift path (journaler): a human
+// edit re-gates the next agent write back to a proposal, so a value you
+// typed is never silently clobbered. An unknown section / lookup failure
+// degrades to the safe proposal path.
+func (s *Service) SetDocByPolicy(ctx context.Context, cwd string, kind Kind, content, reason, sessionID string) (SetOutcome, error) {
+	if strings.TrimSpace(cwd) == "" {
+		return SetOutcome{}, ErrEmptyCwd
+	}
+
+	policy := "proposal"
+	if sections, err := s.ListSections(ctx, cwd); err == nil {
+		for _, sec := range sections {
+			if sec.Slug == string(kind) {
+				policy = normalizeWritePolicy(sec.WritePolicy)
+				break
+			}
+		}
+	} else {
+		s.log.Warn("projectdoc: set policy lookup failed — using proposal gate",
+			"cwd", cwd, "kind", kind, "err", err)
+	}
+
+	if policy == "direct" {
+		// Default to the safe gate: only direct-write when we can POSITIVELY
+		// confirm the live doc is absent or not human-authored. An unknown
+		// read error → fall through to a proposal rather than risk clobbering.
+		locked := true
+		if cur, err := s.GetDoc(ctx, cwd, kind); err == nil {
+			locked = cur.UpdatedBy == AuthorOperator
+		} else if errors.Is(err, ErrNotFound) {
+			locked = false // no doc yet — free to seed it directly
+		}
+		if !locked {
+			doc, err := s.PutDoc(ctx, cwd, kind, content, AuthorAgent)
+			if err != nil {
+				return SetOutcome{}, err
+			}
+			return SetOutcome{Action: "applied", Doc: &doc}, nil
+		}
+	}
+
+	prop, err := s.ProposeDoc(ctx, cwd, kind, content, reason, sessionID)
+	if err != nil {
+		return SetOutcome{}, err
+	}
+	return SetOutcome{Action: "proposed", Proposal: &prop}, nil
 }
 
 // ListPendingProposals returns un-decided proposals for one cwd,
@@ -973,7 +1046,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	// markers, last-scanned timestamps). Saves ~15-25% spawn tokens.
 	var b strings.Builder
 	header := "## Project context (cross-agent shared, read-only)\n\n"
-	footer := "If your work changes the goal or plan, do **not** silently overwrite them. Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal that the operator approves before the live doc updates.\n"
+	footer := "Keep the project docs current as you work. For the short-term objective we're working on right now, use `current_objective_set` — it writes the live doc directly: call it when a new immediate objective is set, when the current one is finished, or when its steps shift. For the long-term `project_goal_set` / medium-term `project_plan_set`, do **not** silently overwrite — those file a proposal the operator approves first.\n"
 	b.WriteString(header)
 
 	// Reserve room for the footer when a budget is active; without
@@ -1098,9 +1171,11 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		"`doc_read` (pass a section slug or kb_* page slug) for a specific document, " +
 		"`project_search` for cross-layer semantic search (facts, journal, docs, knowledge), " +
 		"`memory_search` for episodic facts. Fetch ONLY what the task needs.\n\n" +
-		"If your work changes the goal or plan, do **not** silently overwrite them. " +
-		"Use the `project_goal_set` / `project_plan_set` MCP tools — they file a proposal " +
-		"the operator approves before the live doc updates.\n")
+		"Keep the project docs current. Use `current_objective_set` for the short-term " +
+		"objective we're working on right now — it writes the live doc directly (new " +
+		"objective set / current one finished / steps shift). For the long-term " +
+		"`project_goal_set` and medium-term `project_plan_set`, do **not** silently " +
+		"overwrite — those file a proposal the operator approves first.\n")
 	return b.String(), nil
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
+import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/knowledge_api.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/memory_conflicts_api.dart';
@@ -33,11 +34,18 @@ class ProjectScreen extends ConsumerStatefulWidget {
 }
 
 class _ProjectScreenState extends ConsumerState<ProjectScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-  // Tabs: Overview Goal Plan Tech Activity Journal Inbox Hygiene → Inbox is
-  // index 6 (the proposal banner taps to it).
-  int get _inboxTabIndex => 6;
+    with TickerProviderStateMixin {
+  // The doc tabs ARE the project's blueprint sections (dynamic), followed by
+  // three fixed feature tabs: Journal, Inbox, Hygiene. The controller is
+  // (re)built whenever the section count changes (project switch / blueprint
+  // edit) so a new section — current_objective, or any custom one — shows up
+  // without a hardcoded tab list. Null until the first blueprint load.
+  TabController? _tabs;
+  List<BlueprintSection> _sections = const [];
+  // Journal / Inbox / Hygiene are the three trailing fixed tabs, right after
+  // the dynamic doc tabs.
+  int get _journalTabIndex => _sections.length;
+  int get _inboxTabIndex => _sections.length + 1;
   AsyncValue<List<String>> _projectKeys = const AsyncValue.loading();
   String? _selectedKey;
 
@@ -53,16 +61,59 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   @override
   void initState() {
     super.initState();
-    // 8 tabs: overview/goal/plan/tech/activity/journal/inbox/hygiene
-    // (hygiene rolls up health/conflicts/archived via a nested controller).
-    _tabs = TabController(length: 8, vsync: this);
+    // The TabController is built lazily once the blueprint sections load (in
+    // _loadAll) so its length matches the dynamic doc-tab set.
     _loadKeys();
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
+    _tabs?.dispose();
     super.dispose();
+  }
+
+  // (Re)build the tab controller when the number of tabs changes (project
+  // switch or blueprint edit). Disposes the previous one and preserves the
+  // current index where possible so a refresh doesn't snap back to Overview.
+  void _ensureTabController(int count) {
+    final n = count < 1 ? 1 : count;
+    if (_tabs != null && _tabs!.length == n) return;
+    final prevIndex = _tabs?.index ?? 0;
+    final old = _tabs;
+    _tabs = TabController(
+      length: n,
+      vsync: this,
+      initialIndex: prevIndex < n ? prevIndex : 0,
+    );
+    old?.dispose();
+  }
+
+  // Defensive fallback used ONLY when the blueprint fetch fails on first load,
+  // so the screen still renders its standard tabs. The gateway normally seeds
+  // these (see projectdoc.defaultSections), so this is a safety net.
+  List<BlueprintSection> _fallbackSections(String cwd) {
+    BlueprintSection mk(String slug, String title, int pos, String mode,
+            {String wp = 'proposal', bool pinned = false}) =>
+        BlueprintSection(
+          cwd: cwd,
+          slug: slug,
+          title: title,
+          description: '',
+          position: pos,
+          maintainerMode: mode,
+          writePolicy: wp,
+          promptHint: '',
+          pinned: pinned,
+          inject: true,
+        );
+    return [
+      mk('overview', 'Overview', 0, 'ai', pinned: true),
+      mk('goal', 'Goal', 1, 'ai'),
+      mk('plan', 'Plan', 2, 'ai'),
+      mk('current_objective', 'Current Objective', 3, 'ai', wp: 'direct'),
+      mk('tech_stack', 'Tech stack', 4, 'scanner'),
+      mk('recent_activity', 'Recent activity', 5, 'scanner'),
+    ];
   }
 
   Future<void> _loadKeys() async {
@@ -120,6 +171,29 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     final memApi = ref.read(memoryApiProvider);
     final healthApi = ref.read(memoryHealthApiProvider);
     final conflictsApi = ref.read(memoryConflictsApiProvider);
+    // Blueprint first: the tab set (and its controller length) must match this
+    // project's sections before the bodies render.
+    try {
+      final secs = await ref.read(cortexApiProvider).listSections(cwd);
+      secs.sort((a, b) {
+        if (a.pinned != b.pinned) return a.pinned ? -1 : 1;
+        return a.position.compareTo(b.position);
+      });
+      if (!mounted) return;
+      setState(() {
+        _sections = secs;
+        _ensureTabController(secs.length + 3);
+      });
+    } on ApiException catch (_) {
+      // Don't block the screen on a blueprint hiccup — fall back to the
+      // standard section set so the tabs (incl. current_objective) still show.
+      if (mounted && _sections.isEmpty) {
+        setState(() {
+          _sections = _fallbackSections(cwd);
+          _ensureTabController(_sections.length + 3);
+        });
+      }
+    }
     try {
       final docs = await api.listDocs(cwd);
       if (!mounted) return;
@@ -276,6 +350,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tabs = _tabs;
+    final sections = _sections;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.project.title),
@@ -303,20 +379,18 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             ),
           ],
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          isScrollable: true,
-          tabs: const [
-            Tab(text: 'Overview'),
-            Tab(text: 'Goal'),
-            Tab(text: 'Plan'),
-            Tab(text: 'Tech'),
-            Tab(text: 'Activity'),
-            Tab(text: 'Journal'),
-            Tab(text: 'Inbox'),
-            Tab(text: 'Hygiene'),
-          ],
-        ),
+        bottom: tabs == null
+            ? null
+            : TabBar(
+                controller: tabs,
+                isScrollable: true,
+                tabs: [
+                  for (final s in sections) Tab(text: _sectionTabLabel(s)),
+                  Tab(text: t.web.project.tabs.journal),
+                  Tab(text: t.web.project.tabs.inbox),
+                  Tab(text: t.web.project.tabs.hygiene),
+                ],
+              ),
       ),
       body: Column(
         children: [
@@ -325,35 +399,71 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
             _LifecycleBar(cwd: _selectedKey!),
           const SizedBox(height: 8),
           Expanded(
-            child: TabBarView(
-              controller: _tabs,
-              children: [
-                _overviewTab(),
-                _docTab('goal'),
-                _docTab('plan'),
-                _readonlyDocTab(
-                  'tech_stack',
-                  emptyText: 'No tech_stack scan yet. '
-                      'Triggered automatically on every session spawn '
-                      '(refreshes every 6h). You can force a refresh '
-                      'via POST /api/v1/project-scan/run.',
-                ),
-                _readonlyDocTab(
-                  'recent_activity',
-                  emptyText: 'No git activity summary yet. '
-                      'Generated by the LLM librarian — refreshes '
-                      'automatically every 12h, or you can force it '
-                      'via POST /api/v1/git-activity/run.',
-                ),
-                _journalTab(),
-                _inboxTab(),
-                _hygieneTab(),
-              ],
-            ),
+            child: tabs == null
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: tabs,
+                    children: [
+                      for (final s in sections) _sectionBody(s),
+                      _journalTab(),
+                      _inboxTab(),
+                      _hygieneTab(),
+                    ],
+                  ),
           ),
         ],
       ),
     );
+  }
+
+  // _sectionTabLabel localises the classic slugs (so zh/es operators keep
+  // translated tabs) and falls back to the section's own stored title for
+  // custom sections.
+  String _sectionTabLabel(BlueprintSection s) {
+    final tabs = t.web.project.tabs;
+    switch (s.slug) {
+      case 'overview':
+        return tabs.overview;
+      case 'goal':
+        return tabs.goal;
+      case 'plan':
+        return tabs.plan;
+      case 'current_objective':
+        return tabs.current_objective;
+      case 'tech_stack':
+        return tabs.tech;
+      case 'recent_activity':
+        return tabs.activity;
+      default:
+        return s.title;
+    }
+  }
+
+  // _sectionBody picks the right view for a blueprint section: the rich
+  // overview, a read-only scanner doc, or the editable goal/plan-style editor
+  // (which also covers current_objective and any custom ai/human section).
+  Widget _sectionBody(BlueprintSection s) {
+    if (s.slug == 'overview') return _overviewTab();
+    if (s.maintainerMode == 'scanner') {
+      return _readonlyDocTab(s.slug, emptyText: _scannerEmptyText(s.slug));
+    }
+    return _docTab(s.slug);
+  }
+
+  String _scannerEmptyText(String slug) {
+    switch (slug) {
+      case 'tech_stack':
+        return 'No tech_stack scan yet. Triggered automatically on every '
+            'session spawn (refreshes every 6h). You can force a refresh '
+            'via POST /api/v1/project-scan/run.';
+      case 'recent_activity':
+        return 'No git activity summary yet. Generated by the LLM librarian '
+            '— refreshes automatically every 12h, or you can force it via '
+            'POST /api/v1/git-activity/run.';
+      default:
+        return 'No content yet — this section is rebuilt mechanically by a '
+            'scanner.';
+    }
   }
 
   // ── Doc self-description (A: make each note explain itself) ─────
@@ -388,6 +498,8 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         return p.goal;
       case 'plan':
         return p.plan;
+      case 'current_objective':
+        return p.current_objective;
       case 'tech_stack':
         return p.tech_stack;
       case 'recent_activity':
@@ -451,7 +563,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       margin: const EdgeInsets.only(bottom: 8),
       color: scheme.tertiaryContainer,
       child: InkWell(
-        onTap: () => _tabs.animateTo(_inboxTabIndex),
+        onTap: () => _tabs?.animateTo(_inboxTabIndex),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -1364,20 +1476,26 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     }
   }
 
-  // M-PD — switch the Project tab bar to plan / goal so the
-  // operator can edit the doc that's currently in conflict with
-  // a fact. Tab indices follow the order declared in build():
-  // Overview(0) / Goal(1) / Plan(2) / Tech(3) / Activity(4) /
-  // Journal(5) / Inbox(6) / Hygiene(7). Health/Conflicts/Archived
-  // are nested sub-tabs inside Hygiene (its own DefaultTabController).
+  // M-PD — switch the Project tab bar to the plan / goal / journal tab so the
+  // operator can edit the doc that's currently in conflict with a fact. Tab
+  // positions are resolved from the live blueprint (the doc tabs are dynamic),
+  // with journal/inbox/hygiene trailing after the sections.
   void _jumpToLayerTab(ConflictLayer layer) {
+    final tabs = _tabs;
+    if (tabs == null) return;
+    int? slugIndex(String slug) {
+      final i = _sections.indexWhere((s) => s.slug == slug);
+      return i >= 0 ? i : null;
+    }
     switch (layer) {
       case ConflictLayer.plan:
-        _tabs.animateTo(2);
+        final i = slugIndex('plan');
+        if (i != null) tabs.animateTo(i);
       case ConflictLayer.goal:
-        _tabs.animateTo(1);
+        final i = slugIndex('goal');
+        if (i != null) tabs.animateTo(i);
       case ConflictLayer.journal:
-        _tabs.animateTo(5);
+        tabs.animateTo(_journalTabIndex);
       case ConflictLayer.fact:
         // No project-screen tab for layer-5 facts; operator
         // jumps to the Memory screen instead. Surface a hint

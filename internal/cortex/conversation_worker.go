@@ -128,8 +128,9 @@ func (s *CurationService) Send(ctx context.Context, conversationID, text string)
 		return Message{}, err
 	}
 	// The LLM turn runs detached: it can take minutes (agent-mode
-	// workers) and must not hold the HTTP request open.
-	go s.runAITurn(conv)
+	// workers) and must not hold the HTTP request open. Pass the id (not
+	// the snapshot) so the turn re-reads the latest provider/model pin.
+	go s.runAITurn(conv.ID)
 	return msg, nil
 }
 
@@ -137,18 +138,26 @@ func (s *CurationService) Send(ctx context.Context, conversationID, text string)
 // proposes the revision per the target's lock state, and appends the
 // AI message. Every failure path appends a system message so the
 // operator is never staring at a silently dead conversation.
-func (s *CurationService) runAITurn(conv Conversation) {
+func (s *CurationService) runAITurn(conversationID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	defer cancel()
 
 	fail := func(msg string, err error) {
-		s.log.Warn("curation turn failed", "conversation_id", conv.ID, "stage", msg, "err", err)
+		s.log.Warn("curation turn failed", "conversation_id", conversationID, "stage", msg, "err", err)
 		_, _ = s.store.AppendMessage(ctx, Message{
-			ConversationID: conv.ID,
+			ConversationID: conversationID,
 			Role:           "system",
 			Content:        fmt.Sprintf("AI turn failed (%s): %v", msg, err),
 		})
-		s.announce(conv.ID)
+		s.announce(conversationID)
+	}
+
+	// Re-fetch fresh so a provider/model override the operator pinned just
+	// before sending is always honoured (Send's snapshot may pre-date it).
+	conv, err := s.store.Get(ctx, conversationID)
+	if err != nil {
+		fail("load", err)
+		return
 	}
 
 	system, user, err := s.assemblePrompt(ctx, conv)
@@ -156,14 +165,39 @@ func (s *CurationService) runAITurn(conv Conversation) {
 		fail("assemble", err)
 		return
 	}
-	resp, err := s.registry.Run(ctx, worker.Request{
+	req := worker.Request{
 		Task:                     worker.TaskCuration,
 		SystemPrompt:             system,
 		UserInput:                user,
 		MaxTokens:                8192,
 		Timeout:                  5 * time.Minute,
 		ResponseFormatJSONSchema: curationJSONSchema,
-	})
+	}
+	// Per-conversation override: run THIS turn on the model the operator
+	// pinned in the chat instead of the global `curation` worker config.
+	// summarizer_id → a local/HTTP model; provider_id → a cloud-agent CLI;
+	// neither → global default.
+	var resp worker.Response
+	switch {
+	case conv.SummarizerID != "":
+		resp, err = s.registry.RunWith(ctx, worker.Config{
+			Task:         worker.TaskCuration,
+			Kind:         worker.WorkerSummarizer,
+			SummarizerID: conv.SummarizerID,
+			Model:        conv.Model, // optional per-call model override
+			Enabled:      true,
+		}, req)
+	case conv.ProviderID != "":
+		resp, err = s.registry.RunWith(ctx, worker.Config{
+			Task:       worker.TaskCuration,
+			Kind:       worker.WorkerAgent,
+			ProviderID: conv.ProviderID,
+			Model:      conv.Model,
+			Enabled:    true,
+		}, req)
+	default:
+		resp, err = s.registry.Run(ctx, req)
+	}
 	if err != nil {
 		fail("llm", err)
 		return

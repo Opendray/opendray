@@ -86,6 +86,12 @@ export async function putProjectDoc(input: {
 
 export type MaintainerMode = 'ai' | 'human' | 'scanner'
 
+/** Who lands an agent-side MCP write: 'proposal' files an operator-approved
+ * proposal (goal/plan — long-term, deliberate); 'direct' lets the in-session
+ * agent write the live doc when it is unlocked (current_objective —
+ * short-term, churns every session). Empty/absent defaults to 'proposal'. */
+export type WritePolicy = 'direct' | 'proposal'
+
 /** One section of a project's doc blueprint: its slug IS the doc kind. */
 export interface BlueprintSection {
   cwd: string
@@ -94,6 +100,8 @@ export interface BlueprintSection {
   description?: string
   position: number
   maintainer_mode: MaintainerMode
+  /** Agent-side write routing for this section (see WritePolicy). */
+  write_policy?: WritePolicy
   prompt_hint?: string
   /** Pinned sections sort first and cannot be deleted (overview; the
    * classic knowledge four). */

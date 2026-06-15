@@ -316,6 +316,26 @@ class _BlueprintEditorScreenState extends ConsumerState<BlueprintEditorScreen> {
                 ),
                 Text(t.web.cortex.blueprint.inject,
                     style: Theme.of(context).textTheme.bodySmall),
+                const Spacer(),
+                Tooltip(
+                  message: t.web.cortex.blueprint.writePolicy.hint,
+                  child: DropdownButton<String>(
+                    value: s.writePolicy == 'direct' ? 'direct' : 'proposal',
+                    underline: const SizedBox.shrink(),
+                    items: [
+                      DropdownMenuItem(
+                          value: 'proposal',
+                          child:
+                              Text(t.web.cortex.blueprint.writePolicy.proposal)),
+                      DropdownMenuItem(
+                          value: 'direct',
+                          child:
+                              Text(t.web.cortex.blueprint.writePolicy.direct)),
+                    ],
+                    onChanged: (v) => setState(() => row.section =
+                        s.copyWith(writePolicy: v ?? 'proposal')),
+                  ),
+                ),
               ],
             ),
           ],

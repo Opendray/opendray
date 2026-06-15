@@ -547,6 +547,7 @@
         "health": "Estado",
         "goal": "Objetivo",
         "plan": "Plan",
+        "current_objective": "Objetivo",
         "tech": "Tecnología",
         "activity": "Actividad",
         "journal": "Diario",
@@ -559,6 +560,7 @@
       "docLabel": {
         "goal": "Objetivo",
         "plan": "Plan",
+        "current_objective": "Objetivo actual",
         "tech_stack": "Stack tecnológico",
         "recent_activity": "Actividad reciente"
       },
@@ -677,6 +679,7 @@
         "purpose": {
           "goal": "La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.",
           "plan": "La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.",
+          "current_objective": "El objetivo a corto plazo en el que trabajamos ahora y sus pasos inmediatos. El agente lo escribe directamente durante la sesión y se renueva al completarse.",
           "tech_stack": "Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).",
           "recent_activity": "Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).",
           "overview": "El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo."
@@ -2901,7 +2904,16 @@
         "escalatedToast": "Sesión de agente lanzada",
         "closeHint": "Cerrar esta conversación",
         "revisionApplied": "Documento actualizado",
-        "revisionProposed": "Propuesta creada — revísala en la bandeja"
+        "revisionProposed": "Propuesta creada — revísala en la bandeja",
+        "modelLabel": "Modelo:",
+        "modelHint": "Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el worker de curación global.",
+        "modelGlobalDefault": "Predeterminado (global)",
+        "modelCliDefault": "Predeterminado del CLI",
+        "modelChangeFailed": "No se pudo cambiar el modelo de la conversación",
+        "modelGroupCloud": "Agentes en la nube",
+        "modelGroupLocal": "Modelos locales",
+        "modelProviderDefault": "Predeterminado del proveedor",
+        "modelProbeFailed": "No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria."
       },
       "blueprint": {
         "open": "Plano",
@@ -2927,7 +2939,12 @@
         "cancel": "Cancelar",
         "apply": "Aplicar plano",
         "applyFailed": "Error al aplicar",
-        "appliedToast": "Plano aplicado"
+        "appliedToast": "Plano aplicado",
+        "writePolicy": {
+          "direct": "Escritura directa",
+          "proposal": "Propuesta",
+          "hint": "Directa: el agente escribe el documento en vivo cuando está desbloqueado. Propuesta: las escrituras del agente requieren tu aprobación primero."
+        }
       },
       "quarantine": {
         "title": "Cuarentena",

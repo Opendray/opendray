@@ -3402,6 +3402,7 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get health => 'Estado';
 	@override String get goal => 'Objetivo';
 	@override String get plan => 'Plan';
+	@override String get current_objective => 'Objetivo';
 	@override String get tech => 'Tecnología';
 	@override String get activity => 'Actividad';
 	@override String get journal => 'Diario';
@@ -3421,6 +3422,7 @@ class _TranslationsWebProjectDocLabelEs extends TranslationsWebProjectDocLabelEn
 	// Translations
 	@override String get goal => 'Objetivo';
 	@override String get plan => 'Plan';
+	@override String get current_objective => 'Objetivo actual';
 	@override String get tech_stack => 'Stack tecnológico';
 	@override String get recent_activity => 'Actividad reciente';
 }
@@ -5695,6 +5697,15 @@ class _TranslationsWebCortexChatEs extends TranslationsWebCortexChatEn {
 	@override String get closeHint => 'Cerrar esta conversación';
 	@override String get revisionApplied => 'Documento actualizado';
 	@override String get revisionProposed => 'Propuesta creada — revísala en la bandeja';
+	@override String get modelLabel => 'Modelo:';
+	@override String get modelHint => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el worker de curación global.';
+	@override String get modelGlobalDefault => 'Predeterminado (global)';
+	@override String get modelCliDefault => 'Predeterminado del CLI';
+	@override String get modelChangeFailed => 'No se pudo cambiar el modelo de la conversación';
+	@override String get modelGroupCloud => 'Agentes en la nube';
+	@override String get modelGroupLocal => 'Modelos locales';
+	@override String get modelProviderDefault => 'Predeterminado del proveedor';
+	@override String get modelProbeFailed => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.';
 }
 
 // Path: web.cortex.blueprint
@@ -5724,6 +5735,7 @@ class _TranslationsWebCortexBlueprintEs extends TranslationsWebCortexBlueprintEn
 	@override String get apply => 'Aplicar plano';
 	@override String get applyFailed => 'Error al aplicar';
 	@override String get appliedToast => 'Plano aplicado';
+	@override late final _TranslationsWebCortexBlueprintWritePolicyEs writePolicy = _TranslationsWebCortexBlueprintWritePolicyEs._(_root);
 }
 
 // Path: web.cortex.quarantine
@@ -7063,6 +7075,7 @@ class _TranslationsWebProjectDocMetaPurposeEs extends TranslationsWebProjectDocM
 	// Translations
 	@override String get goal => 'La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.';
 	@override String get plan => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.';
+	@override String get current_objective => 'El objetivo a corto plazo en el que trabajamos ahora y sus pasos inmediatos. El agente lo escribe directamente durante la sesión y se renueva al completarse.';
 	@override String get tech_stack => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).';
 	@override String get recent_activity => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).';
 	@override String get overview => 'El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo.';
@@ -8790,6 +8803,18 @@ class _TranslationsWebCortexBlueprintModeEs extends TranslationsWebCortexBluepri
 	@override String get scanner => 'Escáner';
 }
 
+// Path: web.cortex.blueprint.writePolicy
+class _TranslationsWebCortexBlueprintWritePolicyEs extends TranslationsWebCortexBlueprintWritePolicyEn {
+	_TranslationsWebCortexBlueprintWritePolicyEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get direct => 'Escritura directa';
+	@override String get proposal => 'Propuesta';
+	@override String get hint => 'Directa: el agente escribe el documento en vivo cuando está desbloqueado. Propuesta: las escrituras del agente requieren tu aprobación primero.';
+}
+
 // Path: web.cortex.settings.injection
 class _TranslationsWebCortexSettingsInjectionEs extends TranslationsWebCortexSettingsInjectionEn {
 	_TranslationsWebCortexSettingsInjectionEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9339,6 +9364,7 @@ extension on TranslationsEs {
 			'web.project.tabs.health' => 'Estado',
 			'web.project.tabs.goal' => 'Objetivo',
 			'web.project.tabs.plan' => 'Plan',
+			'web.project.tabs.current_objective' => 'Objetivo',
 			'web.project.tabs.tech' => 'Tecnología',
 			'web.project.tabs.activity' => 'Actividad',
 			'web.project.tabs.journal' => 'Diario',
@@ -9349,6 +9375,7 @@ extension on TranslationsEs {
 			'web.project.tabs.hygiene' => 'Higiene',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
+			'web.project.docLabel.current_objective' => 'Objetivo actual',
 			'web.project.docLabel.tech_stack' => 'Stack tecnológico',
 			'web.project.docLabel.recent_activity' => 'Actividad reciente',
 			'web.project.editor.updatedBy' => 'Actualizado por',
@@ -9398,10 +9425,10 @@ extension on TranslationsEs {
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
 			'web.project.reset.alwaysDeleted' => 'Siempre se elimina: objetivo, plan, propuestas, diario, decisiones de limpieza.',
-			'web.project.reset.alsoDeleteScannerLabel' => 'Eliminar también los documentos del escáner',
-			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity).',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.alsoDeleteScannerLabel' => 'Eliminar también los documentos del escáner',
+			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity).',
 			'web.project.reset.alsoDeleteScannerHint' => 'De todos modos se reconstruyen automáticamente en el siguiente inicio; dejarlo sin marcar suele estar bien.',
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Eliminar también las memorias de pgvector',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'para este scope_key.',
@@ -9438,6 +9465,7 @@ extension on TranslationsEs {
 			'web.project.docMeta.maintainer.human' => 'Autoría humana',
 			'web.project.docMeta.purpose.goal' => 'La intención a largo plazo del proyecto: qué construimos y por qué. Cuando una sesión cambia el rumbo, la IA propone una actualización en tu Bandeja para que la apruebes.',
 			'web.project.docMeta.purpose.plan' => 'La hoja de ruta actual / trabajo en curso. La IA propone una actualización en tu Bandeja tras avanzar una sesión; tú la apruebas.',
+			'web.project.docMeta.purpose.current_objective' => 'El objetivo a corto plazo en el que trabajamos ahora y sus pasos inmediatos. El agente lo escribe directamente durante la sesión y se renueva al completarse.',
 			'web.project.docMeta.purpose.tech_stack' => 'Stack y estructura, autogenerado por el escáner del proyecto (se actualiza cada 6 h).',
 			'web.project.docMeta.purpose.recent_activity' => 'Resumen por IA de la actividad reciente de Git, actualizado automáticamente (cada 12 h).',
 			'web.project.docMeta.purpose.overview' => 'El documento oficial del proyecto: qué es, sus funciones, arquitectura, cómo construir/ejecutar y las bases en que se apoya. Redactado por IA desde las señales del propio proyecto; puedes editarlo (lo bloquea) o regenerarlo.',
@@ -9911,11 +9939,11 @@ extension on TranslationsEs {
 			'web.channels.notifications.cooldowns.k3600' => '1 hora',
 			'web.channels.notifications.snippetCaps.k0' => 'Sin límite, dividir en varios mensajes (predeterminado)',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 caracteres (conciso)',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.snippetCaps.k3000' => '3000 caracteres',
 			'web.channels.notifications.snippetCaps.k6000' => '6000 caracteres',
 			'web.channels.notifications.snippetCaps.k12000' => '12000 caracteres',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.nameLabel' => 'Nombre del bridge',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Etiqueta legible para el adaptador. Se muestra en la lista de canales.',
@@ -10425,11 +10453,11 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => 'Host (sin protocolo). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.regionLabel' => 'Región',
 			'web.backups.targetEditor.s3.regionHint' => 'Solo AWS; en R2 usa \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
 			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Clave de acceso',
@@ -10939,11 +10967,11 @@ extension on TranslationsEs {
 			'web.export.form.confirmSentinel' => 'lo entiendo',
 			'web.export.form.footnote' => 'Los logs de auditoría y los transcripts de session quedan fuera del alcance; en su lugar los cubre /backups (volcado del operador).',
 			'web.export.form.building' => 'Generando…',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.create' => 'Crear exportación',
 			'web.export.form.readyToast' => 'Exportación lista',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.failedToast' => 'Falló la exportación',
 			'web.export.history.loading' => 'Cargando…',
 			'web.export.history.empty' => 'Aún no hay exportaciones. Usa el formulario de arriba para crear una.',
@@ -11162,6 +11190,15 @@ extension on TranslationsEs {
 			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
 			'web.cortex.chat.revisionApplied' => 'Documento actualizado',
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
+			'web.cortex.chat.modelLabel' => 'Modelo:',
+			'web.cortex.chat.modelHint' => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el worker de curación global.',
+			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
+			'web.cortex.chat.modelCliDefault' => 'Predeterminado del CLI',
+			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
+			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
+			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
+			'web.cortex.chat.modelProviderDefault' => 'Predeterminado del proveedor',
+			'web.cortex.chat.modelProbeFailed' => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.',
 			'web.cortex.blueprint.open' => 'Plano',
 			'web.cortex.blueprint.openHint' => 'Edita qué secciones documenta este proyecto',
 			'web.cortex.blueprint.title' => 'Plano del documento',
@@ -11184,6 +11221,9 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.apply' => 'Aplicar plano',
 			'web.cortex.blueprint.applyFailed' => 'Error al aplicar',
 			'web.cortex.blueprint.appliedToast' => 'Plano aplicado',
+			'web.cortex.blueprint.writePolicy.direct' => 'Escritura directa',
+			'web.cortex.blueprint.writePolicy.proposal' => 'Propuesta',
+			'web.cortex.blueprint.writePolicy.hint' => 'Directa: el agente escribe el documento en vivo cuando está desbloqueado. Propuesta: las escrituras del agente requieren tu aprobación primero.',
 			'web.cortex.quarantine.title' => 'Cuarentena',
 			'web.cortex.quarantine.subtitle' => 'Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones de terceros llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano desde el inspector de Memoria. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.',
 			'web.cortex.quarantine.empty' => 'Nada en cuarentena. Las filas llegan desde sessions de origen integración (política “quarantine”) o cuando pones una memoria en cuarentena manualmente en el inspector de Memoria.',
@@ -11441,6 +11481,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
@@ -11456,8 +11498,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.locationDialogHelp' => 'Fija el cwd de esta session a una carpeta específica dentro de tu almacén de notas. Déjalo en blanco para restablecer.',
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
@@ -11955,6 +11995,8 @@ extension on TranslationsEs {
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
 			'backups.restore.cleanHint' => 'Elimina los objetos existentes antes de volver a crearlos.',
 			'backups.restore.auditNoteLabel' => 'Nota de auditoría (opcional)',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.auditNotePlaceholder' => 'p. ej. recuperando de #INC-481',
 			'backups.restore.ownDbWarning' => 'Restaurar en la PROPIA base de datos de opendray reescribirá las filas que este gateway está sirviendo actualmente. Escribe "I understand" para confirmar.',
 			'backups.restore.confirmPlaceholder' => 'Escribe "I understand"',
@@ -11970,8 +12012,6 @@ extension on TranslationsEs {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
 			'backups.restore.succeededTitle' => 'Restauración completada',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
@@ -12469,6 +12509,8 @@ extension on TranslationsEs {
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Cerrar',
 			'memory.kNew' => 'Nuevo',
+			_ => null,
+		} ?? switch (path) {
 			'memory.searchHint' => 'Buscar…',
 			'memory.projectLabel' => 'Proyecto',
 			'memory.filterHint' => 'Filtrar por nombre o ruta…',
@@ -12484,8 +12526,6 @@ extension on TranslationsEs {
 			'memory.deleteOne.body' => 'Esto no se puede deshacer.',
 			'memory.scope.project' => 'Proyecto',
 			'memory.scope.global' => 'Global',
-			_ => null,
-		} ?? switch (path) {
 			'memory.create.textLabel' => 'Texto',
 			'memory.create.scopeKeyLabel' => 'Clave de ámbito (cwd del proyecto)',
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',

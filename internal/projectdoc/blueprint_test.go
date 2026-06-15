@@ -75,12 +75,13 @@ func TestValidateKindForCwd(t *testing.T) {
 
 func TestDefaultSectionsShape(t *testing.T) {
 	secs := defaultSections("/p")
-	if len(secs) != 5 {
-		t.Fatalf("default blueprint has %d sections, want 5", len(secs))
+	if len(secs) != 6 {
+		t.Fatalf("default blueprint has %d sections, want 6", len(secs))
 	}
 	if secs[0].Slug != SlugOverview || !secs[0].Pinned || secs[0].Inject {
 		t.Errorf("overview must be first, pinned, and not injected: %+v", secs[0])
 	}
+	var sawDirect bool
 	for _, sec := range secs {
 		if !ValidSectionSlug(sec.Slug) {
 			t.Errorf("default slug %q fails its own validation", sec.Slug)
@@ -88,6 +89,18 @@ func TestDefaultSectionsShape(t *testing.T) {
 		if !ValidMaintainerMode(sec.MaintainerMode) {
 			t.Errorf("default section %q has bad mode %q", sec.Slug, sec.MaintainerMode)
 		}
+		if !ValidWritePolicy(sec.WritePolicy) {
+			t.Errorf("default section %q has bad write_policy %q", sec.Slug, sec.WritePolicy)
+		}
+		if sec.Slug == "current_objective" {
+			if sec.WritePolicy != "direct" {
+				t.Errorf("current_objective must be direct-write, got %q", sec.WritePolicy)
+			}
+			sawDirect = true
+		}
+	}
+	if !sawDirect {
+		t.Error("default blueprint is missing the direct-write current_objective section")
 	}
 }
 

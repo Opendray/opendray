@@ -123,6 +123,12 @@ export interface CortexConversation {
   target_slug: string
   status: ConversationStatus
   escalated_session_id?: string
+  /** Per-conversation model override (all empty = global `curation`
+   * worker). Mutually exclusive: summarizer_id pins a local/HTTP model;
+   * provider_id+model pins a cloud-agent CLI. */
+  provider_id?: string
+  model?: string
+  summarizer_id?: string
   created_at: string
   updated_at: string
 }
@@ -142,11 +148,36 @@ export async function createConversation(input: {
   target_kind: ConversationTargetKind
   target_cwd: string
   target_slug: string
+  /** Optional model override (cloud-agent provider_id+model, OR a local
+   * summarizer_id) for the new conversation. */
+  provider_id?: string
+  model?: string
+  summarizer_id?: string
 }): Promise<CortexConversation> {
   return api<CortexConversation>('/api/v1/cortex/conversations', {
     method: 'POST',
     body: input,
   })
+}
+
+/** Pins (or clears, with all empty) a conversation's model override:
+ * a cloud-agent provider+model OR a local summarizer_id (mutually
+ * exclusive). Returns the updated conversation. */
+export async function setConversationProvider(
+  id: string,
+  override: { provider_id?: string; model?: string; summarizer_id?: string },
+): Promise<CortexConversation> {
+  return api<CortexConversation>(
+    `/api/v1/cortex/conversations/${id}/provider`,
+    {
+      method: 'POST',
+      body: {
+        provider_id: override.provider_id ?? '',
+        model: override.model ?? '',
+        summarizer_id: override.summarizer_id ?? '',
+      },
+    },
+  )
 }
 
 export async function listConversations(

@@ -288,6 +288,7 @@ class BlueprintSection {
     required this.promptHint,
     required this.pinned,
     required this.inject,
+    this.writePolicy = 'proposal',
     this.nature = 'emergent',
   });
 
@@ -299,6 +300,7 @@ class BlueprintSection {
         description: j['description']?.toString() ?? '',
         position: (j['position'] as num?)?.toInt() ?? 0,
         maintainerMode: j['maintainer_mode']?.toString() ?? 'ai',
+        writePolicy: j['write_policy']?.toString() ?? 'proposal',
         promptHint: j['prompt_hint']?.toString() ?? '',
         pinned: j['pinned'] == true,
         inject: j['inject'] == true,
@@ -312,6 +314,7 @@ class BlueprintSection {
         'description': description,
         'position': position,
         'maintainer_mode': maintainerMode,
+        'write_policy': writePolicy,
         'prompt_hint': promptHint,
         'pinned': pinned,
         'inject': inject,
@@ -323,6 +326,7 @@ class BlueprintSection {
     String? title,
     int? position,
     String? maintainerMode,
+    String? writePolicy,
     bool? inject,
   }) =>
       BlueprintSection(
@@ -332,6 +336,7 @@ class BlueprintSection {
         description: description,
         position: position ?? this.position,
         maintainerMode: maintainerMode ?? this.maintainerMode,
+        writePolicy: writePolicy ?? this.writePolicy,
         promptHint: promptHint,
         pinned: pinned,
         inject: inject ?? this.inject,
@@ -344,6 +349,9 @@ class BlueprintSection {
   final String description;
   final int position;
   final String maintainerMode; // ai | human | scanner
+  // 'proposal' (agent write files an operator-approved proposal) |
+  // 'direct' (in-session agent writes the live doc when unlocked).
+  final String writePolicy;
   final String promptHint;
   final bool pinned;
   final bool inject;

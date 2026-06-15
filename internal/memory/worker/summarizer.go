@@ -43,12 +43,19 @@ func (w *SummarizerWorker) Run(ctx context.Context, req Request) (Response, erro
 	if err != nil {
 		return Response{}, fmt.Errorf("summarizer worker: pick provider: %w", err)
 	}
-	if row.BaseURL == "" || row.Model == "" {
+	// Per-call model override: a caller (e.g. a curation conversation
+	// pinning a specific model on this endpoint) can swap the row's
+	// default model without reconfiguring the provider. Empty → row default.
+	model := row.Model
+	if w.cfg.Model != "" {
+		model = w.cfg.Model
+	}
+	if row.BaseURL == "" || model == "" {
 		return Response{}, errors.New("summarizer worker: provider missing base_url or model")
 	}
 
 	body := map[string]any{
-		"model": row.Model,
+		"model": model,
 		"messages": []map[string]any{
 			{"role": "system", "content": req.SystemPrompt},
 			{"role": "user", "content": req.UserInput},

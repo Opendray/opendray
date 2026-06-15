@@ -192,21 +192,25 @@ func (s *memMCPServer) handle(raw []byte) {
 
 // instructionsBlurb shows up in the agent's system context so the
 // model knows when to call the tools without explicit prompting.
-const instructionsBlurb = `Persistent cross-agent memory backed by opendray. Five layers,
-each with a different rhythm — pick the right tool for the job:
+const instructionsBlurb = `Persistent cross-agent memory backed by opendray. Several layers,
+each with a different rhythm and time-horizon — pick the right one:
 
-  memory_*           short DISCRETE FACTS; retrieved top-K-relevant
-                     (e.g. "user prefers pnpm", "DB at db.example:5432")
-  project_goal_*     LONG-TERM INTENT — what we're building. Rare changes.
-  project_plan_*     CURRENT ROADMAP / WIP ARC. Update OFTEN — every time
-                     the plan moves forward (phase done, scope shift).
-  session_log_append PROJECT JOURNAL — append every time you finish a
-                     meaningful step, fix a bug, hit a blocker, learn
-                     something the next session should know.
-  decision_record    ADR-style architectural locks-in (rare).
-  project_search     CROSS-LAYER semantic search across facts, journal,
-                     goal, and plan. Use when context might live anywhere
-                     ("have we hit X before", "what did we decide about Y").
+  memory_*            short DISCRETE FACTS; retrieved top-K-relevant
+                      (e.g. "user prefers pnpm", "DB at db.example:5432")
+  project_goal_*      LONG-TERM intent (the North Star) — what we're
+                      ultimately building. Rare changes; files a proposal.
+  project_plan_*      MEDIUM-TERM roadmap / arc of phases. Update when the
+                      roadmap SHAPE moves (phase done, scope shift); proposal.
+  current_objective_* SHORT-TERM: what we're working on RIGHT NOW + its
+                      immediate steps. Writes the live doc DIRECTLY (no
+                      approval). Churns constantly — completing it = a
+                      short-term objective done.
+  session_log_append  PROJECT JOURNAL — append every time you finish a
+                      meaningful step, fix a bug, hit a blocker, learn
+                      something the next session should know.
+  decision_record     ADR-style architectural locks-in (rare).
+  project_search      CROSS-LAYER semantic search across facts, journal,
+                      goal, plan, and objective.
 
 CRITICAL HABITS:
 
@@ -218,14 +222,18 @@ CRITICAL HABITS:
    that ends with no journal entries is a session that taught the
    next agent nothing.
 
-3. When the plan shifts, call project_plan_set with the new plan.
-   It files a proposal — the operator approves — so feel free to
-   call it whenever progress changes the roadmap shape.
+3. Keep current_objective_set current — recognise the situation from
+   the conversation, NO special keyword needed: call it when the
+   conversation (a) sets a NEW immediate objective, (b) FINISHES the
+   current one (roll it to the next), or (c) shifts its steps. This
+   is the doc with the most context — you, mid-session — keeping it
+   live. Reserve project_plan_set/project_goal_set for the rarer
+   roadmap/North-Star changes (those file a proposal).
 
 4. memory_store is for FUTURE-SESSION-USEFUL FACTS, not for
    tracking what you're currently doing. "Working on M5" is NOT
    a memory_store entry — that goes in session_log_append or as
-   a project_plan_set update.`
+   a current_objective_set update.`
 
 // toolDefs is the static list returned for tools/list.
 var toolDefs = []map[string]any{
@@ -347,12 +355,50 @@ var toolDefs = []map[string]any{
 		},
 	},
 	{
+		"name": "current_objective_get",
+		"description": "Read the project's CURRENT OBJECTIVE document — the " +
+			"short-term thing we're working on right now and its immediate " +
+			"steps. One markdown body per project; empty when none is set yet.",
+		"inputSchema": map[string]any{
+			"type":       "object",
+			"properties": map[string]any{},
+		},
+	},
+	{
+		"name": "current_objective_set",
+		"description": "Set the project's CURRENT OBJECTIVE — the short-term " +
+			"thing we're working on right now and its immediate steps. Writes " +
+			"the LIVE document directly (no operator approval) so it always " +
+			"reflects where we are. Call it whenever the conversation, in its " +
+			"own words, does any of these — you recognise the situation, there " +
+			"is NO keyword to wait for: (1) establishes a NEW immediate " +
+			"objective; (2) FINISHES the current one — roll it to the next and " +
+			"note what was just done; (3) SHIFTS the objective's scope or " +
+			"steps. It is expected to change often. For the medium-term " +
+			"roadmap use project_plan_set; for long-term intent, project_goal_set.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"content": map[string]any{
+					"type":        "string",
+					"description": "The full current-objective markdown (objective + immediate steps).",
+				},
+				"reason": map[string]any{
+					"type":        "string",
+					"description": "Optional short note (used only if the doc is human-locked and this falls back to a proposal).",
+				},
+			},
+			"required": []string{"content"},
+		},
+	},
+	{
 		"name": "project_goal_set",
-		"description": "File a proposal to replace the project goal " +
-			"with new content. Does NOT overwrite the live doc directly — " +
-			"the operator must approve the proposal first. Use this when " +
-			"the user agrees that the long-term direction has shifted, " +
-			"or to seed an initial goal on a fresh project.",
+		"description": "Update the project GOAL — the LONG-TERM intent / North " +
+			"Star: what we are ultimately building and why. Files a proposal " +
+			"the operator approves (does NOT overwrite the live doc directly). " +
+			"Use RARELY — only when the long-term direction genuinely shifts, " +
+			"or to seed an initial goal. Day-to-day progress goes to " +
+			"current_objective_set, not here.",
 		"inputSchema": map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -370,8 +416,12 @@ var toolDefs = []map[string]any{
 	},
 	{
 		"name": "project_plan_set",
-		"description": "File a proposal to replace the project plan " +
-			"with new content. Same approval flow as project_goal_set.",
+		"description": "Update the project PLAN — the MEDIUM-TERM roadmap / arc " +
+			"of phases. Files a proposal the operator approves (same flow as " +
+			"project_goal_set). Call when the roadmap SHAPE changes: a phase " +
+			"finishes, scope shifts, or phase ordering changes. For the " +
+			"immediate thing you're working on right now, use " +
+			"current_objective_set instead (that one writes live).",
 		"inputSchema": map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -550,10 +600,14 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		result, err = s.callProjectDocGet("goal")
 	case "project_plan_get":
 		result, err = s.callProjectDocGet("plan")
+	case "current_objective_get":
+		result, err = s.callProjectDocGet("current_objective")
 	case "project_goal_set":
-		result, err = s.callProjectDocPropose("goal", params.Arguments)
+		result, err = s.callProjectDocSet("goal", params.Arguments)
 	case "project_plan_set":
-		result, err = s.callProjectDocPropose("plan", params.Arguments)
+		result, err = s.callProjectDocSet("plan", params.Arguments)
+	case "current_objective_set":
+		result, err = s.callProjectDocSet("current_objective", params.Arguments)
 	case "session_log_append":
 		result, err = s.callSessionLogAppend("manual", params.Arguments)
 	case "decision_record":
@@ -922,11 +976,14 @@ func (s *memMCPServer) callSkillDistill(args json.RawMessage) (any, error) {
 	}, nil
 }
 
-// callProjectDocPropose files a change proposal for goal or plan.
-// Per design decision 3, agents cannot overwrite the live document
-// directly — the change lands in project_doc_proposals and waits
-// for operator approval.
-func (s *memMCPServer) callProjectDocPropose(kind string, args json.RawMessage) (any, error) {
+// callProjectDocSet writes goal / plan / current_objective through the
+// gateway's policy-aware set endpoint. The gateway routes on the
+// section's blueprint write_policy: a "direct" section (current_objective)
+// updates the LIVE doc immediately when unlocked; "proposal" sections
+// (goal/plan) — or any doc a human has hand-edited — file a proposal that
+// the operator approves. The response's `action` tells us which happened
+// so the agent gets accurate feedback.
+func (s *memMCPServer) callProjectDocSet(kind string, args json.RawMessage) (any, error) {
 	cwd := s.cfg.scopeKey
 	if cwd == "" {
 		return nil, errors.New("project_doc_set requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
@@ -942,22 +999,37 @@ func (s *memMCPServer) callProjectDocPropose(kind string, args json.RawMessage) 
 		return nil, errors.New("content is required")
 	}
 	body := map[string]any{
-		"cwd":              cwd,
-		"kind":             kind,
-		"proposed_content": in.Content,
-		"reason":           in.Reason,
+		"cwd":     cwd,
+		"content": in.Content,
+		"reason":  in.Reason,
 	}
 	var out struct {
-		ID string `json:"id"`
+		Action   string `json:"action"`
+		Proposal struct {
+			ID string `json:"id"`
+		} `json:"proposal"`
 	}
-	if err := s.gatewayPostJSON("/api/v1/project-doc-proposals", body, &out); err != nil {
+	if err := s.gatewayPostJSON("/api/v1/project-docs/"+kind+"/set", body, &out); err != nil {
 		return nil, err
+	}
+	var text string
+	switch out.Action {
+	case "applied":
+		text = fmt.Sprintf("Updated the live %s document directly.", kind)
+	case "proposed":
+		if out.Proposal.ID == "" {
+			text = fmt.Sprintf("Filed a %s proposal (gateway returned no id) — check the opendray inbox.", kind)
+		} else {
+			text = fmt.Sprintf(
+				"Filed %s proposal %s — this doc is human-locked or proposal-gated, so the live doc is unchanged until the operator approves.",
+				kind, out.Proposal.ID)
+		}
+	default:
+		text = fmt.Sprintf("Gateway returned an unexpected action %q for the %s set — nothing confirmed.", out.Action, kind)
 	}
 	return map[string]any{
 		"content": []map[string]any{
-			{"type": "text", "text": fmt.Sprintf(
-				"Filed %s proposal %s. Waiting for operator approval — the live doc is unchanged until then.",
-				kind, out.ID)},
+			{"type": "text", "text": text},
 		},
 	}, nil
 }
