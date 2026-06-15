@@ -18,5 +18,10 @@
     "@types/ws": "^8.5.13",
     "tsx": "^4.20.0",
     "typescript": "^5.6.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": ">=0.28.1"
+    }
   }
 }
