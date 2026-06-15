@@ -468,17 +468,27 @@ func (s *store) MarkBackupSucceeded(ctx context.Context, id string, r BackupResu
 	return nil
 }
 
-// FindDedupTarget returns the most recent succeeded, non-deleted backup
-// on targetID whose plaintext content_hash matches and which still has a
-// usable blob (non-empty target_path). The bool is false when nothing
-// matches — the caller then uploads normally.
+// FindDedupTarget returns the most recent backup on targetID we can
+// safely dedup against: a succeeded, non-deduped (i.e. it actually
+// uploaded the blob) row with a matching plaintext content_hash, a
+// usable target_path, and no failed verification. The bool is false when
+// nothing qualifies — the caller then uploads normally.
+//
+// Requiring deduped=FALSE means every dedup points at the ONE canonical
+// blob, never at another pointer, so a dedup chain can't be left
+// dangling when intermediate rows age out (reference-aware retention
+// keeps the canonical blob alive while any pointer references it).
+// Excluding verify-failed rows avoids reusing a blob that's proven
+// un-restorable.
 func (s *store) FindDedupTarget(ctx context.Context, targetID, contentHash string) (Backup, bool, error) {
 	if contentHash == "" {
 		return Backup{}, false, nil
 	}
 	row := s.pool.QueryRow(ctx, backupSelectStmt+`
 		WHERE target_id=$1 AND status='succeeded' AND content_hash=$2
+		  AND deduped=FALSE
 		  AND COALESCE(target_path,'')<>''
+		  AND COALESCE(verify_error,'')=''
 		ORDER BY started_at DESC
 		LIMIT 1`, targetID, contentHash)
 	b, err := scanBackup(row)
@@ -515,12 +525,12 @@ func (s *store) MarkBackupDeduped(ctx context.Context, id, contentHash, pgVersio
 		       content_hash=$8,
 		       deduped=TRUE,
 		       verified_at=$9,
-		       verify_error=NULL
-		 WHERE id=$10`,
+		       verify_error=$10
+		 WHERE id=$11`,
 		prior.Bytes, nullIfEmpty(prior.SHA256), nullIfEmpty(prior.KeyFingerprint),
 		nullIfEmpty(prior.TargetPath), nullIfEmpty(pgVersion),
 		nullIfEmpty(info.Version), nullIfEmpty(info.Commit),
-		nullIfEmpty(contentHash), verifiedAt, id)
+		nullIfEmpty(contentHash), verifiedAt, nullIfEmpty(prior.VerifyError), id)
 	if err != nil {
 		return fmt.Errorf("mark deduped: %w", err)
 	}

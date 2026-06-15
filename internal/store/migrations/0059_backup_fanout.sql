@@ -18,4 +18,4 @@ ALTER TABLE backup_schedules
     ADD COLUMN IF NOT EXISTS target_ids TEXT[] NOT NULL DEFAULT '{}';
 UPDATE backup_schedules
    SET target_ids = ARRAY[target_id]
- WHERE cardinality(target_ids) = 0;
+ WHERE cardinality(target_ids) = 0 AND target_id IS NOT NULL;

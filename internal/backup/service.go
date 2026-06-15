@@ -709,6 +709,21 @@ func (s *Service) ListSchedules(ctx context.Context) ([]Schedule, error) {
 }
 
 func (s *Service) UpdateSchedule(ctx context.Context, id string, p SchedulePatch) error {
+	// Validate fan-out targets exist before persisting — the store layer
+	// only checks non-emptiness, and a schedule pointing at an unknown
+	// target would fail at run time instead of at edit time.
+	if p.TargetIDs != nil {
+		ids := dedupeStrings(*p.TargetIDs)
+		if len(ids) == 0 {
+			return fmt.Errorf("target_ids must not be empty")
+		}
+		for _, tid := range ids {
+			if s.targets.get(tid) == nil {
+				return fmt.Errorf("%w: %s", ErrTargetNotFound, tid)
+			}
+		}
+		p.TargetIDs = &ids
+	}
 	return s.store.UpdateSchedule(ctx, id, p)
 }
 
@@ -778,13 +793,22 @@ func (s *Service) prepareGroup(ctx context.Context, req RunBackupRequest) ([]Bac
 	if len(ids) > 1 {
 		groupID = NewGroupID()
 	}
-	rows := make([]Backup, len(ids))
+	rows := make([]Backup, 0, len(ids))
 	for i, id := range ids {
 		b := s.newBackupRow(req, id, groupID)
 		if err := s.store.InsertBackup(ctx, b); err != nil {
-			return nil, nil, err
+			// Don't leave the rows inserted before this one stuck in
+			// 'pending' forever — flip them to failed so retention and
+			// the health roll-up account for them.
+			for _, done := range rows {
+				if mErr := s.store.MarkBackupFailed(ctx, done.ID,
+					fmt.Sprintf("fan-out aborted: sibling insert failed: %v", err)); mErr != nil {
+					s.log.Error("prepareGroup: cleanup mark failed", "backup_id", done.ID, "err", mErr)
+				}
+			}
+			return nil, nil, fmt.Errorf("insert backup row %d/%d: %w", i+1, len(ids), err)
 		}
-		rows[i] = b
+		rows = append(rows, b)
 	}
 	return rows, targets, nil
 }

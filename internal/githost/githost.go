@@ -241,10 +241,18 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Host, error) {
 }
 
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Host, error) {
-	current, err := s.GetByID(ctx, id)
+	// Read WITHOUT decoding the token: a decrypt failure (e.g. the backup
+	// key rotated) must never let a no-token-supplied update blank out
+	// the stored ciphertext. The stored form is preserved verbatim and
+	// only replaced when the caller supplies a new token.
+	current, err := scanHost(s.pool.QueryRow(ctx, hostSelect+` WHERE id=$1`, id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Host{}, ErrNotFound
+	}
 	if err != nil {
 		return Host{}, err
 	}
+	storedToken := current.Token // stored form (possibly encrypted)
 	if req.Kind != nil {
 		if err := validateKind(*req.Kind); err != nil {
 			return Host{}, err
@@ -258,7 +266,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 		current.Name = strings.TrimSpace(*req.Name)
 	}
 	if req.Token != nil && *req.Token != "" {
-		current.Token = *req.Token
+		storedToken = s.encodeToken(*req.Token) // re-encrypt the new token
 	}
 	if req.Enabled != nil {
 		current.Enabled = *req.Enabled
@@ -268,7 +276,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
         SET kind=$1, host=$2, name=$3, token=$4, enabled=$5, updated_at=NOW()
         WHERE id=$6
         RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
-		string(current.Kind), current.Host, current.Name, s.encodeToken(current.Token),
+		string(current.Kind), current.Host, current.Name, storedToken,
 		current.Enabled, id)
 	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {

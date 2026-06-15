@@ -222,8 +222,33 @@ your off-site key really does unlock your backups.
 ## 8. 3-2-1, briefly
 
 Aim for **3** copies of your data, on **2** different media, with **1**
-off-site. opendray supports multiple targets (local + SMB/S3/WebDAV/
-SFTP/rclone); a local target plus one off-site target, each on its own
-schedule, gets you most of the way. Keep the Recovery Kit (or
-passphrase) off-site too — backups and their key on the same dead host
-is one copy, not two.
+off-site. A backup or schedule can **fan out to several targets at
+once** (local + SMB/S3/WebDAV/SFTP/rclone): pick more than one
+destination and opendray writes the *same* sealed bundle to each in a
+single run, grouped under one fan-out id. A target that's temporarily
+down fails only its own copy — the others still land. Retention is
+per-target. Keep the Recovery Kit (or passphrase) off-site too —
+backups and their key on the same dead host is one copy, not two.
+
+## 9. Content-dedup ("incremental")
+
+pg_dump has no native incremental mode, so opendray dedups by content.
+Each backup records the sha256 of its *plaintext* bundle; when a later
+run on the same target produces an identical hash, opendray skips the
+re-upload and points the new row at the existing blob (flagged
+**deduped** in the UI). The row is still a complete, restorable backup —
+it just shares storage with its identical predecessor. Retention is
+reference-aware: a shared blob is removed only once no retained row
+still points at it, so a deduped backup is never left dangling. Note
+that logical dumps often differ byte-for-byte between runs (ordering,
+timestamps), so dedup helps most on genuinely-unchanged databases.
+
+## 10. Credential encryption at rest
+
+Once backups are armed (a backup key is configured), opendray encrypts
+**git-host API tokens** at rest with the same AES-GCM key, transparently
+— no action needed. Tokens saved before backups were armed stay
+plaintext until next saved. Because the key is the backup passphrase,
+**rotating that passphrase makes existing encrypted tokens
+unrecoverable** — re-enter affected git-host tokens after a rotation
+(the UI shows the token as empty/needs-re-entry).
