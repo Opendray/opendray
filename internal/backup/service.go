@@ -4,8 +4,6 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -1034,10 +1032,10 @@ type sealedBundle struct {
 	path      string // sealed ciphertext temp file in cfg.LocalDir
 	size      int64  // bytes of the sealed file
 	pgVersion string // ParsePGMajorMinor(pg_dump --version)
-	// contentHash is sha256 over the *plaintext* bundle (pre-seal), so
-	// it's stable across runs of identical data — content-dedup keys on
-	// it. Seal uses a fresh nonce per run, so the ciphertext is never
-	// stable and can't be hashed for this.
+	// contentHash fingerprints the restorable content (dump +
+	// full-instance sources), with per-run framing excluded so identical
+	// data hashes the same across runs — content-dedup keys on it. See
+	// dedupContentHash.
 	contentHash string
 	cleanup     func()
 }
@@ -1098,6 +1096,11 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 	includeConfig = includeConfig || fullInstance
 
 	sources := []BundleSource{}
+	// hashParts mirrors `sources` by on-disk path: the content
+	// fingerprint is computed from the source files directly (not the
+	// bundle stream) so it excludes the per-run manifest and can
+	// timestamp-normalise the dump — see dedupContentHash.
+	hashParts := []dedupPart{}
 	if includeConfig && s.configPath != "" {
 		cf, err := os.Open(s.configPath)
 		if err != nil {
@@ -1116,6 +1119,7 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 				Body: cf,
 				Size: cfgStat.Size(),
 			})
+			hashParts = append(hashParts, dedupPart{path: s.configPath})
 		}
 	}
 
@@ -1133,6 +1137,7 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 		}
 		defer vf.Close()
 		sources = append(sources, BundleSource{Name: "vault.tar", Body: vf, Size: vtarSize})
+		hashParts = append(hashParts, dedupPart{path: vtarName})
 	}
 	if fullInstance && s.cfg.SecretsFile != "" {
 		sf, err := os.Open(s.cfg.SecretsFile)
@@ -1154,6 +1159,7 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 					Body: sf,
 					Size: sStat.Size(),
 				})
+				hashParts = append(hashParts, dedupPart{path: s.cfg.SecretsFile})
 			}
 		}
 	}
@@ -1163,6 +1169,16 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 		Body: dumpFile,
 		Size: dumpStat.Size(),
 	})
+	hashParts = append(hashParts, dedupPart{path: tmpName, isDump: true})
+
+	// Fingerprint the restorable content (timestamp-normalised dump +
+	// any full-instance sources, manifest excluded) before the temp
+	// files are streamed/removed. A failure here only forgoes dedup.
+	contentHash, err := dedupContentHash(hashParts)
+	if err != nil {
+		s.log.Warn("backup: content-hash failed; this backup won't dedup", "err", err)
+		contentHash = ""
+	}
 
 	info := version.Current()
 	manifest := BundleManifest{
@@ -1187,14 +1203,12 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 	// WriteBundle streams every source body in this goroutine; the
 	// synchronous io.Copy below drains the whole pipe before returning,
 	// so by the time the deferred file closes / temp removals fire the
-	// goroutine has finished reading every BundleSource. We tee the
-	// *plaintext* bundle through a hasher to get a content fingerprint
-	// that's stable across identical runs (Seal's per-run nonce makes
-	// the ciphertext unusable for that — see content-dedup).
-	hasher := sha256.New()
+	// goroutine has finished reading every BundleSource. (The content
+	// fingerprint is computed separately from the source files above, so
+	// the per-run manifest never taints it.)
 	bundleR, bundleW := io.Pipe()
 	go func() {
-		err := WriteBundle(io.MultiWriter(bundleW, hasher), manifest, sources)
+		err := WriteBundle(bundleW, manifest, sources)
 		_ = bundleW.CloseWithError(err)
 	}()
 	sealed := s.cipher.Seal(bundleR)
@@ -1217,7 +1231,7 @@ func (s *Service) buildSealedBundle(ctx context.Context, b Backup, includeConfig
 		path:        sealedName,
 		size:        sealedStat.Size(),
 		pgVersion:   ParsePGMajorMinor(pgVerStr),
-		contentHash: hex.EncodeToString(hasher.Sum(nil)),
+		contentHash: contentHash,
 		cleanup:     cleanup,
 	}, nil
 }

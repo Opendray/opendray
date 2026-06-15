@@ -9,7 +9,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+// vaultEpoch is the fixed mod-time stamped on every vault tar entry.
+// File mtimes aren't restorable content — UnpackVault forces 0600 mode
+// and never restores times — so pinning them makes vault.tar
+// byte-stable for identical file contents, which lets content-dedup
+// recognise an unchanged vault across backups. A non-zero constant
+// keeps tooling that dislikes the zero time happy.
+var vaultEpoch = time.Unix(0, 0).UTC()
 
 // VaultSource is one logical directory captured into a vault tarball.
 // Logical is the root name recorded in the archive (e.g. "notes",
@@ -88,10 +97,12 @@ func packOne(tw *tar.Writer, src VaultSource) error {
 		}
 		arcName := filepath.ToSlash(filepath.Join(src.Logical, rel))
 		hdr := &tar.Header{
-			Name:     arcName,
-			Size:     fi.Size(),
-			Mode:     0o600,
-			ModTime:  fi.ModTime().UTC(),
+			Name: arcName,
+			Size: fi.Size(),
+			Mode: 0o600,
+			// Pinned, not the real mtime — see vaultEpoch. Keeps the tar
+			// byte-stable so content-dedup can match an unchanged vault.
+			ModTime:  vaultEpoch,
 			Typeflag: tar.TypeReg,
 		}
 		if err := tw.WriteHeader(hdr); err != nil {

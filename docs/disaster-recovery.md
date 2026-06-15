@@ -233,15 +233,24 @@ backups and their key on the same dead host is one copy, not two.
 ## 9. Content-dedup ("incremental")
 
 pg_dump has no native incremental mode, so opendray dedups by content.
-Each backup records the sha256 of its *plaintext* bundle; when a later
-run on the same target produces an identical hash, opendray skips the
-re-upload and points the new row at the existing blob (flagged
+Each backup records a fingerprint of its restorable content; when a
+later run on the same target produces an identical fingerprint, opendray
+skips the re-upload and points the new row at the existing blob (flagged
 **deduped** in the UI). The row is still a complete, restorable backup —
 it just shares storage with its identical predecessor. Retention is
 reference-aware: a shared blob is removed only once no retained row
-still points at it, so a deduped backup is never left dangling. Note
-that logical dumps often differ byte-for-byte between runs (ordering,
-timestamps), so dedup helps most on genuinely-unchanged databases.
+still points at it, so a deduped backup is never left dangling.
+
+The fingerprint is computed over the dump (and, for full-instance, the
+vault / secrets / config) but **excludes the volatile, non-content
+framing** that would otherwise make every run unique even when nothing
+changed: the bundle's creation timestamp, the pg_dump archive header's
+timestamp, and vault-file mtimes (which a restore doesn't preserve
+anyway). So an **unchanged database deduplicates** — nightly backups of
+a static database reuse one blob. It will *not* dedup when the data
+actually changed, or when heavy write churn reorders rows on disk (the
+dump bytes genuinely differ then) — which is exactly what you want: when
+in doubt, opendray uploads a fresh, independent copy.
 
 ## 10. Credential encryption at rest
 
