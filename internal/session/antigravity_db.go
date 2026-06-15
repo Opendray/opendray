@@ -70,13 +70,13 @@ func antigravityTranscript(cfg AntigravityHistoryConfig, _ string, startedAt, en
 	if err != nil {
 		return nil
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	rows, err := db.Query("SELECT step_type, step_payload FROM steps ORDER BY idx")
 	if err != nil {
 		return nil
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var turns []Turn
 	bytesUsed := 0

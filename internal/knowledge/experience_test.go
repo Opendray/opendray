@@ -231,7 +231,7 @@ func TestEpisodesSignatureChangesWithFeedstock(t *testing.T) {
 	if episodesSignature(a) == episodesSignature(b) {
 		t.Fatal("signature must change when episodes change")
 	}
-	if episodesSignature(a) != episodesSignature(a) {
+	if sig1, sig2 := episodesSignature(a), episodesSignature(a); sig1 != sig2 {
 		t.Fatal("signature must be deterministic")
 	}
 }

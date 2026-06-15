@@ -1,6 +1,9 @@
 package projectdoc
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestIsEphemeralCwd(t *testing.T) {
 	tests := []struct {
@@ -33,7 +36,7 @@ func TestIsEphemeralCwd(t *testing.T) {
 
 func TestValidateWriteTargetRejectsEphemeral(t *testing.T) {
 	s := &Service{} // validateWriteTarget short-circuits before any DB use
-	if err := s.validateWriteTarget(nil, "/tmp/throwaway", KindGoal); err == nil {
+	if err := s.validateWriteTarget(context.TODO(), "/tmp/throwaway", KindGoal); err == nil {
 		t.Fatalf("doc write under /tmp must be rejected")
 	}
 }

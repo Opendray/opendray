@@ -34,7 +34,7 @@ func runRecoverKey(args []string) int {
 	kitPath := fs.String("kit", "", "path to the Recovery Kit JSON file (required)")
 	install := fs.Bool("install", false, "write the recovered passphrase to the default keyfile (~/.opendray/secrets/backup.key)")
 	overwrite := fs.Bool("overwrite", false, "with --install, replace an existing keyfile")
-	fs.Parse(args)
+	_ = fs.Parse(args) // ExitOnError flagset never returns a non-nil error
 
 	if *kitPath == "" {
 		fmt.Fprintln(os.Stderr, "recover-key: --kit is required")

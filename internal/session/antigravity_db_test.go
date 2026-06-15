@@ -91,7 +91,7 @@ func TestAntigravityTranscript(t *testing.T) {
 	}{
 		{0, agyStepUser, agyUserStep(base, "hello world")},
 		{1, agyStepAssistant, agyAssistantStep(base.Add(time.Second), "hi there")},
-		{2, 9, []byte{0x08, 0x09}},                                       // tool call → skipped
+		{2, 9, []byte{0x08, 0x09}},                                              // tool call → skipped
 		{3, agyStepAssistant, agyAssistantStep(base.Add(2*time.Second), "   ")}, // blank → skipped
 		{4, agyStepUser, agyUserStep(base.Add(3*time.Second), "second question")},
 	}
@@ -129,9 +129,9 @@ func TestResolveAntigravityDBPicksNewestInWindow(t *testing.T) {
 		payload  []byte
 	}{{0, agyStepUser, agyUserStep(now, "x")}}
 
-	writeAgyDB(t, root, "old.db", now.Add(-10*time.Minute), one)   // before window
-	writeAgyDB(t, root, "mid.db", now.Add(-30*time.Second), one)   // in window, older
-	newest := writeAgyDB(t, root, "new.db", now, one)              // in window, newest
+	writeAgyDB(t, root, "old.db", now.Add(-10*time.Minute), one) // before window
+	writeAgyDB(t, root, "mid.db", now.Add(-30*time.Second), one) // in window, older
+	newest := writeAgyDB(t, root, "new.db", now, one)            // in window, newest
 
 	cfg := AntigravityHistoryConfig{ConversationsRoot: root}
 	got := resolveAntigravityDB(cfg, now.Add(-time.Minute), time.Time{})
@@ -164,14 +164,14 @@ func TestPbWireHelpers(t *testing.T) {
 	}
 	// Adversarial inputs must never panic — the blob is untrusted.
 	adversarial := [][]byte{
-		{0xFF, 0xFF},                                     // garbage tag tail
-		{0x80},                                           // truncated varint (continuation, no next)
-		{0x0A, 0x05, 'a', 'b'},                           // wireLen len=5 but only 2 bytes follow
-		{0x0A, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F},             // wireLen with huge length
-		{0x09, 0x01, 0x02, 0x03},                         // wireI64 with <8 trailing bytes
-		{0x0D, 0x01, 0x02},                               // wireI32 with <4 trailing bytes
+		{0xFF, 0xFF},                         // garbage tag tail
+		{0x80},                               // truncated varint (continuation, no next)
+		{0x0A, 0x05, 'a', 'b'},               // wireLen len=5 but only 2 bytes follow
+		{0x0A, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F}, // wireLen with huge length
+		{0x09, 0x01, 0x02, 0x03},             // wireI64 with <8 trailing bytes
+		{0x0D, 0x01, 0x02},                   // wireI32 with <4 trailing bytes
 		{0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // overlong varint value
-		{0x1B},                                           // wire type 3 (group) — must stop, not panic
+		{0x1B}, // wire type 3 (group) — must stop, not panic
 	}
 	for i, in := range adversarial {
 		func() {
