@@ -34,6 +34,8 @@ import (
 	"sync/atomic"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/opendray/opendray-v2/internal/eventbus"
 )
 
 // LiveBackup is the lifecycle handle exposed to handlers and the
@@ -56,6 +58,7 @@ type LiveBackup struct {
 // except the passphrase, which arrives at Arm() time.
 type liveDeps struct {
 	pool       *pgxpool.Pool
+	bus        *eventbus.Hub
 	dsn        string
 	configPath string
 }
@@ -80,6 +83,7 @@ type liveState struct {
 func NewLiveBackup(
 	cfg Config,
 	pool *pgxpool.Pool,
+	bus *eventbus.Hub,
 	dsn string,
 	configPath string,
 	log *slog.Logger,
@@ -88,6 +92,7 @@ func NewLiveBackup(
 		cfg: cfg,
 		deps: liveDeps{
 			pool:       pool,
+			bus:        bus,
 			dsn:        dsn,
 			configPath: configPath,
 		},
@@ -127,6 +132,7 @@ func (l *LiveBackup) Arm(ctx context.Context, passphrase string) error {
 	}
 	svc, err := NewService(l.cfg, ServiceDeps{
 		Pool:       l.deps.pool,
+		Bus:        l.deps.bus,
 		Passphrase: passphrase,
 		DSN:        l.deps.dsn,
 		ConfigPath: l.deps.configPath,

@@ -673,13 +673,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		},
 		SecretsFile: secretsFile,
 	}
-	liveBackup := backup.NewLiveBackup(bcfg, st.Pool(), cfg.Database.URL, cfg.FilePath, log)
+	liveBackup := backup.NewLiveBackup(bcfg, st.Pool(), bus, cfg.Database.URL, cfg.FilePath, log)
 	if keyLoad.Passphrase != "" {
 		// Boot-time Arm: build the service eagerly so init errors
 		// (DB migration failure, etc.) crash boot rather than wait
 		// for the first /backups request.
 		bsvc, berr := backup.NewService(bcfg, backup.ServiceDeps{
 			Pool:       st.Pool(),
+			Bus:        bus,
 			Passphrase: keyLoad.Passphrase,
 			DSN:        cfg.Database.URL,
 			ConfigPath: cfg.FilePath,

@@ -17,6 +17,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/opendray/opendray-v2/internal/eventbus"
 	"github.com/opendray/opendray-v2/internal/version"
 )
 
@@ -43,9 +44,10 @@ type Config struct {
 // a Service. Distinct from Config so Config can be JSON-logged.
 type ServiceDeps struct {
 	Pool       *pgxpool.Pool
-	Passphrase string // from OPENDRAY_BACKUP_KEY
-	DSN        string // libpq conninfo for pg_dump
-	ConfigPath string // optional; cfg.toml path to include in bundles
+	Bus        *eventbus.Hub // optional; nil disables failure notifications
+	Passphrase string        // from OPENDRAY_BACKUP_KEY
+	DSN        string        // libpq conninfo for pg_dump
+	ConfigPath string        // optional; cfg.toml path to include in bundles
 	Log        *slog.Logger
 }
 
@@ -62,8 +64,18 @@ type Service struct {
 	targets    *targetRegistry
 	dsn        string
 	configPath string
-	passphrase string // retained for Recovery Kit export; never logged
+	passphrase string        // retained for Recovery Kit export; never logged
+	bus        *eventbus.Hub // optional; nil disables failure notifications
 	log        *slog.Logger
+}
+
+// notify publishes a backup event to the bus (operator notifications
+// are dispatched by the channel hub). No-op when no bus is wired.
+func (s *Service) notify(topic string, data map[string]any) {
+	if s.bus == nil {
+		return
+	}
+	s.bus.Publish(eventbus.Event{Topic: topic, Data: data})
 }
 
 // NewService validates config + deps and constructs the Service.
@@ -122,6 +134,7 @@ func NewService(cfg Config, deps ServiceDeps) (*Service, error) {
 		dsn:        deps.DSN,
 		configPath: deps.ConfigPath,
 		passphrase: deps.Passphrase,
+		bus:        deps.Bus,
 		log:        log,
 	}, nil
 }
@@ -773,6 +786,12 @@ func (s *Service) doRunBackup(ctx context.Context, b Backup, target BackupTarget
 		if mErr := s.store.MarkBackupFailed(ctx, b.ID, err.Error()); mErr != nil {
 			log.Error("mark failed", "err", mErr)
 		}
+		s.notify("backup.failed", map[string]any{
+			"backup_id": b.ID,
+			"target_id": b.TargetID,
+			"kind":      string(b.Kind),
+			"error":     err.Error(),
+		})
 		return
 	}
 	log.Info("backup succeeded")
@@ -783,6 +802,11 @@ func (s *Service) doRunBackup(ctx context.Context, b Backup, target BackupTarget
 	if s.pgrestore != nil {
 		if vErr := s.VerifyBackup(ctx, b.ID); vErr != nil {
 			log.Warn("backup verification failed", "backup_id", b.ID, "err", vErr)
+			s.notify("backup.verify_failed", map[string]any{
+				"backup_id": b.ID,
+				"target_id": b.TargetID,
+				"error":     vErr.Error(),
+			})
 		} else {
 			log.Info("backup verified", "backup_id", b.ID)
 		}

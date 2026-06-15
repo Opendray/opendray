@@ -943,6 +943,14 @@ func (h *Hub) runOutbound(ctx context.Context) {
 	// UI count exactly like a Telegram reply.
 	chInput, unsubIn := h.bus.Subscribe("session.input", 64)
 	defer unsubIn()
+	// Backup health: a failed backup, or a backup that wrote but failed
+	// post-write verification, is dispatched as a card like any other
+	// notification (mute + repeat-policy apply). No session_id, so
+	// suppressByPolicy keys on the topic.
+	chBackupFail, unsubBF := h.bus.Subscribe("backup.failed", 32)
+	defer unsubBF()
+	chVerifyFail, unsubVF := h.bus.Subscribe("backup.verify_failed", 32)
+	defer unsubVF()
 	for {
 		select {
 		case <-ctx.Done():
@@ -983,6 +991,16 @@ func (h *Hub) runOutbound(ctx context.Context) {
 				return
 			}
 			h.forgetNotifyAllForSession(sessionIDFromEvent(ev))
+		case ev, ok := <-chBackupFail:
+			if !ok {
+				return
+			}
+			h.dispatch(ctx, ev)
+		case ev, ok := <-chVerifyFail:
+			if !ok {
+				return
+			}
+			h.dispatch(ctx, ev)
 		}
 	}
 }
@@ -997,6 +1015,20 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 
 	sessionID := sessionIDFromEvent(ev)
 
+	// The repeat-policy suppression key is the session id for session
+	// events. Non-session events (e.g. backup.*) carry no session_id, so
+	// they'd all collapse onto the same "topic|" key — under "once" mode
+	// the first one would silence every later one for 24h. Key those on
+	// their own id (backup_id) so each distinct backup notifies once.
+	suppressKey := sessionID
+	if suppressKey == "" {
+		if data, ok := ev.Data.(map[string]any); ok {
+			if bid, _ := data["backup_id"].(string); bid != "" {
+				suppressKey = bid
+			}
+		}
+	}
+
 	// Suppress an idle card that would merely echo a reply the
 	// turn-complete fast path already delivered to the chat. The agent
 	// went quiet, the idle watcher re-reads the same last response — no
@@ -1010,6 +1042,10 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 	}
 
 	for _, c := range chs {
+		// A muted channel silences ALL topics, backup alerts included —
+		// muting is the operator's explicit "stop messaging me here". A
+		// future per-category override could exempt backup failures, but
+		// that's a channel-policy decision, deliberately not taken here.
 		if h.isMuted(ctx, c.ID()) {
 			continue
 		}
@@ -1019,14 +1055,14 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 		// and two of its three topics never fired). The hub only dispatches
 		// the events that matter (session.idle / session.ended), so every
 		// enabled, unmuted channel gets them, deduped by the repeat policy.
-		if h.suppressByPolicy(ctx, c.ID(), ev.Topic, sessionID) {
+		if h.suppressByPolicy(ctx, c.ID(), ev.Topic, suppressKey) {
 			continue
 		}
 
 		// Render the card per-channel — different channels can have
 		// different snippet preferences (omit snippet, smaller cap…).
 		snip := h.snippetPrefs(ctx, c.ID())
-		card := buildSessionCard(ev, snip)
+		card := buildNotificationCard(ev, snip)
 		textFallback := card.RenderText()
 
 		msg := ChannelMessage{
@@ -1445,7 +1481,8 @@ func (h *Hub) snippetPrefs(ctx context.Context, channelID string) snippetPrefs {
 	return out
 }
 
-// buildSessionCard turns a session.* event into a structured Card.
+// buildNotificationCard turns a dispatched event (session.*, backup.*,
+// pr.checks_completed) into a structured Card.
 // Cards always carry a body and (for known events) a row of inline
 // action buttons. Channels without CardSender get the RenderText()
 // fallback.
@@ -1464,10 +1501,39 @@ func (h *Hub) snippetPrefs(ctx context.Context, channelID string) snippetPrefs {
 // channel impls (Telegram, etc.) chunk into multiple messages
 // automatically. Operators who want a hard cap can still set
 // notify_snippet_max_chars from the UI.
-func buildSessionCard(ev eventbus.Event, snip snippetPrefs) *Card {
+func buildNotificationCard(ev eventbus.Event, snip snippetPrefs) *Card {
 	data, _ := ev.Data.(map[string]any)
 	sid, _ := data["session_id"].(string)
 	switch ev.Topic {
+	case "backup.failed":
+		bid, _ := data["backup_id"].(string)
+		emsg, _ := data["error"].(string)
+		return &Card{
+			Header: &CardHeader{Title: "Backup failed", Color: "red"},
+			Elements: []CardElement{
+				CardMarkdown{Content: fmt.Sprintf(
+					"Backup `%s` failed: %s", bid, trimForCardN(emsg, 300))},
+				CardActions{Buttons: [][]ButtonOption{{
+					{Text: "Open backups", Value: "nav:/backups"},
+					{Text: "Mute", Value: "cmd:/notify off"},
+				}}},
+			},
+		}
+	case "backup.verify_failed":
+		bid, _ := data["backup_id"].(string)
+		emsg, _ := data["error"].(string)
+		return &Card{
+			Header: &CardHeader{Title: "Backup unverified", Color: "red"},
+			Elements: []CardElement{
+				CardMarkdown{Content: fmt.Sprintf(
+					"Backup `%s` was written but failed verification: %s",
+					bid, trimForCardN(emsg, 300))},
+				CardActions{Buttons: [][]ButtonOption{{
+					{Text: "Open backups", Value: "nav:/backups"},
+					{Text: "Mute", Value: "cmd:/notify off"},
+				}}},
+			},
+		}
 	case "session.idle":
 		ms := toInt64(data["idle_for_ms"])
 		body := fmt.Sprintf("Session %s went idle (silent for %ds).", sid, ms/1000)
