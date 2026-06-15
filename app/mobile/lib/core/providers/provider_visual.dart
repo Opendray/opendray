@@ -69,6 +69,15 @@ const _palette = <String, ProviderVisual>{
     label: 'Antigravity',
     fallbackLetter: 'A',
   ),
+  'opencode': ProviderVisual(
+    // OpenCode ships a monochrome terminal-prompt mark; the tile tint
+    // uses its teal brand colour. Keep in sync with web's
+    // PROVIDER_ICON_MAP + BrandIcon opencode hex.
+    iconAsset: 'assets/provider_icons/opencode.svg',
+    brandColor: Color(0xFF14B8A6),
+    label: 'OpenCode',
+    fallbackLetter: 'O',
+  ),
   'shell': ProviderVisual(
     iconAsset: 'assets/provider_icons/shell.svg',
     brandColor: Color(0xFF4D4D4D),

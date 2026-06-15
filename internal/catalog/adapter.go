@@ -374,7 +374,13 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		skillsEnabled = true
 	}
 
-	if !wantClaudeAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 {
+	// OpenCode reaches its local-endpoint provider config only through the
+	// generated OPENCODE_CONFIG written in Prepare. Make sure we don't take
+	// the no-Prepare fast path when the operator configured a local
+	// endpoint but happened to disable skills and memory MCP.
+	wantsOpenCodeConfig := wantsOpenCodeSessionConfig(id, p.Config)
+
+	if !wantClaudeAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig {
 		return info, nil
 	}
 
@@ -387,6 +393,16 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// can override deliberately.
 		for k, v := range configEnv {
 			out.Env[k] = v
+		}
+
+		// OpenCode: register the operator's local OpenAI-compatible
+		// endpoint (if configured) as a provider in the generated
+		// OPENCODE_CONFIG and default-select it. Runs before skills/MCP so
+		// all three merge into the same per-session config file.
+		if providerID == "opencode" {
+			if err := injectOpenCodeLocalProvider(baseDir, p.Config, &out); err != nil {
+				return session.PrepareOutput{}, fmt.Errorf("inject opencode local provider: %w", err)
+			}
 		}
 
 		// M21 — Pre-assign the agent-side session UUID so the M18
@@ -669,7 +685,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 // Adding a new provider here requires a matching arm in injectSkillsFor.
 func providerSupportsSkills(id string) bool {
 	switch id {
-	case "claude", "gemini", "antigravity":
+	case "claude", "gemini", "antigravity", "opencode":
 		return true
 	default:
 		return false
@@ -776,6 +792,14 @@ func injectSkillsFor(providerID, baseDir string, loaded []skills.Skill, out *ses
 	case "antigravity":
 		// agy reads AGENTS.md from --add-dir'd workspace dirs.
 		return injectAgyContext(baseDir, index, out)
+	case "opencode":
+		// OpenCode loads the instruction files listed in its config. Write
+		// the skill index to a per-session AGENTS.md and reference it from
+		// the generated OPENCODE_CONFIG (instructions array).
+		if err := os.WriteFile(openCodeAgentsPath(baseDir), []byte(index), 0o600); err != nil {
+			return fmt.Errorf("write %s: %w", openCodeAgentsPath(baseDir), err)
+		}
+		return ensureOpenCodeInstructions(baseDir, out)
 	default:
 		return fmt.Errorf("no skill injection path for provider %s", providerID)
 	}
@@ -1258,6 +1282,11 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 		return nil
 	case "antigravity":
 		return injectAgyContext(baseDir, "\n\n---\n\n"+memoryGuidanceText, out)
+	case "opencode":
+		if err := appendToFile(openCodeAgentsPath(baseDir), "\n\n---\n\n"+memoryGuidanceText); err != nil {
+			return err
+		}
+		return ensureOpenCodeInstructions(baseDir, out)
 	}
 	// Other providers: silently skip — they don't have an MCP
 	// surface yet so the memory MCP wouldn't be attached anyway.
@@ -1312,6 +1341,11 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 		return nil
 	case "antigravity":
 		return injectAgyContext(baseDir, "\n\n---\n\n"+text, out)
+	case "opencode":
+		if err := appendToFile(openCodeAgentsPath(baseDir), "\n\n---\n\n"+text); err != nil {
+			return err
+		}
+		return ensureOpenCodeInstructions(baseDir, out)
 	}
 	return nil
 }
