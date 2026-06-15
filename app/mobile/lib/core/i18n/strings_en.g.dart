@@ -4699,6 +4699,39 @@ class TranslationsBackupsRestoreEn {
 	/// en: 'Restore'
 	String get restore => 'Restore';
 
+	/// en: 'Preview (dry run)'
+	String get preview => 'Preview (dry run)';
+
+	/// en: 'Previewing…'
+	String get previewing => 'Previewing…';
+
+	/// en: 'Run a dry-run preview first'
+	String get previewFirstHint => 'Run a dry-run preview first';
+
+	/// en: 'Apply restore'
+	String get applyRestore => 'Apply restore';
+
+	/// en: 'Dry run complete — review the plan, then apply'
+	String get dryRunToast => 'Dry run complete — review the plan, then apply';
+
+	/// en: 'Restore plan (dry run — nothing changed)'
+	String get planTitle => 'Restore plan (dry run — nothing changed)';
+
+	/// en: 'Database dump: {size}'
+	String planDump({required Object size}) => 'Database dump: ${size}';
+
+	/// en: 'config.toml → {path}'
+	String planConfig({required Object path}) => 'config.toml → ${path}';
+
+	/// en: 'secrets.env → {path}'
+	String planSecrets({required Object path}) => 'secrets.env → ${path}';
+
+	/// en: 'vault: {files} files ({roots})'
+	String planVault({required Object files, required Object roots}) => 'vault: ${files} files (${roots})';
+
+	/// en: 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.'
+	String get planApplyHint => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.';
+
 	/// en: 'Restore succeeded'
 	String get succeededTitle => 'Restore succeeded';
 
@@ -19623,6 +19656,17 @@ extension on Translations {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restoring…',
 			'backups.restore.restore' => 'Restore',
+			'backups.restore.preview' => 'Preview (dry run)',
+			'backups.restore.previewing' => 'Previewing…',
+			'backups.restore.previewFirstHint' => 'Run a dry-run preview first',
+			'backups.restore.applyRestore' => 'Apply restore',
+			'backups.restore.dryRunToast' => 'Dry run complete — review the plan, then apply',
+			'backups.restore.planTitle' => 'Restore plan (dry run — nothing changed)',
+			'backups.restore.planDump' => ({required Object size}) => 'Database dump: ${size}',
+			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
+			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
+			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
 			'backups.restore.succeededTitle' => 'Restore succeeded',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
@@ -19630,6 +19674,8 @@ extension on Translations {
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
 			'backups.restore.manifestCreatedAt' => 'Created',
@@ -19641,8 +19687,6 @@ extension on Translations {
 			'backups.restore.encryptionAlgo' => 'Encryption',
 			'backups.restore.bytesRead' => 'Bytes read',
 			'backups.restore.targetDsnUsed' => 'Target DSN',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.targetDsnSelfLabel' => '(opendray\'s own DB)',
 			'backups.restore.done' => 'Done',
 			'backups.inventory.title' => 'What\'s in a backup',
@@ -20144,6 +20188,8 @@ extension on Translations {
 			'memory.archivedToast' => 'Memory archived — restorable from Archived',
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',
 			'memory.reembed.menuItem' => 'Re-embed all',
 			'memory.reembed.confirmTitle' => 'Re-embed all memories?',
@@ -20155,8 +20201,6 @@ extension on Translations {
 			'about.title' => 'About',
 			'about.loading' => 'Loading…',
 			'about.sections.app' => 'App',
-			_ => null,
-		} ?? switch (path) {
 			'about.sections.server' => 'Server',
 			'about.sections.gateway' => 'Gateway',
 			'about.fields.app' => 'App',

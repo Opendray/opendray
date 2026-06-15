@@ -2035,6 +2035,11 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
   final _confirmCtrl = TextEditingController();
   bool _clean = true;
   bool _busy = false;
+  // Plan from the most recent dry-run preview. Apply is gated on this
+  // being non-null so an operator always sees what a restore would do
+  // before it touches a live database. Any change to the bundle / DSN /
+  // clean flag invalidates it (the plan is specific to those inputs).
+  RestorePlan? _plan;
 
   @override
   void dispose() {
@@ -2057,10 +2062,15 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
     if (result == null || result.files.isEmpty) return;
     final f = result.files.single;
     if (f.path == null || f.path!.isEmpty) return;
-    setState(() => _picked = f);
+    setState(() {
+      _picked = f;
+      _plan = null;
+    });
   }
 
-  Future<void> _submit() async {
+  // Step 1: dry run — validates the bundle and reports a plan; changes
+  // nothing on disk or in the database.
+  Future<void> _preview() async {
     final picked = _picked;
     if (picked == null || picked.path == null) {
       ScaffoldMessenger.of(
@@ -2079,9 +2089,39 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
                 ? null
                 : _targetDsnCtrl.text.trim(),
             clean: _clean,
-            // The mobile sheet commits directly (its own confirm gate
-            // already guards it); the server defaults to dry-run, so we
-            // must opt into apply explicitly.
+            apply: false,
+          );
+      if (!mounted) return;
+      setState(() => _plan = res.plan);
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.backups.restore.dryRunToast)),
+      );
+    } on ApiException catch (e) {
+      _showError(messenger, e.message);
+    } on Object catch (e) {
+      _showError(messenger, e.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  // Step 2: apply — commits the restore (safety snapshot + write +
+  // pg_restore). Gated on a prior preview so the plan card is always
+  // shown first.
+  Future<void> _apply() async {
+    final picked = _picked;
+    if (picked == null || picked.path == null || _plan == null) return;
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await ref
+          .read(backupsApiProvider)
+          .restore(
+            bundle: File(picked.path!),
+            targetDsn: _targetDsnCtrl.text.trim().isEmpty
+                ? null
+                : _targetDsnCtrl.text.trim(),
+            clean: _clean,
             apply: true,
             confirm: _restoringOwn ? t.backups.restore.confirmSentinel : null,
             note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
@@ -2089,24 +2129,22 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
       if (!mounted) return;
       Navigator.of(context).pop(res);
     } on ApiException catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('${t.backups.restore.failedTitle}: ${e.message}'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      _showError(messenger, e.message);
     } on Object catch (e) {
-      if (!mounted) return;
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('${t.backups.restore.failedTitle}: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      _showError(messenger, e.toString());
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _showError(ScaffoldMessengerState messenger, String msg) {
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('${t.backups.restore.failedTitle}: $msg'),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
   }
 
   @override
@@ -2191,13 +2229,20 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
                   border: const OutlineInputBorder(),
                   hintText: t.backups.restore.targetDsnPlaceholder,
                 ),
-                onChanged: (_) => setState(() {}),
+                // DSN change re-evaluates the own-DB confirm gate and
+                // invalidates any plan previewed against the old target.
+                onChanged: (_) => setState(() => _plan = null),
               ),
               const SizedBox(height: 12),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: _clean,
-                onChanged: _busy ? null : (v) => setState(() => _clean = v),
+                onChanged: _busy
+                    ? null
+                    : (v) => setState(() {
+                        _clean = v;
+                        _plan = null;
+                      }),
                 title: Text(t.backups.restore.cleanLabel),
                 subtitle: Text(t.backups.restore.cleanHint),
               ),
@@ -2263,27 +2308,126 @@ class _RestoreSheetState extends ConsumerState<_RestoreSheet> {
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.error,
-                  ),
-                  onPressed: _busy || _picked == null || !_confirmReady
-                      ? null
-                      : _submit,
-                  child: Text(
-                    _busy
-                        ? t.backups.restore.restoring
-                        : t.backups.restore.restore,
+              if (_plan != null) ...[
+                const SizedBox(height: 16),
+                _RestorePlanCard(plan: _plan!),
+              ] else if (_picked != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  t.backups.restore.previewFirstHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
                   ),
                 ),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _busy || _picked == null ? null : _preview,
+                      child: Text(
+                        _busy && _plan == null
+                            ? t.backups.restore.previewing
+                            : t.backups.restore.preview,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: theme.colorScheme.error,
+                      ),
+                      onPressed:
+                          _busy ||
+                              _picked == null ||
+                              _plan == null ||
+                              !_confirmReady
+                          ? null
+                          : _apply,
+                      child: Text(
+                        _busy && _plan != null
+                            ? t.backups.restore.restoring
+                            : t.backups.restore.applyRestore,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Read-only preview of what an apply-mode restore would write, shown
+// after a dry-run. Mirrors the web restore plan card.
+class _RestorePlanCard extends StatelessWidget {
+  const _RestorePlanCard({required this.plan});
+  final RestorePlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.outline,
+    );
+    final lines = <Widget>[
+      if (plan.dumpPresent)
+        Text(
+          t.backups.restore.planDump(size: _formatBytes(plan.dumpBytes)),
+          style: theme.textTheme.bodySmall,
+        ),
+      if (plan.configPath.isNotEmpty)
+        Text(
+          t.backups.restore.planConfig(path: plan.configPath),
+          style: theme.textTheme.bodySmall,
+        ),
+      if (plan.secretsPath.isNotEmpty)
+        Text(
+          t.backups.restore.planSecrets(path: plan.secretsPath),
+          style: theme.textTheme.bodySmall,
+        ),
+      if (plan.vaultFiles > 0)
+        Text(
+          t.backups.restore.planVault(
+            files: plan.vaultFiles,
+            roots: plan.vaultRoots.join(', '),
+          ),
+          style: theme.textTheme.bodySmall,
+        ),
+    ];
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.4,
+        ),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t.backups.restore.planTitle.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              letterSpacing: 0.6,
+              color: theme.colorScheme.outline,
+            ),
+          ),
+          const SizedBox(height: 6),
+          ...lines.expand(
+            (w) => [w, const SizedBox(height: 2)],
+          ),
+          const SizedBox(height: 6),
+          Text(t.backups.restore.planApplyHint, style: muted),
+        ],
       ),
     );
   }

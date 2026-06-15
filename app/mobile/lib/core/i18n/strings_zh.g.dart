@@ -2363,6 +2363,17 @@ class _TranslationsBackupsRestoreZh extends TranslationsBackupsRestoreEn {
 	@override String get confirmSentinel => 'I understand';
 	@override String get restoring => '恢复中…';
 	@override String get restore => '恢复';
+	@override String get preview => '预览（试运行）';
+	@override String get previewing => '预览中…';
+	@override String get previewFirstHint => '请先运行试运行预览';
+	@override String get applyRestore => '应用恢复';
+	@override String get dryRunToast => '试运行完成 — 请检查计划后再应用';
+	@override String get planTitle => '恢复计划（试运行 — 未做任何更改）';
+	@override String planDump({required Object size}) => '数据库转储：${size}';
+	@override String planConfig({required Object path}) => 'config.toml → ${path}';
+	@override String planSecrets({required Object path}) => 'secrets.env → ${path}';
+	@override String planVault({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）';
+	@override String get planApplyHint => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。';
 	@override String get succeededTitle => '恢复成功';
 	@override String succeededBody({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。';
 	@override String get failedTitle => '恢复失败';
@@ -11892,6 +11903,17 @@ extension on TranslationsZh {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => '恢复中…',
 			'backups.restore.restore' => '恢复',
+			'backups.restore.preview' => '预览（试运行）',
+			'backups.restore.previewing' => '预览中…',
+			'backups.restore.previewFirstHint' => '请先运行试运行预览',
+			'backups.restore.applyRestore' => '应用恢复',
+			'backups.restore.dryRunToast' => '试运行完成 — 请检查计划后再应用',
+			'backups.restore.planTitle' => '恢复计划（试运行 — 未做任何更改）',
+			'backups.restore.planDump' => ({required Object size}) => '数据库转储：${size}',
+			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
+			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
+			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
 			'backups.restore.succeededTitle' => '恢复成功',
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
@@ -11899,6 +11921,8 @@ extension on TranslationsZh {
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			'backups.restore.manifestTitle' => '清单',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
 			'backups.restore.manifestCreatedAt' => '创建时间',
@@ -11910,8 +11934,6 @@ extension on TranslationsZh {
 			'backups.restore.encryptionAlgo' => '加密算法',
 			'backups.restore.bytesRead' => '已读字节',
 			'backups.restore.targetDsnUsed' => '目标 DSN',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.targetDsnSelfLabel' => '（opendray 自身数据库）',
 			'backups.restore.done' => '完成',
 			'backups.inventory.title' => '备份里有什么',
@@ -12413,6 +12435,8 @@ extension on TranslationsZh {
 			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
 			'memory.reembed.menuItem' => '全部重嵌',
 			'memory.reembed.confirmTitle' => '重嵌所有记忆？',
@@ -12424,8 +12448,6 @@ extension on TranslationsZh {
 			'about.title' => '关于',
 			'about.loading' => '加载中…',
 			'about.sections.app' => '应用',
-			_ => null,
-		} ?? switch (path) {
 			'about.sections.server' => '服务器',
 			'about.sections.gateway' => '网关',
 			'about.fields.app' => '应用',

@@ -2363,6 +2363,17 @@ class _TranslationsBackupsRestoreEs extends TranslationsBackupsRestoreEn {
 	@override String get confirmSentinel => 'I understand';
 	@override String get restoring => 'Restaurando…';
 	@override String get restore => 'Restaurar';
+	@override String get preview => 'Vista previa (simulación)';
+	@override String get previewing => 'Generando vista previa…';
+	@override String get previewFirstHint => 'Ejecuta primero una vista previa en simulación';
+	@override String get applyRestore => 'Aplicar restauración';
+	@override String get dryRunToast => 'Simulación completada — revisa el plan y luego aplícalo';
+	@override String get planTitle => 'Plan de restauración (simulación — no se cambió nada)';
+	@override String planDump({required Object size}) => 'Volcado de base de datos: ${size}';
+	@override String planConfig({required Object path}) => 'config.toml → ${path}';
+	@override String planSecrets({required Object path}) => 'secrets.env → ${path}';
+	@override String planVault({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})';
+	@override String get planApplyHint => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.';
 	@override String get succeededTitle => 'Restauración completada';
 	@override String succeededBody({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.';
 	@override String get failedTitle => 'Error en la restauración';
@@ -11892,6 +11903,17 @@ extension on TranslationsEs {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restaurando…',
 			'backups.restore.restore' => 'Restaurar',
+			'backups.restore.preview' => 'Vista previa (simulación)',
+			'backups.restore.previewing' => 'Generando vista previa…',
+			'backups.restore.previewFirstHint' => 'Ejecuta primero una vista previa en simulación',
+			'backups.restore.applyRestore' => 'Aplicar restauración',
+			'backups.restore.dryRunToast' => 'Simulación completada — revisa el plan y luego aplícalo',
+			'backups.restore.planTitle' => 'Plan de restauración (simulación — no se cambió nada)',
+			'backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
+			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
+			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
+			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
 			'backups.restore.succeededTitle' => 'Restauración completada',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
@@ -11899,6 +11921,8 @@ extension on TranslationsEs {
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
 			'backups.restore.manifestTitle' => 'Manifiesto',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
 			'backups.restore.manifestCreatedAt' => 'Creado',
@@ -11910,8 +11934,6 @@ extension on TranslationsEs {
 			'backups.restore.encryptionAlgo' => 'Cifrado',
 			'backups.restore.bytesRead' => 'Bytes leídos',
 			'backups.restore.targetDsnUsed' => 'DSN de destino',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.targetDsnSelfLabel' => '(la propia base de datos de opendray)',
 			'backups.restore.done' => 'Hecho',
 			'backups.inventory.title' => 'Qué contiene una copia de seguridad',
@@ -12413,6 +12435,8 @@ extension on TranslationsEs {
 			'memory.archivedToast' => 'Memoria archivada — restaurable desde Archivado',
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',
 			'memory.reembed.menuItem' => 'Reincrustar todo',
 			'memory.reembed.confirmTitle' => '¿Reincrustar todas las memorias?',
@@ -12424,8 +12448,6 @@ extension on TranslationsEs {
 			'about.title' => 'Acerca de',
 			'about.loading' => 'Cargando…',
 			'about.sections.app' => 'App',
-			_ => null,
-		} ?? switch (path) {
 			'about.sections.server' => 'Servidor',
 			'about.sections.gateway' => 'Gateway',
 			'about.fields.app' => 'App',
