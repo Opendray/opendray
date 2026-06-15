@@ -46,13 +46,20 @@ export async function resizeSession(
 // it under a new account binding. The session id (and therefore the
 // UI tab) is preserved; only the underlying child process changes.
 // `accountId === ''` clears the binding (CLI uses its system default).
+// carryContext, when true, asks the gateway to seed the new account's
+// fresh session with a recap of the prior conversation (read from the
+// old transcript, injected into the system prompt). Default false keeps
+// the clean-slate switch. Carrying context sends prior conversation
+// content to the provider under the NEW account — callers surface that
+// consent before passing true.
 export async function switchClaudeAccount(
   id: string,
   accountId: string,
+  carryContext = false,
 ): Promise<Session> {
   return api<Session>(`/api/v1/sessions/${id}/claude-account`, {
     method: 'PATCH',
-    body: { account_id: accountId },
+    body: { account_id: accountId, carry_context: carryContext },
   })
 }
 

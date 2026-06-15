@@ -201,7 +201,10 @@
         "defaultName": "默认",
         "defaultSubtitle": "CLI 的系统 keychain / 环境变量",
         "tokenEmpty": "·未填",
-        "confirmSwitch": "切换账户将重启 Claude CLI。对话历史会被保留（脚本会迁移并通过 --resume 恢复），但正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "confirmSwitch": "切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "confirmSwitchCarry": "切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "carryContext": "带入对话上下文",
+        "carryContextHelp": "用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。",
         "switchedToast": "账号已切换",
         "switchedDescription": "当前使用 @{account} · pid {pid}",
         "switchedDefault": "默认",
@@ -2435,7 +2438,9 @@
         "upToDate": "已是最新版本。",
         "checkUpdates": "检查更新",
         "checking": "检查中…",
-        "reinstall": "重新安装"
+        "reinstall": "重新安装",
+        "forcePrompt": "重启将中断 {count} 个进行中的会话（之后会自动恢复）。",
+        "upgradeAnyway": "仍然升级"
       }
     },
     "logViewer": {

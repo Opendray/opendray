@@ -980,7 +980,7 @@ func (m *Manager) Stop(ctx context.Context, id string) error {
 // Rollback: if the respawn fails the row is left in 'stopped' state
 // with the *original* account_id preserved, so the user can manually
 // Restart with the previous credential.
-func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID string) (Session, error) {
+func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID string, carryContext bool) (Session, error) {
 	m.mu.RLock()
 	if m.closed {
 		m.mu.RUnlock()
@@ -1010,18 +1010,34 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 		return Session{}, err
 	}
 
+	// Optionally capture a recap of the OLD conversation before we clear
+	// the binding below. Best-effort: a failure here must never block the
+	// switch, so BuildClaudeCarryover returns "" rather than erroring.
+	// Read it now while sess still holds the previous account's UUID +
+	// cwd — the transcript file persists on disk past Stop(), but the
+	// fields we key on are about to be overwritten.
+	var carryover string
+	if carryContext && sess.ClaudeSessionID != "" {
+		carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.Cwd, sess.ClaudeSessionID, 0)
+		if carryover == "" {
+			m.log.Debug("carry-context requested but no transcript recap built",
+				"session_id", id, "old_claude_session_id", sess.ClaudeSessionID)
+		}
+	}
+
 	// Switching account starts a FRESH conversation under the new
-	// credential. We can't carry the old one across: `claude --resume
-	// <uuid>` validates the UUID against the *target* account's own
-	// session registry (not just a transcript file), so resuming a UUID
-	// minted under the previous account fails with "No conversation
-	// found" and the CLI exits immediately — which left the session
-	// stopped AND unrestartable, since every Start retried the same
-	// doomed --resume. Clearing ClaudeSessionID makes the respawn mint a
-	// new `--session-id` under the new account (a session that account
-	// *does* know), so the switch comes up and later restarts resume it
-	// cleanly. This matches the UI's "in-CLI context is lost on switch"
-	// warning. The new UUID is captured + persisted by spawn().
+	// credential. We can't carry the old one across via --resume:
+	// `claude --resume <uuid>` validates the UUID against the *target*
+	// account's own session registry (not just a transcript file), so
+	// resuming a UUID minted under the previous account fails with "No
+	// conversation found" and the CLI exits immediately — which left the
+	// session stopped AND unrestartable, since every Start retried the
+	// same doomed --resume. Clearing ClaudeSessionID makes the respawn
+	// mint a new `--session-id` under the new account (a session that
+	// account *does* know), so the switch comes up and later restarts
+	// resume it cleanly. When carry-context is on, the prior transcript
+	// is instead injected into the new session's system prompt below.
+	// The new UUID is captured + persisted by spawn().
 	sess.ClaudeSessionID = ""
 	sess.ClaudeAccountID = newAccountID
 	sess.State = StateRunning
@@ -1029,7 +1045,12 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 	sess.ExitCode = nil
 	sess.StartedAt = time.Now().UTC()
 
-	rs, err := m.spawn(ctx, sess, true)
+	// Thread the recap (if any) into the respawn only. spawn() derives
+	// its Prepare context from this ctx, so the carryover key flows to
+	// the adapter's --append-system-prompt injection. One-shot: absent
+	// from later restarts, which --resume the new account's own UUID.
+	spawnCtx := WithCarryoverContext(ctx, carryover)
+	rs, err := m.spawn(spawnCtx, sess, true)
 	if err != nil {
 		// spawn failed; row is still 'stopped' with the original
 		// claude_account_id (we never persisted the new value), so
