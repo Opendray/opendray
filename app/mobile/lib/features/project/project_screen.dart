@@ -11,6 +11,7 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/blueprint_editor_screen.dart';
+import 'package:opendray/features/cortex/curation_chat_screen.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
@@ -633,6 +634,23 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
 
   // ── Goal / Plan editor ─────────────────────────────────────────
 
+  // Opens the AI discussion (CurationChat) for a doc section — web parity
+  // with the per-section "discuss / re-draft with AI" panel.
+  void _openDiscussion(String targetKind, String slug) {
+    final cwd = _selectedKey;
+    if (cwd == null || cwd.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CurationChatScreen(
+          targetKind: targetKind,
+          targetCwd: cwd,
+          targetSlug: slug,
+          onRevision: () => _loadAll(cwd),
+        ),
+      ),
+    );
+  }
+
   Widget _docTab(String kind) {
     if (_selectedKey == null) {
       return Center(child: Text(t.project.pickFirst));
@@ -668,6 +686,14 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                 children: [
                   _docMetaStrip(kind, current.isPersisted ? current : null),
                   if (hasPending) _proposalBanner(),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openDiscussion('doc_section', kind),
+                      icon: const Icon(Icons.forum_outlined, size: 16),
+                      label: Text(t.web.cortex.chat.show),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -16,6 +16,8 @@ class SummarizerProvider {
     required this.kind,
     required this.model,
     required this.isDefault,
+    required this.enabled,
+    required this.baseUrl,
   });
 
   factory SummarizerProvider.fromJson(Map<String, dynamic> json) =>
@@ -25,6 +27,8 @@ class SummarizerProvider {
         kind: json['kind'] as String? ?? '',
         model: json['model'] as String? ?? '',
         isDefault: json['is_default'] as bool? ?? false,
+        enabled: json['enabled'] as bool? ?? false,
+        baseUrl: json['base_url'] as String? ?? '',
       );
 
   final String id;
@@ -32,6 +36,9 @@ class SummarizerProvider {
   final String kind;
   final String model;
   final bool isDefault;
+  final bool enabled;
+  // OpenAI-compatible endpoint; used to live-probe the models it serves.
+  final String baseUrl;
 
   /// "name · model" for the dropdown label.
   String get label => model.isEmpty ? name : '$name · $model';

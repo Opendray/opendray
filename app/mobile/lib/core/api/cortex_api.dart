@@ -138,6 +138,11 @@ class CortexApi {
     required String targetKind,
     required String targetCwd,
     required String targetSlug,
+    // Optional model override for the new conversation (cloud-agent
+    // providerId+model, OR a local summarizerId).
+    String providerId = '',
+    String model = '',
+    String summarizerId = '',
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -146,6 +151,33 @@ class CortexApi {
           'target_kind': targetKind,
           'target_cwd': targetCwd,
           'target_slug': targetSlug,
+          if (providerId.isNotEmpty) 'provider_id': providerId,
+          if (model.isNotEmpty) 'model': model,
+          if (summarizerId.isNotEmpty) 'summarizer_id': summarizerId,
+        },
+      );
+      return CortexConversation.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// Pins (or clears, with all empty) a conversation's model override:
+  /// a cloud-agent providerId+model OR a local summarizerId (mutually
+  /// exclusive). Returns the updated conversation.
+  Future<CortexConversation> setConversationProvider(
+    String id, {
+    String providerId = '',
+    String model = '',
+    String summarizerId = '',
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/cortex/conversations/$id/provider',
+        data: {
+          'provider_id': providerId,
+          'model': model,
+          'summarizer_id': summarizerId,
         },
       );
       return CortexConversation.fromJson(res.data ?? const {});
@@ -393,6 +425,9 @@ class CortexConversation {
     required this.targetSlug,
     required this.status,
     required this.escalatedSessionId,
+    required this.providerId,
+    required this.model,
+    required this.summarizerId,
   });
 
   factory CortexConversation.fromJson(Map<String, dynamic> j) =>
@@ -403,6 +438,9 @@ class CortexConversation {
         targetSlug: j['target_slug']?.toString() ?? '',
         status: j['status']?.toString() ?? 'open',
         escalatedSessionId: j['escalated_session_id']?.toString() ?? '',
+        providerId: j['provider_id']?.toString() ?? '',
+        model: j['model']?.toString() ?? '',
+        summarizerId: j['summarizer_id']?.toString() ?? '',
       );
 
   final String id;
@@ -411,6 +449,12 @@ class CortexConversation {
   final String targetSlug;
   final String status; // open | closed | escalated
   final String escalatedSessionId;
+  // Per-conversation model override (all empty = global curation worker).
+  // Mutually exclusive: summarizerId pins a local/HTTP model; providerId+
+  // model pin a cloud-agent CLI.
+  final String providerId;
+  final String model;
+  final String summarizerId;
 }
 
 class ConversationMessage {
