@@ -1812,7 +1812,8 @@
       },
       "newSchedule": {
         "title": "Nueva programación de copia de seguridad",
-        "targetLabel": "Destino",
+        "targetLabel": "Destinos",
+        "targetsHint": "Elige uno o más: la misma copia se escribe en cada destino (3-2-1).",
         "everyHoursLabel": "Cada (horas)",
         "keepLastNLabel": "Conservar las últimas N",
         "enableImmediately": "Habilitar inmediatamente",
@@ -1820,6 +1821,10 @@
         "createFailedToast": "Error al crear",
         "creating": "Creando…",
         "create": "Crear"
+      },
+      "fanout": {
+        "badge": "difusión",
+        "hint": "Parte de una difusión a varios destinos (grupo {group})"
       },
       "targetsTab": {
         "description": "Destinos de almacenamiento. v1 admite <1>local</1> (disco en el host de opendray) y <3>smb</3> (cualquier recurso compartido SMB / CIFS, p. ej. UNAS o Synology).",
@@ -3947,7 +3952,8 @@
     "title": "Programaciones de copia de seguridad",
     "newButton": "Nueva",
     "deleteTitle": "¿Eliminar programación?",
-    "targetLabel": "Destino",
+    "targetLabel": "Destinos",
+    "targetsHint": "Elige uno o más: la misma copia se escribe en cada destino (3-2-1).",
     "intervalLabel": "Intervalo",
     "retentionLabel": "Retención (conservar las N más recientes)",
     "errorWithMessage": "{prefix}: {error}",

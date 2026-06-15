@@ -1813,6 +1813,7 @@
       "newSchedule": {
         "title": "新建备份计划",
         "targetLabel": "目标",
+        "targetsHint": "选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。",
         "everyHoursLabel": "每隔（小时）",
         "keepLastNLabel": "保留最近 N 个",
         "enableImmediately": "立即启用",
@@ -1820,6 +1821,10 @@
         "createFailedToast": "创建失败",
         "creating": "创建中…",
         "create": "创建"
+      },
+      "fanout": {
+        "badge": "扇出",
+        "hint": "属于一次多目标扇出（组 {group}）"
       },
       "targetsTab": {
         "description": "存储目标。v1 支持 <1>local</1>（opendray 主机磁盘）与 <3>smb</3>（任意 SMB / CIFS 共享，如 UNAS 或群晖）。",
@@ -3948,6 +3953,7 @@
     "newButton": "新建",
     "deleteTitle": "删除计划？",
     "targetLabel": "目标",
+    "targetsHint": "选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。",
     "intervalLabel": "间隔",
     "retentionLabel": "保留（最近 N 个）",
     "errorWithMessage": "{prefix}：{error}",

@@ -594,6 +594,7 @@ class _TranslationsBackupSchedulesZh extends TranslationsBackupSchedulesEn {
 	@override String get newButton => '新建';
 	@override String get deleteTitle => '删除计划？';
 	@override String get targetLabel => '目标';
+	@override String get targetsHint => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。';
 	@override String get intervalLabel => '间隔';
 	@override String get retentionLabel => '保留（最近 N 个）';
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
@@ -1474,6 +1475,7 @@ class _TranslationsWebBackupsZh extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsRecoveryKitZh recoveryKit = _TranslationsWebBackupsRecoveryKitZh._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabZh schedulesTab = _TranslationsWebBackupsSchedulesTabZh._(_root);
 	@override late final _TranslationsWebBackupsNewScheduleZh newSchedule = _TranslationsWebBackupsNewScheduleZh._(_root);
+	@override late final _TranslationsWebBackupsFanoutZh fanout = _TranslationsWebBackupsFanoutZh._(_root);
 	@override late final _TranslationsWebBackupsTargetsTabZh targetsTab = _TranslationsWebBackupsTargetsTabZh._(_root);
 	@override late final _TranslationsWebBackupsTargetEditorZh targetEditor = _TranslationsWebBackupsTargetEditorZh._(_root);
 }
@@ -4856,6 +4858,7 @@ class _TranslationsWebBackupsNewScheduleZh extends TranslationsWebBackupsNewSche
 	// Translations
 	@override String get title => '新建备份计划';
 	@override String get targetLabel => '目标';
+	@override String get targetsHint => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。';
 	@override String get everyHoursLabel => '每隔（小时）';
 	@override String get keepLastNLabel => '保留最近 N 个';
 	@override String get enableImmediately => '立即启用';
@@ -4863,6 +4866,17 @@ class _TranslationsWebBackupsNewScheduleZh extends TranslationsWebBackupsNewSche
 	@override String get createFailedToast => '创建失败';
 	@override String get creating => '创建中…';
 	@override String get create => '创建';
+}
+
+// Path: web.backups.fanout
+class _TranslationsWebBackupsFanoutZh extends TranslationsWebBackupsFanoutEn {
+	_TranslationsWebBackupsFanoutZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get badge => '扇出';
+	@override String hint({required Object group}) => '属于一次多目标扇出（组 ${group}）';
 }
 
 // Path: web.backups.targetsTab
@@ -10318,6 +10332,7 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.deleteTooltip' => '删除',
 			'web.backups.newSchedule.title' => '新建备份计划',
 			'web.backups.newSchedule.targetLabel' => '目标',
+			'web.backups.newSchedule.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'web.backups.newSchedule.everyHoursLabel' => '每隔（小时）',
 			'web.backups.newSchedule.keepLastNLabel' => '保留最近 N 个',
 			'web.backups.newSchedule.enableImmediately' => '立即启用',
@@ -10325,6 +10340,8 @@ extension on TranslationsZh {
 			'web.backups.newSchedule.createFailedToast' => '创建失败',
 			'web.backups.newSchedule.creating' => '创建中…',
 			'web.backups.newSchedule.create' => '创建',
+			'web.backups.fanout.badge' => '扇出',
+			'web.backups.fanout.hint' => ({required Object group}) => '属于一次多目标扇出（组 ${group}）',
 			'web.backups.targetsTab.description' => '存储目标。v1 支持 <1>local</1>（opendray 主机磁盘）与 <3>smb</3>（任意 SMB / CIFS 共享，如 UNAS 或群晖）。',
 			'web.backups.targetsTab.newTarget' => '新建目标',
 			'web.backups.targetsTab.listFailedToast' => '加载目标列表失败',
@@ -10376,11 +10393,11 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
 			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'AES-256-GCM 加密存储；不会被回显',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Path prefix',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.pathPrefixHint' => 'Object-key 前缀（可选）',
 			'web.backups.targetEditor.s3.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.useHttps' => '使用 HTTPS',
@@ -10890,11 +10907,11 @@ extension on TranslationsZh {
 			'web.export.form.failedToast' => '导出失败',
 			'web.export.history.loading' => '加载中…',
 			'web.export.history.empty' => '暂无导出。请使用上面的表单创建一个。',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.title' => '历史',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => '状态',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.columns.scope' => '范围',
 			'web.export.history.columns.size' => '大小',
 			'web.export.history.columns.expires' => '过期',
@@ -11404,11 +11421,11 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.spawnSheet.title' => '新建会话',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
 			'sessions.spawnSheet.cancel' => '取消',
@@ -11918,11 +11935,11 @@ extension on TranslationsZh {
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			'backups.restore.manifestTitle' => '清单',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
 			'backups.restore.manifestCreatedAt' => '创建时间',
@@ -11955,6 +11972,7 @@ extension on TranslationsZh {
 			'backupSchedules.newButton' => '新建',
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
+			'backupSchedules.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'backupSchedules.intervalLabel' => '间隔',
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
@@ -12431,12 +12449,12 @@ extension on TranslationsZh {
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => '创建',
 			'memory.archive' => '归档',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantine' => '隔离',
 			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
 			'memory.reembed.menuItem' => '全部重嵌',
 			'memory.reembed.confirmTitle' => '重嵌所有记忆？',

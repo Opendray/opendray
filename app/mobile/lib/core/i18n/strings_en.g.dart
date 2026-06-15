@@ -1221,8 +1221,11 @@ class TranslationsBackupSchedulesEn {
 	/// en: 'Delete schedule?'
 	String get deleteTitle => 'Delete schedule?';
 
-	/// en: 'Target'
-	String get targetLabel => 'Target';
+	/// en: 'Targets'
+	String get targetLabel => 'Targets';
+
+	/// en: 'Pick one or more — the same backup is written to each (3-2-1).'
+	String get targetsHint => 'Pick one or more — the same backup is written to each (3-2-1).';
 
 	/// en: 'Interval'
 	String get intervalLabel => 'Interval';
@@ -3045,6 +3048,7 @@ class TranslationsWebBackupsEn {
 	late final TranslationsWebBackupsRecoveryKitEn recoveryKit = TranslationsWebBackupsRecoveryKitEn.internal(_root);
 	late final TranslationsWebBackupsSchedulesTabEn schedulesTab = TranslationsWebBackupsSchedulesTabEn.internal(_root);
 	late final TranslationsWebBackupsNewScheduleEn newSchedule = TranslationsWebBackupsNewScheduleEn.internal(_root);
+	late final TranslationsWebBackupsFanoutEn fanout = TranslationsWebBackupsFanoutEn.internal(_root);
 	late final TranslationsWebBackupsTargetsTabEn targetsTab = TranslationsWebBackupsTargetsTabEn.internal(_root);
 	late final TranslationsWebBackupsTargetEditorEn targetEditor = TranslationsWebBackupsTargetEditorEn.internal(_root);
 }
@@ -9610,8 +9614,11 @@ class TranslationsWebBackupsNewScheduleEn {
 	/// en: 'New backup schedule'
 	String get title => 'New backup schedule';
 
-	/// en: 'Target'
-	String get targetLabel => 'Target';
+	/// en: 'Targets'
+	String get targetLabel => 'Targets';
+
+	/// en: 'Pick one or more — the same backup is written to each (3-2-1).'
+	String get targetsHint => 'Pick one or more — the same backup is written to each (3-2-1).';
 
 	/// en: 'Every (hours)'
 	String get everyHoursLabel => 'Every (hours)';
@@ -9633,6 +9640,21 @@ class TranslationsWebBackupsNewScheduleEn {
 
 	/// en: 'Create'
 	String get create => 'Create';
+}
+
+// Path: web.backups.fanout
+class TranslationsWebBackupsFanoutEn {
+	TranslationsWebBackupsFanoutEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'fan-out'
+	String get badge => 'fan-out';
+
+	/// en: 'Part of a multi-target fan-out (group {group})'
+	String hint({required Object group}) => 'Part of a multi-target fan-out (group ${group})';
 }
 
 // Path: web.backups.targetsTab
@@ -18070,7 +18092,8 @@ extension on Translations {
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
 			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
 			'web.backups.newSchedule.title' => 'New backup schedule',
-			'web.backups.newSchedule.targetLabel' => 'Target',
+			'web.backups.newSchedule.targetLabel' => 'Targets',
+			'web.backups.newSchedule.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Every (hours)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Keep last N',
 			'web.backups.newSchedule.enableImmediately' => 'Enable immediately',
@@ -18078,6 +18101,8 @@ extension on Translations {
 			'web.backups.newSchedule.createFailedToast' => 'Create failed',
 			'web.backups.newSchedule.creating' => 'Creating…',
 			'web.backups.newSchedule.create' => 'Create',
+			'web.backups.fanout.badge' => 'fan-out',
+			'web.backups.fanout.hint' => ({required Object group}) => 'Part of a multi-target fan-out (group ${group})',
 			'web.backups.targetsTab.description' => 'Storage destinations. v1 supports <1>local</1> (disk on the opendray host) and <3>smb</3> (any SMB / CIFS share, e.g. UNAS or Synology).',
 			'web.backups.targetsTab.newTarget' => 'New target',
 			'web.backups.targetsTab.listFailedToast' => 'Failed to list targets',
@@ -18129,11 +18154,11 @@ extension on Translations {
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
 			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Stored AES-256-GCM encrypted; never echoed back',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Path prefix',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.pathPrefixHint' => 'Object-key prefix (optional)',
 			'web.backups.targetEditor.s3.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.useHttps' => 'Use HTTPS',
@@ -18643,11 +18668,11 @@ extension on Translations {
 			'web.export.form.failedToast' => 'Export failed',
 			'web.export.history.loading' => 'Loading…',
 			'web.export.history.empty' => 'No exports yet. Use the form above to create one.',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.title' => 'History',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => 'Status',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.columns.scope' => 'Scope',
 			'web.export.history.columns.size' => 'Size',
 			'web.export.history.columns.expires' => 'Expires',
@@ -19157,11 +19182,11 @@ extension on Translations {
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.spawnSheet.title' => 'New session',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancel',
@@ -19671,11 +19696,11 @@ extension on Translations {
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
 			'backups.restore.manifestCreatedAt' => 'Created',
@@ -19707,7 +19732,8 @@ extension on Translations {
 			'backupSchedules.title' => 'Backup schedules',
 			'backupSchedules.newButton' => 'New',
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
-			'backupSchedules.targetLabel' => 'Target',
+			'backupSchedules.targetLabel' => 'Targets',
+			'backupSchedules.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Interval',
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
@@ -20184,12 +20210,12 @@ extension on Translations {
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Create',
 			'memory.archive' => 'Archive',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantine' => 'Quarantine',
 			'memory.archivedToast' => 'Memory archived — restorable from Archived',
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',
 			'memory.reembed.menuItem' => 'Re-embed all',
 			'memory.reembed.confirmTitle' => 'Re-embed all memories?',

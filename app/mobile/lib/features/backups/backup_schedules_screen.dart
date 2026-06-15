@@ -109,7 +109,7 @@ class _BackupSchedulesScreenState
       op: () => ref
           .read(backupsApiProvider)
           .createSchedule(
-            targetId: form.targetId,
+            targetIds: form.targetIds,
             intervalSec: form.intervalSec,
             retention: form.retention,
             enabled: form.enabled,
@@ -278,11 +278,16 @@ class _ScheduleTile extends StatelessWidget {
       ),
       title: Row(
         children: [
-          Text(
-            schedule.targetId,
-            style: const TextStyle(
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              schedule.targetIds.isNotEmpty
+                  ? schedule.targetIds.join(', ')
+                  : schedule.targetId,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 8),
@@ -359,12 +364,13 @@ class _Badge extends StatelessWidget {
 
 class _ScheduleFormResult {
   _ScheduleFormResult({
-    required this.targetId,
+    required this.targetIds,
     required this.intervalSec,
     required this.retention,
     required this.enabled,
   });
-  final String targetId;
+  // Fan-out destination set (3-2-1). First element is the primary target.
+  final List<String> targetIds;
   final int intervalSec;
   final int retention;
   final bool enabled;
@@ -390,7 +396,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
   ];
   static const _retentions = [3, 7, 14, 30];
 
-  late String _targetId;
+  late List<String> _targetIds;
   late int _intervalSec;
   late int _retention;
   late bool _enabled;
@@ -400,14 +406,26 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
   void initState() {
     super.initState();
     final init = widget.initial;
-    _targetId = init?.targetId ?? widget.targets.first.id;
+    _targetIds = init != null
+        ? List<String>.from(init.targetIds)
+        : (widget.targets.isNotEmpty ? [widget.targets.first.id] : <String>[]);
     _intervalSec = init?.intervalSec ?? 86400;
     _retention = init?.retention ?? 7;
     _enabled = init?.enabled ?? true;
   }
 
+  void _toggleTarget(String id) {
+    setState(() {
+      if (_targetIds.contains(id)) {
+        _targetIds = _targetIds.where((x) => x != id).toList();
+      } else {
+        _targetIds = [..._targetIds, id];
+      }
+    });
+  }
+
   void _submit() {
-    if (_targetId.isEmpty) {
+    if (_targetIds.isEmpty) {
       setState(() => _error = t.backupSchedules.validatePickTarget);
       return;
     }
@@ -416,7 +434,7 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
       return;
     }
     Navigator.of(context).pop(_ScheduleFormResult(
-      targetId: _targetId,
+      targetIds: _targetIds,
       intervalSec: _intervalSec,
       retention: _retention,
       enabled: _enabled,
@@ -445,21 +463,27 @@ class _ScheduleFormScreenState extends State<_ScheduleFormScreen> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
           Text(t.backupSchedules.targetLabel, style: muted),
+          const SizedBox(height: 2),
+          Text(t.backupSchedules.targetsHint, style: muted),
           const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            initialValue: _targetId,
-            items: [
-              for (final t in widget.targets)
-                DropdownMenuItem(
-                  value: t.id,
-                  child: Text('${t.id} (${t.kind})'),
-                ),
-            ],
-            onChanged: isEdit
-                ? null // Server doesn't allow changing target on existing schedule
-                : (v) => setState(() => _targetId = v ?? _targetId),
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: Theme.of(context).dividerColor),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                for (final tgt in widget.targets)
+                  CheckboxListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    value: _targetIds.contains(tgt.id),
+                    // Target set is fixed once a schedule exists (mobile
+                    // edits interval/retention/enabled only).
+                    onChanged: isEdit ? null : (_) => _toggleTarget(tgt.id),
+                    title: Text('${tgt.id} (${tgt.kind})'),
+                  ),
+              ],
             ),
           ),
           if (isEdit)

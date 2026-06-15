@@ -122,9 +122,13 @@ const (
 
 // Backup is the public view of one backup row.
 type Backup struct {
-	ID              string         `json:"id"`
-	ScheduleID      *string        `json:"schedule_id,omitempty"`
-	TargetID        string         `json:"target_id"`
+	ID         string  `json:"id"`
+	ScheduleID *string `json:"schedule_id,omitempty"`
+	TargetID   string  `json:"target_id"`
+	// GroupID correlates the rows produced by one fan-out invocation —
+	// the same bundle written to multiple targets. Empty for a plain
+	// single-target backup.
+	GroupID         string         `json:"group_id,omitempty"`
 	Status          BackupStatus   `json:"status"`
 	TriggeredBy     TriggeredBy    `json:"triggered_by"`
 	Kind            BackupKind     `json:"kind"`
@@ -146,8 +150,12 @@ type Backup struct {
 
 // Schedule is a recurring backup spec.
 type Schedule struct {
-	ID          string     `json:"id"`
-	TargetID    string     `json:"target_id"`
+	ID       string `json:"id"`
+	TargetID string `json:"target_id"`
+	// TargetIDs is the full set of destinations this schedule fans out
+	// to (3-2-1). Always contains TargetID as its first element; a
+	// single-target schedule has exactly one entry.
+	TargetIDs   []string   `json:"target_ids"`
 	Kind        BackupKind `json:"kind"`
 	IntervalSec int        `json:"interval_sec"`
 	Retention   int        `json:"retention"`

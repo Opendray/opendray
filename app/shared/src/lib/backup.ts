@@ -87,6 +87,9 @@ export interface Backup {
   id: string
   schedule_id?: string | null
   target_id: string
+  /** Correlates rows from one fan-out invocation (same bundle, many
+   * targets). Empty for a plain single-target backup. */
+  group_id?: string
   status: BackupStatus
   triggered_by: TriggeredBy
   kind: BackupKind
@@ -109,6 +112,9 @@ export interface Backup {
 export interface Schedule {
   id: string
   target_id: string
+  /** Full fan-out destination set (3-2-1). Always includes target_id
+   * as its first element; a single-target schedule has one entry. */
+  target_ids: string[]
   kind: BackupKind
   interval_sec: number
   retention: number
@@ -226,13 +232,18 @@ export async function getBackup(id: string): Promise<Backup> {
 
 export async function createBackup(opts: {
   targetId?: string
+  /** Fan-out destinations (3-2-1). When set, takes precedence over
+   * targetId and the same bundle is written to every target. */
+  targetIds?: string[]
   kind?: BackupKind
   includeConfig?: boolean
 }): Promise<Backup> {
   return api<Backup>('/api/v1/backups', {
     method: 'POST',
     body: {
-      target_id: opts.targetId ?? 'local',
+      ...(opts.targetIds && opts.targetIds.length > 0
+        ? { target_ids: opts.targetIds }
+        : { target_id: opts.targetId ?? 'local' }),
       kind: opts.kind ?? 'db_only',
       include_config: opts.includeConfig ?? false,
     },
@@ -304,7 +315,10 @@ export async function listSchedules(): Promise<Schedule[]> {
 }
 
 export async function createSchedule(opts: {
-  targetId: string
+  targetId?: string
+  /** Fan-out destination set (3-2-1). When set, its first element
+   * becomes the primary target_id. */
+  targetIds?: string[]
   kind?: BackupKind
   intervalSec: number
   retention: number
@@ -313,7 +327,9 @@ export async function createSchedule(opts: {
   return api<Schedule>('/api/v1/backup-schedules', {
     method: 'POST',
     body: {
-      target_id: opts.targetId,
+      ...(opts.targetIds && opts.targetIds.length > 0
+        ? { target_ids: opts.targetIds }
+        : { target_id: opts.targetId }),
       kind: opts.kind ?? 'db_only',
       interval_sec: opts.intervalSec,
       retention: opts.retention,
@@ -326,6 +342,7 @@ export async function updateSchedule(
   id: string,
   patch: {
     kind?: BackupKind
+    targetIds?: string[]
     intervalSec?: number
     retention?: number
     enabled?: boolean
@@ -335,6 +352,7 @@ export async function updateSchedule(
     method: 'PATCH',
     body: {
       ...(patch.kind !== undefined && { kind: patch.kind }),
+      ...(patch.targetIds !== undefined && { target_ids: patch.targetIds }),
       ...(patch.intervalSec !== undefined && {
         interval_sec: patch.intervalSec,
       }),

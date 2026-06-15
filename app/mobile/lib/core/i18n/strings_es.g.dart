@@ -593,7 +593,8 @@ class _TranslationsBackupSchedulesEs extends TranslationsBackupSchedulesEn {
 	@override String get title => 'Programaciones de copia de seguridad';
 	@override String get newButton => 'Nueva';
 	@override String get deleteTitle => '¿Eliminar programación?';
-	@override String get targetLabel => 'Destino';
+	@override String get targetLabel => 'Destinos';
+	@override String get targetsHint => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).';
 	@override String get intervalLabel => 'Intervalo';
 	@override String get retentionLabel => 'Retención (conservar las N más recientes)';
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
@@ -1474,6 +1475,7 @@ class _TranslationsWebBackupsEs extends TranslationsWebBackupsEn {
 	@override late final _TranslationsWebBackupsRecoveryKitEs recoveryKit = _TranslationsWebBackupsRecoveryKitEs._(_root);
 	@override late final _TranslationsWebBackupsSchedulesTabEs schedulesTab = _TranslationsWebBackupsSchedulesTabEs._(_root);
 	@override late final _TranslationsWebBackupsNewScheduleEs newSchedule = _TranslationsWebBackupsNewScheduleEs._(_root);
+	@override late final _TranslationsWebBackupsFanoutEs fanout = _TranslationsWebBackupsFanoutEs._(_root);
 	@override late final _TranslationsWebBackupsTargetsTabEs targetsTab = _TranslationsWebBackupsTargetsTabEs._(_root);
 	@override late final _TranslationsWebBackupsTargetEditorEs targetEditor = _TranslationsWebBackupsTargetEditorEs._(_root);
 }
@@ -4855,7 +4857,8 @@ class _TranslationsWebBackupsNewScheduleEs extends TranslationsWebBackupsNewSche
 
 	// Translations
 	@override String get title => 'Nueva programación de copia de seguridad';
-	@override String get targetLabel => 'Destino';
+	@override String get targetLabel => 'Destinos';
+	@override String get targetsHint => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).';
 	@override String get everyHoursLabel => 'Cada (horas)';
 	@override String get keepLastNLabel => 'Conservar las últimas N';
 	@override String get enableImmediately => 'Habilitar inmediatamente';
@@ -4863,6 +4866,17 @@ class _TranslationsWebBackupsNewScheduleEs extends TranslationsWebBackupsNewSche
 	@override String get createFailedToast => 'Error al crear';
 	@override String get creating => 'Creando…';
 	@override String get create => 'Crear';
+}
+
+// Path: web.backups.fanout
+class _TranslationsWebBackupsFanoutEs extends TranslationsWebBackupsFanoutEn {
+	_TranslationsWebBackupsFanoutEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get badge => 'difusión';
+	@override String hint({required Object group}) => 'Parte de una difusión a varios destinos (grupo ${group})';
 }
 
 // Path: web.backups.targetsTab
@@ -10317,7 +10331,8 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
-			'web.backups.newSchedule.targetLabel' => 'Destino',
+			'web.backups.newSchedule.targetLabel' => 'Destinos',
+			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Cada (horas)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Conservar las últimas N',
 			'web.backups.newSchedule.enableImmediately' => 'Habilitar inmediatamente',
@@ -10325,6 +10340,8 @@ extension on TranslationsEs {
 			'web.backups.newSchedule.createFailedToast' => 'Error al crear',
 			'web.backups.newSchedule.creating' => 'Creando…',
 			'web.backups.newSchedule.create' => 'Crear',
+			'web.backups.fanout.badge' => 'difusión',
+			'web.backups.fanout.hint' => ({required Object group}) => 'Parte de una difusión a varios destinos (grupo ${group})',
 			'web.backups.targetsTab.description' => 'Destinos de almacenamiento. v1 admite <1>local</1> (disco en el host de opendray) y <3>smb</3> (cualquier recurso compartido SMB / CIFS, p. ej. UNAS o Synology).',
 			'web.backups.targetsTab.newTarget' => 'Nuevo destino',
 			'web.backups.targetsTab.listFailedToast' => 'No se pudieron listar los destinos',
@@ -10376,11 +10393,11 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
 			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Clave de acceso',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Clave secreta',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Se almacena cifrada con AES-256-GCM; nunca se devuelve',
 			'web.backups.targetEditor.s3.pathPrefixLabel' => 'Prefijo de ruta',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.pathPrefixHint' => 'Prefijo de clave de objeto (opcional)',
 			'web.backups.targetEditor.s3.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.useHttps' => 'Usar HTTPS',
@@ -10890,11 +10907,11 @@ extension on TranslationsEs {
 			'web.export.form.failedToast' => 'Falló la exportación',
 			'web.export.history.loading' => 'Cargando…',
 			'web.export.history.empty' => 'Aún no hay exportaciones. Usa el formulario de arriba para crear una.',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.history.title' => 'Historial',
 			'web.export.history.columns.id' => 'ID',
 			'web.export.history.columns.status' => 'Estado',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.history.columns.scope' => 'Alcance',
 			'web.export.history.columns.size' => 'Tamaño',
 			'web.export.history.columns.expires' => 'Caduca',
@@ -11404,11 +11421,11 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.spawnSheet.title' => 'Nueva session',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
 			'sessions.spawnSheet.cancel' => 'Cancelar',
@@ -11918,11 +11935,11 @@ extension on TranslationsEs {
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
 			'backups.restore.pickFileToast' => 'Primero elige un archivo de paquete.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
 			'backups.restore.manifestTitle' => 'Manifiesto',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
 			'backups.restore.manifestCreatedAt' => 'Creado',
@@ -11954,7 +11971,8 @@ extension on TranslationsEs {
 			'backupSchedules.title' => 'Programaciones de copia de seguridad',
 			'backupSchedules.newButton' => 'Nueva',
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
-			'backupSchedules.targetLabel' => 'Destino',
+			'backupSchedules.targetLabel' => 'Destinos',
+			'backupSchedules.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Intervalo',
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
@@ -12431,12 +12449,12 @@ extension on TranslationsEs {
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Crear',
 			'memory.archive' => 'Archivar',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantine' => 'Cuarentena',
 			'memory.archivedToast' => 'Memoria archivada — restaurable desde Archivado',
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',
 			'memory.reembed.menuItem' => 'Reincrustar todo',
 			'memory.reembed.confirmTitle' => '¿Reincrustar todas las memorias?',

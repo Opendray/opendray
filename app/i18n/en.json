@@ -1812,7 +1812,8 @@
       },
       "newSchedule": {
         "title": "New backup schedule",
-        "targetLabel": "Target",
+        "targetLabel": "Targets",
+        "targetsHint": "Pick one or more — the same backup is written to each (3-2-1).",
         "everyHoursLabel": "Every (hours)",
         "keepLastNLabel": "Keep last N",
         "enableImmediately": "Enable immediately",
@@ -1820,6 +1821,10 @@
         "createFailedToast": "Create failed",
         "creating": "Creating…",
         "create": "Create"
+      },
+      "fanout": {
+        "badge": "fan-out",
+        "hint": "Part of a multi-target fan-out (group {group})"
       },
       "targetsTab": {
         "description": "Storage destinations. v1 supports <1>local</1> (disk on the opendray host) and <3>smb</3> (any SMB / CIFS share, e.g. UNAS or Synology).",
@@ -3947,7 +3952,8 @@
     "title": "Backup schedules",
     "newButton": "New",
     "deleteTitle": "Delete schedule?",
-    "targetLabel": "Target",
+    "targetLabel": "Targets",
+    "targetsHint": "Pick one or more — the same backup is written to each (3-2-1).",
     "intervalLabel": "Interval",
     "retentionLabel": "Retention (keep N most recent)",
     "errorWithMessage": "{prefix}: {error}",

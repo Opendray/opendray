@@ -13,6 +13,7 @@ const (
 	idPrefixSchedule = "sch"
 	idPrefixTarget   = "tgt"
 	idPrefixImport   = "imp"
+	idPrefixGroup    = "bg"
 )
 
 // idEntropyBytes is the random byte count behind every generated ID.
@@ -50,6 +51,11 @@ func NewTargetID() string { return newID(idPrefixTarget) }
 
 // NewImportID returns a new "imp_..." identifier.
 func NewImportID() string { return newID(idPrefixImport) }
+
+// NewGroupID returns a new "bg_..." identifier correlating the backup
+// rows produced by one fan-out invocation (the same bundle written to
+// multiple targets for 3-2-1).
+func NewGroupID() string { return newID(idPrefixGroup) }
 
 // NewDownloadToken is the per-export download credential. 22 base32
 // chars (~110 bits) is overkill but keeps the surface uniform.

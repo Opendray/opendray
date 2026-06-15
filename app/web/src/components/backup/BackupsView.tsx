@@ -1065,7 +1065,21 @@ function BackupTable({
                   <TriggerBadge triggeredBy={b.triggered_by} />
                 </div>
               </td>
-              <td className="px-3 py-2">{b.target_id}</td>
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  {b.target_id}
+                  {b.group_id && (
+                    <Badge
+                      variant="muted"
+                      title={t('web.backups.fanout.hint', {
+                        group: b.group_id,
+                      })}
+                    >
+                      {t('web.backups.fanout.badge')}
+                    </Badge>
+                  )}
+                </div>
+              </td>
               <td className="px-3 py-2">
                 <div className="flex items-center gap-1.5">
                   <StatusBadge status={b.status} />
@@ -1364,7 +1378,11 @@ function SchedulesTab() {
               {rows.map((s) => (
                 <tr key={s.id} className="border-t border-border/60">
                   <td className="px-3 py-2 font-mono text-[11px]">{s.id}</td>
-                  <td className="px-3 py-2">{s.target_id}</td>
+                  <td className="px-3 py-2">
+                    {(s.target_ids?.length ? s.target_ids : [s.target_id]).join(
+                      ', ',
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-muted-foreground">
                     {formatInterval(s.interval_sec)}
                   </td>
@@ -1411,18 +1429,26 @@ function NewScheduleDialog({
 }) {
   const { t } = useTranslation()
   const enabled = targets.filter((target) => target.enabled)
-  const [targetId, setTargetId] = useState(enabled[0]?.id ?? '')
+  const [targetIds, setTargetIds] = useState<string[]>(
+    enabled[0]?.id ? [enabled[0].id] : [],
+  )
   const [hours, setHours] = useState('24')
   const [retention, setRetention] = useState('7')
   const [enabledFlag, setEnabledFlag] = useState(true)
   const [busy, setBusy] = useState(false)
+
+  function toggleTarget(id: string) {
+    setTargetIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
 
   async function submit() {
     setBusy(true)
     try {
       const intervalSec = Math.max(60, Math.round(Number(hours) * 3600))
       await createSchedule({
-        targetId,
+        targetIds,
         intervalSec,
         retention: Math.max(0, Number(retention)),
         enabled: enabledFlag,
@@ -1450,17 +1476,26 @@ function NewScheduleDialog({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <Label className="text-[12px]">{t('web.backups.newSchedule.targetLabel')}</Label>
-          <select
-            value={targetId}
-            onChange={(e) => setTargetId(e.target.value)}
-            className="h-8 px-2 rounded-md border border-border bg-card text-[12px]"
-          >
+          <p className="text-[11px] text-muted-foreground">
+            {t('web.backups.newSchedule.targetsHint')}
+          </p>
+          <div className="flex flex-col gap-1 rounded-md border border-border bg-card p-2">
             {enabled.map((target) => (
-              <option key={target.id} value={target.id}>
-                {target.id} ({target.kind})
-              </option>
+              <label
+                key={target.id}
+                className="flex items-center gap-2 text-[12px] cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={targetIds.includes(target.id)}
+                  onChange={() => toggleTarget(target.id)}
+                  className="size-3.5"
+                />
+                <span className="font-mono text-[11px]">{target.id}</span>
+                <span className="text-muted-foreground">({target.kind})</span>
+              </label>
             ))}
-          </select>
+          </div>
         </div>
         <div className="flex gap-3">
           <div className="flex-1 flex flex-col gap-1.5">
@@ -1496,7 +1531,7 @@ function NewScheduleDialog({
         </label>
       </div>
       <DialogFooter>
-        <Button onClick={submit} disabled={busy || !targetId}>
+        <Button onClick={submit} disabled={busy || targetIds.length === 0}>
           {busy
             ? t('web.backups.newSchedule.creating')
             : t('web.backups.newSchedule.create')}

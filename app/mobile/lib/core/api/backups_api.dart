@@ -78,6 +78,7 @@ class BackupSchedule {
   BackupSchedule({
     required this.id,
     required this.targetId,
+    required this.targetIds,
     required this.intervalSec,
     required this.retention,
     required this.enabled,
@@ -86,23 +87,38 @@ class BackupSchedule {
     this.lastRunAt,
   });
 
-  factory BackupSchedule.fromJson(Map<String, dynamic> json) => BackupSchedule(
-    id: json['id'] as String? ?? '',
-    targetId: json['target_id'] as String? ?? '',
-    intervalSec: (json['interval_sec'] as num?)?.toInt() ?? 0,
-    retention: (json['retention'] as num?)?.toInt() ?? 0,
-    enabled: json['enabled'] as bool? ?? false,
-    lastRunAt: DateTime.tryParse(json['last_run_at'] as String? ?? '')?.toUtc(),
-    nextRunAt:
-        DateTime.tryParse(json['next_run_at'] as String? ?? '')?.toUtc() ??
-        DateTime.now().toUtc(),
-    createdAt:
-        DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
-        DateTime.fromMillisecondsSinceEpoch(0),
-  );
+  factory BackupSchedule.fromJson(Map<String, dynamic> json) {
+    final rawIds = json['target_ids'];
+    final ids = rawIds is List
+        ? rawIds.whereType<String>().toList()
+        : <String>[];
+    final targetId = json['target_id'] as String? ?? '';
+    return BackupSchedule(
+      id: json['id'] as String? ?? '',
+      targetId: targetId,
+      // Old rows predating fan-out have no array; fall back to the single
+      // target so the UI always shows at least one destination.
+      targetIds: ids.isNotEmpty
+          ? ids
+          : (targetId.isNotEmpty ? [targetId] : const <String>[]),
+      intervalSec: (json['interval_sec'] as num?)?.toInt() ?? 0,
+      retention: (json['retention'] as num?)?.toInt() ?? 0,
+      enabled: json['enabled'] as bool? ?? false,
+      lastRunAt: DateTime.tryParse(
+        json['last_run_at'] as String? ?? '',
+      )?.toUtc(),
+      nextRunAt:
+          DateTime.tryParse(json['next_run_at'] as String? ?? '')?.toUtc() ??
+          DateTime.now().toUtc(),
+      createdAt:
+          DateTime.tryParse(json['created_at'] as String? ?? '')?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
 
   final String id;
   final String targetId;
+  final List<String> targetIds;
   final int intervalSec;
   // Number of backups to retain — older runs auto-pruned.
   final int retention;
@@ -794,7 +810,7 @@ class BackupsApi {
   }
 
   Future<BackupSchedule> createSchedule({
-    required String targetId,
+    required List<String> targetIds,
     required int intervalSec,
     required int retention,
     required bool enabled,
@@ -803,7 +819,7 @@ class BackupsApi {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/backup-schedules',
         data: {
-          'target_id': targetId,
+          'target_ids': targetIds,
           'interval_sec': intervalSec,
           'retention': retention,
           'enabled': enabled,

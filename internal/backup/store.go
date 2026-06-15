@@ -131,9 +131,9 @@ func scanTarget(row rowScanner) (TargetSpec, error) {
 func (s *store) InsertSchedule(ctx context.Context, sc Schedule) error {
 	_, err := s.pool.Exec(ctx, `
 		INSERT INTO backup_schedules
-			(id, target_id, interval_sec, retention, enabled, kind, next_run_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)`,
-		sc.ID, sc.TargetID, sc.IntervalSec, sc.Retention, sc.Enabled,
+			(id, target_id, target_ids, interval_sec, retention, enabled, kind, next_run_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`,
+		sc.ID, sc.TargetID, scheduleTargetIDs(sc), sc.IntervalSec, sc.Retention, sc.Enabled,
 		string(sc.Kind.orDefault()), sc.NextRunAt, sc.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert schedule: %w", err)
@@ -170,6 +170,7 @@ func (s *store) ListSchedules(ctx context.Context) ([]Schedule, error) {
 // SchedulePatch carries partial updates.
 type SchedulePatch struct {
 	Kind        *BackupKind
+	TargetIDs   *[]string
 	IntervalSec *int
 	Retention   *int
 	Enabled     *bool
@@ -185,6 +186,19 @@ func (s *store) UpdateSchedule(ctx context.Context, id string, p SchedulePatch) 
 			`UPDATE backup_schedules SET kind=$1, updated_at=NOW() WHERE id=$2`,
 			string(p.Kind.orDefault()), id); err != nil {
 			return fmt.Errorf("update kind: %w", err)
+		}
+	}
+	if p.TargetIDs != nil {
+		ids := *p.TargetIDs
+		if len(ids) == 0 {
+			return fmt.Errorf("target_ids must not be empty")
+		}
+		// Keep target_id (the FK-backed primary) in sync with the first
+		// element so the legacy column stays meaningful.
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE backup_schedules SET target_ids=$1, target_id=$2, updated_at=NOW() WHERE id=$3`,
+			ids, ids[0], id); err != nil {
+			return fmt.Errorf("update target_ids: %w", err)
 		}
 	}
 	if p.IntervalSec != nil {
@@ -279,26 +293,47 @@ func (s *store) ClaimDueSchedule(ctx context.Context) (Schedule, error) {
 }
 
 const scheduleSelectStmt = `
-	SELECT id, target_id, COALESCE(kind, 'db_only'), interval_sec, retention, enabled,
+	SELECT id, target_id, COALESCE(target_ids, '{}'), COALESCE(kind, 'db_only'),
+	       interval_sec, retention, enabled,
 	       last_run_at, next_run_at, created_at, updated_at
 	  FROM backup_schedules`
 
 func scanSchedule(row rowScanner) (Schedule, error) {
 	var (
 		sc        Schedule
+		targetIDs []string
 		kind      string
 		lastRunAt sql.NullTime
 	)
-	if err := row.Scan(&sc.ID, &sc.TargetID, &kind, &sc.IntervalSec, &sc.Retention,
+	if err := row.Scan(&sc.ID, &sc.TargetID, &targetIDs, &kind, &sc.IntervalSec, &sc.Retention,
 		&sc.Enabled, &lastRunAt, &sc.NextRunAt, &sc.CreatedAt, &sc.UpdatedAt); err != nil {
 		return Schedule{}, err
 	}
 	sc.Kind = BackupKind(kind)
+	// Old rows predating fan-out have an empty array; fall back to the
+	// single target so callers always see at least one destination.
+	if len(targetIDs) == 0 && sc.TargetID != "" {
+		targetIDs = []string{sc.TargetID}
+	}
+	sc.TargetIDs = targetIDs
 	if lastRunAt.Valid {
 		t := lastRunAt.Time
 		sc.LastRunAt = &t
 	}
 	return sc, nil
+}
+
+// scheduleTargetIDs returns the target_ids to persist for a schedule:
+// its explicit list, or a one-element fallback from TargetID so the
+// column is never empty for a valid schedule.
+func scheduleTargetIDs(sc Schedule) []string {
+	if len(sc.TargetIDs) > 0 {
+		return sc.TargetIDs
+	}
+	if sc.TargetID != "" {
+		return []string{sc.TargetID}
+	}
+	return []string{}
 }
 
 // ─── backups ──────────────────────────────────────────────────────
@@ -313,10 +348,10 @@ func (s *store) InsertBackup(ctx context.Context, b Backup) error {
 	}
 	_, err = s.pool.Exec(ctx, `
 		INSERT INTO backups
-			(id, schedule_id, target_id, status, triggered_by, kind, started_at,
+			(id, schedule_id, target_id, group_id, status, triggered_by, kind, started_at,
 			 encrypted, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
-		b.ID, scheduleIDOrNil(b.ScheduleID), b.TargetID,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)`,
+		b.ID, scheduleIDOrNil(b.ScheduleID), b.TargetID, nullIfEmpty(b.GroupID),
 		string(b.Status), string(b.TriggeredBy), string(b.Kind.orDefault()),
 		b.StartedAt, b.Encrypted, metaRaw)
 	if err != nil {
@@ -529,6 +564,7 @@ func (s *store) ResetStaleRunning(ctx context.Context, cutoff time.Duration) (in
 const backupSelectStmt = `
 	SELECT id, schedule_id,
 	       COALESCE(target_id, '') AS target_id,
+	       COALESCE(group_id, ''),
 	       status, triggered_by,
 	       COALESCE(kind, 'db_only'),
 	       started_at, finished_at, bytes,
@@ -561,7 +597,7 @@ func scanBackup(row rowScanner) (Backup, error) {
 		metaRaw     []byte
 	)
 	err := row.Scan(
-		&b.ID, &scheduleID, &b.TargetID, &status, &triggeredBy, &kind,
+		&b.ID, &scheduleID, &b.TargetID, &b.GroupID, &status, &triggeredBy, &kind,
 		&b.StartedAt, &finishedAt, &b.Bytes,
 		&b.SHA256, &b.Encrypted, &b.KeyFingerprint,
 		&b.TargetPath, &b.PGVersion, &b.OpendrayVersion, &b.GitSHA,
