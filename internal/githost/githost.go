@@ -297,17 +297,6 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 	return redact(h), nil
 }
 
-// GetByID fetches the unredacted host (including the raw token) for
-// internal use during update / PR listing. Not exposed via HTTP.
-func (s *Service) GetByID(ctx context.Context, id string) (Host, error) {
-	row := s.pool.QueryRow(ctx, hostSelect+` WHERE id=$1`, id)
-	h, err := s.scanHostDecoded(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Host{}, ErrNotFound
-	}
-	return h, err
-}
-
 func (s *Service) Delete(ctx context.Context, id string) error {
 	res, err := s.pool.Exec(ctx, `DELETE FROM git_hosts WHERE id=$1`, id)
 	if err != nil {

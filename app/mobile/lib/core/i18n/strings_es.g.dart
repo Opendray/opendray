@@ -2368,7 +2368,6 @@ class _TranslationsBackupsRestoreEs extends TranslationsBackupsRestoreEn {
 	@override String get confirmPlaceholder => 'Escribe "I understand"';
 	@override String get confirmSentinel => 'I understand';
 	@override String get restoring => 'Restaurando…';
-	@override String get restore => 'Restaurar';
 	@override String get preview => 'Vista previa (simulación)';
 	@override String get previewing => 'Generando vista previa…';
 	@override String get previewFirstHint => 'Ejecuta primero una vista previa en simulación';
@@ -4745,7 +4744,6 @@ class _TranslationsWebBackupsRestoreEs extends TranslationsWebBackupsRestoreEn {
 	@override String replayedDescription({required Object bytes, required Object id}) => '${bytes} reproducidos desde el manifest ${id}';
 	@override String get failedToast => 'Error en la restauración';
 	@override String get restoring => 'Restaurando…';
-	@override String get restore => 'Restaurar';
 	@override String get dryRunToast => 'Simulación completa: revisa el plan y luego aplícalo';
 	@override String get planTitle => 'Plan de restauración (simulación: nada cambió)';
 	@override String planDump({required Object size}) => 'Volcado de base de datos: ${size}';
@@ -10287,7 +10285,6 @@ extension on TranslationsEs {
 			'web.backups.restore.replayedDescription' => ({required Object bytes, required Object id}) => '${bytes} reproducidos desde el manifest ${id}',
 			'web.backups.restore.failedToast' => 'Error en la restauración',
 			'web.backups.restore.restoring' => 'Restaurando…',
-			'web.backups.restore.restore' => 'Restaurar',
 			'web.backups.restore.dryRunToast' => 'Simulación completa: revisa el plan y luego aplícalo',
 			'web.backups.restore.planTitle' => 'Plan de restauración (simulación: nada cambió)',
 			'web.backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
@@ -10408,9 +10405,9 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.s3.regionHint' => 'Solo AWS; en R2 usa \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			_ => null,
 		} ?? switch (path) {
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Clave de acceso',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Clave secreta',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Se almacena cifrada con AES-256-GCM; nunca se devuelve',
@@ -10922,9 +10919,9 @@ extension on TranslationsEs {
 			'web.export.form.readyToast' => 'Exportación lista',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
 			'web.export.form.failedToast' => 'Falló la exportación',
+			'web.export.history.loading' => 'Cargando…',
 			_ => null,
 		} ?? switch (path) {
-			'web.export.history.loading' => 'Cargando…',
 			'web.export.history.empty' => 'Aún no hay exportaciones. Usa el formulario de arriba para crear una.',
 			'web.export.history.title' => 'Historial',
 			'web.export.history.columns.id' => 'ID',
@@ -11436,9 +11433,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
@@ -11939,7 +11936,6 @@ extension on TranslationsEs {
 			'backups.restore.confirmPlaceholder' => 'Escribe "I understand"',
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restaurando…',
-			'backups.restore.restore' => 'Restaurar',
 			'backups.restore.preview' => 'Vista previa (simulación)',
 			'backups.restore.previewing' => 'Generando vista previa…',
 			'backups.restore.previewFirstHint' => 'Ejecuta primero una vista previa en simulación',
@@ -11950,10 +11946,10 @@ extension on TranslationsEs {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
 			'backups.restore.succeededTitle' => 'Restauración completada',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
 			'backups.restore.pickFileToast' => 'Primero elige un archivo de paquete.',
@@ -12464,10 +12460,10 @@ extension on TranslationsEs {
 			'memory.deleteOne.body' => 'Esto no se puede deshacer.',
 			'memory.scope.project' => 'Proyecto',
 			'memory.scope.global' => 'Global',
-			_ => null,
-		} ?? switch (path) {
 			'memory.create.textLabel' => 'Texto',
 			'memory.create.scopeKeyLabel' => 'Clave de ámbito (cwd del proyecto)',
+			_ => null,
+		} ?? switch (path) {
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Crear',
 			'memory.archive' => 'Archivar',

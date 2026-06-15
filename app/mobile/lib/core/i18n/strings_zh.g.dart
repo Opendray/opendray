@@ -2368,7 +2368,6 @@ class _TranslationsBackupsRestoreZh extends TranslationsBackupsRestoreEn {
 	@override String get confirmPlaceholder => '输入 "I understand"';
 	@override String get confirmSentinel => 'I understand';
 	@override String get restoring => '恢复中…';
-	@override String get restore => '恢复';
 	@override String get preview => '预览（试运行）';
 	@override String get previewing => '预览中…';
 	@override String get previewFirstHint => '请先运行试运行预览';
@@ -4745,7 +4744,6 @@ class _TranslationsWebBackupsRestoreZh extends TranslationsWebBackupsRestoreEn {
 	@override String replayedDescription({required Object bytes, required Object id}) => '已回放 ${bytes}，来自 manifest ${id}';
 	@override String get failedToast => '恢复失败';
 	@override String get restoring => '恢复中…';
-	@override String get restore => '恢复';
 	@override String get dryRunToast => '试运行完成 —— 查看计划后再应用';
 	@override String get planTitle => '恢复计划（试运行 —— 未改动任何内容）';
 	@override String planDump({required Object size}) => '数据库 dump：${size}';
@@ -10287,7 +10285,6 @@ extension on TranslationsZh {
 			'web.backups.restore.replayedDescription' => ({required Object bytes, required Object id}) => '已回放 ${bytes}，来自 manifest ${id}',
 			'web.backups.restore.failedToast' => '恢复失败',
 			'web.backups.restore.restoring' => '恢复中…',
-			'web.backups.restore.restore' => '恢复',
 			'web.backups.restore.dryRunToast' => '试运行完成 —— 查看计划后再应用',
 			'web.backups.restore.planTitle' => '恢复计划（试运行 —— 未改动任何内容）',
 			'web.backups.restore.planDump' => ({required Object size}) => '数据库 dump：${size}',
@@ -10408,9 +10405,9 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.s3.regionHint' => '仅 AWS；R2 用 \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			_ => null,
 		} ?? switch (path) {
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'AES-256-GCM 加密存储；不会被回显',
@@ -10922,9 +10919,9 @@ extension on TranslationsZh {
 			'web.export.form.readyToast' => '导出就绪',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} 字节',
 			'web.export.form.failedToast' => '导出失败',
+			'web.export.history.loading' => '加载中…',
 			_ => null,
 		} ?? switch (path) {
-			'web.export.history.loading' => '加载中…',
 			'web.export.history.empty' => '暂无导出。请使用上面的表单创建一个。',
 			'web.export.history.title' => '历史',
 			'web.export.history.columns.id' => 'ID',
@@ -11436,9 +11433,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.sessionCwd' => '会话 cwd',
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
@@ -11939,7 +11936,6 @@ extension on TranslationsZh {
 			'backups.restore.confirmPlaceholder' => '输入 "I understand"',
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => '恢复中…',
-			'backups.restore.restore' => '恢复',
 			'backups.restore.preview' => '预览（试运行）',
 			'backups.restore.previewing' => '预览中…',
 			'backups.restore.previewFirstHint' => '请先运行试运行预览',
@@ -11950,10 +11946,10 @@ extension on TranslationsZh {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
 			'backups.restore.succeededTitle' => '恢复成功',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
@@ -12464,10 +12460,10 @@ extension on TranslationsZh {
 			'memory.deleteOne.body' => '此操作不可撤销。',
 			'memory.scope.project' => '项目',
 			'memory.scope.global' => '全局',
-			_ => null,
-		} ?? switch (path) {
 			'memory.create.textLabel' => '文本',
 			'memory.create.scopeKeyLabel' => '范围键（项目 cwd）',
+			_ => null,
+		} ?? switch (path) {
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => '创建',
 			'memory.archive' => '归档',

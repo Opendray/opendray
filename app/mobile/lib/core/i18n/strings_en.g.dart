@@ -4710,9 +4710,6 @@ class TranslationsBackupsRestoreEn {
 	/// en: 'Restoring…'
 	String get restoring => 'Restoring…';
 
-	/// en: 'Restore'
-	String get restore => 'Restore';
-
 	/// en: 'Preview (dry run)'
 	String get preview => 'Preview (dry run)';
 
@@ -9402,9 +9399,6 @@ class TranslationsWebBackupsRestoreEn {
 
 	/// en: 'Restoring…'
 	String get restoring => 'Restoring…';
-
-	/// en: 'Restore'
-	String get restore => 'Restore';
 
 	/// en: 'Dry run complete — review the plan, then apply'
 	String get dryRunToast => 'Dry run complete — review the plan, then apply';
@@ -18058,7 +18052,6 @@ extension on Translations {
 			'web.backups.restore.replayedDescription' => ({required Object bytes, required Object id}) => '${bytes} replayed from manifest ${id}',
 			'web.backups.restore.failedToast' => 'Restore failed',
 			'web.backups.restore.restoring' => 'Restoring…',
-			'web.backups.restore.restore' => 'Restore',
 			'web.backups.restore.dryRunToast' => 'Dry run complete — review the plan, then apply',
 			'web.backups.restore.planTitle' => 'Restore plan (dry run — nothing changed)',
 			'web.backups.restore.planDump' => ({required Object size}) => 'Database dump: ${size}',
@@ -18179,9 +18172,9 @@ extension on Translations {
 			'web.backups.targetEditor.s3.regionHint' => 'AWS only; R2 use \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
 			'web.backups.targetEditor.s3.bucketLabel' => 'Bucket',
+			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			_ => null,
 		} ?? switch (path) {
-			'web.backups.targetEditor.s3.bucketPlaceholder' => 'opendray-backups',
 			'web.backups.targetEditor.s3.accessKeyLabel' => 'Access key',
 			'web.backups.targetEditor.s3.secretKeyLabel' => 'Secret key',
 			'web.backups.targetEditor.s3.secretKeyHint' => 'Stored AES-256-GCM encrypted; never echoed back',
@@ -18693,9 +18686,9 @@ extension on Translations {
 			'web.export.form.readyToast' => 'Export ready',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
 			'web.export.form.failedToast' => 'Export failed',
+			'web.export.history.loading' => 'Loading…',
 			_ => null,
 		} ?? switch (path) {
-			'web.export.history.loading' => 'Loading…',
 			'web.export.history.empty' => 'No exports yet. Use the form above to create one.',
 			'web.export.history.title' => 'History',
 			'web.export.history.columns.id' => 'ID',
@@ -19207,9 +19200,9 @@ extension on Translations {
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
+			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
@@ -19710,7 +19703,6 @@ extension on Translations {
 			'backups.restore.confirmPlaceholder' => 'Type "I understand"',
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restoring…',
-			'backups.restore.restore' => 'Restore',
 			'backups.restore.preview' => 'Preview (dry run)',
 			'backups.restore.previewing' => 'Previewing…',
 			'backups.restore.previewFirstHint' => 'Run a dry-run preview first',
@@ -19721,10 +19713,10 @@ extension on Translations {
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
 			'backups.restore.succeededTitle' => 'Restore succeeded',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
@@ -20235,10 +20227,10 @@ extension on Translations {
 			'memory.deleteOne.body' => 'This cannot be undone.',
 			'memory.scope.project' => 'Project',
 			'memory.scope.global' => 'Global',
-			_ => null,
-		} ?? switch (path) {
 			'memory.create.textLabel' => 'Text',
 			'memory.create.scopeKeyLabel' => 'Scope key (project cwd)',
+			_ => null,
+		} ?? switch (path) {
 			'memory.create.scopeKeyHint' => '/Users/you/projects/foo',
 			'memory.create.submit' => 'Create',
 			'memory.archive' => 'Archive',
