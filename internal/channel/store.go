@@ -19,14 +19,24 @@ type channelRow struct {
 	Enabled bool            `json:"enabled"`
 }
 
-type store struct{ pool *pgxpool.Pool }
+type store struct {
+	pool   *pgxpool.Pool
+	cipher FieldCipher // nil = config secrets stored plaintext
+}
 
 func newStore(pool *pgxpool.Pool) *store { return &store{pool: pool} }
+
+// setCipher injects the at-rest field cipher for config secrets. Wired
+// once at boot after the backup subsystem is available; safe to pass a
+// cipher whose backup feature isn't armed yet (secrets stay plaintext
+// until it is).
+func (s *store) setCipher(c FieldCipher) { s.cipher = c }
 
 func (s *store) Insert(ctx context.Context, id, kind string, config json.RawMessage, enabled bool) error {
 	if len(config) == 0 {
 		config = []byte("{}")
 	}
+	config = encryptConfigSecrets(s.cipher, kind, config)
 	_, err := s.pool.Exec(ctx, `
         INSERT INTO channels (id, kind, config, enabled) VALUES ($1, $2, $3::jsonb, $4)`,
 		id, kind, []byte(config), enabled)
@@ -46,6 +56,7 @@ func (s *store) Get(ctx context.Context, id string) (channelRow, error) {
 		}
 		return channelRow{}, fmt.Errorf("scan channel: %w", err)
 	}
+	r.Config = decryptConfigSecrets(s.cipher, r.Kind, r.Config)
 	return r, nil
 }
 
@@ -62,6 +73,7 @@ func (s *store) List(ctx context.Context) ([]channelRow, error) {
 		if err := rows.Scan(&r.ID, &r.Kind, &r.Config, &r.Enabled); err != nil {
 			return nil, err
 		}
+		r.Config = decryptConfigSecrets(s.cipher, r.Kind, r.Config)
 		out = append(out, r)
 	}
 	return out, rows.Err()
@@ -69,6 +81,20 @@ func (s *store) List(ctx context.Context) ([]channelRow, error) {
 
 func (s *store) Update(ctx context.Context, id string, config json.RawMessage, enabled *bool) error {
 	if config != nil {
+		// The config column is keyed by kind for field encryption, but
+		// Update doesn't carry it — look it up. encryptConfigSecrets
+		// skips fields already wrapped, so re-storing a config read back
+		// under a rotated key (whose secrets stayed ciphertext) preserves
+		// them rather than losing them.
+		var kind string
+		if err := s.pool.QueryRow(ctx,
+			`SELECT kind FROM channels WHERE id=$1`, id).Scan(&kind); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrNotFound
+			}
+			return fmt.Errorf("lookup channel kind: %w", err)
+		}
+		config = encryptConfigSecrets(s.cipher, kind, config)
 		if _, err := s.pool.Exec(ctx,
 			`UPDATE channels SET config=$1::jsonb WHERE id=$2`,
 			[]byte(config), id); err != nil {

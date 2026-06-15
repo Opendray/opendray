@@ -144,6 +144,13 @@ func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 	return h
 }
 
+// SetCipher wires the at-rest cipher used to encrypt channel config
+// secrets (bot tokens, app secrets, webhook keys). Called once at boot
+// after the backup subsystem is available. Until set — or while the
+// backup feature is unarmed — secrets are stored plaintext, the
+// historical behaviour.
+func (h *Hub) SetCipher(c FieldCipher) { h.store.setCipher(c) }
+
 // SetSessionInput installs a callback the Hub uses to forward non-
 // command inbound channel messages into the originating session's
 // stdin. Pass the session.Manager (which satisfies SessionInputter

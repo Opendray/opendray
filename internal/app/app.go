@@ -718,6 +718,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// (no-op until the operator arms backups; tokens stay plaintext
 	// until then, matching the historical trust model).
 	gitHostSvc.SetCipher(ambientCipher)
+	// Same at-rest encryption for channel config secrets (bot tokens,
+	// app secrets, webhook keys).
+	channelHub.SetCipher(ambientCipher)
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
 	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
