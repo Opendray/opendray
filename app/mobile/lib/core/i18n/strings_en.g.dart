@@ -6293,8 +6293,17 @@ class TranslationsWebSessionsAccountSwitcherEn {
 	/// en: '·empty'
 	String get tokenEmpty => '·empty';
 
-	/// en: 'Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?'
-	String get confirmSwitch => 'Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?';
+	/// en: 'Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn't carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitch => 'Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switching account restarts the Claude CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchCarry => 'Switching account restarts the Claude CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Carry over conversation context'
+	String get carryContext => 'Carry over conversation context';
+
+	/// en: 'Seeds the new account with a recap of your recent conversation. Prior content is sent to the provider under the new account.'
+	String get carryContextHelp => 'Seeds the new account with a recap of your recent conversation. Prior content is sent to the provider under the new account.';
 
 	/// en: 'Account switched'
 	String get switchedToast => 'Account switched';
@@ -10462,6 +10471,12 @@ class TranslationsWebSettingsAboutEn {
 
 	/// en: 'Re-install'
 	String get reinstall => 'Re-install';
+
+	/// en: '{count} live session(s) will be interrupted by the restart (they auto-resume afterward).'
+	String forcePrompt({required Object count}) => '${count} live session(s) will be interrupted by the restart (they auto-resume afterward).';
+
+	/// en: 'Upgrade anyway'
+	String get upgradeAnyway => 'Upgrade anyway';
 }
 
 // Path: web.memoryAmbient.header
@@ -11126,8 +11141,8 @@ class TranslationsWebCortexChatEn {
 
 	// Translations
 
-	/// en: 'Curation chat'
-	String get title => 'Curation chat';
+	/// en: 'AI discussion'
+	String get title => 'AI discussion';
 
 	/// en: 'Discuss with AI'
 	String get show => 'Discuss with AI';
@@ -11174,8 +11189,8 @@ class TranslationsWebCortexChatEn {
 	/// en: 'Model:'
 	String get modelLabel => 'Model:';
 
-	/// en: 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global curation worker.'
-	String get modelHint => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global curation worker.';
+	/// en: 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.'
+	String get modelHint => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.';
 
 	/// en: 'Default (global)'
 	String get modelGlobalDefault => 'Default (global)';
@@ -13452,8 +13467,8 @@ class TranslationsWebMemoryWorkersTasksCurationEn {
 	/// en: 'Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.'
 	String get modelAdvice => 'Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.';
 
-	/// en: 'Curation chat'
-	String get label => 'Curation chat';
+	/// en: 'AI discussion'
+	String get label => 'AI discussion';
 
 	/// en: 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.'
 	String get description => 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.';
@@ -16890,7 +16905,10 @@ extension on Translations {
 			'web.sessions.accountSwitcher.defaultName' => 'Default',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI\'s system keychain / env',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·empty',
-			'web.sessions.accountSwitcher.confirmSwitch' => 'Switching account will restart the Claude CLI. The conversation history is preserved (transcript is migrated and --resume replays it under the new account), but any in-flight tool execution or unsent input will be lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitch' => 'Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchCarry' => 'Switching account restarts the Claude CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.carryContext' => 'Carry over conversation context',
+			'web.sessions.accountSwitcher.carryContextHelp' => 'Seeds the new account with a recap of your recent conversation. Prior content is sent to the provider under the new account.',
 			'web.sessions.accountSwitcher.switchedToast' => 'Account switched',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => 'Now using @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => 'default',
@@ -17109,7 +17127,7 @@ extension on Translations {
 			'web.memoryWorkers.tasks.blueprint.label' => 'Blueprint proposer',
 			'web.memoryWorkers.tasks.blueprint.description' => 'Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor.',
 			'web.memoryWorkers.tasks.curation.modelAdvice' => 'Your conversational doc/policy editor — strong model recommended (sonnet/opus); it rewrites documents you rely on.',
-			'web.memoryWorkers.tasks.curation.label' => 'Curation chat',
+			'web.memoryWorkers.tasks.curation.label' => 'AI discussion',
 			'web.memoryWorkers.tasks.curation.description' => 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.',
 			'web.memoryWorkers.modelLabel' => 'Model',
 			'web.memoryWorkers.modelHint' => 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.',
@@ -17226,11 +17244,11 @@ extension on Translations {
 			'web.project.archived.restoredToast' => 'Restored',
 			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
 			'web.project.reset.alwaysDeleted' => 'Always deleted: goal, plan, proposals, journal, cleanup decisions.',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.alsoDeleteScannerLabel' => 'Also delete scanner docs',
 			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity).',
 			'web.project.reset.alsoDeleteScannerHint' => 'Auto-rebuild on next spawn anyway — leaving unchecked is usually fine.',
@@ -17740,11 +17758,11 @@ extension on Translations {
 			'web.channels.notifications.cooldowns.k300' => '5 minutes',
 			'web.channels.notifications.cooldowns.k900' => '15 minutes',
 			'web.channels.notifications.cooldowns.k1800' => '30 minutes',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.cooldowns.k3600' => '1 hour',
 			'web.channels.notifications.snippetCaps.k0' => 'No cap — chunk into multiple messages (default)',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 chars (terse)',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.snippetCaps.k3000' => '3000 chars',
 			'web.channels.notifications.snippetCaps.k6000' => '6000 chars',
 			'web.channels.notifications.snippetCaps.k12000' => '12000 chars',
@@ -18254,11 +18272,11 @@ extension on Translations {
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Path prefix',
 			'web.backups.targetEditor.smb.pathPrefixHint' => 'Sub-folder under the share root (optional)',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => 'Host (no protocol). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.regionLabel' => 'Region',
 			'web.backups.targetEditor.s3.regionHint' => 'AWS only; R2 use \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
@@ -18617,6 +18635,8 @@ extension on Translations {
 			'web.settings.about.checkUpdates' => 'Check for updates',
 			'web.settings.about.checking' => 'Checking…',
 			'web.settings.about.reinstall' => 'Re-install',
+			'web.settings.about.forcePrompt' => ({required Object count}) => '${count} live session(s) will be interrupted by the restart (they auto-resume afterward).',
+			'web.settings.about.upgradeAnyway' => 'Upgrade anyway',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
 			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
@@ -18766,13 +18786,13 @@ extension on Translations {
 			'web.export.form.integrationOptions.metadataHint' => 'ID, name, route prefix, scopes — no API key material.',
 			'web.export.form.integrationOptions.plaintext' => 'Include plaintext API keys',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks.',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.confirmWarning' => 'Type <1>I understand</1> to confirm. opendray currently stores only bcrypt hashes — selecting plaintext does NOT export any plaintext (the feature is reserved for a future release that keeps plaintext caches).',
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
 			'web.export.form.footnote' => 'Audit logs and session transcripts are out of scope — covered by /backups (operator dump) instead.',
 			'web.export.form.building' => 'Building…',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.create' => 'Create export',
 			'web.export.form.readyToast' => 'Export ready',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} bytes',
@@ -18979,7 +18999,7 @@ extension on Translations {
 			'web.cortex.home.proposals.approvedToast' => 'Proposal approved — document updated',
 			'web.cortex.home.proposals.rejectedToast' => 'Proposal rejected',
 			'web.cortex.home.proposals.failedToast' => 'Action failed',
-			'web.cortex.chat.title' => 'Curation chat',
+			'web.cortex.chat.title' => 'AI discussion',
 			'web.cortex.chat.show' => 'Discuss with AI',
 			'web.cortex.chat.hide' => 'Hide chat',
 			'web.cortex.chat.emptyHint' => 'Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you\'ve locked it.',
@@ -18995,7 +19015,7 @@ extension on Translations {
 			'web.cortex.chat.revisionApplied' => 'Document updated',
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
 			'web.cortex.chat.modelLabel' => 'Model:',
-			'web.cortex.chat.modelHint' => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global curation worker.',
+			'web.cortex.chat.modelHint' => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.',
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
@@ -19280,13 +19300,13 @@ extension on Translations {
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
@@ -19794,13 +19814,13 @@ extension on Translations {
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
 			'backups.restore.noFile' => 'No file selected',
 			'backups.restore.targetDsnLabel' => 'Target Postgres DSN',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.targetDsnHint' => 'Leave empty to restore into opendray\'s own DB.',
 			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
 			'backups.restore.cleanHint' => 'Drops existing objects before recreating them.',
 			'backups.restore.auditNoteLabel' => 'Audit note (optional)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.auditNotePlaceholder' => 'e.g. recovering from #INC-481',
 			'backups.restore.ownDbWarning' => 'Restoring into opendray\'s OWN database will rewrite the rows this gateway is currently serving. Type "I understand" to confirm.',
 			'backups.restore.confirmPlaceholder' => 'Type "I understand"',
@@ -20308,13 +20328,13 @@ extension on Translations {
 			'memory.rank.effective' => ({required Object value}) => 'Effective score: ${value}',
 			'memory.rank.similarity' => 'Cosine similarity',
 			'memory.rank.ageMultiplier' => ({required Object days}) => 'Age multiplier (${days}d old)',
+			_ => null,
+		} ?? switch (path) {
 			'memory.rank.hitMultiplier' => ({required Object hits}) => 'Hit-count multiplier (${hits} hits)',
 			'memory.rank.confidenceMultiplier' => 'Confidence multiplier',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Close',
 			'memory.kNew' => 'New',
-			_ => null,
-		} ?? switch (path) {
 			'memory.searchHint' => 'Search…',
 			'memory.projectLabel' => 'Project',
 			'memory.filterHint' => 'Filter by name or path…',

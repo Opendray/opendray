@@ -691,7 +691,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                     child: OutlinedButton.icon(
                       onPressed: () => _openDiscussion('doc_section', kind),
                       icon: const Icon(Icons.forum_outlined, size: 16),
-                      label: Text(t.web.cortex.chat.title),
+                      label: Text(t.web.cortex.chat.show),
                     ),
                   ),
                 ],

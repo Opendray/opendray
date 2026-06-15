@@ -564,7 +564,7 @@ class _KbViewState extends ConsumerState<_KbView> {
                                     ),
                                   ),
                                 ),
-                            child: Text(t.web.cortex.chat.title),
+                            child: Text(t.web.cortex.chat.show),
                           ),
                           TextButton(
                             onPressed: () {

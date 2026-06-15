@@ -3185,7 +3185,10 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 	@override String get defaultName => '默认';
 	@override String get defaultSubtitle => 'CLI 的系统 keychain / 环境变量';
 	@override String get tokenEmpty => '·未填';
-	@override String get confirmSwitch => '切换账户将重启 Claude CLI。对话历史会被保留（脚本会迁移并通过 --resume 恢复），但正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitch => '切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitchCarry => '切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get carryContext => '带入对话上下文';
+	@override String get carryContextHelp => '用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。';
 	@override String get switchedToast => '账号已切换';
 	@override String switchedDescription({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}';
 	@override String get switchedDefault => '默认';
@@ -5344,6 +5347,8 @@ class _TranslationsWebSettingsAboutZh extends TranslationsWebSettingsAboutEn {
 	@override String get checkUpdates => '检查更新';
 	@override String get checking => '检查中…';
 	@override String get reinstall => '重新安装';
+	@override String forcePrompt({required Object count}) => '重启将中断 ${count} 个进行中的会话（之后会自动恢复）。';
+	@override String get upgradeAnyway => '仍然升级';
 }
 
 // Path: web.memoryAmbient.header
@@ -5682,7 +5687,7 @@ class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '管护对话';
+	@override String get title => 'AI 讨论';
 	@override String get show => '与 AI 讨论';
 	@override String get hide => '收起对话';
 	@override String get emptyHint => '让 AI 更新、重组或重写这份文档。AI 维护且未锁定时直接生效；你锁定过的文档会以提案进入收件箱。';
@@ -5698,7 +5703,7 @@ class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
 	@override String get revisionApplied => '文档已更新';
 	@override String get revisionProposed => '已生成提案——请到收件箱审阅';
 	@override String get modelLabel => '模型：';
-	@override String get modelHint => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局 curation worker。';
+	@override String get modelHint => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。';
 	@override String get modelGlobalDefault => '默认（全局）';
 	@override String get modelCliDefault => 'CLI 默认';
 	@override String get modelChangeFailed => '切换讨论模型失败';
@@ -6975,7 +6980,7 @@ class _TranslationsWebMemoryWorkersTasksCurationZh extends TranslationsWebMemory
 
 	// Translations
 	@override String get modelAdvice => '你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。';
-	@override String get label => '管护对话';
+	@override String get label => 'AI 讨论';
 	@override String get description => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。';
 }
 
@@ -9086,7 +9091,10 @@ extension on TranslationsZh {
 			'web.sessions.accountSwitcher.defaultName' => '默认',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI 的系统 keychain / 环境变量',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·未填',
-			'web.sessions.accountSwitcher.confirmSwitch' => '切换账户将重启 Claude CLI。对话历史会被保留（脚本会迁移并通过 --resume 恢复），但正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitch' => '切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchCarry' => '切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.carryContext' => '带入对话上下文',
+			'web.sessions.accountSwitcher.carryContextHelp' => '用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。',
 			'web.sessions.accountSwitcher.switchedToast' => '账号已切换',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => '默认',
@@ -9305,7 +9313,7 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.blueprint.label' => '蓝图提议器',
 			'web.memoryWorkers.tasks.blueprint.description' => '根据仓库信号识别项目类型并提议文档章节结构。由蓝图编辑器手动触发。',
 			'web.memoryWorkers.tasks.curation.modelAdvice' => '你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。',
-			'web.memoryWorkers.tasks.curation.label' => '管护对话',
+			'web.memoryWorkers.tasks.curation.label' => 'AI 讨论',
 			'web.memoryWorkers.tasks.curation.description' => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。',
 			'web.memoryWorkers.modelLabel' => '模型',
 			'web.memoryWorkers.modelHint' => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。',
@@ -9422,11 +9430,11 @@ extension on TranslationsZh {
 			'web.project.archived.restoredToast' => '已恢复',
 			'web.project.archived.restoreFailedToast' => '恢复失败',
 			'web.project.reset.button' => '重置',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
 			'web.project.reset.alwaysDeleted' => '始终删除：目标、计划、提案、日志、清理决策。',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.alsoDeleteScannerLabel' => '同时删除 scanner 文档',
 			'web.project.reset.alsoDeleteScannerSuffix' => '(tech_stack + recent_activity)。',
 			'web.project.reset.alsoDeleteScannerHint' => '下次 spawn 会自动重建 — 通常不勾选即可。',
@@ -9936,11 +9944,11 @@ extension on TranslationsZh {
 			'web.channels.notifications.cooldowns.k300' => '5 分钟',
 			'web.channels.notifications.cooldowns.k900' => '15 分钟',
 			'web.channels.notifications.cooldowns.k1800' => '30 分钟',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.cooldowns.k3600' => '1 小时',
 			'web.channels.notifications.snippetCaps.k0' => '不限制 — 拆分到多条消息（默认）',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 字符（精简）',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.snippetCaps.k3000' => '3000 字符',
 			'web.channels.notifications.snippetCaps.k6000' => '6000 字符',
 			'web.channels.notifications.snippetCaps.k12000' => '12000 字符',
@@ -10450,11 +10458,11 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.pathPrefixLabel' => '路径前缀',
 			'web.backups.targetEditor.smb.pathPrefixHint' => '共享根下的子文件夹（可选）',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => '主机（不要带协议）。AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.s3.regionLabel' => 'Region',
 			'web.backups.targetEditor.s3.regionHint' => '仅 AWS；R2 用 \'auto\'',
 			'web.backups.targetEditor.s3.regionPlaceholder' => 'us-east-1 / auto',
@@ -10813,6 +10821,8 @@ extension on TranslationsZh {
 			'web.settings.about.checkUpdates' => '检查更新',
 			'web.settings.about.checking' => '检查中…',
 			'web.settings.about.reinstall' => '重新安装',
+			'web.settings.about.forcePrompt' => ({required Object count}) => '重启将中断 ${count} 个进行中的会话（之后会自动恢复）。',
+			'web.settings.about.upgradeAnyway' => '仍然升级',
 			'web.logViewer.filterPlaceholder' => '过滤…',
 			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
@@ -10962,13 +10972,13 @@ extension on TranslationsZh {
 			'web.export.form.integrationOptions.metadataHint' => 'ID、name、route prefix、scopes — 不包含任何 API key 凭证。',
 			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.confirmWarning' => '输入 <1>I understand</1> 以确认。opendray 当前只存 bcrypt 哈希 — 选择明文也不会导出任何明文（该选项为将来保留明文缓存的版本而预留）。',
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
 			'web.export.form.footnote' => '审计日志与会话记录不在范围内 — 由 /backups（运维 dump）覆盖。',
 			'web.export.form.building' => '构建中…',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.create' => '创建导出',
 			'web.export.form.readyToast' => '导出就绪',
 			'web.export.form.readyDescription' => ({required Object bytes}) => '${bytes} 字节',
@@ -11175,7 +11185,7 @@ extension on TranslationsZh {
 			'web.cortex.home.proposals.approvedToast' => '提案已批准——文档已更新',
 			'web.cortex.home.proposals.rejectedToast' => '提案已拒绝',
 			'web.cortex.home.proposals.failedToast' => '操作失败',
-			'web.cortex.chat.title' => '管护对话',
+			'web.cortex.chat.title' => 'AI 讨论',
 			'web.cortex.chat.show' => '与 AI 讨论',
 			'web.cortex.chat.hide' => '收起对话',
 			'web.cortex.chat.emptyHint' => '让 AI 更新、重组或重写这份文档。AI 维护且未锁定时直接生效；你锁定过的文档会以提案进入收件箱。',
@@ -11191,7 +11201,7 @@ extension on TranslationsZh {
 			'web.cortex.chat.revisionApplied' => '文档已更新',
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
 			'web.cortex.chat.modelLabel' => '模型：',
-			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局 curation worker。',
+			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。',
 			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
 			'web.cortex.chat.modelCliDefault' => 'CLI 默认',
 			'web.cortex.chat.modelChangeFailed' => '切换讨论模型失败',
@@ -11476,13 +11486,13 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => '插入失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
@@ -11990,13 +12000,13 @@ extension on TranslationsZh {
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
 			'backups.restore.noFile' => '未选择文件',
 			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.targetDsnHint' => '留空表示恢复到 opendray 自身的数据库。',
 			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
 			'backups.restore.cleanHint' => '重新创建之前先删除已存在的对象。',
 			'backups.restore.auditNoteLabel' => '审计备注（可选）',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.auditNotePlaceholder' => '例如：恢复 #INC-481',
 			'backups.restore.ownDbWarning' => '恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 "I understand" 以确认。',
 			'backups.restore.confirmPlaceholder' => '输入 "I understand"',
@@ -12504,13 +12514,13 @@ extension on TranslationsZh {
 			'memory.rank.effective' => ({required Object value}) => '有效分：${value}',
 			'memory.rank.similarity' => '余弦相似度',
 			'memory.rank.ageMultiplier' => ({required Object days}) => '时效系数（${days} 天前）',
+			_ => null,
+		} ?? switch (path) {
 			'memory.rank.hitMultiplier' => ({required Object hits}) => '命中系数（${hits} 次命中）',
 			'memory.rank.confidenceMultiplier' => '置信度系数',
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
 			'memory.rank.close' => '关闭',
 			'memory.kNew' => '新建',
-			_ => null,
-		} ?? switch (path) {
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
 			'memory.filterHint' => '按名称或路径筛选…',

@@ -480,7 +480,7 @@
         },
         "curation": {
           "modelAdvice": "你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。",
-          "label": "管护对话",
+          "label": "AI 讨论",
           "description": "驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。"
         }
       },
@@ -2895,7 +2895,7 @@
         }
       },
       "chat": {
-        "title": "管护对话",
+        "title": "AI 讨论",
         "show": "与 AI 讨论",
         "hide": "收起对话",
         "emptyHint": "让 AI 更新、重组或重写这份文档。AI 维护且未锁定时直接生效；你锁定过的文档会以提案进入收件箱。",
@@ -2911,7 +2911,7 @@
         "revisionApplied": "文档已更新",
         "revisionProposed": "已生成提案——请到收件箱审阅",
         "modelLabel": "模型：",
-        "modelHint": "为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局 curation worker。",
+        "modelHint": "为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。",
         "modelGlobalDefault": "默认（全局）",
         "modelCliDefault": "CLI 默认",
         "modelChangeFailed": "切换讨论模型失败",
