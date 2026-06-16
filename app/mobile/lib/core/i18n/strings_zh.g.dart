@@ -1842,6 +1842,7 @@ class _TranslationsSessionsTerminalZh extends TranslationsSessionsTerminalEn {
 	@override late final _TranslationsSessionsTerminalImageSourceZh imageSource = _TranslationsSessionsTerminalImageSourceZh._(_root);
 	@override late final _TranslationsSessionsTerminalKeyboardZh keyboard = _TranslationsSessionsTerminalKeyboardZh._(_root);
 	@override late final _TranslationsSessionsTerminalConnectionZh connection = _TranslationsSessionsTerminalConnectionZh._(_root);
+	@override late final _TranslationsSessionsTerminalSelectCopyZh selectCopy = _TranslationsSessionsTerminalSelectCopyZh._(_root);
 }
 
 // Path: sessions.action
@@ -3099,8 +3100,6 @@ class _TranslationsWebSessionsHeaderZh extends TranslationsWebSessionsHeaderEn {
 	@override String get hideInspector => '隐藏检查器';
 	@override String get attachImage => '附加图片';
 	@override String get attachImageTooltip => '附加图片（或直接粘贴 / 拖入终端）';
-	@override String get copyOutput => '复制输出';
-	@override String get copyOutputTooltip => '复制终端输出（若有选区则复制选区，否则复制全部）';
 	@override String get restart => '重启';
 	@override String get restarting => '重启中…';
 	@override String get remove => '移除';
@@ -3108,6 +3107,8 @@ class _TranslationsWebSessionsHeaderZh extends TranslationsWebSessionsHeaderEn {
 	@override String get stop => '停止';
 	@override String get stopping => '停止中…';
 	@override String pid({required Object pid}) => 'pid ${pid}';
+	@override String get selectText => '选择并复制';
+	@override String get selectTextTooltip => '打开可选择文本视图,复制输出中的任意部分';
 }
 
 // Path: web.sessions.terminal
@@ -3122,14 +3123,15 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get uploadFailedToast => '上传失败';
 	@override String get uploadInvalidTypeToast => '仅支持图片文件';
 	@override String get dropToAttach => '释放以附加图片';
-	@override String get copyButton => '复制';
-	@override String get copyAllTooltip => '复制终端输出到剪贴板(若有选区则复制选区,否则复制全部)';
-	@override String get copySelection => '复制';
-	@override String get copySelectionTooltip => '复制选中的文本';
 	@override String get copiedToast => '已复制到剪贴板';
-	@override String get copyEmptyToast => '暂无可复制内容';
 	@override String get copyFailedToast => '无法复制到剪贴板';
 	@override late final _TranslationsWebSessionsTerminalUrlsZh urls = _TranslationsWebSessionsTerminalUrlsZh._(_root);
+	@override String get selectCopyTitle => '选择并复制';
+	@override String get selectCopyDesc => '拖动(触屏长按)选择输出中的任意部分,然后复制。';
+	@override String get selectCopyCopySelection => '复制选中';
+	@override String get selectCopyCopyAll => '全部复制';
+	@override String get selectCopyNoSelection => '请先选择文本';
+	@override String get selectCopyEmpty => '暂无可复制的输出';
 }
 
 // Path: web.sessions.spawn
@@ -6026,10 +6028,10 @@ class _TranslationsSessionsTerminalKeyboardZh extends TranslationsSessionsTermin
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get copyBuffer => '复制缓冲';
 	@override String get paste => '粘贴';
 	@override String get attachImage => '附加图片';
 	@override String get enter => '回车';
+	@override String get selectText => '选择文本';
 }
 
 // Path: sessions.terminal.connection
@@ -6046,6 +6048,20 @@ class _TranslationsSessionsTerminalConnectionZh extends TranslationsSessionsTerm
 	@override String get disconnected => '已断开';
 	@override String disconnectedWithError({required Object error}) => '已断开（${error}）';
 	@override String get ended => '会话已结束';
+}
+
+// Path: sessions.terminal.selectCopy
+class _TranslationsSessionsTerminalSelectCopyZh extends TranslationsSessionsTerminalSelectCopyEn {
+	_TranslationsSessionsTerminalSelectCopyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '选择并复制';
+	@override String get hint => '长按选择输出中的任意部分,然后复制。';
+	@override String get copyAll => '全部复制';
+	@override String copiedAll({required Object count}) => '已复制全部输出(${count} 个字符)';
+	@override String get empty => '暂无可复制的输出';
 }
 
 // Path: sessions.action.errors
@@ -9023,8 +9039,6 @@ extension on TranslationsZh {
 			'web.sessions.header.hideInspector' => '隐藏检查器',
 			'web.sessions.header.attachImage' => '附加图片',
 			'web.sessions.header.attachImageTooltip' => '附加图片（或直接粘贴 / 拖入终端）',
-			'web.sessions.header.copyOutput' => '复制输出',
-			'web.sessions.header.copyOutputTooltip' => '复制终端输出（若有选区则复制选区，否则复制全部）',
 			'web.sessions.header.restart' => '重启',
 			'web.sessions.header.restarting' => '重启中…',
 			'web.sessions.header.remove' => '移除',
@@ -9032,17 +9046,14 @@ extension on TranslationsZh {
 			'web.sessions.header.stop' => '停止',
 			'web.sessions.header.stopping' => '停止中…',
 			'web.sessions.header.pid' => ({required Object pid}) => 'pid ${pid}',
+			'web.sessions.header.selectText' => '选择并复制',
+			'web.sessions.header.selectTextTooltip' => '打开可选择文本视图,复制输出中的任意部分',
 			'web.sessions.terminal.uploadingToast' => '正在上传图片…',
 			'web.sessions.terminal.uploadedToast' => '图片已附加',
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
 			'web.sessions.terminal.uploadInvalidTypeToast' => '仅支持图片文件',
 			'web.sessions.terminal.dropToAttach' => '释放以附加图片',
-			'web.sessions.terminal.copyButton' => '复制',
-			'web.sessions.terminal.copyAllTooltip' => '复制终端输出到剪贴板(若有选区则复制选区,否则复制全部)',
-			'web.sessions.terminal.copySelection' => '复制',
-			'web.sessions.terminal.copySelectionTooltip' => '复制选中的文本',
 			'web.sessions.terminal.copiedToast' => '已复制到剪贴板',
-			'web.sessions.terminal.copyEmptyToast' => '暂无可复制内容',
 			'web.sessions.terminal.copyFailedToast' => '无法复制到剪贴板',
 			'web.sessions.terminal.urls.tooltip' => '打开本会话最新检测到的链接',
 			'web.sessions.terminal.urls.tapToOpenLatest' => '点击打开最新链接(通常是 OAuth URL)',
@@ -9056,6 +9067,12 @@ extension on TranslationsZh {
 			'web.sessions.terminal.urls.copiedToast' => '链接已复制',
 			'web.sessions.terminal.urls.copyFailedToast' => '复制失败 —— 请长按链接手动复制',
 			'web.sessions.terminal.urls.noneHint' => '暂未检测到链接。',
+			'web.sessions.terminal.selectCopyTitle' => '选择并复制',
+			'web.sessions.terminal.selectCopyDesc' => '拖动(触屏长按)选择输出中的任意部分,然后复制。',
+			'web.sessions.terminal.selectCopyCopySelection' => '复制选中',
+			'web.sessions.terminal.selectCopyCopyAll' => '全部复制',
+			'web.sessions.terminal.selectCopyNoSelection' => '请先选择文本',
+			'web.sessions.terminal.selectCopyEmpty' => '暂无可复制的输出',
 			'web.sessions.spawn.title' => '创建会话',
 			'web.sessions.spawn.description' => '在已注册的 Provider 下启动一个 CLI 会话。',
 			'web.sessions.spawn.provider' => 'Provider',
@@ -9431,9 +9448,9 @@ extension on TranslationsZh {
 			'web.project.archived.archivedAtPrefix' => '归档于',
 			'web.project.archived.restoreButton' => '恢复',
 			'web.project.archived.restoredToast' => '已恢复',
-			'web.project.archived.restoreFailedToast' => '恢复失败',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.archived.restoreFailedToast' => '恢复失败',
 			'web.project.reset.button' => '重置',
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
@@ -9945,9 +9962,9 @@ extension on TranslationsZh {
 			'web.channels.notifications.modes.everyHint' => '不做抑制。仅用于低频频道。',
 			'web.channels.notifications.cooldowns.k60' => '1 分钟',
 			'web.channels.notifications.cooldowns.k300' => '5 分钟',
-			'web.channels.notifications.cooldowns.k900' => '15 分钟',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.notifications.cooldowns.k900' => '15 分钟',
 			'web.channels.notifications.cooldowns.k1800' => '30 分钟',
 			'web.channels.notifications.cooldowns.k3600' => '1 小时',
 			'web.channels.notifications.snippetCaps.k0' => '不限制 — 拆分到多条消息（默认）',
@@ -10459,9 +10476,9 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.userLabel' => '用户',
 			'web.backups.targetEditor.smb.passwordLabel' => '密码',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => '路径前缀',
-			'web.backups.targetEditor.smb.pathPrefixHint' => '共享根下的子文件夹（可选）',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.pathPrefixHint' => '共享根下的子文件夹（可选）',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => '主机（不要带协议）。AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
@@ -10973,9 +10990,9 @@ extension on TranslationsZh {
 			'web.export.form.integrationOptions.noneHint' => '完全跳过 integrations 表。',
 			'web.export.form.integrationOptions.metadata' => '仅元数据（推荐）',
 			'web.export.form.integrationOptions.metadataHint' => 'ID、name、route prefix、scopes — 不包含任何 API key 凭证。',
-			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
 			'web.export.form.confirmWarning' => '输入 <1>I understand</1> 以确认。opendray 当前只存 bcrypt 哈希 — 选择明文也不会导出任何明文（该选项为将来保留明文缓存的版本而预留）。',
 			'web.export.form.confirmPlaceholder' => 'I understand',
@@ -11399,10 +11416,10 @@ extension on TranslationsZh {
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => '上传失败：${error}',
 			'sessions.terminal.imageSource.photoLibrary' => '相册',
 			'sessions.terminal.imageSource.takePhoto' => '拍照',
-			'sessions.terminal.keyboard.copyBuffer' => '复制缓冲',
 			'sessions.terminal.keyboard.paste' => '粘贴',
 			'sessions.terminal.keyboard.attachImage' => '附加图片',
 			'sessions.terminal.keyboard.enter' => '回车',
+			'sessions.terminal.keyboard.selectText' => '选择文本',
 			'sessions.terminal.connection.connecting' => '连接中…',
 			'sessions.terminal.connection.connected' => '已连接',
 			'sessions.terminal.connection.reconnecting' => '重连中…',
@@ -11410,6 +11427,11 @@ extension on TranslationsZh {
 			'sessions.terminal.connection.disconnected' => '已断开',
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => '已断开（${error}）',
 			'sessions.terminal.connection.ended' => '会话已结束',
+			'sessions.terminal.selectCopy.title' => '选择并复制',
+			'sessions.terminal.selectCopy.hint' => '长按选择输出中的任意部分,然后复制。',
+			'sessions.terminal.selectCopy.copyAll' => '全部复制',
+			'sessions.terminal.selectCopy.copiedAll' => ({required Object count}) => '已复制全部输出(${count} 个字符)',
+			'sessions.terminal.selectCopy.empty' => '暂无可复制的输出',
 			'sessions.action.stop' => '停止',
 			'sessions.action.stopping' => '停止中…',
 			'sessions.action.stopDescription' => '发送 SIGTERM，保留历史',
@@ -11482,14 +11504,14 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertAtRefTooltip' => '作为 @引用 插入',
 			'sessions.inspector.notes.insertAtRefShort' => '插入 @引用',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\n想法、待办、为 agent 提供的上下文…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
@@ -11996,14 +12018,14 @@ extension on TranslationsZh {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restoreFromFile' => '从文件恢复',
 			'backups.restore.title' => '从备份包恢复',
 			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
 			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
 			'backups.restore.pickFile' => '选择文件',
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.noFile' => '未选择文件',
 			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
 			'backups.restore.targetDsnHint' => '留空表示恢复到 opendray 自身的数据库。',
@@ -12510,14 +12532,14 @@ extension on TranslationsZh {
 			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
 			'memory.rank.title' => '排名分解',
 			'memory.rank.effective' => ({required Object value}) => '有效分：${value}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.rank.similarity' => '余弦相似度',
 			'memory.rank.ageMultiplier' => ({required Object days}) => '时效系数（${days} 天前）',
 			'memory.rank.hitMultiplier' => ({required Object hits}) => '命中系数（${hits} 次命中）',

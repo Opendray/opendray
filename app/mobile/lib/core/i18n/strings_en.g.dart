@@ -3657,6 +3657,7 @@ class TranslationsSessionsTerminalEn {
 	late final TranslationsSessionsTerminalImageSourceEn imageSource = TranslationsSessionsTerminalImageSourceEn.internal(_root);
 	late final TranslationsSessionsTerminalKeyboardEn keyboard = TranslationsSessionsTerminalKeyboardEn.internal(_root);
 	late final TranslationsSessionsTerminalConnectionEn connection = TranslationsSessionsTerminalConnectionEn.internal(_root);
+	late final TranslationsSessionsTerminalSelectCopyEn selectCopy = TranslationsSessionsTerminalSelectCopyEn.internal(_root);
 }
 
 // Path: sessions.action
@@ -6090,12 +6091,6 @@ class TranslationsWebSessionsHeaderEn {
 	/// en: 'Attach image (or paste / drop into terminal)'
 	String get attachImageTooltip => 'Attach image (or paste / drop into terminal)';
 
-	/// en: 'Copy output'
-	String get copyOutput => 'Copy output';
-
-	/// en: 'Copy the terminal output (selection if any, otherwise everything)'
-	String get copyOutputTooltip => 'Copy the terminal output (selection if any, otherwise everything)';
-
 	/// en: 'Restart'
 	String get restart => 'Restart';
 
@@ -6116,6 +6111,12 @@ class TranslationsWebSessionsHeaderEn {
 
 	/// en: 'pid {pid}'
 	String pid({required Object pid}) => 'pid ${pid}';
+
+	/// en: 'Select & copy'
+	String get selectText => 'Select & copy';
+
+	/// en: 'Open a selectable text view to copy any part of the output'
+	String get selectTextTooltip => 'Open a selectable text view to copy any part of the output';
 }
 
 // Path: web.sessions.terminal
@@ -6141,28 +6142,31 @@ class TranslationsWebSessionsTerminalEn {
 	/// en: 'Drop image to attach'
 	String get dropToAttach => 'Drop image to attach';
 
-	/// en: 'Copy'
-	String get copyButton => 'Copy';
-
-	/// en: 'Copy terminal output to clipboard (selection if any, otherwise everything)'
-	String get copyAllTooltip => 'Copy terminal output to clipboard (selection if any, otherwise everything)';
-
-	/// en: 'Copy'
-	String get copySelection => 'Copy';
-
-	/// en: 'Copy selected text'
-	String get copySelectionTooltip => 'Copy selected text';
-
 	/// en: 'Copied to clipboard'
 	String get copiedToast => 'Copied to clipboard';
-
-	/// en: 'Nothing to copy yet'
-	String get copyEmptyToast => 'Nothing to copy yet';
 
 	/// en: 'Couldn't copy to clipboard'
 	String get copyFailedToast => 'Couldn\'t copy to clipboard';
 
 	late final TranslationsWebSessionsTerminalUrlsEn urls = TranslationsWebSessionsTerminalUrlsEn.internal(_root);
+
+	/// en: 'Select & copy'
+	String get selectCopyTitle => 'Select & copy';
+
+	/// en: 'Drag (or long-press on touch) to select any part of the output, then copy it.'
+	String get selectCopyDesc => 'Drag (or long-press on touch) to select any part of the output, then copy it.';
+
+	/// en: 'Copy selection'
+	String get selectCopyCopySelection => 'Copy selection';
+
+	/// en: 'Copy all'
+	String get selectCopyCopyAll => 'Copy all';
+
+	/// en: 'Select some text first'
+	String get selectCopyNoSelection => 'Select some text first';
+
+	/// en: 'No output to copy yet'
+	String get selectCopyEmpty => 'No output to copy yet';
 }
 
 // Path: web.sessions.spawn
@@ -11704,9 +11708,6 @@ class TranslationsSessionsTerminalKeyboardEn {
 
 	// Translations
 
-	/// en: 'Copy buffer'
-	String get copyBuffer => 'Copy buffer';
-
 	/// en: 'Paste'
 	String get paste => 'Paste';
 
@@ -11715,6 +11716,9 @@ class TranslationsSessionsTerminalKeyboardEn {
 
 	/// en: 'Enter'
 	String get enter => 'Enter';
+
+	/// en: 'Select text'
+	String get selectText => 'Select text';
 }
 
 // Path: sessions.terminal.connection
@@ -11745,6 +11749,30 @@ class TranslationsSessionsTerminalConnectionEn {
 
 	/// en: 'Session ended'
 	String get ended => 'Session ended';
+}
+
+// Path: sessions.terminal.selectCopy
+class TranslationsSessionsTerminalSelectCopyEn {
+	TranslationsSessionsTerminalSelectCopyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Select & copy'
+	String get title => 'Select & copy';
+
+	/// en: 'Long-press to select any part of the output, then copy it.'
+	String get hint => 'Long-press to select any part of the output, then copy it.';
+
+	/// en: 'Copy all'
+	String get copyAll => 'Copy all';
+
+	/// en: 'Copied all output ({count} chars)'
+	String copiedAll({required Object count}) => 'Copied all output (${count} chars)';
+
+	/// en: 'No output to copy yet'
+	String get empty => 'No output to copy yet';
 }
 
 // Path: sessions.action.errors
@@ -16841,8 +16869,6 @@ extension on Translations {
 			'web.sessions.header.hideInspector' => 'Hide inspector',
 			'web.sessions.header.attachImage' => 'Attach image',
 			'web.sessions.header.attachImageTooltip' => 'Attach image (or paste / drop into terminal)',
-			'web.sessions.header.copyOutput' => 'Copy output',
-			'web.sessions.header.copyOutputTooltip' => 'Copy the terminal output (selection if any, otherwise everything)',
 			'web.sessions.header.restart' => 'Restart',
 			'web.sessions.header.restarting' => 'Restarting…',
 			'web.sessions.header.remove' => 'Remove',
@@ -16850,17 +16876,14 @@ extension on Translations {
 			'web.sessions.header.stop' => 'Stop',
 			'web.sessions.header.stopping' => 'Stopping…',
 			'web.sessions.header.pid' => ({required Object pid}) => 'pid ${pid}',
+			'web.sessions.header.selectText' => 'Select & copy',
+			'web.sessions.header.selectTextTooltip' => 'Open a selectable text view to copy any part of the output',
 			'web.sessions.terminal.uploadingToast' => 'Uploading image…',
 			'web.sessions.terminal.uploadedToast' => 'Image attached',
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Only image files can be attached',
 			'web.sessions.terminal.dropToAttach' => 'Drop image to attach',
-			'web.sessions.terminal.copyButton' => 'Copy',
-			'web.sessions.terminal.copyAllTooltip' => 'Copy terminal output to clipboard (selection if any, otherwise everything)',
-			'web.sessions.terminal.copySelection' => 'Copy',
-			'web.sessions.terminal.copySelectionTooltip' => 'Copy selected text',
 			'web.sessions.terminal.copiedToast' => 'Copied to clipboard',
-			'web.sessions.terminal.copyEmptyToast' => 'Nothing to copy yet',
 			'web.sessions.terminal.copyFailedToast' => 'Couldn\'t copy to clipboard',
 			'web.sessions.terminal.urls.tooltip' => 'Open the latest link detected in this session',
 			'web.sessions.terminal.urls.tapToOpenLatest' => 'Tap to open the latest link (most recent OAuth URL)',
@@ -16874,6 +16897,12 @@ extension on Translations {
 			'web.sessions.terminal.urls.copiedToast' => 'URL copied',
 			'web.sessions.terminal.urls.copyFailedToast' => 'Couldn\'t copy — long-press the URL and copy manually',
 			'web.sessions.terminal.urls.noneHint' => 'No links detected yet.',
+			'web.sessions.terminal.selectCopyTitle' => 'Select & copy',
+			'web.sessions.terminal.selectCopyDesc' => 'Drag (or long-press on touch) to select any part of the output, then copy it.',
+			'web.sessions.terminal.selectCopyCopySelection' => 'Copy selection',
+			'web.sessions.terminal.selectCopyCopyAll' => 'Copy all',
+			'web.sessions.terminal.selectCopyNoSelection' => 'Select some text first',
+			'web.sessions.terminal.selectCopyEmpty' => 'No output to copy yet',
 			'web.sessions.spawn.title' => 'Spawn session',
 			'web.sessions.spawn.description' => 'Start a CLI session under a registered provider.',
 			'web.sessions.spawn.provider' => 'Provider',
@@ -17249,9 +17278,9 @@ extension on Translations {
 			'web.project.archived.archivedAtPrefix' => 'Archived',
 			'web.project.archived.restoreButton' => 'Restore',
 			'web.project.archived.restoredToast' => 'Restored',
-			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
@@ -17763,9 +17792,9 @@ extension on Translations {
 			'web.channels.notifications.modes.everyHint' => 'No suppression. Use only for low-frequency channels.',
 			'web.channels.notifications.cooldowns.k60' => '1 minute',
 			'web.channels.notifications.cooldowns.k300' => '5 minutes',
-			'web.channels.notifications.cooldowns.k900' => '15 minutes',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.notifications.cooldowns.k900' => '15 minutes',
 			'web.channels.notifications.cooldowns.k1800' => '30 minutes',
 			'web.channels.notifications.cooldowns.k3600' => '1 hour',
 			'web.channels.notifications.snippetCaps.k0' => 'No cap — chunk into multiple messages (default)',
@@ -18277,9 +18306,9 @@ extension on Translations {
 			'web.backups.targetEditor.smb.userLabel' => 'User',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Password',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Path prefix',
-			'web.backups.targetEditor.smb.pathPrefixHint' => 'Sub-folder under the share root (optional)',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.pathPrefixHint' => 'Sub-folder under the share root (optional)',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => 'Host (no protocol). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
@@ -18791,9 +18820,9 @@ extension on Translations {
 			'web.export.form.integrationOptions.noneHint' => 'Skip the integrations table entirely.',
 			'web.export.form.integrationOptions.metadata' => 'Metadata only (recommended)',
 			'web.export.form.integrationOptions.metadataHint' => 'ID, name, route prefix, scopes — no API key material.',
-			'web.export.form.integrationOptions.plaintext' => 'Include plaintext API keys',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.integrationOptions.plaintext' => 'Include plaintext API keys',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks.',
 			'web.export.form.confirmWarning' => 'Type <1>I understand</1> to confirm. opendray currently stores only bcrypt hashes — selecting plaintext does NOT export any plaintext (the feature is reserved for a future release that keeps plaintext caches).',
 			'web.export.form.confirmPlaceholder' => 'I understand',
@@ -19217,10 +19246,10 @@ extension on Translations {
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => 'Upload failed: ${error}',
 			'sessions.terminal.imageSource.photoLibrary' => 'Photo library',
 			'sessions.terminal.imageSource.takePhoto' => 'Take a photo',
-			'sessions.terminal.keyboard.copyBuffer' => 'Copy buffer',
 			'sessions.terminal.keyboard.paste' => 'Paste',
 			'sessions.terminal.keyboard.attachImage' => 'Attach image',
 			'sessions.terminal.keyboard.enter' => 'Enter',
+			'sessions.terminal.keyboard.selectText' => 'Select text',
 			'sessions.terminal.connection.connecting' => 'Connecting…',
 			'sessions.terminal.connection.connected' => 'Connected',
 			'sessions.terminal.connection.reconnecting' => 'Reconnecting…',
@@ -19228,6 +19257,11 @@ extension on Translations {
 			'sessions.terminal.connection.disconnected' => 'Disconnected',
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => 'Disconnected (${error})',
 			'sessions.terminal.connection.ended' => 'Session ended',
+			'sessions.terminal.selectCopy.title' => 'Select & copy',
+			'sessions.terminal.selectCopy.hint' => 'Long-press to select any part of the output, then copy it.',
+			'sessions.terminal.selectCopy.copyAll' => 'Copy all',
+			'sessions.terminal.selectCopy.copiedAll' => ({required Object count}) => 'Copied all output (${count} chars)',
+			'sessions.terminal.selectCopy.empty' => 'No output to copy yet',
 			'sessions.action.stop' => 'Stop',
 			'sessions.action.stopping' => 'Stopping…',
 			'sessions.action.stopDescription' => 'Send SIGTERM, retain history',
@@ -19300,14 +19334,14 @@ extension on Translations {
 			'sessions.inspector.notes.insertAtRefTooltip' => 'Insert as @reference',
 			'sessions.inspector.notes.insertAtRefShort' => 'Insert @reference',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nThoughts, todos, context for the agent…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Change project docs location',
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
@@ -19814,14 +19848,14 @@ extension on Translations {
 			'backups.encryption.passphraseLabel' => 'Your passphrase',
 			'backups.encryption.passphraseHint' => 'At least 20 characters',
 			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restoreFromFile' => 'Restore from file',
 			'backups.restore.title' => 'Restore from bundle',
 			'backups.restore.subtitle' => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.',
 			'backups.restore.bundleLabel' => 'Bundle file (.tar.gz.enc)',
 			'backups.restore.pickFile' => 'Pick file',
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.noFile' => 'No file selected',
 			'backups.restore.targetDsnLabel' => 'Target Postgres DSN',
 			'backups.restore.targetDsnHint' => 'Leave empty to restore into opendray\'s own DB.',
@@ -20328,14 +20362,14 @@ extension on Translations {
 			'memory.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.denseDegraded' => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
 			'memory.workers' => 'Memory workers',
 			'memory.rank.title' => 'Rank breakdown',
 			'memory.rank.effective' => ({required Object value}) => 'Effective score: ${value}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.rank.similarity' => 'Cosine similarity',
 			'memory.rank.ageMultiplier' => ({required Object days}) => 'Age multiplier (${days}d old)',
 			'memory.rank.hitMultiplier' => ({required Object hits}) => 'Hit-count multiplier (${hits} hits)',

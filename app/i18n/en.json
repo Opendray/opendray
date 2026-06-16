@@ -123,15 +123,15 @@
         "hideInspector": "Hide inspector",
         "attachImage": "Attach image",
         "attachImageTooltip": "Attach image (or paste / drop into terminal)",
-        "copyOutput": "Copy output",
-        "copyOutputTooltip": "Copy the terminal output (selection if any, otherwise everything)",
         "restart": "Restart",
         "restarting": "Restarting…",
         "remove": "Remove",
         "removing": "Removing…",
         "stop": "Stop",
         "stopping": "Stopping…",
-        "pid": "pid {pid}"
+        "pid": "pid {pid}",
+        "selectText": "Select & copy",
+        "selectTextTooltip": "Open a selectable text view to copy any part of the output"
       },
       "terminal": {
         "uploadingToast": "Uploading image…",
@@ -139,12 +139,7 @@
         "uploadFailedToast": "Upload failed",
         "uploadInvalidTypeToast": "Only image files can be attached",
         "dropToAttach": "Drop image to attach",
-        "copyButton": "Copy",
-        "copyAllTooltip": "Copy terminal output to clipboard (selection if any, otherwise everything)",
-        "copySelection": "Copy",
-        "copySelectionTooltip": "Copy selected text",
         "copiedToast": "Copied to clipboard",
-        "copyEmptyToast": "Nothing to copy yet",
         "copyFailedToast": "Couldn't copy to clipboard",
         "urls": {
           "tooltip": "Open the latest link detected in this session",
@@ -159,7 +154,13 @@
           "copiedToast": "URL copied",
           "copyFailedToast": "Couldn't copy — long-press the URL and copy manually",
           "noneHint": "No links detected yet."
-        }
+        },
+        "selectCopyTitle": "Select & copy",
+        "selectCopyDesc": "Drag (or long-press on touch) to select any part of the output, then copy it.",
+        "selectCopyCopySelection": "Copy selection",
+        "selectCopyCopyAll": "Copy all",
+        "selectCopyNoSelection": "Select some text first",
+        "selectCopyEmpty": "No output to copy yet"
       },
       "spawn": {
         "title": "Spawn session",
@@ -3199,10 +3200,10 @@
         "takePhoto": "Take a photo"
       },
       "keyboard": {
-        "copyBuffer": "Copy buffer",
         "paste": "Paste",
         "attachImage": "Attach image",
-        "enter": "Enter"
+        "enter": "Enter",
+        "selectText": "Select text"
       },
       "connection": {
         "connecting": "Connecting…",
@@ -3212,6 +3213,13 @@
         "disconnected": "Disconnected",
         "disconnectedWithError": "Disconnected ({error})",
         "ended": "Session ended"
+      },
+      "selectCopy": {
+        "title": "Select & copy",
+        "hint": "Long-press to select any part of the output, then copy it.",
+        "copyAll": "Copy all",
+        "copiedAll": "Copied all output ({count} chars)",
+        "empty": "No output to copy yet"
       }
     },
     "action": {

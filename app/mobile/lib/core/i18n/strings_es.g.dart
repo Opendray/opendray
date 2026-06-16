@@ -1842,6 +1842,7 @@ class _TranslationsSessionsTerminalEs extends TranslationsSessionsTerminalEn {
 	@override late final _TranslationsSessionsTerminalImageSourceEs imageSource = _TranslationsSessionsTerminalImageSourceEs._(_root);
 	@override late final _TranslationsSessionsTerminalKeyboardEs keyboard = _TranslationsSessionsTerminalKeyboardEs._(_root);
 	@override late final _TranslationsSessionsTerminalConnectionEs connection = _TranslationsSessionsTerminalConnectionEs._(_root);
+	@override late final _TranslationsSessionsTerminalSelectCopyEs selectCopy = _TranslationsSessionsTerminalSelectCopyEs._(_root);
 }
 
 // Path: sessions.action
@@ -3099,8 +3100,6 @@ class _TranslationsWebSessionsHeaderEs extends TranslationsWebSessionsHeaderEn {
 	@override String get hideInspector => 'Ocultar inspector';
 	@override String get attachImage => 'Adjuntar imagen';
 	@override String get attachImageTooltip => 'Adjuntar imagen (o pega / suelta en el terminal)';
-	@override String get copyOutput => 'Copiar salida';
-	@override String get copyOutputTooltip => 'Copia la salida del terminal (la selección si hay alguna, si no, todo)';
 	@override String get restart => 'Reiniciar';
 	@override String get restarting => 'Reiniciando…';
 	@override String get remove => 'Eliminar';
@@ -3108,6 +3107,8 @@ class _TranslationsWebSessionsHeaderEs extends TranslationsWebSessionsHeaderEn {
 	@override String get stop => 'Detener';
 	@override String get stopping => 'Deteniendo…';
 	@override String pid({required Object pid}) => 'pid ${pid}';
+	@override String get selectText => 'Seleccionar y copiar';
+	@override String get selectTextTooltip => 'Abre una vista de texto seleccionable para copiar cualquier parte de la salida';
 }
 
 // Path: web.sessions.terminal
@@ -3122,14 +3123,15 @@ class _TranslationsWebSessionsTerminalEs extends TranslationsWebSessionsTerminal
 	@override String get uploadFailedToast => 'Error al subir';
 	@override String get uploadInvalidTypeToast => 'Solo se pueden adjuntar archivos de imagen';
 	@override String get dropToAttach => 'Suelta la imagen para adjuntarla';
-	@override String get copyButton => 'Copiar';
-	@override String get copyAllTooltip => 'Copia la salida del terminal al portapapeles (la selección si hay alguna, si no, todo)';
-	@override String get copySelection => 'Copiar';
-	@override String get copySelectionTooltip => 'Copiar el texto seleccionado';
 	@override String get copiedToast => 'Copiado al portapapeles';
-	@override String get copyEmptyToast => 'Aún no hay nada que copiar';
 	@override String get copyFailedToast => 'No se pudo copiar al portapapeles';
 	@override late final _TranslationsWebSessionsTerminalUrlsEs urls = _TranslationsWebSessionsTerminalUrlsEs._(_root);
+	@override String get selectCopyTitle => 'Seleccionar y copiar';
+	@override String get selectCopyDesc => 'Arrastra (o mantén pulsado en pantalla táctil) para seleccionar cualquier parte de la salida y cópiala.';
+	@override String get selectCopyCopySelection => 'Copiar selección';
+	@override String get selectCopyCopyAll => 'Copiar todo';
+	@override String get selectCopyNoSelection => 'Selecciona primero algún texto';
+	@override String get selectCopyEmpty => 'Aún no hay salida que copiar';
 }
 
 // Path: web.sessions.spawn
@@ -6026,10 +6028,10 @@ class _TranslationsSessionsTerminalKeyboardEs extends TranslationsSessionsTermin
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get copyBuffer => 'Copiar búfer';
 	@override String get paste => 'Pegar';
 	@override String get attachImage => 'Adjuntar imagen';
 	@override String get enter => 'Intro';
+	@override String get selectText => 'Seleccionar texto';
 }
 
 // Path: sessions.terminal.connection
@@ -6046,6 +6048,20 @@ class _TranslationsSessionsTerminalConnectionEs extends TranslationsSessionsTerm
 	@override String get disconnected => 'Desconectado';
 	@override String disconnectedWithError({required Object error}) => 'Desconectado (${error})';
 	@override String get ended => 'Sesión finalizada';
+}
+
+// Path: sessions.terminal.selectCopy
+class _TranslationsSessionsTerminalSelectCopyEs extends TranslationsSessionsTerminalSelectCopyEn {
+	_TranslationsSessionsTerminalSelectCopyEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Seleccionar y copiar';
+	@override String get hint => 'Mantén pulsado para seleccionar cualquier parte de la salida y cópiala.';
+	@override String get copyAll => 'Copiar todo';
+	@override String copiedAll({required Object count}) => 'Salida copiada (${count} caracteres)';
+	@override String get empty => 'Aún no hay salida que copiar';
 }
 
 // Path: sessions.action.errors
@@ -9023,8 +9039,6 @@ extension on TranslationsEs {
 			'web.sessions.header.hideInspector' => 'Ocultar inspector',
 			'web.sessions.header.attachImage' => 'Adjuntar imagen',
 			'web.sessions.header.attachImageTooltip' => 'Adjuntar imagen (o pega / suelta en el terminal)',
-			'web.sessions.header.copyOutput' => 'Copiar salida',
-			'web.sessions.header.copyOutputTooltip' => 'Copia la salida del terminal (la selección si hay alguna, si no, todo)',
 			'web.sessions.header.restart' => 'Reiniciar',
 			'web.sessions.header.restarting' => 'Reiniciando…',
 			'web.sessions.header.remove' => 'Eliminar',
@@ -9032,17 +9046,14 @@ extension on TranslationsEs {
 			'web.sessions.header.stop' => 'Detener',
 			'web.sessions.header.stopping' => 'Deteniendo…',
 			'web.sessions.header.pid' => ({required Object pid}) => 'pid ${pid}',
+			'web.sessions.header.selectText' => 'Seleccionar y copiar',
+			'web.sessions.header.selectTextTooltip' => 'Abre una vista de texto seleccionable para copiar cualquier parte de la salida',
 			'web.sessions.terminal.uploadingToast' => 'Subiendo imagen…',
 			'web.sessions.terminal.uploadedToast' => 'Imagen adjuntada',
 			'web.sessions.terminal.uploadFailedToast' => 'Error al subir',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Solo se pueden adjuntar archivos de imagen',
 			'web.sessions.terminal.dropToAttach' => 'Suelta la imagen para adjuntarla',
-			'web.sessions.terminal.copyButton' => 'Copiar',
-			'web.sessions.terminal.copyAllTooltip' => 'Copia la salida del terminal al portapapeles (la selección si hay alguna, si no, todo)',
-			'web.sessions.terminal.copySelection' => 'Copiar',
-			'web.sessions.terminal.copySelectionTooltip' => 'Copiar el texto seleccionado',
 			'web.sessions.terminal.copiedToast' => 'Copiado al portapapeles',
-			'web.sessions.terminal.copyEmptyToast' => 'Aún no hay nada que copiar',
 			'web.sessions.terminal.copyFailedToast' => 'No se pudo copiar al portapapeles',
 			'web.sessions.terminal.urls.tooltip' => 'Abre el último enlace detectado en esta session',
 			'web.sessions.terminal.urls.tapToOpenLatest' => 'Toca para abrir el último enlace (la URL de OAuth más reciente)',
@@ -9056,6 +9067,12 @@ extension on TranslationsEs {
 			'web.sessions.terminal.urls.copiedToast' => 'URL copiada',
 			'web.sessions.terminal.urls.copyFailedToast' => 'No se pudo copiar. Mantén pulsada la URL y cópiala manualmente',
 			'web.sessions.terminal.urls.noneHint' => 'Aún no se han detectado enlaces.',
+			'web.sessions.terminal.selectCopyTitle' => 'Seleccionar y copiar',
+			'web.sessions.terminal.selectCopyDesc' => 'Arrastra (o mantén pulsado en pantalla táctil) para seleccionar cualquier parte de la salida y cópiala.',
+			'web.sessions.terminal.selectCopyCopySelection' => 'Copiar selección',
+			'web.sessions.terminal.selectCopyCopyAll' => 'Copiar todo',
+			'web.sessions.terminal.selectCopyNoSelection' => 'Selecciona primero algún texto',
+			'web.sessions.terminal.selectCopyEmpty' => 'Aún no hay salida que copiar',
 			'web.sessions.spawn.title' => 'Crear session',
 			'web.sessions.spawn.description' => 'Inicia una session de la CLI con un proveedor registrado.',
 			'web.sessions.spawn.provider' => 'Proveedor',
@@ -9431,9 +9448,9 @@ extension on TranslationsEs {
 			'web.project.archived.archivedAtPrefix' => 'Archivado',
 			'web.project.archived.restoreButton' => 'Restaurar',
 			'web.project.archived.restoredToast' => 'Restaurado',
-			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.reset.button' => 'Restablecer',
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
@@ -9945,9 +9962,9 @@ extension on TranslationsEs {
 			'web.channels.notifications.modes.everyHint' => 'Sin supresión. Úsalo solo para canales de baja frecuencia.',
 			'web.channels.notifications.cooldowns.k60' => '1 minuto',
 			'web.channels.notifications.cooldowns.k300' => '5 minutos',
-			'web.channels.notifications.cooldowns.k900' => '15 minutos',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.notifications.cooldowns.k900' => '15 minutos',
 			'web.channels.notifications.cooldowns.k1800' => '30 minutos',
 			'web.channels.notifications.cooldowns.k3600' => '1 hora',
 			'web.channels.notifications.snippetCaps.k0' => 'Sin límite, dividir en varios mensajes (predeterminado)',
@@ -10459,9 +10476,9 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.userLabel' => 'Usuario',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Prefijo de ruta',
-			'web.backups.targetEditor.smb.pathPrefixHint' => 'Subcarpeta bajo la raíz del recurso compartido (opcional)',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.pathPrefixHint' => 'Subcarpeta bajo la raíz del recurso compartido (opcional)',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => 'Host (sin protocolo). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
@@ -10973,9 +10990,9 @@ extension on TranslationsEs {
 			'web.export.form.integrationOptions.noneHint' => 'Omitir por completo la tabla de integraciones.',
 			'web.export.form.integrationOptions.metadata' => 'Solo metadatos (recomendado)',
 			'web.export.form.integrationOptions.metadataHint' => 'ID, nombre, prefijo de ruta, alcances. Sin material de API key.',
-			'web.export.form.integrationOptions.plaintext' => 'Incluir las API keys en texto plano',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.integrationOptions.plaintext' => 'Incluir las API keys en texto plano',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 solo con bcrypt: no existe texto plano recuperable. El manifiesto lo documenta; no se filtra nada.',
 			'web.export.form.confirmWarning' => 'Escribe <1>Lo entiendo</1> para confirmar. opendray actualmente almacena solo hashes bcrypt, así que seleccionar texto plano NO exporta ningún texto plano (la función está reservada para una versión futura que mantenga cachés de texto plano).',
 			'web.export.form.confirmPlaceholder' => 'Lo entiendo',
@@ -11399,10 +11416,10 @@ extension on TranslationsEs {
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => 'Falló la subida: ${error}',
 			'sessions.terminal.imageSource.photoLibrary' => 'Biblioteca de fotos',
 			'sessions.terminal.imageSource.takePhoto' => 'Tomar una foto',
-			'sessions.terminal.keyboard.copyBuffer' => 'Copiar búfer',
 			'sessions.terminal.keyboard.paste' => 'Pegar',
 			'sessions.terminal.keyboard.attachImage' => 'Adjuntar imagen',
 			'sessions.terminal.keyboard.enter' => 'Intro',
+			'sessions.terminal.keyboard.selectText' => 'Seleccionar texto',
 			'sessions.terminal.connection.connecting' => 'Conectando…',
 			'sessions.terminal.connection.connected' => 'Conectado',
 			'sessions.terminal.connection.reconnecting' => 'Reconectando…',
@@ -11410,6 +11427,11 @@ extension on TranslationsEs {
 			'sessions.terminal.connection.disconnected' => 'Desconectado',
 			'sessions.terminal.connection.disconnectedWithError' => ({required Object error}) => 'Desconectado (${error})',
 			'sessions.terminal.connection.ended' => 'Sesión finalizada',
+			'sessions.terminal.selectCopy.title' => 'Seleccionar y copiar',
+			'sessions.terminal.selectCopy.hint' => 'Mantén pulsado para seleccionar cualquier parte de la salida y cópiala.',
+			'sessions.terminal.selectCopy.copyAll' => 'Copiar todo',
+			'sessions.terminal.selectCopy.copiedAll' => ({required Object count}) => 'Salida copiada (${count} caracteres)',
+			'sessions.terminal.selectCopy.empty' => 'Aún no hay salida que copiar',
 			'sessions.action.stop' => 'Detener',
 			'sessions.action.stopping' => 'Deteniendo…',
 			'sessions.action.stopDescription' => 'Envía SIGTERM, conserva el historial',
@@ -11482,14 +11504,14 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertAtRefTooltip' => 'Insertar como @referencia',
 			'sessions.inspector.notes.insertAtRefShort' => 'Insertar @referencia',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nIdeas, tareas pendientes, contexto para el agente…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Cambiar la ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
 			'sessions.inspector.notes.create' => 'Crear',
 			'sessions.inspector.notes.filterHint' => 'Filtrar…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
@@ -11996,14 +12018,14 @@ extension on TranslationsEs {
 			'backups.encryption.passphraseLabel' => 'Tu passphrase',
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restoreFromFile' => 'Restaurar desde archivo',
 			'backups.restore.title' => 'Restaurar desde paquete',
 			'backups.restore.subtitle' => 'Reproduce un paquete cifrado .tar.gz.enc en una base de datos Postgres. El paquete se sube desde este teléfono: elige un archivo generado por una copia de seguridad anterior.',
 			'backups.restore.bundleLabel' => 'Archivo de paquete (.tar.gz.enc)',
 			'backups.restore.pickFile' => 'Elegir archivo',
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.noFile' => 'Ningún archivo seleccionado',
 			'backups.restore.targetDsnLabel' => 'DSN de Postgres de destino',
 			'backups.restore.targetDsnHint' => 'Déjalo vacío para restaurar en la propia base de datos de opendray.',
@@ -12510,14 +12532,14 @@ extension on TranslationsEs {
 			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
 			'memory.title' => 'Memoria',
 			'memory.more' => 'Más',
 			'memory.workers' => 'Workers de memoria',
 			'memory.rank.title' => 'Desglose del ranking',
 			'memory.rank.effective' => ({required Object value}) => 'Puntuación efectiva: ${value}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.rank.similarity' => 'Similitud del coseno',
 			'memory.rank.ageMultiplier' => ({required Object days}) => 'Multiplicador por antigüedad (${days}d de antigüedad)',
 			'memory.rank.hitMultiplier' => ({required Object hits}) => 'Multiplicador por número de hits (${hits} hits)',

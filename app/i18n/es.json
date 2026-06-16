@@ -123,15 +123,15 @@
         "hideInspector": "Ocultar inspector",
         "attachImage": "Adjuntar imagen",
         "attachImageTooltip": "Adjuntar imagen (o pega / suelta en el terminal)",
-        "copyOutput": "Copiar salida",
-        "copyOutputTooltip": "Copia la salida del terminal (la selección si hay alguna, si no, todo)",
         "restart": "Reiniciar",
         "restarting": "Reiniciando…",
         "remove": "Eliminar",
         "removing": "Eliminando…",
         "stop": "Detener",
         "stopping": "Deteniendo…",
-        "pid": "pid {pid}"
+        "pid": "pid {pid}",
+        "selectText": "Seleccionar y copiar",
+        "selectTextTooltip": "Abre una vista de texto seleccionable para copiar cualquier parte de la salida"
       },
       "terminal": {
         "uploadingToast": "Subiendo imagen…",
@@ -139,12 +139,7 @@
         "uploadFailedToast": "Error al subir",
         "uploadInvalidTypeToast": "Solo se pueden adjuntar archivos de imagen",
         "dropToAttach": "Suelta la imagen para adjuntarla",
-        "copyButton": "Copiar",
-        "copyAllTooltip": "Copia la salida del terminal al portapapeles (la selección si hay alguna, si no, todo)",
-        "copySelection": "Copiar",
-        "copySelectionTooltip": "Copiar el texto seleccionado",
         "copiedToast": "Copiado al portapapeles",
-        "copyEmptyToast": "Aún no hay nada que copiar",
         "copyFailedToast": "No se pudo copiar al portapapeles",
         "urls": {
           "tooltip": "Abre el último enlace detectado en esta session",
@@ -159,7 +154,13 @@
           "copiedToast": "URL copiada",
           "copyFailedToast": "No se pudo copiar. Mantén pulsada la URL y cópiala manualmente",
           "noneHint": "Aún no se han detectado enlaces."
-        }
+        },
+        "selectCopyTitle": "Seleccionar y copiar",
+        "selectCopyDesc": "Arrastra (o mantén pulsado en pantalla táctil) para seleccionar cualquier parte de la salida y cópiala.",
+        "selectCopyCopySelection": "Copiar selección",
+        "selectCopyCopyAll": "Copiar todo",
+        "selectCopyNoSelection": "Selecciona primero algún texto",
+        "selectCopyEmpty": "Aún no hay salida que copiar"
       },
       "spawn": {
         "title": "Crear session",
@@ -3199,10 +3200,10 @@
         "takePhoto": "Tomar una foto"
       },
       "keyboard": {
-        "copyBuffer": "Copiar búfer",
         "paste": "Pegar",
         "attachImage": "Adjuntar imagen",
-        "enter": "Intro"
+        "enter": "Intro",
+        "selectText": "Seleccionar texto"
       },
       "connection": {
         "connecting": "Conectando…",
@@ -3212,6 +3213,13 @@
         "disconnected": "Desconectado",
         "disconnectedWithError": "Desconectado ({error})",
         "ended": "Sesión finalizada"
+      },
+      "selectCopy": {
+        "title": "Seleccionar y copiar",
+        "hint": "Mantén pulsado para seleccionar cualquier parte de la salida y cópiala.",
+        "copyAll": "Copiar todo",
+        "copiedAll": "Salida copiada ({count} caracteres)",
+        "empty": "Aún no hay salida que copiar"
       }
     },
     "action": {

@@ -11,6 +11,7 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/sessions/terminal_select_sheet.dart';
 import 'package:opendray/features/sessions/url_extractor.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -463,27 +464,25 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
 
   void _sendKey(String text) => _onTerminalOutput(text);
 
-  // Copy the entire xterm buffer (scrollback + visible) to the
-  // system clipboard. Triggered from the keyboard helper bar.
-  Future<void> _copyBuffer() async {
-    final selection = _controller.selection;
-    final text = selection != null
-        ? _terminal.buffer.getText(selection)
-        : _terminal.buffer.getText();
-    if (text.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          selection != null
-              ? 'Selection copied (${text.length} chars)'
-              : 'Buffer copied (${text.length} chars)',
-        ),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  // Reconstruct the buffer as clean text: drop each line's trailing
+  // padding and the run of blank lines past the last printed row, so a
+  // freshly-started session doesn't copy a wall of empty rows. Shared
+  // by the keyboard-bar Copy and the "Select & copy" sheet.
+  String _cleanBufferText() {
+    final raw = _terminal.buffer.getText();
+    final lines = raw.split('\n').map((l) => l.trimRight()).toList();
+    var end = lines.length;
+    while (end > 0 && lines[end - 1].isEmpty) {
+      end--;
+    }
+    return lines.sublist(0, end).join('\n');
+  }
+
+  // Open the "Select & copy" sheet with the cleaned buffer rendered as
+  // SelectableText, so the operator can select any portion (a command,
+  // a URL) — the canvas terminal won't allow a partial selection.
+  Future<void> _openSelectSheet() async {
+    await showTerminalSelectSheet(context, _cleanBufferText());
   }
 
   // Read the system clipboard and feed the text into the terminal
@@ -685,7 +684,7 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
         ),
         _MobileKeyboardBar(
           onKey: _sendKey,
-          onCopy: _copyBuffer,
+          onSelectText: _openSelectSheet,
           onPaste: _pasteFromClipboard,
           onAttachImage: _attachImage,
         ),
@@ -796,13 +795,13 @@ class _StatusStrip extends StatelessWidget {
 class _MobileKeyboardBar extends StatefulWidget {
   const _MobileKeyboardBar({
     required this.onKey,
-    required this.onCopy,
+    required this.onSelectText,
     required this.onPaste,
     required this.onAttachImage,
   });
 
   final void Function(String) onKey;
-  final Future<void> Function() onCopy;
+  final Future<void> Function() onSelectText;
   final Future<void> Function() onPaste;
   final Future<void> Function() onAttachImage;
 
@@ -905,11 +904,11 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
               },
             ),
             _Key(
-              icon: Icons.content_copy,
-              tooltip: t.sessions.terminal.keyboard.copyBuffer,
+              icon: Icons.text_fields,
+              tooltip: t.sessions.terminal.keyboard.selectText,
               onTap: () {
                 _haptic();
-                unawaited(widget.onCopy());
+                unawaited(widget.onSelectText());
               },
             ),
             _Key(
