@@ -46,6 +46,7 @@ const CURATION_PROVIDERS: { id: AgentProviderID; label: string }[] = [
   { id: 'claude', label: 'Claude' },
   { id: 'gemini', label: 'Gemini' },
   { id: 'codex', label: 'Codex' },
+  { id: 'antigravity', label: 'Antigravity' },
 ]
 
 interface CurationChatProps {
