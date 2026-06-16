@@ -1,12 +1,22 @@
 package catalog
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"testing"
 
 	"github.com/opendray/opendray-v2/internal/session"
 )
+
+// stubOpenCodeProbe replaces the live model prober for a test and restores
+// it on cleanup, so tests never depend on a running local endpoint.
+func stubOpenCodeProbe(t *testing.T, ids []string) {
+	t.Helper()
+	prev := probeOpenCodeModels
+	probeOpenCodeModels = func(context.Context, string, string) []string { return ids }
+	t.Cleanup(func() { probeOpenCodeModels = prev })
+}
 
 func readOpenCodeConfig(t *testing.T, baseDir string) map[string]any {
 	t.Helper()
@@ -51,9 +61,10 @@ func TestInjectOpenCodeLocalProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			stubOpenCodeProbe(t, nil) // no live endpoint enumeration
 			dir := t.TempDir()
 			out := &session.PrepareOutput{Env: map[string]string{}}
-			if err := injectOpenCodeLocalProvider(dir, tt.cfg, out); err != nil {
+			if err := injectOpenCodeLocalProvider(context.Background(), dir, tt.cfg, out); err != nil {
 				t.Fatalf("injectOpenCodeLocalProvider: %v", err)
 			}
 			if _, err := os.Stat(openCodeConfigPath(dir)); (err == nil) != tt.wantFile {
@@ -85,6 +96,45 @@ func TestInjectOpenCodeLocalProvider(t *testing.T) {
 				t.Errorf("default model=%q, want %q", got, tt.wantModel)
 			}
 		})
+	}
+}
+
+func TestInjectOpenCodeLocalProvider_EnumeratesProbedModels(t *testing.T) {
+	stubOpenCodeProbe(t, []string{"qwen/qwen3-coder", "deepseek/r1"})
+	dir := t.TempDir()
+	out := &session.PrepareOutput{Env: map[string]string{}}
+	// Only a base URL, no localModel — probed models must populate /model.
+	if err := injectOpenCodeLocalProvider(context.Background(), dir, map[string]any{"localBaseUrl": "http://localhost:1234/v1"}, out); err != nil {
+		t.Fatal(err)
+	}
+	cfg := readOpenCodeConfig(t, dir)
+	local := cfg["provider"].(map[string]any)[openCodeLocalProvider].(map[string]any)
+	models, _ := local["models"].(map[string]any)
+	if _, ok := models["qwen/qwen3-coder"]; !ok {
+		t.Errorf("probed model qwen/qwen3-coder missing from models map: %v", models)
+	}
+	if _, ok := models["deepseek/r1"]; !ok {
+		t.Errorf("probed model deepseek/r1 missing from models map: %v", models)
+	}
+	// Default-selects the first probed model when no localModel is pinned.
+	if got, _ := cfg["model"].(string); got != "opendray-local/qwen/qwen3-coder" {
+		t.Errorf("default model=%q, want opendray-local/qwen/qwen3-coder", got)
+	}
+}
+
+func TestIsOpenCodeChatModel(t *testing.T) {
+	tests := map[string]bool{
+		"qwen/qwen3-coder":        true,
+		"google/gemma-3-4b":       true,
+		"text-embedding-bge-m3":   false,
+		"whisper-large-v3-turbo":  false,
+		"text-embedding-qwen3-8b": false,
+		"some-reranker-v2":        false,
+	}
+	for id, want := range tests {
+		if got := isOpenCodeChatModel(id); got != want {
+			t.Errorf("isOpenCodeChatModel(%q)=%v, want %v", id, got, want)
+		}
 	}
 }
 
@@ -169,9 +219,10 @@ func TestEnsureOpenCodeInstructionsDedup(t *testing.T) {
 // instructions all land in one file without clobbering each other, mirroring
 // the spawn-prep call order.
 func TestOpenCodeConfigMergesAllContributors(t *testing.T) {
+	stubOpenCodeProbe(t, nil)
 	dir := t.TempDir()
 	out := &session.PrepareOutput{Env: map[string]string{}}
-	if err := injectOpenCodeLocalProvider(dir, map[string]any{"localBaseUrl": "http://localhost:1234/v1", "localModel": "m"}, out); err != nil {
+	if err := injectOpenCodeLocalProvider(context.Background(), dir, map[string]any{"localBaseUrl": "http://localhost:1234/v1", "localModel": "m"}, out); err != nil {
 		t.Fatal(err)
 	}
 	if err := ensureOpenCodeInstructions(dir, out); err != nil {

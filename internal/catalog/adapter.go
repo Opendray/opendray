@@ -400,7 +400,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// OPENCODE_CONFIG and default-select it. Runs before skills/MCP so
 		// all three merge into the same per-session config file.
 		if providerID == "opencode" {
-			if err := injectOpenCodeLocalProvider(baseDir, p.Config, &out); err != nil {
+			if err := injectOpenCodeLocalProvider(prepareCtx, baseDir, p.Config, &out); err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("inject opencode local provider: %w", err)
 			}
 		}

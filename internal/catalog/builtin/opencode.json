@@ -31,8 +31,8 @@
       "label_zh": "模型与认证",
       "type": "note",
       "group": "auth",
-      "description": "OpenCode is provider-agnostic. Configure cloud providers with `opencode auth login`, or point the fields below at a local OpenAI-compatible endpoint (Ollama / LM Studio / vLLM). Settings here are written into a per-session config opendray hands OpenCode via OPENCODE_CONFIG — your own ~/.config/opencode config still applies underneath.",
-      "description_zh": "OpenCode 与模型无关。云端用 `opencode auth login` 登录，或在下方字段填入本地 OpenAI 兼容端点（Ollama / LM Studio / vLLM）。这里的设置会写入 opendray 通过 OPENCODE_CONFIG 注入的 per-session 配置 —— 你自己的 ~/.config/opencode 配置仍在底层生效。"
+      "description": "OpenCode is provider-agnostic. For local models, just set the Local Endpoint Base URL below (Ollama / LM Studio / vLLM) — opendray auto-discovers the endpoint's models so they appear in /model. For cloud models, run `opencode auth login` once. Settings here are written into a per-session config opendray hands OpenCode via OPENCODE_CONFIG; your own ~/.config/opencode config still applies underneath.",
+      "description_zh": "OpenCode 与模型无关。用本地模型只需在下方填「本地端点 Base URL」（Ollama / LM Studio / vLLM）—— opendray 会自动发现端点上的模型并显示在 /model 里。云端模型先跑一次 `opencode auth login`。这里的设置会写入 opendray 通过 OPENCODE_CONFIG 注入的 per-session 配置；你自己的 ~/.config/opencode 配置仍在底层生效。"
     },
     {
       "key": "localBaseUrl",
@@ -41,18 +41,18 @@
       "type": "string",
       "group": "model",
       "placeholder": "http://localhost:1234/v1",
-      "description": "OpenAI-compatible base URL. When set, opendray registers a provider named `opendray-local` and selects it by default.",
-      "description_zh": "OpenAI 兼容的 base URL。填写后 opendray 会注册名为 `opendray-local` 的 provider 并默认选用。"
+      "description": "OpenAI-compatible base URL (Ollama / LM Studio / vLLM). When set, opendray registers a provider named `opendray-local`, auto-discovers every model the endpoint serves, and selects one by default — they all show up in OpenCode's /model picker. This is the only field you need for local models.",
+      "description_zh": "OpenAI 兼容的 base URL（Ollama / LM Studio / vLLM）。填写后 opendray 会注册名为 `opendray-local` 的 provider，自动发现端点上的所有模型并默认选用其一 —— 它们都会出现在 OpenCode 的 /model 选择器里。用本地模型只需填这一项。"
     },
     {
       "key": "localModel",
-      "label": "Local Model ID",
-      "label_zh": "本地模型 ID",
+      "label": "Default Local Model (optional)",
+      "label_zh": "默认本地模型（可选）",
       "type": "string",
       "group": "model",
       "placeholder": "qwen3-coder",
-      "description": "Model id served at the local endpoint (used as opendray-local/<id>).",
-      "description_zh": "本地端点上提供的模型 id（用作 opendray-local/<id>）。"
+      "description": "Optional. Pins which discovered model opens by default (used as opendray-local/<id>). Leave blank to default to the first discovered model — all are still available in /model.",
+      "description_zh": "可选。固定默认打开哪个已发现的模型（用作 opendray-local/<id>）。留空则默认用发现的第一个模型 —— 其余仍可在 /model 切换。"
     },
     {
       "key": "localApiKey",

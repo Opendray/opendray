@@ -1,11 +1,14 @@
 package catalog
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/opendray/opendray-v2/internal/session"
 )
@@ -97,16 +100,40 @@ func ensureOpenCodeInstructions(baseDir string, out *session.PrepareOutput) erro
 
 // injectOpenCodeLocalProvider registers a `opendray-local` OpenAI-compatible
 // provider in the generated config when the operator set a local endpoint
-// base URL, and default-selects it. A no-op when no local endpoint is
+// base URL, and default-selects a model. A no-op when no local endpoint is
 // configured (the operator uses their own ~/.config/opencode providers).
-func injectOpenCodeLocalProvider(baseDir string, cfg map[string]any, out *session.PrepareOutput) error {
+//
+// OpenCode's custom OpenAI-compatible provider does NOT auto-discover models,
+// so opendray enumerates them: the endpoint's /models is probed and every
+// (chat) model id is added to the provider's `models` map. This way the
+// operator only enters a base URL and OpenCode's /model picker lists the
+// whole local catalog — `localModel`, if set, just pins the default.
+func injectOpenCodeLocalProvider(ctx context.Context, baseDir string, cfg map[string]any, out *session.PrepareOutput) error {
 	baseURL := strings.TrimSpace(stringFromConfig(cfg, "localBaseUrl"))
 	if baseURL == "" {
 		return nil
 	}
-	model := strings.TrimSpace(stringFromConfig(cfg, "localModel"))
+	localModel := strings.TrimSpace(stringFromConfig(cfg, "localModel"))
 	apiKey := strings.TrimSpace(stringFromConfig(cfg, "localApiKey"))
 	explicitModel := strings.TrimSpace(stringFromConfig(cfg, "model")) != ""
+
+	// Best-effort enumeration — a probe failure (endpoint down) just falls
+	// back to the explicitly named localModel, so a spawn is never blocked.
+	modelIDs := probeOpenCodeModels(ctx, baseURL, apiKey)
+
+	models := map[string]any{}
+	for _, id := range modelIDs {
+		models[id] = map[string]any{"name": id}
+	}
+	if localModel != "" {
+		models[localModel] = map[string]any{"name": localModel}
+	}
+	// Default model: the operator's localModel if set, else the first probed
+	// model so the session opens directly on a working local model.
+	defaultModel := localModel
+	if defaultModel == "" && len(modelIDs) > 0 {
+		defaultModel = modelIDs[0]
+	}
 
 	if err := mergeOpenCodeConfig(baseDir, func(c map[string]any) {
 		providers, _ := c["provider"].(map[string]any)
@@ -117,10 +144,6 @@ func injectOpenCodeLocalProvider(baseDir string, cfg map[string]any, out *sessio
 		if apiKey != "" {
 			options["apiKey"] = apiKey
 		}
-		models := map[string]any{}
-		if model != "" {
-			models[model] = map[string]any{"name": model}
-		}
 		providers[openCodeLocalProvider] = map[string]any{
 			"npm":     "@ai-sdk/openai-compatible",
 			"name":    "Local (opendray)",
@@ -128,16 +151,70 @@ func injectOpenCodeLocalProvider(baseDir string, cfg map[string]any, out *sessio
 			"models":  models,
 		}
 		c["provider"] = providers
-		// Default-select the local model unless the operator pinned an
-		// explicit `model` (which goes through --model and wins anyway).
-		if !explicitModel && model != "" {
-			c["model"] = openCodeLocalProvider + "/" + model
+		// Default-select a local model unless the operator pinned an explicit
+		// `model` (which goes through --model and wins anyway).
+		if !explicitModel && defaultModel != "" {
+			c["model"] = openCodeLocalProvider + "/" + defaultModel
 		}
 	}); err != nil {
 		return err
 	}
 	setOpenCodeConfigEnv(baseDir, out)
 	return nil
+}
+
+// probeOpenCodeModels lists the chat/coding model ids served at an
+// OpenAI-compatible endpoint (GET <baseURL>/models). Embedding /
+// transcription / rerank ids are filtered out so they don't clutter
+// OpenCode's /model picker. Best-effort: any error returns nil so a spawn is
+// never blocked on an unreachable endpoint. A package var so tests can stub
+// it without a live endpoint.
+var probeOpenCodeModels = func(ctx context.Context, baseURL, apiKey string) []string {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(baseURL, "/")+"/models", nil)
+	if err != nil {
+		return nil
+	}
+	if apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	var body struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil
+	}
+	ids := make([]string, 0, len(body.Data))
+	for _, m := range body.Data {
+		if id := strings.TrimSpace(m.ID); id != "" && isOpenCodeChatModel(id) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// isOpenCodeChatModel drops obvious non-chat model ids (embeddings,
+// transcription, rerank, tts) by a conservative substring denylist so the
+// /model picker only offers usable coding models.
+func isOpenCodeChatModel(id string) bool {
+	lc := strings.ToLower(id)
+	for _, bad := range []string{"embed", "whisper", "rerank", "tts", "stt", "transcrib"} {
+		if strings.Contains(lc, bad) {
+			return false
+		}
+	}
+	return true
 }
 
 // renderOpenCodeMCP merges the session's MCP servers into the generated
