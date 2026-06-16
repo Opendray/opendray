@@ -15,6 +15,7 @@ class ProviderVisual {
     required this.brandColor,
     required this.label,
     required this.fallbackLetter,
+    this.monochrome = false,
   });
 
   /// Asset path under `assets/provider_icons/`, or null if no
@@ -34,6 +35,13 @@ class ProviderVisual {
   /// Single uppercase character used inside the tile when no
   /// brand SVG is registered.
   final String fallbackLetter;
+
+  /// True when the bundled SVG is a single-fill black mark (OpenAI /
+  /// Shell / OpenCode). Those are rendered in the theme foreground so
+  /// they read on the dark tile — mirroring the web admin, which inverts
+  /// the same marks to white. Multi-colour marks (Claude / Gemini /
+  /// Antigravity) carry their own ink and stay false.
+  final bool monochrome;
 }
 
 // Brand mark + colour for every provider opendray currently
@@ -53,6 +61,7 @@ const _palette = <String, ProviderVisual>{
     brandColor: Color(0xFF10A37F),
     label: 'Codex',
     fallbackLetter: 'C',
+    monochrome: true,
   ),
   'gemini': ProviderVisual(
     iconAsset: 'assets/provider_icons/gemini.svg',
@@ -77,12 +86,14 @@ const _palette = <String, ProviderVisual>{
     brandColor: Color(0xFF14B8A6),
     label: 'OpenCode',
     fallbackLetter: 'O',
+    monochrome: true,
   ),
   'shell': ProviderVisual(
     iconAsset: 'assets/provider_icons/shell.svg',
     brandColor: Color(0xFF4D4D4D),
     label: 'Shell',
     fallbackLetter: 'S',
+    monochrome: true,
   ),
 };
 
