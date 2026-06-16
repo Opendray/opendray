@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  ClipboardCopy,
   ImagePlus,
   Layers,
   Plus,
@@ -14,6 +13,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   ChevronLeft,
+  TextCursorInput,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
@@ -27,7 +27,11 @@ import {
   Terminal,
   type TerminalHandle,
 } from '@/components/sessions/Terminal'
-import { EndedSessionView } from '@/components/sessions/EndedSessionView'
+import {
+  EndedSessionView,
+  type EndedSessionHandle,
+} from '@/components/sessions/EndedSessionView'
+import { SelectCopyDialog } from '@/components/sessions/SelectCopyDialog'
 import { SpawnDialog } from '@/components/sessions/SpawnDialog'
 import { StatePill } from '@/components/sessions/StatePill'
 import { AccountSwitcher } from '@/components/sessions/AccountSwitcher'
@@ -190,7 +194,20 @@ export function SessionsPage() {
   }, [isMobile, setListCollapsed, setInspectorOpen])
 
   const termRef = useRef<TerminalHandle>(null)
+  const endedRef = useRef<EndedSessionHandle>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // "Select & copy" dialog: holds the reconstructed buffer text so the
+  // operator can natively select any portion (works on touch, unlike
+  // the xterm canvas). Sourced from whichever view is mounted — the
+  // live Terminal or the read-only EndedSessionView.
+  const [selectText, setSelectText] = useState<string | null>(null)
+  const openSelectCopy = () => {
+    const text = currentSession && isTerminalSessionState(currentSession.state)
+      ? endedRef.current?.getBufferText()
+      : termRef.current?.getBufferText()
+    setSelectText(text ?? '')
+  }
 
   const handlePickImage = () => fileInputRef.current?.click()
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,11 +273,7 @@ export function SessionsPage() {
                 !isTerminalSessionState(currentSession.state)
               }
               onAttachImage={handlePickImage}
-              copyEnabled={
-                !!currentSession &&
-                !isTerminalSessionState(currentSession.state)
-              }
-              onCopyOutput={() => termRef.current?.copyAll()}
+              onSelectText={openSelectCopy}
               inspectorOpen={inspectorOpen}
               onToggleInspector={toggleInspector}
             />
@@ -275,7 +288,11 @@ export function SessionsPage() {
             <div className="flex-1 min-h-0 pb-3">
               {currentSession &&
               isTerminalSessionState(currentSession.state) ? (
-                <EndedSessionView key={currentId} sessionId={currentId} />
+                <EndedSessionView
+                  key={currentId}
+                  ref={endedRef}
+                  sessionId={currentId}
+                />
               ) : (
                 <Terminal
                   ref={termRef}
@@ -339,6 +356,11 @@ export function SessionsPage() {
         onOpenChange={setSpawnOpen}
         onSpawned={(s) => open({ id: s.id, name: s.name || s.provider_id })}
       />
+      <SelectCopyDialog
+        text={selectText ?? ''}
+        open={selectText !== null}
+        onOpenChange={(v) => !v && setSelectText(null)}
+      />
       {confirmDialogEl}
     </div>
   )
@@ -384,8 +406,7 @@ function WorkbenchHeader({
   onToggleList,
   attachImageEnabled,
   onAttachImage,
-  copyEnabled,
-  onCopyOutput,
+  onSelectText,
   inspectorOpen,
   onToggleInspector,
 }: {
@@ -400,8 +421,7 @@ function WorkbenchHeader({
   onToggleList: () => void
   attachImageEnabled: boolean
   onAttachImage: () => void
-  copyEnabled: boolean
-  onCopyOutput: () => void
+  onSelectText: () => void
   inspectorOpen: boolean
   onToggleInspector: () => void
 }) {
@@ -423,8 +443,8 @@ function WorkbenchHeader({
     : t('web.sessions.header.showInspector')
   const attachLabel = t('web.sessions.header.attachImage')
   const attachTooltip = t('web.sessions.header.attachImageTooltip')
-  const copyLabel = t('web.sessions.header.copyOutput')
-  const copyTooltip = t('web.sessions.header.copyOutputTooltip')
+  const selectLabel = t('web.sessions.header.selectText')
+  const selectTooltip = t('web.sessions.header.selectTextTooltip')
   return (
     <div className="h-11 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
@@ -489,15 +509,14 @@ function WorkbenchHeader({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onCopyOutput}
-            disabled={!copyEnabled}
-            aria-label={copyLabel}
+            onClick={onSelectText}
+            aria-label={selectLabel}
             className="size-7 shrink-0"
           >
-            <ClipboardCopy className="size-3.5" />
+            <TextCursorInput className="size-3.5" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>{copyTooltip}</TooltipContent>
+        <TooltipContent>{selectTooltip}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>

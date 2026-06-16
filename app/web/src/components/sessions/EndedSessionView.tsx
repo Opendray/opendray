@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { Terminal as XTerm } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
@@ -6,9 +6,15 @@ import { useTranslation } from 'react-i18next'
 
 import { api } from '@/lib/api'
 import { useTheme } from '@/stores/theme'
+import { terminalBufferText } from './terminal-text'
 
 interface EndedSessionViewProps {
   sessionId: string
+}
+
+export interface EndedSessionHandle {
+  /** Full replayed buffer as clean plain text — feeds "Select & copy". */
+  getBufferText: () => string
 }
 
 function readVar(name: string): string {
@@ -49,13 +55,22 @@ function buildTheme(applied: 'light' | 'dark') {
  * session. No WebSocket — fixes the reconnect loop that happens when
  * the workbench tries to stream a process that has already exited.
  */
-export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
+export const EndedSessionView = forwardRef<
+  EndedSessionHandle,
+  EndedSessionViewProps
+>(function EndedSessionView({ sessionId }, ref) {
   const { t } = useTranslation()
   const rootRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<XTerm | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const themeApplied = useTheme((s) => s.applied())
+
+  useImperativeHandle(
+    ref,
+    () => ({ getBufferText: () => terminalBufferText(xtermRef.current) }),
+    [],
+  )
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -147,4 +162,4 @@ export function EndedSessionView({ sessionId }: EndedSessionViewProps) {
       />
     </div>
   )
-}
+})

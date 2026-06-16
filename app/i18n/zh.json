@@ -123,15 +123,15 @@
         "hideInspector": "隐藏检查器",
         "attachImage": "附加图片",
         "attachImageTooltip": "附加图片（或直接粘贴 / 拖入终端）",
-        "copyOutput": "复制输出",
-        "copyOutputTooltip": "复制终端输出（若有选区则复制选区，否则复制全部）",
         "restart": "重启",
         "restarting": "重启中…",
         "remove": "移除",
         "removing": "移除中…",
         "stop": "停止",
         "stopping": "停止中…",
-        "pid": "pid {pid}"
+        "pid": "pid {pid}",
+        "selectText": "选择并复制",
+        "selectTextTooltip": "打开可选择文本视图,复制输出中的任意部分"
       },
       "terminal": {
         "uploadingToast": "正在上传图片…",
@@ -139,12 +139,7 @@
         "uploadFailedToast": "上传失败",
         "uploadInvalidTypeToast": "仅支持图片文件",
         "dropToAttach": "释放以附加图片",
-        "copyButton": "复制",
-        "copyAllTooltip": "复制终端输出到剪贴板(若有选区则复制选区,否则复制全部)",
-        "copySelection": "复制",
-        "copySelectionTooltip": "复制选中的文本",
         "copiedToast": "已复制到剪贴板",
-        "copyEmptyToast": "暂无可复制内容",
         "copyFailedToast": "无法复制到剪贴板",
         "urls": {
           "tooltip": "打开本会话最新检测到的链接",
@@ -159,7 +154,13 @@
           "copiedToast": "链接已复制",
           "copyFailedToast": "复制失败 —— 请长按链接手动复制",
           "noneHint": "暂未检测到链接。"
-        }
+        },
+        "selectCopyTitle": "选择并复制",
+        "selectCopyDesc": "拖动(触屏长按)选择输出中的任意部分,然后复制。",
+        "selectCopyCopySelection": "复制选中",
+        "selectCopyCopyAll": "全部复制",
+        "selectCopyNoSelection": "请先选择文本",
+        "selectCopyEmpty": "暂无可复制的输出"
       },
       "spawn": {
         "title": "创建会话",
@@ -3199,10 +3200,10 @@
         "takePhoto": "拍照"
       },
       "keyboard": {
-        "copyBuffer": "复制缓冲",
         "paste": "粘贴",
         "attachImage": "附加图片",
-        "enter": "回车"
+        "enter": "回车",
+        "selectText": "选择文本"
       },
       "connection": {
         "connecting": "连接中…",
@@ -3212,6 +3213,13 @@
         "disconnected": "已断开",
         "disconnectedWithError": "已断开（{error}）",
         "ended": "会话已结束"
+      },
+      "selectCopy": {
+        "title": "选择并复制",
+        "hint": "长按选择输出中的任意部分,然后复制。",
+        "copyAll": "全部复制",
+        "copiedAll": "已复制全部输出({count} 个字符)",
+        "empty": "暂无可复制的输出"
       }
     },
     "action": {
