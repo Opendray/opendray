@@ -2250,7 +2250,7 @@ class _TranslationsBackupsRecoveryKitZh extends TranslationsBackupsRecoveryKitEn
 	// Translations
 	@override String get menuLabel => '恢复工具包';
 	@override String get title => '恢复工具包';
-	@override String get warning => '备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。';
+	@override String get warning => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。';
 	@override String get passphraseLabel => '恢复口令（至少 8 位）';
 	@override String get confirmLabel => '确认恢复口令';
 	@override String get generate => '生成';
@@ -4822,7 +4822,7 @@ class _TranslationsWebBackupsRecoveryKitZh extends TranslationsWebBackupsRecover
 	// Translations
 	@override String get button => '恢复工具包';
 	@override String get title => '下载恢复工具包';
-	@override String get warning => '备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。';
+	@override String get warning => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。';
 	@override String get passphraseLabel => '恢复口令（至少 8 位）';
 	@override String get passphrasePlaceholder => '一个你不会丢失的强口令';
 	@override String get confirmLabel => '确认恢复口令';
@@ -10379,7 +10379,7 @@ extension on TranslationsZh {
 			'web.backups.trigger.preRestoreHint' => '应用恢复前自动拍摄的安全快照',
 			'web.backups.recoveryKit.button' => '恢复工具包',
 			'web.backups.recoveryKit.title' => '下载恢复工具包',
-			'web.backups.recoveryKit.warning' => '备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。',
+			'web.backups.recoveryKit.warning' => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。',
 			'web.backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'web.backups.recoveryKit.passphrasePlaceholder' => '一个你不会丢失的强口令',
 			'web.backups.recoveryKit.confirmLabel' => '确认恢复口令',
@@ -11947,7 +11947,7 @@ extension on TranslationsZh {
 			'backups.kv.no' => '否',
 			'backups.recoveryKit.menuLabel' => '恢复工具包',
 			'backups.recoveryKit.title' => '恢复工具包',
-			'backups.recoveryKit.warning' => '备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。',
+			'backups.recoveryKit.warning' => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。',
 			'backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'backups.recoveryKit.confirmLabel' => '确认恢复口令',
 			'backups.recoveryKit.generate' => '生成',

@@ -22,6 +22,7 @@ const _curationProviders = <({String id, String label})>[
   (id: 'claude', label: 'Claude'),
   (id: 'gemini', label: 'Gemini'),
   (id: 'codex', label: 'Codex'),
+  (id: 'antigravity', label: 'Antigravity'),
 ];
 
 class CurationChatScreen extends ConsumerStatefulWidget {
