@@ -183,6 +183,7 @@
         "bypassCodex": "Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "YOLO mode (--yolo)",
         "bypassAntigravity": "Bypass permissions / YOLO (--dangerously-skip-permissions)",
+        "bypassOpencode": "Bypass permissions (--dangerously-skip-permissions)",
         "bypassOnHint": "This session will run with elevated autonomy.",
         "bypassOffHint": "Off — confirmations and prompts behave normally.",
         "errorPickProvider": "Pick a provider.",
@@ -3367,6 +3368,7 @@
         "labelCodex": "Bypass approvals & sandbox",
         "labelGemini": "YOLO mode",
         "labelAntigravity": "Bypass permissions / YOLO",
+        "labelOpencode": "Bypass permissions",
         "subtitleOn": "This session will run with elevated autonomy.",
         "subtitleOff": "Off — confirmations and prompts behave normally."
       },
