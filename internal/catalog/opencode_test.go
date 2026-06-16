@@ -138,37 +138,6 @@ func TestIsOpenCodeChatModel(t *testing.T) {
 	}
 }
 
-func TestInjectOpenCodeBypass(t *testing.T) {
-	t.Run("enabled writes catch-all allow", func(t *testing.T) {
-		dir := t.TempDir()
-		out := &session.PrepareOutput{Env: map[string]string{}}
-		if err := injectOpenCodeBypass(dir, map[string]any{"bypassPermissions": true}, out); err != nil {
-			t.Fatal(err)
-		}
-		if out.Env["OPENCODE_CONFIG"] != openCodeConfigPath(dir) {
-			t.Errorf("OPENCODE_CONFIG=%q, want %q", out.Env["OPENCODE_CONFIG"], openCodeConfigPath(dir))
-		}
-		cfg := readOpenCodeConfig(t, dir)
-		perm, ok := cfg["permission"].(map[string]any)
-		if !ok || perm["*"] != "allow" {
-			t.Errorf("permission=%v, want {\"*\":\"allow\"}", cfg["permission"])
-		}
-	})
-	t.Run("disabled is a no-op", func(t *testing.T) {
-		dir := t.TempDir()
-		out := &session.PrepareOutput{Env: map[string]string{}}
-		if err := injectOpenCodeBypass(dir, map[string]any{"bypassPermissions": false}, out); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := os.Stat(openCodeConfigPath(dir)); err == nil {
-			t.Error("config written on no-op")
-		}
-		if out.Env["OPENCODE_CONFIG"] != "" {
-			t.Error("OPENCODE_CONFIG set on no-op")
-		}
-	})
-}
-
 func TestWantsOpenCodeSessionConfig(t *testing.T) {
 	tests := []struct {
 		name string
@@ -177,7 +146,6 @@ func TestWantsOpenCodeSessionConfig(t *testing.T) {
 		want bool
 	}{
 		{"opencode with local endpoint", "opencode", map[string]any{"localBaseUrl": "http://localhost:1234/v1"}, true},
-		{"opencode with bypass only", "opencode", map[string]any{"bypassPermissions": true}, true},
 		{"opencode whitespace-only endpoint", "opencode", map[string]any{"localBaseUrl": "   "}, false},
 		{"opencode no endpoint", "opencode", map[string]any{}, false},
 		{"non-opencode with endpoint key", "claude", map[string]any{"localBaseUrl": "http://localhost:1234/v1"}, false},

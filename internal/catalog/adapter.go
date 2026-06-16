@@ -403,9 +403,6 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			if err := injectOpenCodeLocalProvider(prepareCtx, baseDir, p.Config, &out); err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("inject opencode local provider: %w", err)
 			}
-			if err := injectOpenCodeBypass(baseDir, p.Config, &out); err != nil {
-				return session.PrepareOutput{}, fmt.Errorf("inject opencode bypass: %w", err)
-			}
 		}
 
 		// M21 — Pre-assign the agent-side session UUID so the M18

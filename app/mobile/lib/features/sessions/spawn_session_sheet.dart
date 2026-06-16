@@ -32,6 +32,7 @@ const Map<String, List<String>> _bypassFlagsByProvider = {
   'codex': ['--dangerously-bypass-approvals-and-sandbox'],
   'gemini': ['--yolo'],
   'antigravity': ['--dangerously-skip-permissions'],
+  'opencode': ['--dangerously-skip-permissions'],
 };
 
 // Per-provider label for the bypass toggle. Different CLIs name
@@ -43,6 +44,7 @@ String? _bypassLabelFor(String providerId) {
     'codex' => t.sessions.spawnSheet.bypass.labelCodex,
     'gemini' => t.sessions.spawnSheet.bypass.labelGemini,
     'antigravity' => t.sessions.spawnSheet.bypass.labelAntigravity,
+    'opencode' => t.sessions.spawnSheet.bypass.labelOpencode,
     _ => null,
   };
 }
