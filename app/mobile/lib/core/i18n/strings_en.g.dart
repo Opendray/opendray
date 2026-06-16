@@ -4482,8 +4482,8 @@ class TranslationsBackupsRecoveryKitEn {
 	/// en: 'Recovery Kit'
 	String get title => 'Recovery Kit';
 
-	/// en: 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.'
-	String get warning => 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.';
+	/// en: 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it's a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.'
+	String get warning => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.';
 
 	/// en: 'Recovery passphrase (min 8)'
 	String get passphraseLabel => 'Recovery passphrase (min 8)';
@@ -9542,8 +9542,8 @@ class TranslationsWebBackupsRecoveryKitEn {
 	/// en: 'Download Recovery Kit'
 	String get title => 'Download Recovery Kit';
 
-	/// en: 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.'
-	String get warning => 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.';
+	/// en: 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it's a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.'
+	String get warning => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.';
 
 	/// en: 'Recovery passphrase (min 8 chars)'
 	String get passphraseLabel => 'Recovery passphrase (min 8 chars)';
@@ -18197,7 +18197,7 @@ extension on Translations {
 			'web.backups.trigger.preRestoreHint' => 'Automatic safety snapshot taken before a restore was applied',
 			'web.backups.recoveryKit.button' => 'Recovery Kit',
 			'web.backups.recoveryKit.title' => 'Download Recovery Kit',
-			'web.backups.recoveryKit.warning' => 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.',
+			'web.backups.recoveryKit.warning' => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.',
 			'web.backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8 chars)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'a strong passphrase you will not lose',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
@@ -19765,7 +19765,7 @@ extension on Translations {
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Recovery Kit',
 			'backups.recoveryKit.title' => 'Recovery Kit',
-			'backups.recoveryKit.warning' => 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.',
+			'backups.recoveryKit.warning' => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.',
 			'backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
 			'backups.recoveryKit.generate' => 'Generate',
