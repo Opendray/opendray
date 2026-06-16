@@ -10,6 +10,39 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.8.0] — 2026-06-16
+
+### Added
+
+- **OpenCode CLI provider.** Drive OpenCode — the open-source,
+  provider-agnostic agentic coding CLI — through the same PTY gateway as
+  Claude Code / Codex / Gemini. Point it at a local OpenAI-compatible
+  endpoint (Ollama / LM Studio / vLLM) with just a base URL: opendray
+  generates a per-session config, auto-discovers the endpoint's models so
+  they all appear in OpenCode's `/model` picker, and wires the shared
+  `opendray-memory` MCP, skills, and a spawn-dialog bypass toggle. (#369)
+- **AI discussion model picker on mobile**, matching the web admin's
+  cloud-agent + local-model selection in Cortex's Discuss With AI. (#368)
+- **Antigravity** is now selectable as a cloud agent in Cortex's Discuss
+  With AI. (#370)
+- **Backup-hardening arc + Cortex memory/notes UX** integrated from beta:
+  scheduled/fan-out backups across pluggable targets, pre-migration
+  snapshots, and the conversational notes/knowledge maintenance surface. (#367)
+
+### Changed
+
+- **Recovery Kit clarity.** The dialog now states what the kit is for
+  (disaster-recovery insurance, rarely needed), that each generation is an
+  independent file sealed with its own password (nothing is stored — there
+  is no master password), and that the password protects the file, not the
+  gateway. Downloaded kits are named by key fingerprint + date so
+  regenerating no longer silently overwrites a prior kit. (#371)
+
+### Fixed
+
+- Release announcements trigger via `workflow_run` instead of the release
+  event. (#366)
+
 ## [v2.7.6] — 2026-06-14
 
 ### Added
