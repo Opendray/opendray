@@ -345,7 +345,15 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// Auto-attach opendray's memory MCP server when enabled at app
 	// startup. This is what makes "the agent remembers things across
 	// sessions" actually work without per-CLI manual setup.
-	if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp {
+	//
+	// Exception: third-party integration sessions are isolated. They are
+	// self-managed — they bring their own tools and own their data — so
+	// we never auto-attach the cross-project memory MCP, which would let
+	// the agent read other projects' facts/journal/docs. Operator and CLI
+	// sessions are unaffected (project data is already cwd-scoped; the
+	// shared global/KB layer stays available to them).
+	isIntegration := session.OriginFromContext(ctx) == session.OriginIntegration
+	if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
 		servers = append(servers, MCPServer{
 			Name:    "opendray-memory",
 			Command: sp.memory.BinaryPath,

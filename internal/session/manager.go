@@ -630,7 +630,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		return nil, fmt.Errorf("cwd is not a directory: %s", sess.Cwd)
 	}
 
-	resolveCtx := WithAccountID(ctx, sess.ClaudeAccountID)
+	resolveCtx := WithOrigin(WithAccountID(ctx, sess.ClaudeAccountID), sess.Origin)
 	p, err := m.providers.Resolve(resolveCtx, sess.ProviderID)
 	if err != nil {
 		return nil, err

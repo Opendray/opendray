@@ -99,6 +99,10 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 			data := map[string]any{
 				"session_id":  rs.sess.ID,
 				"idle_for_ms": m.idleThreshold.Milliseconds(),
+				// origin lets the channel hub skip integration-driven
+				// sessions: third-party apps own their own delivery, so
+				// opendray must not mirror them to operator channels.
+				"origin": string(rs.sess.Origin),
 			}
 			if snippet := m.recentResponseSnippet(rs); snippet != "" {
 				data["recent_output"] = snippet
@@ -263,6 +267,9 @@ func (m *Manager) waitExit(rs *runningSession) {
 				"exit_code":  exitCode,
 				"ended_at":   now,
 				"state":      string(state),
+				// origin lets the channel hub skip integration-driven
+				// sessions (self-managed delivery — never mirrored).
+				"origin": string(rs.sess.Origin),
 			},
 		})
 	})
