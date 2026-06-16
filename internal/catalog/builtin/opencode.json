@@ -75,6 +75,16 @@
       "description_zh": "provider/model 形式的默认模型。与上方本地默认同时设置时，此项优先。"
     },
     {
+      "key": "bypassPermissions",
+      "label": "Bypass Permissions",
+      "label_zh": "跳过权限检查",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "description": "Auto-approve every tool action — writes \"permission\": {\"*\": \"allow\"} into the generated OPENCODE_CONFIG. Full autonomous mode; dangerous. Equivalent to OpenCode's --dangerously-skip-permissions, but config-based so it also applies to the interactive TUI.",
+      "description_zh": "自动批准所有工具操作 —— 往生成的 OPENCODE_CONFIG 写入 \"permission\": {\"*\": \"allow\"}。完全自主模式，危险。等价于 OpenCode 的 --dangerously-skip-permissions，但用 config 实现，对交互式 TUI 也生效。"
+    },
+    {
       "key": "command",
       "label": "Command Path",
       "label_zh": "命令路径",

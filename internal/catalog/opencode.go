@@ -217,6 +217,24 @@ func isOpenCodeChatModel(id string) bool {
 	return true
 }
 
+// injectOpenCodeBypass writes a catch-all allow permission into the
+// generated config when the operator enabled bypassPermissions, so every
+// tool action auto-approves (OpenCode's equivalent of Claude Code's
+// --dangerously-skip-permissions, but config-based so it also covers the
+// interactive TUI). A no-op when the toggle is off.
+func injectOpenCodeBypass(baseDir string, cfg map[string]any, out *session.PrepareOutput) error {
+	if on, _ := cfg["bypassPermissions"].(bool); !on {
+		return nil
+	}
+	if err := mergeOpenCodeConfig(baseDir, func(c map[string]any) {
+		c["permission"] = map[string]any{"*": "allow"}
+	}); err != nil {
+		return err
+	}
+	setOpenCodeConfigEnv(baseDir, out)
+	return nil
+}
+
 // renderOpenCodeMCP merges the session's MCP servers into the generated
 // config's `mcp` block (OpenCode's native shape: {type, command[], enabled,
 // environment}) and returns the OPENCODE_CONFIG env so the spawn picks the
@@ -288,5 +306,14 @@ func stringFromConfig(cfg map[string]any, key string) string {
 // uses this so the no-Prepare fast path can't silently drop a configured
 // local endpoint when skills and memory MCP both happen to be off.
 func wantsOpenCodeSessionConfig(id string, cfg map[string]any) bool {
-	return id == "opencode" && strings.TrimSpace(stringFromConfig(cfg, "localBaseUrl")) != ""
+	if id != "opencode" {
+		return false
+	}
+	if strings.TrimSpace(stringFromConfig(cfg, "localBaseUrl")) != "" {
+		return true
+	}
+	if on, _ := cfg["bypassPermissions"].(bool); on {
+		return true
+	}
+	return false
 }
