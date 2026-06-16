@@ -183,6 +183,7 @@
         "bypassCodex": "Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "Modo YOLO (--yolo)",
         "bypassAntigravity": "Omitir permisos / YOLO (--dangerously-skip-permissions)",
+        "bypassOpencode": "Omitir permisos (--dangerously-skip-permissions)",
         "bypassOnHint": "Esta session se ejecutará con autonomía elevada.",
         "bypassOffHint": "Desactivado. Las confirmaciones y los prompts se comportan con normalidad.",
         "errorPickProvider": "Elige un proveedor.",
@@ -1788,7 +1789,7 @@
       "recoveryKit": {
         "button": "Kit de recuperación",
         "title": "Descargar kit de recuperación",
-        "warning": "La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.",
+        "warning": "Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.",
         "passphraseLabel": "Frase de recuperación (mín. 8 caracteres)",
         "passphrasePlaceholder": "una frase fuerte que no perderás",
         "confirmLabel": "Confirmar frase de recuperación",
@@ -3367,6 +3368,7 @@
         "labelCodex": "Omitir aprobaciones y sandbox",
         "labelGemini": "Modo YOLO",
         "labelAntigravity": "Omitir permisos / YOLO",
+        "labelOpencode": "Omitir permisos",
         "subtitleOn": "Esta session se ejecutará con autonomía elevada.",
         "subtitleOff": "Desactivado. Las confirmaciones y los prompts se comportan de forma normal."
       },
@@ -3846,7 +3848,7 @@
     "recoveryKit": {
       "menuLabel": "Kit de recuperación",
       "title": "Kit de recuperación",
-      "warning": "La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.",
+      "warning": "Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.",
       "passphraseLabel": "Frase de recuperación (mín. 8)",
       "confirmLabel": "Confirmar frase de recuperación",
       "generate": "Generar",

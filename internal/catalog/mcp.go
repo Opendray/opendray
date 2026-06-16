@@ -68,6 +68,10 @@ func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, 
 		// the identical non-destructive merge attaches opendray-memory
 		// per-session, never globally.
 		return renderGeminiMCP(cwd, servers)
+	case "opencode":
+		// OpenCode reads MCP from its JSON config's `mcp` block; we merge
+		// into the per-session OPENCODE_CONFIG file opendray generates.
+		return renderOpenCodeMCP(baseDir, servers)
 	default:
 		// Provider declared supportsMcp=true but we have no renderer
 		// for it; surface as a no-op rather than failing the spawn.

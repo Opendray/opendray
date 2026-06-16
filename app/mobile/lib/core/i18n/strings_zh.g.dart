@@ -2250,7 +2250,7 @@ class _TranslationsBackupsRecoveryKitZh extends TranslationsBackupsRecoveryKitEn
 	// Translations
 	@override String get menuLabel => '恢复工具包';
 	@override String get title => '恢复工具包';
-	@override String get warning => '备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。';
+	@override String get warning => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。';
 	@override String get passphraseLabel => '恢复口令（至少 8 位）';
 	@override String get confirmLabel => '确认恢复口令';
 	@override String get generate => '生成';
@@ -3160,6 +3160,7 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get bypassCodex => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassGemini => 'YOLO 模式 (--yolo)';
 	@override String get bypassAntigravity => '跳过权限 / YOLO (--dangerously-skip-permissions)';
+	@override String get bypassOpencode => '跳过权限检查 (--dangerously-skip-permissions)';
 	@override String get bypassOnHint => '本次会话将以更高的自主权运行。';
 	@override String get bypassOffHint => '关闭 — 确认与提示按正常流程处理。';
 	@override String get errorPickProvider => '请选择一个 Provider。';
@@ -4821,7 +4822,7 @@ class _TranslationsWebBackupsRecoveryKitZh extends TranslationsWebBackupsRecover
 	// Translations
 	@override String get button => '恢复工具包';
 	@override String get title => '下载恢复工具包';
-	@override String get warning => '备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。';
+	@override String get warning => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。';
 	@override String get passphraseLabel => '恢复口令（至少 8 位）';
 	@override String get passphrasePlaceholder => '一个你不会丢失的强口令';
 	@override String get confirmLabel => '确认恢复口令';
@@ -6231,6 +6232,7 @@ class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnS
 	@override String get labelCodex => '跳过批准与沙盒';
 	@override String get labelGemini => 'YOLO 模式';
 	@override String get labelAntigravity => '跳过权限 / YOLO';
+	@override String get labelOpencode => '跳过权限检查';
 	@override String get subtitleOn => '此会话将以提升的自主权运行。';
 	@override String get subtitleOff => '关闭 — 确认和提示按正常方式处理。';
 }
@@ -9075,6 +9077,7 @@ extension on TranslationsZh {
 			'web.sessions.spawn.bypassCodex' => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'YOLO 模式 (--yolo)',
 			'web.sessions.spawn.bypassAntigravity' => '跳过权限 / YOLO (--dangerously-skip-permissions)',
+			'web.sessions.spawn.bypassOpencode' => '跳过权限检查 (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => '本次会话将以更高的自主权运行。',
 			'web.sessions.spawn.bypassOffHint' => '关闭 — 确认与提示按正常流程处理。',
 			'web.sessions.spawn.errorPickProvider' => '请选择一个 Provider。',
@@ -9429,9 +9432,9 @@ extension on TranslationsZh {
 			'web.project.archived.restoreButton' => '恢复',
 			'web.project.archived.restoredToast' => '已恢复',
 			'web.project.archived.restoreFailedToast' => '恢复失败',
-			'web.project.reset.button' => '重置',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.button' => '重置',
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
 			'web.project.reset.alwaysDeleted' => '始终删除：目标、计划、提案、日志、清理决策。',
@@ -9943,9 +9946,9 @@ extension on TranslationsZh {
 			'web.channels.notifications.cooldowns.k60' => '1 分钟',
 			'web.channels.notifications.cooldowns.k300' => '5 分钟',
 			'web.channels.notifications.cooldowns.k900' => '15 分钟',
-			'web.channels.notifications.cooldowns.k1800' => '30 分钟',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.notifications.cooldowns.k1800' => '30 分钟',
 			'web.channels.notifications.cooldowns.k3600' => '1 小时',
 			'web.channels.notifications.snippetCaps.k0' => '不限制 — 拆分到多条消息（默认）',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 字符（精简）',
@@ -10376,7 +10379,7 @@ extension on TranslationsZh {
 			'web.backups.trigger.preRestoreHint' => '应用恢复前自动拍摄的安全快照',
 			'web.backups.recoveryKit.button' => '恢复工具包',
 			'web.backups.recoveryKit.title' => '下载恢复工具包',
-			'web.backups.recoveryKit.warning' => '备份口令从不存进备份。本工具包是用你自设的 recovery 口令包裹的那个备份口令。请把文件和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。',
+			'web.backups.recoveryKit.warning' => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。',
 			'web.backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'web.backups.recoveryKit.passphrasePlaceholder' => '一个你不会丢失的强口令',
 			'web.backups.recoveryKit.confirmLabel' => '确认恢复口令',
@@ -10457,9 +10460,9 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.passwordLabel' => '密码',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => '路径前缀',
 			'web.backups.targetEditor.smb.pathPrefixHint' => '共享根下的子文件夹（可选）',
-			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => '主机（不要带协议）。AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
@@ -10971,9 +10974,9 @@ extension on TranslationsZh {
 			'web.export.form.integrationOptions.metadata' => '仅元数据（推荐）',
 			'web.export.form.integrationOptions.metadataHint' => 'ID、name、route prefix、scopes — 不包含任何 API key 凭证。',
 			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
-			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
 			'web.export.form.confirmWarning' => '输入 <1>I understand</1> 以确认。opendray 当前只存 bcrypt 哈希 — 选择明文也不会导出任何明文（该选项为将来保留明文缓存的版本而预留）。',
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
@@ -11485,9 +11488,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
 			'sessions.inspector.notes.create' => '创建',
 			'sessions.inspector.notes.filterHint' => '筛选…',
-			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.locationDialogTitle' => '项目文档位置',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
@@ -11533,6 +11536,7 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO 模式',
 			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
+			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
 			'sessions.spawnSheet.bypass.subtitleOff' => '关闭 — 确认和提示按正常方式处理。',
 			'sessions.spawnSheet.noProviders.title' => '未配置任何提供商',
@@ -11943,7 +11947,7 @@ extension on TranslationsZh {
 			'backups.kv.no' => '否',
 			'backups.recoveryKit.menuLabel' => '恢复工具包',
 			'backups.recoveryKit.title' => '恢复工具包',
-			'backups.recoveryKit.warning' => '备份口令从不存进备份。本工具包用你自设的 recovery 口令将其包裹。请把工具包和 recovery 口令分别妥善异地保存 —— 二者缺一,机器丢失即意味着备份不可恢复。',
+			'backups.recoveryKit.warning' => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。',
 			'backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'backups.recoveryKit.confirmLabel' => '确认恢复口令',
 			'backups.recoveryKit.generate' => '生成',
@@ -11998,10 +12002,10 @@ extension on TranslationsZh {
 			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
 			'backups.restore.pickFile' => '选择文件',
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
-			'backups.restore.noFile' => '未选择文件',
-			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.noFile' => '未选择文件',
+			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
 			'backups.restore.targetDsnHint' => '留空表示恢复到 opendray 自身的数据库。',
 			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
@@ -12512,10 +12516,10 @@ extension on TranslationsZh {
 			'memory.workers' => '记忆工作器',
 			'memory.rank.title' => '排名分解',
 			'memory.rank.effective' => ({required Object value}) => '有效分：${value}',
-			'memory.rank.similarity' => '余弦相似度',
-			'memory.rank.ageMultiplier' => ({required Object days}) => '时效系数（${days} 天前）',
 			_ => null,
 		} ?? switch (path) {
+			'memory.rank.similarity' => '余弦相似度',
+			'memory.rank.ageMultiplier' => ({required Object days}) => '时效系数（${days} 天前）',
 			'memory.rank.hitMultiplier' => ({required Object hits}) => '命中系数（${hits} 次命中）',
 			'memory.rank.confidenceMultiplier' => '置信度系数',
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',

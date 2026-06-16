@@ -1,0 +1,110 @@
+{
+  "$schema": "https://opendray.dev/schemas/manifest-v2.json",
+  "id": "opencode",
+  "displayName": "OpenCode",
+  "displayName_zh": "OpenCode",
+  "description": "OpenCode — open-source, provider-agnostic agentic coding CLI; drive cloud or local models (Ollama / LM Studio / any OpenAI-compatible endpoint) through the same PTY",
+  "description_zh": "OpenCode —— 开源、模型无关的智能编码 CLI；通过同一套 PTY 驱动云端或本地模型（Ollama / LM Studio / 任意 OpenAI 兼容端点）",
+  "icon": "🧩",
+  "version": "1.0.0",
+  "kind": "cli",
+  "executable": "opencode",
+  "npmPackage": "opencode-ai",
+  "modelFlag": "--model",
+  "knownModels": [
+    "anthropic/claude-sonnet-4-6",
+    "openai/gpt-5-codex",
+    "google/gemini-3.1-pro",
+    "ollama/qwen3-coder",
+    "opendray-local/local-model"
+  ],
+  "capabilities": {
+    "supportsResume": false,
+    "supportsStream": true,
+    "supportsImages": false,
+    "supportsMcp": true
+  },
+  "configSchema": [
+    {
+      "key": "authNote",
+      "label": "Models & Authentication",
+      "label_zh": "模型与认证",
+      "type": "note",
+      "group": "auth",
+      "description": "OpenCode is provider-agnostic. For local models, just set the Local Endpoint Base URL below (Ollama / LM Studio / vLLM) — opendray auto-discovers the endpoint's models so they appear in /model. For cloud models, run `opencode auth login` once. Settings here are written into a per-session config opendray hands OpenCode via OPENCODE_CONFIG; your own ~/.config/opencode config still applies underneath.",
+      "description_zh": "OpenCode 与模型无关。用本地模型只需在下方填「本地端点 Base URL」（Ollama / LM Studio / vLLM）—— opendray 会自动发现端点上的模型并显示在 /model 里。云端模型先跑一次 `opencode auth login`。这里的设置会写入 opendray 通过 OPENCODE_CONFIG 注入的 per-session 配置；你自己的 ~/.config/opencode 配置仍在底层生效。"
+    },
+    {
+      "key": "localBaseUrl",
+      "label": "Local Endpoint Base URL",
+      "label_zh": "本地端点 Base URL",
+      "type": "string",
+      "group": "model",
+      "placeholder": "http://localhost:1234/v1",
+      "description": "OpenAI-compatible base URL (Ollama / LM Studio / vLLM). When set, opendray registers a provider named `opendray-local`, auto-discovers every model the endpoint serves, and selects one by default — they all show up in OpenCode's /model picker. This is the only field you need for local models.",
+      "description_zh": "OpenAI 兼容的 base URL（Ollama / LM Studio / vLLM）。填写后 opendray 会注册名为 `opendray-local` 的 provider，自动发现端点上的所有模型并默认选用其一 —— 它们都会出现在 OpenCode 的 /model 选择器里。用本地模型只需填这一项。"
+    },
+    {
+      "key": "localModel",
+      "label": "Default Local Model (optional)",
+      "label_zh": "默认本地模型（可选）",
+      "type": "string",
+      "group": "model",
+      "placeholder": "qwen3-coder",
+      "description": "Optional. Pins which discovered model opens by default (used as opendray-local/<id>). Leave blank to default to the first discovered model — all are still available in /model.",
+      "description_zh": "可选。固定默认打开哪个已发现的模型（用作 opendray-local/<id>）。留空则默认用发现的第一个模型 —— 其余仍可在 /model 切换。"
+    },
+    {
+      "key": "localApiKey",
+      "label": "Local Endpoint API Key",
+      "label_zh": "本地端点 API 密钥",
+      "type": "secret",
+      "group": "model",
+      "placeholder": "(optional)",
+      "description": "Optional API key for the local endpoint. Most local servers ignore it.",
+      "description_zh": "本地端点的可选 API 密钥。多数本地服务器会忽略它。"
+    },
+    {
+      "key": "model",
+      "label": "Default Model (provider/model)",
+      "label_zh": "默认模型 (provider/model)",
+      "type": "string",
+      "group": "model",
+      "placeholder": "anthropic/claude-sonnet-4-6",
+      "description": "Default model in provider/model form. Overrides the local default above when both are set.",
+      "description_zh": "provider/model 形式的默认模型。与上方本地默认同时设置时，此项优先。"
+    },
+    {
+      "key": "command",
+      "label": "Command Path",
+      "label_zh": "命令路径",
+      "type": "string",
+      "group": "advanced",
+      "placeholder": "opencode"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "label_zh": "额外 CLI 参数",
+      "type": "args",
+      "group": "advanced"
+    },
+    {
+      "key": "skills_disabled",
+      "label": "Disable opendray skills",
+      "label_zh": "禁用 opendray skills",
+      "type": "boolean",
+      "group": "advanced",
+      "default": false,
+      "description": "Skip injecting the opendray skill index + memory guidance. Left off (default), opendray writes an AGENTS.md into a per-session scratch dir and references it from the generated OPENCODE_CONFIG instructions; turn this on to suppress that.",
+      "description_zh": "不注入 opendray skill 索引与记忆引导。默认关闭时 opendray 会在 per-session 临时目录写一份 AGENTS.md，并从生成的 OPENCODE_CONFIG instructions 引用它；打开此项则不再注入。"
+    }
+  ],
+  "ui": {
+    "activityBar": {
+      "id": "opencode",
+      "icon": "🧩",
+      "title": "OpenCode"
+    }
+  }
+}

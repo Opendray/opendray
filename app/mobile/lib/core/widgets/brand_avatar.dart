@@ -42,6 +42,16 @@ class BrandAvatar extends StatelessWidget {
               width: inner,
               height: inner,
               semanticsLabel: visual.label,
+              // Single-fill black marks (OpenAI/Codex, Shell, OpenCode)
+              // render in the theme foreground so they read on the dark
+              // tile — matching the web admin, which inverts them to white.
+              // Multi-colour marks keep their own ink.
+              colorFilter: visual.monochrome
+                  ? ColorFilter.mode(
+                      Theme.of(context).colorScheme.onSurface,
+                      BlendMode.srcIn,
+                    )
+                  : null,
             )
           : Text(
               visual.fallbackLetter,

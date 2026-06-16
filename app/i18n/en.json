@@ -183,6 +183,7 @@
         "bypassCodex": "Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)",
         "bypassGemini": "YOLO mode (--yolo)",
         "bypassAntigravity": "Bypass permissions / YOLO (--dangerously-skip-permissions)",
+        "bypassOpencode": "Bypass permissions (--dangerously-skip-permissions)",
         "bypassOnHint": "This session will run with elevated autonomy.",
         "bypassOffHint": "Off — confirmations and prompts behave normally.",
         "errorPickProvider": "Pick a provider.",
@@ -1788,7 +1789,7 @@
       "recoveryKit": {
         "button": "Recovery Kit",
         "title": "Download Recovery Kit",
-        "warning": "The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.",
+        "warning": "Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it's a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.",
         "passphraseLabel": "Recovery passphrase (min 8 chars)",
         "passphrasePlaceholder": "a strong passphrase you will not lose",
         "confirmLabel": "Confirm recovery passphrase",
@@ -3367,6 +3368,7 @@
         "labelCodex": "Bypass approvals & sandbox",
         "labelGemini": "YOLO mode",
         "labelAntigravity": "Bypass permissions / YOLO",
+        "labelOpencode": "Bypass permissions",
         "subtitleOn": "This session will run with elevated autonomy.",
         "subtitleOff": "Off — confirmations and prompts behave normally."
       },
@@ -3846,7 +3848,7 @@
     "recoveryKit": {
       "menuLabel": "Recovery Kit",
       "title": "Recovery Kit",
-      "warning": "The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.",
+      "warning": "Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it's a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.",
       "passphraseLabel": "Recovery passphrase (min 8)",
       "confirmLabel": "Confirm recovery passphrase",
       "generate": "Generate",

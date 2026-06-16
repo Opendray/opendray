@@ -2250,7 +2250,7 @@ class _TranslationsBackupsRecoveryKitEs extends TranslationsBackupsRecoveryKitEn
 	// Translations
 	@override String get menuLabel => 'Kit de recuperación';
 	@override String get title => 'Kit de recuperación';
-	@override String get warning => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.';
+	@override String get warning => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.';
 	@override String get passphraseLabel => 'Frase de recuperación (mín. 8)';
 	@override String get confirmLabel => 'Confirmar frase de recuperación';
 	@override String get generate => 'Generar';
@@ -3160,6 +3160,7 @@ class _TranslationsWebSessionsSpawnEs extends TranslationsWebSessionsSpawnEn {
 	@override String get bypassCodex => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassGemini => 'Modo YOLO (--yolo)';
 	@override String get bypassAntigravity => 'Omitir permisos / YOLO (--dangerously-skip-permissions)';
+	@override String get bypassOpencode => 'Omitir permisos (--dangerously-skip-permissions)';
 	@override String get bypassOnHint => 'Esta session se ejecutará con autonomía elevada.';
 	@override String get bypassOffHint => 'Desactivado. Las confirmaciones y los prompts se comportan con normalidad.';
 	@override String get errorPickProvider => 'Elige un proveedor.';
@@ -4821,7 +4822,7 @@ class _TranslationsWebBackupsRecoveryKitEs extends TranslationsWebBackupsRecover
 	// Translations
 	@override String get button => 'Kit de recuperación';
 	@override String get title => 'Descargar kit de recuperación';
-	@override String get warning => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.';
+	@override String get warning => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.';
 	@override String get passphraseLabel => 'Frase de recuperación (mín. 8 caracteres)';
 	@override String get passphrasePlaceholder => 'una frase fuerte que no perderás';
 	@override String get confirmLabel => 'Confirmar frase de recuperación';
@@ -6231,6 +6232,7 @@ class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnS
 	@override String get labelCodex => 'Omitir aprobaciones y sandbox';
 	@override String get labelGemini => 'Modo YOLO';
 	@override String get labelAntigravity => 'Omitir permisos / YOLO';
+	@override String get labelOpencode => 'Omitir permisos';
 	@override String get subtitleOn => 'Esta session se ejecutará con autonomía elevada.';
 	@override String get subtitleOff => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.';
 }
@@ -9075,6 +9077,7 @@ extension on TranslationsEs {
 			'web.sessions.spawn.bypassCodex' => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'Modo YOLO (--yolo)',
 			'web.sessions.spawn.bypassAntigravity' => 'Omitir permisos / YOLO (--dangerously-skip-permissions)',
+			'web.sessions.spawn.bypassOpencode' => 'Omitir permisos (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => 'Esta session se ejecutará con autonomía elevada.',
 			'web.sessions.spawn.bypassOffHint' => 'Desactivado. Las confirmaciones y los prompts se comportan con normalidad.',
 			'web.sessions.spawn.errorPickProvider' => 'Elige un proveedor.',
@@ -9429,9 +9432,9 @@ extension on TranslationsEs {
 			'web.project.archived.restoreButton' => 'Restaurar',
 			'web.project.archived.restoredToast' => 'Restaurado',
 			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
-			'web.project.reset.button' => 'Restablecer',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.button' => 'Restablecer',
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
 			'web.project.reset.alwaysDeleted' => 'Siempre se elimina: objetivo, plan, propuestas, diario, decisiones de limpieza.',
@@ -9943,9 +9946,9 @@ extension on TranslationsEs {
 			'web.channels.notifications.cooldowns.k60' => '1 minuto',
 			'web.channels.notifications.cooldowns.k300' => '5 minutos',
 			'web.channels.notifications.cooldowns.k900' => '15 minutos',
-			'web.channels.notifications.cooldowns.k1800' => '30 minutos',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.notifications.cooldowns.k1800' => '30 minutos',
 			'web.channels.notifications.cooldowns.k3600' => '1 hora',
 			'web.channels.notifications.snippetCaps.k0' => 'Sin límite, dividir en varios mensajes (predeterminado)',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 caracteres (conciso)',
@@ -10376,7 +10379,7 @@ extension on TranslationsEs {
 			'web.backups.trigger.preRestoreHint' => 'Instantánea de seguridad automática tomada antes de aplicar una restauración',
 			'web.backups.recoveryKit.button' => 'Kit de recuperación',
 			'web.backups.recoveryKit.title' => 'Descargar kit de recuperación',
-			'web.backups.recoveryKit.warning' => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.',
+			'web.backups.recoveryKit.warning' => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.',
 			'web.backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8 caracteres)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'una frase fuerte que no perderás',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
@@ -10457,9 +10460,9 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Prefijo de ruta',
 			'web.backups.targetEditor.smb.pathPrefixHint' => 'Subcarpeta bajo la raíz del recurso compartido (opcional)',
-			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => 'Host (sin protocolo). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
@@ -10971,9 +10974,9 @@ extension on TranslationsEs {
 			'web.export.form.integrationOptions.metadata' => 'Solo metadatos (recomendado)',
 			'web.export.form.integrationOptions.metadataHint' => 'ID, nombre, prefijo de ruta, alcances. Sin material de API key.',
 			'web.export.form.integrationOptions.plaintext' => 'Incluir las API keys en texto plano',
-			'web.export.form.integrationOptions.plaintextHint' => 'v1 solo con bcrypt: no existe texto plano recuperable. El manifiesto lo documenta; no se filtra nada.',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.integrationOptions.plaintextHint' => 'v1 solo con bcrypt: no existe texto plano recuperable. El manifiesto lo documenta; no se filtra nada.',
 			'web.export.form.confirmWarning' => 'Escribe <1>Lo entiendo</1> para confirmar. opendray actualmente almacena solo hashes bcrypt, así que seleccionar texto plano NO exporta ningún texto plano (la función está reservada para una versión futura que mantenga cachés de texto plano).',
 			'web.export.form.confirmPlaceholder' => 'Lo entiendo',
 			'web.export.form.confirmSentinel' => 'lo entiendo',
@@ -11485,9 +11488,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
 			'sessions.inspector.notes.create' => 'Crear',
 			'sessions.inspector.notes.filterHint' => 'Filtrar…',
-			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.locationDialogTitle' => 'Ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Falló la carga: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
@@ -11533,6 +11536,7 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.bypass.labelCodex' => 'Omitir aprobaciones y sandbox',
 			'sessions.spawnSheet.bypass.labelGemini' => 'Modo YOLO',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Omitir permisos / YOLO',
+			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
 			'sessions.spawnSheet.noProviders.title' => 'No hay proveedores configurados',
@@ -11943,7 +11947,7 @@ extension on TranslationsEs {
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Kit de recuperación',
 			'backups.recoveryKit.title' => 'Kit de recuperación',
-			'backups.recoveryKit.warning' => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.',
+			'backups.recoveryKit.warning' => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.',
 			'backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
 			'backups.recoveryKit.generate' => 'Generar',
@@ -11998,10 +12002,10 @@ extension on TranslationsEs {
 			'backups.restore.bundleLabel' => 'Archivo de paquete (.tar.gz.enc)',
 			'backups.restore.pickFile' => 'Elegir archivo',
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
-			'backups.restore.noFile' => 'Ningún archivo seleccionado',
-			'backups.restore.targetDsnLabel' => 'DSN de Postgres de destino',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.noFile' => 'Ningún archivo seleccionado',
+			'backups.restore.targetDsnLabel' => 'DSN de Postgres de destino',
 			'backups.restore.targetDsnHint' => 'Déjalo vacío para restaurar en la propia base de datos de opendray.',
 			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
@@ -12512,10 +12516,10 @@ extension on TranslationsEs {
 			'memory.workers' => 'Workers de memoria',
 			'memory.rank.title' => 'Desglose del ranking',
 			'memory.rank.effective' => ({required Object value}) => 'Puntuación efectiva: ${value}',
-			'memory.rank.similarity' => 'Similitud del coseno',
-			'memory.rank.ageMultiplier' => ({required Object days}) => 'Multiplicador por antigüedad (${days}d de antigüedad)',
 			_ => null,
 		} ?? switch (path) {
+			'memory.rank.similarity' => 'Similitud del coseno',
+			'memory.rank.ageMultiplier' => ({required Object days}) => 'Multiplicador por antigüedad (${days}d de antigüedad)',
 			'memory.rank.hitMultiplier' => ({required Object hits}) => 'Multiplicador por número de hits (${hits} hits)',
 			'memory.rank.confidenceMultiplier' => 'Multiplicador por confianza',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',

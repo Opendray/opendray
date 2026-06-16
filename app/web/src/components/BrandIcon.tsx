@@ -60,6 +60,16 @@ const INLINE: Record<string, IconData> = {
 		path: 'M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z',
 	},
 
+	// OpenCode — terminal-prompt mark. The real mark renders from the
+	// curated SVG (public/icons/opencode.svg); this entry only supplies
+	// the brand hex so the avatar disc tints correctly. The path is the
+	// simplified `>_` glyph and is never drawn for curated keys.
+	opencode: {
+		title: 'OpenCode',
+		hex: '14B8A6',
+		path: 'M5 6l6 6-6 6 1.4 1.4L13.8 12 6.4 4.6zM13 18h6v2h-6z',
+	},
+
 	// OpenAI — six-fold rotational sunburst, simplified.
 	openai: {
 		title: 'OpenAI',
@@ -132,6 +142,7 @@ const CURATED = new Set([
 	'claude',
 	'gemini',
 	'antigravity',
+	'opencode',
 	'openai',
 	'shell',
 	'slack',
@@ -145,6 +156,7 @@ const CURATED = new Set([
 // the popover surface. Multi-colour curated SVGs (claude orange,
 // gemini gem, slack 4-colour) carry their own ink and are excluded.
 const CURATED_MONOCHROME_DARK_INVERT = new Set([
+	'opencode',
 	'openai',
 	'shell',
 	'dingtalk',

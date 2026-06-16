@@ -4482,8 +4482,8 @@ class TranslationsBackupsRecoveryKitEn {
 	/// en: 'Recovery Kit'
 	String get title => 'Recovery Kit';
 
-	/// en: 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.'
-	String get warning => 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.';
+	/// en: 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it's a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.'
+	String get warning => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.';
 
 	/// en: 'Recovery passphrase (min 8)'
 	String get passphraseLabel => 'Recovery passphrase (min 8)';
@@ -6235,6 +6235,9 @@ class TranslationsWebSessionsSpawnEn {
 
 	/// en: 'Bypass permissions / YOLO (--dangerously-skip-permissions)'
 	String get bypassAntigravity => 'Bypass permissions / YOLO (--dangerously-skip-permissions)';
+
+	/// en: 'Bypass permissions (--dangerously-skip-permissions)'
+	String get bypassOpencode => 'Bypass permissions (--dangerously-skip-permissions)';
 
 	/// en: 'This session will run with elevated autonomy.'
 	String get bypassOnHint => 'This session will run with elevated autonomy.';
@@ -9539,8 +9542,8 @@ class TranslationsWebBackupsRecoveryKitEn {
 	/// en: 'Download Recovery Kit'
 	String get title => 'Download Recovery Kit';
 
-	/// en: 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.'
-	String get warning => 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.';
+	/// en: 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it's a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.'
+	String get warning => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.';
 
 	/// en: 'Recovery passphrase (min 8 chars)'
 	String get passphraseLabel => 'Recovery passphrase (min 8 chars)';
@@ -12101,6 +12104,9 @@ class TranslationsSessionsSpawnSheetBypassEn {
 
 	/// en: 'Bypass permissions / YOLO'
 	String get labelAntigravity => 'Bypass permissions / YOLO';
+
+	/// en: 'Bypass permissions'
+	String get labelOpencode => 'Bypass permissions';
 
 	/// en: 'This session will run with elevated autonomy.'
 	String get subtitleOn => 'This session will run with elevated autonomy.';
@@ -16889,6 +16895,7 @@ extension on Translations {
 			'web.sessions.spawn.bypassCodex' => 'Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassGemini' => 'YOLO mode (--yolo)',
 			'web.sessions.spawn.bypassAntigravity' => 'Bypass permissions / YOLO (--dangerously-skip-permissions)',
+			'web.sessions.spawn.bypassOpencode' => 'Bypass permissions (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => 'This session will run with elevated autonomy.',
 			'web.sessions.spawn.bypassOffHint' => 'Off — confirmations and prompts behave normally.',
 			'web.sessions.spawn.errorPickProvider' => 'Pick a provider.',
@@ -17243,9 +17250,9 @@ extension on Translations {
 			'web.project.archived.restoreButton' => 'Restore',
 			'web.project.archived.restoredToast' => 'Restored',
 			'web.project.archived.restoreFailedToast' => 'Restore failed',
-			'web.project.reset.button' => 'Reset',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.button' => 'Reset',
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
 			'web.project.reset.alwaysDeleted' => 'Always deleted: goal, plan, proposals, journal, cleanup decisions.',
@@ -17757,9 +17764,9 @@ extension on Translations {
 			'web.channels.notifications.cooldowns.k60' => '1 minute',
 			'web.channels.notifications.cooldowns.k300' => '5 minutes',
 			'web.channels.notifications.cooldowns.k900' => '15 minutes',
-			'web.channels.notifications.cooldowns.k1800' => '30 minutes',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.notifications.cooldowns.k1800' => '30 minutes',
 			'web.channels.notifications.cooldowns.k3600' => '1 hour',
 			'web.channels.notifications.snippetCaps.k0' => 'No cap — chunk into multiple messages (default)',
 			'web.channels.notifications.snippetCaps.k1000' => '1000 chars (terse)',
@@ -18190,7 +18197,7 @@ extension on Translations {
 			'web.backups.trigger.preRestoreHint' => 'Automatic safety snapshot taken before a restore was applied',
 			'web.backups.recoveryKit.button' => 'Recovery Kit',
 			'web.backups.recoveryKit.title' => 'Download Recovery Kit',
-			'web.backups.recoveryKit.warning' => 'The backup passphrase is never stored in a backup. This kit is that passphrase wrapped under a recovery passphrase you choose. Store BOTH the file and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.',
+			'web.backups.recoveryKit.warning' => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.',
 			'web.backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8 chars)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'a strong passphrase you will not lose',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
@@ -18271,9 +18278,9 @@ extension on Translations {
 			'web.backups.targetEditor.smb.passwordLabel' => 'Password',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Path prefix',
 			'web.backups.targetEditor.smb.pathPrefixHint' => 'Sub-folder under the share root (optional)',
-			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
 			'web.backups.targetEditor.s3.endpointHint' => 'Host (no protocol). AWS: s3.amazonaws.com · R2: <accountid>.r2.cloudflarestorage.com · MinIO: minio.local:9000',
 			'web.backups.targetEditor.s3.endpointPlaceholder' => 's3.amazonaws.com',
@@ -18785,9 +18792,9 @@ extension on Translations {
 			'web.export.form.integrationOptions.metadata' => 'Metadata only (recommended)',
 			'web.export.form.integrationOptions.metadataHint' => 'ID, name, route prefix, scopes — no API key material.',
 			'web.export.form.integrationOptions.plaintext' => 'Include plaintext API keys',
-			'web.export.form.integrationOptions.plaintextHint' => 'v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks.',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.integrationOptions.plaintextHint' => 'v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks.',
 			'web.export.form.confirmWarning' => 'Type <1>I understand</1> to confirm. opendray currently stores only bcrypt hashes — selecting plaintext does NOT export any plaintext (the feature is reserved for a future release that keeps plaintext caches).',
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
@@ -19299,9 +19306,9 @@ extension on Translations {
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
 			'sessions.inspector.notes.create' => 'Create',
 			'sessions.inspector.notes.filterHint' => 'Filter…',
-			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.locationDialogTitle' => 'Project docs location',
 			'sessions.inspector.notes.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
@@ -19347,6 +19354,7 @@ extension on Translations {
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
 			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO mode',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
+			'sessions.spawnSheet.bypass.labelOpencode' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Off — confirmations and prompts behave normally.',
 			'sessions.spawnSheet.noProviders.title' => 'No providers configured',
@@ -19757,7 +19765,7 @@ extension on Translations {
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Recovery Kit',
 			'backups.recoveryKit.title' => 'Recovery Kit',
-			'backups.recoveryKit.warning' => 'The backup passphrase is never stored in a backup. This kit wraps it under a recovery passphrase you choose. Save BOTH the kit and the recovery passphrase somewhere safe and separate — without them, a lost host means unrecoverable backups.',
+			'backups.recoveryKit.warning' => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.',
 			'backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
 			'backups.recoveryKit.generate' => 'Generate',
@@ -19812,10 +19820,10 @@ extension on Translations {
 			'backups.restore.bundleLabel' => 'Bundle file (.tar.gz.enc)',
 			'backups.restore.pickFile' => 'Pick file',
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
-			'backups.restore.noFile' => 'No file selected',
-			'backups.restore.targetDsnLabel' => 'Target Postgres DSN',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restore.noFile' => 'No file selected',
+			'backups.restore.targetDsnLabel' => 'Target Postgres DSN',
 			'backups.restore.targetDsnHint' => 'Leave empty to restore into opendray\'s own DB.',
 			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
@@ -20326,10 +20334,10 @@ extension on Translations {
 			'memory.workers' => 'Memory workers',
 			'memory.rank.title' => 'Rank breakdown',
 			'memory.rank.effective' => ({required Object value}) => 'Effective score: ${value}',
-			'memory.rank.similarity' => 'Cosine similarity',
-			'memory.rank.ageMultiplier' => ({required Object days}) => 'Age multiplier (${days}d old)',
 			_ => null,
 		} ?? switch (path) {
+			'memory.rank.similarity' => 'Cosine similarity',
+			'memory.rank.ageMultiplier' => ({required Object days}) => 'Age multiplier (${days}d old)',
 			'memory.rank.hitMultiplier' => ({required Object hits}) => 'Hit-count multiplier (${hits} hits)',
 			'memory.rank.confidenceMultiplier' => 'Confidence multiplier',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
