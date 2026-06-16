@@ -1246,7 +1246,15 @@ function RecoveryKitDialog() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'opendray-recovery-kit.json'
+      // Name each kit by its key fingerprint + date so regenerating with a
+      // different password doesn't silently overwrite a prior kit in Downloads.
+      const meta = kit as unknown as {
+        key_fingerprint?: string
+        created_at?: string
+      }
+      const fp = (meta.key_fingerprint ?? '').slice(0, 8)
+      const day = (meta.created_at ?? '').slice(0, 10).replace(/-/g, '')
+      a.download = `opendray-recovery-kit${fp ? `-${fp}` : ''}${day ? `-${day}` : ''}.json`
       a.click()
       URL.revokeObjectURL(url)
       toast.success(t('web.backups.recoveryKit.downloadedToast'))

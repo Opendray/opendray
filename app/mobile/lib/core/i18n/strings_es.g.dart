@@ -2250,7 +2250,7 @@ class _TranslationsBackupsRecoveryKitEs extends TranslationsBackupsRecoveryKitEn
 	// Translations
 	@override String get menuLabel => 'Kit de recuperación';
 	@override String get title => 'Kit de recuperación';
-	@override String get warning => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.';
+	@override String get warning => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.';
 	@override String get passphraseLabel => 'Frase de recuperación (mín. 8)';
 	@override String get confirmLabel => 'Confirmar frase de recuperación';
 	@override String get generate => 'Generar';
@@ -4822,7 +4822,7 @@ class _TranslationsWebBackupsRecoveryKitEs extends TranslationsWebBackupsRecover
 	// Translations
 	@override String get button => 'Kit de recuperación';
 	@override String get title => 'Descargar kit de recuperación';
-	@override String get warning => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.';
+	@override String get warning => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.';
 	@override String get passphraseLabel => 'Frase de recuperación (mín. 8 caracteres)';
 	@override String get passphrasePlaceholder => 'una frase fuerte que no perderás';
 	@override String get confirmLabel => 'Confirmar frase de recuperación';
@@ -10379,7 +10379,7 @@ extension on TranslationsEs {
 			'web.backups.trigger.preRestoreHint' => 'Instantánea de seguridad automática tomada antes de aplicar una restauración',
 			'web.backups.recoveryKit.button' => 'Kit de recuperación',
 			'web.backups.recoveryKit.title' => 'Descargar kit de recuperación',
-			'web.backups.recoveryKit.warning' => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit es esa frase envuelta con una frase de recuperación que tú eliges. Guarda TANTO el archivo COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.',
+			'web.backups.recoveryKit.warning' => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.',
 			'web.backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8 caracteres)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'una frase fuerte que no perderás',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
@@ -11947,7 +11947,7 @@ extension on TranslationsEs {
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Kit de recuperación',
 			'backups.recoveryKit.title' => 'Kit de recuperación',
-			'backups.recoveryKit.warning' => 'La frase de la copia de seguridad nunca se guarda en una copia. Este kit la envuelve con una frase de recuperación que tú eliges. Guarda TANTO el kit COMO la frase de recuperación en un lugar seguro y separado: sin ellos, perder el host significa copias irrecuperables.',
+			'backups.recoveryKit.warning' => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.',
 			'backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
 			'backups.recoveryKit.generate' => 'Generar',
