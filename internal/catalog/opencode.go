@@ -263,11 +263,10 @@ func openCodeMCPEntry(s MCPServer) map[string]any {
 	if s.Command == "" {
 		return nil
 	}
-	// Fresh slice (never alias s.Args' backing array) — command+args as a
-	// single list, OpenCode's local-server shape.
-	command := make([]string, 0, 1+len(s.Args))
-	command = append(command, s.Command)
-	command = append(command, s.Args...)
+	// command+args as a single list (OpenCode's local-server shape).
+	// Appending s.Args to a cap-1 literal always reallocates, so the result
+	// never aliases s.Args' backing array.
+	command := append([]string{s.Command}, s.Args...)
 	entry := map[string]any{"type": "local", "command": command, "enabled": true}
 	if len(s.Env) > 0 {
 		entry["environment"] = s.Env
