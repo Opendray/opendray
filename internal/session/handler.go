@@ -189,10 +189,36 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
+	p, ok := integration.CurrentPrincipal(r.Context())
+	list = visibleSessions(p, ok, list)
 	if list == nil {
 		list = []Session{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"sessions": list})
+}
+
+// visibleSessions filters the session list for the calling principal.
+// An integration token sees only its own integration's sessions; the
+// operator console (admin token, or no integration principal) never sees
+// integration-origin sessions at all. Third-party consumer sessions are
+// private — they may serve many end users — so they must not surface in
+// the operator's session list. Returns a fresh slice (never mutates).
+func visibleSessions(p integration.Principal, ok bool, list []Session) []Session {
+	asIntegration := ok && p.Kind == integration.KindIntegration
+	out := make([]Session, 0, len(list))
+	for _, s := range list {
+		if asIntegration {
+			if s.IntegrationID == p.ID {
+				out = append(out, s)
+			}
+			continue
+		}
+		if s.Origin == OriginIntegration {
+			continue
+		}
+		out = append(out, s)
+	}
+	return out
 }
 
 func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
