@@ -218,9 +218,13 @@ export interface Integration {
   mcp_servers?: McpServerSpec[]
   /** System prompt prepended to sessions this integration creates. */
   system_prompt?: string
-  /** When true, tool calls are auto-approved (the integration runs
-      unattended, so there's no operator to confirm prompts). */
-  bypass_permissions?: boolean
+  /** Permission mode for sessions this integration creates:
+      'default' = the provider's normal approval flow; 'bypass' =
+      auto-approve every tool call (unattended, no operator to confirm). */
+  permission_mode?: 'default' | 'bypass'
+  /** Reserved forward-compat slot for a future named, reusable Agent
+      entity. Not used at runtime yet. */
+  agent_id?: string
 }
 
 export interface McpServerSpec {

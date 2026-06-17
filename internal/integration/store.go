@@ -38,14 +38,14 @@ func (s *store) Insert(ctx context.Context, i Integration) error {
             (id, name, base_url, route_prefix, api_key_hash, scopes, version,
              enabled, health_status, created_at, is_system, memory_policy,
              default_provider_id, default_model, default_claude_account_id,
-             mcp_servers, system_prompt, bypass_permissions)
+             mcp_servers, system_prompt, permission_mode, agent_id)
         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12,
-                $13, $14, $15, $16::jsonb, $17, $18)`,
+                $13, $14, $15, $16::jsonb, $17, $18, $19)`,
 		i.ID, i.Name, i.BaseURL, i.RoutePrefix, i.apiKeyHash, scopesJSON,
 		nullIfEmpty(i.Version), i.Enabled, string(i.HealthStatus), i.CreatedAt,
 		i.IsSystem, string(policy),
 		i.DefaultProviderID, i.DefaultModel, i.DefaultClaudeAccountID,
-		mcpServers, i.SystemPrompt, i.BypassPermissions)
+		mcpServers, i.SystemPrompt, string(NormalizePermissionMode(i.PermissionMode)), i.AgentID)
 	if err != nil {
 		return fmt.Errorf("insert integration: %w", err)
 	}
@@ -173,11 +173,18 @@ func (s *store) Update(ctx context.Context, id string, patch UpdatePatch) error 
 			return fmt.Errorf("update system_prompt: %w", err)
 		}
 	}
-	if patch.BypassPermissions != nil {
+	if patch.PermissionMode != nil {
 		if _, err := s.pool.Exec(ctx,
-			`UPDATE integrations SET bypass_permissions=$1 WHERE id=$2`,
-			*patch.BypassPermissions, id); err != nil {
-			return fmt.Errorf("update bypass_permissions: %w", err)
+			`UPDATE integrations SET permission_mode=$1 WHERE id=$2`,
+			string(NormalizePermissionMode(*patch.PermissionMode)), id); err != nil {
+			return fmt.Errorf("update permission_mode: %w", err)
+		}
+	}
+	if patch.AgentID != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET agent_id=$1 WHERE id=$2`,
+			*patch.AgentID, id); err != nil {
+			return fmt.Errorf("update agent_id: %w", err)
 		}
 	}
 	return nil
@@ -242,7 +249,8 @@ const selectStmt = `
            COALESCE(default_claude_account_id, ''),
            COALESCE(mcp_servers, '[]'::jsonb),
            COALESCE(system_prompt, ''),
-           COALESCE(bypass_permissions, FALSE)
+           COALESCE(permission_mode, 'default'),
+           COALESCE(agent_id, '')
     FROM integrations`
 
 type rowScanner interface {
@@ -267,6 +275,7 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 		rotatedAt      sql.NullTime
 		memoryPolicy   string
 		mcpServersRaw  []byte
+		permissionMode string
 	)
 	err := row.Scan(
 		&i.ID, &i.Name, &i.BaseURL, &i.RoutePrefix, &i.apiKeyHash,
@@ -274,12 +283,13 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 		&healthLastSeen, &i.CreatedAt, &rotatedAt, &i.IsSystem,
 		&memoryPolicy,
 		&i.DefaultProviderID, &i.DefaultModel, &i.DefaultClaudeAccountID,
-		&mcpServersRaw, &i.SystemPrompt, &i.BypassPermissions,
+		&mcpServersRaw, &i.SystemPrompt, &permissionMode, &i.AgentID,
 	)
 	if err != nil {
 		return Integration{}, err
 	}
 	i.MemoryPolicy = MemoryPolicy(memoryPolicy)
+	i.PermissionMode = NormalizePermissionMode(PermissionMode(permissionMode))
 	if len(mcpServersRaw) == 0 {
 		mcpServersRaw = []byte("[]")
 	}
@@ -333,7 +343,8 @@ type UpdatePatch struct {
 
 	// Provider-agnostic spawn profile. A non-nil pointer sets the column
 	// (empty mcp_servers / system_prompt clears it).
-	MCPServers        *json.RawMessage
-	SystemPrompt      *string
-	BypassPermissions *bool
+	MCPServers     *json.RawMessage
+	SystemPrompt   *string
+	PermissionMode *PermissionMode
+	AgentID        *string
 }

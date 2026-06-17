@@ -298,33 +298,35 @@ func IntegrationSystemPromptFromContext(ctx context.Context) string {
 	return ""
 }
 
-type bypassPermissionsCtxKey struct{}
+type permissionModeCtxKey struct{}
 
-// WithBypassPermissions attaches the integration's auto-approve request
-// to ctx for resolve-time use. false is a no-op.
-func WithBypassPermissions(ctx context.Context, bypass bool) context.Context {
-	if !bypass {
+// WithPermissionMode attaches the integration's spawn-profile permission
+// mode ("default"|"bypass") to ctx for resolve-time use. Empty/"default"
+// is a no-op (the provider's normal approval flow stands).
+func WithPermissionMode(ctx context.Context, mode string) context.Context {
+	if mode == "" || mode == "default" {
 		return ctx
 	}
-	return context.WithValue(ctx, bypassPermissionsCtxKey{}, bypass)
+	return context.WithValue(ctx, permissionModeCtxKey{}, mode)
 }
 
-// BypassPermissionsFromContext returns the value set by
-// WithBypassPermissions, or false if none.
-func BypassPermissionsFromContext(ctx context.Context) bool {
-	if v, ok := ctx.Value(bypassPermissionsCtxKey{}).(bool); ok {
+// PermissionModeFromContext returns the mode set by WithPermissionMode,
+// or "" if none. "bypass" → the catalog appends the provider's bypass
+// flag.
+func PermissionModeFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(permissionModeCtxKey{}).(string); ok {
 		return v
 	}
-	return false
+	return ""
 }
 
 // IntegrationSpawnProfile is the provider-agnostic injection config an
 // integration declares once; the manager applies it to every session
 // that integration creates.
 type IntegrationSpawnProfile struct {
-	MCPServersJSON    string // raw mcp_servers JSON array
-	SystemPrompt      string
-	BypassPermissions bool
+	MCPServersJSON string // raw mcp_servers JSON array
+	SystemPrompt   string
+	PermissionMode string // "default" | "bypass"
 }
 
 // IntegrationSpawnProfiles resolves an integration's spawn profile.

@@ -68,7 +68,7 @@ export function EditIntegrationDialog({
       claudeAccountId: integration.default_claude_account_id ?? '',
     })
     setSystemPrompt(integration.system_prompt ?? '')
-    setBypassPermissions(integration.bypass_permissions ?? false)
+    setBypassPermissions(integration.permission_mode === 'bypass')
     setMcpServersText(JSON.stringify(integration.mcp_servers ?? [], null, 2))
     setMcpError(null)
     setError(null)
@@ -145,8 +145,8 @@ export function EditIntegrationDialog({
     if (systemPrompt !== (integration.system_prompt ?? '')) {
       patch.system_prompt = systemPrompt
     }
-    if (bypassPermissions !== (integration.bypass_permissions ?? false)) {
-      patch.bypass_permissions = bypassPermissions
+    if (bypassPermissions !== (integration.permission_mode === 'bypass')) {
+      patch.permission_mode = bypassPermissions ? 'bypass' : 'default'
     }
     if (
       JSON.stringify(mcpServers) !==

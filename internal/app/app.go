@@ -2173,9 +2173,9 @@ func (l *integrationDefaultsLookup) SpawnProfileFor(ctx context.Context, integra
 		mcp = string(i.MCPServers)
 	}
 	return session.IntegrationSpawnProfile{
-		MCPServersJSON:    mcp,
-		SystemPrompt:      i.SystemPrompt,
-		BypassPermissions: i.BypassPermissions,
+		MCPServersJSON: mcp,
+		SystemPrompt:   i.SystemPrompt,
+		PermissionMode: string(integration.NormalizePermissionMode(i.PermissionMode)),
 	}, nil
 }
 

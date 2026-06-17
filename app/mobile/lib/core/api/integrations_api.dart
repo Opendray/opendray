@@ -59,7 +59,7 @@ class Integration {
           json['default_claude_account_id'] as String? ?? '',
       mcpServers: mcpServers,
       systemPrompt: json['system_prompt'] as String? ?? '',
-      bypassPermissions: json['bypass_permissions'] as bool? ?? false,
+      bypassPermissions: (json['permission_mode'] as String?) == 'bypass',
     );
   }
 
@@ -307,7 +307,7 @@ class IntegrationsApi {
           if (mcpServers != null) 'mcp_servers': mcpServers,
           if (systemPrompt != null) 'system_prompt': systemPrompt,
           if (bypassPermissions != null)
-            'bypass_permissions': bypassPermissions,
+            'permission_mode': bypassPermissions ? 'bypass' : 'default',
         },
       );
       return Integration.fromJson(res.data ?? {});

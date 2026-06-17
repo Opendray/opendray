@@ -102,7 +102,8 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		DefaultClaudeAccountID *string          `json:"default_claude_account_id,omitempty"`
 		MCPServers             *json.RawMessage `json:"mcp_servers,omitempty"`
 		SystemPrompt           *string          `json:"system_prompt,omitempty"`
-		BypassPermissions      *bool            `json:"bypass_permissions,omitempty"`
+		PermissionMode         *PermissionMode  `json:"permission_mode,omitempty"`
+		AgentID                *string          `json:"agent_id,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
@@ -112,6 +113,17 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest,
 			fmt.Errorf("memory_policy must be none|quarantine|full, got %q", *req.MemoryPolicy))
 		return
+	}
+	if req.PermissionMode != nil && *req.PermissionMode != "" && !ValidPermissionMode(*req.PermissionMode) {
+		writeError(w, http.StatusBadRequest,
+			fmt.Errorf("permission_mode must be default|bypass, got %q", *req.PermissionMode))
+		return
+	}
+	if req.MCPServers != nil {
+		if err := validateMCPServers(*req.MCPServers); err != nil {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
 	}
 	patch := UpdatePatch{
 		BaseURL:                req.BaseURL,
@@ -124,7 +136,8 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		DefaultClaudeAccountID: req.DefaultClaudeAccountID,
 		MCPServers:             req.MCPServers,
 		SystemPrompt:           req.SystemPrompt,
-		BypassPermissions:      req.BypassPermissions,
+		PermissionMode:         req.PermissionMode,
+		AgentID:                req.AgentID,
 	}
 	i, err := h.svc.Update(r.Context(), id, patch)
 	if errors.Is(err, ErrNotFound) {

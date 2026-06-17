@@ -321,16 +321,17 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// for bypass: codex's full bypass flag (appended below) is
 		// mutually exclusive with an approval policy, so applying both
 		// would conflict.
-		if !session.BypassPermissionsFromContext(ctx) {
+		if session.PermissionModeFromContext(ctx) != "bypass" {
 			if approval, ok := p.Config["approval"].(string); ok && approval != "" {
 				args = append(args, "-c", "approval_policy="+tomlString(approval))
 			}
 		}
 	}
 	// Integration bypass: append the provider's unattended/auto-approve
-	// flag when the creating integration set bypass_permissions, so its
-	// sessions run without a human to approve tool calls.
-	if session.BypassPermissionsFromContext(ctx) {
+	// flag when the creating integration's spawn profile set
+	// permission_mode=bypass, so its sessions run without a human to
+	// approve tool calls.
+	if session.PermissionModeFromContext(ctx) == "bypass" {
 		args = append(args, bypassArgsFor(p.Manifest.ID)...)
 	}
 

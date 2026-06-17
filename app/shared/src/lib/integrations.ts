@@ -45,7 +45,8 @@ export async function updateIntegration(
     default_claude_account_id?: string
     mcp_servers?: McpServerSpec[]
     system_prompt?: string
-    bypass_permissions?: boolean
+    permission_mode?: 'default' | 'bypass'
+    agent_id?: string
   },
 ): Promise<Integration> {
   return api<Integration>(`/api/v1/integrations/${id}`, {

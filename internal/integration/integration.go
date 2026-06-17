@@ -61,6 +61,41 @@ func ValidMemoryPolicy(p MemoryPolicy) bool {
 	return false
 }
 
+// PermissionMode is the spawn profile's tool-approval policy for sessions
+// an integration creates. Provider-agnostic: opendray maps it to each
+// CLI's permission surface at spawn.
+type PermissionMode string
+
+const (
+	// PermissionModeDefault leaves the provider's normal approval flow in
+	// place (the operator-attended TUI gates tool calls). The zero value.
+	PermissionModeDefault PermissionMode = "default"
+	// PermissionModeBypass auto-approves every tool call — for an
+	// unattended, app-driven session with no human at the TUI. Maps to the
+	// provider's bypass flag (claude --dangerously-skip-permissions /
+	// gemini --yolo / codex --dangerously-bypass-approvals-and-sandbox).
+	PermissionModeBypass PermissionMode = "bypass"
+)
+
+// ValidPermissionMode reports whether m is a declared mode. Empty is
+// treated as the safe default by NormalizePermissionMode, not here.
+func ValidPermissionMode(m PermissionMode) bool {
+	switch m {
+	case PermissionModeDefault, PermissionModeBypass:
+		return true
+	}
+	return false
+}
+
+// NormalizePermissionMode maps empty to the safe "default", leaving other
+// values untouched so validation can reject a bad explicit value.
+func NormalizePermissionMode(m PermissionMode) PermissionMode {
+	if m == "" {
+		return PermissionModeDefault
+	}
+	return m
+}
+
 // Integration is the public view of one registered external app.
 // `APIKeyHash` is excluded from JSON; the plaintext key is returned
 // once at registration and never again.
@@ -93,16 +128,23 @@ type Integration struct {
 	DefaultModel           string `json:"default_model,omitempty"`
 	DefaultClaudeAccountID string `json:"default_claude_account_id,omitempty"`
 
-	// MCPServers / SystemPrompt / BypassPermissions are the provider-
-	// AGNOSTIC half of the spawn profile (the 0064 default-agent fields are
-	// the other half). Applied ONLY to sessions this integration creates:
-	// opendray renders MCPServers via renderMCP, injects SystemPrompt via
-	// the provider's native system-prompt surface, and appends the
-	// provider's bypass flag when BypassPermissions is set — all per the
-	// resolved provider, so the integration is no longer locked to one CLI.
-	MCPServers        json.RawMessage `json:"mcp_servers,omitempty"`
-	SystemPrompt      string          `json:"system_prompt,omitempty"`
-	BypassPermissions bool            `json:"bypass_permissions"`
+	// MCPServers / SystemPrompt / PermissionMode are the provider-AGNOSTIC
+	// half of the spawn profile (the 0064 default-agent fields are the other
+	// half). Applied ONLY to sessions this integration creates: opendray
+	// renders MCPServers via renderMCP, injects SystemPrompt via the
+	// provider's native system-prompt surface, and maps PermissionMode to
+	// the provider's bypass flag — all per the resolved provider, so the
+	// integration is no longer locked to one CLI.
+	MCPServers     json.RawMessage `json:"mcp_servers,omitempty"`
+	SystemPrompt   string          `json:"system_prompt,omitempty"`
+	PermissionMode PermissionMode  `json:"permission_mode,omitempty"`
+
+	// AgentID is a RESERVED forward-compat slot for a future named,
+	// reusable Agent entity that integrations reference (so many can share
+	// one {provider, model, account, prompt, mcp, permission} bundle). Not
+	// read at runtime yet — present so adopting that model later needs no
+	// table reshape. Empty = inline spawn profile (today's only mode).
+	AgentID string `json:"agent_id,omitempty"`
 
 	// IsSystem flags rows opendray manages itself (e.g. the
 	// auto-registered opendray-memory MCP integration). The UI
