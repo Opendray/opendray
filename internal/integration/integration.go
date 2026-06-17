@@ -81,6 +81,17 @@ type Integration struct {
 	// creates: none (default) | quarantine | full.
 	MemoryPolicy MemoryPolicy `json:"memory_policy"`
 
+	// DefaultProviderID / DefaultModel / DefaultClaudeAccountID are the
+	// spawn defaults applied to sessions this integration creates when
+	// the POST /sessions request omits the corresponding field. They are
+	// DEFAULTS, not enforcement: a request that supplies its own
+	// provider_id / model / claude_account_id always wins. Empty means
+	// "no default" — the session falls back to the request value (or the
+	// provider/CLI default when the request is also empty).
+	DefaultProviderID      string `json:"default_provider_id,omitempty"`
+	DefaultModel           string `json:"default_model,omitempty"`
+	DefaultClaudeAccountID string `json:"default_claude_account_id,omitempty"`
+
 	// IsSystem flags rows opendray manages itself (e.g. the
 	// auto-registered opendray-memory MCP integration). The UI
 	// renders system rows in a separate group and disables

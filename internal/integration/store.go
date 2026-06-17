@@ -32,11 +32,14 @@ func (s *store) Insert(ctx context.Context, i Integration) error {
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO integrations
             (id, name, base_url, route_prefix, api_key_hash, scopes, version,
-             enabled, health_status, created_at, is_system, memory_policy)
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12)`,
+             enabled, health_status, created_at, is_system, memory_policy,
+             default_provider_id, default_model, default_claude_account_id)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12,
+                $13, $14, $15)`,
 		i.ID, i.Name, i.BaseURL, i.RoutePrefix, i.apiKeyHash, scopesJSON,
 		nullIfEmpty(i.Version), i.Enabled, string(i.HealthStatus), i.CreatedAt,
-		i.IsSystem, string(policy))
+		i.IsSystem, string(policy),
+		i.DefaultProviderID, i.DefaultModel, i.DefaultClaudeAccountID)
 	if err != nil {
 		return fmt.Errorf("insert integration: %w", err)
 	}
@@ -125,6 +128,27 @@ func (s *store) Update(ctx context.Context, id string, patch UpdatePatch) error 
 			return fmt.Errorf("update memory_policy: %w", err)
 		}
 	}
+	if patch.DefaultProviderID != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET default_provider_id=$1 WHERE id=$2`,
+			*patch.DefaultProviderID, id); err != nil {
+			return fmt.Errorf("update default_provider_id: %w", err)
+		}
+	}
+	if patch.DefaultModel != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET default_model=$1 WHERE id=$2`,
+			*patch.DefaultModel, id); err != nil {
+			return fmt.Errorf("update default_model: %w", err)
+		}
+	}
+	if patch.DefaultClaudeAccountID != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET default_claude_account_id=$1 WHERE id=$2`,
+			*patch.DefaultClaudeAccountID, id); err != nil {
+			return fmt.Errorf("update default_claude_account_id: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -181,7 +205,10 @@ const selectStmt = `
            enabled, health_status, health_payload,
            health_last_seen, created_at, rotated_at,
            COALESCE(is_system, FALSE),
-           COALESCE(memory_policy, 'quarantine')
+           COALESCE(memory_policy, 'quarantine'),
+           COALESCE(default_provider_id, ''),
+           COALESCE(default_model, ''),
+           COALESCE(default_claude_account_id, '')
     FROM integrations`
 
 type rowScanner interface {
@@ -211,6 +238,7 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 		&scopesRaw, &i.Version, &i.Enabled, &healthStatus, &healthRaw,
 		&healthLastSeen, &i.CreatedAt, &rotatedAt, &i.IsSystem,
 		&memoryPolicy,
+		&i.DefaultProviderID, &i.DefaultModel, &i.DefaultClaudeAccountID,
 	)
 	if err != nil {
 		return Integration{}, err
@@ -256,4 +284,10 @@ type UpdatePatch struct {
 	Version      *string
 	Enabled      *bool
 	MemoryPolicy *MemoryPolicy
+
+	// Spawn defaults for sessions this integration creates. A non-nil
+	// pointer sets the column (empty string clears the default).
+	DefaultProviderID      *string
+	DefaultModel           *string
+	DefaultClaudeAccountID *string
 }

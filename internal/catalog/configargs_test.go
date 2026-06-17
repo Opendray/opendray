@@ -291,20 +291,24 @@ func TestApplyConfigSchema_RealManifests(t *testing.T) {
 func TestModelArgs(t *testing.T) {
 	cli := Manifest{ModelFlag: "--model"}
 	cases := []struct {
-		name string
-		m    Manifest
-		cfg  map[string]any
-		want []string
+		name     string
+		m        Manifest
+		cfg      map[string]any
+		override string
+		want     []string
 	}{
-		{"default set", cli, map[string]any{"model": "opus"}, []string{"--model", "opus"}},
-		{"no default", cli, map[string]any{}, nil},
-		{"empty default", cli, map[string]any{"model": ""}, nil},
-		{"non-string default", cli, map[string]any{"model": 3}, nil},
-		{"no model flag", Manifest{}, map[string]any{"model": "opus"}, nil},
+		{"default set", cli, map[string]any{"model": "opus"}, "", []string{"--model", "opus"}},
+		{"no default", cli, map[string]any{}, "", nil},
+		{"empty default", cli, map[string]any{"model": ""}, "", nil},
+		{"non-string default", cli, map[string]any{"model": 3}, "", nil},
+		{"no model flag", Manifest{}, map[string]any{"model": "opus"}, "", nil},
+		{"override wins over default", cli, map[string]any{"model": "opus"}, "sonnet", []string{"--model", "sonnet"}},
+		{"override with no default", cli, map[string]any{}, "haiku", []string{"--model", "haiku"}},
+		{"override ignored without flag", Manifest{}, map[string]any{}, "haiku", nil},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			got := modelArgs(c.m, c.cfg)
+			got := modelArgs(c.m, c.cfg, c.override)
 			if len(got) != len(c.want) {
 				t.Fatalf("modelArgs=%v want %v", got, c.want)
 			}

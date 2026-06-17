@@ -68,9 +68,23 @@ type ClaudeAccountChecker interface {
 	PickAutoAssignClaudeAccount(ctx context.Context) (string, error)
 }
 
+// IntegrationDefaults resolves the spawn defaults an integration has
+// configured (provider / model / claude account). create() applies them
+// to integration-origin sessions for any field the request omits. Kept
+// as a small interface so the session package needn't import the
+// integration registry directly. Optional; a nil resolver disables
+// default application.
+type IntegrationDefaults interface {
+	// DefaultsFor returns the configured spawn defaults for the
+	// integration with the given id. Any field may be empty ("no
+	// default"). The caller treats a non-nil error as "no defaults".
+	DefaultsFor(ctx context.Context, integrationID string) (provider, model, claudeAccount string, err error)
+}
+
 type Handlers struct {
 	svc      Service
 	acct     ClaudeAccountChecker // optional; nil disables early validation
+	defaults IntegrationDefaults  // optional; nil disables integration spawn defaults
 	log      *slog.Logger
 	upgrader websocket.Upgrader
 }
@@ -85,6 +99,14 @@ type HandlerOption func(*Handlers)
 // is equivalent to omitting the option (validation is skipped).
 func WithClaudeAccountChecker(c ClaudeAccountChecker) HandlerOption {
 	return func(h *Handlers) { h.acct = c }
+}
+
+// WithIntegrationDefaults wires the resolver used to fill provider /
+// model / claude account from an integration's configured spawn
+// defaults in create(). Passing nil is equivalent to omitting it
+// (defaults are not applied).
+func WithIntegrationDefaults(d IntegrationDefaults) HandlerOption {
+	return func(h *Handlers) { h.defaults = d }
 }
 
 func NewHandlers(svc Service, log *slog.Logger, opts ...HandlerOption) *Handlers {
@@ -141,6 +163,22 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	// Provenance — derived from the authenticated principal, never the
+	// JSON body (Cortex Phase 2). Integration-created sessions are
+	// tagged so the memory capture pipeline can route their facts by
+	// the integration's memory_policy instead of polluting durable
+	// memory. No principal (route not behind auth middleware, e.g. in
+	// tests) falls through to the operator default.
+	//
+	// Stamped first so integration defaults below see the resolved
+	// origin, and so the default-filled provider/account flow through
+	// the same validation + auto-assign as a client-supplied request.
+	if p, ok := integration.CurrentPrincipal(r.Context()); ok && p.Kind == integration.KindIntegration {
+		req.SetOrigin(OriginIntegration, p.ID)
+		h.applyIntegrationDefaults(r.Context(), p.ID, &req)
+	} else if ok {
+		req.SetOrigin(OriginOperator, "")
+	}
 	// Validate claude_account_id up front so the operator gets a clean
 	// 400 instead of a 500 on the deferred spawn-time error. We only
 	// check when an id was actually supplied; empty means "use the
@@ -164,23 +202,38 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 		// Auto-assign errors are non-fatal: we still try to spawn
 		// with the CLI default rather than failing the create call.
 	}
-	// Provenance — derived from the authenticated principal, never the
-	// JSON body (Cortex Phase 2). Integration-created sessions are
-	// tagged so the memory capture pipeline can route their facts by
-	// the integration's memory_policy instead of polluting durable
-	// memory. No principal (route not behind auth middleware, e.g. in
-	// tests) falls through to the operator default.
-	if p, ok := integration.CurrentPrincipal(r.Context()); ok && p.Kind == integration.KindIntegration {
-		req.SetOrigin(OriginIntegration, p.ID)
-	} else if ok {
-		req.SetOrigin(OriginOperator, "")
-	}
 	sess, err := h.svc.Create(r.Context(), req)
 	if err != nil {
 		h.respondError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, sess)
+}
+
+// applyIntegrationDefaults fills provider / model / claude account from
+// the integration's configured spawn defaults, but only for fields the
+// request left empty — a client-supplied value always wins. A nil
+// resolver (option not wired) or any lookup error is a silent no-op:
+// defaults are a convenience, never a hard requirement for spawning.
+func (h *Handlers) applyIntegrationDefaults(ctx context.Context, integrationID string, req *CreateRequest) {
+	if h.defaults == nil {
+		return
+	}
+	provider, model, account, err := h.defaults.DefaultsFor(ctx, integrationID)
+	if err != nil {
+		h.log.Warn("integration defaults lookup failed",
+			"integration", integrationID, "err", err)
+		return
+	}
+	if req.ProviderID == "" {
+		req.ProviderID = provider
+	}
+	if req.Model == "" {
+		req.Model = model
+	}
+	if req.ClaudeAccountID == "" {
+		req.ClaudeAccountID = account
+	}
 }
 
 func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {

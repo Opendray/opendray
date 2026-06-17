@@ -84,6 +84,33 @@ func AccountID(ctx context.Context) string {
 	return ""
 }
 
+// ── Model selection ────────────────────────────────────────────────
+//
+// A session can pin its own model (Session.Model). Like the account
+// selection it isn't a Resolve() parameter, so we thread it through
+// context; the ProviderResolver renders it via the manifest's model
+// flag, taking precedence over the provider config default. Empty is a
+// no-op so the resolver falls back to the configured default.
+
+type modelCtxKey struct{}
+
+// WithModel attaches the session's pinned model to ctx for resolve-time
+// use. Empty model is a no-op.
+func WithModel(ctx context.Context, model string) context.Context {
+	if model == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, modelCtxKey{}, model)
+}
+
+// ModelFromContext retrieves the value set by WithModel, or "" if none.
+func ModelFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(modelCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
 // ── Cwd propagation ────────────────────────────────────────────────
 //
 // Some prepare-time decisions (notably the memory MCP auto-attach)

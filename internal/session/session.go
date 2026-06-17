@@ -56,9 +56,13 @@ func classifyExitState(stopRequested, closing bool) State {
 // resources (PTY fd, ring buffer, subscribers) live on the Manager's
 // internal struct, not here.
 type Session struct {
-	ID              string   `json:"id"`
-	Name            string   `json:"name,omitempty"`
-	ProviderID      string   `json:"provider_id"`
+	ID         string `json:"id"`
+	Name       string `json:"name,omitempty"`
+	ProviderID string `json:"provider_id"`
+	// Model pins the model this session spawns against, applied at
+	// spawn via the provider's model flag. Empty falls back to the
+	// provider config default. See CreateRequest.Model.
+	Model           string   `json:"model,omitempty"`
 	Cwd             string   `json:"cwd"`
 	Args            []string `json:"args"`
 	State           State    `json:"state"`
@@ -97,8 +101,13 @@ const (
 
 // CreateRequest is the JSON body for POST /api/v1/sessions.
 type CreateRequest struct {
-	Name            string   `json:"name"`
-	ProviderID      string   `json:"provider_id"`
+	Name       string `json:"name"`
+	ProviderID string `json:"provider_id"`
+	// Model optionally pins the model for this session (e.g. an "opus"
+	// id for the claude provider). Empty means "use the provider config
+	// default". Applied at spawn via the provider's model flag, so a
+	// `--model` in Args still wins (the manager dedups overridden flags).
+	Model           string   `json:"model,omitempty"`
 	ClaudeAccountID string   `json:"claude_account_id,omitempty"`
 	ParentSessionID string   `json:"parent_session_id,omitempty"`
 	Cwd             string   `json:"cwd"`

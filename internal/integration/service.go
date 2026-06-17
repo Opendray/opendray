@@ -57,6 +57,13 @@ type RegisterRequest struct {
 	// this integration creates (none|quarantine|full). Empty defaults
 	// to quarantine — safe by default.
 	MemoryPolicy MemoryPolicy `json:"memory_policy,omitempty"`
+
+	// DefaultProviderID / DefaultModel / DefaultClaudeAccountID seed the
+	// spawn defaults for sessions this integration creates. All optional;
+	// empty means "no default". See Integration for semantics.
+	DefaultProviderID      string `json:"default_provider_id,omitempty"`
+	DefaultModel           string `json:"default_model,omitempty"`
+	DefaultClaudeAccountID string `json:"default_claude_account_id,omitempty"`
 }
 
 // RegisterResult bundles the persisted integration with the one-time
@@ -127,7 +134,12 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		CreatedAt:    time.Now().UTC(),
 		IsSystem:     req.IsSystem,
 		MemoryPolicy: policy,
-		apiKeyHash:   hash,
+
+		DefaultProviderID:      req.DefaultProviderID,
+		DefaultModel:           req.DefaultModel,
+		DefaultClaudeAccountID: req.DefaultClaudeAccountID,
+
+		apiKeyHash: hash,
 	}
 	if len(i.Scopes) == 0 {
 		i.Scopes = append([]string{}, defaultScopes...)

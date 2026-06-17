@@ -92,11 +92,14 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req struct {
-		BaseURL      *string       `json:"base_url,omitempty"`
-		Scopes       *[]string     `json:"scopes,omitempty"`
-		Version      *string       `json:"version,omitempty"`
-		Enabled      *bool         `json:"enabled,omitempty"`
-		MemoryPolicy *MemoryPolicy `json:"memory_policy,omitempty"`
+		BaseURL                *string       `json:"base_url,omitempty"`
+		Scopes                 *[]string     `json:"scopes,omitempty"`
+		Version                *string       `json:"version,omitempty"`
+		Enabled                *bool         `json:"enabled,omitempty"`
+		MemoryPolicy           *MemoryPolicy `json:"memory_policy,omitempty"`
+		DefaultProviderID      *string       `json:"default_provider_id,omitempty"`
+		DefaultModel           *string       `json:"default_model,omitempty"`
+		DefaultClaudeAccountID *string       `json:"default_claude_account_id,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
@@ -108,11 +111,14 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	patch := UpdatePatch{
-		BaseURL:      req.BaseURL,
-		Scopes:       req.Scopes,
-		Version:      req.Version,
-		Enabled:      req.Enabled,
-		MemoryPolicy: req.MemoryPolicy,
+		BaseURL:                req.BaseURL,
+		Scopes:                 req.Scopes,
+		Version:                req.Version,
+		Enabled:                req.Enabled,
+		MemoryPolicy:           req.MemoryPolicy,
+		DefaultProviderID:      req.DefaultProviderID,
+		DefaultModel:           req.DefaultModel,
+		DefaultClaudeAccountID: req.DefaultClaudeAccountID,
 	}
 	i, err := h.svc.Update(r.Context(), id, patch)
 	if errors.Is(err, ErrNotFound) {
