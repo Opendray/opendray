@@ -484,6 +484,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithAutoFailoverEnabled(cfg.Providers.Claude.AutoFailoverIsEnabled()),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, skillsLoader, mcpLoader, secretsFile, log)
+	// Built before the session manager so spawn can inject an
+	// integration's provider-agnostic spawn profile (MCP servers + system
+	// prompt + auto-approve) into the sessions it creates, and so POST
+	// /sessions can inherit the integration's configured spawn defaults
+	// (provider / model / claude account). The handlers (proxy, events,
+	// health) that consume it are constructed further below where the rest
+	// of the integration surface is assembled.
+	intgrSvc := integration.NewService(st.Pool(), bus, log)
+	sessionOpts = append(sessionOpts,
+		// Inject each integration's provider-agnostic spawn profile into
+		// the sessions it creates (create AND reactivate).
+		session.WithIntegrationSpawnProfiles(&integrationDefaultsLookup{svc: intgrSvc}),
+	)
 	sessionMgr := session.NewManager(
 		st.Pool(),
 		bus,
@@ -497,12 +510,6 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if err := sessionMgr.ReconcileStartup(ctx); err != nil {
 		log.Warn("session reconcile on startup failed", "err", err)
 	}
-	// Built before the session handlers so POST /sessions can inherit an
-	// integration's configured spawn defaults (provider / model / claude
-	// account). The handlers (proxy, events, health) that consume it are
-	// constructed further below where the rest of the integration surface
-	// is assembled.
-	intgrSvc := integration.NewService(st.Pool(), bus, log)
 	sessionHandlers := session.NewHandlers(sessionMgr, log,
 		// Inject the cliacct validator so POST /sessions and
 		// PATCH /sessions/{id}/claude-account fail fast with 400
@@ -2151,6 +2158,25 @@ func (l *integrationDefaultsLookup) DefaultsFor(ctx context.Context, integration
 		return "", "", "", err
 	}
 	return i.DefaultProviderID, i.DefaultModel, i.DefaultClaudeAccountID, nil
+}
+
+// SpawnProfileFor resolves the integration's provider-agnostic spawn
+// profile (MCP servers + system prompt + auto-approve) so the session
+// manager can inject it into every session this integration creates.
+func (l *integrationDefaultsLookup) SpawnProfileFor(ctx context.Context, integrationID string) (session.IntegrationSpawnProfile, error) {
+	i, err := l.svc.Get(ctx, integrationID)
+	if err != nil {
+		return session.IntegrationSpawnProfile{}, err
+	}
+	mcp := ""
+	if len(i.MCPServers) > 0 && string(i.MCPServers) != "[]" && string(i.MCPServers) != "null" {
+		mcp = string(i.MCPServers)
+	}
+	return session.IntegrationSpawnProfile{
+		MCPServersJSON: mcp,
+		SystemPrompt:   i.SystemPrompt,
+		PermissionMode: string(integration.NormalizePermissionMode(i.PermissionMode)),
+	}, nil
 }
 
 // summarizerIntegrationLookup adapts integration.Service to the

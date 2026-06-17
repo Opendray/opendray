@@ -2114,6 +2114,13 @@ class _TranslationsIntegrationsFormZh extends TranslationsIntegrationsFormEn {
 	@override String get editFieldScopes => '范围';
 	@override String get editScopesHelper => '逗号分隔。';
 	@override String get editFieldVersion => '版本';
+	@override String get systemPromptLabel => '系统提示词';
+	@override String get systemPromptHint => '添加到此集成创建的每个会话开头。留空 = 无。';
+	@override String get mcpServersLabel => 'MCP 服务器';
+	@override String get mcpServersHint => 'MCP 服务器规格的 JSON 数组。空数组 = 无。';
+	@override String get mcpServersInvalid => 'MCP 服务器必须是有效的 JSON 数组。';
+	@override String get bypassPermissionsLabel => '绕过权限';
+	@override String get bypassPermissionsHint => '为创建的会话跳过权限确认。请谨慎使用。';
 	@override String get apiKeyWarn => '此 key 只显示这一次。';
 	@override String get copyCopied => '已复制';
 	@override String get copyCopy => '复制';
@@ -4470,6 +4477,13 @@ class _TranslationsWebIntegrationsEditDialogZh extends TranslationsWebIntegratio
 	@override String get versionPlaceholder => '0.1.0';
 	@override String get scopesLabel => 'Scopes';
 	@override String get scopesIntro => '收窄或放宽此集成 API key 授权的 API 范围。已颁发的 token 不受影响 — 新的 scope 集在下次请求时生效。';
+	@override String get systemPromptLabel => '系统提示词';
+	@override String get systemPromptHint => '会预置到此集成创建的每个会话前。留空则不使用。';
+	@override String get bypassPermissionsLabel => '跳过权限确认';
+	@override String get bypassPermissionsHint => '自动批准工具调用 — 此集成无人值守运行，没有操作员确认提示。';
+	@override String get mcpServersLabel => 'MCP 服务器';
+	@override String mcpServersHint({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON 数组，例如 [${"name"} }]';
+	@override String get mcpServersInvalid => 'MCP 服务器必须是合法的 JSON 数组。';
 	@override String get errorModeSwitch => '在仅消费型与反向代理型之间切换需要删除并重新注册 — name 和 route_prefix 无法原地修改。';
 	@override String get updatedToast => '集成已更新';
 	@override String get cancel => '取消';
@@ -10124,6 +10138,13 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => '收窄或放宽此集成 API key 授权的 API 范围。已颁发的 token 不受影响 — 新的 scope 集在下次请求时生效。',
+			'web.integrations.edit_dialog.systemPromptLabel' => '系统提示词',
+			'web.integrations.edit_dialog.systemPromptHint' => '会预置到此集成创建的每个会话前。留空则不使用。',
+			'web.integrations.edit_dialog.bypassPermissionsLabel' => '跳过权限确认',
+			'web.integrations.edit_dialog.bypassPermissionsHint' => '自动批准工具调用 — 此集成无人值守运行，没有操作员确认提示。',
+			'web.integrations.edit_dialog.mcpServersLabel' => 'MCP 服务器',
+			'web.integrations.edit_dialog.mcpServersHint' => ({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON 数组，例如 [${"name"} }]',
+			'web.integrations.edit_dialog.mcpServersInvalid' => 'MCP 服务器必须是合法的 JSON 数组。',
 			'web.integrations.edit_dialog.errorModeSwitch' => '在仅消费型与反向代理型之间切换需要删除并重新注册 — name 和 route_prefix 无法原地修改。',
 			'web.integrations.edit_dialog.updatedToast' => '集成已更新',
 			'web.integrations.edit_dialog.cancel' => '取消',
@@ -10509,6 +10530,8 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.kindPicker' => '你想备份到哪里？',
 			'web.backups.targetEditor.idLabel' => 'ID（可选）',
 			'web.backups.targetEditor.idPlaceholder' => '留空则自动生成，例如 tgt_xxx',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.createdToast' => '目标已创建',
 			'web.backups.targetEditor.createFailedToast' => '创建失败',
 			'web.backups.targetEditor.creating' => '创建中…',
@@ -10516,8 +10539,6 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.enableImmediately' => '立即启用（否则保存为禁用 — 适合 "先配置好，稍后开启"）',
 			'web.backups.targetEditor.local.rootLabel' => '根目录',
 			'web.backups.targetEditor.local.rootHint' => '留空 = cfg.backup.local_dir (~/.opendray/backups)',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  或  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => '主机',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
@@ -11023,6 +11044,8 @@ extension on TranslationsZh {
 			'web.noteEditor.status.saveFailed' => '保存失败',
 			'web.noteEditor.status.saving' => '保存中…',
 			'web.noteEditor.status.unsaved' => '未保存',
+			_ => null,
+		} ?? switch (path) {
 			'web.noteEditor.status.newNote' => '新笔记',
 			'web.noteEditor.status.saved' => '已保存',
 			'web.export.title' => '导出数据',
@@ -11030,8 +11053,6 @@ extension on TranslationsZh {
 			'web.export.backToBackups' => '← 备份',
 			'web.export.sections.export' => '导出',
 			'web.export.sections.import' => '导入',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.scope' => '范围',
 			'web.export.form.memories' => '记忆',
 			'web.export.form.memoriesHint' => '跨 CLI 持久化的记忆行（text + scope + metadata）。向量被省略；导入端重嵌入。',
@@ -11537,6 +11558,8 @@ extension on TranslationsZh {
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff 失败（${status}）：${message}',
 			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff 失败：${error}',
 			'sessions.inspector.git.insertHash' => '插入哈希',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => '查看失败（${status}）：${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
@@ -11544,8 +11567,6 @@ extension on TranslationsZh {
 			'sessions.inspector.git.tabLog' => '日志',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
 			'sessions.inspector.tasks.runCommandSubtitle' => '在新的 shell 会话中运行并切换过去',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
@@ -11822,6 +11843,13 @@ extension on TranslationsZh {
 			'integrations.form.editFieldScopes' => '范围',
 			'integrations.form.editScopesHelper' => '逗号分隔。',
 			'integrations.form.editFieldVersion' => '版本',
+			'integrations.form.systemPromptLabel' => '系统提示词',
+			'integrations.form.systemPromptHint' => '添加到此集成创建的每个会话开头。留空 = 无。',
+			'integrations.form.mcpServersLabel' => 'MCP 服务器',
+			'integrations.form.mcpServersHint' => 'MCP 服务器规格的 JSON 数组。空数组 = 无。',
+			'integrations.form.mcpServersInvalid' => 'MCP 服务器必须是有效的 JSON 数组。',
+			'integrations.form.bypassPermissionsLabel' => '绕过权限',
+			'integrations.form.bypassPermissionsHint' => '为创建的会话跳过权限确认。请谨慎使用。',
 			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
 			'integrations.form.copyCopied' => '已复制',
 			'integrations.form.copyCopy' => '复制',
@@ -12044,6 +12072,8 @@ extension on TranslationsZh {
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
 			'backups.restartToActivate' => '重启 opendray 以激活备份',
 			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
@@ -12058,8 +12088,6 @@ extension on TranslationsZh {
 			'backups.overviewTargets' => '目标',
 			'backups.overviewSchedules' => '计划',
 			'backups.overviewBackups' => '备份',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.headlineHealthy' => '备份正常',
 			'backups.health.headlineAttention' => '需要关注',
 			'backups.health.headlineNever' => '尚无备份',
@@ -12558,6 +12586,8 @@ extension on TranslationsZh {
 			'dataExport.import.summaryCard.memories' => '记忆',
 			'dataExport.import.summaryCard.integrations' => '集成',
 			'dataExport.import.summaryCard.customTasks' => '自定义任务',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.summaryCard.created' => '创建',
 			'dataExport.import.summaryCard.skipped' => '跳过',
 			'dataExport.import.summaryCard.failed' => '失败',
@@ -12572,8 +12602,6 @@ extension on TranslationsZh {
 			'dataExport.imports.columns.source' => '来源',
 			'dataExport.imports.columns.counts' => '计数',
 			'dataExport.imports.columns.when' => '时间',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => '${n} 秒后',
 			'dataExport.relative.inMinutes' => ({required Object n}) => '${n} 分钟后',
 			'dataExport.relative.inHours' => ({required Object n}) => '${n} 小时后',

@@ -153,6 +153,9 @@ class _IntegrationDetailScreenState
             defaultProviderId: patch.defaultProviderId,
             defaultModel: patch.defaultModel,
             defaultClaudeAccountId: patch.defaultClaudeAccountId,
+            systemPrompt: patch.systemPrompt,
+            mcpServers: patch.mcpServers,
+            bypassPermissions: patch.bypassPermissions,
           );
       if (!mounted) return;
       messenger.showSnackBar(

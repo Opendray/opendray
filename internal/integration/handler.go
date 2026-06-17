@@ -92,14 +92,18 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req struct {
-		BaseURL                *string       `json:"base_url,omitempty"`
-		Scopes                 *[]string     `json:"scopes,omitempty"`
-		Version                *string       `json:"version,omitempty"`
-		Enabled                *bool         `json:"enabled,omitempty"`
-		MemoryPolicy           *MemoryPolicy `json:"memory_policy,omitempty"`
-		DefaultProviderID      *string       `json:"default_provider_id,omitempty"`
-		DefaultModel           *string       `json:"default_model,omitempty"`
-		DefaultClaudeAccountID *string       `json:"default_claude_account_id,omitempty"`
+		BaseURL                *string          `json:"base_url,omitempty"`
+		Scopes                 *[]string        `json:"scopes,omitempty"`
+		Version                *string          `json:"version,omitempty"`
+		Enabled                *bool            `json:"enabled,omitempty"`
+		MemoryPolicy           *MemoryPolicy    `json:"memory_policy,omitempty"`
+		DefaultProviderID      *string          `json:"default_provider_id,omitempty"`
+		DefaultModel           *string          `json:"default_model,omitempty"`
+		DefaultClaudeAccountID *string          `json:"default_claude_account_id,omitempty"`
+		MCPServers             *json.RawMessage `json:"mcp_servers,omitempty"`
+		SystemPrompt           *string          `json:"system_prompt,omitempty"`
+		PermissionMode         *PermissionMode  `json:"permission_mode,omitempty"`
+		AgentID                *string          `json:"agent_id,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, err)
@@ -110,6 +114,17 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 			fmt.Errorf("memory_policy must be none|quarantine|full, got %q", *req.MemoryPolicy))
 		return
 	}
+	if req.PermissionMode != nil && *req.PermissionMode != "" && !ValidPermissionMode(*req.PermissionMode) {
+		writeError(w, http.StatusBadRequest,
+			fmt.Errorf("permission_mode must be default|bypass, got %q", *req.PermissionMode))
+		return
+	}
+	if req.MCPServers != nil {
+		if err := validateMCPServers(*req.MCPServers); err != nil {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
+	}
 	patch := UpdatePatch{
 		BaseURL:                req.BaseURL,
 		Scopes:                 req.Scopes,
@@ -119,6 +134,10 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 		DefaultProviderID:      req.DefaultProviderID,
 		DefaultModel:           req.DefaultModel,
 		DefaultClaudeAccountID: req.DefaultClaudeAccountID,
+		MCPServers:             req.MCPServers,
+		SystemPrompt:           req.SystemPrompt,
+		PermissionMode:         req.PermissionMode,
+		AgentID:                req.AgentID,
 	}
 	i, err := h.svc.Update(r.Context(), id, patch)
 	if errors.Is(err, ErrNotFound) {

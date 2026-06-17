@@ -109,6 +109,15 @@ func WithAutoFailoverEnabled(enabled bool) ManagerOption {
 	return func(m *Manager) { m.autoFailoverEnabled = enabled }
 }
 
+// WithIntegrationSpawnProfiles wires the resolver the manager uses to
+// look up the provider-agnostic spawn profile (MCP servers + system
+// prompt + auto-approve) an integration declares, and apply it to every
+// session that integration creates. Defaults to nil (injection disabled)
+// so existing callers keep working unchanged.
+func WithIntegrationSpawnProfiles(p IntegrationSpawnProfiles) ManagerOption {
+	return func(m *Manager) { m.spawnProfiles = p }
+}
+
 func WithIdleThreshold(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleThreshold = d }
 }
@@ -161,8 +170,9 @@ type Manager struct {
 	bus                 *eventbus.Hub
 	store               *sessionStore
 	providers           ProviderResolver
-	claudeAccounts      ClaudeAccountResolver // optional; nil disables transcript migration + failover
-	autoFailoverEnabled bool                  // when true + claudeAccounts != nil, rate-limit scanner is hot
+	claudeAccounts      ClaudeAccountResolver    // optional; nil disables transcript migration + failover
+	autoFailoverEnabled bool                     // when true + claudeAccounts != nil, rate-limit scanner is hot
+	spawnProfiles       IntegrationSpawnProfiles // optional; nil disables integration spawn-profile injection
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
@@ -632,6 +642,19 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	}
 
 	resolveCtx := WithModel(WithOrigin(WithAccountID(ctx, sess.ClaudeAccountID), sess.Origin), sess.Model)
+	// Integration spawn profile: provider-agnostic MCP servers + system
+	// prompt + auto-approve declared on the creating integration, applied
+	// to every session it spawns (create AND reactivate). Best-effort: a
+	// lookup error logs and falls through (the session still spawns).
+	var spawnProfile IntegrationSpawnProfile
+	if m.spawnProfiles != nil && sess.Origin == OriginIntegration && sess.IntegrationID != "" {
+		if pr, err := m.spawnProfiles.SpawnProfileFor(ctx, sess.IntegrationID); err != nil {
+			m.log.Warn("integration spawn profile lookup failed", "integration", sess.IntegrationID, "err", err)
+		} else {
+			spawnProfile = pr
+		}
+	}
+	resolveCtx = WithPermissionMode(WithIntegrationMCPServers(resolveCtx, spawnProfile.MCPServersJSON), spawnProfile.PermissionMode)
 	p, err := m.providers.Resolve(resolveCtx, sess.ProviderID)
 	if err != nil {
 		return nil, err
@@ -653,7 +676,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		// UUID into Prepare so the provider emits `--resume <id>` and
 		// the prior transcript continues, instead of minting a fresh
 		// session and orphaning history.
-		prepareCtx := WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID)
+		prepareCtx := WithIntegrationSystemPrompt(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), spawnProfile.SystemPrompt)
 		if reactivate {
 			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
 		}
@@ -676,6 +699,19 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		}
 	}
 
+	// For integration-origin sessions the spawn profile is the SINGLE
+	// source of MCP / system-prompt / permission injection. Strip those
+	// per-CLI flags from the request args so an integration can't ALSO
+	// hand-build them imperatively — that declarative-vs-imperative dual
+	// path is the real redundancy: two sources of the same effect, no
+	// dedup between them, and a provider-locked end run around the
+	// profile. Injection intent must live on the integration row, never
+	// per request. Operator / CLI sessions keep full args control.
+	userArgs := sess.Args
+	if sess.Origin == OriginIntegration {
+		userArgs = stripInjectionFlags(userArgs)
+	}
+
 	// User-supplied spawn args take precedence over provider-config-derived
 	// args: drop any flag from p.Args that the user is re-specifying, plus
 	// any provider-side flag that the catalog declares mutually exclusive
@@ -683,11 +719,11 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	// flags (codex's clap rejects a second --ask-for-approval) or
 	// ArgGroup conflicts (codex's --dangerously-bypass-approvals-and-sandbox
 	// vs --ask-for-approval) fail to spawn.
-	providerArgs := dropOverriddenFlags(p.Args, sess.Args)
-	providerArgs = dropConflictingFlags(providerArgs, sess.Args, p.Conflicts)
+	providerArgs := dropOverriddenFlags(p.Args, userArgs)
+	providerArgs = dropConflictingFlags(providerArgs, userArgs, p.Conflicts)
 	args := append([]string(nil), providerArgs...)
 	args = append(args, extraArgs...)
-	args = append(args, sess.Args...)
+	args = append(args, userArgs...)
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = sess.Cwd
@@ -1323,6 +1359,46 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 // matches every flag opendray's bundled providers actually emit (codex,
 // claude, gemini). It does NOT support flag values that start with "-"
 // (e.g. negative numbers); none of our providers use such values.
+// injectionValueFlags / injectionBoolFlags are the per-CLI flags the
+// integration spawn profile owns (MCP config, system prompt, permission
+// bypass). stripInjectionFlags removes them from an integration session's
+// request args so the profile is the single source — see the call site.
+var injectionValueFlags = map[string]bool{
+	"--mcp-config":           true, // claude
+	"--append-system-prompt": true, // claude
+}
+var injectionBoolFlags = map[string]bool{
+	"--dangerously-skip-permissions": true, // claude
+	"--yolo":                         true, // gemini
+	"--dangerously-bypass-approvals-and-sandbox": true, // codex / antigravity
+}
+
+// stripInjectionFlags returns args with the spawn-profile-owned injection
+// flags removed (both "--flag=v" and "--flag v" forms). Returns a new
+// slice; the input is not mutated.
+func stripInjectionFlags(args []string) []string {
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		name := a
+		if idx := strings.IndexByte(a, '='); idx >= 0 {
+			name = a[:idx]
+		}
+		if injectionBoolFlags[name] {
+			continue
+		}
+		if injectionValueFlags[name] {
+			// "--flag value" (no '=') also consumes the following token.
+			if !strings.Contains(a, "=") && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+				i++
+			}
+			continue
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
 func dropOverriddenFlags(providerArgs, userArgs []string) []string {
 	if len(providerArgs) == 0 || len(userArgs) == 0 {
 		return providerArgs

@@ -317,9 +317,22 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// via context) wins over the per-provider operator default.
 	args = append(args, modelArgs(p.Manifest, p.Config, session.ModelFromContext(ctx))...)
 	if p.Manifest.ID == "codex" {
-		if approval, ok := p.Config["approval"].(string); ok && approval != "" {
-			args = append(args, "-c", "approval_policy="+tomlString(approval))
+		// Skip the operator's approval policy when the integration asked
+		// for bypass: codex's full bypass flag (appended below) is
+		// mutually exclusive with an approval policy, so applying both
+		// would conflict.
+		if session.PermissionModeFromContext(ctx) != "bypass" {
+			if approval, ok := p.Config["approval"].(string); ok && approval != "" {
+				args = append(args, "-c", "approval_policy="+tomlString(approval))
+			}
 		}
+	}
+	// Integration bypass: append the provider's unattended/auto-approve
+	// flag when the creating integration's spawn profile set
+	// permission_mode=bypass, so its sessions run without a human to
+	// approve tool calls.
+	if session.PermissionModeFromContext(ctx) == "bypass" {
+		args = append(args, bypassArgsFor(p.Manifest.ID)...)
 	}
 
 	info := session.ProviderInfo{
@@ -343,6 +356,13 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// Precedence on `name` collision: provider config wins. Lets users
 	// override a vault entry per-provider without editing the registry.
 	servers := mergeMCPServers(loadVaultMCPs(sp.mcps, sp.log), parseMCPServers(p.Config))
+	// Integration-scoped MCP servers: declared on the integration that
+	// created this session (provider-agnostic), merged after vault+config
+	// so the integration's own tools attach to whatever provider the
+	// operator pointed it at. Integration entries win on name collision.
+	if raw := session.IntegrationMCPServersFromContext(ctx); raw != "" {
+		servers = mergeMCPServers(servers, parseMCPServersJSON(raw))
+	}
 	// Auto-attach opendray's memory MCP server when enabled at app
 	// startup. This is what makes "the agent remembers things across
 	// sessions" actually work without per-CLI manual setup.
@@ -389,7 +409,12 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// endpoint but happened to disable skills and memory MCP.
 	wantsOpenCodeConfig := wantsOpenCodeSessionConfig(id, p.Config)
 
-	if !wantClaudeAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig {
+	// An integration system prompt is injected inside the Prepare
+	// closure (same surface as ambient memory), so it must not take the
+	// no-Prepare fast path even when nothing else needs one.
+	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
+
+	if !wantClaudeAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
 		return info, nil
 	}
 
@@ -577,6 +602,13 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// — only present on the switch respawn.
 		if err := injectCarryoverFor(prepareCtx, providerID, baseDir, &out); err != nil {
 			return session.PrepareOutput{}, fmt.Errorf("inject carryover context: %w", err)
+		}
+
+		// Integration spawn profile: inject the creating integration's boot
+		// system prompt through the same per-provider surface as ambient
+		// memory. No-op when the integration didn't set one.
+		if err := injectIntegrationPromptFor(prepareCtx, providerID, baseDir, &out); err != nil {
+			return session.PrepareOutput{}, err
 		}
 
 		// Background mirror: pull whatever Claude has already written
@@ -1318,6 +1350,32 @@ func injectCarryoverFor(ctx context.Context, providerID, baseDir string, out *se
 		return nil
 	}
 	return injectAmbientMemoryFor(providerID, baseDir, text, out)
+}
+
+// injectIntegrationPromptFor injects the integration's boot system
+// prompt (set via the integration's spawn profile) through the same
+// per-provider surface as ambient memory. No-op when unset.
+func injectIntegrationPromptFor(ctx context.Context, providerID, baseDir string, out *session.PrepareOutput) error {
+	text := session.IntegrationSystemPromptFromContext(ctx)
+	if text == "" {
+		return nil
+	}
+	return injectAmbientMemoryFor(providerID, baseDir, text, out)
+}
+
+// bypassArgsFor returns the per-provider flag that makes a CLI run
+// unattended (no human to approve tool calls), used when an
+// integration sets bypass_permissions. Empty for providers without one.
+func bypassArgsFor(providerID string) []string {
+	switch providerID {
+	case "claude", "antigravity":
+		return []string{"--dangerously-skip-permissions"}
+	case "gemini":
+		return []string{"--yolo"}
+	case "codex":
+		return []string{"--dangerously-bypass-approvals-and-sandbox"}
+	}
+	return nil
 }
 
 func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.PrepareOutput) error {

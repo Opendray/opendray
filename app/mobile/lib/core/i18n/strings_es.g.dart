@@ -2114,6 +2114,13 @@ class _TranslationsIntegrationsFormEs extends TranslationsIntegrationsFormEn {
 	@override String get editFieldScopes => 'Ámbitos';
 	@override String get editScopesHelper => 'Separados por comas.';
 	@override String get editFieldVersion => 'Versión';
+	@override String get systemPromptLabel => 'Prompt del sistema';
+	@override String get systemPromptHint => 'Se antepone a cada sesión que crea esta integración. Vacío = ninguno.';
+	@override String get mcpServersLabel => 'Servidores MCP';
+	@override String get mcpServersHint => 'Array JSON de especificaciones de servidores MCP. Array vacío = ninguno.';
+	@override String get mcpServersInvalid => 'Los servidores MCP deben ser un array JSON válido.';
+	@override String get bypassPermissionsLabel => 'Omitir permisos';
+	@override String get bypassPermissionsHint => 'Omite las solicitudes de permiso en las sesiones creadas. Úsalo con cuidado.';
 	@override String get apiKeyWarn => 'No volverás a ver esta key.';
 	@override String get copyCopied => 'Copiado';
 	@override String get copyCopy => 'Copiar';
@@ -4470,6 +4477,13 @@ class _TranslationsWebIntegrationsEditDialogEs extends TranslationsWebIntegratio
 	@override String get versionPlaceholder => '0.1.0';
 	@override String get scopesLabel => 'Scopes';
 	@override String get scopesIntro => 'Reduce o amplía la superficie de API que autoriza la API key de esta integración. Los tokens activos no se ven afectados: el nuevo conjunto de scopes surte efecto en la siguiente petición.';
+	@override String get systemPromptLabel => 'Prompt de sistema';
+	@override String get systemPromptHint => 'Se antepone a cada sesión que crea esta integración. Déjalo en blanco para no usar ninguno.';
+	@override String get bypassPermissionsLabel => 'Omitir permisos';
+	@override String get bypassPermissionsHint => 'Aprueba automáticamente las llamadas a herramientas: esta integración se ejecuta sin supervisión, sin operador que confirme las solicitudes.';
+	@override String get mcpServersLabel => 'Servidores MCP';
+	@override String mcpServersHint({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'Array JSON, p. ej. [${"name"} }]';
+	@override String get mcpServersInvalid => 'Los servidores MCP deben ser un array JSON válido.';
 	@override String get errorModeSwitch => 'Cambiar entre modo solo consumidora y reverse-proxy requiere eliminar la integración y volver a registrarla: el nombre y route_prefix no pueden cambiarse sobre la marcha.';
 	@override String get updatedToast => 'Integración actualizada';
 	@override String get cancel => 'Cancelar';
@@ -10124,6 +10138,13 @@ extension on TranslationsEs {
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => 'Reduce o amplía la superficie de API que autoriza la API key de esta integración. Los tokens activos no se ven afectados: el nuevo conjunto de scopes surte efecto en la siguiente petición.',
+			'web.integrations.edit_dialog.systemPromptLabel' => 'Prompt de sistema',
+			'web.integrations.edit_dialog.systemPromptHint' => 'Se antepone a cada sesión que crea esta integración. Déjalo en blanco para no usar ninguno.',
+			'web.integrations.edit_dialog.bypassPermissionsLabel' => 'Omitir permisos',
+			'web.integrations.edit_dialog.bypassPermissionsHint' => 'Aprueba automáticamente las llamadas a herramientas: esta integración se ejecuta sin supervisión, sin operador que confirme las solicitudes.',
+			'web.integrations.edit_dialog.mcpServersLabel' => 'Servidores MCP',
+			'web.integrations.edit_dialog.mcpServersHint' => ({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'Array JSON, p. ej. [${"name"} }]',
+			'web.integrations.edit_dialog.mcpServersInvalid' => 'Los servidores MCP deben ser un array JSON válido.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Cambiar entre modo solo consumidora y reverse-proxy requiere eliminar la integración y volver a registrarla: el nombre y route_prefix no pueden cambiarse sobre la marcha.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integración actualizada',
 			'web.integrations.edit_dialog.cancel' => 'Cancelar',
@@ -10509,6 +10530,8 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.kindPicker' => '¿Dónde quieres hacer la copia de seguridad?',
 			'web.backups.targetEditor.idLabel' => 'ID (opcional)',
 			'web.backups.targetEditor.idPlaceholder' => 'se genera automáticamente si se deja en blanco, p. ej. tgt_xxx',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.createdToast' => 'Destino creado',
 			'web.backups.targetEditor.createFailedToast' => 'Error al crear',
 			'web.backups.targetEditor.creating' => 'Creando…',
@@ -10516,8 +10539,6 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.enableImmediately' => 'Habilitar inmediatamente (de lo contrario se guarda como deshabilitado, útil para "configurar ahora, activar más tarde")',
 			'web.backups.targetEditor.local.rootLabel' => 'Directorio raíz',
 			'web.backups.targetEditor.local.rootHint' => 'Vacío = cfg.backup.local_dir (~/.opendray/backups)',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  o  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
@@ -11023,6 +11044,8 @@ extension on TranslationsEs {
 			'web.noteEditor.status.saveFailed' => 'error al guardar',
 			'web.noteEditor.status.saving' => 'guardando…',
 			'web.noteEditor.status.unsaved' => 'sin guardar',
+			_ => null,
+		} ?? switch (path) {
 			'web.noteEditor.status.newNote' => 'nota nueva',
 			'web.noteEditor.status.saved' => 'guardada',
 			'web.export.title' => 'Exportar datos',
@@ -11030,8 +11053,6 @@ extension on TranslationsEs {
 			'web.export.backToBackups' => '← Backups',
 			'web.export.sections.export' => 'Exportar',
 			'web.export.sections.import' => 'Importar',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.scope' => 'Alcance',
 			'web.export.form.memories' => 'Memorias',
 			'web.export.form.memoriesHint' => 'Filas de memoria persistente entre CLI (texto + alcance + metadatos). Los vectores de embedding se omiten; el importador vuelve a generarlos.',
@@ -11537,6 +11558,8 @@ extension on TranslationsEs {
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Falló el diff (${status}): ${message}',
 			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Falló el diff: ${error}',
 			'sessions.inspector.git.insertHash' => 'Insertar hash',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.git.showFullPatch' => 'Mostrar el parche completo',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Falló al mostrar (${status}): ${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
@@ -11544,8 +11567,6 @@ extension on TranslationsEs {
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Ejecutar comando',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Se ejecuta en una nueva session de shell y cambia a ella',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.filterHint' => 'Filtrar tareas…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'Ninguna tarea coincide con "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No hay tareas en esta carpeta',
@@ -11822,6 +11843,13 @@ extension on TranslationsEs {
 			'integrations.form.editFieldScopes' => 'Ámbitos',
 			'integrations.form.editScopesHelper' => 'Separados por comas.',
 			'integrations.form.editFieldVersion' => 'Versión',
+			'integrations.form.systemPromptLabel' => 'Prompt del sistema',
+			'integrations.form.systemPromptHint' => 'Se antepone a cada sesión que crea esta integración. Vacío = ninguno.',
+			'integrations.form.mcpServersLabel' => 'Servidores MCP',
+			'integrations.form.mcpServersHint' => 'Array JSON de especificaciones de servidores MCP. Array vacío = ninguno.',
+			'integrations.form.mcpServersInvalid' => 'Los servidores MCP deben ser un array JSON válido.',
+			'integrations.form.bypassPermissionsLabel' => 'Omitir permisos',
+			'integrations.form.bypassPermissionsHint' => 'Omite las solicitudes de permiso en las sesiones creadas. Úsalo con cuidado.',
 			'integrations.form.apiKeyWarn' => 'No volverás a ver esta key.',
 			'integrations.form.copyCopied' => 'Copiado',
 			'integrations.form.copyCopy' => 'Copiar',
@@ -12044,6 +12072,8 @@ extension on TranslationsEs {
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Archivo de clave',
 			'backups.configuredViaLabel' => 'Configurado mediante',
 			'backups.wizard.title' => 'Configurar copias de seguridad',
@@ -12058,8 +12088,6 @@ extension on TranslationsEs {
 			'backups.overviewTargets' => 'Destinos',
 			'backups.overviewSchedules' => 'Programaciones',
 			'backups.overviewBackups' => 'Copias de seguridad',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.headlineHealthy' => 'Copias correctas',
 			'backups.health.headlineAttention' => 'Requiere atención',
 			'backups.health.headlineNever' => 'Aún sin copias',
@@ -12558,6 +12586,8 @@ extension on TranslationsEs {
 			'dataExport.import.summaryCard.memories' => 'Memorias',
 			'dataExport.import.summaryCard.integrations' => 'Integraciones',
 			'dataExport.import.summaryCard.customTasks' => 'Tareas personalizadas',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.summaryCard.created' => 'creadas',
 			'dataExport.import.summaryCard.skipped' => 'omitidas',
 			'dataExport.import.summaryCard.failed' => 'fallidas',
@@ -12572,8 +12602,6 @@ extension on TranslationsEs {
 			'dataExport.imports.columns.source' => 'Origen',
 			'dataExport.imports.columns.counts' => 'Recuentos',
 			'dataExport.imports.columns.when' => 'Cuándo',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'en ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'en ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'en ${n}h',

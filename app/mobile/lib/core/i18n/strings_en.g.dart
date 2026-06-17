@@ -4209,6 +4209,27 @@ class TranslationsIntegrationsFormEn {
 	/// en: 'Version'
 	String get editFieldVersion => 'Version';
 
+	/// en: 'System prompt'
+	String get systemPromptLabel => 'System prompt';
+
+	/// en: 'Prepended to every session this integration spawns. Empty = none.'
+	String get systemPromptHint => 'Prepended to every session this integration spawns. Empty = none.';
+
+	/// en: 'MCP servers'
+	String get mcpServersLabel => 'MCP servers';
+
+	/// en: 'JSON array of MCP server specs. Empty array = none.'
+	String get mcpServersHint => 'JSON array of MCP server specs. Empty array = none.';
+
+	/// en: 'MCP servers must be a valid JSON array.'
+	String get mcpServersInvalid => 'MCP servers must be a valid JSON array.';
+
+	/// en: 'Bypass permissions'
+	String get bypassPermissionsLabel => 'Bypass permissions';
+
+	/// en: 'Skip permission prompts for spawned sessions. Use with care.'
+	String get bypassPermissionsHint => 'Skip permission prompts for spawned sessions. Use with care.';
+
 	/// en: 'You won't see this key again.'
 	String get apiKeyWarn => 'You won\'t see this key again.';
 
@@ -8817,6 +8838,27 @@ class TranslationsWebIntegrationsEditDialogEn {
 
 	/// en: 'Trim or widen the API surface this integration's API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request.'
 	String get scopesIntro => 'Trim or widen the API surface this integration\'s API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request.';
+
+	/// en: 'System prompt'
+	String get systemPromptLabel => 'System prompt';
+
+	/// en: 'Prepended to every session this integration spawns. Leave blank for none.'
+	String get systemPromptHint => 'Prepended to every session this integration spawns. Leave blank for none.';
+
+	/// en: 'Bypass permissions'
+	String get bypassPermissionsLabel => 'Bypass permissions';
+
+	/// en: 'Auto-approve tool calls — this integration runs unattended, with no operator to confirm prompts.'
+	String get bypassPermissionsHint => 'Auto-approve tool calls — this integration runs unattended, with no operator to confirm prompts.';
+
+	/// en: 'MCP servers'
+	String get mcpServersLabel => 'MCP servers';
+
+	/// en: 'JSON array, e.g. [{ "name": "...", "command": "...", "args": ["..."], "env": { "K": "V" } }]'
+	String mcpServersHint({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON array, e.g. [${"name"} }]';
+
+	/// en: 'MCP servers must be a valid JSON array.'
+	String get mcpServersInvalid => 'MCP servers must be a valid JSON array.';
 
 	/// en: 'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can't change in place.'
 	String get errorModeSwitch => 'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can\'t change in place.';
@@ -17994,6 +18036,13 @@ extension on Translations {
 			'web.integrations.edit_dialog.versionPlaceholder' => '0.1.0',
 			'web.integrations.edit_dialog.scopesLabel' => 'Scopes',
 			'web.integrations.edit_dialog.scopesIntro' => 'Trim or widen the API surface this integration\'s API key authorises. Live tokens are unaffected — the new scope set takes effect on the next request.',
+			'web.integrations.edit_dialog.systemPromptLabel' => 'System prompt',
+			'web.integrations.edit_dialog.systemPromptHint' => 'Prepended to every session this integration spawns. Leave blank for none.',
+			'web.integrations.edit_dialog.bypassPermissionsLabel' => 'Bypass permissions',
+			'web.integrations.edit_dialog.bypassPermissionsHint' => 'Auto-approve tool calls — this integration runs unattended, with no operator to confirm prompts.',
+			'web.integrations.edit_dialog.mcpServersLabel' => 'MCP servers',
+			'web.integrations.edit_dialog.mcpServersHint' => ({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON array, e.g. [${"name"} }]',
+			'web.integrations.edit_dialog.mcpServersInvalid' => 'MCP servers must be a valid JSON array.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can\'t change in place.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integration updated',
 			'web.integrations.edit_dialog.cancel' => 'Cancel',
@@ -18379,6 +18428,8 @@ extension on Translations {
 			'web.backups.targetEditor.kindPicker' => 'Where do you want to back up to?',
 			'web.backups.targetEditor.idLabel' => 'ID (optional)',
 			'web.backups.targetEditor.idPlaceholder' => 'auto-generated if blank, e.g. tgt_xxx',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.createdToast' => 'Target created',
 			'web.backups.targetEditor.createFailedToast' => 'Create failed',
 			'web.backups.targetEditor.creating' => 'Creating…',
@@ -18386,8 +18437,6 @@ extension on Translations {
 			'web.backups.targetEditor.enableImmediately' => 'Enable immediately (otherwise saved as disabled — useful for "configure now, turn on later")',
 			'web.backups.targetEditor.local.rootLabel' => 'Root directory',
 			'web.backups.targetEditor.local.rootHint' => 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  or  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
@@ -18893,6 +18942,8 @@ extension on Translations {
 			'web.noteEditor.status.saveFailed' => 'save failed',
 			'web.noteEditor.status.saving' => 'saving…',
 			'web.noteEditor.status.unsaved' => 'unsaved',
+			_ => null,
+		} ?? switch (path) {
 			'web.noteEditor.status.newNote' => 'new note',
 			'web.noteEditor.status.saved' => 'saved',
 			'web.export.title' => 'Export data',
@@ -18900,8 +18951,6 @@ extension on Translations {
 			'web.export.backToBackups' => '← Backups',
 			'web.export.sections.export' => 'Export',
 			'web.export.sections.import' => 'Import',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.scope' => 'Scope',
 			'web.export.form.memories' => 'Memories',
 			'web.export.form.memoriesHint' => 'Cross-CLI persistent memory rows (text + scope + metadata). Embedding vectors are omitted; importer re-embeds.',
@@ -19407,6 +19456,8 @@ extension on Translations {
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff failed (${status}): ${message}',
 			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff failed: ${error}',
 			'sessions.inspector.git.insertHash' => 'Insert hash',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.git.showFullPatch' => 'Show full patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Show failed (${status}): ${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
@@ -19414,8 +19465,6 @@ extension on Translations {
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Runs in a new shell session and switches to it',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
@@ -19692,6 +19741,13 @@ extension on Translations {
 			'integrations.form.editFieldScopes' => 'Scopes',
 			'integrations.form.editScopesHelper' => 'Comma-separated.',
 			'integrations.form.editFieldVersion' => 'Version',
+			'integrations.form.systemPromptLabel' => 'System prompt',
+			'integrations.form.systemPromptHint' => 'Prepended to every session this integration spawns. Empty = none.',
+			'integrations.form.mcpServersLabel' => 'MCP servers',
+			'integrations.form.mcpServersHint' => 'JSON array of MCP server specs. Empty array = none.',
+			'integrations.form.mcpServersInvalid' => 'MCP servers must be a valid JSON array.',
+			'integrations.form.bypassPermissionsLabel' => 'Bypass permissions',
+			'integrations.form.bypassPermissionsHint' => 'Skip permission prompts for spawned sessions. Use with care.',
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
 			'integrations.form.copyCopied' => 'Copied',
 			'integrations.form.copyCopy' => 'Copy',
@@ -19914,6 +19970,8 @@ extension on Translations {
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
 			'backups.restartToActivate' => 'Restart opendray to activate backups',
 			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Key file',
 			'backups.configuredViaLabel' => 'Configured via',
 			'backups.wizard.title' => 'Set up backups',
@@ -19928,8 +19986,6 @@ extension on Translations {
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
 			'backups.overviewBackups' => 'Backups',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.headlineHealthy' => 'Backups healthy',
 			'backups.health.headlineAttention' => 'Needs attention',
 			'backups.health.headlineNever' => 'No backups yet',
@@ -20428,6 +20484,8 @@ extension on Translations {
 			'dataExport.import.summaryCard.memories' => 'Memories',
 			'dataExport.import.summaryCard.integrations' => 'Integrations',
 			'dataExport.import.summaryCard.customTasks' => 'Custom tasks',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.summaryCard.created' => 'created',
 			'dataExport.import.summaryCard.skipped' => 'skipped',
 			'dataExport.import.summaryCard.failed' => 'failed',
@@ -20442,8 +20500,6 @@ extension on Translations {
 			'dataExport.imports.columns.source' => 'Source',
 			'dataExport.imports.columns.counts' => 'Counts',
 			'dataExport.imports.columns.when' => 'When',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'in ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'in ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'in ${n}h',

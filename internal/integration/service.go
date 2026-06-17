@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -64,6 +65,15 @@ type RegisterRequest struct {
 	DefaultProviderID      string `json:"default_provider_id,omitempty"`
 	DefaultModel           string `json:"default_model,omitempty"`
 	DefaultClaudeAccountID string `json:"default_claude_account_id,omitempty"`
+
+	// MCPServers / SystemPrompt / PermissionMode seed the provider-agnostic
+	// spawn profile for sessions this integration creates. All optional;
+	// empty means "no injection" / "default". See Integration for semantics.
+	MCPServers     json.RawMessage `json:"mcp_servers,omitempty"`
+	SystemPrompt   string          `json:"system_prompt,omitempty"`
+	PermissionMode PermissionMode  `json:"permission_mode,omitempty"`
+	// AgentID is the reserved forward-compat slot (see Integration.AgentID).
+	AgentID string `json:"agent_id,omitempty"`
 }
 
 // RegisterResult bundles the persisted integration with the one-time
@@ -139,6 +149,11 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		DefaultModel:           req.DefaultModel,
 		DefaultClaudeAccountID: req.DefaultClaudeAccountID,
 
+		MCPServers:     req.MCPServers,
+		SystemPrompt:   req.SystemPrompt,
+		PermissionMode: NormalizePermissionMode(req.PermissionMode),
+		AgentID:        req.AgentID,
+
 		apiKeyHash: hash,
 	}
 	if len(i.Scopes) == 0 {
@@ -178,6 +193,17 @@ func (s *Service) GetByPrefix(ctx context.Context, prefix string) (Integration, 
 }
 
 func (s *Service) Update(ctx context.Context, id string, patch UpdatePatch) (Integration, error) {
+	if patch.MemoryPolicy != nil && *patch.MemoryPolicy != "" && !ValidMemoryPolicy(*patch.MemoryPolicy) {
+		return Integration{}, fmt.Errorf("memory_policy must be none|quarantine|full, got %q", *patch.MemoryPolicy)
+	}
+	if patch.PermissionMode != nil && *patch.PermissionMode != "" && !ValidPermissionMode(*patch.PermissionMode) {
+		return Integration{}, fmt.Errorf("permission_mode must be default|bypass, got %q", *patch.PermissionMode)
+	}
+	if patch.MCPServers != nil {
+		if err := validateMCPServers(*patch.MCPServers); err != nil {
+			return Integration{}, err
+		}
+	}
 	if err := s.store.Update(ctx, id, patch); err != nil {
 		return Integration{}, err
 	}
@@ -319,12 +345,40 @@ func validateRegister(req RegisterRequest) error {
 	if req.MemoryPolicy != "" && !ValidMemoryPolicy(req.MemoryPolicy) {
 		return fmt.Errorf("memory_policy must be none|quarantine|full, got %q", req.MemoryPolicy)
 	}
+	if req.PermissionMode != "" && !ValidPermissionMode(req.PermissionMode) {
+		return fmt.Errorf("permission_mode must be default|bypass, got %q", req.PermissionMode)
+	}
+	if err := validateMCPServers(req.MCPServers); err != nil {
+		return err
+	}
 	if hasURL {
 		if u, err := url.Parse(req.BaseURL); err != nil || u.Scheme == "" || u.Host == "" {
 			return fmt.Errorf("base_url is invalid: %s", req.BaseURL)
 		}
 		if strings.ContainsAny(req.RoutePrefix, "/?#") {
 			return fmt.Errorf("route_prefix may not contain /?#")
+		}
+	}
+	return nil
+}
+
+// validateMCPServers rejects a malformed spawn-profile mcp_servers value
+// at the API boundary (Register / Update) rather than silently dropping it
+// at spawn time. Empty / "[]" / "null" are fine (no injection). Otherwise
+// it MUST be a JSON array of objects each carrying a non-empty "name".
+func validateMCPServers(raw json.RawMessage) error {
+	s := strings.TrimSpace(string(raw))
+	if s == "" || s == "[]" || s == "null" {
+		return nil
+	}
+	var servers []map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &servers); err != nil {
+		return fmt.Errorf("mcp_servers must be a JSON array of server objects: %w", err)
+	}
+	for i, srv := range servers {
+		var name string
+		if err := json.Unmarshal(srv["name"], &name); err != nil || strings.TrimSpace(name) == "" {
+			return fmt.Errorf("mcp_servers[%d] is missing a non-empty \"name\"", i)
 		}
 	}
 	return nil

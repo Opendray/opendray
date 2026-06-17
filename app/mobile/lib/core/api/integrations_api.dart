@@ -24,6 +24,9 @@ class Integration {
     this.defaultProviderId = '',
     this.defaultModel = '',
     this.defaultClaudeAccountId = '',
+    this.mcpServers = const [],
+    this.systemPrompt = '',
+    this.bypassPermissions = false,
   });
 
   factory Integration.fromJson(Map<String, dynamic> json) {
@@ -31,6 +34,8 @@ class Integration {
     final scopes = scopesRaw is List
         ? scopesRaw.whereType<String>().toList()
         : <String>[];
+    final mcpRaw = json['mcp_servers'];
+    final mcpServers = mcpRaw is List ? List<dynamic>.from(mcpRaw) : <dynamic>[];
     return Integration(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
@@ -52,6 +57,9 @@ class Integration {
       defaultModel: json['default_model'] as String? ?? '',
       defaultClaudeAccountId:
           json['default_claude_account_id'] as String? ?? '',
+      mcpServers: mcpServers,
+      systemPrompt: json['system_prompt'] as String? ?? '',
+      bypassPermissions: (json['permission_mode'] as String?) == 'bypass',
     );
   }
 
@@ -75,6 +83,11 @@ class Integration {
   final String defaultProviderId;
   final String defaultModel;
   final String defaultClaudeAccountId;
+  // Spawn-profile extras applied to sessions this integration creates.
+  // mcpServers is a JSON array of MCP server specs (round-tripped raw).
+  final List<dynamic> mcpServers;
+  final String systemPrompt;
+  final bool bypassPermissions;
 }
 
 class CallEntry {
@@ -273,6 +286,9 @@ class IntegrationsApi {
     String? defaultProviderId,
     String? defaultModel,
     String? defaultClaudeAccountId,
+    Object? mcpServers,
+    String? systemPrompt,
+    bool? bypassPermissions,
   }) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
@@ -288,6 +304,10 @@ class IntegrationsApi {
           if (defaultModel != null) 'default_model': defaultModel,
           if (defaultClaudeAccountId != null)
             'default_claude_account_id': defaultClaudeAccountId,
+          if (mcpServers != null) 'mcp_servers': mcpServers,
+          if (systemPrompt != null) 'system_prompt': systemPrompt,
+          if (bypassPermissions != null)
+            'permission_mode': bypassPermissions ? 'bypass' : 'default',
         },
       );
       return Integration.fromJson(res.data ?? {});
