@@ -96,3 +96,4 @@ tmp/
 # code; it's a maintainer-machine helper, not a shipped script. Keep it under
 # ~/.opendray/scripts/ on the dev box.
 scripts/update-local.sh
+docs/integrations/__pycache__/
