@@ -176,6 +176,11 @@ func (m *Mirror) BackfillAll(ctx context.Context) (projects, ingested int, err e
 		if strings.TrimSpace(cwd) == "" {
 			continue
 		}
+		// Integration zones are isolated partitions, not real working
+		// dirs — there is no .claude/projects tree to mirror for them.
+		if IsIntegrationScopeKey(cwd) {
+			continue
+		}
 		n, serr := m.SyncCwd(ctx, cwd)
 		if serr != nil {
 			m.log.Debug("backfill sync", "cwd", cwd, "err", serr)
