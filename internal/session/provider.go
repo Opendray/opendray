@@ -111,6 +111,34 @@ func Cwd(ctx context.Context) string {
 	return ""
 }
 
+// ── Origin propagation ─────────────────────────────────────────────
+//
+// Prepare-time isolation decisions need the session's provenance: a
+// third-party integration session is self-managed — it drives its own
+// delivery and brings its own tools — so opendray must NOT auto-attach
+// the cross-project memory MCP to it (see adapter Resolve). Like cwd,
+// origin lives on the Session struct but isn't a Resolve() parameter,
+// so we thread it through context.
+
+type originCtxKey struct{}
+
+// WithOrigin attaches the session's origin to ctx for resolve-time use.
+// Empty origin is a no-op.
+func WithOrigin(ctx context.Context, o Origin) context.Context {
+	if o == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, originCtxKey{}, o)
+}
+
+// OriginFromContext retrieves the value set by WithOrigin, or "" if none.
+func OriginFromContext(ctx context.Context) Origin {
+	if v, ok := ctx.Value(originCtxKey{}).(Origin); ok {
+		return v
+	}
+	return ""
+}
+
 // sessionIDCtxKey + WithSessionID + SessionIDFromContext mirror the
 // cwd plumbing for the session.id, used by ambient-memory rendering
 // at spawn time. Defined here (alongside WithCwd) so callers don't

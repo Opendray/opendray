@@ -918,6 +918,20 @@ func sessionIDFromEvent(ev eventbus.Event) string {
 	return ""
 }
 
+// originFromEvent pulls the session origin out of an event's data
+// payload (best effort). Empty when the topic doesn't carry one
+// (e.g. backup.*), which callers treat as "not an integration".
+func originFromEvent(ev eventbus.Event) string {
+	data, _ := ev.Data.(map[string]any)
+	if data == nil {
+		return ""
+	}
+	if s, ok := data["origin"].(string); ok {
+		return s
+	}
+	return ""
+}
+
 func (h *Hub) runOutbound(ctx context.Context) {
 	defer close(h.outDone)
 	chIdle, unsubI := h.bus.Subscribe("session.idle", 64)
@@ -1019,6 +1033,16 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 		chs = append(chs, c)
 	}
 	h.mu.RUnlock()
+
+	// Third-party integration sessions are self-managed: the integration
+	// owns its own delivery (e.g. its own Telegram bot), so opendray never
+	// mirrors their idle/ended notification cards to operator channels.
+	// Non-session events (backup.* etc.) carry no origin and fall through.
+	// Literal "integration" mirrors session.OriginIntegration; kept inline
+	// to avoid a channel→session import just for one constant.
+	if originFromEvent(ev) == "integration" {
+		return
+	}
 
 	sessionID := sessionIDFromEvent(ev)
 
