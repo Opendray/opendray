@@ -149,10 +149,10 @@ var (
 	ErrNoWorkerConfigured = errors.New("memory worker: no worker configured for task")
 
 	// ErrAgentUnsupported is returned when an operator picked an
-	// agent provider that doesn't support --print mode (today:
-	// codex). The UI should validate before saving but we
-	// double-check defensively.
-	ErrAgentUnsupported = errors.New("memory worker: agent provider unsupported in --print mode")
+	// agent provider with no headless worker path (today: opencode).
+	// The UI should validate before saving but we double-check
+	// defensively.
+	ErrAgentUnsupported = errors.New("memory worker: agent provider unsupported in headless mode")
 )
 
 // Worker is the single-method interface every implementation
