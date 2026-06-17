@@ -107,7 +107,28 @@ type App struct {
 type knowledgeMemorySource struct{ mem *memory.Service }
 
 func (a knowledgeMemorySource) ListProjectKeys(ctx context.Context) ([]string, error) {
-	return a.mem.ListScopeKeys(ctx, memory.ScopeProject)
+	keys, err := a.mem.ListScopeKeys(ctx, memory.ScopeProject)
+	if err != nil {
+		return nil, err
+	}
+	// Third-party integration zones are isolated: their captured facts
+	// must never feed the operator-facing knowledge base.
+	return filterOutIntegrationZones(keys), nil
+}
+
+// filterOutIntegrationZones drops per-integration memory zones from a
+// list of project scope_keys, returning a new slice (the inputs are
+// never mutated). Used wherever project memory is treated as operator
+// knowledge or as a real cwd.
+func filterOutIntegrationZones(keys []string) []string {
+	out := make([]string, 0, len(keys))
+	for _, k := range keys {
+		if memory.IsIntegrationScopeKey(k) {
+			continue
+		}
+		out = append(out, k)
+	}
+	return out
 }
 
 func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey string, limit int) ([]knowledge.MemoryRow, error) {
@@ -130,6 +151,8 @@ func (a knowledgeMemorySource) ListAllMemories(ctx context.Context, limit int) (
 	if err != nil {
 		return nil, err
 	}
+	// Integration zones are isolated from the cross-project KB.
+	keys = filterOutIntegrationZones(keys)
 	if limit <= 0 {
 		limit = 400
 	}

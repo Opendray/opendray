@@ -392,6 +392,19 @@ func (r *runner) isDuplicate(ctx context.Context, fact summarizer.Fact, rule Rul
 // project) use the session's cwd; 'global' uses an operator-style
 // placeholder.
 func scopeKeyForRule(rule Rule, sess SessionInfo) string {
+	// Third-party integration sessions get their own per-integration
+	// memory zone, independent of the rule's target scope. Otherwise a
+	// captured fact lands under the operator's shared partition — the
+	// cwd for project scope, "operator" for global scope — i.e. every
+	// integration sharing a cwd reads/writes the same memory and the
+	// data is unattributable. The "integration:" prefix can't collide
+	// with a real absolute-path cwd or the "operator" global key, so
+	// the zone is both isolated and identifiable (e.g. via
+	// ListScopeKeys). Origin/IntegrationID are populated at capture
+	// time from the authenticated principal (migration 0044).
+	if sess.Origin == "integration" && sess.IntegrationID != "" {
+		return memory.IntegrationScopeKey(sess.IntegrationID)
+	}
 	switch rule.TargetScope {
 	case "global":
 		return "operator"
