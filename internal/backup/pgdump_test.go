@@ -29,11 +29,80 @@ func TestNewPgDump_MissingBinary(t *testing.T) {
 }
 
 func TestNewPgDump_PATHFallback_Missing(t *testing.T) {
-	// Force PATH to empty so PATH lookup fails.
+	// Force PATH to empty AND neutralize filesystem discovery so neither
+	// PATH nor the well-known install locations can resolve a binary.
 	t.Setenv("PATH", "")
+	defer withSearchGlobs(nil)()
 	_, err := NewPgDump("")
 	if !errors.Is(err, ErrPgDumpUnavailable) {
 		t.Fatalf("got %v, want ErrPgDumpUnavailable", err)
+	}
+}
+
+// withSearchGlobs temporarily swaps pgDumpSearchGlobs; the returned func
+// restores the original.
+func withSearchGlobs(g []string) func() {
+	prev := pgDumpSearchGlobs
+	pgDumpSearchGlobs = g
+	return func() { pgDumpSearchGlobs = prev }
+}
+
+func TestParsePGMajorMinorInts(t *testing.T) {
+	tests := []struct {
+		line     string
+		maj, min int
+		ok       bool
+	}{
+		{"pg_dump (PostgreSQL) 17.9 (Homebrew)", 17, 9, true},
+		{"pg_dump (PostgreSQL) 14.19 (Homebrew)", 14, 19, true},
+		{"pg_dump (PostgreSQL) 17.6 (Debian 17.6-1.pgdg13+1)", 17, 6, true},
+		{"no version here", 0, 0, false},
+		{"", 0, 0, false},
+	}
+	for _, tt := range tests {
+		maj, min, ok := parsePGMajorMinorInts(tt.line)
+		if ok != tt.ok || maj != tt.maj || min != tt.min {
+			t.Errorf("parsePGMajorMinorInts(%q) = (%d,%d,%v), want (%d,%d,%v)",
+				tt.line, maj, min, ok, tt.maj, tt.min, tt.ok)
+		}
+	}
+}
+
+func TestPickNewestPgDump(t *testing.T) {
+	tests := []struct {
+		name  string
+		cands []pgDumpCandidate
+		want  string
+	}{
+		{"empty", nil, ""},
+		{
+			"prefers higher major (the crash-loop fix)",
+			[]pgDumpCandidate{
+				{path: "/opt/homebrew/bin/pg_dump", major: 14, minor: 19},
+				{path: "/opt/homebrew/opt/postgresql@17/bin/pg_dump", major: 17, minor: 9},
+			},
+			"/opt/homebrew/opt/postgresql@17/bin/pg_dump",
+		},
+		{
+			"same major prefers higher minor",
+			[]pgDumpCandidate{
+				{path: "/a/pg_dump", major: 17, minor: 2},
+				{path: "/b/pg_dump", major: 17, minor: 9},
+			},
+			"/b/pg_dump",
+		},
+		{
+			"single candidate wins",
+			[]pgDumpCandidate{{path: "/only/pg_dump", major: 14, minor: 1}},
+			"/only/pg_dump",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := pickNewestPgDump(tt.cands); got != tt.want {
+				t.Errorf("pickNewestPgDump() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
