@@ -474,6 +474,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	if err := sessionMgr.ReconcileStartup(ctx); err != nil {
 		log.Warn("session reconcile on startup failed", "err", err)
 	}
+	// Built before the session handlers so POST /sessions can inherit an
+	// integration's configured spawn defaults (provider / model / claude
+	// account). The handlers (proxy, events, health) that consume it are
+	// constructed further below where the rest of the integration surface
+	// is assembled.
+	intgrSvc := integration.NewService(st.Pool(), bus, log)
 	sessionHandlers := session.NewHandlers(sessionMgr, log,
 		// Inject the cliacct validator so POST /sessions and
 		// PATCH /sessions/{id}/claude-account fail fast with 400
@@ -481,6 +487,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// letting the row be persisted/mutated and then erroring
 		// at spawn time with 500.
 		session.WithClaudeAccountChecker(cliacctSvc),
+		// Fill provider/model/claude-account from the integration's
+		// configured defaults for sessions an integration creates and
+		// the request leaves those fields empty (request still wins).
+		session.WithIntegrationDefaults(&integrationDefaultsLookup{svc: intgrSvc}),
 	)
 	// Now that the session manager exists, let the catalog handler
 	// populate RuntimeInfo.ActiveSessions on update-check responses so
@@ -509,7 +519,6 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	channelHandlers := channel.NewHandlers(channelHub, log)
 	bridgeHandlers := bridge.NewHandlers(bridge.DefaultBroker(), log)
 
-	intgrSvc := integration.NewService(st.Pool(), bus, log)
 	intgrHandlers := integration.NewHandlers(intgrSvc, log)
 	intgrCallLogger := integration.NewCallLogger(st.Pool(), log)
 	intgrCallLogHandlers := integration.NewCallLogHandlers(intgrCallLogger, log)
@@ -2103,6 +2112,22 @@ func resolveAntigravityHistoryConfig(c config.AntigravityProviderConfig) session
 		out.ConversationsRoot = expandPath(c.ConversationsRoot)
 	}
 	return out
+}
+
+// integrationDefaultsLookup adapts integration.Service to the session
+// package's IntegrationDefaults interface, so a session an integration
+// creates inherits that integration's configured provider / model /
+// claude account when the POST /sessions request omits them.
+type integrationDefaultsLookup struct {
+	svc *integration.Service
+}
+
+func (l *integrationDefaultsLookup) DefaultsFor(ctx context.Context, integrationID string) (provider, model, claudeAccount string, err error) {
+	i, err := l.svc.Get(ctx, integrationID)
+	if err != nil {
+		return "", "", "", err
+	}
+	return i.DefaultProviderID, i.DefaultModel, i.DefaultClaudeAccountID, nil
 }
 
 // summarizerIntegrationLookup adapts integration.Service to the

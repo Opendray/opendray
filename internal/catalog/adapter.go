@@ -313,8 +313,9 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// manifest, which keeps spawn args reproducible across restarts.
 	configArgs, configEnv := applyConfigSchema(p.Manifest.ConfigSchema, p.Config)
 	args = append(args, configArgs...)
-	// Per-provider default model (operator-managed) → e.g. `--model X`.
-	args = append(args, modelArgs(p.Manifest, p.Config)...)
+	// Model → e.g. `--model X`. A per-session pin (Session.Model, threaded
+	// via context) wins over the per-provider operator default.
+	args = append(args, modelArgs(p.Manifest, p.Config, session.ModelFromContext(ctx))...)
 	if p.Manifest.ID == "codex" {
 		if approval, ok := p.Config["approval"].(string); ok && approval != "" {
 			args = append(args, "-c", "approval_policy="+tomlString(approval))

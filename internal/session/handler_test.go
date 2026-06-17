@@ -32,6 +32,7 @@ func (f *fakeSvc) Create(_ context.Context, req CreateRequest) (Session, error) 
 	}
 	s := Session{
 		ID: "ses_test", ProviderID: req.ProviderID, Cwd: req.Cwd,
+		Model:           req.Model, // surface so integration-default tests can assert it
 		Args:            req.Args,
 		State:           StateRunning,
 		ClaudeAccountID: req.ClaudeAccountID, // surface the field so auto-assign tests can assert it

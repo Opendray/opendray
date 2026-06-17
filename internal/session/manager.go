@@ -540,6 +540,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		ID:              sessID,
 		Name:            name,
 		ProviderID:      req.ProviderID,
+		Model:           req.Model,
 		Cwd:             req.Cwd,
 		Args:            req.Args,
 		State:           StateRunning,
@@ -630,7 +631,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		return nil, fmt.Errorf("cwd is not a directory: %s", sess.Cwd)
 	}
 
-	resolveCtx := WithOrigin(WithAccountID(ctx, sess.ClaudeAccountID), sess.Origin)
+	resolveCtx := WithModel(WithOrigin(WithAccountID(ctx, sess.ClaudeAccountID), sess.Origin), sess.Model)
 	p, err := m.providers.Resolve(resolveCtx, sess.ProviderID)
 	if err != nil {
 		return nil, err

@@ -27,15 +27,20 @@ import (
 // missing or unequal to dependsVal — lets fields like apiKey only apply
 // when authType=="custom".
 //
-// modelArgs renders the per-provider default model into CLI args when
-// the operator has set one (config["model"]) and the manifest declares a
-// model flag. A per-session --model in the spawn args still wins — the
-// session manager drops provider-derived flags the user re-specifies.
-func modelArgs(m Manifest, cfg map[string]any) []string {
+// modelArgs renders a model selection into CLI args when the manifest
+// declares a model flag. The per-session `override` (Session.Model) wins
+// over the per-provider default (config["model"]); empty override falls
+// back to the configured default. A per-session --model in the spawn
+// args still wins over both — the session manager drops provider-derived
+// flags the user re-specifies.
+func modelArgs(m Manifest, cfg map[string]any, override string) []string {
 	if m.ModelFlag == "" {
 		return nil
 	}
-	model, _ := cfg["model"].(string)
+	model := override
+	if model == "" {
+		model, _ = cfg["model"].(string)
+	}
 	if model == "" {
 		return nil
 	}

@@ -18,8 +18,8 @@ type sessionStore struct{ pool *pgxpool.Pool }
 func newStore(pool *pgxpool.Pool) *sessionStore { return &sessionStore{pool: pool} }
 
 const sessionSelect = `
-    SELECT id, COALESCE(name, ''), provider_id, cwd, args, state,
-           COALESCE(pid, 0),
+    SELECT id, COALESCE(name, ''), provider_id, COALESCE(model, ''), cwd,
+           args, state, COALESCE(pid, 0),
            COALESCE(claude_account_id, ''), COALESCE(claude_session_id, ''),
            COALESCE(parent_session_id, ''),
            COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
@@ -40,12 +40,12 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 	}
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO sessions
-            (id, name, provider_id, cwd, args, state, pid,
+            (id, name, provider_id, model, cwd, args, state, pid,
              claude_account_id, claude_session_id, parent_session_id,
              origin, integration_id, started_at)
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8, $9, $10, $11, $12, $13)`,
-		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Cwd,
-		argsJSON, string(sess.State), nullableInt(sess.PID),
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13, $14)`,
+		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Model,
+		sess.Cwd, argsJSON, string(sess.State), nullableInt(sess.PID),
 		nullableString(sess.ClaudeAccountID), nullableString(sess.ClaudeSessionID),
 		nullableString(sess.ParentSessionID),
 		string(origin), nullableString(sess.IntegrationID),
@@ -237,7 +237,7 @@ func scanSession(row rowScanner) (Session, error) {
 		stateStr  string
 		originStr string
 	)
-	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Cwd, &argsJSON,
+	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
 		&s.ParentSessionID, &originStr, &s.IntegrationID,
 		&s.StartedAt, &endedAt, &exitCode)
