@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -205,10 +207,17 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   late final TextEditingController _scopes;
   late final TextEditingController _version;
   late final TextEditingController _defaultModel;
+  late final TextEditingController _systemPrompt;
+  late final TextEditingController _mcpServers;
   late bool _enabled;
   late String _defaultProviderId;
   late String _defaultClaudeAccountId;
+  late bool _bypassPermissions;
   String? _error;
+
+  // The pretty-printed JSON the mcp_servers textarea started with, so
+  // _submit can tell whether the operator actually edited it.
+  late final String _mcpServersInitial;
 
   @override
   void initState() {
@@ -218,9 +227,15 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
     _version = TextEditingController(text: widget.current.version ?? '');
     _defaultModel =
         TextEditingController(text: widget.current.defaultModel);
+    _systemPrompt =
+        TextEditingController(text: widget.current.systemPrompt);
+    _mcpServersInitial = const JsonEncoder.withIndent('  ')
+        .convert(widget.current.mcpServers);
+    _mcpServers = TextEditingController(text: _mcpServersInitial);
     _enabled = widget.current.enabled;
     _defaultProviderId = widget.current.defaultProviderId;
     _defaultClaudeAccountId = widget.current.defaultClaudeAccountId;
+    _bypassPermissions = widget.current.bypassPermissions;
   }
 
   @override
@@ -229,6 +244,8 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
     _scopes.dispose();
     _version.dispose();
     _defaultModel.dispose();
+    _systemPrompt.dispose();
+    _mcpServers.dispose();
     super.dispose();
   }
 
@@ -248,6 +265,26 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
     final scopesChanged = scopes.length != initialScopes.length ||
         !scopes.asMap().entries.every((e) => e.value == initialScopes[e.key]);
     final model = _defaultModel.text.trim();
+    final systemPrompt = _systemPrompt.text;
+    // Parse the mcp_servers JSON textarea. Must be a JSON array; a
+    // malformed body or non-list aborts the submit with an inline error.
+    final mcpText = _mcpServers.text;
+    final mcpChanged = mcpText != _mcpServersInitial;
+    List<dynamic>? mcpServers;
+    if (mcpChanged) {
+      final trimmed = mcpText.trim();
+      try {
+        final decoded = trimmed.isEmpty ? <dynamic>[] : jsonDecode(trimmed);
+        if (decoded is! List) {
+          setState(() => _error = t.integrations.form.mcpServersInvalid);
+          return;
+        }
+        mcpServers = decoded;
+      } on FormatException {
+        setState(() => _error = t.integrations.form.mcpServersInvalid);
+        return;
+      }
+    }
     Navigator.of(context).pop(
       EditIntegrationFormResult(
         baseUrl: baseUrl != widget.current.baseUrl ? baseUrl : null,
@@ -263,6 +300,13 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
         defaultClaudeAccountId:
             _defaultClaudeAccountId != widget.current.defaultClaudeAccountId
                 ? _defaultClaudeAccountId
+                : null,
+        systemPrompt:
+            systemPrompt != widget.current.systemPrompt ? systemPrompt : null,
+        mcpServers: mcpChanged ? mcpServers : null,
+        bypassPermissions:
+            _bypassPermissions != widget.current.bypassPermissions
+                ? _bypassPermissions
                 : null,
       ),
     );
@@ -315,6 +359,27 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
             value: _enabled,
             onChanged: (v) => setState(() => _enabled = v),
           ),
+          const SizedBox(height: 8),
+          _Field(
+            controller: _systemPrompt,
+            label: t.integrations.form.systemPromptLabel,
+            helper: t.integrations.form.systemPromptHint,
+            maxLines: 6,
+          ),
+          _Field(
+            controller: _mcpServers,
+            label: t.integrations.form.mcpServersLabel,
+            helper: t.integrations.form.mcpServersHint,
+            maxLines: 8,
+            monospace: true,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(t.integrations.form.bypassPermissionsLabel),
+            subtitle: Text(t.integrations.form.bypassPermissionsHint),
+            value: _bypassPermissions,
+            onChanged: (v) => setState(() => _bypassPermissions = v),
+          ),
           if (_error != null)
             Text(
               _error!,
@@ -338,6 +403,9 @@ class EditIntegrationFormResult {
     this.defaultProviderId,
     this.defaultModel,
     this.defaultClaudeAccountId,
+    this.systemPrompt,
+    this.mcpServers,
+    this.bypassPermissions,
   });
   final String? baseUrl;
   final List<String>? scopes;
@@ -346,6 +414,9 @@ class EditIntegrationFormResult {
   final String? defaultProviderId;
   final String? defaultModel;
   final String? defaultClaudeAccountId;
+  final String? systemPrompt;
+  final List<dynamic>? mcpServers;
+  final bool? bypassPermissions;
 
   bool get isEmpty =>
       baseUrl == null &&
@@ -354,7 +425,10 @@ class EditIntegrationFormResult {
       enabled == null &&
       defaultProviderId == null &&
       defaultModel == null &&
-      defaultClaudeAccountId == null;
+      defaultClaudeAccountId == null &&
+      systemPrompt == null &&
+      mcpServers == null &&
+      bypassPermissions == null;
 }
 
 // RevealApiKeyDialog displays a freshly-minted API key once. The
@@ -482,6 +556,8 @@ class _Field extends StatelessWidget {
     this.helper,
     this.keyboardType,
     this.autofocus = false,
+    this.maxLines = 1,
+    this.monospace = false,
   });
 
   final TextEditingController controller;
@@ -490,16 +566,24 @@ class _Field extends StatelessWidget {
   final String? helper;
   final TextInputType? keyboardType;
   final bool autofocus;
+  final int maxLines;
+  final bool monospace;
 
   @override
   Widget build(BuildContext context) {
+    final multiline = maxLines > 1;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
         autofocus: autofocus,
         autocorrect: false,
-        keyboardType: keyboardType,
+        maxLines: maxLines,
+        keyboardType:
+            multiline ? TextInputType.multiline : keyboardType,
+        style: monospace
+            ? const TextStyle(fontFamily: 'monospace', fontSize: 12)
+            : null,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,

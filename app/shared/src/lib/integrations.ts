@@ -1,6 +1,7 @@
 import { api } from './api'
 import type {
   Integration,
+  McpServerSpec,
   RegisterIntegrationRequest,
   RegisterIntegrationResult,
 } from './types'
@@ -42,6 +43,9 @@ export async function updateIntegration(
     default_provider_id?: string
     default_model?: string
     default_claude_account_id?: string
+    mcp_servers?: McpServerSpec[]
+    system_prompt?: string
+    bypass_permissions?: boolean
   },
 ): Promise<Integration> {
   return api<Integration>(`/api/v1/integrations/${id}`, {

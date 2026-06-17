@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -64,6 +65,13 @@ type RegisterRequest struct {
 	DefaultProviderID      string `json:"default_provider_id,omitempty"`
 	DefaultModel           string `json:"default_model,omitempty"`
 	DefaultClaudeAccountID string `json:"default_claude_account_id,omitempty"`
+
+	// MCPServers / SystemPrompt / BypassPermissions seed the provider-
+	// agnostic spawn profile for sessions this integration creates. All
+	// optional; empty means "no injection". See Integration for semantics.
+	MCPServers        json.RawMessage `json:"mcp_servers,omitempty"`
+	SystemPrompt      string          `json:"system_prompt,omitempty"`
+	BypassPermissions bool            `json:"bypass_permissions,omitempty"`
 }
 
 // RegisterResult bundles the persisted integration with the one-time
@@ -138,6 +146,10 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 		DefaultProviderID:      req.DefaultProviderID,
 		DefaultModel:           req.DefaultModel,
 		DefaultClaudeAccountID: req.DefaultClaudeAccountID,
+
+		MCPServers:        req.MCPServers,
+		SystemPrompt:      req.SystemPrompt,
+		BypassPermissions: req.BypassPermissions,
 
 		apiKeyHash: hash,
 	}

@@ -214,6 +214,23 @@ export interface Integration {
   default_provider_id?: string
   default_model?: string
   default_claude_account_id?: string
+  /** MCP servers injected into sessions this integration creates. */
+  mcp_servers?: McpServerSpec[]
+  /** System prompt prepended to sessions this integration creates. */
+  system_prompt?: string
+  /** When true, tool calls are auto-approved (the integration runs
+      unattended, so there's no operator to confirm prompts). */
+  bypass_permissions?: boolean
+}
+
+export interface McpServerSpec {
+  name: string
+  transport?: string
+  command?: string
+  args?: string[]
+  env?: Record<string, string>
+  url?: string
+  headers?: Record<string, string>
 }
 
 export interface RegisterIntegrationRequest {

@@ -41,6 +41,21 @@ func parseMCPServers(cfg map[string]any) []MCPServer {
 	return out
 }
 
+// parseMCPServersJSON unmarshals a raw JSON array string (same shape as
+// the provider config's mcp_servers) into []MCPServer. Returns nil (not
+// error) on empty / malformed — integration MCP injection is best-effort,
+// mirroring parseMCPServers.
+func parseMCPServersJSON(raw string) []MCPServer {
+	if raw == "" {
+		return nil
+	}
+	var out []MCPServer
+	if err := json.Unmarshal([]byte(raw), &out); err != nil {
+		return nil
+	}
+	return out
+}
+
 // renderMCP writes per-provider MCP config files into baseDir and
 // returns the extra CLI args / env required to make the provider
 // pick them up. Provider IDs without a renderer return empty.

@@ -109,6 +109,15 @@ func WithAutoFailoverEnabled(enabled bool) ManagerOption {
 	return func(m *Manager) { m.autoFailoverEnabled = enabled }
 }
 
+// WithIntegrationSpawnProfiles wires the resolver the manager uses to
+// look up the provider-agnostic spawn profile (MCP servers + system
+// prompt + auto-approve) an integration declares, and apply it to every
+// session that integration creates. Defaults to nil (injection disabled)
+// so existing callers keep working unchanged.
+func WithIntegrationSpawnProfiles(p IntegrationSpawnProfiles) ManagerOption {
+	return func(m *Manager) { m.spawnProfiles = p }
+}
+
 func WithIdleThreshold(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleThreshold = d }
 }
@@ -161,8 +170,9 @@ type Manager struct {
 	bus                 *eventbus.Hub
 	store               *sessionStore
 	providers           ProviderResolver
-	claudeAccounts      ClaudeAccountResolver // optional; nil disables transcript migration + failover
-	autoFailoverEnabled bool                  // when true + claudeAccounts != nil, rate-limit scanner is hot
+	claudeAccounts      ClaudeAccountResolver    // optional; nil disables transcript migration + failover
+	autoFailoverEnabled bool                     // when true + claudeAccounts != nil, rate-limit scanner is hot
+	spawnProfiles       IntegrationSpawnProfiles // optional; nil disables integration spawn-profile injection
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
@@ -632,6 +642,19 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	}
 
 	resolveCtx := WithModel(WithOrigin(WithAccountID(ctx, sess.ClaudeAccountID), sess.Origin), sess.Model)
+	// Integration spawn profile: provider-agnostic MCP servers + system
+	// prompt + auto-approve declared on the creating integration, applied
+	// to every session it spawns (create AND reactivate). Best-effort: a
+	// lookup error logs and falls through (the session still spawns).
+	var spawnProfile IntegrationSpawnProfile
+	if m.spawnProfiles != nil && sess.Origin == OriginIntegration && sess.IntegrationID != "" {
+		if pr, err := m.spawnProfiles.SpawnProfileFor(ctx, sess.IntegrationID); err != nil {
+			m.log.Warn("integration spawn profile lookup failed", "integration", sess.IntegrationID, "err", err)
+		} else {
+			spawnProfile = pr
+		}
+	}
+	resolveCtx = WithBypassPermissions(WithIntegrationMCPServers(resolveCtx, spawnProfile.MCPServersJSON), spawnProfile.BypassPermissions)
 	p, err := m.providers.Resolve(resolveCtx, sess.ProviderID)
 	if err != nil {
 		return nil, err
@@ -653,7 +676,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		// UUID into Prepare so the provider emits `--resume <id>` and
 		// the prior transcript continues, instead of minting a fresh
 		// session and orphaning history.
-		prepareCtx := WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID)
+		prepareCtx := WithIntegrationSystemPrompt(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), spawnProfile.SystemPrompt)
 		if reactivate {
 			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
 		}

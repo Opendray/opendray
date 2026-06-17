@@ -29,17 +29,23 @@ func (s *store) Insert(ctx context.Context, i Integration) error {
 	if policy == "" {
 		policy = MemoryPolicyQuarantine
 	}
+	mcpServers := []byte(i.MCPServers)
+	if len(mcpServers) == 0 {
+		mcpServers = []byte("[]")
+	}
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO integrations
             (id, name, base_url, route_prefix, api_key_hash, scopes, version,
              enabled, health_status, created_at, is_system, memory_policy,
-             default_provider_id, default_model, default_claude_account_id)
+             default_provider_id, default_model, default_claude_account_id,
+             mcp_servers, system_prompt, bypass_permissions)
         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12,
-                $13, $14, $15)`,
+                $13, $14, $15, $16::jsonb, $17, $18)`,
 		i.ID, i.Name, i.BaseURL, i.RoutePrefix, i.apiKeyHash, scopesJSON,
 		nullIfEmpty(i.Version), i.Enabled, string(i.HealthStatus), i.CreatedAt,
 		i.IsSystem, string(policy),
-		i.DefaultProviderID, i.DefaultModel, i.DefaultClaudeAccountID)
+		i.DefaultProviderID, i.DefaultModel, i.DefaultClaudeAccountID,
+		mcpServers, i.SystemPrompt, i.BypassPermissions)
 	if err != nil {
 		return fmt.Errorf("insert integration: %w", err)
 	}
@@ -149,6 +155,31 @@ func (s *store) Update(ctx context.Context, id string, patch UpdatePatch) error 
 			return fmt.Errorf("update default_claude_account_id: %w", err)
 		}
 	}
+	if patch.MCPServers != nil {
+		raw := []byte(*patch.MCPServers)
+		if len(raw) == 0 {
+			raw = []byte("[]")
+		}
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET mcp_servers=$1::jsonb WHERE id=$2`,
+			raw, id); err != nil {
+			return fmt.Errorf("update mcp_servers: %w", err)
+		}
+	}
+	if patch.SystemPrompt != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET system_prompt=$1 WHERE id=$2`,
+			*patch.SystemPrompt, id); err != nil {
+			return fmt.Errorf("update system_prompt: %w", err)
+		}
+	}
+	if patch.BypassPermissions != nil {
+		if _, err := s.pool.Exec(ctx,
+			`UPDATE integrations SET bypass_permissions=$1 WHERE id=$2`,
+			*patch.BypassPermissions, id); err != nil {
+			return fmt.Errorf("update bypass_permissions: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -208,7 +239,10 @@ const selectStmt = `
            COALESCE(memory_policy, 'quarantine'),
            COALESCE(default_provider_id, ''),
            COALESCE(default_model, ''),
-           COALESCE(default_claude_account_id, '')
+           COALESCE(default_claude_account_id, ''),
+           COALESCE(mcp_servers, '[]'::jsonb),
+           COALESCE(system_prompt, ''),
+           COALESCE(bypass_permissions, FALSE)
     FROM integrations`
 
 type rowScanner interface {
@@ -232,6 +266,7 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 		healthLastSeen sql.NullTime
 		rotatedAt      sql.NullTime
 		memoryPolicy   string
+		mcpServersRaw  []byte
 	)
 	err := row.Scan(
 		&i.ID, &i.Name, &i.BaseURL, &i.RoutePrefix, &i.apiKeyHash,
@@ -239,11 +274,16 @@ func (s *store) scanRow(row rowScanner) (Integration, error) {
 		&healthLastSeen, &i.CreatedAt, &rotatedAt, &i.IsSystem,
 		&memoryPolicy,
 		&i.DefaultProviderID, &i.DefaultModel, &i.DefaultClaudeAccountID,
+		&mcpServersRaw, &i.SystemPrompt, &i.BypassPermissions,
 	)
 	if err != nil {
 		return Integration{}, err
 	}
 	i.MemoryPolicy = MemoryPolicy(memoryPolicy)
+	if len(mcpServersRaw) == 0 {
+		mcpServersRaw = []byte("[]")
+	}
+	i.MCPServers = json.RawMessage(mcpServersRaw)
 	_ = json.Unmarshal(scopesRaw, &i.Scopes)
 	if i.Scopes == nil {
 		i.Scopes = []string{}
@@ -290,4 +330,10 @@ type UpdatePatch struct {
 	DefaultProviderID      *string
 	DefaultModel           *string
 	DefaultClaudeAccountID *string
+
+	// Provider-agnostic spawn profile. A non-nil pointer sets the column
+	// (empty mcp_servers / system_prompt clears it).
+	MCPServers        *json.RawMessage
+	SystemPrompt      *string
+	BypassPermissions *bool
 }

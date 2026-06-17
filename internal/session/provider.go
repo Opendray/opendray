@@ -245,3 +245,90 @@ func CarryoverContextFromContext(ctx context.Context) string {
 	}
 	return ""
 }
+
+// ── Integration spawn profile ──────────────────────────────────────
+//
+// The three keys below carry the provider-AGNOSTIC half of an
+// integration's spawn profile (mcp_servers / system_prompt /
+// bypass_permissions). The manager looks the profile up after resolving
+// the creating integration and threads it through context, so the
+// catalog adapter can translate each piece via the existing per-provider
+// machinery (renderMCP, the system-prompt surface, the bypass flag)
+// without these becoming Resolve()/Prepare() parameters. Each helper is a
+// no-op on its zero value so the common (non-integration) spawn path
+// needn't guard.
+
+type integrationMCPServersCtxKey struct{}
+
+// WithIntegrationMCPServers attaches the integration's raw mcp_servers
+// JSON array string to ctx for resolve-time use. Empty is a no-op.
+func WithIntegrationMCPServers(ctx context.Context, rawJSON string) context.Context {
+	if rawJSON == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, integrationMCPServersCtxKey{}, rawJSON)
+}
+
+// IntegrationMCPServersFromContext returns the raw mcp_servers JSON set
+// by WithIntegrationMCPServers, or "" if none.
+func IntegrationMCPServersFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(integrationMCPServersCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
+type integrationSystemPromptCtxKey struct{}
+
+// WithIntegrationSystemPrompt attaches the integration's boot system
+// prompt to ctx for prepare-time use. Empty is a no-op.
+func WithIntegrationSystemPrompt(ctx context.Context, text string) context.Context {
+	if text == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, integrationSystemPromptCtxKey{}, text)
+}
+
+// IntegrationSystemPromptFromContext returns the prompt set by
+// WithIntegrationSystemPrompt, or "" if none.
+func IntegrationSystemPromptFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(integrationSystemPromptCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
+type bypassPermissionsCtxKey struct{}
+
+// WithBypassPermissions attaches the integration's auto-approve request
+// to ctx for resolve-time use. false is a no-op.
+func WithBypassPermissions(ctx context.Context, bypass bool) context.Context {
+	if !bypass {
+		return ctx
+	}
+	return context.WithValue(ctx, bypassPermissionsCtxKey{}, bypass)
+}
+
+// BypassPermissionsFromContext returns the value set by
+// WithBypassPermissions, or false if none.
+func BypassPermissionsFromContext(ctx context.Context) bool {
+	if v, ok := ctx.Value(bypassPermissionsCtxKey{}).(bool); ok {
+		return v
+	}
+	return false
+}
+
+// IntegrationSpawnProfile is the provider-agnostic injection config an
+// integration declares once; the manager applies it to every session
+// that integration creates.
+type IntegrationSpawnProfile struct {
+	MCPServersJSON    string // raw mcp_servers JSON array
+	SystemPrompt      string
+	BypassPermissions bool
+}
+
+// IntegrationSpawnProfiles resolves an integration's spawn profile.
+// Optional; nil disables integration spawn-profile injection.
+type IntegrationSpawnProfiles interface {
+	SpawnProfileFor(ctx context.Context, integrationID string) (IntegrationSpawnProfile, error)
+}

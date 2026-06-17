@@ -15,8 +15,10 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { updateIntegration } from '@/lib/integrations'
-import type { Integration } from '@/lib/types'
+import type { Integration, McpServerSpec } from '@/lib/types'
 
 import { ScopePicker } from './ScopePicker'
 import { DefaultAgentFields, type DefaultAgentValue } from './DefaultAgentFields'
@@ -47,6 +49,10 @@ export function EditIntegrationDialog({
     model: '',
     claudeAccountId: '',
   })
+  const [systemPrompt, setSystemPrompt] = useState('')
+  const [bypassPermissions, setBypassPermissions] = useState(false)
+  const [mcpServersText, setMcpServersText] = useState('')
+  const [mcpError, setMcpError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Reset form when the integration prop changes (different row
@@ -61,6 +67,10 @@ export function EditIntegrationDialog({
       model: integration.default_model ?? '',
       claudeAccountId: integration.default_claude_account_id ?? '',
     })
+    setSystemPrompt(integration.system_prompt ?? '')
+    setBypassPermissions(integration.bypass_permissions ?? false)
+    setMcpServersText(JSON.stringify(integration.mcp_servers ?? [], null, 2))
+    setMcpError(null)
     setError(null)
   }, [integration, open])
 
@@ -92,8 +102,23 @@ export function EditIntegrationDialog({
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setError(null)
+    setMcpError(null)
     if (baseURLLooksLikeModeSwitch) {
       setError(t('web.integrations.edit_dialog.errorModeSwitch'))
+      return
+    }
+    // Parse the MCP servers JSON up front so a bad payload aborts the
+    // save (and keeps the dialog open) before we touch anything else.
+    let mcpServers: McpServerSpec[]
+    try {
+      const parsed = JSON.parse(mcpServersText || '[]')
+      if (!Array.isArray(parsed)) {
+        setMcpError(t('web.integrations.edit_dialog.mcpServersInvalid'))
+        return
+      }
+      mcpServers = parsed
+    } catch {
+      setMcpError(t('web.integrations.edit_dialog.mcpServersInvalid'))
       return
     }
     const patch: Parameters<typeof updateIntegration>[1] = {}
@@ -116,6 +141,18 @@ export function EditIntegrationDialog({
       defaults.claudeAccountId !== (integration.default_claude_account_id ?? '')
     ) {
       patch.default_claude_account_id = defaults.claudeAccountId
+    }
+    if (systemPrompt !== (integration.system_prompt ?? '')) {
+      patch.system_prompt = systemPrompt
+    }
+    if (bypassPermissions !== (integration.bypass_permissions ?? false)) {
+      patch.bypass_permissions = bypassPermissions
+    }
+    if (
+      JSON.stringify(mcpServers) !==
+      JSON.stringify(integration.mcp_servers ?? [])
+    ) {
+      patch.mcp_servers = mcpServers
     }
     if (Object.keys(patch).length === 0) {
       onOpenChange(false)
@@ -216,6 +253,56 @@ export function EditIntegrationDialog({
           </div>
 
           <DefaultAgentFields value={defaults} onChange={setDefaults} />
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit_system_prompt">
+              {t('web.integrations.edit_dialog.systemPromptLabel')}
+            </Label>
+            <Textarea
+              id="edit_system_prompt"
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              rows={5}
+            />
+            <p className="text-[11px] text-muted-foreground/80">
+              {t('web.integrations.edit_dialog.systemPromptHint')}
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit_bypass_permissions">
+              {t('web.integrations.edit_dialog.bypassPermissionsLabel')}
+            </Label>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="edit_bypass_permissions"
+                checked={bypassPermissions}
+                onCheckedChange={setBypassPermissions}
+              />
+              <span className="text-[11px] text-muted-foreground/80">
+                {t('web.integrations.edit_dialog.bypassPermissionsHint')}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="edit_mcp_servers">
+              {t('web.integrations.edit_dialog.mcpServersLabel')}
+            </Label>
+            <Textarea
+              id="edit_mcp_servers"
+              value={mcpServersText}
+              onChange={(e) => setMcpServersText(e.target.value)}
+              rows={8}
+              className="font-mono text-xs"
+            />
+            <p className="text-[11px] text-muted-foreground/80">
+              {t('web.integrations.edit_dialog.mcpServersHint')}
+            </p>
+            {mcpError && (
+              <p className="text-[11px] text-destructive">{mcpError}</p>
+            )}
+          </div>
 
           {error && (
             <div className="text-[12px] text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">

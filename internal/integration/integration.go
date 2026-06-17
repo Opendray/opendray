@@ -18,6 +18,7 @@
 package integration
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 )
@@ -91,6 +92,17 @@ type Integration struct {
 	DefaultProviderID      string `json:"default_provider_id,omitempty"`
 	DefaultModel           string `json:"default_model,omitempty"`
 	DefaultClaudeAccountID string `json:"default_claude_account_id,omitempty"`
+
+	// MCPServers / SystemPrompt / BypassPermissions are the provider-
+	// AGNOSTIC half of the spawn profile (the 0064 default-agent fields are
+	// the other half). Applied ONLY to sessions this integration creates:
+	// opendray renders MCPServers via renderMCP, injects SystemPrompt via
+	// the provider's native system-prompt surface, and appends the
+	// provider's bypass flag when BypassPermissions is set — all per the
+	// resolved provider, so the integration is no longer locked to one CLI.
+	MCPServers        json.RawMessage `json:"mcp_servers,omitempty"`
+	SystemPrompt      string          `json:"system_prompt,omitempty"`
+	BypassPermissions bool            `json:"bypass_permissions"`
 
 	// IsSystem flags rows opendray manages itself (e.g. the
 	// auto-registered opendray-memory MCP integration). The UI
