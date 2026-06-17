@@ -114,6 +114,65 @@ func TestRouteForSession(t *testing.T) {
 	}
 }
 
+// TestScopeKeyForRule pins the memory-partition key per session origin.
+// Integration-origin sessions MUST land in their own per-integration
+// zone ("integration:<id>") regardless of target scope, so their facts
+// never share the operator's cwd-scoped project partition or the shared
+// "operator" global partition. Without this the isolation zone is a
+// no-op: every integration sharing a cwd reads/writes the same memory.
+func TestScopeKeyForRule(t *testing.T) {
+	tests := []struct {
+		name string
+		rule Rule
+		sess SessionInfo
+		want string
+	}{
+		{
+			name: "operator project scope keys on cwd",
+			rule: Rule{TargetScope: "project"},
+			sess: SessionInfo{Origin: "operator", Cwd: "/home/dev/proj"},
+			want: "/home/dev/proj",
+		},
+		{
+			name: "operator global scope keys on operator",
+			rule: Rule{TargetScope: "global"},
+			sess: SessionInfo{Origin: "operator", Cwd: "/home/dev/proj"},
+			want: "operator",
+		},
+		{
+			name: "cli session behaves like operator",
+			rule: Rule{TargetScope: "project"},
+			sess: SessionInfo{Origin: "cli", Cwd: "/home/dev/proj"},
+			want: "/home/dev/proj",
+		},
+		{
+			name: "integration project scope is isolated to its own zone",
+			rule: Rule{TargetScope: "project"},
+			sess: SessionInfo{Origin: "integration", IntegrationID: "intg-42", Cwd: "/home/dev/proj"},
+			want: "integration:intg-42",
+		},
+		{
+			name: "integration global scope is ALSO isolated (no operator pollution)",
+			rule: Rule{TargetScope: "global"},
+			sess: SessionInfo{Origin: "integration", IntegrationID: "intg-42", Cwd: "/home/dev/proj"},
+			want: "integration:intg-42",
+		},
+		{
+			name: "integration origin without id falls back to cwd (defensive)",
+			rule: Rule{TargetScope: "project"},
+			sess: SessionInfo{Origin: "integration", Cwd: "/home/dev/proj"},
+			want: "/home/dev/proj",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := scopeKeyForRule(tt.rule, tt.sess); got != tt.want {
+				t.Errorf("scopeKeyForRule() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestIntegrationSessionQuarantinesFacts drives the FULL capture path
 // (trigger → summarize → store) via runForceForSession with the
 // worker-provider default, proving captured facts land in quarantine
@@ -159,6 +218,9 @@ func TestIntegrationSessionQuarantinesFacts(t *testing.T) {
 	}
 	if got.Metadata["integration_id"] != "intg-42" {
 		t.Errorf("metadata integration_id = %v, want intg-42", got.Metadata["integration_id"])
+	}
+	if got.ScopeKey != "integration:intg-42" {
+		t.Errorf("scope_key = %q, want integration:intg-42 (isolated zone, not cwd %q)", got.ScopeKey, sess.Cwd)
 	}
 }
 
@@ -235,6 +297,9 @@ func TestOperatorSessionStaysDurable(t *testing.T) {
 	}
 	if mem.storeCalls[0].QuarantineExpiresAt != nil {
 		t.Errorf("operator fact must not carry a quarantine expiry")
+	}
+	if got := mem.storeCalls[0].ScopeKey; got != "/x" {
+		t.Errorf("operator scope_key = %q, want cwd /x (no regression)", got)
 	}
 	if fp := r.policy.(*fakePolicy); fp.calls != 0 {
 		t.Errorf("policy resolver consulted %d times for an operator session, want 0", fp.calls)

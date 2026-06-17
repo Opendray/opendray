@@ -128,6 +128,11 @@ func (s *Scheduler) tick(ctx context.Context) {
 		if k == "" {
 			continue
 		}
+		// Integration memory zones aren't real working dirs; skip them
+		// so the git scanner never runs against a non-path scope_key.
+		if memory.IsIntegrationScopeKey(k) {
+			continue
+		}
 		if !s.svc.IsStale(ctx, k, s.cfg.MaxAge) {
 			s.log.Debug("scheduler.skip_fresh", "scope_key", k)
 			continue
