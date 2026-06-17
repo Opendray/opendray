@@ -388,6 +388,7 @@ class _TranslationsIntegrationsZh extends TranslationsIntegrationsEn {
 	@override String get directionInbound => '入站';
 	@override String get directionOutbound => '出站';
 	@override late final _TranslationsIntegrationsFormZh form = _TranslationsIntegrationsFormZh._(_root);
+	@override late final _TranslationsIntegrationsDefaultAgentZh defaultAgent = _TranslationsIntegrationsDefaultAgentZh._(_root);
 	@override String get emptyState => '在 Web 管理端注册：集成 → 新建。';
 	@override String get sectionRegistered => '已注册';
 	@override String get sectionSystem => '系统';
@@ -1424,6 +1425,7 @@ class _TranslationsWebIntegrationsZh extends TranslationsWebIntegrationsEn {
 	@override String get groupSystem => '系统（由 opendray 管理）';
 	@override String get groupOperator => '用户注册';
 	@override late final _TranslationsWebIntegrationsCardZh card = _TranslationsWebIntegrationsCardZh._(_root);
+	@override late final _TranslationsWebIntegrationsDefaultAgentZh defaultAgent = _TranslationsWebIntegrationsDefaultAgentZh._(_root);
 	@override late final _TranslationsWebIntegrationsRegisterDialogZh register_dialog = _TranslationsWebIntegrationsRegisterDialogZh._(_root);
 	@override late final _TranslationsWebIntegrationsRevealZh reveal = _TranslationsWebIntegrationsRevealZh._(_root);
 	@override late final _TranslationsWebIntegrationsEditDialogZh edit_dialog = _TranslationsWebIntegrationsEditDialogZh._(_root);
@@ -2115,6 +2117,25 @@ class _TranslationsIntegrationsFormZh extends TranslationsIntegrationsFormEn {
 	@override String get apiKeyWarn => '此 key 只显示这一次。';
 	@override String get copyCopied => '已复制';
 	@override String get copyCopy => '复制';
+}
+
+// Path: integrations.defaultAgent
+class _TranslationsIntegrationsDefaultAgentZh extends TranslationsIntegrationsDefaultAgentEn {
+	_TranslationsIntegrationsDefaultAgentZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '默认 agent';
+	@override String get description => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先。';
+	@override String get providerLabel => '默认 provider';
+	@override String get providerNone => '无默认';
+	@override String get modelLabel => '默认模型';
+	@override String get modelHint => 'provider 默认(如 opus)';
+	@override String get accountLabel => '默认 Claude 账号';
+	@override String get accountNone => '无默认';
+	@override String get accountTokenMissing => '(缺少 token)';
+	@override String get accountHint => '仅当默认 provider 为 Claude 时生效。';
 }
 
 // Path: memoryWorkers.tasks
@@ -4355,6 +4376,25 @@ class _TranslationsWebIntegrationsCardZh extends TranslationsWebIntegrationsCard
 	@override String rotateConfirm({required Object name}) => '轮换 "${name}" 的 API key? 当前 key 将立即失效。';
 	@override String deleteConfirm({required Object name}) => '删除集成 ${name}?';
 	@override String get removedToast => '集成已移除';
+}
+
+// Path: web.integrations.defaultAgent
+class _TranslationsWebIntegrationsDefaultAgentZh extends TranslationsWebIntegrationsDefaultAgentEn {
+	_TranslationsWebIntegrationsDefaultAgentZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '默认 agent';
+	@override String get description => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先 — 这是默认值,而非强制。';
+	@override String get providerLabel => '默认 provider';
+	@override String get providerNone => '无默认';
+	@override String get modelLabel => '默认模型';
+	@override String get modelPlaceholder => 'provider 默认(如 opus)';
+	@override String get accountLabel => '默认 Claude 账号';
+	@override String get accountNone => '无默认';
+	@override String get accountTokenMissing => '(缺少 token)';
+	@override String get accountHint => '仅当默认 provider 为 Claude 时生效。';
 }
 
 // Path: web.integrations.register_dialog
@@ -10026,6 +10066,16 @@ extension on TranslationsZh {
 			'web.integrations.card.rotateConfirm' => ({required Object name}) => '轮换 "${name}" 的 API key? 当前 key 将立即失效。',
 			'web.integrations.card.deleteConfirm' => ({required Object name}) => '删除集成 ${name}?',
 			'web.integrations.card.removedToast' => '集成已移除',
+			'web.integrations.defaultAgent.title' => '默认 agent',
+			'web.integrations.defaultAgent.description' => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先 — 这是默认值,而非强制。',
+			'web.integrations.defaultAgent.providerLabel' => '默认 provider',
+			'web.integrations.defaultAgent.providerNone' => '无默认',
+			'web.integrations.defaultAgent.modelLabel' => '默认模型',
+			'web.integrations.defaultAgent.modelPlaceholder' => 'provider 默认(如 opus)',
+			'web.integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
+			'web.integrations.defaultAgent.accountNone' => '无默认',
+			'web.integrations.defaultAgent.accountTokenMissing' => '(缺少 token)',
+			'web.integrations.defaultAgent.accountHint' => '仅当默认 provider 为 Claude 时生效。',
 			'web.integrations.register_dialog.title' => '注册集成',
 			'web.integrations.register_dialog.description' => '签发一次性 API key。关闭前请复制它 — opendray 不会再显示明文。',
 			'web.integrations.register_dialog.nameLabel' => '名称',
@@ -10466,6 +10516,8 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.enableImmediately' => '立即启用（否则保存为禁用 — 适合 "先配置好，稍后开启"）',
 			'web.backups.targetEditor.local.rootLabel' => '根目录',
 			'web.backups.targetEditor.local.rootHint' => '留空 = cfg.backup.local_dir (~/.opendray/backups)',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  或  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => '主机',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
@@ -10476,8 +10528,6 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.userLabel' => '用户',
 			'web.backups.targetEditor.smb.passwordLabel' => '密码',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => '路径前缀',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.pathPrefixHint' => '共享根下的子文件夹（可选）',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
@@ -10980,6 +11030,8 @@ extension on TranslationsZh {
 			'web.export.backToBackups' => '← 备份',
 			'web.export.sections.export' => '导出',
 			'web.export.sections.import' => '导入',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.scope' => '范围',
 			'web.export.form.memories' => '记忆',
 			'web.export.form.memoriesHint' => '跨 CLI 持久化的记忆行（text + scope + metadata）。向量被省略；导入端重嵌入。',
@@ -10990,8 +11042,6 @@ extension on TranslationsZh {
 			'web.export.form.integrationOptions.noneHint' => '完全跳过 integrations 表。',
 			'web.export.form.integrationOptions.metadata' => '仅元数据（推荐）',
 			'web.export.form.integrationOptions.metadataHint' => 'ID、name、route prefix、scopes — 不包含任何 API key 凭证。',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
 			'web.export.form.confirmWarning' => '输入 <1>I understand</1> 以确认。opendray 当前只存 bcrypt 哈希 — 选择明文也不会导出任何明文（该选项为将来保留明文缓存的版本而预留）。',
@@ -11494,6 +11544,8 @@ extension on TranslationsZh {
 			'sessions.inspector.git.tabLog' => '日志',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
 			'sessions.inspector.tasks.runCommandSubtitle' => '在新的 shell 会话中运行并切换过去',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
@@ -11504,8 +11556,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertAtRefTooltip' => '作为 @引用 插入',
 			'sessions.inspector.notes.insertAtRefShort' => '插入 @引用',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\n想法、待办、为 agent 提供的上下文…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
@@ -11775,6 +11825,16 @@ extension on TranslationsZh {
 			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
 			'integrations.form.copyCopied' => '已复制',
 			'integrations.form.copyCopy' => '复制',
+			'integrations.defaultAgent.title' => '默认 agent',
+			'integrations.defaultAgent.description' => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先。',
+			'integrations.defaultAgent.providerLabel' => '默认 provider',
+			'integrations.defaultAgent.providerNone' => '无默认',
+			'integrations.defaultAgent.modelLabel' => '默认模型',
+			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
+			'integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
+			'integrations.defaultAgent.accountNone' => '无默认',
+			'integrations.defaultAgent.accountTokenMissing' => '(缺少 token)',
+			'integrations.defaultAgent.accountHint' => '仅当默认 provider 为 Claude 时生效。',
 			'integrations.emptyState' => '在 Web 管理端注册：集成 → 新建。',
 			'integrations.sectionRegistered' => '已注册',
 			'integrations.sectionSystem' => '系统',
@@ -11998,6 +12058,8 @@ extension on TranslationsZh {
 			'backups.overviewTargets' => '目标',
 			'backups.overviewSchedules' => '计划',
 			'backups.overviewBackups' => '备份',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.headlineHealthy' => '备份正常',
 			'backups.health.headlineAttention' => '需要关注',
 			'backups.health.headlineNever' => '尚无备份',
@@ -12018,8 +12080,6 @@ extension on TranslationsZh {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restoreFromFile' => '从文件恢复',
 			'backups.restore.title' => '从备份包恢复',
 			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
@@ -12512,6 +12572,8 @@ extension on TranslationsZh {
 			'dataExport.imports.columns.source' => '来源',
 			'dataExport.imports.columns.counts' => '计数',
 			'dataExport.imports.columns.when' => '时间',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => '${n} 秒后',
 			'dataExport.relative.inMinutes' => ({required Object n}) => '${n} 分钟后',
 			'dataExport.relative.inHours' => ({required Object n}) => '${n} 小时后',
@@ -12532,8 +12594,6 @@ extension on TranslationsZh {
 			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
 			'memory.title' => '记忆',
 			'memory.more' => '更多',

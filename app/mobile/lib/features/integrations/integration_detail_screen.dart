@@ -150,6 +150,9 @@ class _IntegrationDetailScreenState
             scopes: patch.scopes,
             version: patch.version,
             enabled: patch.enabled,
+            defaultProviderId: patch.defaultProviderId,
+            defaultModel: patch.defaultModel,
+            defaultClaudeAccountId: patch.defaultClaudeAccountId,
           );
       if (!mounted) return;
       messenger.showSnackBar(

@@ -1345,6 +1345,18 @@
         "deleteConfirm": "Delete integration {name}?",
         "removedToast": "Integration removed"
       },
+      "defaultAgent": {
+        "title": "Default agent",
+        "description": "Applied to sessions this integration creates when its request omits the field. The request always wins — these are defaults, not enforcement.",
+        "providerLabel": "Default provider",
+        "providerNone": "No default",
+        "modelLabel": "Default model",
+        "modelPlaceholder": "Provider default (e.g. opus)",
+        "accountLabel": "Default Claude account",
+        "accountNone": "No default",
+        "accountTokenMissing": "(token missing)",
+        "accountHint": "Only applies when the default provider is Claude."
+      },
       "register_dialog": {
         "title": "Register integration",
         "description": "Issues a one-time API key. Copy it before closing — opendray never displays the plaintext again.",
@@ -3624,6 +3636,18 @@
       "apiKeyWarn": "You won't see this key again.",
       "copyCopied": "Copied",
       "copyCopy": "Copy"
+    },
+    "defaultAgent": {
+      "title": "Default agent",
+      "description": "Applied to sessions this integration creates when its request omits the field. The request always wins.",
+      "providerLabel": "Default provider",
+      "providerNone": "No default",
+      "modelLabel": "Default model",
+      "modelHint": "Provider default (e.g. opus)",
+      "accountLabel": "Default Claude account",
+      "accountNone": "No default",
+      "accountTokenMissing": "(token missing)",
+      "accountHint": "Only applies when the default provider is Claude."
     },
     "emptyState": "Register from the web admin: Integrations → New.",
     "sectionRegistered": "Registered",

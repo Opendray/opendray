@@ -208,6 +208,12 @@ export interface Integration {
   /** True for rows opendray manages itself (e.g. opendray-memory).
       Operators can't delete or rotate these from the UI. */
   is_system: boolean
+  /** Spawn defaults applied to sessions this integration creates when
+      the request omits the field (the request always wins). Empty =
+      no default. */
+  default_provider_id?: string
+  default_model?: string
+  default_claude_account_id?: string
 }
 
 export interface RegisterIntegrationRequest {
@@ -216,6 +222,9 @@ export interface RegisterIntegrationRequest {
   route_prefix: string
   scopes?: string[]
   version?: string
+  default_provider_id?: string
+  default_model?: string
+  default_claude_account_id?: string
 }
 
 export interface RegisterIntegrationResult {

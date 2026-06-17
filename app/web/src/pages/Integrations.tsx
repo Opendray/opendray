@@ -35,6 +35,10 @@ import { EditIntegrationDialog } from '@/components/integrations/EditIntegration
 import { ProxyConsole } from '@/components/integrations/ProxyConsole'
 import { ScopePicker } from '@/components/integrations/ScopePicker'
 import {
+  DefaultAgentFields,
+  type DefaultAgentValue,
+} from '@/components/integrations/DefaultAgentFields'
+import {
   listIntegrations,
   registerIntegration,
   rotateIntegrationKey,
@@ -411,6 +415,11 @@ function RegisterDialog({
     'session:read',
     'event:subscribe:session.*',
   ])
+  const [defaults, setDefaults] = useState<DefaultAgentValue>({
+    providerId: '',
+    model: '',
+    claudeAccountId: '',
+  })
   const [error, setError] = useState<string | null>(null)
 
   const reset = () => {
@@ -419,6 +428,7 @@ function RegisterDialog({
     setRoutePrefix('')
     setVersion('')
     setScopes(['session:read', 'event:subscribe:session.*'])
+    setDefaults({ providerId: '', model: '', claudeAccountId: '' })
     setError(null)
   }
 
@@ -452,6 +462,9 @@ function RegisterDialog({
       route_prefix: prefix,
       scopes,
       version: version.trim() || undefined,
+      default_provider_id: defaults.providerId || undefined,
+      default_model: defaults.model.trim() || undefined,
+      default_claude_account_id: defaults.claudeAccountId || undefined,
     })
   }
 
@@ -463,7 +476,7 @@ function RegisterDialog({
         onOpenChange(v)
       }}
     >
-      <DialogContent className="max-w-[520px]">
+      <DialogContent className="max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('web.integrations.register_dialog.title')}</DialogTitle>
           <DialogDescription>
@@ -551,6 +564,8 @@ function RegisterDialog({
               intro={t('web.integrations.register_dialog.scopesIntro')}
             />
           </div>
+
+          <DefaultAgentFields value={defaults} onChange={setDefaults} />
 
           {error && (
             <div className="text-[12px] text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">

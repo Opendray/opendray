@@ -735,6 +735,7 @@ class TranslationsIntegrationsEn {
 	String get directionOutbound => 'Outbound';
 
 	late final TranslationsIntegrationsFormEn form = TranslationsIntegrationsFormEn.internal(_root);
+	late final TranslationsIntegrationsDefaultAgentEn defaultAgent = TranslationsIntegrationsDefaultAgentEn.internal(_root);
 
 	/// en: 'Register from the web admin: Integrations → New.'
 	String get emptyState => 'Register from the web admin: Integrations → New.';
@@ -2979,6 +2980,7 @@ class TranslationsWebIntegrationsEn {
 	String get groupOperator => 'Operator-registered';
 
 	late final TranslationsWebIntegrationsCardEn card = TranslationsWebIntegrationsCardEn.internal(_root);
+	late final TranslationsWebIntegrationsDefaultAgentEn defaultAgent = TranslationsWebIntegrationsDefaultAgentEn.internal(_root);
 	late final TranslationsWebIntegrationsRegisterDialogEn register_dialog = TranslationsWebIntegrationsRegisterDialogEn.internal(_root);
 	late final TranslationsWebIntegrationsRevealEn reveal = TranslationsWebIntegrationsRevealEn.internal(_root);
 	late final TranslationsWebIntegrationsEditDialogEn edit_dialog = TranslationsWebIntegrationsEditDialogEn.internal(_root);
@@ -4215,6 +4217,45 @@ class TranslationsIntegrationsFormEn {
 
 	/// en: 'Copy'
 	String get copyCopy => 'Copy';
+}
+
+// Path: integrations.defaultAgent
+class TranslationsIntegrationsDefaultAgentEn {
+	TranslationsIntegrationsDefaultAgentEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Default agent'
+	String get title => 'Default agent';
+
+	/// en: 'Applied to sessions this integration creates when its request omits the field. The request always wins.'
+	String get description => 'Applied to sessions this integration creates when its request omits the field. The request always wins.';
+
+	/// en: 'Default provider'
+	String get providerLabel => 'Default provider';
+
+	/// en: 'No default'
+	String get providerNone => 'No default';
+
+	/// en: 'Default model'
+	String get modelLabel => 'Default model';
+
+	/// en: 'Provider default (e.g. opus)'
+	String get modelHint => 'Provider default (e.g. opus)';
+
+	/// en: 'Default Claude account'
+	String get accountLabel => 'Default Claude account';
+
+	/// en: 'No default'
+	String get accountNone => 'No default';
+
+	/// en: '(token missing)'
+	String get accountTokenMissing => '(token missing)';
+
+	/// en: 'Only applies when the default provider is Claude.'
+	String get accountHint => 'Only applies when the default provider is Claude.';
 }
 
 // Path: memoryWorkers.tasks
@@ -8566,6 +8607,45 @@ class TranslationsWebIntegrationsCardEn {
 
 	/// en: 'Integration removed'
 	String get removedToast => 'Integration removed';
+}
+
+// Path: web.integrations.defaultAgent
+class TranslationsWebIntegrationsDefaultAgentEn {
+	TranslationsWebIntegrationsDefaultAgentEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Default agent'
+	String get title => 'Default agent';
+
+	/// en: 'Applied to sessions this integration creates when its request omits the field. The request always wins — these are defaults, not enforcement.'
+	String get description => 'Applied to sessions this integration creates when its request omits the field. The request always wins — these are defaults, not enforcement.';
+
+	/// en: 'Default provider'
+	String get providerLabel => 'Default provider';
+
+	/// en: 'No default'
+	String get providerNone => 'No default';
+
+	/// en: 'Default model'
+	String get modelLabel => 'Default model';
+
+	/// en: 'Provider default (e.g. opus)'
+	String get modelPlaceholder => 'Provider default (e.g. opus)';
+
+	/// en: 'Default Claude account'
+	String get accountLabel => 'Default Claude account';
+
+	/// en: 'No default'
+	String get accountNone => 'No default';
+
+	/// en: '(token missing)'
+	String get accountTokenMissing => '(token missing)';
+
+	/// en: 'Only applies when the default provider is Claude.'
+	String get accountHint => 'Only applies when the default provider is Claude.';
 }
 
 // Path: web.integrations.register_dialog
@@ -17856,6 +17936,16 @@ extension on Translations {
 			'web.integrations.card.rotateConfirm' => ({required Object name}) => 'Rotate the API key for "${name}"? The current key will stop working immediately.',
 			'web.integrations.card.deleteConfirm' => ({required Object name}) => 'Delete integration ${name}?',
 			'web.integrations.card.removedToast' => 'Integration removed',
+			'web.integrations.defaultAgent.title' => 'Default agent',
+			'web.integrations.defaultAgent.description' => 'Applied to sessions this integration creates when its request omits the field. The request always wins — these are defaults, not enforcement.',
+			'web.integrations.defaultAgent.providerLabel' => 'Default provider',
+			'web.integrations.defaultAgent.providerNone' => 'No default',
+			'web.integrations.defaultAgent.modelLabel' => 'Default model',
+			'web.integrations.defaultAgent.modelPlaceholder' => 'Provider default (e.g. opus)',
+			'web.integrations.defaultAgent.accountLabel' => 'Default Claude account',
+			'web.integrations.defaultAgent.accountNone' => 'No default',
+			'web.integrations.defaultAgent.accountTokenMissing' => '(token missing)',
+			'web.integrations.defaultAgent.accountHint' => 'Only applies when the default provider is Claude.',
 			'web.integrations.register_dialog.title' => 'Register integration',
 			'web.integrations.register_dialog.description' => 'Issues a one-time API key. Copy it before closing — opendray never displays the plaintext again.',
 			'web.integrations.register_dialog.nameLabel' => 'Name',
@@ -18296,6 +18386,8 @@ extension on Translations {
 			'web.backups.targetEditor.enableImmediately' => 'Enable immediately (otherwise saved as disabled — useful for "configure now, turn on later")',
 			'web.backups.targetEditor.local.rootLabel' => 'Root directory',
 			'web.backups.targetEditor.local.rootHint' => 'Empty = cfg.backup.local_dir (~/.opendray/backups)',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  or  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
@@ -18306,8 +18398,6 @@ extension on Translations {
 			'web.backups.targetEditor.smb.userLabel' => 'User',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Password',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Path prefix',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.pathPrefixHint' => 'Sub-folder under the share root (optional)',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
@@ -18810,6 +18900,8 @@ extension on Translations {
 			'web.export.backToBackups' => '← Backups',
 			'web.export.sections.export' => 'Export',
 			'web.export.sections.import' => 'Import',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.scope' => 'Scope',
 			'web.export.form.memories' => 'Memories',
 			'web.export.form.memoriesHint' => 'Cross-CLI persistent memory rows (text + scope + metadata). Embedding vectors are omitted; importer re-embeds.',
@@ -18820,8 +18912,6 @@ extension on Translations {
 			'web.export.form.integrationOptions.noneHint' => 'Skip the integrations table entirely.',
 			'web.export.form.integrationOptions.metadata' => 'Metadata only (recommended)',
 			'web.export.form.integrationOptions.metadataHint' => 'ID, name, route prefix, scopes — no API key material.',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.integrationOptions.plaintext' => 'Include plaintext API keys',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks.',
 			'web.export.form.confirmWarning' => 'Type <1>I understand</1> to confirm. opendray currently stores only bcrypt hashes — selecting plaintext does NOT export any plaintext (the feature is reserved for a future release that keeps plaintext caches).',
@@ -19324,6 +19414,8 @@ extension on Translations {
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Runs in a new shell session and switches to it',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
@@ -19334,8 +19426,6 @@ extension on Translations {
 			'sessions.inspector.notes.insertAtRefTooltip' => 'Insert as @reference',
 			'sessions.inspector.notes.insertAtRefShort' => 'Insert @reference',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nThoughts, todos, context for the agent…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Change project docs location',
@@ -19605,6 +19695,16 @@ extension on Translations {
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
 			'integrations.form.copyCopied' => 'Copied',
 			'integrations.form.copyCopy' => 'Copy',
+			'integrations.defaultAgent.title' => 'Default agent',
+			'integrations.defaultAgent.description' => 'Applied to sessions this integration creates when its request omits the field. The request always wins.',
+			'integrations.defaultAgent.providerLabel' => 'Default provider',
+			'integrations.defaultAgent.providerNone' => 'No default',
+			'integrations.defaultAgent.modelLabel' => 'Default model',
+			'integrations.defaultAgent.modelHint' => 'Provider default (e.g. opus)',
+			'integrations.defaultAgent.accountLabel' => 'Default Claude account',
+			'integrations.defaultAgent.accountNone' => 'No default',
+			'integrations.defaultAgent.accountTokenMissing' => '(token missing)',
+			'integrations.defaultAgent.accountHint' => 'Only applies when the default provider is Claude.',
 			'integrations.emptyState' => 'Register from the web admin: Integrations → New.',
 			'integrations.sectionRegistered' => 'Registered',
 			'integrations.sectionSystem' => 'System',
@@ -19828,6 +19928,8 @@ extension on Translations {
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
 			'backups.overviewBackups' => 'Backups',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.headlineHealthy' => 'Backups healthy',
 			'backups.health.headlineAttention' => 'Needs attention',
 			'backups.health.headlineNever' => 'No backups yet',
@@ -19848,8 +19950,6 @@ extension on Translations {
 			'backups.encryption.passphraseLabel' => 'Your passphrase',
 			'backups.encryption.passphraseHint' => 'At least 20 characters',
 			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restoreFromFile' => 'Restore from file',
 			'backups.restore.title' => 'Restore from bundle',
 			'backups.restore.subtitle' => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.',
@@ -20342,6 +20442,8 @@ extension on Translations {
 			'dataExport.imports.columns.source' => 'Source',
 			'dataExport.imports.columns.counts' => 'Counts',
 			'dataExport.imports.columns.when' => 'When',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'in ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'in ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'in ${n}h',
@@ -20362,8 +20464,6 @@ extension on Translations {
 			'memory.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.denseDegraded' => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.',
 			'memory.title' => 'Memory',
 			'memory.more' => 'More',
