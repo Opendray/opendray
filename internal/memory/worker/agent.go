@@ -133,6 +133,11 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	// JSON-schema instruction) is folded into stdin ahead of the
 	// user input.
 	input := req.UserInput
+	// Gemini receives the prompt via the --prompt arg (see buildCommand),
+	// not stdin, so leave its stdin empty to avoid duplicating the prompt.
+	if w.cfg.ProviderID == "gemini" {
+		input = ""
+	}
 	// codex and antigravity (agy) have no system-prompt CLI flag, so the
 	// system block (+ JSON-schema instruction) is folded into stdin ahead
 	// of the user input.
@@ -162,7 +167,7 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 			return Response{}, fmt.Errorf("agent worker: timeout after %s (stdout: %s, stderr: %s)",
 				timeout, stdoutTrunc, stderrTrunc)
 		}
-		return Response{}, fmt.Errorf("agent worker: %s --print: %w (stdout: %s, stderr: %s)",
+		return Response{}, fmt.Errorf("agent worker: %s headless run: %w (stdout: %s, stderr: %s)",
 			w.cfg.ProviderID, err, stdoutTrunc, stderrTrunc)
 	}
 	dur := time.Since(t0).Milliseconds()
@@ -254,8 +259,13 @@ func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]st
 		args = append(args, "-")
 		return args, nil, nil
 	case "gemini":
+		// Gemini's headless flag is -p/--prompt (NOT --print, which is
+		// Claude-only — gemini errors "Unknown argument: print"). The
+		// prompt is passed as the flag value; the system block is read
+		// from GEMINI.md via --include-directories below. Run does not
+		// also pipe the prompt to stdin for gemini (it is here in args).
 		args := []string{
-			"--print",
+			"--prompt", req.UserInput,
 			"--session-id", sessionID,
 		}
 		if w.cfg.Model != "" {
