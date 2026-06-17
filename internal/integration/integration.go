@@ -33,16 +33,18 @@ const (
 )
 
 // MemoryPolicy declares what the memory capture pipeline does with
-// sessions an integration creates (Cortex Phase 2 — quarantine by
-// default so third-party temp sessions can't pollute durable memory).
+// sessions an integration creates (Cortex Phase 2 — "none" by default
+// so a third-party consumer's sessions are fully isolated: their content
+// is never captured into the shared memory store).
 type MemoryPolicy string
 
 const (
-	// MemoryPolicyNone — sessions never produce memory.
+	// MemoryPolicyNone — sessions never produce memory. The default for
+	// integrations: privacy-safe isolation for third-party consumers.
 	MemoryPolicyNone MemoryPolicy = "none"
 	// MemoryPolicyQuarantine — facts land in the quarantine tier:
 	// excluded from consolidation + spawn injection, reviewable and
-	// promotable, auto-expired after a TTL. The default.
+	// promotable, auto-expired after a TTL. Opt-in for trusted integrations.
 	MemoryPolicyQuarantine MemoryPolicy = "quarantine"
 	// MemoryPolicyFull — trusted: facts are durable, same as operator
 	// sessions.
@@ -76,7 +78,7 @@ type Integration struct {
 	RotatedAt      *time.Time     `json:"rotated_at,omitempty"`
 
 	// MemoryPolicy routes memory capture for sessions this integration
-	// creates: none | quarantine (default) | full.
+	// creates: none (default) | quarantine | full.
 	MemoryPolicy MemoryPolicy `json:"memory_policy"`
 
 	// IsSystem flags rows opendray manages itself (e.g. the

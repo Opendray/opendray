@@ -108,7 +108,12 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (RegisterRe
 	}
 	policy := req.MemoryPolicy
 	if policy == "" {
-		policy = MemoryPolicyQuarantine
+		// Integration-created sessions are isolated by default: their
+		// transcripts are never captured into the memory store. Third-party
+		// consumers may serve many end users, so their session content is
+		// private by default. An operator can opt a trusted integration into
+		// quarantine/full explicitly.
+		policy = MemoryPolicyNone
 	}
 	i := Integration{
 		ID:           id,
