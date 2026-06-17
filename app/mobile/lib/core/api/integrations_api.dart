@@ -21,6 +21,9 @@ class Integration {
     this.version,
     this.healthLastSeen,
     this.rotatedAt,
+    this.defaultProviderId = '',
+    this.defaultModel = '',
+    this.defaultClaudeAccountId = '',
   });
 
   factory Integration.fromJson(Map<String, dynamic> json) {
@@ -45,6 +48,10 @@ class Integration {
       rotatedAt:
           DateTime.tryParse(json['rotated_at'] as String? ?? '')?.toUtc(),
       isSystem: json['is_system'] as bool? ?? false,
+      defaultProviderId: json['default_provider_id'] as String? ?? '',
+      defaultModel: json['default_model'] as String? ?? '',
+      defaultClaudeAccountId:
+          json['default_claude_account_id'] as String? ?? '',
     );
   }
 
@@ -63,6 +70,11 @@ class Integration {
   // System rows are managed by opendray itself (e.g. opendray-memory MCP)
   // — not operator-mutable.
   final bool isSystem;
+  // Spawn defaults applied to sessions this integration creates when the
+  // request omits the field (the request always wins). Empty = no default.
+  final String defaultProviderId;
+  final String defaultModel;
+  final String defaultClaudeAccountId;
 }
 
 class CallEntry {
@@ -222,6 +234,9 @@ class IntegrationsApi {
     required String routePrefix,
     List<String>? scopes,
     String? version,
+    String? defaultProviderId,
+    String? defaultModel,
+    String? defaultClaudeAccountId,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -232,6 +247,13 @@ class IntegrationsApi {
           'route_prefix': routePrefix,
           if (scopes != null && scopes.isNotEmpty) 'scopes': scopes,
           if (version != null && version.isNotEmpty) 'version': version,
+          if (defaultProviderId != null && defaultProviderId.isNotEmpty)
+            'default_provider_id': defaultProviderId,
+          if (defaultModel != null && defaultModel.isNotEmpty)
+            'default_model': defaultModel,
+          if (defaultClaudeAccountId != null &&
+              defaultClaudeAccountId.isNotEmpty)
+            'default_claude_account_id': defaultClaudeAccountId,
         },
       );
       return RegisterResult.fromJson(res.data ?? {});
@@ -248,6 +270,9 @@ class IntegrationsApi {
     List<String>? scopes,
     String? version,
     bool? enabled,
+    String? defaultProviderId,
+    String? defaultModel,
+    String? defaultClaudeAccountId,
   }) async {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
@@ -257,6 +282,12 @@ class IntegrationsApi {
           if (scopes != null) 'scopes': scopes,
           if (version != null) 'version': version,
           if (enabled != null) 'enabled': enabled,
+          // Non-null means "set" — empty string clears the default.
+          if (defaultProviderId != null)
+            'default_provider_id': defaultProviderId,
+          if (defaultModel != null) 'default_model': defaultModel,
+          if (defaultClaudeAccountId != null)
+            'default_claude_account_id': defaultClaudeAccountId,
         },
       );
       return Integration.fromJson(res.data ?? {});

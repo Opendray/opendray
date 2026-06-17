@@ -388,6 +388,7 @@ class _TranslationsIntegrationsEs extends TranslationsIntegrationsEn {
 	@override String get directionInbound => 'Entrantes';
 	@override String get directionOutbound => 'Salientes';
 	@override late final _TranslationsIntegrationsFormEs form = _TranslationsIntegrationsFormEs._(_root);
+	@override late final _TranslationsIntegrationsDefaultAgentEs defaultAgent = _TranslationsIntegrationsDefaultAgentEs._(_root);
 	@override String get emptyState => 'Regístrala desde el admin web: Integraciones → Nueva.';
 	@override String get sectionRegistered => 'Registradas';
 	@override String get sectionSystem => 'Sistema';
@@ -1424,6 +1425,7 @@ class _TranslationsWebIntegrationsEs extends TranslationsWebIntegrationsEn {
 	@override String get groupSystem => 'Sistema (gestionado por opendray)';
 	@override String get groupOperator => 'Registradas por el operador';
 	@override late final _TranslationsWebIntegrationsCardEs card = _TranslationsWebIntegrationsCardEs._(_root);
+	@override late final _TranslationsWebIntegrationsDefaultAgentEs defaultAgent = _TranslationsWebIntegrationsDefaultAgentEs._(_root);
 	@override late final _TranslationsWebIntegrationsRegisterDialogEs register_dialog = _TranslationsWebIntegrationsRegisterDialogEs._(_root);
 	@override late final _TranslationsWebIntegrationsRevealEs reveal = _TranslationsWebIntegrationsRevealEs._(_root);
 	@override late final _TranslationsWebIntegrationsEditDialogEs edit_dialog = _TranslationsWebIntegrationsEditDialogEs._(_root);
@@ -2115,6 +2117,25 @@ class _TranslationsIntegrationsFormEs extends TranslationsIntegrationsFormEn {
 	@override String get apiKeyWarn => 'No volverás a ver esta key.';
 	@override String get copyCopied => 'Copiado';
 	@override String get copyCopy => 'Copiar';
+}
+
+// Path: integrations.defaultAgent
+class _TranslationsIntegrationsDefaultAgentEs extends TranslationsIntegrationsDefaultAgentEn {
+	_TranslationsIntegrationsDefaultAgentEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Agente predeterminado';
+	@override String get description => 'Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece.';
+	@override String get providerLabel => 'Proveedor predeterminado';
+	@override String get providerNone => 'Sin predeterminado';
+	@override String get modelLabel => 'Modelo predeterminado';
+	@override String get modelHint => 'Predeterminado del proveedor (p. ej. opus)';
+	@override String get accountLabel => 'Cuenta de Claude predeterminada';
+	@override String get accountNone => 'Sin predeterminado';
+	@override String get accountTokenMissing => '(falta el token)';
+	@override String get accountHint => 'Solo se aplica cuando el proveedor predeterminado es Claude.';
 }
 
 // Path: memoryWorkers.tasks
@@ -4355,6 +4376,25 @@ class _TranslationsWebIntegrationsCardEs extends TranslationsWebIntegrationsCard
 	@override String rotateConfirm({required Object name}) => '¿Rotar la API key de "${name}"? La key actual dejará de funcionar de inmediato.';
 	@override String deleteConfirm({required Object name}) => '¿Eliminar la integración ${name}?';
 	@override String get removedToast => 'Integración eliminada';
+}
+
+// Path: web.integrations.defaultAgent
+class _TranslationsWebIntegrationsDefaultAgentEs extends TranslationsWebIntegrationsDefaultAgentEn {
+	_TranslationsWebIntegrationsDefaultAgentEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Agente predeterminado';
+	@override String get description => 'Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece: son valores predeterminados, no obligatorios.';
+	@override String get providerLabel => 'Proveedor predeterminado';
+	@override String get providerNone => 'Sin predeterminado';
+	@override String get modelLabel => 'Modelo predeterminado';
+	@override String get modelPlaceholder => 'Predeterminado del proveedor (p. ej. opus)';
+	@override String get accountLabel => 'Cuenta de Claude predeterminada';
+	@override String get accountNone => 'Sin predeterminado';
+	@override String get accountTokenMissing => '(falta el token)';
+	@override String get accountHint => 'Solo se aplica cuando el proveedor predeterminado es Claude.';
 }
 
 // Path: web.integrations.register_dialog
@@ -10026,6 +10066,16 @@ extension on TranslationsEs {
 			'web.integrations.card.rotateConfirm' => ({required Object name}) => '¿Rotar la API key de "${name}"? La key actual dejará de funcionar de inmediato.',
 			'web.integrations.card.deleteConfirm' => ({required Object name}) => '¿Eliminar la integración ${name}?',
 			'web.integrations.card.removedToast' => 'Integración eliminada',
+			'web.integrations.defaultAgent.title' => 'Agente predeterminado',
+			'web.integrations.defaultAgent.description' => 'Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece: son valores predeterminados, no obligatorios.',
+			'web.integrations.defaultAgent.providerLabel' => 'Proveedor predeterminado',
+			'web.integrations.defaultAgent.providerNone' => 'Sin predeterminado',
+			'web.integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
+			'web.integrations.defaultAgent.modelPlaceholder' => 'Predeterminado del proveedor (p. ej. opus)',
+			'web.integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
+			'web.integrations.defaultAgent.accountNone' => 'Sin predeterminado',
+			'web.integrations.defaultAgent.accountTokenMissing' => '(falta el token)',
+			'web.integrations.defaultAgent.accountHint' => 'Solo se aplica cuando el proveedor predeterminado es Claude.',
 			'web.integrations.register_dialog.title' => 'Registrar integración',
 			'web.integrations.register_dialog.description' => 'Emite una API key de un solo uso. Cópiala antes de cerrar: opendray nunca vuelve a mostrar el texto en claro.',
 			'web.integrations.register_dialog.nameLabel' => 'Nombre',
@@ -10466,6 +10516,8 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.enableImmediately' => 'Habilitar inmediatamente (de lo contrario se guarda como deshabilitado, útil para "configurar ahora, activar más tarde")',
 			'web.backups.targetEditor.local.rootLabel' => 'Directorio raíz',
 			'web.backups.targetEditor.local.rootHint' => 'Vacío = cfg.backup.local_dir (~/.opendray/backups)',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.local.rootPlaceholder' => '~/backups/opendray  o  /mnt/external-hdd/opendray',
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
@@ -10476,8 +10528,6 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.userLabel' => 'Usuario',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Prefijo de ruta',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.pathPrefixHint' => 'Subcarpeta bajo la raíz del recurso compartido (opcional)',
 			'web.backups.targetEditor.smb.pathPrefixPlaceholder' => 'opendray/backups',
 			'web.backups.targetEditor.s3.endpointLabel' => 'Endpoint',
@@ -10980,6 +11030,8 @@ extension on TranslationsEs {
 			'web.export.backToBackups' => '← Backups',
 			'web.export.sections.export' => 'Exportar',
 			'web.export.sections.import' => 'Importar',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.scope' => 'Alcance',
 			'web.export.form.memories' => 'Memorias',
 			'web.export.form.memoriesHint' => 'Filas de memoria persistente entre CLI (texto + alcance + metadatos). Los vectores de embedding se omiten; el importador vuelve a generarlos.',
@@ -10990,8 +11042,6 @@ extension on TranslationsEs {
 			'web.export.form.integrationOptions.noneHint' => 'Omitir por completo la tabla de integraciones.',
 			'web.export.form.integrationOptions.metadata' => 'Solo metadatos (recomendado)',
 			'web.export.form.integrationOptions.metadataHint' => 'ID, nombre, prefijo de ruta, alcances. Sin material de API key.',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.integrationOptions.plaintext' => 'Incluir las API keys en texto plano',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 solo con bcrypt: no existe texto plano recuperable. El manifiesto lo documenta; no se filtra nada.',
 			'web.export.form.confirmWarning' => 'Escribe <1>Lo entiendo</1> para confirmar. opendray actualmente almacena solo hashes bcrypt, así que seleccionar texto plano NO exporta ningún texto plano (la función está reservada para una versión futura que mantenga cachés de texto plano).',
@@ -11494,6 +11544,8 @@ extension on TranslationsEs {
 			'sessions.inspector.git.tabLog' => 'Log',
 			'sessions.inspector.tasks.runCommand' => 'Ejecutar comando',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Se ejecuta en una nueva session de shell y cambia a ella',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.tasks.filterHint' => 'Filtrar tareas…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'Ninguna tarea coincide con "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No hay tareas en esta carpeta',
@@ -11504,8 +11556,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertAtRefTooltip' => 'Insertar como @referencia',
 			'sessions.inspector.notes.insertAtRefShort' => 'Insertar @referencia',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nIdeas, tareas pendientes, contexto para el agente…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Cambiar la ubicación de los documentos del proyecto',
@@ -11775,6 +11825,16 @@ extension on TranslationsEs {
 			'integrations.form.apiKeyWarn' => 'No volverás a ver esta key.',
 			'integrations.form.copyCopied' => 'Copiado',
 			'integrations.form.copyCopy' => 'Copiar',
+			'integrations.defaultAgent.title' => 'Agente predeterminado',
+			'integrations.defaultAgent.description' => 'Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece.',
+			'integrations.defaultAgent.providerLabel' => 'Proveedor predeterminado',
+			'integrations.defaultAgent.providerNone' => 'Sin predeterminado',
+			'integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
+			'integrations.defaultAgent.modelHint' => 'Predeterminado del proveedor (p. ej. opus)',
+			'integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
+			'integrations.defaultAgent.accountNone' => 'Sin predeterminado',
+			'integrations.defaultAgent.accountTokenMissing' => '(falta el token)',
+			'integrations.defaultAgent.accountHint' => 'Solo se aplica cuando el proveedor predeterminado es Claude.',
 			'integrations.emptyState' => 'Regístrala desde el admin web: Integraciones → Nueva.',
 			'integrations.sectionRegistered' => 'Registradas',
 			'integrations.sectionSystem' => 'Sistema',
@@ -11998,6 +12058,8 @@ extension on TranslationsEs {
 			'backups.overviewTargets' => 'Destinos',
 			'backups.overviewSchedules' => 'Programaciones',
 			'backups.overviewBackups' => 'Copias de seguridad',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.headlineHealthy' => 'Copias correctas',
 			'backups.health.headlineAttention' => 'Requiere atención',
 			'backups.health.headlineNever' => 'Aún sin copias',
@@ -12018,8 +12080,6 @@ extension on TranslationsEs {
 			'backups.encryption.passphraseLabel' => 'Tu passphrase',
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restoreFromFile' => 'Restaurar desde archivo',
 			'backups.restore.title' => 'Restaurar desde paquete',
 			'backups.restore.subtitle' => 'Reproduce un paquete cifrado .tar.gz.enc en una base de datos Postgres. El paquete se sube desde este teléfono: elige un archivo generado por una copia de seguridad anterior.',
@@ -12512,6 +12572,8 @@ extension on TranslationsEs {
 			'dataExport.imports.columns.source' => 'Origen',
 			'dataExport.imports.columns.counts' => 'Recuentos',
 			'dataExport.imports.columns.when' => 'Cuándo',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'en ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'en ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'en ${n}h',
@@ -12532,8 +12594,6 @@ extension on TranslationsEs {
 			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
 			'memory.title' => 'Memoria',
 			'memory.more' => 'Más',

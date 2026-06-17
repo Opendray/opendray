@@ -39,6 +39,9 @@ export async function updateIntegration(
     scopes?: string[]
     version?: string
     enabled?: boolean
+    default_provider_id?: string
+    default_model?: string
+    default_claude_account_id?: string
   },
 ): Promise<Integration> {
   return api<Integration>(`/api/v1/integrations/${id}`, {

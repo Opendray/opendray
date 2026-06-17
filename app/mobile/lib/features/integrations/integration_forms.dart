@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'package:opendray/core/api/integrations_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/integrations/default_agent_fields.dart';
 
 // Form pages and small read-only dialogs shared by the Integrations
 // screens. Multi-field forms (register / edit) are full-screen pages
@@ -38,6 +39,9 @@ class _RegisterIntegrationScreenState
   final _prefix = TextEditingController();
   final _scopes = TextEditingController();
   final _version = TextEditingController();
+  final _defaultModel = TextEditingController();
+  String _defaultProviderId = '';
+  String _defaultClaudeAccountId = '';
   String? _error;
 
   @override
@@ -47,6 +51,7 @@ class _RegisterIntegrationScreenState
     _prefix.dispose();
     _scopes.dispose();
     _version.dispose();
+    _defaultModel.dispose();
     super.dispose();
   }
 
@@ -72,6 +77,9 @@ class _RegisterIntegrationScreenState
         routePrefix: prefix.replaceAll(RegExp(r'^/+|/+$'), ''),
         scopes: scopes,
         version: _version.text.trim(),
+        defaultProviderId: _defaultProviderId,
+        defaultModel: _defaultModel.text.trim(),
+        defaultClaudeAccountId: _defaultClaudeAccountId,
       ),
     );
   }
@@ -120,6 +128,18 @@ class _RegisterIntegrationScreenState
             label: t.integrations.form.fieldVersion,
             hint: '1.0.0',
           ),
+          DefaultAgentFields(
+            providerId: _defaultProviderId,
+            claudeAccountId: _defaultClaudeAccountId,
+            modelController: _defaultModel,
+            onProviderChanged: (v) => setState(() {
+              _defaultProviderId = v;
+              // The account default is only meaningful for claude.
+              if (v != 'claude') _defaultClaudeAccountId = '';
+            }),
+            onAccountChanged: (v) =>
+                setState(() => _defaultClaudeAccountId = v),
+          ),
           if (_error != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -143,12 +163,18 @@ class RegisterIntegrationFormResult {
     required this.routePrefix,
     required this.scopes,
     required this.version,
+    this.defaultProviderId = '',
+    this.defaultModel = '',
+    this.defaultClaudeAccountId = '',
   });
   final String name;
   final String baseUrl;
   final String routePrefix;
   final List<String> scopes;
   final String version;
+  final String defaultProviderId;
+  final String defaultModel;
+  final String defaultClaudeAccountId;
 }
 
 // EditIntegrationScreen patches base_url / scopes / version / enabled.
@@ -178,7 +204,10 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   late final TextEditingController _baseUrl;
   late final TextEditingController _scopes;
   late final TextEditingController _version;
+  late final TextEditingController _defaultModel;
   late bool _enabled;
+  late String _defaultProviderId;
+  late String _defaultClaudeAccountId;
   String? _error;
 
   @override
@@ -187,7 +216,11 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
     _baseUrl = TextEditingController(text: widget.current.baseUrl);
     _scopes = TextEditingController(text: widget.current.scopes.join(', '));
     _version = TextEditingController(text: widget.current.version ?? '');
+    _defaultModel =
+        TextEditingController(text: widget.current.defaultModel);
     _enabled = widget.current.enabled;
+    _defaultProviderId = widget.current.defaultProviderId;
+    _defaultClaudeAccountId = widget.current.defaultClaudeAccountId;
   }
 
   @override
@@ -195,6 +228,7 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
     _baseUrl.dispose();
     _scopes.dispose();
     _version.dispose();
+    _defaultModel.dispose();
     super.dispose();
   }
 
@@ -213,12 +247,23 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
     final initialScopes = widget.current.scopes;
     final scopesChanged = scopes.length != initialScopes.length ||
         !scopes.asMap().entries.every((e) => e.value == initialScopes[e.key]);
+    final model = _defaultModel.text.trim();
     Navigator.of(context).pop(
       EditIntegrationFormResult(
         baseUrl: baseUrl != widget.current.baseUrl ? baseUrl : null,
         scopes: scopesChanged ? scopes : null,
         version: version != (widget.current.version ?? '') ? version : null,
         enabled: _enabled != widget.current.enabled ? _enabled : null,
+        defaultProviderId:
+            _defaultProviderId != widget.current.defaultProviderId
+                ? _defaultProviderId
+                : null,
+        defaultModel:
+            model != widget.current.defaultModel ? model : null,
+        defaultClaudeAccountId:
+            _defaultClaudeAccountId != widget.current.defaultClaudeAccountId
+                ? _defaultClaudeAccountId
+                : null,
       ),
     );
   }
@@ -253,6 +298,17 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
             label: t.integrations.form.editFieldVersion,
           ),
           const SizedBox(height: 8),
+          DefaultAgentFields(
+            providerId: _defaultProviderId,
+            claudeAccountId: _defaultClaudeAccountId,
+            modelController: _defaultModel,
+            onProviderChanged: (v) => setState(() {
+              _defaultProviderId = v;
+              if (v != 'claude') _defaultClaudeAccountId = '';
+            }),
+            onAccountChanged: (v) =>
+                setState(() => _defaultClaudeAccountId = v),
+          ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(t.integrations.enabledLabel),
@@ -279,14 +335,26 @@ class EditIntegrationFormResult {
     this.scopes,
     this.version,
     this.enabled,
+    this.defaultProviderId,
+    this.defaultModel,
+    this.defaultClaudeAccountId,
   });
   final String? baseUrl;
   final List<String>? scopes;
   final String? version;
   final bool? enabled;
+  final String? defaultProviderId;
+  final String? defaultModel;
+  final String? defaultClaudeAccountId;
 
   bool get isEmpty =>
-      baseUrl == null && scopes == null && version == null && enabled == null;
+      baseUrl == null &&
+      scopes == null &&
+      version == null &&
+      enabled == null &&
+      defaultProviderId == null &&
+      defaultModel == null &&
+      defaultClaudeAccountId == null;
 }
 
 // RevealApiKeyDialog displays a freshly-minted API key once. The

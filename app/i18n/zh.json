@@ -1345,6 +1345,18 @@
         "deleteConfirm": "删除集成 {name}?",
         "removedToast": "集成已移除"
       },
+      "defaultAgent": {
+        "title": "默认 agent",
+        "description": "当该集成创建会话且请求未指定相应字段时套用。请求值始终优先 — 这是默认值,而非强制。",
+        "providerLabel": "默认 provider",
+        "providerNone": "无默认",
+        "modelLabel": "默认模型",
+        "modelPlaceholder": "provider 默认(如 opus)",
+        "accountLabel": "默认 Claude 账号",
+        "accountNone": "无默认",
+        "accountTokenMissing": "(缺少 token)",
+        "accountHint": "仅当默认 provider 为 Claude 时生效。"
+      },
       "register_dialog": {
         "title": "注册集成",
         "description": "签发一次性 API key。关闭前请复制它 — opendray 不会再显示明文。",
@@ -3624,6 +3636,18 @@
       "apiKeyWarn": "此 key 只显示这一次。",
       "copyCopied": "已复制",
       "copyCopy": "复制"
+    },
+    "defaultAgent": {
+      "title": "默认 agent",
+      "description": "当该集成创建会话且请求未指定相应字段时套用。请求值始终优先。",
+      "providerLabel": "默认 provider",
+      "providerNone": "无默认",
+      "modelLabel": "默认模型",
+      "modelHint": "provider 默认(如 opus)",
+      "accountLabel": "默认 Claude 账号",
+      "accountNone": "无默认",
+      "accountTokenMissing": "(缺少 token)",
+      "accountHint": "仅当默认 provider 为 Claude 时生效。"
     },
     "emptyState": "在 Web 管理端注册：集成 → 新建。",
     "sectionRegistered": "已注册",

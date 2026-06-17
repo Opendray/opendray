@@ -1345,6 +1345,18 @@
         "deleteConfirm": "¿Eliminar la integración {name}?",
         "removedToast": "Integración eliminada"
       },
+      "defaultAgent": {
+        "title": "Agente predeterminado",
+        "description": "Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece: son valores predeterminados, no obligatorios.",
+        "providerLabel": "Proveedor predeterminado",
+        "providerNone": "Sin predeterminado",
+        "modelLabel": "Modelo predeterminado",
+        "modelPlaceholder": "Predeterminado del proveedor (p. ej. opus)",
+        "accountLabel": "Cuenta de Claude predeterminada",
+        "accountNone": "Sin predeterminado",
+        "accountTokenMissing": "(falta el token)",
+        "accountHint": "Solo se aplica cuando el proveedor predeterminado es Claude."
+      },
       "register_dialog": {
         "title": "Registrar integración",
         "description": "Emite una API key de un solo uso. Cópiala antes de cerrar: opendray nunca vuelve a mostrar el texto en claro.",
@@ -3624,6 +3636,18 @@
       "apiKeyWarn": "No volverás a ver esta key.",
       "copyCopied": "Copiado",
       "copyCopy": "Copiar"
+    },
+    "defaultAgent": {
+      "title": "Agente predeterminado",
+      "description": "Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece.",
+      "providerLabel": "Proveedor predeterminado",
+      "providerNone": "Sin predeterminado",
+      "modelLabel": "Modelo predeterminado",
+      "modelHint": "Predeterminado del proveedor (p. ej. opus)",
+      "accountLabel": "Cuenta de Claude predeterminada",
+      "accountNone": "Sin predeterminado",
+      "accountTokenMissing": "(falta el token)",
+      "accountHint": "Solo se aplica cuando el proveedor predeterminado es Claude."
     },
     "emptyState": "Regístrala desde el admin web: Integraciones → Nueva.",
     "sectionRegistered": "Registradas",

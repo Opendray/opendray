@@ -19,6 +19,7 @@ import { updateIntegration } from '@/lib/integrations'
 import type { Integration } from '@/lib/types'
 
 import { ScopePicker } from './ScopePicker'
+import { DefaultAgentFields, type DefaultAgentValue } from './DefaultAgentFields'
 
 interface EditIntegrationDialogProps {
   open: boolean
@@ -41,6 +42,11 @@ export function EditIntegrationDialog({
   const [baseURL, setBaseURL] = useState('')
   const [version, setVersion] = useState('')
   const [scopes, setScopes] = useState<string[]>([])
+  const [defaults, setDefaults] = useState<DefaultAgentValue>({
+    providerId: '',
+    model: '',
+    claudeAccountId: '',
+  })
   const [error, setError] = useState<string | null>(null)
 
   // Reset form when the integration prop changes (different row
@@ -50,6 +56,11 @@ export function EditIntegrationDialog({
     setBaseURL(integration.base_url ?? '')
     setVersion(integration.version ?? '')
     setScopes(integration.scopes ?? [])
+    setDefaults({
+      providerId: integration.default_provider_id ?? '',
+      model: integration.default_model ?? '',
+      claudeAccountId: integration.default_claude_account_id ?? '',
+    })
     setError(null)
   }, [integration, open])
 
@@ -94,6 +105,17 @@ export function EditIntegrationDialog({
       JSON.stringify(scopes) !== JSON.stringify(integration.scopes ?? [])
     ) {
       patch.scopes = scopes
+    }
+    if (defaults.providerId !== (integration.default_provider_id ?? '')) {
+      patch.default_provider_id = defaults.providerId
+    }
+    if (defaults.model.trim() !== (integration.default_model ?? '')) {
+      patch.default_model = defaults.model.trim()
+    }
+    if (
+      defaults.claudeAccountId !== (integration.default_claude_account_id ?? '')
+    ) {
+      patch.default_claude_account_id = defaults.claudeAccountId
     }
     if (Object.keys(patch).length === 0) {
       onOpenChange(false)
@@ -192,6 +214,8 @@ export function EditIntegrationDialog({
               intro={t('web.integrations.edit_dialog.scopesIntro')}
             />
           </div>
+
+          <DefaultAgentFields value={defaults} onChange={setDefaults} />
 
           {error && (
             <div className="text-[12px] text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">

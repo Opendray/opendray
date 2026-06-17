@@ -69,6 +69,9 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
             routePrefix: form.routePrefix,
             scopes: form.scopes,
             version: form.version,
+            defaultProviderId: form.defaultProviderId,
+            defaultModel: form.defaultModel,
+            defaultClaudeAccountId: form.defaultClaudeAccountId,
           );
       if (!mounted) return;
       await RevealApiKeyDialog.show(
