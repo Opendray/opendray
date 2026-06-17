@@ -81,6 +81,34 @@ Every session your integration creates is stamped server-side with `origin=integ
 
 ## 3. Registration & the API key
 
+### Credential model — who needs admin, who gets a key
+
+**A third-party app NEVER needs, sees, or holds the opendray admin account/password.** That is the entire point of the model: there are two distinct credentials for two distinct roles.
+
+| Role | Who | Credential | What it can do |
+|---|---|---|---|
+| **Operator** | You / whoever runs the gateway | the **admin bearer token** | Everything, including the integration *management* endpoints: register, rotate-key, disable, delete. Never leaves the operator. |
+| **Integration** | The third-party app | a **scoped `odk_live_…` API key** | Drive *its own* sessions, subscribe to events, and (with the scope) read/write memory. It is a first-class Principal, but it is **not** admin: it cannot register/manage integrations and cannot see other integrations' sessions. |
+
+```
+            ┌─ operator (admin token) ──────────────────────────────┐
+ONE TIME →  │ POST /integrations  ──►  mints a scoped odk_live_ key  │
+            └───────────────────────────────────────────────────────┘
+                                  │  (handed out-of-band, shown once)
+                                  ▼
+            ┌─ third-party app (odk_live_ key only) ────────────────┐
+EVERY CALL  │ POST /sessions · /input · event WS · /memory/*        │
+            └───────────────────────────────────────────────────────┘
+```
+
+So:
+
+- The **admin credential is used by the operator, once, to register the app** (and later to rotate/disable/delete it). The third party is never given it.
+- The third party authenticates **only** with its own `odk_live_…` key. That key is **independently revocable/rotatable** — if it leaks, the operator rotates *it* without touching the admin token or any other integration.
+- The key is **not** "admin lite": it cannot reach the management endpoints (registering or administering integrations stays admin-only — see the table in [§16](#16-endpoint-reference)).
+
+> **Honest M3 caveat.** Per-route scope enforcement is only partial today (only `event:subscribe:*` and `memory:*` are enforced — see [§5](#5-scopes--authorization)). So an integration key can currently reach the *business* endpoints (`POST /sessions`, `GET /providers`, …) regardless of its declared scopes. It still is **not** the admin credential — it cannot manage integrations and is independently revocable — but until v1.1 lands per-route enforcement, treat **"which apps the operator chose to register"** as the real trust boundary, and grant minimal scopes anyway so your client is correct once enforcement turns on.
+
 ### Registration is admin-only
 
 The operator (admin bearer token) registers you. **Your app NEVER self-registers.** You ask the operator for a key; they create the row and hand you the plaintext out-of-band.
