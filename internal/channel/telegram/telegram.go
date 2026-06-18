@@ -55,6 +55,14 @@ func init() {
 type config struct {
 	BotToken string `json:"bot_token"`
 	ChatID   int64  `json:"chat_id"`
+
+	// Voice config — references an MCP server installed under the
+	// vault (internal/mcp). No credentials live here; the MCP server's
+	// own mcp.json holds the API key behind a ${SECRET} placeholder.
+	// See docs/mcp-voice.md for the tool contract.
+	VoiceMCPServer            string `json:"voice_mcp_server,omitempty"`
+	VoiceTranscriptionEnabled bool   `json:"voice_transcription_enabled,omitempty"`
+	VoiceReplyEnabled         bool   `json:"voice_reply_enabled,omitempty"`
 }
 
 // Telegram implements channel.Channel + several capability interfaces.
@@ -139,6 +147,7 @@ func (t *Telegram) publishCommands(ctx context.Context) {
 	}
 	cmds := []tgCmd{
 		{Command: "panel", Description: "Control panel — sessions + actions"},
+		{Command: "new", Description: "Start a new session (provider picker)"},
 		{Command: "list", Description: "List active sessions"},
 		{Command: "peek", Description: "Re-send the selected session's latest output"},
 		{Command: "help", Description: "List available commands"},
@@ -201,6 +210,11 @@ func (t *Telegram) Send(ctx context.Context, msg channel.ChannelMessage) error {
 		return err
 	}
 	t.recordHandle(&msg, resp.Result.MessageID)
+	// Voice reply augmentation — when the channel has voice_reply_enabled
+	// and a bound MCP voice provider, synthesize msg.Text and post it
+	// as a voice note alongside the text. Best-effort: any failure is
+	// logged but the text reply (already delivered above) stands.
+	t.maybeVoiceReply(ctx, msg)
 	return nil
 }
 
@@ -261,6 +275,10 @@ func (t *Telegram) SendCard(ctx context.Context, msg channel.ChannelMessage, car
 		lastID = resp.Result.MessageID
 	}
 	t.recordHandle(&msg, lastID)
+	// Voice reply augmentation — see Send's note. Uses the card's
+	// rendered plain text (msg.Text set by the Hub in deliverTurnReply)
+	// rather than the HTML chunk body so TTS gets clean prose.
+	t.maybeVoiceReply(ctx, msg)
 	return nil
 }
 
@@ -498,18 +516,67 @@ func (t *Telegram) deliverMessage(ctx context.Context, inbound channel.InboundFu
 	if m.ReplyToMessage != nil && m.ReplyToMessage.MessageID != 0 {
 		meta["reply_to_outbound_msg_id"] = strconv.Itoa(m.ReplyToMessage.MessageID)
 	}
+
+	text := m.Text
+
+	// Voice notes route through the channel's bound MCP voice provider
+	// (docs/mcp-voice.md). Substitute the empty Text with the transcript
+	// before handing off to the Hub so everything downstream — session
+	// routing, persistence, reply detection — sees a normal text message.
+	// Failure modes are surfaced as friendly chat replies; we never let
+	// a voice note silently disappear.
+	if m.Voice != nil && text == "" {
+		if !t.cfg.VoiceTranscriptionEnabled {
+			t.replyVoiceError(ctx, rc, "Voice messages aren't enabled for this bot. Send text instead.")
+			return
+		}
+		transcript, err := t.transcribeVoice(ctx, m.Voice)
+		if err != nil {
+			t.log.Warn("voice transcription failed", "err", err, "duration_s", m.Voice.Duration)
+			t.replyVoiceError(ctx, rc, "Couldn't transcribe that voice note — try again or send text.")
+			return
+		}
+		if transcript == "" {
+			// Server reported no speech detected — silent drop on
+			// Telegram side is the least surprising response.
+			return
+		}
+		text = transcript
+		meta["transcribed_by"] = "voice-mcp"
+		meta["voice_mcp_server"] = t.cfg.VoiceMCPServer
+		meta["voice_duration_s"] = m.Voice.Duration
+	}
+
 	msg := channel.ChannelMessage{
 		ChannelID:      t.id,
 		Direction:      channel.DirectionInbound,
 		ConversationID: strconv.FormatInt(m.Chat.ID, 10),
 		Author:         m.From.username(),
-		Text:           m.Text,
+		Text:           text,
 		Timestamp:      time.Unix(m.Date, 0).UTC(),
 		ReplyCtx:       rc,
 		Metadata:       meta,
 	}
 	if err := inbound(ctx, msg); err != nil {
 		t.log.Error("inbound handler failed", "err", err)
+	}
+}
+
+// replyVoiceError sends a one-shot apology back to the chat when the
+// voice path can't deliver — disabled, transcription error, empty
+// transcript with no-speech detected, etc. Best-effort: a send failure
+// here is logged but doesn't escalate, since we're already on an
+// error branch.
+func (t *Telegram) replyVoiceError(ctx context.Context, rc ReplyCtx, text string) {
+	body := map[string]any{
+		"chat_id": rc.ChatID,
+		"text":    text,
+	}
+	if rc.MessageID != 0 {
+		body["reply_parameters"] = map[string]any{"message_id": rc.MessageID}
+	}
+	if err := t.callAPI(ctx, "sendMessage", body, nil); err != nil {
+		t.log.Warn("voice error reply failed", "err", err)
 	}
 }
 
@@ -677,6 +744,17 @@ type tgMessage struct {
 	Date           int64      `json:"date"`
 	Text           string     `json:"text"`
 	ReplyToMessage *tgMessage `json:"reply_to_message,omitempty"`
+	Voice          *tgVoice   `json:"voice,omitempty"`
+}
+
+// tgVoice is Telegram's voice-note payload — OGG/Opus by default.
+// FileID is the opaque handle the getFile API resolves to a download
+// path; Duration is whole seconds; MimeType is normally "audio/ogg".
+type tgVoice struct {
+	FileID   string `json:"file_id"`
+	Duration int    `json:"duration"`
+	MimeType string `json:"mime_type,omitempty"`
+	FileSize int64  `json:"file_size,omitempty"`
 }
 
 type tgCallbackQuery struct {

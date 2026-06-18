@@ -114,6 +114,28 @@ export const KIND_DEFS: KindDef[] = [
         placeholder: '3500 (blank = 3500, 0 = unlimited)',
         hint: 'Caps how much of the agent’s reply is sent before it’s trimmed with a “…(truncated)” note. Blank uses the 3500 default (~one message); set 0 to send the whole reply, split across multiple messages.',
       },
+      {
+        name: 'voice_mcp_server',
+        label: 'Voice provider (MCP server id)',
+        type: 'text',
+        optional: true,
+        placeholder: 'deepgram-default',
+        hint: 'Id of an installed MCP server that implements voice/transcribe and/or voice/synthesize (see docs/mcp-voice.md). Install one via Plugins → MCP Servers. Leave blank to disable voice.',
+      },
+      {
+        name: 'voice_transcription_enabled',
+        label: 'Voice notes → text',
+        type: 'boolean',
+        default: false,
+        hint: 'When on, voice messages sent to the bot are transcribed via the MCP voice provider above and forwarded to the session as text.',
+      },
+      {
+        name: 'voice_reply_enabled',
+        label: 'Voice reply (TTS)',
+        type: 'boolean',
+        default: false,
+        hint: 'When on, the bot replies with a synthesized voice note. Requires the MCP voice provider to implement voice/synthesize. Not yet wired in this release — toggle has no effect until the outbound voice path lands.',
+      },
     ],
   },
   {

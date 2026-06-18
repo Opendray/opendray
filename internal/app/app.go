@@ -29,7 +29,7 @@ import (
 	_ "github.com/opendray/opendray-v2/internal/channel/discord"  // register kind=discord
 	_ "github.com/opendray/opendray-v2/internal/channel/feishu"   // register kind=feishu
 	_ "github.com/opendray/opendray-v2/internal/channel/slack"    // register kind=slack
-	_ "github.com/opendray/opendray-v2/internal/channel/telegram" // register kind=telegram
+	"github.com/opendray/opendray-v2/internal/channel/telegram"   // registers kind=telegram via init() + voice service handoff
 	_ "github.com/opendray/opendray-v2/internal/channel/wechat"   // register kind=wechat (wxpusher push)
 	_ "github.com/opendray/opendray-v2/internal/channel/wecom"    // register kind=wecom
 	"github.com/opendray/opendray-v2/internal/cliacct"
@@ -65,6 +65,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/store"
 	vaultgit "github.com/opendray/opendray-v2/internal/vaultgit"
 	"github.com/opendray/opendray-v2/internal/version"
+	"github.com/opendray/opendray-v2/internal/voice"
 )
 
 type App struct {
@@ -458,6 +459,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			"vault", mcpLoader.VaultRoot(), "secrets", secretsFile)
 	}
 
+	// Voice service: channels (Telegram today, web duplex later) call
+	// MCP voice servers — Deepgram / ElevenLabs / Whisper-local /
+	// whatever the operator installed — through this facade. The
+	// servers themselves are vault entries; no third-party code is
+	// compiled into Opendray. See docs/mcp-voice.md.
+	voiceSvc := voice.NewService(mcpLoader, secretsFile, log)
+	telegram.SetVoiceService(voiceSvc)
+
 	var sessionOpts []session.ManagerOption
 	if d := cfg.Session.Threshold(); d > 0 {
 		sessionOpts = append(sessionOpts, session.WithIdleThreshold(d))
@@ -538,7 +547,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// this layer rather than internal/channel so the channel package
 	// stays free of the session dependency. The matching idle-card
 	// buttons (Resume / End) emit the same `cmd:/...` payloads.
-	registerChannelCommands(channelHub, sessionMgr)
+	registerChannelCommands(channelHub, sessionMgr, cat, cliacctSvc)
 	// Optional single-owner gate: when OPENDRAY_CONTROL_OWNER is set to
 	// a Telegram user id, only that account may interact with the bot at
 	// all — send text to a session, run commands, or tap controls.
