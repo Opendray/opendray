@@ -3142,7 +3142,6 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get dropToAttach => '释放以附加图片';
 	@override String get copiedToast => '已复制到剪贴板';
 	@override String get copyFailedToast => '无法复制到剪贴板';
-	@override late final _TranslationsWebSessionsTerminalUrlsZh urls = _TranslationsWebSessionsTerminalUrlsZh._(_root);
 	@override String get selectCopyTitle => '选择并复制';
 	@override String get selectCopyDesc => '拖动(触屏长按)选择输出中的任意部分,然后复制。';
 	@override String get selectCopyCopySelection => '复制选中';
@@ -6851,27 +6850,6 @@ class _TranslationsWebSessionsListRowZh extends TranslationsWebSessionsListRowEn
 	@override String claudeAccountTitle({required Object label}) => 'Claude 账号：${label}';
 }
 
-// Path: web.sessions.terminal.urls
-class _TranslationsWebSessionsTerminalUrlsZh extends TranslationsWebSessionsTerminalUrlsEn {
-	_TranslationsWebSessionsTerminalUrlsZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get tooltip => '打开本会话最新检测到的链接';
-	@override String get tapToOpenLatest => '点击打开最新链接(通常是 OAuth URL)';
-	@override String get openListTooltip => '显示所有链接';
-	@override String buttonLabel({required Object count}) => '${count} 个链接';
-	@override String buttonLabel_plural({required Object count}) => '${count} 个链接';
-	@override String get dialogTitle => '检测到的链接';
-	@override String get dialogDesc => '本会话输出中出现过的 URL,最新的在最上面。点击「打开」即可在默认浏览器中跳转 —— 终端里的换行不会影响。';
-	@override String get openButton => '打开';
-	@override String get copyButton => '复制';
-	@override String get copiedToast => '链接已复制';
-	@override String get copyFailedToast => '复制失败 —— 请长按链接手动复制';
-	@override String get noneHint => '暂未检测到链接。';
-}
-
 // Path: web.sessions.inspector.tabs
 class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsInspectorTabsEn {
 	_TranslationsWebSessionsInspectorTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9100,18 +9078,6 @@ extension on TranslationsZh {
 			'web.sessions.terminal.dropToAttach' => '释放以附加图片',
 			'web.sessions.terminal.copiedToast' => '已复制到剪贴板',
 			'web.sessions.terminal.copyFailedToast' => '无法复制到剪贴板',
-			'web.sessions.terminal.urls.tooltip' => '打开本会话最新检测到的链接',
-			'web.sessions.terminal.urls.tapToOpenLatest' => '点击打开最新链接(通常是 OAuth URL)',
-			'web.sessions.terminal.urls.openListTooltip' => '显示所有链接',
-			'web.sessions.terminal.urls.buttonLabel' => ({required Object count}) => '${count} 个链接',
-			'web.sessions.terminal.urls.buttonLabel_plural' => ({required Object count}) => '${count} 个链接',
-			'web.sessions.terminal.urls.dialogTitle' => '检测到的链接',
-			'web.sessions.terminal.urls.dialogDesc' => '本会话输出中出现过的 URL,最新的在最上面。点击「打开」即可在默认浏览器中跳转 —— 终端里的换行不会影响。',
-			'web.sessions.terminal.urls.openButton' => '打开',
-			'web.sessions.terminal.urls.copyButton' => '复制',
-			'web.sessions.terminal.urls.copiedToast' => '链接已复制',
-			'web.sessions.terminal.urls.copyFailedToast' => '复制失败 —— 请长按链接手动复制',
-			'web.sessions.terminal.urls.noneHint' => '暂未检测到链接。',
 			'web.sessions.terminal.selectCopyTitle' => '选择并复制',
 			'web.sessions.terminal.selectCopyDesc' => '拖动(触屏长按)选择输出中的任意部分,然后复制。',
 			'web.sessions.terminal.selectCopyCopySelection' => '复制选中',
@@ -9493,8 +9459,6 @@ extension on TranslationsZh {
 			'web.project.archived.archivedAtPrefix' => '归档于',
 			'web.project.archived.restoreButton' => '恢复',
 			'web.project.archived.restoredToast' => '已恢复',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.archived.restoreFailedToast' => '恢复失败',
 			'web.project.reset.button' => '重置',
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
@@ -9507,6 +9471,8 @@ extension on TranslationsZh {
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Agent 存储的长期事实（用户偏好、项目事实）。无法恢复。',
 			'web.project.reset.cancel' => '取消',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.deleteForever' => '永久删除',
 			'web.project.reset.successToast' => ({required Object summary}) => '重置：已删除 ${summary}',
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} 份文档',
@@ -10007,8 +9973,6 @@ extension on TranslationsZh {
 			'web.channels.notifications.modes.everyHint' => '不做抑制。仅用于低频频道。',
 			'web.channels.notifications.cooldowns.k60' => '1 分钟',
 			'web.channels.notifications.cooldowns.k300' => '5 分钟',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.cooldowns.k900' => '15 分钟',
 			'web.channels.notifications.cooldowns.k1800' => '30 分钟',
 			'web.channels.notifications.cooldowns.k3600' => '1 小时',
@@ -10021,6 +9985,8 @@ extension on TranslationsZh {
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => '适配器的人类可读标签。会显示在频道列表中。',
 			'web.channels.bridge.tokenLabel' => '适配器 token',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.regenerateTooltip' => '重新生成',
 			'web.channels.bridge.copyTooltip' => '复制',
 			'web.channels.bridge.tokenCopiedToast' => '已复制 token',
@@ -10521,8 +10487,6 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.kindPicker' => '你想备份到哪里？',
 			'web.backups.targetEditor.idLabel' => 'ID（可选）',
 			'web.backups.targetEditor.idPlaceholder' => '留空则自动生成，例如 tgt_xxx',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.createdToast' => '目标已创建',
 			'web.backups.targetEditor.createFailedToast' => '创建失败',
 			'web.backups.targetEditor.creating' => '创建中…',
@@ -10535,6 +10499,8 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => '端口',
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.smb.shareHint' => 'SMB 服务器上的顶层共享名',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
 			'web.backups.targetEditor.smb.userLabel' => '用户',
@@ -11035,8 +11001,6 @@ extension on TranslationsZh {
 			'web.noteEditor.status.saveFailed' => '保存失败',
 			'web.noteEditor.status.saving' => '保存中…',
 			'web.noteEditor.status.unsaved' => '未保存',
-			_ => null,
-		} ?? switch (path) {
 			'web.noteEditor.status.newNote' => '新笔记',
 			'web.noteEditor.status.saved' => '已保存',
 			'web.export.title' => '导出数据',
@@ -11049,6 +11013,8 @@ extension on TranslationsZh {
 			'web.export.form.memoriesHint' => '跨 CLI 持久化的记忆行（text + scope + metadata）。向量被省略；导入端重嵌入。',
 			'web.export.form.integrations' => '集成',
 			'web.export.form.customTasks' => '自定义任务',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.customTasksHint' => '在 Inspector 的 Tasks 标签里展示的运维自定义任务。',
 			'web.export.form.integrationOptions.none' => '无',
 			'web.export.form.integrationOptions.noneHint' => '完全跳过 integrations 表。',
@@ -11549,8 +11515,6 @@ extension on TranslationsZh {
 			'sessions.inspector.git.insertPath' => '插入路径',
 			'sessions.inspector.git.showDiff' => '查看 diff',
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff 失败（${status}）：${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff 失败：${error}',
 			'sessions.inspector.git.insertHash' => '插入哈希',
 			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
@@ -11563,6 +11527,8 @@ extension on TranslationsZh {
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => '已插入：@${path}',
 			'sessions.inspector.notes.myNotes' => '我的笔记',
@@ -12063,8 +12029,6 @@ extension on TranslationsZh {
 			'backups.wizard.savePassphrase' => '保存密语',
 			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
 			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saveNowHeader' => '立即保存这个密语',
 			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
 			'backups.overviewTargets' => '目标',
@@ -12077,6 +12041,8 @@ extension on TranslationsZh {
 			'backups.health.never' => '从未',
 			'backups.health.tiles.recentFailures' => '近期失败',
 			'backups.health.tiles.verifyFailures' => '校验失败',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.tiles.overdue' => '逾期',
 			'backups.health.tiles.schedules' => '计划',
 			'backups.failedToLoad' => '加载备份失败',
@@ -12577,8 +12543,6 @@ extension on TranslationsZh {
 			'dataExport.imports.listFailedToast' => ({required Object error}) => '加载导入失败：${error}',
 			'dataExport.imports.noneCounts' => '（无计数）',
 			'dataExport.imports.sourceUnknown' => '（未知来源）',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.imports.columns.id' => 'ID',
 			'dataExport.imports.columns.status' => '状态',
 			'dataExport.imports.columns.source' => '来源',
@@ -12591,6 +12555,8 @@ extension on TranslationsZh {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n} 小时前',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.status.pending' => '等待',
 			'dataExport.status.running' => '运行中',
 			'dataExport.status.ready' => '就绪',

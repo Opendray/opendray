@@ -6177,8 +6177,6 @@ class TranslationsWebSessionsTerminalEn {
 	/// en: 'Couldn't copy to clipboard'
 	String get copyFailedToast => 'Couldn\'t copy to clipboard';
 
-	late final TranslationsWebSessionsTerminalUrlsEn urls = TranslationsWebSessionsTerminalUrlsEn.internal(_root);
-
 	/// en: 'Select & copy'
 	String get selectCopyTitle => 'Select & copy';
 
@@ -13249,51 +13247,6 @@ class TranslationsWebSessionsListRowEn {
 	String claudeAccountTitle({required Object label}) => 'Claude account: ${label}';
 }
 
-// Path: web.sessions.terminal.urls
-class TranslationsWebSessionsTerminalUrlsEn {
-	TranslationsWebSessionsTerminalUrlsEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Open the latest link detected in this session'
-	String get tooltip => 'Open the latest link detected in this session';
-
-	/// en: 'Tap to open the latest link (most recent OAuth URL)'
-	String get tapToOpenLatest => 'Tap to open the latest link (most recent OAuth URL)';
-
-	/// en: 'Show all links'
-	String get openListTooltip => 'Show all links';
-
-	/// en: '{count} link'
-	String buttonLabel({required Object count}) => '${count} link';
-
-	/// en: '{count} links'
-	String buttonLabel_plural({required Object count}) => '${count} links';
-
-	/// en: 'Detected links'
-	String get dialogTitle => 'Detected links';
-
-	/// en: 'URLs printed in this session's output, newest first. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.'
-	String get dialogDesc => 'URLs printed in this session\'s output, newest first. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.';
-
-	/// en: 'Open'
-	String get openButton => 'Open';
-
-	/// en: 'Copy'
-	String get copyButton => 'Copy';
-
-	/// en: 'URL copied'
-	String get copiedToast => 'URL copied';
-
-	/// en: 'Couldn't copy — long-press the URL and copy manually'
-	String get copyFailedToast => 'Couldn\'t copy — long-press the URL and copy manually';
-
-	/// en: 'No links detected yet.'
-	String get noneHint => 'No links detected yet.';
-}
-
 // Path: web.sessions.inspector.tabs
 class TranslationsWebSessionsInspectorTabsEn {
 	TranslationsWebSessionsInspectorTabsEn.internal(this._root);
@@ -16980,18 +16933,6 @@ extension on Translations {
 			'web.sessions.terminal.dropToAttach' => 'Drop image to attach',
 			'web.sessions.terminal.copiedToast' => 'Copied to clipboard',
 			'web.sessions.terminal.copyFailedToast' => 'Couldn\'t copy to clipboard',
-			'web.sessions.terminal.urls.tooltip' => 'Open the latest link detected in this session',
-			'web.sessions.terminal.urls.tapToOpenLatest' => 'Tap to open the latest link (most recent OAuth URL)',
-			'web.sessions.terminal.urls.openListTooltip' => 'Show all links',
-			'web.sessions.terminal.urls.buttonLabel' => ({required Object count}) => '${count} link',
-			'web.sessions.terminal.urls.buttonLabel_plural' => ({required Object count}) => '${count} links',
-			'web.sessions.terminal.urls.dialogTitle' => 'Detected links',
-			'web.sessions.terminal.urls.dialogDesc' => 'URLs printed in this session\'s output, newest first. Tap Open to launch in your default browser — works even when the URL is line-wrapped in the terminal.',
-			'web.sessions.terminal.urls.openButton' => 'Open',
-			'web.sessions.terminal.urls.copyButton' => 'Copy',
-			'web.sessions.terminal.urls.copiedToast' => 'URL copied',
-			'web.sessions.terminal.urls.copyFailedToast' => 'Couldn\'t copy — long-press the URL and copy manually',
-			'web.sessions.terminal.urls.noneHint' => 'No links detected yet.',
 			'web.sessions.terminal.selectCopyTitle' => 'Select & copy',
 			'web.sessions.terminal.selectCopyDesc' => 'Drag (or long-press on touch) to select any part of the output, then copy it.',
 			'web.sessions.terminal.selectCopyCopySelection' => 'Copy selection',
@@ -17373,8 +17314,6 @@ extension on Translations {
 			'web.project.archived.archivedAtPrefix' => 'Archived',
 			'web.project.archived.restoreButton' => 'Restore',
 			'web.project.archived.restoredToast' => 'Restored',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
@@ -17387,6 +17326,8 @@ extension on Translations {
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'for this scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Long-term facts the agent stored (user preferences, project facts). Cannot be recovered.',
 			'web.project.reset.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.deleteForever' => 'Delete forever',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Reset: deleted ${summary}',
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} doc',
@@ -17887,8 +17828,6 @@ extension on Translations {
 			'web.channels.notifications.modes.everyHint' => 'No suppression. Use only for low-frequency channels.',
 			'web.channels.notifications.cooldowns.k60' => '1 minute',
 			'web.channels.notifications.cooldowns.k300' => '5 minutes',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.cooldowns.k900' => '15 minutes',
 			'web.channels.notifications.cooldowns.k1800' => '30 minutes',
 			'web.channels.notifications.cooldowns.k3600' => '1 hour',
@@ -17901,6 +17840,8 @@ extension on Translations {
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Human label for the adapter. Shown in the channels list.',
 			'web.channels.bridge.tokenLabel' => 'Adapter token',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.regenerateTooltip' => 'Regenerate',
 			'web.channels.bridge.copyTooltip' => 'Copy',
 			'web.channels.bridge.tokenCopiedToast' => 'Token copied',
@@ -18401,8 +18342,6 @@ extension on Translations {
 			'web.backups.targetEditor.kindPicker' => 'Where do you want to back up to?',
 			'web.backups.targetEditor.idLabel' => 'ID (optional)',
 			'web.backups.targetEditor.idPlaceholder' => 'auto-generated if blank, e.g. tgt_xxx',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.createdToast' => 'Target created',
 			'web.backups.targetEditor.createFailedToast' => 'Create failed',
 			'web.backups.targetEditor.creating' => 'Creating…',
@@ -18415,6 +18354,8 @@ extension on Translations {
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => 'Port',
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.smb.shareHint' => 'Top-level share name on the SMB server',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
 			'web.backups.targetEditor.smb.userLabel' => 'User',
@@ -18915,8 +18856,6 @@ extension on Translations {
 			'web.noteEditor.status.saveFailed' => 'save failed',
 			'web.noteEditor.status.saving' => 'saving…',
 			'web.noteEditor.status.unsaved' => 'unsaved',
-			_ => null,
-		} ?? switch (path) {
 			'web.noteEditor.status.newNote' => 'new note',
 			'web.noteEditor.status.saved' => 'saved',
 			'web.export.title' => 'Export data',
@@ -18929,6 +18868,8 @@ extension on Translations {
 			'web.export.form.memoriesHint' => 'Cross-CLI persistent memory rows (text + scope + metadata). Embedding vectors are omitted; importer re-embeds.',
 			'web.export.form.integrations' => 'Integrations',
 			'web.export.form.customTasks' => 'Custom tasks',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.customTasksHint' => 'Operator-defined tasks shown in the Inspector\'s Tasks tab.',
 			'web.export.form.integrationOptions.none' => 'None',
 			'web.export.form.integrationOptions.noneHint' => 'Skip the integrations table entirely.',
@@ -19429,8 +19370,6 @@ extension on Translations {
 			'sessions.inspector.git.insertPath' => 'Insert path',
 			'sessions.inspector.git.showDiff' => 'Show diff',
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff failed (${status}): ${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff failed: ${error}',
 			'sessions.inspector.git.insertHash' => 'Insert hash',
 			'sessions.inspector.git.showFullPatch' => 'Show full patch',
@@ -19443,6 +19382,8 @@ extension on Translations {
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Inserted: @${path}',
 			'sessions.inspector.notes.myNotes' => 'My notes',
@@ -19943,8 +19884,6 @@ extension on Translations {
 			'backups.wizard.savePassphrase' => 'Save passphrase',
 			'backups.wizard.generateHint' => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.',
 			'backups.wizard.helperRecommended' => 'Recommended: 40+ chars from a password manager',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saveNowHeader' => 'Save this passphrase NOW',
 			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
 			'backups.overviewTargets' => 'Targets',
@@ -19957,6 +19896,8 @@ extension on Translations {
 			'backups.health.never' => 'never',
 			'backups.health.tiles.recentFailures' => 'Recent failures',
 			'backups.health.tiles.verifyFailures' => 'Verify failures',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.tiles.overdue' => 'Overdue',
 			'backups.health.tiles.schedules' => 'Schedules',
 			'backups.failedToLoad' => 'Failed to load backups',
@@ -20457,8 +20398,6 @@ extension on Translations {
 			'dataExport.imports.listFailedToast' => ({required Object error}) => 'Failed to load imports: ${error}',
 			'dataExport.imports.noneCounts' => '(no counts)',
 			'dataExport.imports.sourceUnknown' => '(unknown source)',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.imports.columns.id' => 'ID',
 			'dataExport.imports.columns.status' => 'Status',
 			'dataExport.imports.columns.source' => 'Source',
@@ -20471,6 +20410,8 @@ extension on Translations {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n}s ago',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n}m ago',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n}h ago',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.status.pending' => 'pending',
 			'dataExport.status.running' => 'running',
 			'dataExport.status.ready' => 'ready',

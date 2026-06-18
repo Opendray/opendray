@@ -3142,7 +3142,6 @@ class _TranslationsWebSessionsTerminalEs extends TranslationsWebSessionsTerminal
 	@override String get dropToAttach => 'Suelta la imagen para adjuntarla';
 	@override String get copiedToast => 'Copiado al portapapeles';
 	@override String get copyFailedToast => 'No se pudo copiar al portapapeles';
-	@override late final _TranslationsWebSessionsTerminalUrlsEs urls = _TranslationsWebSessionsTerminalUrlsEs._(_root);
 	@override String get selectCopyTitle => 'Seleccionar y copiar';
 	@override String get selectCopyDesc => 'Arrastra (o mantén pulsado en pantalla táctil) para seleccionar cualquier parte de la salida y cópiala.';
 	@override String get selectCopyCopySelection => 'Copiar selección';
@@ -6851,27 +6850,6 @@ class _TranslationsWebSessionsListRowEs extends TranslationsWebSessionsListRowEn
 	@override String claudeAccountTitle({required Object label}) => 'Cuenta de Claude: ${label}';
 }
 
-// Path: web.sessions.terminal.urls
-class _TranslationsWebSessionsTerminalUrlsEs extends TranslationsWebSessionsTerminalUrlsEn {
-	_TranslationsWebSessionsTerminalUrlsEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get tooltip => 'Abre el último enlace detectado en esta session';
-	@override String get tapToOpenLatest => 'Toca para abrir el último enlace (la URL de OAuth más reciente)';
-	@override String get openListTooltip => 'Mostrar todos los enlaces';
-	@override String buttonLabel({required Object count}) => '${count} enlace';
-	@override String buttonLabel_plural({required Object count}) => '${count} enlaces';
-	@override String get dialogTitle => 'Enlaces detectados';
-	@override String get dialogDesc => 'URLs impresas en la salida de esta session, las más recientes primero. Toca Abrir para lanzarla en tu navegador predeterminado. Funciona incluso cuando la URL se divide en varias líneas en el terminal.';
-	@override String get openButton => 'Abrir';
-	@override String get copyButton => 'Copiar';
-	@override String get copiedToast => 'URL copiada';
-	@override String get copyFailedToast => 'No se pudo copiar. Mantén pulsada la URL y cópiala manualmente';
-	@override String get noneHint => 'Aún no se han detectado enlaces.';
-}
-
 // Path: web.sessions.inspector.tabs
 class _TranslationsWebSessionsInspectorTabsEs extends TranslationsWebSessionsInspectorTabsEn {
 	_TranslationsWebSessionsInspectorTabsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9100,18 +9078,6 @@ extension on TranslationsEs {
 			'web.sessions.terminal.dropToAttach' => 'Suelta la imagen para adjuntarla',
 			'web.sessions.terminal.copiedToast' => 'Copiado al portapapeles',
 			'web.sessions.terminal.copyFailedToast' => 'No se pudo copiar al portapapeles',
-			'web.sessions.terminal.urls.tooltip' => 'Abre el último enlace detectado en esta session',
-			'web.sessions.terminal.urls.tapToOpenLatest' => 'Toca para abrir el último enlace (la URL de OAuth más reciente)',
-			'web.sessions.terminal.urls.openListTooltip' => 'Mostrar todos los enlaces',
-			'web.sessions.terminal.urls.buttonLabel' => ({required Object count}) => '${count} enlace',
-			'web.sessions.terminal.urls.buttonLabel_plural' => ({required Object count}) => '${count} enlaces',
-			'web.sessions.terminal.urls.dialogTitle' => 'Enlaces detectados',
-			'web.sessions.terminal.urls.dialogDesc' => 'URLs impresas en la salida de esta session, las más recientes primero. Toca Abrir para lanzarla en tu navegador predeterminado. Funciona incluso cuando la URL se divide en varias líneas en el terminal.',
-			'web.sessions.terminal.urls.openButton' => 'Abrir',
-			'web.sessions.terminal.urls.copyButton' => 'Copiar',
-			'web.sessions.terminal.urls.copiedToast' => 'URL copiada',
-			'web.sessions.terminal.urls.copyFailedToast' => 'No se pudo copiar. Mantén pulsada la URL y cópiala manualmente',
-			'web.sessions.terminal.urls.noneHint' => 'Aún no se han detectado enlaces.',
 			'web.sessions.terminal.selectCopyTitle' => 'Seleccionar y copiar',
 			'web.sessions.terminal.selectCopyDesc' => 'Arrastra (o mantén pulsado en pantalla táctil) para seleccionar cualquier parte de la salida y cópiala.',
 			'web.sessions.terminal.selectCopyCopySelection' => 'Copiar selección',
@@ -9493,8 +9459,6 @@ extension on TranslationsEs {
 			'web.project.archived.archivedAtPrefix' => 'Archivado',
 			'web.project.archived.restoreButton' => 'Restaurar',
 			'web.project.archived.restoredToast' => 'Restaurado',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.reset.button' => 'Restablecer',
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
@@ -9507,6 +9471,8 @@ extension on TranslationsEs {
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'para este scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Hechos a largo plazo que el agente almacenó (preferencias del usuario, datos del proyecto). No se pueden recuperar.',
 			'web.project.reset.cancel' => 'Cancelar',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.deleteForever' => 'Eliminar para siempre',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Restablecido: se eliminó ${summary}',
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} documento',
@@ -10007,8 +9973,6 @@ extension on TranslationsEs {
 			'web.channels.notifications.modes.everyHint' => 'Sin supresión. Úsalo solo para canales de baja frecuencia.',
 			'web.channels.notifications.cooldowns.k60' => '1 minuto',
 			'web.channels.notifications.cooldowns.k300' => '5 minutos',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.cooldowns.k900' => '15 minutos',
 			'web.channels.notifications.cooldowns.k1800' => '30 minutos',
 			'web.channels.notifications.cooldowns.k3600' => '1 hora',
@@ -10021,6 +9985,8 @@ extension on TranslationsEs {
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Etiqueta legible para el adaptador. Se muestra en la lista de canales.',
 			'web.channels.bridge.tokenLabel' => 'Token del adaptador',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.regenerateTooltip' => 'Regenerar',
 			'web.channels.bridge.copyTooltip' => 'Copiar',
 			'web.channels.bridge.tokenCopiedToast' => 'Token copiado',
@@ -10521,8 +10487,6 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.kindPicker' => '¿Dónde quieres hacer la copia de seguridad?',
 			'web.backups.targetEditor.idLabel' => 'ID (opcional)',
 			'web.backups.targetEditor.idPlaceholder' => 'se genera automáticamente si se deja en blanco, p. ej. tgt_xxx',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.createdToast' => 'Destino creado',
 			'web.backups.targetEditor.createFailedToast' => 'Error al crear',
 			'web.backups.targetEditor.creating' => 'Creando…',
@@ -10535,6 +10499,8 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => 'Puerto',
 			'web.backups.targetEditor.smb.shareLabel' => 'Recurso compartido',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.smb.shareHint' => 'Nombre del recurso compartido de nivel superior en el servidor SMB',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
 			'web.backups.targetEditor.smb.userLabel' => 'Usuario',
@@ -11035,8 +11001,6 @@ extension on TranslationsEs {
 			'web.noteEditor.status.saveFailed' => 'error al guardar',
 			'web.noteEditor.status.saving' => 'guardando…',
 			'web.noteEditor.status.unsaved' => 'sin guardar',
-			_ => null,
-		} ?? switch (path) {
 			'web.noteEditor.status.newNote' => 'nota nueva',
 			'web.noteEditor.status.saved' => 'guardada',
 			'web.export.title' => 'Exportar datos',
@@ -11049,6 +11013,8 @@ extension on TranslationsEs {
 			'web.export.form.memoriesHint' => 'Filas de memoria persistente entre CLI (texto + alcance + metadatos). Los vectores de embedding se omiten; el importador vuelve a generarlos.',
 			'web.export.form.integrations' => 'Integraciones',
 			'web.export.form.customTasks' => 'Tareas personalizadas',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.customTasksHint' => 'Tareas definidas por el operador que se muestran en la pestaña Tareas del Inspector.',
 			'web.export.form.integrationOptions.none' => 'Ninguna',
 			'web.export.form.integrationOptions.noneHint' => 'Omitir por completo la tabla de integraciones.',
@@ -11549,8 +11515,6 @@ extension on TranslationsEs {
 			'sessions.inspector.git.insertPath' => 'Insertar ruta',
 			'sessions.inspector.git.showDiff' => 'Mostrar diff',
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Falló el diff (${status}): ${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Falló el diff: ${error}',
 			'sessions.inspector.git.insertHash' => 'Insertar hash',
 			'sessions.inspector.git.showFullPatch' => 'Mostrar el parche completo',
@@ -11563,6 +11527,8 @@ extension on TranslationsEs {
 			'sessions.inspector.tasks.filterHint' => 'Filtrar tareas…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'Ninguna tarea coincide con "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No hay tareas en esta carpeta',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => 'Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Insertado: @${path}',
 			'sessions.inspector.notes.myNotes' => 'Mis notas',
@@ -12063,8 +12029,6 @@ extension on TranslationsEs {
 			'backups.wizard.savePassphrase' => 'Guardar passphrase',
 			'backups.wizard.generateHint' => 'El servidor genera una passphrase criptográficamente aleatoria, tú la copias a un gestor de contraseñas y luego confirmas.',
 			'backups.wizard.helperRecommended' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saveNowHeader' => 'Guarda esta passphrase AHORA',
 			'backups.wizard.saveNowBody' => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.',
 			'backups.overviewTargets' => 'Destinos',
@@ -12077,6 +12041,8 @@ extension on TranslationsEs {
 			'backups.health.never' => 'nunca',
 			'backups.health.tiles.recentFailures' => 'Fallos recientes',
 			'backups.health.tiles.verifyFailures' => 'Verificación fallida',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.tiles.overdue' => 'Atrasadas',
 			'backups.health.tiles.schedules' => 'Programaciones',
 			'backups.failedToLoad' => 'Error al cargar las copias de seguridad',
@@ -12577,8 +12543,6 @@ extension on TranslationsEs {
 			'dataExport.imports.listFailedToast' => ({required Object error}) => 'Error al cargar las importaciones: ${error}',
 			'dataExport.imports.noneCounts' => '(sin recuentos)',
 			'dataExport.imports.sourceUnknown' => '(origen desconocido)',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.imports.columns.id' => 'ID',
 			'dataExport.imports.columns.status' => 'Estado',
 			'dataExport.imports.columns.source' => 'Origen',
@@ -12591,6 +12555,8 @@ extension on TranslationsEs {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => 'hace ${n}s',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => 'hace ${n}m',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => 'hace ${n}h',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.status.pending' => 'pendiente',
 			'dataExport.status.running' => 'en ejecución',
 			'dataExport.status.ready' => 'listo',
