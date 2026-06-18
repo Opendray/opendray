@@ -11336,6 +11336,12 @@ class TranslationsWebCortexChatEn {
 	/// en: 'Local models'
 	String get modelGroupLocal => 'Local models';
 
+	/// en: 'Default account'
+	String get accountDefault => 'Default account';
+
+	/// en: 'Which Claude account this discussion runs against (Claude is multi-account).'
+	String get accountHint => 'Which Claude account this discussion runs against (Claude is multi-account).';
+
 	/// en: 'Provider default'
 	String get modelProviderDefault => 'Provider default';
 
@@ -19196,6 +19202,8 @@ extension on Translations {
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
 			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
 			'web.cortex.chat.modelGroupLocal' => 'Local models',
+			'web.cortex.chat.accountDefault' => 'Default account',
+			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
 			'web.cortex.chat.modelProviderDefault' => 'Provider default',
 			'web.cortex.chat.modelProbeFailed' => 'Couldn\'t reach the endpoint to list models — pick the provider default or configure it in Memory settings.',
 			'web.cortex.blueprint.open' => 'Blueprint',
@@ -19454,10 +19462,10 @@ extension on Translations {
 			'sessions.inspector.git.insertPath' => 'Insert path',
 			'sessions.inspector.git.showDiff' => 'Show diff',
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff failed (${status}): ${message}',
-			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff failed: ${error}',
-			'sessions.inspector.git.insertHash' => 'Insert hash',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff failed: ${error}',
+			'sessions.inspector.git.insertHash' => 'Insert hash',
 			'sessions.inspector.git.showFullPatch' => 'Show full patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Show failed (${status}): ${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
@@ -19968,10 +19976,10 @@ extension on Translations {
 			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
 			'backups.emptyNoBackups.headline' => 'No backups yet',
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
-			'backups.restartToActivate' => 'Restart opendray to activate backups',
-			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restartToActivate' => 'Restart opendray to activate backups',
+			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
 			'backups.keyFileLabel' => 'Key file',
 			'backups.configuredViaLabel' => 'Configured via',
 			'backups.wizard.title' => 'Set up backups',
@@ -20482,10 +20490,10 @@ extension on Translations {
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memories',
-			'dataExport.import.summaryCard.integrations' => 'Integrations',
-			'dataExport.import.summaryCard.customTasks' => 'Custom tasks',
 			_ => null,
 		} ?? switch (path) {
+			'dataExport.import.summaryCard.integrations' => 'Integrations',
+			'dataExport.import.summaryCard.customTasks' => 'Custom tasks',
 			'dataExport.import.summaryCard.created' => 'created',
 			'dataExport.import.summaryCard.skipped' => 'skipped',
 			'dataExport.import.summaryCard.failed' => 'failed',

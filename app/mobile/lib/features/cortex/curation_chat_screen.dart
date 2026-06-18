@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/memory_summarizers_api.dart';
 import 'package:opendray/core/api/memory_workers_api.dart';
+import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // CurationChat — the conversational maintenance channel (Cortex Phase 4),
@@ -60,6 +62,10 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
   // Picker: '' | 'agent:<id>' | 'local:<id>', plus the chosen model.
   String _selection = '';
   String _model = '';
+  // Claude is multi-account — which account a claude turn runs against
+  // ('' = default). Only used when the agent is claude.
+  String _claudeAccountId = '';
+  List<ClaudeAccountSummary> _claudeAccounts = const [];
   List<SummarizerProvider> _localProviders = const [];
   List<ModelOption> _agentModels = const [];
   List<String> _localModels = const [];
@@ -85,6 +91,7 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
     try {
       final cortex = ref.read(cortexApiProvider);
       final summarizers = await ref.read(memorySummarizersApiProvider).list();
+      final accounts = await ref.read(claudeAccountsApiProvider).list();
       final convs = await cortex.listConversations(
         cwd: widget.targetCwd,
         slug: widget.targetSlug,
@@ -100,6 +107,7 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
       if (!mounted) return;
       setState(() {
         _localProviders = summarizers.where((p) => p.enabled).toList();
+        _claudeAccounts = accounts.where((a) => a.enabled).toList();
         _conv = conv;
         _messages = msgs;
         _loading = false;
@@ -112,6 +120,7 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
             _selection = '';
           }
           _model = conv.model;
+          _claudeAccountId = conv.claudeAccountId;
         }
       });
       await _refreshModelCatalog();
@@ -163,19 +172,29 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
     }
   }
 
-  // Maps the picker state to the backend override shape.
-  ({String providerId, String model, String summarizerId}) _override() {
+  // Maps the picker state to the backend override shape. The claude
+  // account is only carried for the claude agent (backend clears it
+  // otherwise).
+  ({String providerId, String model, String claudeAccountId, String summarizerId})
+      _override() {
     if (_selection.startsWith('agent:')) {
+      final providerId = _selection.substring(6);
       return (
-        providerId: _selection.substring(6),
+        providerId: providerId,
         model: _model,
+        claudeAccountId: providerId == 'claude' ? _claudeAccountId : '',
         summarizerId: '',
       );
     }
     if (_selection.startsWith('local:')) {
-      return (providerId: '', model: '', summarizerId: _selection.substring(6));
+      return (
+        providerId: '',
+        model: '',
+        claudeAccountId: '',
+        summarizerId: _selection.substring(6),
+      );
     }
-    return (providerId: '', model: '', summarizerId: '');
+    return (providerId: '', model: '', claudeAccountId: '', summarizerId: '');
   }
 
   Future<void> _persistOverride() async {
@@ -189,6 +208,7 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
             conv.id,
             providerId: o.providerId,
             model: o.model,
+            claudeAccountId: o.claudeAccountId,
             summarizerId: o.summarizerId,
           );
       if (mounted) setState(() => _conv = updated);
@@ -211,6 +231,11 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
     await _persistOverride();
   }
 
+  Future<void> _onAccountChanged(String acct) async {
+    setState(() => _claudeAccountId = acct);
+    await _persistOverride();
+  }
+
   Future<void> _send() async {
     final text = _draftCtrl.text.trim();
     if (text.isEmpty || _sending || _awaitingReply) return;
@@ -226,6 +251,7 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
           targetSlug: widget.targetSlug,
           providerId: o.providerId,
           model: o.model,
+          claudeAccountId: o.claudeAccountId,
           summarizerId: o.summarizerId,
         );
       }
@@ -421,8 +447,43 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
             const SizedBox(width: 8),
             Expanded(child: _modelDropdown(context)),
           ],
+          if (_agentProvider == 'claude') ...[
+            const SizedBox(width: 8),
+            Expanded(child: _accountDropdown(context)),
+          ],
         ],
       ),
+    );
+  }
+
+  // Claude account picker — Claude is multi-account; pin which account
+  // this discussion's claude turns run against ('' = default).
+  Widget _accountDropdown(BuildContext context) {
+    final items = <DropdownMenuItem<String>>[
+      DropdownMenuItem(
+        value: '',
+        child: Text(t.web.cortex.chat.accountDefault),
+      ),
+      for (final a in _claudeAccounts)
+        DropdownMenuItem(
+          value: a.id,
+          child: Text(
+            a.displayName.isNotEmpty
+                ? a.displayName
+                : (a.name.isNotEmpty ? a.name : a.id),
+          ),
+        ),
+    ];
+    final value = items.any((it) => it.value == _claudeAccountId)
+        ? _claudeAccountId
+        : '';
+    return DropdownButton<String>(
+      value: value,
+      isExpanded: true,
+      isDense: true,
+      underline: const SizedBox.shrink(),
+      items: items,
+      onChanged: (v) => _onAccountChanged(v ?? ''),
     );
   }
 

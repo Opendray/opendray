@@ -5766,6 +5766,8 @@ class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
 	@override String get modelChangeFailed => '切换讨论模型失败';
 	@override String get modelGroupCloud => '云端 agent';
 	@override String get modelGroupLocal => '本地模型';
+	@override String get accountDefault => '默认账号';
+	@override String get accountHint => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。';
 	@override String get modelProviderDefault => '供应商默认';
 	@override String get modelProbeFailed => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。';
 }
@@ -11298,6 +11300,8 @@ extension on TranslationsZh {
 			'web.cortex.chat.modelChangeFailed' => '切换讨论模型失败',
 			'web.cortex.chat.modelGroupCloud' => '云端 agent',
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
+			'web.cortex.chat.accountDefault' => '默认账号',
+			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
 			'web.cortex.chat.modelProviderDefault' => '供应商默认',
 			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
@@ -11556,10 +11560,10 @@ extension on TranslationsZh {
 			'sessions.inspector.git.insertPath' => '插入路径',
 			'sessions.inspector.git.showDiff' => '查看 diff',
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Diff 失败（${status}）：${message}',
-			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff 失败：${error}',
-			'sessions.inspector.git.insertHash' => '插入哈希',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Diff 失败：${error}',
+			'sessions.inspector.git.insertHash' => '插入哈希',
 			'sessions.inspector.git.showFullPatch' => '查看完整 patch',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => '查看失败（${status}）：${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
@@ -12070,10 +12074,10 @@ extension on TranslationsZh {
 			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
 			'backups.emptyNoBackups.headline' => '暂无备份',
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
-			'backups.restartToActivate' => '重启 opendray 以激活备份',
-			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restartToActivate' => '重启 opendray 以激活备份',
+			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
@@ -12584,10 +12588,10 @@ extension on TranslationsZh {
 			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
 			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
 			'dataExport.import.summaryCard.memories' => '记忆',
-			'dataExport.import.summaryCard.integrations' => '集成',
-			'dataExport.import.summaryCard.customTasks' => '自定义任务',
 			_ => null,
 		} ?? switch (path) {
+			'dataExport.import.summaryCard.integrations' => '集成',
+			'dataExport.import.summaryCard.customTasks' => '自定义任务',
 			'dataExport.import.summaryCard.created' => '创建',
 			'dataExport.import.summaryCard.skipped' => '跳过',
 			'dataExport.import.summaryCard.failed' => '失败',

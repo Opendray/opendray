@@ -142,6 +142,7 @@ class CortexApi {
     // providerId+model, OR a local summarizerId).
     String providerId = '',
     String model = '',
+    String claudeAccountId = '',
     String summarizerId = '',
   }) async {
     try {
@@ -153,6 +154,7 @@ class CortexApi {
           'target_slug': targetSlug,
           if (providerId.isNotEmpty) 'provider_id': providerId,
           if (model.isNotEmpty) 'model': model,
+          if (claudeAccountId.isNotEmpty) 'claude_account_id': claudeAccountId,
           if (summarizerId.isNotEmpty) 'summarizer_id': summarizerId,
         },
       );
@@ -169,6 +171,7 @@ class CortexApi {
     String id, {
     String providerId = '',
     String model = '',
+    String claudeAccountId = '',
     String summarizerId = '',
   }) async {
     try {
@@ -177,6 +180,7 @@ class CortexApi {
         data: {
           'provider_id': providerId,
           'model': model,
+          'claude_account_id': claudeAccountId,
           'summarizer_id': summarizerId,
         },
       );
@@ -427,6 +431,7 @@ class CortexConversation {
     required this.escalatedSessionId,
     required this.providerId,
     required this.model,
+    required this.claudeAccountId,
     required this.summarizerId,
   });
 
@@ -440,6 +445,7 @@ class CortexConversation {
         escalatedSessionId: j['escalated_session_id']?.toString() ?? '',
         providerId: j['provider_id']?.toString() ?? '',
         model: j['model']?.toString() ?? '',
+        claudeAccountId: j['claude_account_id']?.toString() ?? '',
         summarizerId: j['summarizer_id']?.toString() ?? '',
       );
 
@@ -454,6 +460,9 @@ class CortexConversation {
   // model pin a cloud-agent CLI.
   final String providerId;
   final String model;
+  // Which Claude (cliacct) account a claude turn runs against — Claude is
+  // multi-account. Only meaningful when providerId == 'claude'.
+  final String claudeAccountId;
   final String summarizerId;
 }
 

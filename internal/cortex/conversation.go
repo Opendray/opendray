@@ -48,11 +48,15 @@ type Conversation struct {
 	// worker config). Mutually exclusive: SummarizerID pins a local/HTTP
 	// model (a summarizer_providers row); ProviderID+Model pins a
 	// cloud-agent CLI. See SetProvider.
-	ProviderID   string    `json:"provider_id,omitempty"`
-	Model        string    `json:"model,omitempty"`
-	SummarizerID string    `json:"summarizer_id,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ProviderID string `json:"provider_id,omitempty"`
+	Model      string `json:"model,omitempty"`
+	// ClaudeAccountID pins which Claude (cliacct) account a claude turn
+	// runs against — Claude is multi-account. Only meaningful when
+	// ProviderID == "claude"; threaded into the worker as Config.AccountID.
+	ClaudeAccountID string    `json:"claude_account_id,omitempty"`
+	SummarizerID    string    `json:"summarizer_id,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 // validConvProvider reports whether p is an allowed cloud-agent override
@@ -73,25 +77,32 @@ func validConvProvider(p string) bool {
 
 // normalizeConvOverride validates + canonicalises a conversation override.
 // Local model (summarizerID) and cloud-agent (providerID) are mutually
-// exclusive; all empty means "use the global curation worker".
-func normalizeConvOverride(providerID, model, summarizerID string) (p, m, s string, err error) {
+// exclusive; all empty means "use the global curation worker". A Claude
+// account override is only meaningful for provider=claude and is cleared
+// otherwise.
+func normalizeConvOverride(providerID, model, summarizerID, claudeAccountID string) (p, m, s, acct string, err error) {
 	providerID = strings.TrimSpace(providerID)
 	summarizerID = strings.TrimSpace(summarizerID)
+	claudeAccountID = strings.TrimSpace(claudeAccountID)
 	if summarizerID != "" {
 		if providerID != "" {
-			return "", "", "", errors.New("cortex: set either a cloud-agent provider or a local model, not both")
+			return "", "", "", "", errors.New("cortex: set either a cloud-agent provider or a local model, not both")
 		}
 		// model is an OPTIONAL per-call override of the model the local
 		// endpoint serves (empty → the provider row's configured model).
-		return "", model, summarizerID, nil
+		// A local model has no Claude account.
+		return "", model, summarizerID, "", nil
 	}
 	if !validConvProvider(providerID) {
-		return "", "", "", fmt.Errorf("cortex: provider_id %q is not supported for AI discussion (want claude|gemini|codex|antigravity)", providerID)
+		return "", "", "", "", fmt.Errorf("cortex: provider_id %q is not supported for AI discussion (want claude|gemini|codex|antigravity)", providerID)
 	}
 	if providerID == "" {
 		model = "" // a model with no provider is meaningless
 	}
-	return providerID, model, "", nil
+	if providerID != "claude" {
+		claudeAccountID = "" // account selection only applies to claude
+	}
+	return providerID, model, "", claudeAccountID, nil
 }
 
 // Message is one turn in a conversation. RevisionAction records what
@@ -132,23 +143,23 @@ func validTargetKind(k string) bool {
 // Create opens a conversation bound to a target. The override (providerID/
 // model for a cloud agent, OR summarizerID for a local model) is optional;
 // all empty = use the global curation worker.
-func (s *ConversationStore) Create(ctx context.Context, targetKind, targetCwd, targetSlug, providerID, model, summarizerID string) (Conversation, error) {
+func (s *ConversationStore) Create(ctx context.Context, targetKind, targetCwd, targetSlug, providerID, model, summarizerID, claudeAccountID string) (Conversation, error) {
 	if !validTargetKind(targetKind) {
 		return Conversation{}, fmt.Errorf("cortex: bad target_kind %q", targetKind)
 	}
 	if strings.TrimSpace(targetCwd) == "" || strings.TrimSpace(targetSlug) == "" {
 		return Conversation{}, errors.New("cortex: target_cwd and target_slug are required")
 	}
-	providerID, model, summarizerID, err := normalizeConvOverride(providerID, model, summarizerID)
+	providerID, model, summarizerID, claudeAccountID, err := normalizeConvOverride(providerID, model, summarizerID, claudeAccountID)
 	if err != nil {
 		return Conversation{}, err
 	}
 	row := s.pool.QueryRow(ctx, `
-		INSERT INTO cortex_conversations (id, target_kind, target_cwd, target_slug, provider_id, model, summarizer_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO cortex_conversations (id, target_kind, target_cwd, target_slug, provider_id, model, claude_account_id, summarizer_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, target_kind, target_cwd, target_slug, status,
-		          COALESCE(escalated_session_id, ''), provider_id, model, summarizer_id, created_at, updated_at`,
-		newConvID("cc_"), targetKind, targetCwd, targetSlug, providerID, model, summarizerID)
+		          COALESCE(escalated_session_id, ''), provider_id, model, claude_account_id, summarizer_id, created_at, updated_at`,
+		newConvID("cc_"), targetKind, targetCwd, targetSlug, providerID, model, claudeAccountID, summarizerID)
 	return scanConversation(row)
 }
 
@@ -156,7 +167,7 @@ func (s *ConversationStore) Create(ctx context.Context, targetKind, targetCwd, t
 func (s *ConversationStore) Get(ctx context.Context, id string) (Conversation, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT id, target_kind, target_cwd, target_slug, status,
-		       COALESCE(escalated_session_id, ''), provider_id, model, summarizer_id, created_at, updated_at
+		       COALESCE(escalated_session_id, ''), provider_id, model, claude_account_id, summarizer_id, created_at, updated_at
 		  FROM cortex_conversations WHERE id = $1`, id)
 	c, err := scanConversation(row)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -168,15 +179,15 @@ func (s *ConversationStore) Get(ctx context.Context, id string) (Conversation, e
 // SetProvider pins (or clears) the conversation's model override. All empty
 // resets it to the global curation worker config; otherwise either a
 // cloud-agent provider (+model) OR a local summarizer provider.
-func (s *ConversationStore) SetProvider(ctx context.Context, id, providerID, model, summarizerID string) error {
-	providerID, model, summarizerID, err := normalizeConvOverride(providerID, model, summarizerID)
+func (s *ConversationStore) SetProvider(ctx context.Context, id, providerID, model, summarizerID, claudeAccountID string) error {
+	providerID, model, summarizerID, claudeAccountID, err := normalizeConvOverride(providerID, model, summarizerID, claudeAccountID)
 	if err != nil {
 		return err
 	}
 	tag, err := s.pool.Exec(ctx, `
 		UPDATE cortex_conversations
-		   SET provider_id = $1, model = $2, summarizer_id = $3, updated_at = NOW()
-		 WHERE id = $4`, providerID, model, summarizerID, id)
+		   SET provider_id = $1, model = $2, summarizer_id = $3, claude_account_id = $4, updated_at = NOW()
+		 WHERE id = $5`, providerID, model, summarizerID, claudeAccountID, id)
 	if err != nil {
 		return fmt.Errorf("cortex: set conversation provider: %w", err)
 	}
@@ -197,13 +208,13 @@ func (s *ConversationStore) ListByTarget(ctx context.Context, targetCwd, targetS
 	if targetCwd == "" && targetSlug == "" {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, target_kind, target_cwd, target_slug, status,
-			       COALESCE(escalated_session_id, ''), provider_id, model, summarizer_id, created_at, updated_at
+			       COALESCE(escalated_session_id, ''), provider_id, model, claude_account_id, summarizer_id, created_at, updated_at
 			  FROM cortex_conversations
 			 ORDER BY updated_at DESC LIMIT $1`, limit)
 	} else {
 		rows, err = s.pool.Query(ctx, `
 			SELECT id, target_kind, target_cwd, target_slug, status,
-			       COALESCE(escalated_session_id, ''), provider_id, model, summarizer_id, created_at, updated_at
+			       COALESCE(escalated_session_id, ''), provider_id, model, claude_account_id, summarizer_id, created_at, updated_at
 			  FROM cortex_conversations
 			 WHERE target_cwd = $1 AND target_slug = $2
 			 ORDER BY updated_at DESC LIMIT $3`, targetCwd, targetSlug, limit)
@@ -296,7 +307,7 @@ type convRowScanner interface{ Scan(dest ...any) error }
 func scanConversation(row convRowScanner) (Conversation, error) {
 	var c Conversation
 	err := row.Scan(&c.ID, &c.TargetKind, &c.TargetCwd, &c.TargetSlug,
-		&c.Status, &c.EscalatedSessionID, &c.ProviderID, &c.Model, &c.SummarizerID,
+		&c.Status, &c.EscalatedSessionID, &c.ProviderID, &c.Model, &c.ClaudeAccountID, &c.SummarizerID,
 		&c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		return Conversation{}, err

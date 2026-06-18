@@ -37,6 +37,7 @@ import {
   setConversationProvider,
 } from '@/lib/cortex'
 import { type AgentProviderID, listAgentModels } from '@/lib/memoryWorkers'
+import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { listProviders } from '@/lib/memoryAmbient'
 import { probeEmbeddingEndpoint } from '@/lib/memory'
 
@@ -76,6 +77,9 @@ export function CurationChat({
   // Seeded from the active conversation once it loads (sync effect below).
   const [selection, setSelection] = useState('')
   const [model, setModel] = useState('')
+  // Claude is multi-account — pin which account a claude turn runs against
+  // ('' = the default account/config). Only used when the agent is claude.
+  const [claudeAccountId, setClaudeAccountId] = useState('')
   const agentProvider: AgentProviderID | '' = selection.startsWith('agent:')
     ? (selection.slice('agent:'.length) as AgentProviderID)
     : ''
@@ -147,6 +151,7 @@ export function CurationChat({
       else if (active.provider_id) setSelection(`agent:${active.provider_id}`)
       else setSelection('')
       setModel(active.model ?? '')
+      setClaudeAccountId(active.claude_account_id ?? '')
     }
   }, [active])
 
@@ -173,10 +178,24 @@ export function CurationChat({
     ? (localModelsQuery.data.models ?? [])
     : []
 
-  // Map a selection + agent model to the backend override shape.
-  const overrideFor = (sel: string, m: string) => {
-    if (sel.startsWith('agent:'))
-      return { provider_id: sel.slice('agent:'.length), model: m }
+  // Configured Claude accounts (multi-account auth). Only needed when the
+  // discussion runs on the claude agent.
+  const claudeAccountsQuery = useQuery({
+    queryKey: ['claude-accounts'],
+    queryFn: listClaudeAccounts,
+    enabled: agentProvider === 'claude',
+  })
+
+  // Map a selection + agent model (+ claude account) to the backend
+  // override shape. The account is only carried for the claude agent; the
+  // backend clears it for any other provider.
+  const overrideFor = (sel: string, m: string, acct: string) => {
+    if (sel.startsWith('agent:')) {
+      const provider_id = sel.slice('agent:'.length)
+      return provider_id === 'claude'
+        ? { provider_id, model: m, claude_account_id: acct }
+        : { provider_id, model: m }
+    }
     if (sel.startsWith('local:'))
       return { summarizer_id: sel.slice('local:'.length) }
     return {}
@@ -185,8 +204,8 @@ export function CurationChat({
   // Persist an override change. When no conversation exists yet the
   // selection is held locally and applied at creation time (see send).
   const persistOverride = useMutation({
-    mutationFn: (next: { sel: string; model: string }) =>
-      setConversationProvider(active!.id, overrideFor(next.sel, next.model)),
+    mutationFn: (next: { sel: string; model: string; acct: string }) =>
+      setConversationProvider(active!.id, overrideFor(next.sel, next.model, next.acct)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cortex-conversations', targetCwd, targetSlug] })
       if (active) qc.invalidateQueries({ queryKey: ['cortex-conversation', active.id] })
@@ -198,11 +217,15 @@ export function CurationChat({
   const changeSelection = (sel: string) => {
     setSelection(sel)
     setModel('')
-    if (active) persistOverride.mutate({ sel, model: '' })
+    if (active) persistOverride.mutate({ sel, model: '', acct: claudeAccountId })
   }
   const changeModel = (m: string) => {
     setModel(m)
-    if (active) persistOverride.mutate({ sel: selection, model: m })
+    if (active) persistOverride.mutate({ sel: selection, model: m, acct: claudeAccountId })
+  }
+  const changeAccount = (acct: string) => {
+    setClaudeAccountId(acct)
+    if (active) persistOverride.mutate({ sel: selection, model, acct })
   }
 
   const send = useMutation({
@@ -213,7 +236,7 @@ export function CurationChat({
           target_kind: targetKind,
           target_cwd: targetCwd,
           target_slug: targetSlug,
-          ...overrideFor(selection, model),
+          ...overrideFor(selection, model, claudeAccountId),
         })
       }
       await sendConversationMessage(conv.id, text)
@@ -328,6 +351,23 @@ export function CurationChat({
                 {m.label}
               </option>
             ))}
+          </select>
+        )}
+        {agentProvider === 'claude' && (
+          <select
+            value={claudeAccountId}
+            onChange={(e) => changeAccount(e.target.value)}
+            className="bg-background min-w-0 flex-1 rounded border px-1.5 py-0.5 text-[11px]"
+            title={t('web.cortex.chat.accountHint')}
+          >
+            <option value="">{t('web.cortex.chat.accountDefault')}</option>
+            {(claudeAccountsQuery.data ?? [])
+              .filter((a) => a.enabled)
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.display_name || a.name || a.id}
+                </option>
+              ))}
           </select>
         )}
         {selection.startsWith('local:') && (

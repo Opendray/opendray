@@ -2938,6 +2938,8 @@
         "modelChangeFailed": "No se pudo cambiar el modelo de la conversación",
         "modelGroupCloud": "Agentes en la nube",
         "modelGroupLocal": "Modelos locales",
+        "accountDefault": "Cuenta predeterminada",
+        "accountHint": "Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).",
         "modelProviderDefault": "Predeterminado del proveedor",
         "modelProbeFailed": "No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria."
       },
