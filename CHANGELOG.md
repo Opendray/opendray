@@ -10,6 +10,47 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.9.0] — 2026-06-19
+
+### Added
+
+- **Per-integration spawn profile.** Each third-party integration now
+  carries its own provider-agnostic spawn config — MCP servers, system
+  prompt, and a permission-bypass toggle — decoupled from per-CLI args, so
+  one integration behaves consistently across Claude / Codex / Gemini. (#381)
+- **Per-integration default agent + first-class session model.** Choose the
+  default agent and model an integration's sessions spawn with, from a
+  dedicated web + mobile config UI. (#378, #379)
+- **Native Select & Copy in the terminal.** Drag (or long-press on touch)
+  to select any portion of the buffer — a command, a line-wrapped URL — and
+  copy it, on both web and mobile. Replaces the old whole-buffer copy. (#374)
+- **Claude account selector for AI discussion.** Cortex's Discuss With AI
+  lets you pick which Claude account drives the discussion (web + mobile +
+  i18n). (#385)
+- **Remove (delete) session control** alongside Stop, so an ended session
+  can be cleared from the list rather than only halted. (#387)
+- **Mobile parity for integrations + project blueprint**, bringing the phone
+  app level with the web admin's integration management. (#386)
+- **Third-party integration guide + searchable `kb_integrations` KB page** —
+  an authoritative, on-demand reference for wiring external callers. (#382)
+
+### Changed
+
+- **Integration-origin sessions are isolated** from the operator's session
+  list and default to no memory capture, keeping third-party traffic out of
+  the operator's working view. (#375, #376)
+- **Retired the detected-URLs badge** on the terminal pane — native Select &
+  Copy now covers the OAuth-login URL case the badge existed to rescue. (#388)
+
+### Fixed
+
+- **Third-party integration memory capture** is routed into per-integration
+  zones instead of leaking facts into the operator's partition. (#380)
+- **Backup pre-migration snapshots** auto-discover the newest `pg_dump` so a
+  stale PATH default can't crash-loop migrations. (#383)
+- **AI discussion on non-Claude providers** uses the correct per-CLI
+  headless invocation (e.g. gemini `--prompt`, codex `exec`). (#384)
+
 ## [v2.8.0] — 2026-06-16
 
 ### Added
