@@ -128,6 +128,9 @@ export interface CortexConversation {
    * provider_id+model pins a cloud-agent CLI. */
   provider_id?: string
   model?: string
+  /** Which Claude (cliacct) account a claude turn runs against — Claude
+   * is multi-account. Only meaningful when provider_id === 'claude'. */
+  claude_account_id?: string
   summarizer_id?: string
   created_at: string
   updated_at: string
@@ -152,6 +155,7 @@ export async function createConversation(input: {
    * summarizer_id) for the new conversation. */
   provider_id?: string
   model?: string
+  claude_account_id?: string
   summarizer_id?: string
 }): Promise<CortexConversation> {
   return api<CortexConversation>('/api/v1/cortex/conversations', {
@@ -165,7 +169,12 @@ export async function createConversation(input: {
  * exclusive). Returns the updated conversation. */
 export async function setConversationProvider(
   id: string,
-  override: { provider_id?: string; model?: string; summarizer_id?: string },
+  override: {
+    provider_id?: string
+    model?: string
+    claude_account_id?: string
+    summarizer_id?: string
+  },
 ): Promise<CortexConversation> {
   return api<CortexConversation>(
     `/api/v1/cortex/conversations/${id}/provider`,
@@ -174,6 +183,7 @@ export async function setConversationProvider(
       body: {
         provider_id: override.provider_id ?? '',
         model: override.model ?? '',
+        claude_account_id: override.claude_account_id ?? '',
         summarizer_id: override.summarizer_id ?? '',
       },
     },

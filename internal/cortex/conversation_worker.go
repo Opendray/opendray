@@ -193,6 +193,7 @@ func (s *CurationService) runAITurn(conversationID string) {
 			Kind:       worker.WorkerAgent,
 			ProviderID: conv.ProviderID,
 			Model:      conv.Model,
+			AccountID:  conv.ClaudeAccountID, // multi-account claude: pin the chosen account
 			Enabled:    true,
 		}, req)
 	default:

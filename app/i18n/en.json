@@ -2938,6 +2938,8 @@
         "modelChangeFailed": "Couldn't change the discussion model",
         "modelGroupCloud": "Cloud agents",
         "modelGroupLocal": "Local models",
+        "accountDefault": "Default account",
+        "accountHint": "Which Claude account this discussion runs against (Claude is multi-account).",
         "modelProviderDefault": "Provider default",
         "modelProbeFailed": "Couldn't reach the endpoint to list models — pick the provider default or configure it in Memory settings."
       },

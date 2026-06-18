@@ -2938,6 +2938,8 @@
         "modelChangeFailed": "切换讨论模型失败",
         "modelGroupCloud": "云端 agent",
         "modelGroupLocal": "本地模型",
+        "accountDefault": "默认账号",
+        "accountHint": "本次讨论使用哪个 Claude 账号(Claude 是多账号)。",
         "modelProviderDefault": "供应商默认",
         "modelProbeFailed": "无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。"
       },

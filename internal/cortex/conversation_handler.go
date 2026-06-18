@@ -44,18 +44,19 @@ func (h *Handlers) createConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		TargetKind   string `json:"target_kind"`
-		TargetCwd    string `json:"target_cwd"`
-		TargetSlug   string `json:"target_slug"`
-		ProviderID   string `json:"provider_id"`
-		Model        string `json:"model"`
-		SummarizerID string `json:"summarizer_id"`
+		TargetKind      string `json:"target_kind"`
+		TargetCwd       string `json:"target_cwd"`
+		TargetSlug      string `json:"target_slug"`
+		ProviderID      string `json:"provider_id"`
+		Model           string `json:"model"`
+		ClaudeAccountID string `json:"claude_account_id"`
+		SummarizerID    string `json:"summarizer_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	conv, err := h.convStore.Create(r.Context(), body.TargetKind, body.TargetCwd, body.TargetSlug, body.ProviderID, body.Model, body.SummarizerID)
+	conv, err := h.convStore.Create(r.Context(), body.TargetKind, body.TargetCwd, body.TargetSlug, body.ProviderID, body.Model, body.SummarizerID, body.ClaudeAccountID)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
@@ -71,15 +72,16 @@ func (h *Handlers) setConversationProvider(w http.ResponseWriter, r *http.Reques
 	}
 	id := chi.URLParam(r, "id")
 	var body struct {
-		ProviderID   string `json:"provider_id"`
-		Model        string `json:"model"`
-		SummarizerID string `json:"summarizer_id"`
+		ProviderID      string `json:"provider_id"`
+		Model           string `json:"model"`
+		ClaudeAccountID string `json:"claude_account_id"`
+		SummarizerID    string `json:"summarizer_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	if err := h.convStore.SetProvider(r.Context(), id, body.ProviderID, body.Model, body.SummarizerID); err != nil {
+	if err := h.convStore.SetProvider(r.Context(), id, body.ProviderID, body.Model, body.SummarizerID, body.ClaudeAccountID); err != nil {
 		if errors.Is(err, ErrConversationNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 			return

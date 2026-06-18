@@ -5766,6 +5766,8 @@ class _TranslationsWebCortexChatEs extends TranslationsWebCortexChatEn {
 	@override String get modelChangeFailed => 'No se pudo cambiar el modelo de la conversación';
 	@override String get modelGroupCloud => 'Agentes en la nube';
 	@override String get modelGroupLocal => 'Modelos locales';
+	@override String get accountDefault => 'Cuenta predeterminada';
+	@override String get accountHint => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).';
 	@override String get modelProviderDefault => 'Predeterminado del proveedor';
 	@override String get modelProbeFailed => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.';
 }
@@ -11298,6 +11300,8 @@ extension on TranslationsEs {
 			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
 			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
 			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
+			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
+			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
 			'web.cortex.chat.modelProviderDefault' => 'Predeterminado del proveedor',
 			'web.cortex.chat.modelProbeFailed' => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.',
 			'web.cortex.blueprint.open' => 'Plano',
@@ -11556,10 +11560,10 @@ extension on TranslationsEs {
 			'sessions.inspector.git.insertPath' => 'Insertar ruta',
 			'sessions.inspector.git.showDiff' => 'Mostrar diff',
 			'sessions.inspector.git.diffFailedApi' => ({required Object status, required Object message}) => 'Falló el diff (${status}): ${message}',
-			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Falló el diff: ${error}',
-			'sessions.inspector.git.insertHash' => 'Insertar hash',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.git.diffFailedGeneric' => ({required Object error}) => 'Falló el diff: ${error}',
+			'sessions.inspector.git.insertHash' => 'Insertar hash',
 			'sessions.inspector.git.showFullPatch' => 'Mostrar el parche completo',
 			'sessions.inspector.git.showFailedApi' => ({required Object status, required Object message}) => 'Falló al mostrar (${status}): ${message}',
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
@@ -12070,10 +12074,10 @@ extension on TranslationsEs {
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
-			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
-			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
 			_ => null,
 		} ?? switch (path) {
+			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
+			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
 			'backups.keyFileLabel' => 'Archivo de clave',
 			'backups.configuredViaLabel' => 'Configurado mediante',
 			'backups.wizard.title' => 'Configurar copias de seguridad',
@@ -12584,10 +12588,10 @@ extension on TranslationsEs {
 			'dataExport.import.finishedWithErrors' => 'Importación finalizada con errores',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Error en la importación: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memorias',
-			'dataExport.import.summaryCard.integrations' => 'Integraciones',
-			'dataExport.import.summaryCard.customTasks' => 'Tareas personalizadas',
 			_ => null,
 		} ?? switch (path) {
+			'dataExport.import.summaryCard.integrations' => 'Integraciones',
+			'dataExport.import.summaryCard.customTasks' => 'Tareas personalizadas',
 			'dataExport.import.summaryCard.created' => 'creadas',
 			'dataExport.import.summaryCard.skipped' => 'omitidas',
 			'dataExport.import.summaryCard.failed' => 'fallidas',
