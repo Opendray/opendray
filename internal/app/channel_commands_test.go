@@ -23,6 +23,9 @@ type fakeSessionOps struct {
 	stopCalls []string
 	stopErr   error
 
+	removeCalls []string
+	removeErr   error
+
 	startCalls []string
 	startResp  session.Session
 	startErr   error
@@ -39,6 +42,10 @@ func (f *fakeSessionOps) List(_ context.Context) ([]session.Session, error) {
 func (f *fakeSessionOps) Stop(_ context.Context, id string) error {
 	f.stopCalls = append(f.stopCalls, id)
 	return f.stopErr
+}
+func (f *fakeSessionOps) Remove(_ context.Context, id string) error {
+	f.removeCalls = append(f.removeCalls, id)
+	return f.removeErr
 }
 func (f *fakeSessionOps) Start(_ context.Context, id string) (session.Session, error) {
 	f.startCalls = append(f.startCalls, id)
@@ -305,6 +312,54 @@ func TestEndSessionHandler_AlreadyEndedIsFriendly(t *testing.T) {
 
 func TestEndSessionHandler_UnexpectedErrorPropagates(t *testing.T) {
 	h := endSessionHandler(&fakeSessionOps{stopErr: errors.New("disk full")})
+	_, err := h(context.Background(),
+		channel.CommandContext{Args: []string{"ses_x"}})
+	if err == nil {
+		t.Error("unexpected errors should propagate so the channel layer logs them")
+	}
+}
+
+func TestRemoveSessionHandler_Success(t *testing.T) {
+	mgr := &fakeSessionOps{}
+	h := removeSessionHandler(mgr)
+	got, err := h(context.Background(),
+		channel.CommandContext{Args: []string{"ses_abc"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "Session ses_abc removed." {
+		t.Errorf("reply: %q", got)
+	}
+	if len(mgr.removeCalls) != 1 || mgr.removeCalls[0] != "ses_abc" {
+		t.Errorf("Remove not called with ses_abc: %v", mgr.removeCalls)
+	}
+}
+
+func TestRemoveSessionHandler_MissingArgIsUsage(t *testing.T) {
+	h := removeSessionHandler(&fakeSessionOps{})
+	got, err := h(context.Background(), channel.CommandContext{Args: nil})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(got, "Usage:") {
+		t.Errorf("missing usage hint: %q", got)
+	}
+}
+
+func TestRemoveSessionHandler_NotFoundIsFriendly(t *testing.T) {
+	h := removeSessionHandler(&fakeSessionOps{removeErr: session.ErrNotFound})
+	got, err := h(context.Background(),
+		channel.CommandContext{Args: []string{"ses_ghost"}})
+	if err != nil {
+		t.Fatalf("ErrNotFound should not propagate as error: %v", err)
+	}
+	if !strings.Contains(got, "not found") {
+		t.Errorf("friendly message missing: %q", got)
+	}
+}
+
+func TestRemoveSessionHandler_UnexpectedErrorPropagates(t *testing.T) {
+	h := removeSessionHandler(&fakeSessionOps{removeErr: errors.New("disk full")})
 	_, err := h(context.Background(),
 		channel.CommandContext{Args: []string{"ses_x"}})
 	if err == nil {

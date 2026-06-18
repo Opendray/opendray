@@ -50,6 +50,9 @@ type sessionOps interface {
 	List(ctx context.Context) ([]session.Session, error)
 	Start(ctx context.Context, id string) (session.Session, error)
 	Stop(ctx context.Context, id string) error
+	// Remove permanently deletes a session: stops it if still live, then
+	// drops the DB row. Destructive counterpart to Stop (no restart).
+	Remove(ctx context.Context, id string) error
 	// RecentSnippet is the live, notification-grade preview of a
 	// running session's latest output (backs /peek). "" when not live.
 	RecentSnippet(id string) string
@@ -73,6 +76,8 @@ type sessionOps interface {
 //     inline button on the idle card as well)
 //   - /resume <id>    — re-spawn a stopped/ended session under the
 //     same id (used by the Resume inline button)
+//   - /remove <id>    — permanently delete a session (stop + drop the
+//     row; used by the 🗑 Remove control-keyboard button)
 func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 	hub.RegisterCommand(channel.Command{
 		Name:        "list",
@@ -95,6 +100,13 @@ func registerChannelCommands(hub *channel.Hub, mgr sessionOps) {
 		Description: "Resume a stopped or ended session: /resume <session_id>",
 		Source:      "builtin",
 		Handler:     resumeSessionHandler(mgr),
+	})
+	hub.RegisterCommand(channel.Command{
+		Name: "remove",
+		Description: "Remove a session permanently: /remove <session_id> " +
+			"(stops it, then deletes the row — no restart)",
+		Source:  "builtin",
+		Handler: removeSessionHandler(mgr),
 	})
 	hub.RegisterCommand(channel.Command{
 		Name: "select",
@@ -330,6 +342,22 @@ func resumeSessionHandler(mgr sessionOps) channel.CommandHandler {
 			return "", fmt.Errorf("resume %s: %w", sid, err)
 		}
 		return fmt.Sprintf("Session %s resumed (state=%s).", sid, s.State), nil
+	}
+}
+
+func removeSessionHandler(mgr sessionOps) channel.CommandHandler {
+	return func(ctx context.Context, cc channel.CommandContext) (string, error) {
+		sid, ok := singleSessionArg(cc.Args)
+		if !ok {
+			return "Usage: /remove <session_id>", nil
+		}
+		if err := mgr.Remove(ctx, sid); err != nil {
+			if errors.Is(err, session.ErrNotFound) {
+				return "Session " + sid + " not found.", nil
+			}
+			return "", fmt.Errorf("remove %s: %w", sid, err)
+		}
+		return "Session " + sid + " removed.", nil
 	}
 }
 

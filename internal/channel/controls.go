@@ -42,17 +42,22 @@ func (b ControlButton) Resolve(sid string) string {
 // (which renders the labels) and the hub (which maps a tapped label
 // back to its command) — so the two can never drift.
 //
-// Stop/Restart route through /confirm (a fat-fingered tap must never
-// interrupt a live session); Switch opens /list to retarget which
-// session the chat talks to; Peek re-sends the current session's latest
-// output; Panel opens the /panel home. Peek carries no "%s" so it isn't
-// session-templated — the /peek handler resolves the chat's active pin
-// itself and reports cleanly when none is selected.
+// Stop/Restart/Remove route through /confirm (a fat-fingered tap must
+// never interrupt — let alone delete — a live session); Switch opens
+// /list to retarget which session the chat talks to; Peek re-sends the
+// current session's latest output; Panel opens the /panel home. Peek
+// carries no "%s" so it isn't session-templated — the /peek handler
+// resolves the chat's active pin itself and reports cleanly when none is
+// selected.
+//
+// Stop interrupts the agent but keeps the row (restartable); Remove is
+// the destructive sibling — it stops AND deletes the session permanently.
 func ControlKeyboardLayout() [][]ControlButton {
 	return [][]ControlButton{
 		{
 			{Label: "⏸ Stop", Command: "/confirm stop %s"},
 			{Label: "🔄 Restart", Command: "/confirm restart %s"},
+			{Label: "🗑 Remove", Command: "/confirm remove %s"},
 		},
 		{
 			{Label: "🔀 Switch", Command: "/list"},

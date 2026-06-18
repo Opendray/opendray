@@ -260,8 +260,8 @@ func (h *Hub) registerBuiltinCommands() {
 }
 
 // confirmCardHandler renders the Yes/Cancel card for a destructive
-// control action. Args are [verb, sessionID]; verb is "stop" or
-// "restart". Unknown input degrades to a harmless hint.
+// control action. Args are [verb, sessionID]; verb is "stop",
+// "restart", or "remove". Unknown input degrades to a harmless hint.
 func confirmCardHandler(_ context.Context, cc CommandContext) (*Card, error) {
 	if len(cc.Args) < 2 {
 		return &Card{Elements: []CardElement{
@@ -279,6 +279,10 @@ func confirmCardHandler(_ context.Context, cc CommandContext) (*Card, error) {
 		title = "Restart session?"
 		body = fmt.Sprintf("Restart session `%s`? It re-spawns under the same id.", sid)
 		yesText, yesCmd = "✓ Yes, restart", "cmd:/resume "+sid
+	case "remove":
+		title = "Remove session?"
+		body = fmt.Sprintf("Remove session `%s`? This stops it AND deletes it permanently — no restart.", sid)
+		yesText, yesCmd = "🗑 Yes, remove", "cmd:/remove "+sid
 	default:
 		return &Card{Elements: []CardElement{
 			CardMarkdown{Content: "Unknown action to confirm."},
