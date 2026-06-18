@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -182,6 +184,25 @@ class RegisterResult {
   final String apiKey;
 }
 
+// ProxyResponse is the raw upstream result of a reverse-proxy request
+// made through the console — captured for ANY status code (a 404/500 is
+// a legitimate result to display, not an error to swallow).
+class ProxyResponse {
+  ProxyResponse({
+    required this.status,
+    required this.durationMs,
+    required this.headers,
+    required this.body,
+    this.contentType,
+  });
+
+  final int status;
+  final int durationMs;
+  final List<MapEntry<String, String>> headers;
+  final String body;
+  final String? contentType;
+}
+
 class IntegrationsApi {
   IntegrationsApi(this._dio);
   final Dio _dio;
@@ -320,6 +341,77 @@ class IntegrationsApi {
     try {
       await _dio.delete<void>('/api/v1/integrations/$id');
     } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // Sends a request through /api/v1/proxy/{prefix}/* and returns the raw
+  // upstream response. Uses a bare Dio clone (same base URL + auth header
+  // as the shared client) so it can surface ANY status code — the shared
+  // dioProvider interceptor rejects non-2xx, which would hide a perfectly
+  // valid 404/500 the operator wants to inspect.
+  Future<ProxyResponse> proxy({
+    required String routePrefix,
+    required String method,
+    required String path,
+    Map<String, String> extraHeaders = const {},
+    String? body,
+  }) async {
+    final hasBody = method != 'GET' &&
+        method != 'DELETE' &&
+        body != null &&
+        body.trim().isNotEmpty;
+    final headers = <String, dynamic>{
+      ..._dio.options.headers, // Accept + Authorization from the session
+      ...extraHeaders,
+    };
+    if (hasBody &&
+        !headers.keys.any((k) => k.toLowerCase() == 'content-type')) {
+      headers['Content-Type'] = 'application/json';
+    }
+    final raw = Dio(
+      BaseOptions(
+        baseUrl: _dio.options.baseUrl,
+        connectTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: headers,
+        validateStatus: (_) => true,
+        responseType: ResponseType.plain,
+      ),
+    );
+    final p = path.startsWith('/') ? path : '/$path';
+    final url = '/api/v1/proxy/$routePrefix$p';
+    final sw = Stopwatch()..start();
+    try {
+      final res = await raw.request<String>(
+        url,
+        data: hasBody ? body : null,
+        options: Options(method: method),
+      );
+      sw.stop();
+      final out = <MapEntry<String, String>>[];
+      res.headers.forEach(
+        (name, values) => out.add(MapEntry(name, values.join(', '))),
+      );
+      var bodyText = res.data ?? '';
+      final ct = res.headers.value('content-type');
+      if (ct != null && ct.contains('application/json')) {
+        try {
+          bodyText =
+              const JsonEncoder.withIndent('  ').convert(jsonDecode(bodyText));
+        } on Object {
+          // Not JSON despite the header — leave the raw text as-is.
+        }
+      }
+      return ProxyResponse(
+        status: res.statusCode ?? 0,
+        durationMs: sw.elapsedMilliseconds,
+        headers: out,
+        body: bodyText,
+        contentType: ct,
+      );
+    } on DioException catch (e) {
+      sw.stop();
       throw toApiException(e);
     }
   }

@@ -7,6 +7,7 @@ import 'package:opendray/core/api/integrations_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/integrations/integration_detail_screen.dart';
 import 'package:opendray/features/integrations/integration_forms.dart';
+import 'package:opendray/features/integrations/proxy_console_view.dart';
 
 // Top-level Integrations list. Splits operator-registered rows from
 // system rows (e.g. opendray-memory MCP) so the latter never visually
@@ -23,13 +24,28 @@ class IntegrationsScreen extends ConsumerStatefulWidget {
       _IntegrationsScreenState();
 }
 
-class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
+class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen>
+    with SingleTickerProviderStateMixin {
   AsyncValue<List<Integration>> _state = const AsyncValue.loading();
+  late final TabController _tab;
 
   @override
   void initState() {
     super.initState();
+    // Two tabs mirror the web Integrations page: the registered list and
+    // the reverse-proxy console. Rebuild on tab change so the register FAB
+    // only shows on the list tab.
+    _tab = TabController(length: 2, vsync: this)
+      ..addListener(() {
+        if (mounted) setState(() {});
+      });
     _load();
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -115,18 +131,33 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
             onPressed: _state is AsyncLoading ? null : _load,
           ),
         ],
+        bottom: TabBar(
+          controller: _tab,
+          tabs: [
+            Tab(text: t.web.integrations.tabs.registered),
+            Tab(text: t.web.integrations.tabs.console),
+          ],
+        ),
       ),
-      body: _state.when(
-        data: _buildList,
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
+      body: TabBarView(
+        controller: _tab,
+        children: [
+          _state.when(
+            data: _buildList,
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => _ErrorView(error: e.toString(), onRetry: _load),
+          ),
+          ProxyConsoleView(integrations: _state.valueOrNull ?? const []),
+        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'integrations_fab',
-        onPressed: _onRegister,
-        icon: const Icon(Icons.add),
-        label: Text(t.integrations.register),
-      ),
+      floatingActionButton: _tab.index == 0
+          ? FloatingActionButton.extended(
+              heroTag: 'integrations_fab',
+              onPressed: _onRegister,
+              icon: const Icon(Icons.add),
+              label: Text(t.integrations.register),
+            )
+          : null,
     );
   }
 
