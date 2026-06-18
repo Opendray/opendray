@@ -12,8 +12,6 @@ import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/terminal_select_sheet.dart';
-import 'package:opendray/features/sessions/url_extractor.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:xterm/xterm.dart';
 
@@ -53,19 +51,6 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
   // identical payloads on every layout pass.
   int _lastCols = 0;
   int _lastRows = 0;
-
-  // URL detector state — same model as the web admin's badge:
-  //   - Scan PTY bytes for http(s) URLs as they stream in.
-  //   - Keep the most recent ones in insertion order (dedup'd).
-  //   - Surface a floating "Open latest link" button (Stack overlay)
-  //     so OAuth flows on mobile aren't gated behind manual
-  //     copy-paste of a hard-wrapped URL.
-  // The 4 KB tail handles URLs spanning a WS frame boundary
-  // (a single OAuth URL is ~450 chars, well under 4 KB).
-  static const _urlScanTailBytes = 4096;
-  static const _maxDetectedUrls = 50;
-  final List<String> _detectedUrls = <String>[];
-  String _urlScanTail = '';
 
   @override
   void initState() {
@@ -209,13 +194,9 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
       setState(() => _state = _ConnState.connected);
     }
     if (msg is Uint8List) {
-      final decoded = _decode(msg);
-      _terminal.write(decoded);
-      _scanForUrls(decoded);
+      _terminal.write(_decode(msg));
     } else if (msg is List<int>) {
-      final decoded = _decode(Uint8List.fromList(msg));
-      _terminal.write(decoded);
-      _scanForUrls(decoded);
+      _terminal.write(_decode(Uint8List.fromList(msg)));
     } else if (msg is String) {
       // Server sends control frames (e.g. {"type":"ended"}) as text.
       // We don't render them on the terminal; flip state instead.
@@ -225,169 +206,6 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
         }
       }
     }
-  }
-
-  void _scanForUrls(String chunk) {
-    try {
-      final combined = _urlScanTail + stripAnsi(chunk);
-      final found = extractUrls(combined);
-      if (found.isNotEmpty) {
-        var changed = false;
-        final seen = _detectedUrls.toSet();
-        for (final u in found) {
-          if (!seen.contains(u)) {
-            seen.add(u);
-            _detectedUrls.add(u);
-            changed = true;
-          }
-        }
-        // Cap the list at MAX_DETECTED_URLS — newest stay, oldest go.
-        if (_detectedUrls.length > _maxDetectedUrls) {
-          _detectedUrls.removeRange(
-            0,
-            _detectedUrls.length - _maxDetectedUrls,
-          );
-          changed = true;
-        }
-        if (changed && mounted) setState(() {});
-      }
-      _urlScanTail = combined.length > _urlScanTailBytes
-          ? combined.substring(combined.length - _urlScanTailBytes)
-          : combined;
-    } on Object catch (_) {
-      // URL extraction is best-effort. If anything throws (malformed
-      // UTF-8 cluster, etc.), drop this chunk's scan and keep the
-      // terminal flowing.
-    }
-  }
-
-  Future<void> _openDetectedUrl(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } on Object catch (_) {
-      // If the launcher rejects the URL (sandbox / unsupported
-      // scheme) we silently no-op — the operator can fall back to
-      // long-pressing the URL in the terminal.
-    }
-  }
-
-  Future<void> _showDetectedUrlsSheet(BuildContext context) async {
-    // Newest first — matches the badge's primary-tap target and the
-    // most likely thing the operator wants to act on.
-    final ordered = _detectedUrls.reversed.toList(growable: false);
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1F),
-      isScrollControlled: true,
-      builder: (sheetCtx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Detected links',
-                  style: TextStyle(
-                    color: Color(0xFFE7E7EA),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'URLs printed in this session’s output. Tap Open '
-                  'to launch in your default browser.',
-                  style: TextStyle(
-                    color: Color(0xFF9999A0),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: ordered.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: 10),
-                    itemBuilder: (_, idx) {
-                      final url = ordered[idx];
-                      return Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF222227),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.stretch,
-                          children: [
-                            SelectableText(
-                              url,
-                              style: const TextStyle(
-                                color: Color(0xFFE7E7EA),
-                                fontSize: 11,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: FilledButton.icon(
-                                    icon: const Icon(
-                                      Icons.open_in_new,
-                                      size: 16,
-                                    ),
-                                    label: const Text('Open'),
-                                    onPressed: () {
-                                      Navigator.of(sheetCtx).pop();
-                                      _openDetectedUrl(url);
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    icon: const Icon(
-                                      Icons.copy,
-                                      size: 16,
-                                    ),
-                                    label: const Text('Copy'),
-                                    onPressed: () async {
-                                      await Clipboard.setData(
-                                        ClipboardData(text: url),
-                                      );
-                                      if (sheetCtx.mounted) {
-                                        ScaffoldMessenger.of(sheetCtx)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'URL copied',
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   String _decode(Uint8List bytes) {
@@ -668,17 +486,6 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
                   ),
                 ),
               ),
-              if (_detectedUrls.isNotEmpty)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _DetectedUrlBadge(
-                    urls: _detectedUrls,
-                    onTapLatest: () =>
-                        _openDetectedUrl(_detectedUrls.last),
-                    onOpenList: () => _showDetectedUrlsSheet(context),
-                  ),
-                ),
             ],
           ),
         ),
@@ -1032,121 +839,5 @@ class _Key extends StatelessWidget {
     );
     final t = tooltip;
     return t != null ? Tooltip(message: t, child: body) : body;
-  }
-}
-
-class _DetectedUrlBadge extends StatelessWidget {
-  const _DetectedUrlBadge({
-    required this.urls,
-    required this.onTapLatest,
-    required this.onOpenList,
-  });
-
-  final List<String> urls;
-  final VoidCallback onTapLatest;
-  final VoidCallback onOpenList;
-
-  @override
-  Widget build(BuildContext context) {
-    final count = urls.length;
-    final label = count == 1 ? '$count link' : '$count links';
-
-    // N = 1: single tappable pill.
-    if (count == 1) {
-      return Material(
-        color: const Color(0xFF222227),
-        borderRadius: BorderRadius.circular(8),
-        elevation: 2,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onTapLatest,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.open_in_new,
-                  size: 14,
-                  color: Color(0xFFE7E7EA),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFFE7E7EA),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    // N ≥ 2: split pill — left tap opens the latest URL, right
-    // tap opens the multi-URL sheet for picking older ones.
-    return Material(
-      color: const Color(0xFF222227),
-      borderRadius: BorderRadius.circular(8),
-      elevation: 2,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              bottomLeft: Radius.circular(8),
-            ),
-            onTap: onTapLatest,
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.open_in_new,
-                    size: 14,
-                    color: Color(0xFFE7E7EA),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Color(0xFFE7E7EA),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 20,
-            color: const Color(0xFF3A3A40),
-          ),
-          InkWell(
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(8),
-              bottomRight: Radius.circular(8),
-            ),
-            onTap: onOpenList,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Icon(
-                Icons.more_horiz,
-                size: 16,
-                color: Color(0xFFE7E7EA),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
