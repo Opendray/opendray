@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:opendray/core/api/integrations_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/integrations/default_agent_fields.dart';
+import 'package:opendray/features/integrations/scope_picker.dart';
 
 // Form pages and small read-only dialogs shared by the Integrations
 // screens. Multi-field forms (register / edit) are full-screen pages
@@ -39,7 +40,8 @@ class _RegisterIntegrationScreenState
   final _name = TextEditingController();
   final _baseUrl = TextEditingController();
   final _prefix = TextEditingController();
-  final _scopes = TextEditingController();
+  // Default grant mirrors the web register dialog.
+  List<String> _scopes = const ['session:read', 'event:subscribe:session.*'];
   final _version = TextEditingController();
   final _defaultModel = TextEditingController();
   String _defaultProviderId = '';
@@ -51,7 +53,6 @@ class _RegisterIntegrationScreenState
     _name.dispose();
     _baseUrl.dispose();
     _prefix.dispose();
-    _scopes.dispose();
     _version.dispose();
     _defaultModel.dispose();
     super.dispose();
@@ -67,17 +68,12 @@ class _RegisterIntegrationScreenState
       );
       return;
     }
-    final scopes = _scopes.text
-        .split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
     Navigator.of(context).pop(
       RegisterIntegrationFormResult(
         name: name,
         baseUrl: baseUrl,
         routePrefix: prefix.replaceAll(RegExp(r'^/+|/+$'), ''),
-        scopes: scopes,
+        scopes: _scopes,
         version: _version.text.trim(),
         defaultProviderId: _defaultProviderId,
         defaultModel: _defaultModel.text.trim(),
@@ -120,16 +116,17 @@ class _RegisterIntegrationScreenState
             helper: t.integrations.form.routePrefixHelper,
           ),
           _Field(
-            controller: _scopes,
-            label: t.integrations.form.fieldScopes,
-            hint: 'session:read, session:events',
-            helper: t.integrations.form.scopesHelper,
-          ),
-          _Field(
             controller: _version,
             label: t.integrations.form.fieldVersion,
             hint: '1.0.0',
           ),
+          const SizedBox(height: 4),
+          ScopePicker(
+            selected: _scopes,
+            intro: t.web.integrations.register_dialog.scopesIntro,
+            onChanged: (next) => setState(() => _scopes = next),
+          ),
+          const SizedBox(height: 12),
           DefaultAgentFields(
             providerId: _defaultProviderId,
             claudeAccountId: _defaultClaudeAccountId,
@@ -204,7 +201,7 @@ class EditIntegrationScreen extends StatefulWidget {
 
 class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   late final TextEditingController _baseUrl;
-  late final TextEditingController _scopes;
+  late List<String> _scopes;
   late final TextEditingController _version;
   late final TextEditingController _defaultModel;
   late final TextEditingController _systemPrompt;
@@ -223,7 +220,7 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   void initState() {
     super.initState();
     _baseUrl = TextEditingController(text: widget.current.baseUrl);
-    _scopes = TextEditingController(text: widget.current.scopes.join(', '));
+    _scopes = List.of(widget.current.scopes);
     _version = TextEditingController(text: widget.current.version ?? '');
     _defaultModel =
         TextEditingController(text: widget.current.defaultModel);
@@ -241,7 +238,6 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
   @override
   void dispose() {
     _baseUrl.dispose();
-    _scopes.dispose();
     _version.dispose();
     _defaultModel.dispose();
     _systemPrompt.dispose();
@@ -255,11 +251,7 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
       setState(() => _error = t.integrations.form.validateBaseUrl);
       return;
     }
-    final scopes = _scopes.text
-        .split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final scopes = _scopes;
     final version = _version.text.trim();
     final initialScopes = widget.current.scopes;
     final scopesChanged = scopes.length != initialScopes.length ||
@@ -276,12 +268,14 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
       try {
         final decoded = trimmed.isEmpty ? <dynamic>[] : jsonDecode(trimmed);
         if (decoded is! List) {
-          setState(() => _error = t.integrations.form.mcpServersInvalid);
+          setState(
+              () => _error = t.web.integrations.edit_dialog.mcpServersInvalid);
           return;
         }
         mcpServers = decoded;
       } on FormatException {
-        setState(() => _error = t.integrations.form.mcpServersInvalid);
+        setState(
+            () => _error = t.web.integrations.edit_dialog.mcpServersInvalid);
         return;
       }
     }
@@ -333,15 +327,16 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
             keyboardType: TextInputType.url,
           ),
           _Field(
-            controller: _scopes,
-            label: t.integrations.form.editFieldScopes,
-            helper: t.integrations.form.editScopesHelper,
-          ),
-          _Field(
             controller: _version,
             label: t.integrations.form.editFieldVersion,
           ),
           const SizedBox(height: 8),
+          ScopePicker(
+            selected: _scopes,
+            intro: t.web.integrations.edit_dialog.scopesIntro,
+            onChanged: (next) => setState(() => _scopes = next),
+          ),
+          const SizedBox(height: 12),
           DefaultAgentFields(
             providerId: _defaultProviderId,
             claudeAccountId: _defaultClaudeAccountId,
@@ -362,21 +357,21 @@ class _EditIntegrationScreenState extends State<EditIntegrationScreen> {
           const SizedBox(height: 8),
           _Field(
             controller: _systemPrompt,
-            label: t.integrations.form.systemPromptLabel,
-            helper: t.integrations.form.systemPromptHint,
+            label: t.web.integrations.edit_dialog.systemPromptLabel,
+            helper: t.web.integrations.edit_dialog.systemPromptHint,
             maxLines: 6,
           ),
           _Field(
             controller: _mcpServers,
-            label: t.integrations.form.mcpServersLabel,
-            helper: t.integrations.form.mcpServersHint,
+            label: t.web.integrations.edit_dialog.mcpServersLabel,
+            helper: t.web.integrations.edit_dialog.mcpServersHint,
             maxLines: 8,
             monospace: true,
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(t.integrations.form.bypassPermissionsLabel),
-            subtitle: Text(t.integrations.form.bypassPermissionsHint),
+            title: Text(t.web.integrations.edit_dialog.bypassPermissionsLabel),
+            subtitle: Text(t.web.integrations.edit_dialog.bypassPermissionsHint),
             value: _bypassPermissions,
             onChanged: (v) => setState(() => _bypassPermissions = v),
           ),

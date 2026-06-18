@@ -2107,20 +2107,9 @@ class _TranslationsIntegrationsFormEs extends TranslationsIntegrationsFormEn {
 	@override String get fieldBaseUrl => 'URL base';
 	@override String get fieldRoutePrefix => 'Prefijo de ruta';
 	@override String get routePrefixHelper => 'Accesible como /api/v1/<prefix>/...';
-	@override String get fieldScopes => 'Ámbitos (opcional)';
-	@override String get scopesHelper => 'Separados por comas. Vacío = valores por defecto del servidor.';
 	@override String get fieldVersion => 'Versión (opcional)';
 	@override String get validateBaseUrl => 'La URL base es obligatoria.';
-	@override String get editFieldScopes => 'Ámbitos';
-	@override String get editScopesHelper => 'Separados por comas.';
 	@override String get editFieldVersion => 'Versión';
-	@override String get systemPromptLabel => 'Prompt del sistema';
-	@override String get systemPromptHint => 'Se antepone a cada sesión que crea esta integración. Vacío = ninguno.';
-	@override String get mcpServersLabel => 'Servidores MCP';
-	@override String get mcpServersHint => 'Array JSON de especificaciones de servidores MCP. Array vacío = ninguno.';
-	@override String get mcpServersInvalid => 'Los servidores MCP deben ser un array JSON válido.';
-	@override String get bypassPermissionsLabel => 'Omitir permisos';
-	@override String get bypassPermissionsHint => 'Omite las solicitudes de permiso en las sesiones creadas. Úsalo con cuidado.';
 	@override String get apiKeyWarn => 'No volverás a ver esta key.';
 	@override String get copyCopied => 'Copiado';
 	@override String get copyCopy => 'Copiar';
@@ -4482,7 +4471,7 @@ class _TranslationsWebIntegrationsEditDialogEs extends TranslationsWebIntegratio
 	@override String get bypassPermissionsLabel => 'Omitir permisos';
 	@override String get bypassPermissionsHint => 'Aprueba automáticamente las llamadas a herramientas: esta integración se ejecuta sin supervisión, sin operador que confirme las solicitudes.';
 	@override String get mcpServersLabel => 'Servidores MCP';
-	@override String mcpServersHint({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'Array JSON, p. ej. [${"name"} }]';
+	@override String get mcpServersHint => 'Array JSON de objetos de servidor MCP — cada uno con name, command, args, env (o url/headers para sse/http). Array vacío = ninguno.';
 	@override String get mcpServersInvalid => 'Los servidores MCP deben ser un array JSON válido.';
 	@override String get errorModeSwitch => 'Cambiar entre modo solo consumidora y reverse-proxy requiere eliminar la integración y volver a registrarla: el nombre y route_prefix no pueden cambiarse sobre la marcha.';
 	@override String get updatedToast => 'Integración actualizada';
@@ -10145,7 +10134,7 @@ extension on TranslationsEs {
 			'web.integrations.edit_dialog.bypassPermissionsLabel' => 'Omitir permisos',
 			'web.integrations.edit_dialog.bypassPermissionsHint' => 'Aprueba automáticamente las llamadas a herramientas: esta integración se ejecuta sin supervisión, sin operador que confirme las solicitudes.',
 			'web.integrations.edit_dialog.mcpServersLabel' => 'Servidores MCP',
-			'web.integrations.edit_dialog.mcpServersHint' => ({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'Array JSON, p. ej. [${"name"} }]',
+			'web.integrations.edit_dialog.mcpServersHint' => 'Array JSON de objetos de servidor MCP — cada uno con name, command, args, env (o url/headers para sse/http). Array vacío = ninguno.',
 			'web.integrations.edit_dialog.mcpServersInvalid' => 'Los servidores MCP deben ser un array JSON válido.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Cambiar entre modo solo consumidora y reverse-proxy requiere eliminar la integración y volver a registrarla: el nombre y route_prefix no pueden cambiarse sobre la marcha.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integración actualizada',
@@ -11840,20 +11829,9 @@ extension on TranslationsEs {
 			'integrations.form.fieldBaseUrl' => 'URL base',
 			'integrations.form.fieldRoutePrefix' => 'Prefijo de ruta',
 			'integrations.form.routePrefixHelper' => 'Accesible como /api/v1/<prefix>/...',
-			'integrations.form.fieldScopes' => 'Ámbitos (opcional)',
-			'integrations.form.scopesHelper' => 'Separados por comas. Vacío = valores por defecto del servidor.',
 			'integrations.form.fieldVersion' => 'Versión (opcional)',
 			'integrations.form.validateBaseUrl' => 'La URL base es obligatoria.',
-			'integrations.form.editFieldScopes' => 'Ámbitos',
-			'integrations.form.editScopesHelper' => 'Separados por comas.',
 			'integrations.form.editFieldVersion' => 'Versión',
-			'integrations.form.systemPromptLabel' => 'Prompt del sistema',
-			'integrations.form.systemPromptHint' => 'Se antepone a cada sesión que crea esta integración. Vacío = ninguno.',
-			'integrations.form.mcpServersLabel' => 'Servidores MCP',
-			'integrations.form.mcpServersHint' => 'Array JSON de especificaciones de servidores MCP. Array vacío = ninguno.',
-			'integrations.form.mcpServersInvalid' => 'Los servidores MCP deben ser un array JSON válido.',
-			'integrations.form.bypassPermissionsLabel' => 'Omitir permisos',
-			'integrations.form.bypassPermissionsHint' => 'Omite las solicitudes de permiso en las sesiones creadas. Úsalo con cuidado.',
 			'integrations.form.apiKeyWarn' => 'No volverás a ver esta key.',
 			'integrations.form.copyCopied' => 'Copiado',
 			'integrations.form.copyCopy' => 'Copiar',
@@ -12074,8 +12052,6 @@ extension on TranslationsEs {
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
 			'backups.keyFileLabel' => 'Archivo de clave',
@@ -12087,6 +12063,8 @@ extension on TranslationsEs {
 			'backups.wizard.savePassphrase' => 'Guardar passphrase',
 			'backups.wizard.generateHint' => 'El servidor genera una passphrase criptográficamente aleatoria, tú la copias a un gestor de contraseñas y luego confirmas.',
 			'backups.wizard.helperRecommended' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saveNowHeader' => 'Guarda esta passphrase AHORA',
 			'backups.wizard.saveNowBody' => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.',
 			'backups.overviewTargets' => 'Destinos',
@@ -12588,8 +12566,6 @@ extension on TranslationsEs {
 			'dataExport.import.finishedWithErrors' => 'Importación finalizada con errores',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Error en la importación: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memorias',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.summaryCard.integrations' => 'Integraciones',
 			'dataExport.import.summaryCard.customTasks' => 'Tareas personalizadas',
 			'dataExport.import.summaryCard.created' => 'creadas',
@@ -12601,6 +12577,8 @@ extension on TranslationsEs {
 			'dataExport.imports.listFailedToast' => ({required Object error}) => 'Error al cargar las importaciones: ${error}',
 			'dataExport.imports.noneCounts' => '(sin recuentos)',
 			'dataExport.imports.sourceUnknown' => '(origen desconocido)',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.imports.columns.id' => 'ID',
 			'dataExport.imports.columns.status' => 'Estado',
 			'dataExport.imports.columns.source' => 'Origen',

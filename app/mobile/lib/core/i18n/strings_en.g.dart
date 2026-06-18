@@ -4188,47 +4188,14 @@ class TranslationsIntegrationsFormEn {
 	/// en: 'Reachable as /api/v1/<prefix>/...'
 	String get routePrefixHelper => 'Reachable as /api/v1/<prefix>/...';
 
-	/// en: 'Scopes (optional)'
-	String get fieldScopes => 'Scopes (optional)';
-
-	/// en: 'Comma-separated. Empty = server defaults.'
-	String get scopesHelper => 'Comma-separated. Empty = server defaults.';
-
 	/// en: 'Version (optional)'
 	String get fieldVersion => 'Version (optional)';
 
 	/// en: 'Base URL is required.'
 	String get validateBaseUrl => 'Base URL is required.';
 
-	/// en: 'Scopes'
-	String get editFieldScopes => 'Scopes';
-
-	/// en: 'Comma-separated.'
-	String get editScopesHelper => 'Comma-separated.';
-
 	/// en: 'Version'
 	String get editFieldVersion => 'Version';
-
-	/// en: 'System prompt'
-	String get systemPromptLabel => 'System prompt';
-
-	/// en: 'Prepended to every session this integration spawns. Empty = none.'
-	String get systemPromptHint => 'Prepended to every session this integration spawns. Empty = none.';
-
-	/// en: 'MCP servers'
-	String get mcpServersLabel => 'MCP servers';
-
-	/// en: 'JSON array of MCP server specs. Empty array = none.'
-	String get mcpServersHint => 'JSON array of MCP server specs. Empty array = none.';
-
-	/// en: 'MCP servers must be a valid JSON array.'
-	String get mcpServersInvalid => 'MCP servers must be a valid JSON array.';
-
-	/// en: 'Bypass permissions'
-	String get bypassPermissionsLabel => 'Bypass permissions';
-
-	/// en: 'Skip permission prompts for spawned sessions. Use with care.'
-	String get bypassPermissionsHint => 'Skip permission prompts for spawned sessions. Use with care.';
 
 	/// en: 'You won't see this key again.'
 	String get apiKeyWarn => 'You won\'t see this key again.';
@@ -8854,8 +8821,8 @@ class TranslationsWebIntegrationsEditDialogEn {
 	/// en: 'MCP servers'
 	String get mcpServersLabel => 'MCP servers';
 
-	/// en: 'JSON array, e.g. [{ "name": "...", "command": "...", "args": ["..."], "env": { "K": "V" } }]'
-	String mcpServersHint({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON array, e.g. [${"name"} }]';
+	/// en: 'JSON array of MCP server objects — each with name, command, args, env (or url/headers for sse/http). Empty array = none.'
+	String get mcpServersHint => 'JSON array of MCP server objects — each with name, command, args, env (or url/headers for sse/http). Empty array = none.';
 
 	/// en: 'MCP servers must be a valid JSON array.'
 	String get mcpServersInvalid => 'MCP servers must be a valid JSON array.';
@@ -18047,7 +18014,7 @@ extension on Translations {
 			'web.integrations.edit_dialog.bypassPermissionsLabel' => 'Bypass permissions',
 			'web.integrations.edit_dialog.bypassPermissionsHint' => 'Auto-approve tool calls — this integration runs unattended, with no operator to confirm prompts.',
 			'web.integrations.edit_dialog.mcpServersLabel' => 'MCP servers',
-			'web.integrations.edit_dialog.mcpServersHint' => ({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON array, e.g. [${"name"} }]',
+			'web.integrations.edit_dialog.mcpServersHint' => 'JSON array of MCP server objects — each with name, command, args, env (or url/headers for sse/http). Empty array = none.',
 			'web.integrations.edit_dialog.mcpServersInvalid' => 'MCP servers must be a valid JSON array.',
 			'web.integrations.edit_dialog.errorModeSwitch' => 'Switching between consumer-only and reverse-proxy mode requires deleting the integration and re-registering — name and route_prefix can\'t change in place.',
 			'web.integrations.edit_dialog.updatedToast' => 'Integration updated',
@@ -19742,20 +19709,9 @@ extension on Translations {
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => 'Route prefix',
 			'integrations.form.routePrefixHelper' => 'Reachable as /api/v1/<prefix>/...',
-			'integrations.form.fieldScopes' => 'Scopes (optional)',
-			'integrations.form.scopesHelper' => 'Comma-separated. Empty = server defaults.',
 			'integrations.form.fieldVersion' => 'Version (optional)',
 			'integrations.form.validateBaseUrl' => 'Base URL is required.',
-			'integrations.form.editFieldScopes' => 'Scopes',
-			'integrations.form.editScopesHelper' => 'Comma-separated.',
 			'integrations.form.editFieldVersion' => 'Version',
-			'integrations.form.systemPromptLabel' => 'System prompt',
-			'integrations.form.systemPromptHint' => 'Prepended to every session this integration spawns. Empty = none.',
-			'integrations.form.mcpServersLabel' => 'MCP servers',
-			'integrations.form.mcpServersHint' => 'JSON array of MCP server specs. Empty array = none.',
-			'integrations.form.mcpServersInvalid' => 'MCP servers must be a valid JSON array.',
-			'integrations.form.bypassPermissionsLabel' => 'Bypass permissions',
-			'integrations.form.bypassPermissionsHint' => 'Skip permission prompts for spawned sessions. Use with care.',
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
 			'integrations.form.copyCopied' => 'Copied',
 			'integrations.form.copyCopy' => 'Copy',
@@ -19976,8 +19932,6 @@ extension on Translations {
 			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
 			'backups.emptyNoBackups.headline' => 'No backups yet',
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restartToActivate' => 'Restart opendray to activate backups',
 			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
 			'backups.keyFileLabel' => 'Key file',
@@ -19989,6 +19943,8 @@ extension on Translations {
 			'backups.wizard.savePassphrase' => 'Save passphrase',
 			'backups.wizard.generateHint' => 'Server generates a cryptographically random passphrase, you copy it to a password manager, then commit.',
 			'backups.wizard.helperRecommended' => 'Recommended: 40+ chars from a password manager',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saveNowHeader' => 'Save this passphrase NOW',
 			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
 			'backups.overviewTargets' => 'Targets',
@@ -20490,8 +20446,6 @@ extension on Translations {
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memories',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.summaryCard.integrations' => 'Integrations',
 			'dataExport.import.summaryCard.customTasks' => 'Custom tasks',
 			'dataExport.import.summaryCard.created' => 'created',
@@ -20503,6 +20457,8 @@ extension on Translations {
 			'dataExport.imports.listFailedToast' => ({required Object error}) => 'Failed to load imports: ${error}',
 			'dataExport.imports.noneCounts' => '(no counts)',
 			'dataExport.imports.sourceUnknown' => '(unknown source)',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.imports.columns.id' => 'ID',
 			'dataExport.imports.columns.status' => 'Status',
 			'dataExport.imports.columns.source' => 'Source',

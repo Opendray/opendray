@@ -2107,20 +2107,9 @@ class _TranslationsIntegrationsFormZh extends TranslationsIntegrationsFormEn {
 	@override String get fieldBaseUrl => 'Base URL';
 	@override String get fieldRoutePrefix => '路由前缀';
 	@override String get routePrefixHelper => '可通过 /api/v1/<前缀>/... 访问';
-	@override String get fieldScopes => '范围（可选）';
-	@override String get scopesHelper => '逗号分隔。留空 = 服务器默认。';
 	@override String get fieldVersion => '版本（可选）';
 	@override String get validateBaseUrl => '必须填写 Base URL。';
-	@override String get editFieldScopes => '范围';
-	@override String get editScopesHelper => '逗号分隔。';
 	@override String get editFieldVersion => '版本';
-	@override String get systemPromptLabel => '系统提示词';
-	@override String get systemPromptHint => '添加到此集成创建的每个会话开头。留空 = 无。';
-	@override String get mcpServersLabel => 'MCP 服务器';
-	@override String get mcpServersHint => 'MCP 服务器规格的 JSON 数组。空数组 = 无。';
-	@override String get mcpServersInvalid => 'MCP 服务器必须是有效的 JSON 数组。';
-	@override String get bypassPermissionsLabel => '绕过权限';
-	@override String get bypassPermissionsHint => '为创建的会话跳过权限确认。请谨慎使用。';
 	@override String get apiKeyWarn => '此 key 只显示这一次。';
 	@override String get copyCopied => '已复制';
 	@override String get copyCopy => '复制';
@@ -4482,7 +4471,7 @@ class _TranslationsWebIntegrationsEditDialogZh extends TranslationsWebIntegratio
 	@override String get bypassPermissionsLabel => '跳过权限确认';
 	@override String get bypassPermissionsHint => '自动批准工具调用 — 此集成无人值守运行，没有操作员确认提示。';
 	@override String get mcpServersLabel => 'MCP 服务器';
-	@override String mcpServersHint({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON 数组，例如 [${"name"} }]';
+	@override String get mcpServersHint => 'MCP 服务器对象的 JSON 数组 —— 每项含 name、command、args、env(sse/http 用 url/headers)。空数组 = 无。';
 	@override String get mcpServersInvalid => 'MCP 服务器必须是合法的 JSON 数组。';
 	@override String get errorModeSwitch => '在仅消费型与反向代理型之间切换需要删除并重新注册 — name 和 route_prefix 无法原地修改。';
 	@override String get updatedToast => '集成已更新';
@@ -10145,7 +10134,7 @@ extension on TranslationsZh {
 			'web.integrations.edit_dialog.bypassPermissionsLabel' => '跳过权限确认',
 			'web.integrations.edit_dialog.bypassPermissionsHint' => '自动批准工具调用 — 此集成无人值守运行，没有操作员确认提示。',
 			'web.integrations.edit_dialog.mcpServersLabel' => 'MCP 服务器',
-			'web.integrations.edit_dialog.mcpServersHint' => ({required "...", "command": "...", "args": ["..."], "env": { "K": "V" "name"}) => 'JSON 数组，例如 [${"name"} }]',
+			'web.integrations.edit_dialog.mcpServersHint' => 'MCP 服务器对象的 JSON 数组 —— 每项含 name、command、args、env(sse/http 用 url/headers)。空数组 = 无。',
 			'web.integrations.edit_dialog.mcpServersInvalid' => 'MCP 服务器必须是合法的 JSON 数组。',
 			'web.integrations.edit_dialog.errorModeSwitch' => '在仅消费型与反向代理型之间切换需要删除并重新注册 — name 和 route_prefix 无法原地修改。',
 			'web.integrations.edit_dialog.updatedToast' => '集成已更新',
@@ -11840,20 +11829,9 @@ extension on TranslationsZh {
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => '路由前缀',
 			'integrations.form.routePrefixHelper' => '可通过 /api/v1/<前缀>/... 访问',
-			'integrations.form.fieldScopes' => '范围（可选）',
-			'integrations.form.scopesHelper' => '逗号分隔。留空 = 服务器默认。',
 			'integrations.form.fieldVersion' => '版本（可选）',
 			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
-			'integrations.form.editFieldScopes' => '范围',
-			'integrations.form.editScopesHelper' => '逗号分隔。',
 			'integrations.form.editFieldVersion' => '版本',
-			'integrations.form.systemPromptLabel' => '系统提示词',
-			'integrations.form.systemPromptHint' => '添加到此集成创建的每个会话开头。留空 = 无。',
-			'integrations.form.mcpServersLabel' => 'MCP 服务器',
-			'integrations.form.mcpServersHint' => 'MCP 服务器规格的 JSON 数组。空数组 = 无。',
-			'integrations.form.mcpServersInvalid' => 'MCP 服务器必须是有效的 JSON 数组。',
-			'integrations.form.bypassPermissionsLabel' => '绕过权限',
-			'integrations.form.bypassPermissionsHint' => '为创建的会话跳过权限确认。请谨慎使用。',
 			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
 			'integrations.form.copyCopied' => '已复制',
 			'integrations.form.copyCopy' => '复制',
@@ -12074,8 +12052,6 @@ extension on TranslationsZh {
 			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
 			'backups.emptyNoBackups.headline' => '暂无备份',
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restartToActivate' => '重启 opendray 以激活备份',
 			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
 			'backups.keyFileLabel' => '密钥文件',
@@ -12087,6 +12063,8 @@ extension on TranslationsZh {
 			'backups.wizard.savePassphrase' => '保存密语',
 			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
 			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saveNowHeader' => '立即保存这个密语',
 			'backups.wizard.saveNowBody' => '此处只显示一次。之后无法从 opendray 取回。',
 			'backups.overviewTargets' => '目标',
@@ -12588,8 +12566,6 @@ extension on TranslationsZh {
 			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
 			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
 			'dataExport.import.summaryCard.memories' => '记忆',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.summaryCard.integrations' => '集成',
 			'dataExport.import.summaryCard.customTasks' => '自定义任务',
 			'dataExport.import.summaryCard.created' => '创建',
@@ -12601,6 +12577,8 @@ extension on TranslationsZh {
 			'dataExport.imports.listFailedToast' => ({required Object error}) => '加载导入失败：${error}',
 			'dataExport.imports.noneCounts' => '（无计数）',
 			'dataExport.imports.sourceUnknown' => '（未知来源）',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.imports.columns.id' => 'ID',
 			'dataExport.imports.columns.status' => '状态',
 			'dataExport.imports.columns.source' => '来源',

@@ -49,6 +49,11 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
   int get _inboxTabIndex => _sections.length + 1;
   AsyncValue<List<String>> _projectKeys = const AsyncValue.loading();
   String? _selectedKey;
+  // Set when the blueprint fetch fails. We deliberately do NOT substitute a
+  // hardcoded section set on failure (that silently hides custom sections —
+  // an operator adds a page on web and it vanishes on mobile). Instead the
+  // build surfaces a retry banner and keeps whatever sections loaded.
+  Object? _blueprintError;
 
   // Per-tab state. Kept in the parent so tab swipes don't tear down.
   AsyncValue<List<ProjectDoc>> _docs = const AsyncValue.loading();
@@ -87,34 +92,6 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       initialIndex: prevIndex < n ? prevIndex : 0,
     );
     old?.dispose();
-  }
-
-  // Defensive fallback used ONLY when the blueprint fetch fails on first load,
-  // so the screen still renders its standard tabs. The gateway normally seeds
-  // these (see projectdoc.defaultSections), so this is a safety net.
-  List<BlueprintSection> _fallbackSections(String cwd) {
-    BlueprintSection mk(String slug, String title, int pos, String mode,
-            {String wp = 'proposal', bool pinned = false}) =>
-        BlueprintSection(
-          cwd: cwd,
-          slug: slug,
-          title: title,
-          description: '',
-          position: pos,
-          maintainerMode: mode,
-          writePolicy: wp,
-          promptHint: '',
-          pinned: pinned,
-          inject: true,
-        );
-    return [
-      mk('overview', 'Overview', 0, 'ai', pinned: true),
-      mk('goal', 'Goal', 1, 'ai'),
-      mk('plan', 'Plan', 2, 'ai'),
-      mk('current_objective', 'Current Objective', 3, 'ai', wp: 'direct'),
-      mk('tech_stack', 'Tech stack', 4, 'scanner'),
-      mk('recent_activity', 'Recent activity', 5, 'scanner'),
-    ];
   }
 
   Future<void> _loadKeys() async {
@@ -183,17 +160,20 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       if (!mounted) return;
       setState(() {
         _sections = secs;
+        _blueprintError = null;
         _ensureTabController(secs.length + 3);
       });
-    } on ApiException catch (_) {
-      // Don't block the screen on a blueprint hiccup — fall back to the
-      // standard section set so the tabs (incl. current_objective) still show.
-      if (mounted && _sections.isEmpty) {
-        setState(() {
-          _sections = _fallbackSections(cwd);
-          _ensureTabController(_sections.length + 3);
-        });
-      }
+    } on ApiException catch (e) {
+      // Web parity: NEVER substitute a hardcoded section set on failure —
+      // that silently drops custom blueprint sections (the operator adds a
+      // page on web, it vanishes on mobile). Surface the error with a retry
+      // banner and keep whatever sections already loaded; an empty set still
+      // renders the three fixed tabs (Journal / Inbox / Hygiene).
+      if (!mounted) return;
+      setState(() {
+        _blueprintError = e;
+        _ensureTabController(_sections.length + 3);
+      });
     }
     try {
       final docs = await api.listDocs(cwd);
@@ -398,6 +378,10 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
           _cwdPicker(),
           if (_selectedKey != null && _selectedKey!.isNotEmpty)
             _LifecycleBar(cwd: _selectedKey!),
+          if (_blueprintError != null &&
+              _selectedKey != null &&
+              _selectedKey!.isNotEmpty)
+            _blueprintErrorBar(),
           const SizedBox(height: 8),
           Expanded(
             child: tabs == null
@@ -411,6 +395,42 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                       _hygieneTab(),
                     ],
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // _blueprintErrorBar replaces the old silent hardcoded fallback: when the
+  // blueprint fetch fails we tell the operator the section list may be
+  // incomplete and offer a retry — instead of inventing a default set that
+  // hides custom sections. The three fixed tabs still render underneath.
+  Widget _blueprintErrorBar() {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+      decoration: BoxDecoration(
+        color: scheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              size: 18, color: scheme.onErrorContainer),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              t.project.loadFailed(error: '${_blueprintError ?? ''}'),
+              style: TextStyle(fontSize: 12, color: scheme.onErrorContainer),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final cwd = _selectedKey;
+              if (cwd != null && cwd.isNotEmpty) _loadAll(cwd);
+            },
+            child: Text(t.common.retry),
           ),
         ],
       ),
