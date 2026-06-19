@@ -20,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/opendray/opendray-v2/internal/audit"
+	"github.com/opendray/opendray-v2/internal/autoloop"
 	"github.com/opendray/opendray-v2/internal/auth"
 	"github.com/opendray/opendray-v2/internal/backup"
 	"github.com/opendray/opendray-v2/internal/catalog"
@@ -73,6 +74,7 @@ type App struct {
 	store           *store.Store
 	bus             *eventbus.Hub
 	sessions        *session.Manager
+	loopEngine      *autoloop.Engine // Loop Engine; cancels loop goroutines on shutdown (loops stay 'running' for reconcile)
 	channels        *channel.Hub
 	integrations    *integration.Service
 	healthCheck     *integration.HealthChecker
@@ -774,6 +776,21 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Pool(), summarizerRegistry, cliacctSvc, log)
 	memoryWorkerHandlers := memworker.NewHandlers(memoryWorkerRegistry, log)
 
+	// Loop Engine (autoloop) — gateway-level Loop Engineering: drive a session
+	// repeatedly on a fixed interval, or until a judged goal is met. The engine
+	// drives sessions at the PTY layer, so it is provider-agnostic; sessionMgr
+	// satisfies autoloop.SessionDriver directly. Goal verification routes
+	// through the memory-worker registry (TaskLoopJudge, summarizer by default).
+	loopEngine := autoloop.New(
+		autoloop.NewPgStore(st.Pool()),
+		sessionMgr,
+		autoloop.NewWorkerJudge(memoryWorkerRegistry, 90*time.Second),
+		bus, log)
+	loopHandlers := autoloop.NewHandlers(loopEngine, log)
+	if err := loopEngine.ReconcileStartup(ctx); err != nil {
+		log.Warn("autoloop: reconcile re-arm failed", "err", err)
+	}
+
 	// M-PA — memory health dashboard. Aggregates "is the memory
 	// system actually working?" metrics across both subsystems
 	// (layer 5 + projectdoc) for one HTTP read.
@@ -1263,6 +1280,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				r.Use(intgrCallLogger.Middleware)
 				authHandlers.MountProtected(r)
 				sessionHandlers.Mount(r)
+				loopHandlers.Mount(r)
 				catalogHandlers.Mount(r)
 				cliacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
@@ -1288,6 +1306,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		log:                  log,
 		store:                st,
 		bus:                  bus,
+		loopEngine:           loopEngine,
 		sessions:             sessionMgr,
 		channels:             channelHub,
 		integrations:         intgrSvc,
@@ -1518,6 +1537,13 @@ func (a *App) Run(ctx context.Context) error {
 
 	if err := a.server.Shutdown(shutdownCtx); err != nil {
 		a.log.Error("http shutdown", "err", err)
+	}
+	// Stop loop goroutines before the sessions they drive. Loops keep their
+	// 'running' status in the DB so ReconcileStartup re-arms them next boot.
+	if a.loopEngine != nil {
+		if err := a.loopEngine.Shutdown(shutdownCtx); err != nil {
+			a.log.Error("autoloop shutdown", "err", err)
+		}
 	}
 	if err := a.sessions.Shutdown(shutdownCtx); err != nil {
 		a.log.Error("session shutdown", "err", err)

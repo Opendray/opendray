@@ -63,6 +63,13 @@ const (
 	// operator discusses a doc section or knowledge page with the AI
 	// and the AI produces a revision (apply or proposal).
 	TaskCuration TaskKind = "curation"
+	// TaskLoopJudge is the Loop Engine (autoloop) goal-mode verifier:
+	// given a goal and the latest turn's output, decide whether to
+	// continue (with a next prompt), the goal is done, it should
+	// escalate to a human, or it failed. Seeded summarizer by default
+	// so it is provider-agnostic — the judge is decoupled from whichever
+	// CLI the driven session runs.
+	TaskLoopJudge TaskKind = "loop_judge"
 )
 
 // AllTasks returns every recognised TaskKind in a stable order.
@@ -72,7 +79,7 @@ func AllTasks() []TaskKind {
 	return []TaskKind{
 		TaskGatekeeper, TaskCleaner, TaskGitActivity, TaskTranscript,
 		TaskPlanDrift, TaskConflictDetector, TaskCapture,
-		TaskBlueprint, TaskCuration,
+		TaskBlueprint, TaskCuration, TaskLoopJudge,
 	}
 }
 
