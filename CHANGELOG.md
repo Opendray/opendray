@@ -10,6 +10,27 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.9.1] — 2026-06-19
+
+### Fixed
+
+- **Escalating a Cortex discussion now jumps straight into the spawned
+  session and continues on the same CLI + account.** The escalated session
+  surfaces immediately — web deep-links it via `?open=`, mobile pushes the
+  route — instead of only appearing on the next manual list refresh. It also
+  inherits the conversation's provider / model / Claude-account override
+  rather than always falling back to Claude. (#390)
+
+### Changed
+
+- **Refreshed the third-party integration guide and its searchable
+  `kb_integrations` KB page** to match the shipped v2.9.0 contract:
+  `permission_mode` (`default` | `bypass`) replacing the old
+  `bypass_permissions` boolean, the per-principal `integration:<id>` memory
+  zone, the enforced `providers:write` / `providers:update` scopes, and the
+  reserved `agent_id` field. Removes the stale `FORTHCOMING` framing so any
+  AI or developer reading it gets the current contract. (#391)
+
 ## [v2.9.0] — 2026-06-19
 
 ### Added
