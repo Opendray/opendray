@@ -2234,11 +2234,20 @@ type curationSessionLauncher struct {
 	mgr *session.Manager
 }
 
-func (l *curationSessionLauncher) Launch(ctx context.Context, cwd, name, seedPrompt string) (string, error) {
+func (l *curationSessionLauncher) Launch(ctx context.Context, spec cortex.LaunchSpec) (string, error) {
+	// Continue the escalated session on the same CLI + account the
+	// discussion ran on. A conversation with no cloud-agent override (or
+	// a local-summarizer override, which has no CLI) falls back to claude.
+	providerID := spec.ProviderID
+	if providerID == "" {
+		providerID = "claude"
+	}
 	sess, err := l.mgr.Create(ctx, session.CreateRequest{
-		Name:       name,
-		ProviderID: "claude",
-		Cwd:        cwd,
+		Name:            spec.Name,
+		ProviderID:      providerID,
+		Model:           spec.Model,
+		ClaudeAccountID: spec.ClaudeAccountID,
+		Cwd:             spec.Cwd,
 	})
 	if err != nil {
 		return "", err
@@ -2255,7 +2264,7 @@ func (l *curationSessionLauncher) Launch(ctx context.Context, cwd, name, seedPro
 		}
 		time.Sleep(500 * time.Millisecond)
 		_ = l.mgr.Input(bg, sid, []byte{'\r'})
-	}(sess.ID, seedPrompt)
+	}(sess.ID, spec.SeedPrompt)
 	return sess.ID, nil
 }
 

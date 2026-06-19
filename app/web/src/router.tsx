@@ -58,6 +58,11 @@ const sessionsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/sessions',
   component: SessionsPage,
+  // `open` deep-links a session to auto-select on arrival — used when
+  // escalating a Cortex discussion into a session. Without this the
+  // param is stripped and the new session never gets focused.
+  validateSearch: (search): { open?: string } =>
+    typeof search.open === 'string' ? { open: search.open } : {},
 })
 
 const providersRoute = createRoute({

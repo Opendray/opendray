@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/cortex_api.dart';
@@ -9,6 +10,7 @@ import 'package:opendray/core/api/memory_api.dart';
 import 'package:opendray/core/api/memory_summarizers_api.dart';
 import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // CurationChat — the conversational maintenance channel (Cortex Phase 4),
@@ -326,6 +328,14 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
         _escalating = false;
       });
       _snack(t.web.cortex.chat.escalatedToast);
+      // Refresh the session list and jump straight into the freshly
+      // spawned session — mirrors web's ?open= deep-link. Without this
+      // the new session only surfaces on the next manual list refresh.
+      ref.invalidate(sessionsListProvider);
+      final sid = updated.escalatedSessionId;
+      if (sid.isNotEmpty) {
+        unawaited(context.push('/session/$sid'));
+      }
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _escalating = false);

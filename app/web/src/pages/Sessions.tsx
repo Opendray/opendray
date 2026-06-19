@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
   ImagePlus,
   Layers,
@@ -68,6 +69,25 @@ export function SessionsPage() {
   })
 
   const currentSession = sessions?.find((s) => s.id === currentId)
+
+  // Deep-link: /sessions?open=<id> auto-selects a session on arrival —
+  // used when a Cortex discussion is escalated into a session. We wait
+  // for the list to actually contain the row (the escalate flow
+  // invalidates ['sessions'], so it lands within one refetch), open it,
+  // then strip the param so a manual tab switch isn't yanked back.
+  const search = useSearch({ strict: false }) as { open?: string }
+  const navigate = useNavigate()
+  const openedParamRef = useRef<string | null>(null)
+  useEffect(() => {
+    const id = search.open
+    if (!id || !sessions) return
+    if (openedParamRef.current === id) return
+    const target = sessions.find((s) => s.id === id)
+    if (!target) return
+    openedParamRef.current = id
+    open({ id: target.id, name: target.name || target.provider_id })
+    navigate({ to: '/sessions', search: {}, replace: true })
+  }, [search.open, sessions, open, navigate])
 
   const remove = useMutation({
     mutationFn: removeSession,
