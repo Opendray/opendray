@@ -256,8 +256,12 @@ export function CurationChat({
     onSuccess: (conv) => {
       toast.success(t('web.cortex.chat.escalatedToast'))
       qc.invalidateQueries({ queryKey: ['cortex-conversation', conv.id] })
+      // Force the session list to refetch so the freshly-spawned session
+      // is present by the time /sessions reads it (its ?open= deep-link
+      // waits for the row before auto-selecting).
+      qc.invalidateQueries({ queryKey: ['sessions'] })
       if (conv.escalated_session_id) {
-        navigate({ to: '/sessions', search: { open: conv.escalated_session_id } as any })
+        navigate({ to: '/sessions', search: { open: conv.escalated_session_id } })
       }
     },
     onError: (e: Error) =>

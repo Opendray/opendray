@@ -21,11 +21,26 @@ type ContextSource interface {
 	RelevantContext(ctx context.Context, cwd, query string, topK int) (string, error)
 }
 
+// LaunchSpec describes the session to spawn when escalating a
+// conversation. ProviderID/Model/ClaudeAccountID carry the
+// conversation's cloud-agent override so the escalated session continues
+// on the SAME CLI + account the discussion ran on. An empty ProviderID
+// (no override, or a local-summarizer override that has no CLI to
+// continue on) lets the launcher pick its default.
+type LaunchSpec struct {
+	Cwd             string
+	Name            string
+	SeedPrompt      string
+	ProviderID      string
+	Model           string
+	ClaudeAccountID string
+}
+
 // SessionLauncher escalates a conversation into a full agent session.
 // Implemented in the app over session.Manager — cortex never imports
 // internal/session.
 type SessionLauncher interface {
-	Launch(ctx context.Context, cwd, name, seedPrompt string) (sessionID string, err error)
+	Launch(ctx context.Context, spec LaunchSpec) (sessionID string, err error)
 }
 
 // CurationService runs the conversational maintenance channel.
@@ -427,7 +442,14 @@ func (s *CurationService) Escalate(ctx context.Context, conversationID string) (
 	seed.WriteString("Use the project_goal_set / project_plan_set MCP tools (or the project-docs HTTP API) so changes flow through the standard proposal/approval path — do not edit doc mirrors on disk.\n")
 
 	name := "curation: " + conv.TargetSlug
-	sessionID, err := s.sessions.Launch(ctx, cwd, name, seed.String())
+	sessionID, err := s.sessions.Launch(ctx, LaunchSpec{
+		Cwd:             cwd,
+		Name:            name,
+		SeedPrompt:      seed.String(),
+		ProviderID:      conv.ProviderID,
+		Model:           conv.Model,
+		ClaudeAccountID: conv.ClaudeAccountID,
+	})
 	if err != nil {
 		return Conversation{}, fmt.Errorf("cortex: launch session: %w", err)
 	}
