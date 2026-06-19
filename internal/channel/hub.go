@@ -43,6 +43,15 @@ type Hub struct {
 	notifyMu    sync.Mutex
 	notifyState map[string]map[string]time.Time // channelID -> "topic|sessionID" -> sent-at
 
+	// loopSessions is the set of session ids currently driven by a Loop
+	// Engine (autoloop) loop. The hub suppresses routine per-turn idle
+	// cards for these sessions — a loop fires an idle every iteration as the
+	// agent settles, which would otherwise broadcast a card to every channel
+	// each turn. Loop milestones (escalated / failed) notify instead, via
+	// dispatchLoop. Maintained from autoloop.* lifecycle events.
+	loopMu       sync.Mutex
+	loopSessions map[string]bool
+
 	lastSessMu sync.RWMutex
 	lastSess   map[string]string // channelID -> session_id of the most-recent notification
 
@@ -134,6 +143,7 @@ func NewHub(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger) *Hub {
 		cmds:          NewCommandRegistry(),
 		channels:      make(map[string]Channel),
 		notifyState:   make(map[string]map[string]time.Time),
+		loopSessions:  make(map[string]bool),
 		lastSess:      make(map[string]string),
 		outboundIndex: make(map[string]map[string]outboundEntry),
 		activeSess:    make(map[string]string),
@@ -976,6 +986,12 @@ func (h *Hub) runOutbound(ctx context.Context) {
 	defer unsubBF()
 	chVerifyFail, unsubVF := h.bus.Subscribe("backup.verify_failed", 32)
 	defer unsubVF()
+	// Loop Engine (autoloop) lifecycle. The wildcard catches started /
+	// resumed (which mark a session loop-driven, so its idle cards stay
+	// suppressed) and the milestone outcomes escalated / failed (which
+	// broadcast a "needs attention" card). See dispatchLoop.
+	chLoop, unsubLoop := h.bus.Subscribe("autoloop.*", 64)
+	defer unsubLoop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -1026,6 +1042,11 @@ func (h *Hub) runOutbound(ctx context.Context) {
 				return
 			}
 			h.dispatch(ctx, ev)
+		case ev, ok := <-chLoop:
+			if !ok {
+				return
+			}
+			h.dispatchLoop(ctx, ev)
 		}
 	}
 }
@@ -1049,6 +1070,15 @@ func (h *Hub) dispatch(ctx context.Context, ev eventbus.Event) {
 	}
 
 	sessionID := sessionIDFromEvent(ev)
+
+	// A loop-driven session fires an idle every iteration as the agent
+	// settles between turns; broadcasting that as a card to every channel
+	// each turn is pure noise. Suppress routine idle cards for loop
+	// sessions — the loop's own milestones (escalated / failed) notify
+	// instead, via dispatchLoop.
+	if ev.Topic == "session.idle" && sessionID != "" && h.isLoopSession(sessionID) {
+		return
+	}
 
 	// The repeat-policy suppression key is the session id for session
 	// events. Non-session events (e.g. backup.*) carry no session_id, so

@@ -39,6 +39,31 @@ func NewHandlers(svc LoopService, log *slog.Logger) *Handlers {
 	return &Handlers{svc: svc, log: log.With("component", "autoloop.http")}
 }
 
+// Loop scopes. Enforced only for integration principals (admin and the
+// no-principal test path bypass). Not in defaultScopes — an operator grants
+// loop:* explicitly when registering an integration that should drive loops.
+const (
+	ScopeLoopCreate = "loop:create"
+	ScopeLoopRead   = "loop:read"
+	ScopeLoopWrite  = "loop:write"
+)
+
+// allow returns true when the request's principal may use scope. Admin
+// principals and an absent principal (unauthenticated test path) are allowed;
+// an integration principal must hold the scope, else allow writes a 403 and
+// returns false.
+func (h *Handlers) allow(w http.ResponseWriter, r *http.Request, scope string) bool {
+	p, ok := integration.CurrentPrincipal(r.Context())
+	if !ok || p.Kind != integration.KindIntegration {
+		return true
+	}
+	if integration.HasScope(p.Scopes, scope) {
+		return true
+	}
+	writeErr(w, http.StatusForbidden, integration.ErrInsufficientScope)
+	return false
+}
+
 // Mount adds the loop routes. Caller mounts under /api/v1 in the combined-auth
 // group, so both an operator (admin bearer) and an integration (API key) can
 // drive loops; origin is derived from the authenticated principal, never the
@@ -72,6 +97,9 @@ type createBody struct {
 }
 
 func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, ScopeLoopCreate) {
+		return
+	}
 	var body createBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
@@ -103,6 +131,9 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, ScopeLoopRead) {
+		return
+	}
 	loops, err := h.svc.List(r.Context())
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, err)
@@ -115,6 +146,9 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, ScopeLoopRead) {
+		return
+	}
 	l, err := h.svc.Get(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
 		writeErr(w, statusForErr(err), err)
@@ -124,6 +158,9 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, ScopeLoopRead) {
+		return
+	}
 	rs, err := h.svc.Runs(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
 		writeErr(w, statusForErr(err), err)
@@ -140,6 +177,9 @@ func (h *Handlers) resume(w http.ResponseWriter, r *http.Request) { h.transition
 func (h *Handlers) stop(w http.ResponseWriter, r *http.Request)   { h.transition(w, r, h.svc.Stop) }
 
 func (h *Handlers) transition(w http.ResponseWriter, r *http.Request, fn func(context.Context, string) error) {
+	if !h.allow(w, r, ScopeLoopWrite) {
+		return
+	}
 	id := chi.URLParam(r, "id")
 	if err := fn(r.Context(), id); err != nil {
 		writeErr(w, statusForErr(err), err)

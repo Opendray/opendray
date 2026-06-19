@@ -78,7 +78,11 @@ func TestCreateOperatorOrigin(t *testing.T) {
 
 func TestCreateIntegrationOrigin(t *testing.T) {
 	svc := &fakeSvc{}
-	p := &integration.Principal{Kind: integration.KindIntegration, ID: "intg_42"}
+	p := &integration.Principal{
+		Kind:   integration.KindIntegration,
+		ID:     "intg_42",
+		Scopes: []string{ScopeLoopCreate},
+	}
 	h := testRouter(svc, p)
 	dl := time.Now().Add(time.Hour).Format(time.RFC3339)
 	body := `{"session_id":"s1","kind":"interval","prompt":"p","interval_seconds":30,"deadline_at":"` + dl + `"}`
@@ -155,5 +159,39 @@ func TestRunsEndpoint(t *testing.T) {
 	var rs []Run
 	if err := json.Unmarshal(rec.Body.Bytes(), &rs); err != nil || len(rs) != 1 {
 		t.Fatalf("runs body = %s (err %v)", rec.Body, err)
+	}
+}
+
+func TestIntegrationForbiddenWithoutScope(t *testing.T) {
+	// An integration principal missing the required scope is rejected; an
+	// admin / no principal (operator UI, tests) is not.
+	noScope := &integration.Principal{Kind: integration.KindIntegration, ID: "i1"}
+	dl := time.Now().Add(time.Hour).Format(time.RFC3339)
+	body := `{"session_id":"s1","kind":"goal","goal":"g","prompt":"p","deadline_at":"` + dl + `"}`
+
+	rec := do(t, testRouter(&fakeSvc{}, noScope), http.MethodPost, "/loops", body)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("create without loop:create = %d, want 403", rec.Code)
+	}
+	rec = do(t, testRouter(&fakeSvc{}, noScope), http.MethodGet, "/loops", "")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("list without loop:read = %d, want 403", rec.Code)
+	}
+	rec = do(t, testRouter(&fakeSvc{}, noScope), http.MethodPost, "/loops/lp_1/stop", "")
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("stop without loop:write = %d, want 403", rec.Code)
+	}
+}
+
+func TestIntegrationAllowedWithScope(t *testing.T) {
+	reader := &integration.Principal{
+		Kind:   integration.KindIntegration,
+		ID:     "i1",
+		Scopes: []string{ScopeLoopRead},
+	}
+	svc := &fakeSvc{loop: Loop{ID: "lp_1"}}
+	rec := do(t, testRouter(svc, reader), http.MethodGet, "/loops", "")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list with loop:read = %d, want 200", rec.Code)
 	}
 }
