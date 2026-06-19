@@ -70,6 +70,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMemoryQuarantineZh memoryQuarantine = _TranslationsMemoryQuarantineZh._(_root);
 	@override late final _TranslationsCortexHubZh cortexHub = _TranslationsCortexHubZh._(_root);
 	@override late final _TranslationsCortexSettingsZh cortexSettings = _TranslationsCortexSettingsZh._(_root);
+	@override late final _TranslationsLoopsZh loops = _TranslationsLoopsZh._(_root);
 }
 
 // Path: common
@@ -136,6 +137,7 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
 	@override String get updateAvailable => '有可用更新';
+	@override String get loops => '循环';
 }
 
 // Path: web
@@ -174,6 +176,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebExportZh export = _TranslationsWebExportZh._(_root);
 	@override late final _TranslationsWebKnowledgeZh knowledge = _TranslationsWebKnowledgeZh._(_root);
 	@override late final _TranslationsWebCortexZh cortex = _TranslationsWebCortexZh._(_root);
+	@override late final _TranslationsWebLoopsZh loops = _TranslationsWebLoopsZh._(_root);
 }
 
 // Path: more
@@ -1043,6 +1046,29 @@ class _TranslationsCortexSettingsZh extends TranslationsCortexSettingsEn {
 	@override String get defaultBadge => '默认';
 }
 
+// Path: loops
+class _TranslationsLoopsZh extends TranslationsLoopsEn {
+	_TranslationsLoopsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '循环';
+	@override String get subtitle => '自主 agent 循环 —— 按间隔运行 session,或跑到目标达成。';
+	@override String get create => '创建循环';
+	@override String get createHint => '循环驱动一个已有 session,必须设置截止时间。';
+	@override String get empty => '还没有循环。创建一个来自主驱动 session。';
+	@override String get createdToast => '已创建循环';
+	@override late final _TranslationsLoopsKindZh kind = _TranslationsLoopsKindZh._(_root);
+	@override late final _TranslationsLoopsKindHintZh kindHint = _TranslationsLoopsKindHintZh._(_root);
+	@override late final _TranslationsLoopsStatusZh status = _TranslationsLoopsStatusZh._(_root);
+	@override late final _TranslationsLoopsOriginZh origin = _TranslationsLoopsOriginZh._(_root);
+	@override String iterationOf({required Object n, required Object max}) => '${n} / ${max}';
+	@override late final _TranslationsLoopsActionZh action = _TranslationsLoopsActionZh._(_root);
+	@override late final _TranslationsLoopsFieldZh field = _TranslationsLoopsFieldZh._(_root);
+	@override late final _TranslationsLoopsRunsZh runs = _TranslationsLoopsRunsZh._(_root);
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1676,6 +1702,29 @@ class _TranslationsWebCortexZh extends TranslationsWebCortexEn {
 	@override late final _TranslationsWebCortexSettingsZh settings = _TranslationsWebCortexSettingsZh._(_root);
 }
 
+// Path: web.loops
+class _TranslationsWebLoopsZh extends TranslationsWebLoopsEn {
+	_TranslationsWebLoopsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '循环';
+	@override String get subtitle => '自主 agent 循环 —— 按间隔运行 session,或跑到目标达成。';
+	@override String get create => '创建循环';
+	@override String get createHint => '循环驱动一个已有 session,必须设置截止时间。';
+	@override String get empty => '还没有循环。创建一个来自主驱动 session。';
+	@override String get createdToast => '已创建循环';
+	@override late final _TranslationsWebLoopsKindZh kind = _TranslationsWebLoopsKindZh._(_root);
+	@override late final _TranslationsWebLoopsKindHintZh kindHint = _TranslationsWebLoopsKindHintZh._(_root);
+	@override late final _TranslationsWebLoopsStatusZh status = _TranslationsWebLoopsStatusZh._(_root);
+	@override late final _TranslationsWebLoopsOriginZh origin = _TranslationsWebLoopsOriginZh._(_root);
+	@override String iterationOf({required Object n, required Object max}) => '${n} / ${max}';
+	@override late final _TranslationsWebLoopsActionZh action = _TranslationsWebLoopsActionZh._(_root);
+	@override late final _TranslationsWebLoopsFieldZh field = _TranslationsWebLoopsFieldZh._(_root);
+	@override late final _TranslationsWebLoopsRunsZh runs = _TranslationsWebLoopsRunsZh._(_root);
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityZh extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1726,6 +1775,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
 	@override late final _TranslationsMoreItemsAboutZh about = _TranslationsMoreItemsAboutZh._(_root);
 	@override late final _TranslationsMoreItemsVaultZh vault = _TranslationsMoreItemsVaultZh._(_root);
+	@override late final _TranslationsMoreItemsLoopsZh loops = _TranslationsMoreItemsLoopsZh._(_root);
 }
 
 // Path: activity.filter
@@ -3031,6 +3081,102 @@ class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSe
 	@override String validateInteger({required Object field}) => '「${field}」必须是整数';
 	@override String validateNumber({required Object field}) => '「${field}」必须是数字';
 	@override late final _TranslationsSettingsServerSettingsEmbedderModelZh embedderModel = _TranslationsSettingsServerSettingsEmbedderModelZh._(_root);
+}
+
+// Path: loops.kind
+class _TranslationsLoopsKindZh extends TranslationsLoopsKindEn {
+	_TranslationsLoopsKindZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => '目标';
+	@override String get interval => '定时';
+}
+
+// Path: loops.kindHint
+class _TranslationsLoopsKindHintZh extends TranslationsLoopsKindHintEn {
+	_TranslationsLoopsKindHintZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => '跑到评审判定目标达成';
+	@override String get interval => '每隔 N 秒重发 prompt';
+}
+
+// Path: loops.status
+class _TranslationsLoopsStatusZh extends TranslationsLoopsStatusEn {
+	_TranslationsLoopsStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get pending => '待启动';
+	@override String get running => '运行中';
+	@override String get paused => '已暂停';
+	@override String get done => '已完成';
+	@override String get stopped => '已停止';
+	@override String get failed => '失败';
+	@override String get escalated => '已升级';
+}
+
+// Path: loops.origin
+class _TranslationsLoopsOriginZh extends TranslationsLoopsOriginEn {
+	_TranslationsLoopsOriginZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get integration => '集成';
+}
+
+// Path: loops.action
+class _TranslationsLoopsActionZh extends TranslationsLoopsActionEn {
+	_TranslationsLoopsActionZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get pause => '暂停';
+	@override String get resume => '恢复';
+	@override String get stop => '停止';
+	@override String get details => '详情';
+	@override String get cancel => '取消';
+	@override String get create => '创建';
+}
+
+// Path: loops.field
+class _TranslationsLoopsFieldZh extends TranslationsLoopsFieldEn {
+	_TranslationsLoopsFieldZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get session => 'Session ID';
+	@override String get sessionPlaceholder => '该循环驱动的 session';
+	@override String get kind => '类型';
+	@override String get goal => '目标';
+	@override String get goalPlaceholder => '循环要达成什么';
+	@override String get seedPrompt => '初始 prompt';
+	@override String get prompt => 'Prompt';
+	@override String get promptPlaceholder => '发送给 agent 的指令';
+	@override String get intervalSeconds => '间隔(秒)';
+	@override String get maxIterations => '最大迭代数';
+	@override String get durationMinutes => '截止(分钟)';
+	@override String get failureCap => '失败上限';
+}
+
+// Path: loops.runs
+class _TranslationsLoopsRunsZh extends TranslationsLoopsRunsEn {
+	_TranslationsLoopsRunsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '迭代记录';
+	@override String get empty => '还没有迭代。';
+	@override String iteration({required Object n}) => '第 ${n} 轮';
 }
 
 // Path: web.sessions.list
@@ -5819,6 +5965,102 @@ class _TranslationsWebCortexSettingsZh extends TranslationsWebCortexSettingsEn {
 	@override late final _TranslationsWebCortexSettingsInjectionZh injection = _TranslationsWebCortexSettingsInjectionZh._(_root);
 }
 
+// Path: web.loops.kind
+class _TranslationsWebLoopsKindZh extends TranslationsWebLoopsKindEn {
+	_TranslationsWebLoopsKindZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => '目标';
+	@override String get interval => '定时';
+}
+
+// Path: web.loops.kindHint
+class _TranslationsWebLoopsKindHintZh extends TranslationsWebLoopsKindHintEn {
+	_TranslationsWebLoopsKindHintZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => '跑到评审判定目标达成';
+	@override String get interval => '每隔 N 秒重发 prompt';
+}
+
+// Path: web.loops.status
+class _TranslationsWebLoopsStatusZh extends TranslationsWebLoopsStatusEn {
+	_TranslationsWebLoopsStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get pending => '待启动';
+	@override String get running => '运行中';
+	@override String get paused => '已暂停';
+	@override String get done => '已完成';
+	@override String get stopped => '已停止';
+	@override String get failed => '失败';
+	@override String get escalated => '已升级';
+}
+
+// Path: web.loops.origin
+class _TranslationsWebLoopsOriginZh extends TranslationsWebLoopsOriginEn {
+	_TranslationsWebLoopsOriginZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get integration => '集成';
+}
+
+// Path: web.loops.action
+class _TranslationsWebLoopsActionZh extends TranslationsWebLoopsActionEn {
+	_TranslationsWebLoopsActionZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get pause => '暂停';
+	@override String get resume => '恢复';
+	@override String get stop => '停止';
+	@override String get details => '详情';
+	@override String get cancel => '取消';
+	@override String get create => '创建';
+}
+
+// Path: web.loops.field
+class _TranslationsWebLoopsFieldZh extends TranslationsWebLoopsFieldEn {
+	_TranslationsWebLoopsFieldZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get session => 'Session ID';
+	@override String get sessionPlaceholder => '该循环驱动的 session';
+	@override String get kind => '类型';
+	@override String get goal => '目标';
+	@override String get goalPlaceholder => '循环要达成什么';
+	@override String get seedPrompt => '初始 prompt';
+	@override String get prompt => 'Prompt';
+	@override String get promptPlaceholder => '发送给 agent 的指令';
+	@override String get intervalSeconds => '间隔(秒)';
+	@override String get maxIterations => '最大迭代数';
+	@override String get durationMinutes => '截止(分钟)';
+	@override String get failureCap => '失败上限';
+}
+
+// Path: web.loops.runs
+class _TranslationsWebLoopsRunsZh extends TranslationsWebLoopsRunsEn {
+	_TranslationsWebLoopsRunsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '迭代记录';
+	@override String get empty => '还没有迭代。';
+	@override String iteration({required Object n}) => '第 ${n} 轮';
+}
+
 // Path: more.items.integrations
 class _TranslationsMoreItemsIntegrationsZh extends TranslationsMoreItemsIntegrationsEn {
 	_TranslationsMoreItemsIntegrationsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -6015,6 +6257,17 @@ class _TranslationsMoreItemsVaultZh extends TranslationsMoreItemsVaultEn {
 	// Translations
 	@override String get title => '文档库';
 	@override String get subtitle => '自由 markdown 笔记(Obsidian 同步)';
+}
+
+// Path: more.items.loops
+class _TranslationsMoreItemsLoopsZh extends TranslationsMoreItemsLoopsEn {
+	_TranslationsMoreItemsLoopsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '循环';
+	@override String get subtitle => '自主 agent 循环';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -8998,6 +9251,7 @@ extension on TranslationsZh {
 			'nav.vault' => '文档库',
 			'nav.cortex' => '心智中枢',
 			'nav.updateAvailable' => '有可用更新',
+			'nav.loops' => '循环',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -9470,9 +9724,9 @@ extension on TranslationsZh {
 			'web.project.reset.alsoDeleteMemoriesLabel' => '同时删除 pgvector 记忆',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Agent 存储的长期事实（用户偏好、项目事实）。无法恢复。',
-			'web.project.reset.cancel' => '取消',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.cancel' => '取消',
 			'web.project.reset.deleteForever' => '永久删除',
 			'web.project.reset.successToast' => ({required Object summary}) => '重置：已删除 ${summary}',
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} 份文档',
@@ -9984,9 +10238,9 @@ extension on TranslationsZh {
 			'web.channels.bridge.nameLabel' => 'Bridge 名称',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => '适配器的人类可读标签。会显示在频道列表中。',
-			'web.channels.bridge.tokenLabel' => '适配器 token',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.bridge.tokenLabel' => '适配器 token',
 			'web.channels.bridge.regenerateTooltip' => '重新生成',
 			'web.channels.bridge.copyTooltip' => '复制',
 			'web.channels.bridge.tokenCopiedToast' => '已复制 token',
@@ -10498,9 +10752,9 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.hostLabel' => '主机',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => '端口',
-			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			'web.backups.targetEditor.smb.shareHint' => 'SMB 服务器上的顶层共享名',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
 			'web.backups.targetEditor.smb.userLabel' => '用户',
@@ -11012,9 +11266,9 @@ extension on TranslationsZh {
 			'web.export.form.memories' => '记忆',
 			'web.export.form.memoriesHint' => '跨 CLI 持久化的记忆行（text + scope + metadata）。向量被省略；导入端重嵌入。',
 			'web.export.form.integrations' => '集成',
-			'web.export.form.customTasks' => '自定义任务',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.customTasks' => '自定义任务',
 			'web.export.form.customTasksHint' => '在 Inspector 的 Tasks 标签里展示的运维自定义任务。',
 			'web.export.form.integrationOptions.none' => '无',
 			'web.export.form.integrationOptions.noneHint' => '完全跳过 integrations 表。',
@@ -11304,6 +11558,46 @@ extension on TranslationsZh {
 			'web.cortex.settings.injection.savedToast' => '注入模式已保存——新建会话立即采用，后端无需重启',
 			'web.cortex.settings.injection.saveFailed' => '保存失败',
 			'web.cortex.settings.injection.note' => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。',
+			'web.loops.title' => '循环',
+			'web.loops.subtitle' => '自主 agent 循环 —— 按间隔运行 session,或跑到目标达成。',
+			'web.loops.create' => '创建循环',
+			'web.loops.createHint' => '循环驱动一个已有 session,必须设置截止时间。',
+			'web.loops.empty' => '还没有循环。创建一个来自主驱动 session。',
+			'web.loops.createdToast' => '已创建循环',
+			'web.loops.kind.goal' => '目标',
+			'web.loops.kind.interval' => '定时',
+			'web.loops.kindHint.goal' => '跑到评审判定目标达成',
+			'web.loops.kindHint.interval' => '每隔 N 秒重发 prompt',
+			'web.loops.status.pending' => '待启动',
+			'web.loops.status.running' => '运行中',
+			'web.loops.status.paused' => '已暂停',
+			'web.loops.status.done' => '已完成',
+			'web.loops.status.stopped' => '已停止',
+			'web.loops.status.failed' => '失败',
+			'web.loops.status.escalated' => '已升级',
+			'web.loops.origin.integration' => '集成',
+			'web.loops.iterationOf' => ({required Object n, required Object max}) => '${n} / ${max}',
+			'web.loops.action.pause' => '暂停',
+			'web.loops.action.resume' => '恢复',
+			'web.loops.action.stop' => '停止',
+			'web.loops.action.details' => '详情',
+			'web.loops.action.cancel' => '取消',
+			'web.loops.action.create' => '创建',
+			'web.loops.field.session' => 'Session ID',
+			'web.loops.field.sessionPlaceholder' => '该循环驱动的 session',
+			'web.loops.field.kind' => '类型',
+			'web.loops.field.goal' => '目标',
+			'web.loops.field.goalPlaceholder' => '循环要达成什么',
+			'web.loops.field.seedPrompt' => '初始 prompt',
+			'web.loops.field.prompt' => 'Prompt',
+			'web.loops.field.promptPlaceholder' => '发送给 agent 的指令',
+			'web.loops.field.intervalSeconds' => '间隔(秒)',
+			'web.loops.field.maxIterations' => '最大迭代数',
+			'web.loops.field.durationMinutes' => '截止(分钟)',
+			'web.loops.field.failureCap' => '失败上限',
+			'web.loops.runs.title' => '迭代记录',
+			'web.loops.runs.empty' => '还没有迭代。',
+			'web.loops.runs.iteration' => ({required Object n}) => '第 ${n} 轮',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -11348,6 +11642,8 @@ extension on TranslationsZh {
 			'more.items.about.subtitle' => '构建版本与服务器信息',
 			'more.items.vault.title' => '文档库',
 			'more.items.vault.subtitle' => '自由 markdown 笔记(Obsidian 同步)',
+			'more.items.loops.title' => '循环',
+			'more.items.loops.subtitle' => '自主 agent 循环',
 			'more.signOut' => '退出登录',
 			'activity.title' => '活动',
 			'activity.empty' => '暂无集成调用记录。',
@@ -11484,6 +11780,8 @@ extension on TranslationsZh {
 			'sessions.dirPicker.dialog.title' => '新建文件夹',
 			'sessions.dirPicker.dialog.hint' => '文件夹名',
 			'sessions.dirPicker.dialog.create' => '创建',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.shell.title' => '检查器',
 			'sessions.inspector.shell.loadError' => ({required Object error}) => '加载会话失败：${error}',
 			'sessions.inspector.shell.tabs.files' => '文件',
@@ -11527,8 +11825,6 @@ extension on TranslationsZh {
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => '已插入：@${path}',
 			'sessions.inspector.notes.myNotes' => '我的笔记',
@@ -11998,6 +12294,8 @@ extension on TranslationsZh {
 			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
 			'backups.kv.size' => '大小',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.encrypted' => '已加密',
 			'backups.kv.targetPath' => '目标路径',
 			'backups.kv.error' => '错误',
@@ -12041,8 +12339,6 @@ extension on TranslationsZh {
 			'backups.health.never' => '从未',
 			'backups.health.tiles.recentFailures' => '近期失败',
 			'backups.health.tiles.verifyFailures' => '校验失败',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.tiles.overdue' => '逾期',
 			'backups.health.tiles.schedules' => '计划',
 			'backups.failedToLoad' => '加载备份失败',
@@ -12512,6 +12808,8 @@ extension on TranslationsZh {
 			'dataExport.history.columns.scope' => '范围',
 			'dataExport.history.columns.size' => '大小',
 			'dataExport.history.columns.expires' => '过期',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.columns.actions' => '操作',
 			'dataExport.history.scopeEmpty' => '（空）',
 			'dataExport.history.scopeMemories' => '记忆',
@@ -12555,8 +12853,6 @@ extension on TranslationsZh {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n} 小时前',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.status.pending' => '等待',
 			'dataExport.status.running' => '运行中',
 			'dataExport.status.ready' => '就绪',
@@ -12843,6 +13139,46 @@ extension on TranslationsZh {
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
 			'cortexSettings.providersLoadFailed' => '加载 provider 失败',
 			'cortexSettings.defaultBadge' => '默认',
+			'loops.title' => '循环',
+			'loops.subtitle' => '自主 agent 循环 —— 按间隔运行 session,或跑到目标达成。',
+			'loops.create' => '创建循环',
+			'loops.createHint' => '循环驱动一个已有 session,必须设置截止时间。',
+			'loops.empty' => '还没有循环。创建一个来自主驱动 session。',
+			'loops.createdToast' => '已创建循环',
+			'loops.kind.goal' => '目标',
+			'loops.kind.interval' => '定时',
+			'loops.kindHint.goal' => '跑到评审判定目标达成',
+			'loops.kindHint.interval' => '每隔 N 秒重发 prompt',
+			'loops.status.pending' => '待启动',
+			'loops.status.running' => '运行中',
+			'loops.status.paused' => '已暂停',
+			'loops.status.done' => '已完成',
+			'loops.status.stopped' => '已停止',
+			'loops.status.failed' => '失败',
+			'loops.status.escalated' => '已升级',
+			'loops.origin.integration' => '集成',
+			'loops.iterationOf' => ({required Object n, required Object max}) => '${n} / ${max}',
+			'loops.action.pause' => '暂停',
+			'loops.action.resume' => '恢复',
+			'loops.action.stop' => '停止',
+			'loops.action.details' => '详情',
+			'loops.action.cancel' => '取消',
+			'loops.action.create' => '创建',
+			'loops.field.session' => 'Session ID',
+			'loops.field.sessionPlaceholder' => '该循环驱动的 session',
+			'loops.field.kind' => '类型',
+			'loops.field.goal' => '目标',
+			'loops.field.goalPlaceholder' => '循环要达成什么',
+			'loops.field.seedPrompt' => '初始 prompt',
+			'loops.field.prompt' => 'Prompt',
+			'loops.field.promptPlaceholder' => '发送给 agent 的指令',
+			'loops.field.intervalSeconds' => '间隔(秒)',
+			'loops.field.maxIterations' => '最大迭代数',
+			'loops.field.durationMinutes' => '截止(分钟)',
+			'loops.field.failureCap' => '失败上限',
+			'loops.runs.title' => '迭代记录',
+			'loops.runs.empty' => '还没有迭代。',
+			'loops.runs.iteration' => ({required Object n}) => '第 ${n} 轮',
 			_ => null,
 		};
 	}

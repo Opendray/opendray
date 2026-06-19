@@ -70,6 +70,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMemoryQuarantineEs memoryQuarantine = _TranslationsMemoryQuarantineEs._(_root);
 	@override late final _TranslationsCortexHubEs cortexHub = _TranslationsCortexHubEs._(_root);
 	@override late final _TranslationsCortexSettingsEs cortexSettings = _TranslationsCortexSettingsEs._(_root);
+	@override late final _TranslationsLoopsEs loops = _TranslationsLoopsEs._(_root);
 }
 
 // Path: common
@@ -136,6 +137,7 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
 	@override String get updateAvailable => 'Actualización disponible';
+	@override String get loops => 'Bucles';
 }
 
 // Path: web
@@ -174,6 +176,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebExportEs export = _TranslationsWebExportEs._(_root);
 	@override late final _TranslationsWebKnowledgeEs knowledge = _TranslationsWebKnowledgeEs._(_root);
 	@override late final _TranslationsWebCortexEs cortex = _TranslationsWebCortexEs._(_root);
+	@override late final _TranslationsWebLoopsEs loops = _TranslationsWebLoopsEs._(_root);
 }
 
 // Path: more
@@ -1043,6 +1046,29 @@ class _TranslationsCortexSettingsEs extends TranslationsCortexSettingsEn {
 	@override String get defaultBadge => 'predeterminado';
 }
 
+// Path: loops
+class _TranslationsLoopsEs extends TranslationsLoopsEn {
+	_TranslationsLoopsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Bucles';
+	@override String get subtitle => 'Bucles de agente autónomos: ejecuta una sesión por intervalo o hasta cumplir un objetivo.';
+	@override String get create => 'Crear bucle';
+	@override String get createHint => 'El bucle controla una sesión existente. Se requiere una fecha límite.';
+	@override String get empty => 'Aún no hay bucles. Crea uno para controlar una sesión de forma autónoma.';
+	@override String get createdToast => 'Bucle creado';
+	@override late final _TranslationsLoopsKindEs kind = _TranslationsLoopsKindEs._(_root);
+	@override late final _TranslationsLoopsKindHintEs kindHint = _TranslationsLoopsKindHintEs._(_root);
+	@override late final _TranslationsLoopsStatusEs status = _TranslationsLoopsStatusEs._(_root);
+	@override late final _TranslationsLoopsOriginEs origin = _TranslationsLoopsOriginEs._(_root);
+	@override String iterationOf({required Object n, required Object max}) => '${n} / ${max}';
+	@override late final _TranslationsLoopsActionEs action = _TranslationsLoopsActionEs._(_root);
+	@override late final _TranslationsLoopsFieldEs field = _TranslationsLoopsFieldEs._(_root);
+	@override late final _TranslationsLoopsRunsEs runs = _TranslationsLoopsRunsEs._(_root);
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarEs extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -1676,6 +1702,29 @@ class _TranslationsWebCortexEs extends TranslationsWebCortexEn {
 	@override late final _TranslationsWebCortexSettingsEs settings = _TranslationsWebCortexSettingsEs._(_root);
 }
 
+// Path: web.loops
+class _TranslationsWebLoopsEs extends TranslationsWebLoopsEn {
+	_TranslationsWebLoopsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Bucles';
+	@override String get subtitle => 'Bucles de agente autónomos: ejecuta una sesión por intervalo o hasta cumplir un objetivo.';
+	@override String get create => 'Crear bucle';
+	@override String get createHint => 'El bucle controla una sesión existente. Se requiere una fecha límite.';
+	@override String get empty => 'Aún no hay bucles. Crea uno para controlar una sesión de forma autónoma.';
+	@override String get createdToast => 'Bucle creado';
+	@override late final _TranslationsWebLoopsKindEs kind = _TranslationsWebLoopsKindEs._(_root);
+	@override late final _TranslationsWebLoopsKindHintEs kindHint = _TranslationsWebLoopsKindHintEs._(_root);
+	@override late final _TranslationsWebLoopsStatusEs status = _TranslationsWebLoopsStatusEs._(_root);
+	@override late final _TranslationsWebLoopsOriginEs origin = _TranslationsWebLoopsOriginEs._(_root);
+	@override String iterationOf({required Object n, required Object max}) => '${n} / ${max}';
+	@override late final _TranslationsWebLoopsActionEs action = _TranslationsWebLoopsActionEs._(_root);
+	@override late final _TranslationsWebLoopsFieldEs field = _TranslationsWebLoopsFieldEs._(_root);
+	@override late final _TranslationsWebLoopsRunsEs runs = _TranslationsWebLoopsRunsEs._(_root);
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityEs extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -1726,6 +1775,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
 	@override late final _TranslationsMoreItemsAboutEs about = _TranslationsMoreItemsAboutEs._(_root);
 	@override late final _TranslationsMoreItemsVaultEs vault = _TranslationsMoreItemsVaultEs._(_root);
+	@override late final _TranslationsMoreItemsLoopsEs loops = _TranslationsMoreItemsLoopsEs._(_root);
 }
 
 // Path: activity.filter
@@ -3031,6 +3081,102 @@ class _TranslationsSettingsServerSettingsEs extends TranslationsSettingsServerSe
 	@override String validateInteger({required Object field}) => '"${field}" debe ser un entero';
 	@override String validateNumber({required Object field}) => '"${field}" debe ser un número';
 	@override late final _TranslationsSettingsServerSettingsEmbedderModelEs embedderModel = _TranslationsSettingsServerSettingsEmbedderModelEs._(_root);
+}
+
+// Path: loops.kind
+class _TranslationsLoopsKindEs extends TranslationsLoopsKindEn {
+	_TranslationsLoopsKindEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => 'Objetivo';
+	@override String get interval => 'Intervalo';
+}
+
+// Path: loops.kindHint
+class _TranslationsLoopsKindHintEs extends TranslationsLoopsKindHintEn {
+	_TranslationsLoopsKindHintEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => 'ejecutar hasta que un evaluador confirme el objetivo';
+	@override String get interval => 'reenviar el prompt cada N segundos';
+}
+
+// Path: loops.status
+class _TranslationsLoopsStatusEs extends TranslationsLoopsStatusEn {
+	_TranslationsLoopsStatusEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get pending => 'Pendiente';
+	@override String get running => 'En ejecución';
+	@override String get paused => 'Pausado';
+	@override String get done => 'Completado';
+	@override String get stopped => 'Detenido';
+	@override String get failed => 'Fallido';
+	@override String get escalated => 'Escalado';
+}
+
+// Path: loops.origin
+class _TranslationsLoopsOriginEs extends TranslationsLoopsOriginEn {
+	_TranslationsLoopsOriginEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get integration => 'Integración';
+}
+
+// Path: loops.action
+class _TranslationsLoopsActionEs extends TranslationsLoopsActionEn {
+	_TranslationsLoopsActionEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get pause => 'Pausar';
+	@override String get resume => 'Reanudar';
+	@override String get stop => 'Detener';
+	@override String get details => 'Detalles';
+	@override String get cancel => 'Cancelar';
+	@override String get create => 'Crear';
+}
+
+// Path: loops.field
+class _TranslationsLoopsFieldEs extends TranslationsLoopsFieldEn {
+	_TranslationsLoopsFieldEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get session => 'ID de sesión';
+	@override String get sessionPlaceholder => 'la sesión que controla este bucle';
+	@override String get kind => 'Tipo';
+	@override String get goal => 'Objetivo';
+	@override String get goalPlaceholder => 'qué debe lograr el bucle';
+	@override String get seedPrompt => 'Prompt inicial';
+	@override String get prompt => 'Prompt';
+	@override String get promptPlaceholder => 'la instrucción enviada al agente';
+	@override String get intervalSeconds => 'Intervalo (segundos)';
+	@override String get maxIterations => 'Iteraciones máximas';
+	@override String get durationMinutes => 'Fecha límite (minutos)';
+	@override String get failureCap => 'Límite de fallos';
+}
+
+// Path: loops.runs
+class _TranslationsLoopsRunsEs extends TranslationsLoopsRunsEn {
+	_TranslationsLoopsRunsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Iteraciones';
+	@override String get empty => 'Aún no hay iteraciones.';
+	@override String iteration({required Object n}) => 'Iteración ${n}';
 }
 
 // Path: web.sessions.list
@@ -5819,6 +5965,102 @@ class _TranslationsWebCortexSettingsEs extends TranslationsWebCortexSettingsEn {
 	@override late final _TranslationsWebCortexSettingsInjectionEs injection = _TranslationsWebCortexSettingsInjectionEs._(_root);
 }
 
+// Path: web.loops.kind
+class _TranslationsWebLoopsKindEs extends TranslationsWebLoopsKindEn {
+	_TranslationsWebLoopsKindEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => 'Objetivo';
+	@override String get interval => 'Intervalo';
+}
+
+// Path: web.loops.kindHint
+class _TranslationsWebLoopsKindHintEs extends TranslationsWebLoopsKindHintEn {
+	_TranslationsWebLoopsKindHintEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get goal => 'ejecutar hasta que un evaluador confirme el objetivo';
+	@override String get interval => 'reenviar el prompt cada N segundos';
+}
+
+// Path: web.loops.status
+class _TranslationsWebLoopsStatusEs extends TranslationsWebLoopsStatusEn {
+	_TranslationsWebLoopsStatusEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get pending => 'Pendiente';
+	@override String get running => 'En ejecución';
+	@override String get paused => 'Pausado';
+	@override String get done => 'Completado';
+	@override String get stopped => 'Detenido';
+	@override String get failed => 'Fallido';
+	@override String get escalated => 'Escalado';
+}
+
+// Path: web.loops.origin
+class _TranslationsWebLoopsOriginEs extends TranslationsWebLoopsOriginEn {
+	_TranslationsWebLoopsOriginEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get integration => 'Integración';
+}
+
+// Path: web.loops.action
+class _TranslationsWebLoopsActionEs extends TranslationsWebLoopsActionEn {
+	_TranslationsWebLoopsActionEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get pause => 'Pausar';
+	@override String get resume => 'Reanudar';
+	@override String get stop => 'Detener';
+	@override String get details => 'Detalles';
+	@override String get cancel => 'Cancelar';
+	@override String get create => 'Crear';
+}
+
+// Path: web.loops.field
+class _TranslationsWebLoopsFieldEs extends TranslationsWebLoopsFieldEn {
+	_TranslationsWebLoopsFieldEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get session => 'ID de sesión';
+	@override String get sessionPlaceholder => 'la sesión que controla este bucle';
+	@override String get kind => 'Tipo';
+	@override String get goal => 'Objetivo';
+	@override String get goalPlaceholder => 'qué debe lograr el bucle';
+	@override String get seedPrompt => 'Prompt inicial';
+	@override String get prompt => 'Prompt';
+	@override String get promptPlaceholder => 'la instrucción enviada al agente';
+	@override String get intervalSeconds => 'Intervalo (segundos)';
+	@override String get maxIterations => 'Iteraciones máximas';
+	@override String get durationMinutes => 'Fecha límite (minutos)';
+	@override String get failureCap => 'Límite de fallos';
+}
+
+// Path: web.loops.runs
+class _TranslationsWebLoopsRunsEs extends TranslationsWebLoopsRunsEn {
+	_TranslationsWebLoopsRunsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Iteraciones';
+	@override String get empty => 'Aún no hay iteraciones.';
+	@override String iteration({required Object n}) => 'Iteración ${n}';
+}
+
 // Path: more.items.integrations
 class _TranslationsMoreItemsIntegrationsEs extends TranslationsMoreItemsIntegrationsEn {
 	_TranslationsMoreItemsIntegrationsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -6015,6 +6257,17 @@ class _TranslationsMoreItemsVaultEs extends TranslationsMoreItemsVaultEn {
 	// Translations
 	@override String get title => 'Bóveda';
 	@override String get subtitle => 'Notas markdown libres (sincronización Obsidian)';
+}
+
+// Path: more.items.loops
+class _TranslationsMoreItemsLoopsEs extends TranslationsMoreItemsLoopsEn {
+	_TranslationsMoreItemsLoopsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Bucles';
+	@override String get subtitle => 'Bucles de agente autónomos';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -8998,6 +9251,7 @@ extension on TranslationsEs {
 			'nav.vault' => 'Bóveda',
 			'nav.cortex' => 'Cortex',
 			'nav.updateAvailable' => 'Actualización disponible',
+			'nav.loops' => 'Bucles',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Cargando…',
 			'web.topbar.expandSidebar' => 'Expandir barra lateral',
@@ -9470,9 +9724,9 @@ extension on TranslationsEs {
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Eliminar también las memorias de pgvector',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'para este scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Hechos a largo plazo que el agente almacenó (preferencias del usuario, datos del proyecto). No se pueden recuperar.',
-			'web.project.reset.cancel' => 'Cancelar',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.cancel' => 'Cancelar',
 			'web.project.reset.deleteForever' => 'Eliminar para siempre',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Restablecido: se eliminó ${summary}',
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} documento',
@@ -9984,9 +10238,9 @@ extension on TranslationsEs {
 			'web.channels.bridge.nameLabel' => 'Nombre del bridge',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Etiqueta legible para el adaptador. Se muestra en la lista de canales.',
-			'web.channels.bridge.tokenLabel' => 'Token del adaptador',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.bridge.tokenLabel' => 'Token del adaptador',
 			'web.channels.bridge.regenerateTooltip' => 'Regenerar',
 			'web.channels.bridge.copyTooltip' => 'Copiar',
 			'web.channels.bridge.tokenCopiedToast' => 'Token copiado',
@@ -10498,9 +10752,9 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => 'Puerto',
-			'web.backups.targetEditor.smb.shareLabel' => 'Recurso compartido',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.shareLabel' => 'Recurso compartido',
 			'web.backups.targetEditor.smb.shareHint' => 'Nombre del recurso compartido de nivel superior en el servidor SMB',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
 			'web.backups.targetEditor.smb.userLabel' => 'Usuario',
@@ -11012,9 +11266,9 @@ extension on TranslationsEs {
 			'web.export.form.memories' => 'Memorias',
 			'web.export.form.memoriesHint' => 'Filas de memoria persistente entre CLI (texto + alcance + metadatos). Los vectores de embedding se omiten; el importador vuelve a generarlos.',
 			'web.export.form.integrations' => 'Integraciones',
-			'web.export.form.customTasks' => 'Tareas personalizadas',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.customTasks' => 'Tareas personalizadas',
 			'web.export.form.customTasksHint' => 'Tareas definidas por el operador que se muestran en la pestaña Tareas del Inspector.',
 			'web.export.form.integrationOptions.none' => 'Ninguna',
 			'web.export.form.integrationOptions.noneHint' => 'Omitir por completo la tabla de integraciones.',
@@ -11304,6 +11558,46 @@ extension on TranslationsEs {
 			'web.cortex.settings.injection.savedToast' => 'Modo guardado — las sesiones nuevas lo usan de inmediato (sin reiniciar el backend)',
 			'web.cortex.settings.injection.saveFailed' => 'Error al guardar',
 			'web.cortex.settings.injection.note' => 'En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice.',
+			'web.loops.title' => 'Bucles',
+			'web.loops.subtitle' => 'Bucles de agente autónomos: ejecuta una sesión por intervalo o hasta cumplir un objetivo.',
+			'web.loops.create' => 'Crear bucle',
+			'web.loops.createHint' => 'El bucle controla una sesión existente. Se requiere una fecha límite.',
+			'web.loops.empty' => 'Aún no hay bucles. Crea uno para controlar una sesión de forma autónoma.',
+			'web.loops.createdToast' => 'Bucle creado',
+			'web.loops.kind.goal' => 'Objetivo',
+			'web.loops.kind.interval' => 'Intervalo',
+			'web.loops.kindHint.goal' => 'ejecutar hasta que un evaluador confirme el objetivo',
+			'web.loops.kindHint.interval' => 'reenviar el prompt cada N segundos',
+			'web.loops.status.pending' => 'Pendiente',
+			'web.loops.status.running' => 'En ejecución',
+			'web.loops.status.paused' => 'Pausado',
+			'web.loops.status.done' => 'Completado',
+			'web.loops.status.stopped' => 'Detenido',
+			'web.loops.status.failed' => 'Fallido',
+			'web.loops.status.escalated' => 'Escalado',
+			'web.loops.origin.integration' => 'Integración',
+			'web.loops.iterationOf' => ({required Object n, required Object max}) => '${n} / ${max}',
+			'web.loops.action.pause' => 'Pausar',
+			'web.loops.action.resume' => 'Reanudar',
+			'web.loops.action.stop' => 'Detener',
+			'web.loops.action.details' => 'Detalles',
+			'web.loops.action.cancel' => 'Cancelar',
+			'web.loops.action.create' => 'Crear',
+			'web.loops.field.session' => 'ID de sesión',
+			'web.loops.field.sessionPlaceholder' => 'la sesión que controla este bucle',
+			'web.loops.field.kind' => 'Tipo',
+			'web.loops.field.goal' => 'Objetivo',
+			'web.loops.field.goalPlaceholder' => 'qué debe lograr el bucle',
+			'web.loops.field.seedPrompt' => 'Prompt inicial',
+			'web.loops.field.prompt' => 'Prompt',
+			'web.loops.field.promptPlaceholder' => 'la instrucción enviada al agente',
+			'web.loops.field.intervalSeconds' => 'Intervalo (segundos)',
+			'web.loops.field.maxIterations' => 'Iteraciones máximas',
+			'web.loops.field.durationMinutes' => 'Fecha límite (minutos)',
+			'web.loops.field.failureCap' => 'Límite de fallos',
+			'web.loops.runs.title' => 'Iteraciones',
+			'web.loops.runs.empty' => 'Aún no hay iteraciones.',
+			'web.loops.runs.iteration' => ({required Object n}) => 'Iteración ${n}',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -11348,6 +11642,8 @@ extension on TranslationsEs {
 			'more.items.about.subtitle' => 'Versión de compilación e información del servidor',
 			'more.items.vault.title' => 'Bóveda',
 			'more.items.vault.subtitle' => 'Notas markdown libres (sincronización Obsidian)',
+			'more.items.loops.title' => 'Bucles',
+			'more.items.loops.subtitle' => 'Bucles de agente autónomos',
 			'more.signOut' => 'Cerrar sesión',
 			'activity.title' => 'Actividad',
 			'activity.empty' => 'Aún no hay llamadas de integración registradas.',
@@ -11484,6 +11780,8 @@ extension on TranslationsEs {
 			'sessions.dirPicker.dialog.title' => 'Nueva carpeta',
 			'sessions.dirPicker.dialog.hint' => 'Nombre de la carpeta',
 			'sessions.dirPicker.dialog.create' => 'Crear',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.shell.title' => 'Inspector',
 			'sessions.inspector.shell.loadError' => ({required Object error}) => 'No se pudo cargar la sesión: ${error}',
 			'sessions.inspector.shell.tabs.files' => 'Archivos',
@@ -11527,8 +11825,6 @@ extension on TranslationsEs {
 			'sessions.inspector.tasks.filterHint' => 'Filtrar tareas…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'Ninguna tarea coincide con "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No hay tareas en esta carpeta',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => 'Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Insertado: @${path}',
 			'sessions.inspector.notes.myNotes' => 'Mis notas',
@@ -11998,6 +12294,8 @@ extension on TranslationsEs {
 			'backups.kv.started' => 'Iniciado',
 			'backups.kv.finished' => 'Finalizado',
 			'backups.kv.size' => 'Tamaño',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.encrypted' => 'Cifrado',
 			'backups.kv.targetPath' => 'Ruta de destino',
 			'backups.kv.error' => 'Error',
@@ -12041,8 +12339,6 @@ extension on TranslationsEs {
 			'backups.health.never' => 'nunca',
 			'backups.health.tiles.recentFailures' => 'Fallos recientes',
 			'backups.health.tiles.verifyFailures' => 'Verificación fallida',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.tiles.overdue' => 'Atrasadas',
 			'backups.health.tiles.schedules' => 'Programaciones',
 			'backups.failedToLoad' => 'Error al cargar las copias de seguridad',
@@ -12512,6 +12808,8 @@ extension on TranslationsEs {
 			'dataExport.history.columns.scope' => 'Alcance',
 			'dataExport.history.columns.size' => 'Tamaño',
 			'dataExport.history.columns.expires' => 'Caduca',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.columns.actions' => 'Acciones',
 			'dataExport.history.scopeEmpty' => '(vacío)',
 			'dataExport.history.scopeMemories' => 'memorias',
@@ -12555,8 +12853,6 @@ extension on TranslationsEs {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => 'hace ${n}s',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => 'hace ${n}m',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => 'hace ${n}h',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.status.pending' => 'pendiente',
 			'dataExport.status.running' => 'en ejecución',
 			'dataExport.status.ready' => 'listo',
@@ -12843,6 +13139,46 @@ extension on TranslationsEs {
 			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',
 			'cortexSettings.providersLoadFailed' => 'Error al cargar proveedores',
 			'cortexSettings.defaultBadge' => 'predeterminado',
+			'loops.title' => 'Bucles',
+			'loops.subtitle' => 'Bucles de agente autónomos: ejecuta una sesión por intervalo o hasta cumplir un objetivo.',
+			'loops.create' => 'Crear bucle',
+			'loops.createHint' => 'El bucle controla una sesión existente. Se requiere una fecha límite.',
+			'loops.empty' => 'Aún no hay bucles. Crea uno para controlar una sesión de forma autónoma.',
+			'loops.createdToast' => 'Bucle creado',
+			'loops.kind.goal' => 'Objetivo',
+			'loops.kind.interval' => 'Intervalo',
+			'loops.kindHint.goal' => 'ejecutar hasta que un evaluador confirme el objetivo',
+			'loops.kindHint.interval' => 'reenviar el prompt cada N segundos',
+			'loops.status.pending' => 'Pendiente',
+			'loops.status.running' => 'En ejecución',
+			'loops.status.paused' => 'Pausado',
+			'loops.status.done' => 'Completado',
+			'loops.status.stopped' => 'Detenido',
+			'loops.status.failed' => 'Fallido',
+			'loops.status.escalated' => 'Escalado',
+			'loops.origin.integration' => 'Integración',
+			'loops.iterationOf' => ({required Object n, required Object max}) => '${n} / ${max}',
+			'loops.action.pause' => 'Pausar',
+			'loops.action.resume' => 'Reanudar',
+			'loops.action.stop' => 'Detener',
+			'loops.action.details' => 'Detalles',
+			'loops.action.cancel' => 'Cancelar',
+			'loops.action.create' => 'Crear',
+			'loops.field.session' => 'ID de sesión',
+			'loops.field.sessionPlaceholder' => 'la sesión que controla este bucle',
+			'loops.field.kind' => 'Tipo',
+			'loops.field.goal' => 'Objetivo',
+			'loops.field.goalPlaceholder' => 'qué debe lograr el bucle',
+			'loops.field.seedPrompt' => 'Prompt inicial',
+			'loops.field.prompt' => 'Prompt',
+			'loops.field.promptPlaceholder' => 'la instrucción enviada al agente',
+			'loops.field.intervalSeconds' => 'Intervalo (segundos)',
+			'loops.field.maxIterations' => 'Iteraciones máximas',
+			'loops.field.durationMinutes' => 'Fecha límite (minutos)',
+			'loops.field.failureCap' => 'Límite de fallos',
+			'loops.runs.title' => 'Iteraciones',
+			'loops.runs.empty' => 'Aún no hay iteraciones.',
+			'loops.runs.iteration' => ({required Object n}) => 'Iteración ${n}',
 			_ => null,
 		};
 	}

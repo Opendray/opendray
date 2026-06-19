@@ -3,6 +3,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
   Layers,
+  Repeat,
   Cpu,
   MessageSquare,
   Plug,
@@ -43,6 +44,7 @@ interface NavItem {
 const groups: NavItem[][] = [
   [
     { to: '/sessions', icon: Layers, labelKey: 'nav.sessions', shortcut: 'g s' },
+    { to: '/loops', icon: Repeat, labelKey: 'nav.loops', shortcut: 'g o' },
     // Cortex — the unified Memory → Notes → Knowledge module. One
     // entry; the three rungs are layered inside (they are one loop,
     // not three silos).

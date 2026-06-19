@@ -42,7 +42,8 @@
     "knowledge": "Conocimiento",
     "vault": "Bóveda",
     "cortex": "Cortex",
-    "updateAvailable": "Actualización disponible"
+    "updateAvailable": "Actualización disponible",
+    "loops": "Bucles"
   },
   "web": {
     "brand": "opendray",
@@ -2992,6 +2993,62 @@
           "note": "En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice."
         }
       }
+    },
+    "loops": {
+      "title": "Bucles",
+      "subtitle": "Bucles de agente autónomos: ejecuta una sesión por intervalo o hasta cumplir un objetivo.",
+      "create": "Crear bucle",
+      "createHint": "El bucle controla una sesión existente. Se requiere una fecha límite.",
+      "empty": "Aún no hay bucles. Crea uno para controlar una sesión de forma autónoma.",
+      "createdToast": "Bucle creado",
+      "kind": {
+        "goal": "Objetivo",
+        "interval": "Intervalo"
+      },
+      "kindHint": {
+        "goal": "ejecutar hasta que un evaluador confirme el objetivo",
+        "interval": "reenviar el prompt cada N segundos"
+      },
+      "status": {
+        "pending": "Pendiente",
+        "running": "En ejecución",
+        "paused": "Pausado",
+        "done": "Completado",
+        "stopped": "Detenido",
+        "failed": "Fallido",
+        "escalated": "Escalado"
+      },
+      "origin": {
+        "integration": "Integración"
+      },
+      "iterationOf": "{n} / {max}",
+      "action": {
+        "pause": "Pausar",
+        "resume": "Reanudar",
+        "stop": "Detener",
+        "details": "Detalles",
+        "cancel": "Cancelar",
+        "create": "Crear"
+      },
+      "field": {
+        "session": "ID de sesión",
+        "sessionPlaceholder": "la sesión que controla este bucle",
+        "kind": "Tipo",
+        "goal": "Objetivo",
+        "goalPlaceholder": "qué debe lograr el bucle",
+        "seedPrompt": "Prompt inicial",
+        "prompt": "Prompt",
+        "promptPlaceholder": "la instrucción enviada al agente",
+        "intervalSeconds": "Intervalo (segundos)",
+        "maxIterations": "Iteraciones máximas",
+        "durationMinutes": "Fecha límite (minutos)",
+        "failureCap": "Límite de fallos"
+      },
+      "runs": {
+        "title": "Iteraciones",
+        "empty": "Aún no hay iteraciones.",
+        "iteration": "Iteración {n}"
+      }
     }
   },
   "more": {
@@ -3079,6 +3136,10 @@
       "vault": {
         "title": "Bóveda",
         "subtitle": "Notas markdown libres (sincronización Obsidian)"
+      },
+      "loops": {
+        "title": "Bucles",
+        "subtitle": "Bucles de agente autónomos"
       }
     },
     "signOut": "Cerrar sesión"
@@ -4876,5 +4937,61 @@
     "providersManageOnWeb": "Añade o edita proveedores en el panel web.",
     "providersLoadFailed": "Error al cargar proveedores",
     "defaultBadge": "predeterminado"
+  },
+  "loops": {
+    "title": "Bucles",
+    "subtitle": "Bucles de agente autónomos: ejecuta una sesión por intervalo o hasta cumplir un objetivo.",
+    "create": "Crear bucle",
+    "createHint": "El bucle controla una sesión existente. Se requiere una fecha límite.",
+    "empty": "Aún no hay bucles. Crea uno para controlar una sesión de forma autónoma.",
+    "createdToast": "Bucle creado",
+    "kind": {
+      "goal": "Objetivo",
+      "interval": "Intervalo"
+    },
+    "kindHint": {
+      "goal": "ejecutar hasta que un evaluador confirme el objetivo",
+      "interval": "reenviar el prompt cada N segundos"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "running": "En ejecución",
+      "paused": "Pausado",
+      "done": "Completado",
+      "stopped": "Detenido",
+      "failed": "Fallido",
+      "escalated": "Escalado"
+    },
+    "origin": {
+      "integration": "Integración"
+    },
+    "iterationOf": "{n} / {max}",
+    "action": {
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "stop": "Detener",
+      "details": "Detalles",
+      "cancel": "Cancelar",
+      "create": "Crear"
+    },
+    "field": {
+      "session": "ID de sesión",
+      "sessionPlaceholder": "la sesión que controla este bucle",
+      "kind": "Tipo",
+      "goal": "Objetivo",
+      "goalPlaceholder": "qué debe lograr el bucle",
+      "seedPrompt": "Prompt inicial",
+      "prompt": "Prompt",
+      "promptPlaceholder": "la instrucción enviada al agente",
+      "intervalSeconds": "Intervalo (segundos)",
+      "maxIterations": "Iteraciones máximas",
+      "durationMinutes": "Fecha límite (minutos)",
+      "failureCap": "Límite de fallos"
+    },
+    "runs": {
+      "title": "Iteraciones",
+      "empty": "Aún no hay iteraciones.",
+      "iteration": "Iteración {n}"
+    }
   }
 }

@@ -42,7 +42,8 @@
     "knowledge": "Knowledge",
     "vault": "Vault",
     "cortex": "Cortex",
-    "updateAvailable": "Update available"
+    "updateAvailable": "Update available",
+    "loops": "Loops"
   },
   "web": {
     "brand": "opendray",
@@ -2992,6 +2993,62 @@
           "note": "Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed."
         }
       }
+    },
+    "loops": {
+      "title": "Loops",
+      "subtitle": "Autonomous agent loops — run a session on an interval, or until a goal is met.",
+      "create": "Create loop",
+      "createHint": "The loop drives an existing session. A deadline is required.",
+      "empty": "No loops yet. Create one to drive a session autonomously.",
+      "createdToast": "Loop created",
+      "kind": {
+        "goal": "Goal",
+        "interval": "Interval"
+      },
+      "kindHint": {
+        "goal": "run until a judge says the goal is met",
+        "interval": "re-send the prompt every N seconds"
+      },
+      "status": {
+        "pending": "Pending",
+        "running": "Running",
+        "paused": "Paused",
+        "done": "Done",
+        "stopped": "Stopped",
+        "failed": "Failed",
+        "escalated": "Escalated"
+      },
+      "origin": {
+        "integration": "Integration"
+      },
+      "iterationOf": "{n} / {max}",
+      "action": {
+        "pause": "Pause",
+        "resume": "Resume",
+        "stop": "Stop",
+        "details": "Details",
+        "cancel": "Cancel",
+        "create": "Create"
+      },
+      "field": {
+        "session": "Session ID",
+        "sessionPlaceholder": "the session this loop drives",
+        "kind": "Kind",
+        "goal": "Goal",
+        "goalPlaceholder": "what the loop should accomplish",
+        "seedPrompt": "Seed prompt",
+        "prompt": "Prompt",
+        "promptPlaceholder": "the instruction sent to the agent",
+        "intervalSeconds": "Interval (seconds)",
+        "maxIterations": "Max iterations",
+        "durationMinutes": "Deadline (minutes)",
+        "failureCap": "Failure cap"
+      },
+      "runs": {
+        "title": "Iterations",
+        "empty": "No iterations yet.",
+        "iteration": "Iteration {n}"
+      }
     }
   },
   "more": {
@@ -3079,6 +3136,10 @@
       "vault": {
         "title": "Vault",
         "subtitle": "Freeform markdown notes (Obsidian-sync)"
+      },
+      "loops": {
+        "title": "Loops",
+        "subtitle": "Autonomous agent loops"
       }
     },
     "signOut": "Sign out"
@@ -4876,5 +4937,61 @@
     "providersManageOnWeb": "Add or edit providers on the web admin.",
     "providersLoadFailed": "Failed to load providers",
     "defaultBadge": "default"
+  },
+  "loops": {
+    "title": "Loops",
+    "subtitle": "Autonomous agent loops — run a session on an interval, or until a goal is met.",
+    "create": "Create loop",
+    "createHint": "The loop drives an existing session. A deadline is required.",
+    "empty": "No loops yet. Create one to drive a session autonomously.",
+    "createdToast": "Loop created",
+    "kind": {
+      "goal": "Goal",
+      "interval": "Interval"
+    },
+    "kindHint": {
+      "goal": "run until a judge says the goal is met",
+      "interval": "re-send the prompt every N seconds"
+    },
+    "status": {
+      "pending": "Pending",
+      "running": "Running",
+      "paused": "Paused",
+      "done": "Done",
+      "stopped": "Stopped",
+      "failed": "Failed",
+      "escalated": "Escalated"
+    },
+    "origin": {
+      "integration": "Integration"
+    },
+    "iterationOf": "{n} / {max}",
+    "action": {
+      "pause": "Pause",
+      "resume": "Resume",
+      "stop": "Stop",
+      "details": "Details",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "field": {
+      "session": "Session ID",
+      "sessionPlaceholder": "the session this loop drives",
+      "kind": "Kind",
+      "goal": "Goal",
+      "goalPlaceholder": "what the loop should accomplish",
+      "seedPrompt": "Seed prompt",
+      "prompt": "Prompt",
+      "promptPlaceholder": "the instruction sent to the agent",
+      "intervalSeconds": "Interval (seconds)",
+      "maxIterations": "Max iterations",
+      "durationMinutes": "Deadline (minutes)",
+      "failureCap": "Failure cap"
+    },
+    "runs": {
+      "title": "Iterations",
+      "empty": "No iterations yet.",
+      "iteration": "Iteration {n}"
+    }
   }
 }

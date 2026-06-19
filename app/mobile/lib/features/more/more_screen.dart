@@ -10,6 +10,7 @@ import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:opendray/features/data_export/data_export_screen.dart';
 import 'package:opendray/features/githosts/githosts_screen.dart';
+import 'package:opendray/features/loops/loops_screen.dart';
 import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
@@ -50,6 +51,12 @@ class MoreScreen extends ConsumerWidget {
           // Activity + Integrations are top-level bottom-nav tabs now; the
           // gateway section keeps the lower-frequency destinations.
           _SectionHeader(label: t.more.sections.gateway),
+          _MenuTile(
+            icon: Icons.repeat,
+            title: t.more.items.loops.title,
+            subtitle: t.more.items.loops.subtitle,
+            onTap: () => _push(context, const LoopsScreen()),
+          ),
           _MenuTile(
             icon: Icons.notifications_outlined,
             title: t.more.items.channels.title,

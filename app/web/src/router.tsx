@@ -8,6 +8,7 @@ import {
 import { AppShell } from '@/components/AppShell'
 import { LoginPage } from '@/pages/Login'
 import { SessionsPage } from '@/pages/Sessions'
+import { LoopsPage } from '@/pages/Loops'
 import { ProvidersPage } from '@/pages/Providers'
 import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
@@ -63,6 +64,12 @@ const sessionsRoute = createRoute({
   // param is stripped and the new session never gets focused.
   validateSearch: (search): { open?: string } =>
     typeof search.open === 'string' ? { open: search.open } : {},
+})
+
+const loopsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/loops',
+  component: LoopsPage,
 })
 
 const providersRoute = createRoute({
@@ -247,6 +254,7 @@ const routeTree = rootRoute.addChildren([
   protectedRoute.addChildren([
     indexRoute,
     sessionsRoute,
+    loopsRoute,
     providersRoute,
     channelsRoute,
     integrationsRoute,

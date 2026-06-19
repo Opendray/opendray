@@ -71,6 +71,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMemoryQuarantineEn memoryQuarantine = TranslationsMemoryQuarantineEn.internal(_root);
 	late final TranslationsCortexHubEn cortexHub = TranslationsCortexHubEn.internal(_root);
 	late final TranslationsCortexSettingsEn cortexSettings = TranslationsCortexSettingsEn.internal(_root);
+	late final TranslationsLoopsEn loops = TranslationsLoopsEn.internal(_root);
 }
 
 // Path: common
@@ -215,6 +216,9 @@ class TranslationsNavEn {
 
 	/// en: 'Update available'
 	String get updateAvailable => 'Update available';
+
+	/// en: 'Loops'
+	String get loops => 'Loops';
 }
 
 // Path: web
@@ -258,6 +262,7 @@ class TranslationsWebEn {
 	late final TranslationsWebExportEn export = TranslationsWebExportEn.internal(_root);
 	late final TranslationsWebKnowledgeEn knowledge = TranslationsWebKnowledgeEn.internal(_root);
 	late final TranslationsWebCortexEn cortex = TranslationsWebCortexEn.internal(_root);
+	late final TranslationsWebLoopsEn loops = TranslationsWebLoopsEn.internal(_root);
 }
 
 // Path: more
@@ -2254,6 +2259,45 @@ class TranslationsCortexSettingsEn {
 	String get defaultBadge => 'default';
 }
 
+// Path: loops
+class TranslationsLoopsEn {
+	TranslationsLoopsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loops'
+	String get title => 'Loops';
+
+	/// en: 'Autonomous agent loops — run a session on an interval, or until a goal is met.'
+	String get subtitle => 'Autonomous agent loops — run a session on an interval, or until a goal is met.';
+
+	/// en: 'Create loop'
+	String get create => 'Create loop';
+
+	/// en: 'The loop drives an existing session. A deadline is required.'
+	String get createHint => 'The loop drives an existing session. A deadline is required.';
+
+	/// en: 'No loops yet. Create one to drive a session autonomously.'
+	String get empty => 'No loops yet. Create one to drive a session autonomously.';
+
+	/// en: 'Loop created'
+	String get createdToast => 'Loop created';
+
+	late final TranslationsLoopsKindEn kind = TranslationsLoopsKindEn.internal(_root);
+	late final TranslationsLoopsKindHintEn kindHint = TranslationsLoopsKindHintEn.internal(_root);
+	late final TranslationsLoopsStatusEn status = TranslationsLoopsStatusEn.internal(_root);
+	late final TranslationsLoopsOriginEn origin = TranslationsLoopsOriginEn.internal(_root);
+
+	/// en: '{n} / {max}'
+	String iterationOf({required Object n, required Object max}) => '${n} / ${max}';
+
+	late final TranslationsLoopsActionEn action = TranslationsLoopsActionEn.internal(_root);
+	late final TranslationsLoopsFieldEn field = TranslationsLoopsFieldEn.internal(_root);
+	late final TranslationsLoopsRunsEn runs = TranslationsLoopsRunsEn.internal(_root);
+}
+
 // Path: web.topbar
 class TranslationsWebTopbarEn {
 	TranslationsWebTopbarEn.internal(this._root);
@@ -3394,6 +3438,45 @@ class TranslationsWebCortexEn {
 	late final TranslationsWebCortexSettingsEn settings = TranslationsWebCortexSettingsEn.internal(_root);
 }
 
+// Path: web.loops
+class TranslationsWebLoopsEn {
+	TranslationsWebLoopsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loops'
+	String get title => 'Loops';
+
+	/// en: 'Autonomous agent loops — run a session on an interval, or until a goal is met.'
+	String get subtitle => 'Autonomous agent loops — run a session on an interval, or until a goal is met.';
+
+	/// en: 'Create loop'
+	String get create => 'Create loop';
+
+	/// en: 'The loop drives an existing session. A deadline is required.'
+	String get createHint => 'The loop drives an existing session. A deadline is required.';
+
+	/// en: 'No loops yet. Create one to drive a session autonomously.'
+	String get empty => 'No loops yet. Create one to drive a session autonomously.';
+
+	/// en: 'Loop created'
+	String get createdToast => 'Loop created';
+
+	late final TranslationsWebLoopsKindEn kind = TranslationsWebLoopsKindEn.internal(_root);
+	late final TranslationsWebLoopsKindHintEn kindHint = TranslationsWebLoopsKindHintEn.internal(_root);
+	late final TranslationsWebLoopsStatusEn status = TranslationsWebLoopsStatusEn.internal(_root);
+	late final TranslationsWebLoopsOriginEn origin = TranslationsWebLoopsOriginEn.internal(_root);
+
+	/// en: '{n} / {max}'
+	String iterationOf({required Object n, required Object max}) => '${n} / ${max}';
+
+	late final TranslationsWebLoopsActionEn action = TranslationsWebLoopsActionEn.internal(_root);
+	late final TranslationsWebLoopsFieldEn field = TranslationsWebLoopsFieldEn.internal(_root);
+	late final TranslationsWebLoopsRunsEn runs = TranslationsWebLoopsRunsEn.internal(_root);
+}
+
 // Path: more.identity
 class TranslationsMoreIdentityEn {
 	TranslationsMoreIdentityEn.internal(this._root);
@@ -3458,6 +3541,7 @@ class TranslationsMoreItemsEn {
 	late final TranslationsMoreItemsSettingsEn settings = TranslationsMoreItemsSettingsEn.internal(_root);
 	late final TranslationsMoreItemsAboutEn about = TranslationsMoreItemsAboutEn.internal(_root);
 	late final TranslationsMoreItemsVaultEn vault = TranslationsMoreItemsVaultEn.internal(_root);
+	late final TranslationsMoreItemsLoopsEn loops = TranslationsMoreItemsLoopsEn.internal(_root);
 }
 
 // Path: activity.filter
@@ -5952,6 +6036,168 @@ class TranslationsSettingsServerSettingsEn {
 	String validateNumber({required Object field}) => '"${field}" must be a number';
 
 	late final TranslationsSettingsServerSettingsEmbedderModelEn embedderModel = TranslationsSettingsServerSettingsEmbedderModelEn.internal(_root);
+}
+
+// Path: loops.kind
+class TranslationsLoopsKindEn {
+	TranslationsLoopsKindEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Goal'
+	String get goal => 'Goal';
+
+	/// en: 'Interval'
+	String get interval => 'Interval';
+}
+
+// Path: loops.kindHint
+class TranslationsLoopsKindHintEn {
+	TranslationsLoopsKindHintEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'run until a judge says the goal is met'
+	String get goal => 'run until a judge says the goal is met';
+
+	/// en: 're-send the prompt every N seconds'
+	String get interval => 're-send the prompt every N seconds';
+}
+
+// Path: loops.status
+class TranslationsLoopsStatusEn {
+	TranslationsLoopsStatusEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pending'
+	String get pending => 'Pending';
+
+	/// en: 'Running'
+	String get running => 'Running';
+
+	/// en: 'Paused'
+	String get paused => 'Paused';
+
+	/// en: 'Done'
+	String get done => 'Done';
+
+	/// en: 'Stopped'
+	String get stopped => 'Stopped';
+
+	/// en: 'Failed'
+	String get failed => 'Failed';
+
+	/// en: 'Escalated'
+	String get escalated => 'Escalated';
+}
+
+// Path: loops.origin
+class TranslationsLoopsOriginEn {
+	TranslationsLoopsOriginEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Integration'
+	String get integration => 'Integration';
+}
+
+// Path: loops.action
+class TranslationsLoopsActionEn {
+	TranslationsLoopsActionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pause'
+	String get pause => 'Pause';
+
+	/// en: 'Resume'
+	String get resume => 'Resume';
+
+	/// en: 'Stop'
+	String get stop => 'Stop';
+
+	/// en: 'Details'
+	String get details => 'Details';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Create'
+	String get create => 'Create';
+}
+
+// Path: loops.field
+class TranslationsLoopsFieldEn {
+	TranslationsLoopsFieldEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Session ID'
+	String get session => 'Session ID';
+
+	/// en: 'the session this loop drives'
+	String get sessionPlaceholder => 'the session this loop drives';
+
+	/// en: 'Kind'
+	String get kind => 'Kind';
+
+	/// en: 'Goal'
+	String get goal => 'Goal';
+
+	/// en: 'what the loop should accomplish'
+	String get goalPlaceholder => 'what the loop should accomplish';
+
+	/// en: 'Seed prompt'
+	String get seedPrompt => 'Seed prompt';
+
+	/// en: 'Prompt'
+	String get prompt => 'Prompt';
+
+	/// en: 'the instruction sent to the agent'
+	String get promptPlaceholder => 'the instruction sent to the agent';
+
+	/// en: 'Interval (seconds)'
+	String get intervalSeconds => 'Interval (seconds)';
+
+	/// en: 'Max iterations'
+	String get maxIterations => 'Max iterations';
+
+	/// en: 'Deadline (minutes)'
+	String get durationMinutes => 'Deadline (minutes)';
+
+	/// en: 'Failure cap'
+	String get failureCap => 'Failure cap';
+}
+
+// Path: loops.runs
+class TranslationsLoopsRunsEn {
+	TranslationsLoopsRunsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Iterations'
+	String get title => 'Iterations';
+
+	/// en: 'No iterations yet.'
+	String get empty => 'No iterations yet.';
+
+	/// en: 'Iteration {n}'
+	String iteration({required Object n}) => 'Iteration ${n}';
 }
 
 // Path: web.sessions.list
@@ -11433,6 +11679,168 @@ class TranslationsWebCortexSettingsEn {
 	late final TranslationsWebCortexSettingsInjectionEn injection = TranslationsWebCortexSettingsInjectionEn.internal(_root);
 }
 
+// Path: web.loops.kind
+class TranslationsWebLoopsKindEn {
+	TranslationsWebLoopsKindEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Goal'
+	String get goal => 'Goal';
+
+	/// en: 'Interval'
+	String get interval => 'Interval';
+}
+
+// Path: web.loops.kindHint
+class TranslationsWebLoopsKindHintEn {
+	TranslationsWebLoopsKindHintEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'run until a judge says the goal is met'
+	String get goal => 'run until a judge says the goal is met';
+
+	/// en: 're-send the prompt every N seconds'
+	String get interval => 're-send the prompt every N seconds';
+}
+
+// Path: web.loops.status
+class TranslationsWebLoopsStatusEn {
+	TranslationsWebLoopsStatusEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pending'
+	String get pending => 'Pending';
+
+	/// en: 'Running'
+	String get running => 'Running';
+
+	/// en: 'Paused'
+	String get paused => 'Paused';
+
+	/// en: 'Done'
+	String get done => 'Done';
+
+	/// en: 'Stopped'
+	String get stopped => 'Stopped';
+
+	/// en: 'Failed'
+	String get failed => 'Failed';
+
+	/// en: 'Escalated'
+	String get escalated => 'Escalated';
+}
+
+// Path: web.loops.origin
+class TranslationsWebLoopsOriginEn {
+	TranslationsWebLoopsOriginEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Integration'
+	String get integration => 'Integration';
+}
+
+// Path: web.loops.action
+class TranslationsWebLoopsActionEn {
+	TranslationsWebLoopsActionEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Pause'
+	String get pause => 'Pause';
+
+	/// en: 'Resume'
+	String get resume => 'Resume';
+
+	/// en: 'Stop'
+	String get stop => 'Stop';
+
+	/// en: 'Details'
+	String get details => 'Details';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Create'
+	String get create => 'Create';
+}
+
+// Path: web.loops.field
+class TranslationsWebLoopsFieldEn {
+	TranslationsWebLoopsFieldEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Session ID'
+	String get session => 'Session ID';
+
+	/// en: 'the session this loop drives'
+	String get sessionPlaceholder => 'the session this loop drives';
+
+	/// en: 'Kind'
+	String get kind => 'Kind';
+
+	/// en: 'Goal'
+	String get goal => 'Goal';
+
+	/// en: 'what the loop should accomplish'
+	String get goalPlaceholder => 'what the loop should accomplish';
+
+	/// en: 'Seed prompt'
+	String get seedPrompt => 'Seed prompt';
+
+	/// en: 'Prompt'
+	String get prompt => 'Prompt';
+
+	/// en: 'the instruction sent to the agent'
+	String get promptPlaceholder => 'the instruction sent to the agent';
+
+	/// en: 'Interval (seconds)'
+	String get intervalSeconds => 'Interval (seconds)';
+
+	/// en: 'Max iterations'
+	String get maxIterations => 'Max iterations';
+
+	/// en: 'Deadline (minutes)'
+	String get durationMinutes => 'Deadline (minutes)';
+
+	/// en: 'Failure cap'
+	String get failureCap => 'Failure cap';
+}
+
+// Path: web.loops.runs
+class TranslationsWebLoopsRunsEn {
+	TranslationsWebLoopsRunsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Iterations'
+	String get title => 'Iterations';
+
+	/// en: 'No iterations yet.'
+	String get empty => 'No iterations yet.';
+
+	/// en: 'Iteration {n}'
+	String iteration({required Object n}) => 'Iteration ${n}';
+}
+
 // Path: more.items.integrations
 class TranslationsMoreItemsIntegrationsEn {
 	TranslationsMoreItemsIntegrationsEn.internal(this._root);
@@ -11701,6 +12109,21 @@ class TranslationsMoreItemsVaultEn {
 
 	/// en: 'Freeform markdown notes (Obsidian-sync)'
 	String get subtitle => 'Freeform markdown notes (Obsidian-sync)';
+}
+
+// Path: more.items.loops
+class TranslationsMoreItemsLoopsEn {
+	TranslationsMoreItemsLoopsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loops'
+	String get title => 'Loops';
+
+	/// en: 'Autonomous agent loops'
+	String get subtitle => 'Autonomous agent loops';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -16853,6 +17276,7 @@ extension on Translations {
 			'nav.vault' => 'Vault',
 			'nav.cortex' => 'Cortex',
 			'nav.updateAvailable' => 'Update available',
+			'nav.loops' => 'Loops',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
 			'web.topbar.expandSidebar' => 'Expand sidebar',
@@ -17325,9 +17749,9 @@ extension on Translations {
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Also delete pgvector memories',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'for this scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Long-term facts the agent stored (user preferences, project facts). Cannot be recovered.',
-			'web.project.reset.cancel' => 'Cancel',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.reset.cancel' => 'Cancel',
 			'web.project.reset.deleteForever' => 'Delete forever',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Reset: deleted ${summary}',
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} doc',
@@ -17839,9 +18263,9 @@ extension on Translations {
 			'web.channels.bridge.nameLabel' => 'Bridge name',
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Human label for the adapter. Shown in the channels list.',
-			'web.channels.bridge.tokenLabel' => 'Adapter token',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.bridge.tokenLabel' => 'Adapter token',
 			'web.channels.bridge.regenerateTooltip' => 'Regenerate',
 			'web.channels.bridge.copyTooltip' => 'Copy',
 			'web.channels.bridge.tokenCopiedToast' => 'Token copied',
@@ -18353,9 +18777,9 @@ extension on Translations {
 			'web.backups.targetEditor.smb.hostLabel' => 'Host',
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => 'Port',
-			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			'web.backups.targetEditor.smb.shareHint' => 'Top-level share name on the SMB server',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
 			'web.backups.targetEditor.smb.userLabel' => 'User',
@@ -18867,9 +19291,9 @@ extension on Translations {
 			'web.export.form.memories' => 'Memories',
 			'web.export.form.memoriesHint' => 'Cross-CLI persistent memory rows (text + scope + metadata). Embedding vectors are omitted; importer re-embeds.',
 			'web.export.form.integrations' => 'Integrations',
-			'web.export.form.customTasks' => 'Custom tasks',
 			_ => null,
 		} ?? switch (path) {
+			'web.export.form.customTasks' => 'Custom tasks',
 			'web.export.form.customTasksHint' => 'Operator-defined tasks shown in the Inspector\'s Tasks tab.',
 			'web.export.form.integrationOptions.none' => 'None',
 			'web.export.form.integrationOptions.noneHint' => 'Skip the integrations table entirely.',
@@ -19159,6 +19583,46 @@ extension on Translations {
 			'web.cortex.settings.injection.savedToast' => 'Injection mode saved — new sessions use it immediately (no backend restart)',
 			'web.cortex.settings.injection.saveFailed' => 'Save failed',
 			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
+			'web.loops.title' => 'Loops',
+			'web.loops.subtitle' => 'Autonomous agent loops — run a session on an interval, or until a goal is met.',
+			'web.loops.create' => 'Create loop',
+			'web.loops.createHint' => 'The loop drives an existing session. A deadline is required.',
+			'web.loops.empty' => 'No loops yet. Create one to drive a session autonomously.',
+			'web.loops.createdToast' => 'Loop created',
+			'web.loops.kind.goal' => 'Goal',
+			'web.loops.kind.interval' => 'Interval',
+			'web.loops.kindHint.goal' => 'run until a judge says the goal is met',
+			'web.loops.kindHint.interval' => 're-send the prompt every N seconds',
+			'web.loops.status.pending' => 'Pending',
+			'web.loops.status.running' => 'Running',
+			'web.loops.status.paused' => 'Paused',
+			'web.loops.status.done' => 'Done',
+			'web.loops.status.stopped' => 'Stopped',
+			'web.loops.status.failed' => 'Failed',
+			'web.loops.status.escalated' => 'Escalated',
+			'web.loops.origin.integration' => 'Integration',
+			'web.loops.iterationOf' => ({required Object n, required Object max}) => '${n} / ${max}',
+			'web.loops.action.pause' => 'Pause',
+			'web.loops.action.resume' => 'Resume',
+			'web.loops.action.stop' => 'Stop',
+			'web.loops.action.details' => 'Details',
+			'web.loops.action.cancel' => 'Cancel',
+			'web.loops.action.create' => 'Create',
+			'web.loops.field.session' => 'Session ID',
+			'web.loops.field.sessionPlaceholder' => 'the session this loop drives',
+			'web.loops.field.kind' => 'Kind',
+			'web.loops.field.goal' => 'Goal',
+			'web.loops.field.goalPlaceholder' => 'what the loop should accomplish',
+			'web.loops.field.seedPrompt' => 'Seed prompt',
+			'web.loops.field.prompt' => 'Prompt',
+			'web.loops.field.promptPlaceholder' => 'the instruction sent to the agent',
+			'web.loops.field.intervalSeconds' => 'Interval (seconds)',
+			'web.loops.field.maxIterations' => 'Max iterations',
+			'web.loops.field.durationMinutes' => 'Deadline (minutes)',
+			'web.loops.field.failureCap' => 'Failure cap',
+			'web.loops.runs.title' => 'Iterations',
+			'web.loops.runs.empty' => 'No iterations yet.',
+			'web.loops.runs.iteration' => ({required Object n}) => 'Iteration ${n}',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -19203,6 +19667,8 @@ extension on Translations {
 			'more.items.about.subtitle' => 'Build version & server info',
 			'more.items.vault.title' => 'Vault',
 			'more.items.vault.subtitle' => 'Freeform markdown notes (Obsidian-sync)',
+			'more.items.loops.title' => 'Loops',
+			'more.items.loops.subtitle' => 'Autonomous agent loops',
 			'more.signOut' => 'Sign out',
 			'activity.title' => 'Activity',
 			'activity.empty' => 'No integration calls recorded yet.',
@@ -19339,6 +19805,8 @@ extension on Translations {
 			'sessions.dirPicker.dialog.title' => 'New folder',
 			'sessions.dirPicker.dialog.hint' => 'Folder name',
 			'sessions.dirPicker.dialog.create' => 'Create',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.shell.title' => 'Inspector',
 			'sessions.inspector.shell.loadError' => ({required Object error}) => 'Failed to load session: ${error}',
 			'sessions.inspector.shell.tabs.files' => 'Files',
@@ -19382,8 +19850,6 @@ extension on Translations {
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Inserted: @${path}',
 			'sessions.inspector.notes.myNotes' => 'My notes',
@@ -19853,6 +20319,8 @@ extension on Translations {
 			'backups.kv.started' => 'Started',
 			'backups.kv.finished' => 'Finished',
 			'backups.kv.size' => 'Size',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.encrypted' => 'Encrypted',
 			'backups.kv.targetPath' => 'Target path',
 			'backups.kv.error' => 'Error',
@@ -19896,8 +20364,6 @@ extension on Translations {
 			'backups.health.never' => 'never',
 			'backups.health.tiles.recentFailures' => 'Recent failures',
 			'backups.health.tiles.verifyFailures' => 'Verify failures',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.tiles.overdue' => 'Overdue',
 			'backups.health.tiles.schedules' => 'Schedules',
 			'backups.failedToLoad' => 'Failed to load backups',
@@ -20367,6 +20833,8 @@ extension on Translations {
 			'dataExport.history.columns.scope' => 'Scope',
 			'dataExport.history.columns.size' => 'Size',
 			'dataExport.history.columns.expires' => 'Expires',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.columns.actions' => 'Actions',
 			'dataExport.history.scopeEmpty' => '(empty)',
 			'dataExport.history.scopeMemories' => 'memories',
@@ -20410,8 +20878,6 @@ extension on Translations {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n}s ago',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n}m ago',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n}h ago',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.status.pending' => 'pending',
 			'dataExport.status.running' => 'running',
 			'dataExport.status.ready' => 'ready',
@@ -20698,6 +21164,46 @@ extension on Translations {
 			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',
 			'cortexSettings.providersLoadFailed' => 'Failed to load providers',
 			'cortexSettings.defaultBadge' => 'default',
+			'loops.title' => 'Loops',
+			'loops.subtitle' => 'Autonomous agent loops — run a session on an interval, or until a goal is met.',
+			'loops.create' => 'Create loop',
+			'loops.createHint' => 'The loop drives an existing session. A deadline is required.',
+			'loops.empty' => 'No loops yet. Create one to drive a session autonomously.',
+			'loops.createdToast' => 'Loop created',
+			'loops.kind.goal' => 'Goal',
+			'loops.kind.interval' => 'Interval',
+			'loops.kindHint.goal' => 'run until a judge says the goal is met',
+			'loops.kindHint.interval' => 're-send the prompt every N seconds',
+			'loops.status.pending' => 'Pending',
+			'loops.status.running' => 'Running',
+			'loops.status.paused' => 'Paused',
+			'loops.status.done' => 'Done',
+			'loops.status.stopped' => 'Stopped',
+			'loops.status.failed' => 'Failed',
+			'loops.status.escalated' => 'Escalated',
+			'loops.origin.integration' => 'Integration',
+			'loops.iterationOf' => ({required Object n, required Object max}) => '${n} / ${max}',
+			'loops.action.pause' => 'Pause',
+			'loops.action.resume' => 'Resume',
+			'loops.action.stop' => 'Stop',
+			'loops.action.details' => 'Details',
+			'loops.action.cancel' => 'Cancel',
+			'loops.action.create' => 'Create',
+			'loops.field.session' => 'Session ID',
+			'loops.field.sessionPlaceholder' => 'the session this loop drives',
+			'loops.field.kind' => 'Kind',
+			'loops.field.goal' => 'Goal',
+			'loops.field.goalPlaceholder' => 'what the loop should accomplish',
+			'loops.field.seedPrompt' => 'Seed prompt',
+			'loops.field.prompt' => 'Prompt',
+			'loops.field.promptPlaceholder' => 'the instruction sent to the agent',
+			'loops.field.intervalSeconds' => 'Interval (seconds)',
+			'loops.field.maxIterations' => 'Max iterations',
+			'loops.field.durationMinutes' => 'Deadline (minutes)',
+			'loops.field.failureCap' => 'Failure cap',
+			'loops.runs.title' => 'Iterations',
+			'loops.runs.empty' => 'No iterations yet.',
+			'loops.runs.iteration' => ({required Object n}) => 'Iteration ${n}',
 			_ => null,
 		};
 	}

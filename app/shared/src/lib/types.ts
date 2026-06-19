@@ -39,6 +39,75 @@ export interface CreateSessionRequest {
   parent_session_id?: string
 }
 
+// ── Loops (autoloop — Loop Engine) ──────────────────────────
+
+export type LoopKind = 'interval' | 'goal'
+
+export type LoopStatus =
+  | 'pending'
+  | 'running'
+  | 'paused'
+  | 'done'
+  | 'stopped'
+  | 'failed'
+  | 'escalated'
+
+export const TERMINAL_LOOP_STATUSES: LoopStatus[] = [
+  'done',
+  'stopped',
+  'failed',
+  'escalated',
+]
+
+export function isTerminalLoopStatus(s: LoopStatus): boolean {
+  return TERMINAL_LOOP_STATUSES.includes(s)
+}
+
+export interface Loop {
+  id: string
+  session_id: string
+  origin: 'operator' | 'integration'
+  integration_id?: string
+  kind: LoopKind
+  status: LoopStatus
+  goal?: string
+  prompt: string
+  interval_seconds?: number
+  max_iterations: number
+  deadline_at?: string
+  failure_cap: number
+  judge_task?: string
+  iteration: number
+  last_verdict?: string
+  last_reason?: string
+  created_at: string
+  started_at?: string
+  ended_at?: string
+}
+
+export interface LoopRun {
+  id: number
+  loop_id: string
+  iteration: number
+  prompt: string
+  verdict?: string
+  reason?: string
+  started_at: string
+  ended_at?: string
+}
+
+export interface CreateLoopRequest {
+  session_id: string
+  kind: LoopKind
+  goal?: string
+  prompt: string
+  interval_seconds?: number
+  max_iterations?: number
+  deadline_at: string
+  failure_cap?: number
+  judge_task?: string
+}
+
 // ── Claude accounts (OAuth-token-on-disk model, mirrors v1) ─
 
 export interface ClaudeAccount {

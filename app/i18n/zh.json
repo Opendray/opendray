@@ -42,7 +42,8 @@
     "knowledge": "知识",
     "vault": "文档库",
     "cortex": "心智中枢",
-    "updateAvailable": "有可用更新"
+    "updateAvailable": "有可用更新",
+    "loops": "循环"
   },
   "web": {
     "brand": "opendray",
@@ -2992,6 +2993,62 @@
           "note": "完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。"
         }
       }
+    },
+    "loops": {
+      "title": "循环",
+      "subtitle": "自主 agent 循环 —— 按间隔运行 session,或跑到目标达成。",
+      "create": "创建循环",
+      "createHint": "循环驱动一个已有 session,必须设置截止时间。",
+      "empty": "还没有循环。创建一个来自主驱动 session。",
+      "createdToast": "已创建循环",
+      "kind": {
+        "goal": "目标",
+        "interval": "定时"
+      },
+      "kindHint": {
+        "goal": "跑到评审判定目标达成",
+        "interval": "每隔 N 秒重发 prompt"
+      },
+      "status": {
+        "pending": "待启动",
+        "running": "运行中",
+        "paused": "已暂停",
+        "done": "已完成",
+        "stopped": "已停止",
+        "failed": "失败",
+        "escalated": "已升级"
+      },
+      "origin": {
+        "integration": "集成"
+      },
+      "iterationOf": "{n} / {max}",
+      "action": {
+        "pause": "暂停",
+        "resume": "恢复",
+        "stop": "停止",
+        "details": "详情",
+        "cancel": "取消",
+        "create": "创建"
+      },
+      "field": {
+        "session": "Session ID",
+        "sessionPlaceholder": "该循环驱动的 session",
+        "kind": "类型",
+        "goal": "目标",
+        "goalPlaceholder": "循环要达成什么",
+        "seedPrompt": "初始 prompt",
+        "prompt": "Prompt",
+        "promptPlaceholder": "发送给 agent 的指令",
+        "intervalSeconds": "间隔(秒)",
+        "maxIterations": "最大迭代数",
+        "durationMinutes": "截止(分钟)",
+        "failureCap": "失败上限"
+      },
+      "runs": {
+        "title": "迭代记录",
+        "empty": "还没有迭代。",
+        "iteration": "第 {n} 轮"
+      }
     }
   },
   "more": {
@@ -3079,6 +3136,10 @@
       "vault": {
         "title": "文档库",
         "subtitle": "自由 markdown 笔记(Obsidian 同步)"
+      },
+      "loops": {
+        "title": "循环",
+        "subtitle": "自主 agent 循环"
       }
     },
     "signOut": "退出登录"
@@ -4876,5 +4937,61 @@
     "providersManageOnWeb": "在 web 管理端添加或编辑 provider。",
     "providersLoadFailed": "加载 provider 失败",
     "defaultBadge": "默认"
+  },
+  "loops": {
+    "title": "循环",
+    "subtitle": "自主 agent 循环 —— 按间隔运行 session,或跑到目标达成。",
+    "create": "创建循环",
+    "createHint": "循环驱动一个已有 session,必须设置截止时间。",
+    "empty": "还没有循环。创建一个来自主驱动 session。",
+    "createdToast": "已创建循环",
+    "kind": {
+      "goal": "目标",
+      "interval": "定时"
+    },
+    "kindHint": {
+      "goal": "跑到评审判定目标达成",
+      "interval": "每隔 N 秒重发 prompt"
+    },
+    "status": {
+      "pending": "待启动",
+      "running": "运行中",
+      "paused": "已暂停",
+      "done": "已完成",
+      "stopped": "已停止",
+      "failed": "失败",
+      "escalated": "已升级"
+    },
+    "origin": {
+      "integration": "集成"
+    },
+    "iterationOf": "{n} / {max}",
+    "action": {
+      "pause": "暂停",
+      "resume": "恢复",
+      "stop": "停止",
+      "details": "详情",
+      "cancel": "取消",
+      "create": "创建"
+    },
+    "field": {
+      "session": "Session ID",
+      "sessionPlaceholder": "该循环驱动的 session",
+      "kind": "类型",
+      "goal": "目标",
+      "goalPlaceholder": "循环要达成什么",
+      "seedPrompt": "初始 prompt",
+      "prompt": "Prompt",
+      "promptPlaceholder": "发送给 agent 的指令",
+      "intervalSeconds": "间隔(秒)",
+      "maxIterations": "最大迭代数",
+      "durationMinutes": "截止(分钟)",
+      "failureCap": "失败上限"
+    },
+    "runs": {
+      "title": "迭代记录",
+      "empty": "还没有迭代。",
+      "iteration": "第 {n} 轮"
+    }
   }
 }
