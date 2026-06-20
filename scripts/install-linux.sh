@@ -195,26 +195,27 @@ EOF
 ask_yes_no "Install Claude Code (npm @anthropic-ai/claude-code)?" "y" WANT_CLAUDE
 ask_yes_no "Install Gemini CLI (npm @google/gemini-cli)?" "n" WANT_GEMINI
 ask_yes_no "Install Codex CLI (npm @openai/codex)?" "n" WANT_CODEX
+ask_yes_no "Enable Antigravity CLI (agy) — install manually after wizard?" "n" WANT_ANTIGRAVITY
 
 INSTALLED_ANY=0
 
 npm_install_global() {
     local pkg="$1" bin="$2"
     if have_cmd "$bin"; then
-        log_ok "$bin already on PATH — skipping $pkg install"
+        log_ok "$bin already on PATH, skipping $pkg install"
         INSTALLED_ANY=1
         return 0
     fi
-    log_info "Installing $pkg (~30–90 s — npm registry download)..."
-    # `npm install -g` writes under /usr/lib/node_modules — needs root unless prefix is rewritten.
-    # No --silent / no /dev/null redirect: AI CLI packages are 50–100 MB, and a silent install on a
+    log_info "Installing $pkg (~30 to 90 s, npm registry download)..."
+    # `npm install -g` writes under /usr/lib/node_modules, needs root unless prefix is rewritten.
+    # No --silent / no /dev/null redirect: AI CLI packages are 50 to 100 MB, and a silent install on a
     # slow link looks indistinguishable from a hang. Let npm's progress bar through.
     run_priv npm install -g "$pkg"
     if have_cmd "$bin"; then
         log_ok "$bin installed: $($bin --version 2>/dev/null | head -1 || echo 'version unknown')"
         INSTALLED_ANY=1
     else
-        log_warn "$pkg installed but '$bin' is not on PATH — check 'npm bin -g' is in your \$PATH"
+        log_warn "$pkg installed but '$bin' is not on PATH, check 'npm bin -g' is in your \$PATH"
     fi
 }
 
@@ -222,9 +223,22 @@ npm_install_global() {
 [ "$WANT_GEMINI" = "y" ] && npm_install_global "@google/gemini-cli" gemini
 [ "$WANT_CODEX"  = "y" ] && npm_install_global "@openai/codex" codex
 
-# Don't fail hard — user might want to install CLIs manually later.
+# Antigravity (agy) is a Google product distributed outside npm. We do not
+# fetch it automatically because the canonical install path may change; if
+# the user opted in we just confirm whether it is on PATH and surface a
+# pointer they can follow.
+if [ "$WANT_ANTIGRAVITY" = "y" ]; then
+    if have_cmd agy; then
+        log_ok "agy already on PATH: $(agy --version 2>/dev/null | head -1 || echo 'version unknown')"
+        INSTALLED_ANY=1
+    else
+        log_warn "Antigravity CLI (agy) is not on PATH. Install it from https://antigravity.google.com, then run 'agy' once to log in. opendray will pick it up on the next session spawn."
+    fi
+fi
+
+# Don't fail hard, user might want to install CLIs manually later.
 # But warn loudly if literally nothing landed.
-if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd gemini && ! have_cmd codex; then
+if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd gemini && ! have_cmd codex && ! have_cmd agy; then
     log_warn "No AI CLI is on PATH. opendray will install fine, but session spawn will fail until you install one."
     ask_yes_no "Continue without an AI CLI?" "n" CONT_NO_CLI
     [ "$CONT_NO_CLI" = "y" ] || exit 0
@@ -243,9 +257,12 @@ cat <<'EOF'
   │     (gemini has no `login` subcommand; run it once,             │
   │      paste the device code from codeassist.google.com/          │
   │      authcode at the prompt, then ^C to exit)                   │
+  │   sudo -u opendray -H agy                                       │
+  │     (Antigravity has no `login` subcommand; run it once,        │
+  │      sign in with your Google / Antigravity account, ^C)        │
   │                                                                 │
   │ Credentials are written under                                   │
-  │   /var/lib/opendray/.{codex,gemini,claude}/                     │
+  │   /var/lib/opendray/.{codex,gemini,claude,antigravity}/         │
   │ which is where the daemon reads them at session spawn time.     │
   └─────────────────────────────────────────────────────────────────┘
 EOF
@@ -289,8 +306,33 @@ if [ "$PG_MODE" = "local" ]; then
     DEBIAN_FRONTEND=noninteractive run_priv apt-get install -y -qq \
         postgresql-16 postgresql-16-pgvector
 
-    run_priv systemctl enable --now postgresql
-    log_ok "PostgreSQL 16 installed and running"
+    # systemctl works on real systemd hosts; containers, WSL, and chroots
+    # have systemd-as-PID-1 disabled, so `systemctl enable --now postgresql`
+    # silently no-ops there. Fall back to pg_ctlcluster, then verify the
+    # socket is actually accepting connections before claiming success.
+    if run_priv systemctl is-system-running --quiet 2>/dev/null; then
+        run_priv systemctl enable --now postgresql
+    else
+        log_info "systemd not running (container/WSL/chroot), starting cluster via pg_ctlcluster..."
+        if ! run_priv pg_ctlcluster 16 main start >/dev/null 2>&1; then
+            # Already-running clusters return non-zero; only fail if no socket appears.
+            log_warn "pg_ctlcluster reported non-zero, verifying via socket probe..."
+        fi
+    fi
+
+    log_info "Waiting for PostgreSQL to accept connections..."
+    PG_READY=0
+    for _ in $(seq 1 30); do
+        if run_priv -u postgres pg_isready -q 2>/dev/null; then
+            PG_READY=1
+            break
+        fi
+        sleep 1
+    done
+    if [ "$PG_READY" = "0" ]; then
+        log_die "PostgreSQL did not start within 30s. Check 'journalctl -u postgresql' or '/var/log/postgresql/postgresql-16-main.log'."
+    fi
+    log_ok "PostgreSQL 16 installed and accepting connections"
 
     PG_SUPER_HOST="127.0.0.1"
     PG_SUPER_PORT="5432"
