@@ -45,7 +45,12 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
   // Carry-over toggle. When on, the switch seeds the new account's
   // fresh session with a recap of the prior conversation (sent to the
   // provider under the new account — see the helper text / confirm).
-  const [carryContext, setCarryContext] = useState(false)
+  // Defaults ON: an account switch can't truly resume the old
+  // conversation across isolated accounts, so without a recap the new
+  // session starts blind — the common surprise was "I switched and lost
+  // everything". The confirm dialog uses the carry-consent copy so the
+  // cross-account data flow is still surfaced; untick for a clean slate.
+  const [carryContext, setCarryContext] = useState(true)
 
   const mutation = useMutation({
     mutationFn: (accountId: string) =>
