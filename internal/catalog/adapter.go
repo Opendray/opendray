@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/opendray/opendray-v2/internal/agyacct"
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/session"
@@ -47,6 +48,7 @@ func resolveExecutable(raw string) string {
 type SessionProvider struct {
 	cat         *Catalog
 	accounts    *cliacct.Service // optional; nil disables claude multi-account
+	agyAccounts *agyacct.Service // optional; nil disables antigravity multi-account
 	skills      *skills.Loader   // optional; nil disables skill injection
 	mcps        *mcp.Loader      // optional; nil disables vault MCP injection
 	secretsFile string           // dotenv file for ${KEY} substitution; empty = no substitution
@@ -192,6 +194,7 @@ type MemoryAutoAttach struct {
 func NewSessionProvider(
 	cat *Catalog,
 	accounts *cliacct.Service,
+	agyAccounts *agyacct.Service,
 	skills *skills.Loader,
 	mcps *mcp.Loader,
 	secretsFile string,
@@ -203,6 +206,7 @@ func NewSessionProvider(
 	return &SessionProvider{
 		cat:         cat,
 		accounts:    accounts,
+		agyAccounts: agyAccounts,
 		skills:      skills,
 		mcps:        mcps,
 		secretsFile: secretsFile,
@@ -342,11 +346,13 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		Conflicts:  providerConflicts(p.Manifest.ID),
 	}
 
-	// Account selection: only meaningful for the Claude provider —
-	// other CLIs (codex / antigravity) don't yet have a multi-account
-	// abstraction in v2 because their auth model differs.
-	claudeAccountID := session.AccountID(ctx)
-	wantClaudeAccount := id == "claude" && claudeAccountID != "" && sp.accounts != nil
+	// Account selection. claude isolates accounts via CLAUDE_CONFIG_DIR;
+	// antigravity isolates via HOME (agy keys all state off $HOME). Both
+	// arrive through the same generic session.AccountID — the session
+	// manager set it from the provider-appropriate field at spawn.
+	selectedAccountID := session.AccountID(ctx)
+	wantClaudeAccount := id == "claude" && selectedAccountID != "" && sp.accounts != nil
+	wantAgyAccount := id == "antigravity" && selectedAccountID != "" && sp.agyAccounts != nil
 
 	// Merge vault MCP registry (enabled-only) into the provider's
 	// inline mcp_servers list. Vault entries are loaded eagerly here
@@ -414,7 +420,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// no-Prepare fast path even when nothing else needs one.
 	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
 
-	if !wantClaudeAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
+	if !wantClaudeAccount && !wantAgyAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
 		return info, nil
 	}
 
@@ -452,9 +458,9 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		injectSessionIDFor(prepareCtx, providerID, &out)
 
 		if wantClaudeAccount {
-			configDir, token, err := sp.accounts.ResolveSpawnCreds(prepareCtx, claudeAccountID)
+			configDir, token, err := sp.accounts.ResolveSpawnCreds(prepareCtx, selectedAccountID)
 			if err != nil {
-				return session.PrepareOutput{}, fmt.Errorf("claude account %s: %w", claudeAccountID, err)
+				return session.PrepareOutput{}, fmt.Errorf("claude account %s: %w", selectedAccountID, err)
 			}
 			// Static token only for legacy token-file accounts; config-dir
 			// accounts authenticate via CLAUDE_CONFIG_DIR/.credentials.json,
@@ -471,6 +477,25 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				// account dir untouched and inject skills purely via the
 				// --append-system-prompt CLI flag below.
 				out.Env["CLAUDE_CONFIG_DIR"] = configDir
+			}
+		}
+
+		if wantAgyAccount {
+			// agy keys its entire credential + conversation state off
+			// $HOME, so binding to an account = pointing HOME at the
+			// account's dedicated dir (which holds its own
+			// .gemini/antigravity-cli/antigravity-oauth-token).
+			home, err := sp.agyAccounts.ResolveSpawnHome(prepareCtx, selectedAccountID)
+			if err != nil {
+				return session.PrepareOutput{}, fmt.Errorf("antigravity account %s: %w", selectedAccountID, err)
+			}
+			out.Env["HOME"] = home
+			// Share the (large) Playwright browser cache across accounts
+			// instead of re-downloading it per HOME. Best-effort: a
+			// failure just means this account fetches its own copy.
+			if err := ensureAgySharedCache(home); err != nil {
+				sp.log.Warn("antigravity shared-cache symlink failed",
+					"home", home, "err", err)
 			}
 		}
 
@@ -728,6 +753,36 @@ func injectAgyContext(baseDir, content string, out *session.PrepareOutput) error
 	}
 	if !hasArgPair(out.Args, "--add-dir", baseDir) {
 		out.Args = append(out.Args, "--add-dir", baseDir)
+	}
+	return nil
+}
+
+// ensureAgySharedCache symlinks a per-account antigravity HOME's
+// Playwright browser cache to the gateway user's real one, so each
+// account doesn't re-download the (hundreds-of-MB) browser payload under
+// its own HOME. No-op when home IS the real HOME, when the shared source
+// doesn't exist yet, or when the account already has its own cache entry
+// (real dir or prior symlink) in place. Best-effort — the caller logs
+// and continues on error.
+func ensureAgySharedCache(home string) error {
+	realHome, err := os.UserHomeDir()
+	if err != nil || realHome == "" || home == realHome {
+		return nil
+	}
+	const rel = ".cache/ms-playwright-go"
+	src := filepath.Join(realHome, rel)
+	if st, err := os.Stat(src); err != nil || !st.IsDir() {
+		return nil // nothing to share yet
+	}
+	dst := filepath.Join(home, rel)
+	if _, err := os.Lstat(dst); err == nil {
+		return nil // already present
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+		return fmt.Errorf("mkdir cache parent: %w", err)
+	}
+	if err := os.Symlink(src, dst); err != nil {
+		return fmt.Errorf("symlink cache: %w", err)
 	}
 	return nil
 }

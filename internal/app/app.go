@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/opendray/opendray-v2/internal/agyacct"
 	"github.com/opendray/opendray-v2/internal/audit"
 	"github.com/opendray/opendray-v2/internal/auth"
 	"github.com/opendray/opendray-v2/internal/backup"
@@ -431,6 +432,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		cliacctWatcher = cliacct.NewWatcher(cliacctSvc, cliacctSvc.AccountsDir(), log)
 	}
 
+	// Antigravity (agy) multi-account: an account is a dedicated HOME
+	// dir holding its own OAuth token (agy keys all state off $HOME).
+	// Parallel subsystem to cliacct; no host watcher in Phase 1 —
+	// accounts are surfaced via the "Import local" scan.
+	agyacctSvc := agyacct.NewService(st.Pool(), bus, log)
+	agyacctHandlers := agyacct.NewHandlers(agyacctSvc, log)
+
 	// Vault + skills are needed by the SessionProvider so spawn-time
 	// injection has them available. Constructed here (before the
 	// session manager) so the manager's first Resolve call sees them.
@@ -482,7 +490,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// non-throttled enabled account.
 		session.WithAutoFailoverEnabled(cfg.Providers.Claude.AutoFailoverIsEnabled()),
 	)
-	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, skillsLoader, mcpLoader, secretsFile, log)
+	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	// Built before the session manager so spawn can inject an
 	// integration's provider-agnostic spawn profile (MCP servers + system
 	// prompt + auto-approve) into the sessions it creates, and so POST
@@ -516,6 +524,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// letting the row be persisted/mutated and then erroring
 		// at spawn time with 500.
 		session.WithClaudeAccountChecker(cliacctSvc),
+		// Same fast-fail validation for PATCH
+		// /sessions/{id}/antigravity-account.
+		session.WithAntigravityAccountChecker(agyacctSvc),
 		// Fill provider/model/claude-account from the integration's
 		// configured defaults for sessions an integration creates and
 		// the request leaves those fields empty (request still wins).
@@ -1264,6 +1275,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				sessionHandlers.Mount(r)
 				catalogHandlers.Mount(r)
 				cliacctHandlers.Mount(r)
+				agyacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)

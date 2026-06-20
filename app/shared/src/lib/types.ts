@@ -23,6 +23,8 @@ export interface Session {
   pid?: number
   claude_account_id?: string
   claude_session_id?: string
+  /** Antigravity account this session is pinned to (provider "antigravity"). */
+  antigravity_account_id?: string
   /** Set when this session was spawned on behalf of another (e.g. a Task). */
   parent_session_id?: string
   started_at: string
@@ -83,6 +85,40 @@ export interface UpdateClaudeAccountRequest {
   display_name?: string
   config_dir?: string
   token_path?: string
+  description?: string
+  enabled?: boolean
+}
+
+// ── Antigravity accounts (HOME-isolation model) ─────────────
+// An antigravity account is a dedicated HOME dir holding its own agy
+// OAuth token. config_dir is that HOME; token_filled = token present.
+export interface AntigravityAccount {
+  id: string
+  name: string
+  display_name: string
+  config_dir: string // per-account HOME directory
+  description: string
+  enabled: boolean
+  token_filled: boolean
+  created_at: string
+  updated_at: string
+  // Derived, optional for forward-compat.
+  last_used_at?: string
+  active_sessions?: number
+}
+
+export interface CreateAntigravityAccountRequest {
+  name: string
+  display_name?: string
+  config_dir?: string
+  description?: string
+  enabled?: boolean
+}
+
+export interface UpdateAntigravityAccountRequest {
+  name?: string
+  display_name?: string
+  config_dir?: string
   description?: string
   enabled?: boolean
 }

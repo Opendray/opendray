@@ -63,6 +63,21 @@ export async function switchClaudeAccount(
   })
 }
 
+// switchAntigravityAccount rebinds a running antigravity session to a
+// different account (a different HOME) and respawns it. agy has no
+// cross-account recap builder, so this is always a clean-slate switch —
+// hence no carryContext parameter. `accountId === ''` clears the binding
+// (CLI uses the gateway user's default ~/.gemini HOME).
+export async function switchAntigravityAccount(
+  id: string,
+  accountId: string,
+): Promise<Session> {
+  return api<Session>(`/api/v1/sessions/${id}/antigravity-account`, {
+    method: 'PATCH',
+    body: { account_id: accountId },
+  })
+}
+
 export interface HistoryEntry {
   ts: string
   text: string

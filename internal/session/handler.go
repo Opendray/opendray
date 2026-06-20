@@ -38,7 +38,19 @@ type Service interface {
 	Subscribe(ctx context.Context, id string) (<-chan []byte, func(), error)
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
+	SwitchAntigravityAccount(ctx context.Context, id, accountID string) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
+}
+
+// AntigravityAccountChecker is the minimal agyacct surface the session
+// handler needs to validate `antigravity_account_id` early (before the
+// switch mutates the row). Mirrors ClaudeAccountChecker; a nil checker
+// disables validation (deferred error at spawn time).
+type AntigravityAccountChecker interface {
+	// CheckEnabled returns nil when id refers to an existing, enabled
+	// antigravity account; an error otherwise (distinguishing
+	// not-found from disabled so the handler maps both to 400).
+	CheckEnabled(ctx context.Context, id string) error
 }
 
 // ClaudeAccountChecker is the minimal cliacct surface the session
@@ -83,8 +95,9 @@ type IntegrationDefaults interface {
 
 type Handlers struct {
 	svc      Service
-	acct     ClaudeAccountChecker // optional; nil disables early validation
-	defaults IntegrationDefaults  // optional; nil disables integration spawn defaults
+	acct     ClaudeAccountChecker      // optional; nil disables early validation
+	agyAcct  AntigravityAccountChecker // optional; nil disables early validation
+	defaults IntegrationDefaults       // optional; nil disables integration spawn defaults
 	log      *slog.Logger
 	upgrader websocket.Upgrader
 }
@@ -99,6 +112,13 @@ type HandlerOption func(*Handlers)
 // is equivalent to omitting the option (validation is skipped).
 func WithClaudeAccountChecker(c ClaudeAccountChecker) HandlerOption {
 	return func(h *Handlers) { h.acct = c }
+}
+
+// WithAntigravityAccountChecker wires the agyacct surface used to
+// validate antigravity_account_id in switchAntigravityAccount(). Passing
+// nil is equivalent to omitting the option (validation is skipped).
+func WithAntigravityAccountChecker(c AntigravityAccountChecker) HandlerOption {
+	return func(h *Handlers) { h.agyAcct = c }
 }
 
 // WithIntegrationDefaults wires the resolver used to fill provider /
@@ -152,6 +172,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Get("/stream", h.stream)
 			r.Get("/history", h.history)
 			r.Patch("/claude-account", h.switchClaudeAccount)
+			r.Patch("/antigravity-account", h.switchAntigravityAccount)
 			r.Post("/uploads", h.upload)
 		})
 	})
@@ -604,6 +625,32 @@ func (h *Handlers) switchClaudeAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	sess, err := h.svc.SwitchClaudeAccount(r.Context(), id, req.AccountID, req.CarryContext)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
+}
+
+// switchAntigravityAccount handles PATCH /sessions/{id}/antigravity-account.
+// Mirrors switchClaudeAccount: validate the target up-front (so a bad id
+// fails before the live session is stopped), then rebind. carry_context
+// is accepted in the body for client symmetry but ignored — agy has no
+// cross-account recap builder yet, so the switch is always clean-slate.
+func (h *Handlers) switchAntigravityAccount(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req SwitchAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if h.agyAcct != nil && req.AccountID != "" {
+		if err := h.agyAcct.CheckEnabled(r.Context(), req.AccountID); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("account_id: %w", err))
+			return
+		}
+	}
+	sess, err := h.svc.SwitchAntigravityAccount(r.Context(), id, req.AccountID)
 	if err != nil {
 		h.respondError(w, err)
 		return
