@@ -10,7 +10,7 @@ func TestNormalizeConvOverride_ClaudeAccount(t *testing.T) {
 		wantErr                              bool
 	}{
 		{"claude keeps account", "claude", "opus", "", "acc-1", "claude", "acc-1", false},
-		{"non-claude clears account", "gemini", "", "", "acc-1", "gemini", "", false},
+		{"non-claude clears account", "antigravity", "", "", "acc-1", "antigravity", "", false},
 		{"codex clears account", "codex", "", "", "acc-1", "codex", "", false},
 		{"summarizer clears account+provider", "", "", "sum-1", "acc-1", "", "", false},
 		{"empty provider clears account", "", "", "", "acc-1", "", "", false},

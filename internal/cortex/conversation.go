@@ -65,11 +65,11 @@ type Conversation struct {
 // validConvProvider lists the cloud-agent providers the Cortex
 // conversation worker can actually drive headlessly. Must stay in sync
 // with the worker fabric's AgentWorker.buildCommand switch (claude /
-// gemini / codex / antigravity). opencode has no headless worker path
-// yet, so it is intentionally NOT accepted here.
+// codex / antigravity). gemini was retired (superseded by antigravity)
+// and opencode has no headless worker path yet, so neither is accepted.
 func validConvProvider(p string) bool {
 	switch p {
-	case "", "claude", "gemini", "codex", "antigravity":
+	case "", "claude", "codex", "antigravity":
 		return true
 	}
 	return false

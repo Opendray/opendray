@@ -7,7 +7,7 @@
 #   1. Plan summary + confirmation
 #   2. Base tools (curl, ca-certificates, build essentials, postgresql-client)
 #   3. Node.js (for AI CLIs); pnpm only when --from-source
-#   4. AI CLI selection + install (Claude / Codex / Gemini)
+#   4. AI CLI selection + install (Claude / Codex / Antigravity / Grok)
 #   5. PostgreSQL path: use existing OR install locally
 #   6. Bootstrap opendray DB / user / pgvector
 #   7. opendray credentials + listen address
@@ -108,7 +108,7 @@ before the systemd unit is started — nothing irreversible happens before that.
 
   1) Install base tools             (apt: curl, build-essential, postgresql-client)
   2) Install Node.js                (needed for the AI CLIs)
-  3) Choose & install AI CLIs       (Claude / Codex / Gemini — at least one required)
+  3) Choose & install AI CLIs       (Claude / Codex / Antigravity / Grok — at least one required)
   4) Postgres path:
        (a) use an existing PostgreSQL host                     — recommended for prod
        (b) install PostgreSQL 16 + pgvector locally via apt    — easiest for single-box
@@ -193,9 +193,9 @@ or running the npm command by hand.
 EOF
 
 ask_yes_no "Install Claude Code (npm @anthropic-ai/claude-code)?" "y" WANT_CLAUDE
-ask_yes_no "Install Gemini CLI (npm @google/gemini-cli)?" "n" WANT_GEMINI
 ask_yes_no "Install Codex CLI (npm @openai/codex)?" "n" WANT_CODEX
 ask_yes_no "Enable Antigravity CLI (agy) — install manually after wizard?" "n" WANT_ANTIGRAVITY
+ask_yes_no "Enable Grok Build CLI (grok) — install manually after wizard?" "n" WANT_GROK
 
 INSTALLED_ANY=0
 
@@ -220,7 +220,6 @@ npm_install_global() {
 }
 
 [ "$WANT_CLAUDE" = "y" ] && npm_install_global "@anthropic-ai/claude-code" claude
-[ "$WANT_GEMINI" = "y" ] && npm_install_global "@google/gemini-cli" gemini
 [ "$WANT_CODEX"  = "y" ] && npm_install_global "@openai/codex" codex
 
 # Antigravity (agy) is a Google product distributed outside npm. We do not
@@ -236,9 +235,22 @@ if [ "$WANT_ANTIGRAVITY" = "y" ]; then
     fi
 fi
 
+# Grok Build (grok) is xAI's standalone binary, distributed via x.ai's
+# installer (not npm). Same handling as agy: we don't auto-fetch it
+# because it must land in the opendray service user's HOME to be
+# readable at spawn time; we surface the one-liner instead.
+if [ "$WANT_GROK" = "y" ]; then
+    if have_cmd grok; then
+        log_ok "grok already on PATH: $(grok --version 2>/dev/null | head -1 || echo 'version unknown')"
+        INSTALLED_ANY=1
+    else
+        log_warn "Grok Build CLI (grok) is not on PATH. Install it as the opendray user with: curl -fsSL https://x.ai/cli/install.sh | bash — then run 'grok login'. opendray will pick it up on the next session spawn."
+    fi
+fi
+
 # Don't fail hard, user might want to install CLIs manually later.
 # But warn loudly if literally nothing landed.
-if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd gemini && ! have_cmd codex && ! have_cmd agy; then
+if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd codex && ! have_cmd agy && ! have_cmd grok; then
     log_warn "No AI CLI is on PATH. opendray will install fine, but session spawn will fail until you install one."
     ask_yes_no "Continue without an AI CLI?" "n" CONT_NO_CLI
     [ "$CONT_NO_CLI" = "y" ] || exit 0
@@ -246,25 +258,22 @@ fi
 
 cat <<'EOF'
 
-  ┌─ Heads up ──────────────────────────────────────────────────────┐
-  │ The CLIs are installed but NOT logged in. After this wizard,    │
-  │ run each login command as the opendray service user so the      │
-  │ daemon can read the resulting credentials:                      │
-  │                                                                 │
-  │   sudo -u opendray -H claude auth login                         │
-  │   sudo -u opendray -H codex login --device-auth                 │
-  │   sudo -u opendray -H GEMINI_CLI_NO_BROWSER=true gemini         │
-  │     (gemini has no `login` subcommand; run it once,             │
-  │      paste the device code from codeassist.google.com/          │
-  │      authcode at the prompt, then ^C to exit)                   │
-  │   sudo -u opendray -H agy                                       │
-  │     (Antigravity has no `login` subcommand; run it once,        │
-  │      sign in with your Google / Antigravity account, ^C)        │
-  │                                                                 │
-  │ Credentials are written under                                   │
-  │   /var/lib/opendray/.{codex,gemini,claude,antigravity}/         │
-  │ which is where the daemon reads them at session spawn time.     │
-  └─────────────────────────────────────────────────────────────────┘
+  ── Heads up: log in the CLIs as the opendray service user ──────────
+  The CLIs are installed but NOT logged in. After this wizard, run each
+  login command as the opendray service user so the daemon can read the
+  resulting credentials:
+
+    sudo -u opendray -H claude auth login
+    sudo -u opendray -H codex login --device-auth
+    sudo -u opendray -H agy
+      (Antigravity has no `login` subcommand; run it once, sign in with
+       your Google / Antigravity account, then ^C to exit)
+    sudo -u opendray -H grok login
+      (Grok signs in with your xAI account)
+
+  Credentials are written under
+    /var/lib/opendray/.{codex,claude,antigravity,grok}/
+  which is where the daemon reads them at session spawn time.
 EOF
 
 # ───────────────────────────────────────────────────────────────────────
@@ -825,13 +834,11 @@ cat <<EOF
        log in as ${OD_ADMIN_USER}, rotate the admin password.
     2. Finish logging your AI CLI(s) in as the opendray service user so
        the daemon can read the resulting credentials under
-       /var/lib/opendray/.{codex,gemini,claude}/ :
+       /var/lib/opendray/.{codex,claude,antigravity,grok}/ :
          sudo -u opendray -H claude auth login
          sudo -u opendray -H codex login --device-auth
-         sudo -u opendray -H GEMINI_CLI_NO_BROWSER=true gemini
-       (gemini has no 'login' subcommand — run it once interactively,
-        paste the device code from codeassist.google.com/authcode at
-        the prompt, then ^C to exit.)
+         sudo -u opendray -H agy          # sign in with Google, then ^C
+         sudo -u opendray -H grok login   # sign in with your xAI account
     3. Providers → register the CLI binary path (e.g. \$(which claude)).
     4. Sessions → New session → spawn your first session.
 

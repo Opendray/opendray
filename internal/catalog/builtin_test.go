@@ -4,9 +4,11 @@ import "testing"
 
 // TestLoadBuiltin_AllPresent guards the catalog's builtin set: the M2
 // scope (claude/codex/gemini/shell, ADR 0004), antigravity (agy) as a
-// gemini-lineage cloud CLI, and opencode as the provider-agnostic /
-// local-model CLI. If you intentionally add another manifest, update
-// ADR 0004 and this test together.
+// gemini-lineage cloud CLI, opencode as the provider-agnostic /
+// local-model CLI, and grok (xAI Grok Build). gemini is still loaded
+// here but carries "hidden": true so it stays resolvable for existing
+// sessions while dropping off the UI/wizard. If you intentionally add
+// another manifest, update ADR 0004 and this test together.
 func TestLoadBuiltin_AllPresent(t *testing.T) {
 	manifests, hashes, err := LoadBuiltin()
 	if err != nil {
@@ -15,6 +17,7 @@ func TestLoadBuiltin_AllPresent(t *testing.T) {
 	want := map[string]bool{
 		"claude": true, "codex": true, "gemini": true,
 		"shell": true, "antigravity": true, "opencode": true,
+		"grok": true,
 	}
 	if len(manifests) != len(want) {
 		t.Errorf("got %d manifests, want %d", len(manifests), len(want))
