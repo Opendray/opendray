@@ -49,7 +49,7 @@ type llmDecision struct {
 // + JSON-schema enforcement. M25 — replaced the direct HTTP
 // client with a Registry dispatch so the cleaner touchpoint
 // independently picks between the summarizer HTTP path and a
-// headless Claude/Gemini agent based on the operator's choice in
+// headless Claude/Antigravity agent based on the operator's choice in
 // memory_workers.cleaner.
 //
 // The DecisionsJSONSchema constant is plumbed through worker.Request

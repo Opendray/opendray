@@ -152,8 +152,8 @@ function RenderInput({
       )
     case 'select': {
       // Radix Select forbids `value=""` on Item (it reserves "" to mean
-      // "cleared / show placeholder"). Some manifests (e.g. gemini's
-      // `sandbox`) legitimately use the empty string as an option, so
+      // "cleared / show placeholder"). Some manifests legitimately
+      // use the empty string as an option, so
       // map it to a sentinel inside the widget and translate back at
       // the boundary.
       const EMPTY = '__empty__'

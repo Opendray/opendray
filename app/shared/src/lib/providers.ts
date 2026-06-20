@@ -19,7 +19,6 @@ export interface ProviderVisual {
 const palette: Record<string, Omit<ProviderVisual, 'letter'>> = {
   claude: { bg: 'bg-orange-600', fg: 'text-white', name: 'Claude Code' },
   codex: { bg: 'bg-emerald-600', fg: 'text-white', name: 'Codex' },
-  gemini: { bg: 'bg-sky-600', fg: 'text-white', name: 'Gemini' },
   shell: { bg: 'bg-slate-600', fg: 'text-white', name: 'Shell' },
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "opendray",
   "version": "0.0.0",
-  "description": "Self-hosted gateway that runs Claude Code / Codex / Gemini / shell sessions on your own infrastructure. CLI installer wrapper around the official Go release binary.",
+  "description": "Self-hosted gateway that runs Claude Code / Codex / Antigravity / shell sessions on your own infrastructure. CLI installer wrapper around the official Go release binary.",
   "license": "Apache-2.0",
   "homepage": "https://opendray.dev",
   "repository": {
@@ -14,7 +14,7 @@
     "opendray",
     "claude-code",
     "codex",
-    "gemini",
+    "antigravity",
     "ai-coding-agent",
     "self-hosted",
     "gateway",

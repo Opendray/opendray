@@ -21,7 +21,7 @@ import (
 //   - collapses runs of blank lines so the snippet packs tightly.
 //
 // Used by recentResponseSnippet for every provider except claude, so a
-// shell — and the codex / gemini screen-snapshot fallback — keeps its
+// shell — and the codex / antigravity screen-snapshot fallback — keeps its
 // output intact instead of being run through Claude-tuned heuristics.
 
 // barePromptLine matches a line that is nothing but a shell prompt
@@ -34,7 +34,7 @@ var barePromptLine = regexp.MustCompile(`^[>$#%❯➜»]{1,2}$`)
 
 // stripScreenChrome picks the right chrome filter for a provider's
 // rendered terminal output: Claude's heavy TUI gets FilterClaudeChrome,
-// everything else (shell, plus the codex / gemini snapshot fallback)
+// everything else (shell, plus the codex / antigravity snapshot fallback)
 // gets the content-preserving FilterShellChrome.
 func stripScreenChrome(provider, snapshot string) string {
 	if provider == "claude" {

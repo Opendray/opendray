@@ -224,7 +224,7 @@ export function MemoryWorkersPage() {
       </section>
 
       {/* § 2. Workers — per-task routing decisions (summarizer
-          provider vs headless Claude/Gemini agent). */}
+          provider vs headless Claude/Antigravity agent). */}
       <section id="cortex-sec-2" className="scroll-mt-4 space-y-3">
         <SectionTitle
           step={2}
@@ -802,9 +802,6 @@ function WorkerCard({
                   <SelectContent>
                     <SelectItem value="claude">
                       {t('web.memoryWorkers.cliClaude')}
-                    </SelectItem>
-                    <SelectItem value="gemini">
-                      {t('web.memoryWorkers.cliGemini')}
                     </SelectItem>
                     <SelectItem value="codex">
                       {t('web.memoryWorkers.cliCodex')}

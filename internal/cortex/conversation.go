@@ -65,8 +65,8 @@ type Conversation struct {
 // validConvProvider lists the cloud-agent providers the Cortex
 // conversation worker can actually drive headlessly. Must stay in sync
 // with the worker fabric's AgentWorker.buildCommand switch (claude /
-// codex / antigravity). gemini was retired (superseded by antigravity)
-// and opencode has no headless worker path yet, so neither is accepted.
+// codex / antigravity). opencode has no headless worker path yet, so
+// it is not accepted.
 func validConvProvider(p string) bool {
 	switch p {
 	case "", "claude", "codex", "antigravity":
@@ -94,7 +94,7 @@ func normalizeConvOverride(providerID, model, summarizerID, claudeAccountID stri
 		return "", model, summarizerID, "", nil
 	}
 	if !validConvProvider(providerID) {
-		return "", "", "", "", fmt.Errorf("cortex: provider_id %q is not supported for AI discussion (want claude|gemini|codex|antigravity)", providerID)
+		return "", "", "", "", fmt.Errorf("cortex: provider_id %q is not supported for AI discussion (want claude|codex|antigravity)", providerID)
 	}
 	if providerID == "" {
 		model = "" // a model with no provider is meaningless

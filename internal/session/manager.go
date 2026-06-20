@@ -149,12 +149,6 @@ func WithCodexHistoryConfig(cfg CodexHistoryConfig) ManagerOption {
 	return func(m *Manager) { m.codexHistoryCfg = cfg }
 }
 
-// WithGeminiHistoryConfig overrides the Gemini tmp + projects-file
-// paths used by Manager.History. Empty config = ~/.gemini defaults.
-func WithGeminiHistoryConfig(cfg GeminiHistoryConfig) ManagerOption {
-	return func(m *Manager) { m.geminiHistoryCfg = cfg }
-}
-
 // WithAntigravityHistoryConfig overrides the agy conversations root used
 // by Manager.Transcript. Empty config = ~/.gemini/antigravity-cli/
 // conversations default.
@@ -181,7 +175,6 @@ type Manager struct {
 
 	claudeHistoryCfg      ClaudeHistoryConfig
 	codexHistoryCfg       CodexHistoryConfig
-	geminiHistoryCfg      GeminiHistoryConfig
 	antigravityHistoryCfg AntigravityHistoryConfig
 
 	mu       sync.RWMutex
@@ -830,8 +823,8 @@ func (m *Manager) RecentScreen(id string) string {
 
 // RecentSnippet returns the notification-grade preview of a running
 // session's latest output — the same content the idle / turn cards
-// carry. Unlike RecentScreen it is provider-aware: claude / gemini
-// prefer their JSONL recent-response (clean assistant text), and
+// carry. Unlike RecentScreen it is provider-aware: claude
+// prefers its JSONL recent-response (clean assistant text), and
 // anything else falls back to the chrome-stripped visible screen.
 // This is what an on-demand "show me the current output" affordance
 // (e.g. the Telegram /peek command) should surface so it matches what
@@ -852,7 +845,7 @@ func (m *Manager) RecentSnippet(id string) string {
 // ensureColorTerm guarantees child CLIs see a color-capable terminal.
 // opendray always allocates a real PTY (pty.Start), so the CLIs'
 // isatty() check passes — but systemd starts the daemon with no TERM,
-// and Node/ink-based CLIs (claude, codex, gemini) fall back to
+// and Node/ink-based CLIs (claude, codex, antigravity) fall back to
 // monochrome output when TERM is unset. We inject xterm-256color +
 // truecolor as defaults only; an explicit TERM/COLORTERM already in
 // the environment (or set later by provider config, which mergeEnv
@@ -1166,11 +1159,11 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	// auto-emitted by xterm.js and our Dart xterm fork when the CLI
 	// queries terminal state — they're protocol-level back-channel
 	// responses, not user input. Most TUIs absorb them as escape
-	// sequences and discard them silently, but Gemini's input
+	// sequences and discard them silently, but some Ink-based input
 	// parser leaks the trailing `1;2c` into the visible prompt and
 	// enters a broken state that swallows the next Enter. Filtering
 	// here is harmless for Claude/Codex (they fall back to defaults
-	// when no DA response arrives) and fixes Gemini cleanly.
+	// when no DA response arrives) and fixes the affected CLIs cleanly.
 	data = stripTerminalCapabilityResponses(data)
 	if len(data) == 0 {
 		return nil
@@ -1263,7 +1256,6 @@ func (m *Manager) Buffer(_ context.Context, id string, since int64) (Replay, err
 //
 //   - claude → ~/.claude/projects/<encoded-cwd>/*.jsonl
 //   - codex  → ~/.codex/sessions/.../rollout-*.jsonl filtered by session_meta.cwd
-//   - gemini → ~/.gemini/tmp/<sha256(cwd)>/logs.json
 //
 // Providers without a transcript on disk (shell, etc.) return
 // UnsupportedProvider=true with empty entries so the UI can render
@@ -1282,8 +1274,6 @@ func (m *Manager) History(ctx context.Context, id string, limit int) (HistoryRes
 		entries = ProjectInputHistory(m.claudeHistoryCfg, sess.Cwd, limit)
 	case "codex":
 		entries = CodexInputHistory(m.codexHistoryCfg, sess.Cwd, limit)
-	case "gemini":
-		entries = GeminiInputHistory(m.geminiHistoryCfg, sess.Cwd, limit)
 	default:
 		return HistoryResponse{Entries: []ProjectInput{}, UnsupportedProvider: true}, nil
 	}
@@ -1357,7 +1347,7 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 // Value-flag detection is a peek heuristic: a flag is treated as taking a
 // value when the following token does not itself start with "-". This
 // matches every flag opendray's bundled providers actually emit (codex,
-// claude, gemini). It does NOT support flag values that start with "-"
+// claude, antigravity). It does NOT support flag values that start with "-"
 // (e.g. negative numbers); none of our providers use such values.
 // injectionValueFlags / injectionBoolFlags are the per-CLI flags the
 // integration spawn profile owns (MCP config, system prompt, permission
@@ -1368,9 +1358,8 @@ var injectionValueFlags = map[string]bool{
 	"--append-system-prompt": true, // claude
 }
 var injectionBoolFlags = map[string]bool{
-	"--dangerously-skip-permissions": true, // claude
-	"--yolo":                         true, // gemini
-	"--dangerously-bypass-approvals-and-sandbox": true, // codex / antigravity
+	"--dangerously-skip-permissions":             true, // claude / antigravity
+	"--dangerously-bypass-approvals-and-sandbox": true, // codex
 }
 
 // stripInjectionFlags returns args with the spawn-profile-owned injection

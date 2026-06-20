@@ -18,7 +18,7 @@ wrap 的 CLI、bootstrap Postgres)跟 README 里的部署路径串到一起。
 
 | 工具 | 为什么 | 备注 |
 |---|---|---|
-| 至少一个:Claude Code / Codex CLI / Gemini CLI | opendray 是 **wrapper**,不是模型 —— 它在 host 上 spawn 你装好的 CLI | 第 1 步 |
+| 至少一个:Claude Code / Codex CLI / Antigravity CLI | opendray 是 **wrapper**,不是模型 —— 它在 host 上 spawn 你装好的 CLI | 第 1 步 |
 | PostgreSQL 15 / 16 / 17 + **pgvector** 扩展 | 状态、会话、记忆向量 | 第 2 步 |
 | `go` 1.25+ 和 `pnpm` 10+ —— *只在* 从源码 build 时需要 | 用 release binary 的话跳过 | [Releases 页](https://github.com/Opendray/opendray/releases) |
 | 一个可达的端口(默认 `:8770`)给 Web 后台 | UI + API + WebSocket | 没反向代理就绑 `127.0.0.1` |
@@ -48,17 +48,18 @@ provider 时会自动读到。
 codex --version     # 验证一下
 ```
 
-### Gemini CLI(Google)
+### Antigravity CLI(agy)
 
 ```sh
-npm install -g @google/gemini-cli
-gemini auth login
+# 安装 Antigravity CLI;装完 `agy` 应该在 $PATH 上
+#(Antigravity 取代了已停止维护的 Gemini CLI)
+agy --version       # 验证一下
 ```
 
 ### 验证至少一个能找到
 
 ```sh
-which claude codex gemini      # 至少一行能 resolve
+which claude codex agy      # 至少一行能 resolve
 ```
 
 > 只装 **一个** CLI 就能跑 opendray,其他以后再加。Provider 列表是
@@ -126,7 +127,7 @@ PGPASSWORD='<密码>' psql -h <pg-host> -U opendray_user -d opendray -c "SELECT 
 ## 第 3 步 —— 选部署路径、装 opendray
 
 **先问自己**:你来这里是为了 session spawn 功能吗(在 web Sessions
-页 spawn Claude / Codex / Gemini)?
+页 spawn Claude / Codex / Antigravity)?
 
 ### 如果是 —— 需要 "完整" 路径
 

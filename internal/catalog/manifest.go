@@ -1,5 +1,5 @@
 // Package catalog serves the embedded CLI provider manifests
-// (claude, codex, gemini, shell) plus per-provider user config.
+// (claude, codex, antigravity, shell) plus per-provider user config.
 //
 // Per ADR 0004 the catalog backend ships only 4 manifests — anything
 // that v1 had as a "plugin" but is actually a UI tool / messaging
@@ -47,8 +47,8 @@ type Manifest struct {
 	// pinned to it still spawn) but drops it from Catalog.List, so it
 	// disappears from every UI provider picker and the wizard. Used to
 	// retire a provider without deleting its manifest/helper code or
-	// breaking sessions already bound to it (e.g. gemini, superseded by
-	// antigravity). Reversible: flip the flag back to false.
+	// breaking sessions already bound to it. Reversible: flip the flag
+	// back to false.
 	Hidden bool `json:"hidden,omitempty"`
 }
 

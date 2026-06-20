@@ -7,7 +7,7 @@
 // the unit, so the dashboard only queues a request; this command, running
 // as root, applies the official latest release (checksum-verified, via the
 // same path as `opendray update`), ensures the W^X drop-in so the upgraded
-// daemon doesn't relapse into the codex/gemini JIT crash (#239), restarts,
+// daemon doesn't relapse into the codex/antigravity JIT crash (#239), restarts,
 // and clears the request.
 package main
 
@@ -54,7 +54,7 @@ func runSelfUpdate(args []string) int {
 		req.Version, req.RequestedBy, req.RequestedAt.Format(time.RFC3339))
 
 	// Ensure the W^X drop-in so the upgraded daemon doesn't relapse into the
-	// codex/gemini JIT crash — `update` alone never touches the unit (#239).
+	// codex/antigravity JIT crash — `update` alone never touches the unit (#239).
 	ensureNoMdwxDropIn()
 
 	// Binary swap + restart via the existing checksum-verified path. As
@@ -78,7 +78,7 @@ func ensureNoMdwxDropIn() {
 		fmt.Fprintf(os.Stderr, "[!] couldn't create drop-in dir: %v\n", err)
 		return
 	}
-	const content = "# Added by `opendray self-update`: V8/Node JIT (codex, gemini) needs\n" +
+	const content = "# Added by `opendray self-update`: V8/Node JIT (codex, antigravity) needs\n" +
 		"# W^X (RW->RX mprotect), which MemoryDenyWriteExecute blocks.\n" +
 		"[Service]\nMemoryDenyWriteExecute=false\n"
 	if err := os.WriteFile(noMdwxDropIn, []byte(content), 0o644); err != nil {

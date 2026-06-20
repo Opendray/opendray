@@ -5,7 +5,7 @@ import 'package:opendray/core/api/dio_provider.dart';
 import 'package:opendray/core/api/models.dart';
 
 // /api/v1/providers — list of CLI providers configured on the
-// gateway (Claude Code / Codex / Gemini / etc.). Used by the spawn-
+// gateway (Claude Code / Codex / Antigravity / etc.). Used by the spawn-
 // session form to populate the provider picker, and by the
 // More → Providers screen for enable toggles + config edits.
 

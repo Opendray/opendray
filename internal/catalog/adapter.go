@@ -343,7 +343,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	}
 
 	// Account selection: only meaningful for the Claude provider —
-	// other CLIs (codex / gemini) don't yet have a multi-account
+	// other CLIs (codex / antigravity) don't yet have a multi-account
 	// abstraction in v2 because their auth model differs.
 	claudeAccountID := session.AccountID(ctx)
 	wantClaudeAccount := id == "claude" && claudeAccountID != "" && sp.accounts != nil
@@ -392,7 +392,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	mcpEnabled := p.Manifest.Capabilities.SupportsMcp && len(servers) > 0
 
 	// Skill injection: enabled by default for providers in the safe
-	// list (claude, gemini). Codex is opt-in via skills_enabled=true
+	// list (claude, antigravity). Codex is opt-in via skills_enabled=true
 	// because its only injection path is CODEX_HOME, which clobbers
 	// ChatGPT-OAuth auth.
 	skillsEnabled := sp.skills != nil && providerSupportsSkills(id)
@@ -442,8 +442,8 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// M21 — Pre-assign the agent-side session UUID so the M18
 		// transcript reader can locate the *.jsonl file directly,
 		// instead of falling back to "latest mtime in dir" which
-		// picks up unrelated active conversations. Claude Code and
-		// Gemini both accept `--session-id <uuid>`; Codex does not,
+		// picks up unrelated active conversations. Claude Code
+		// accepts `--session-id <uuid>`; Codex does not,
 		// so it stays on the cwd-based reader path. injectSessionIDFor
 		// mutates out.Args + out.ClaudeSessionID directly, and the
 		// session manager picks up the UUID for persistence. When this
@@ -493,7 +493,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 
 		// Inject memory-tool guidance into the agent's system prompt
 		// when the memory MCP is being attached. Without this nudge,
-		// Claude (and to a lesser extent Codex/Gemini) tends to use
+		// Claude (and to a lesser extent Codex/Antigravity) tends to use
 		// its built-in markdown memory feature instead of our shared
 		// MCP store, defeating the cross-CLI value prop. Done here
 		// (after skills, before MCP rendering) so the message ordering
@@ -508,7 +508,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// memories from the injector and prepend it to the system
 		// prompt. Same per-CLI dispatch as memory guidance — claude
 		// gets another --append-system-prompt arg, codex appends to
-		// AGENTS.md, gemini to GEMINI.md. Empty rendered text means
+		// AGENTS.md, antigravity to its --add-dir'd AGENTS.md. Empty rendered text means
 		// the operator's profile says "none" or there are no
 		// memories yet; we silently skip.
 		if sp.ambientInjector != nil {
@@ -662,32 +662,17 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
-		// gemini + antigravity both render MCP into <cwd>/.gemini/
-		// settings.json (agy reads the same workspace file gemini does).
-		// Clean up stale entries when MCP is off this spawn so removed
-		// servers (and their credentials) don't linger.
-		if providerID == "gemini" || providerID == "antigravity" {
+		// Antigravity (agy) renders MCP into <cwd>/.gemini/settings.json
+		// (it reuses gemini-cli's workspace settings file). Clean up
+		// stale entries when MCP is off this spawn so removed servers
+		// (and their credentials) don't linger.
+		if providerID == "antigravity" {
 			cwd := session.Cwd(prepareCtx)
 			if cwd != "" && !mcpEnabled {
 				if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
 					sp.log.Warn("workspace MCP cleanup failed",
 						"provider", providerID, "cwd", cwd, "err", err)
 				}
-			}
-			// Folder-trust disabling is a gemini-cli feature; agy's trust
-			// model is unverified, so only gemini gets the hint.
-			if providerID == "gemini" && cwd != "" && mcpEnabled && geminiFolderUntrusted(cwd) {
-				// Folder trust would silently disable everything we just
-				// rendered. Surface a one-time spawn hint in the session
-				// terminal + gateway log; we deliberately do NOT edit the
-				// user's trust store.
-				out.Notices = append(out.Notices,
-					"opendray: Gemini marks this folder as untrusted, so it disables ALL MCP servers "+
-						"(including opendray-memory) and workspace settings here. "+
-						"Trust the folder once — accept Gemini's folder-trust prompt or run /trust — "+
-						"then restart the session to attach MCP.")
-				sp.log.Warn("gemini folder untrusted; gemini will disable MCP servers for this session",
-					"cwd", cwd)
 			}
 		}
 
@@ -709,12 +694,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 // safe skill-injection path for by default.
 //
 //	claude — `--append-system-prompt` flag, zero filesystem touch
-//	gemini — writes a GEMINI.md inside the per-session scratch dir
-//	         and adds it to the workspace via --include-directories;
-//	         does NOT override ~/.gemini, so auth is preserved
-//	antigravity — same as gemini but AGENTS.md + --add-dir (agy's
-//	         workspace-context convention; verified it reads AGENTS.md
-//	         from added dirs)
+//	antigravity — writes AGENTS.md inside the per-session scratch dir
+//	         and adds it via --add-dir (agy's workspace-context
+//	         convention; verified it reads AGENTS.md from added dirs)
+//	         without touching the user's real ~/.gemini
 //
 // codex is intentionally NOT in the default list: it has no system-
 // prompt CLI flag, so the only path is `<CODEX_HOME>/instructions.md`,
@@ -726,7 +709,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 // Adding a new provider here requires a matching arm in injectSkillsFor.
 func providerSupportsSkills(id string) bool {
 	switch id {
-	case "claude", "gemini", "antigravity", "opencode":
+	case "claude", "antigravity", "opencode":
 		return true
 	default:
 		return false
@@ -735,9 +718,9 @@ func providerSupportsSkills(id string) bool {
 
 // injectAgyContext appends content to <baseDir>/AGENTS.md and ensures
 // `--add-dir <baseDir>` is set (idempotent). Antigravity (agy) reads
-// AGENTS.md from directories added via --add-dir — verified live — which
-// mirrors gemini's GEMINI.md + --include-directories convention without
-// touching the user's real ~/.gemini or cwd AGENTS.md.
+// AGENTS.md from directories added via --add-dir — verified live — so we
+// inject workspace context without touching the user's real ~/.gemini
+// state dir or the cwd AGENTS.md.
 func injectAgyContext(baseDir, content string, out *session.PrepareOutput) error {
 	path := filepath.Join(baseDir, "AGENTS.md")
 	if err := appendToFile(path, content); err != nil {
@@ -755,7 +738,7 @@ func injectAgyContext(baseDir, content string, out *session.PrepareOutput) error
 //
 //	claude: --append-system-prompt <text>          (CLI flag)
 //	codex:  <CODEX_HOME>/instructions.md           (file in config dir)
-//	gemini: <baseDir>/GEMINI.md + --include-directories=<baseDir>
+//	antigravity: <baseDir>/AGENTS.md + --add-dir=<baseDir>
 //
 // The skills index itself is the same markdown across providers — only
 // the delivery mechanism differs.
@@ -818,17 +801,6 @@ func injectSkillsFor(providerID, baseDir string, loaded []skills.Skill, out *ses
 		if err := os.WriteFile(agentsPath, body, 0o600); err != nil {
 			return fmt.Errorf("write %s: %w", agentsPath, err)
 		}
-		return nil
-	case "gemini":
-		// Gemini reads GEMINI.md as memory from cwd, parent dirs, and
-		// ~/.gemini/. We can't (and shouldn't) touch any of those, so
-		// drop the index in baseDir and ask gemini to widen the
-		// workspace via --include-directories.
-		path := filepath.Join(baseDir, "GEMINI.md")
-		if err := os.WriteFile(path, []byte(index), 0o600); err != nil {
-			return fmt.Errorf("write %s: %w", path, err)
-		}
-		out.Args = append(out.Args, "--include-directories", baseDir)
 		return nil
 	case "antigravity":
 		// agy reads AGENTS.md from --add-dir'd workspace dirs.
@@ -1111,7 +1083,7 @@ const memoryGuidanceText = `## Persistent cross-agent memory (opendray-memory)
 
 This session has access to an MCP server named ` + "`opendray-memory`" + ` that
 persists durable facts to a shared store. **Every Claude / Codex /
-Gemini session in the same project reads and writes the same
+Antigravity session in the same project reads and writes the same
 store.** What you save here is what the next session sees, no
 matter which CLI it runs under.
 
@@ -1122,7 +1094,7 @@ matter which CLI it runs under.
 ` + "`# Memory` / `MEMORY.md`" + ` auto-memory files, or any local
 per-project memory file you'd normally create). Those files are
 **CLI-local** — a memory you write to a file is invisible to the
-next Codex or Gemini session in this project, which defeats the
+next Codex or Antigravity session in this project, which defeats the
 entire point of a shared brain. opendray already imports any
 pre-existing local memory files into this store for you, and
 injects the relevant project memory into your context at startup,
@@ -1162,8 +1134,8 @@ matching category so future sessions can filter:
   names, types, struct fields. ` + "`grep`" + ` finds these next time.
 - Ephemeral state: what's in progress, the last command you ran,
   the file currently open. The next session will look fresh.
-- Anything already documented in CLAUDE.md / AGENTS.md /
-  GEMINI.md — operator-curated docs are the source of truth there.
+- Anything already documented in CLAUDE.md / AGENTS.md —
+  operator-curated docs are the source of truth there.
 
 ### How to store
 
@@ -1258,8 +1230,8 @@ sessions will still want to retrieve months from now.
 // manager on reactivation), claude continues that conversation via
 // `--resume <id>` rather than starting a fresh `--session-id`. We
 // preserve the original UUID on out.ClaudeSessionID so the row keeps
-// pointing at the same transcript. Gemini has no verified resume flag,
-// so it falls back to a fresh session-id (a new turn, history intact
+// pointing at the same transcript. Providers without a verified resume
+// flag fall back to a fresh session-id (a new turn, history intact
 // on disk) until that's confirmed.
 func injectSessionIDFor(ctx context.Context, providerID string, out *session.PrepareOutput) bool {
 	resumeID := session.ResumeClaudeSessionIDFromContext(ctx)
@@ -1270,11 +1242,6 @@ func injectSessionIDFor(ctx context.Context, providerID string, out *session.Pre
 			out.ClaudeSessionID = resumeID
 			return true
 		}
-		id := uuid.NewString()
-		out.Args = append(out.Args, "--session-id", id)
-		out.ClaudeSessionID = id
-		return true
-	case "gemini":
 		id := uuid.NewString()
 		out.Args = append(out.Args, "--session-id", id)
 		out.ClaudeSessionID = id
@@ -1293,9 +1260,9 @@ func injectSessionIDFor(ctx context.Context, providerID string, out *session.Pre
 //	codex  → append to <CODEX_HOME>/AGENTS.md (created earlier by
 //	         injectSkillsFor when skills are on; otherwise we lazily
 //	         set up CODEX_HOME here).
-//	gemini → append to <baseDir>/GEMINI.md and ensure
-//	         --include-directories <baseDir> is set (idempotent — won't
-//	         duplicate if injectSkillsFor already added it).
+//	antigravity → append to the --add-dir'd <baseDir>/AGENTS.md
+//	         (idempotent — won't duplicate if injectSkillsFor already
+//	         added it).
 func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOutput) error {
 	switch providerID {
 	case "claude":
@@ -1312,15 +1279,6 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 		}
 		path := filepath.Join(home, "AGENTS.md")
 		return appendToFile(path, "\n\n---\n\n"+memoryGuidanceText)
-	case "gemini":
-		path := filepath.Join(baseDir, "GEMINI.md")
-		if err := appendToFile(path, "\n\n---\n\n"+memoryGuidanceText); err != nil {
-			return err
-		}
-		if !hasArgPair(out.Args, "--include-directories", baseDir) {
-			out.Args = append(out.Args, "--include-directories", baseDir)
-		}
-		return nil
 	case "antigravity":
 		return injectAgyContext(baseDir, "\n\n---\n\n"+memoryGuidanceText, out)
 	case "opencode":
@@ -1370,8 +1328,6 @@ func bypassArgsFor(providerID string) []string {
 	switch providerID {
 	case "claude", "antigravity":
 		return []string{"--dangerously-skip-permissions"}
-	case "gemini":
-		return []string{"--yolo"}
 	case "codex":
 		return []string{"--dangerously-bypass-approvals-and-sandbox"}
 	}
@@ -1397,15 +1353,6 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 		}
 		path := filepath.Join(home, "AGENTS.md")
 		return appendToFile(path, "\n\n---\n\n"+text)
-	case "gemini":
-		path := filepath.Join(baseDir, "GEMINI.md")
-		if err := appendToFile(path, "\n\n---\n\n"+text); err != nil {
-			return err
-		}
-		if !hasArgPair(out.Args, "--include-directories", baseDir) {
-			out.Args = append(out.Args, "--include-directories", baseDir)
-		}
-		return nil
 	case "antigravity":
 		return injectAgyContext(baseDir, "\n\n---\n\n"+text, out)
 	case "opencode":

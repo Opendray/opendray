@@ -1,6 +1,6 @@
 # opendray Third-Party Integration Guide
 
-This is the canonical, forward-looking contract that **every** third-party app or website MUST follow to integrate with opendray. opendray is a self-hosted gateway that drives AI coding CLIs (Claude Code, Codex, Gemini, OpenCode, antigravity) over a PTY behind a unified REST + WebSocket API. A third-party app integrates by being **registered by an operator** (admin-only), receiving a **one-time scoped API key**, and then spawning and driving agent sessions over REST while optionally proxying its own UI and subscribing to a live event stream. This document states the rules as explicit **MUST / SHOULD / NEVER**, documents the current reality honestly (including what is *not* enforced yet), and gives you a runnable end-to-end path.
+This is the canonical, forward-looking contract that **every** third-party app or website MUST follow to integrate with opendray. opendray is a self-hosted gateway that drives AI coding CLIs (Claude Code, Codex, OpenCode, antigravity) over a PTY behind a unified REST + WebSocket API. A third-party app integrates by being **registered by an operator** (admin-only), receiving a **one-time scoped API key**, and then spawning and driving agent sessions over REST while optionally proxying its own UI and subscribing to a live event stream. This document states the rules as explicit **MUST / SHOULD / NEVER**, documents the current reality honestly (including what is *not* enforced yet), and gives you a runnable end-to-end path.
 
 ## Who this is for
 
@@ -287,7 +287,7 @@ The integration row carries one **unified spawn profile** in two halves on the s
 
 | Field | Meaning |
 |---|---|
-| `default_provider_id` | Which CLI to spawn (`claude`, `codex`, `gemini`, `opencode`, `antigravity`). |
+| `default_provider_id` | Which CLI to spawn (`claude`, `codex`, `opencode`, `antigravity`). |
 | `default_model` | Model within that provider (e.g. `opus`). |
 | `default_claude_account_id` | Claude account binding (Claude provider only). |
 
@@ -338,11 +338,11 @@ For `model` specifically there is a **higher** layer: a literal `--model X` in t
 
 ### Per-provider translation (verified)
 
-| Intent | claude / antigravity | gemini | codex |
-|---|---|---|---|
-| MCP | `--mcp-config <file>` | `<cwd>/.gemini/settings.json` | config (manifest) |
-| System prompt | `--append-system-prompt` | `GEMINI.md` | `AGENTS.md` |
-| `permission_mode: bypass` | `--dangerously-skip-permissions` | `--yolo` | `--dangerously-bypass-approvals-and-sandbox` |
+| Intent | claude / antigravity | codex |
+|---|---|---|
+| MCP | `--mcp-config <file>` | config (manifest) |
+| System prompt | `--append-system-prompt` | `AGENTS.md` |
+| `permission_mode: bypass` | `--dangerously-skip-permissions` | `--dangerously-bypass-approvals-and-sandbox` |
 
 The bypass flag is appended **only** when `permission_mode == "bypass"`; `default` leaves the provider's normal approval flow untouched (and, for codex, leaves the operator's configured approval policy in place). Switching providers requires **zero** code changes on your side: the operator patches `default_provider_id`, and the next session renders the same intent through the new CLI's surfaces.
 
@@ -734,8 +734,8 @@ print(asyncio.run(run()))
 **3. Operator later switches provider — your code unchanged:**
 ```bash
 curl -X PATCH https://HOST/api/v1/integrations/int_… -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -d '{"default_provider_id":"gemini"}'
-# next session renders the same MCP into .gemini/settings.json, the prompt into GEMINI.md, bypass via --yolo
+  -d '{"default_provider_id":"antigravity"}'
+# next session renders the same MCP via --mcp-config, the prompt via --append-system-prompt, bypass via --dangerously-skip-permissions
 ```
 
 ### Pattern B (bridge) — wire protocol

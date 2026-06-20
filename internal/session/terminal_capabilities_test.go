@@ -7,9 +7,9 @@ import (
 
 // The headline regression: the Dart xterm fork emits "\x1b[?1;2c"
 // in response to a Primary DA query (CSI c). That sequence used to
-// reach Gemini's stdin, where its input parser ate the "\x1b[?"
-// prefix but leaked the trailing "1;2c" into the visible prompt
-// and entered a broken state that swallowed the next Enter.
+// reach some Ink-based CLIs' stdin, where the input parser ate the
+// "\x1b[?" prefix but leaked the trailing "1;2c" into the visible
+// prompt and entered a broken state that swallowed the next Enter.
 func TestStripTerminalCapabilityResponses_PrimaryDA(t *testing.T) {
 	in := []byte("\x1b[?1;2c")
 	got := stripTerminalCapabilityResponses(in)

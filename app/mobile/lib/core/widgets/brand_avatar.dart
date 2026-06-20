@@ -1,5 +1,5 @@
 // BrandAvatar — circular tile that shows the provider's official
-// mark (Claude / Gemini / OpenAI / Shell) on top of a brand-tinted
+// mark (Claude / Antigravity / OpenAI / Shell) on top of a brand-tinted
 // background. Falls back to a single uppercase letter when the
 // provider has no bundled SVG.
 //

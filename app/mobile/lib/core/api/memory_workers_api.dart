@@ -150,7 +150,7 @@ class WorkerConfig {
   final String? summarizerId;
   final String? providerId;
   final String? accountId;
-  // Agent-CLI model pin (claude --model / gemini --model); empty = CLI default.
+  // Agent-CLI model pin (claude --model / antigravity --model); empty = CLI default.
   final String? model;
   final bool enabled;
   final DateTime updatedAt;
@@ -309,7 +309,7 @@ class MemoryWorkersApi {
     }
   }
 
-  // Selectable models for an agent-CLI worker (claude / gemini / codex /
+  // Selectable models for an agent-CLI worker (claude / codex /
   // antigravity). Empty for local HTTP summarizers. Mirrors web
   // listAgentModels → GET /api/v1/memory/workers/models?provider_id=X.
   Future<List<ModelOption>> listAgentModels(String providerId) async {

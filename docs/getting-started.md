@@ -20,7 +20,7 @@ condensed paths in README Production deploy are a better fit.
 
 | Tool | Why | Note |
 |---|---|---|
-| At least one of: Claude Code / Codex CLI / Gemini CLI | opendray is a **wrapper**, not a model — it spawns a CLI on your host | Step 1 below |
+| At least one of: Claude Code / Codex CLI / Antigravity CLI | opendray is a **wrapper**, not a model — it spawns a CLI on your host | Step 1 below |
 | PostgreSQL 15 / 16 / 17 + **pgvector** extension | State, sessions, memory vectors | Step 2 below |
 | `go` 1.25+ and `pnpm` 10+ — *only* if you build from source | Skip if you grab a release binary | [Releases page](https://github.com/Opendray/opendray/releases) |
 | A reachable network port (default `:8770`) for the web admin | UI + API + WebSockets | Bind to `127.0.0.1` unless behind a reverse proxy |
@@ -53,17 +53,18 @@ provider.
 codex --version     # sanity check
 ```
 
-### Gemini CLI (Google)
+### Antigravity CLI (agy)
 
 ```sh
-npm install -g @google/gemini-cli
-gemini auth login
+# Install the Antigravity CLI; whatever you end up with should put
+# `agy` on $PATH. (Antigravity supersedes the retired Gemini CLI.)
+agy --version       # sanity check
 ```
 
 ### Verify at least one is reachable
 
 ```sh
-which claude codex gemini      # at least one line should resolve
+which claude codex agy      # at least one line should resolve
 ```
 
 > You can run opendray with just **one** CLI installed and add the
@@ -132,7 +133,7 @@ You should see `check: ok` and no errors.
 ## Step 3 — pick a deploy path and install opendray
 
 **Decision question first**: are you here for the session spawn
-feature (drive Claude / Codex / Gemini from the web Sessions page)?
+feature (drive Claude / Codex / Antigravity from the web Sessions page)?
 
 ### If YES — you need a "Full" path
 

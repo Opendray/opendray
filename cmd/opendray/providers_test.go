@@ -12,8 +12,8 @@ func TestSplitCSV(t *testing.T) {
 	}{
 		{"", nil},
 		{"claude", []string{"claude"}},
-		{"claude,gemini", []string{"claude", "gemini"}},
-		{" claude , gemini , codex ", []string{"claude", "gemini", "codex"}},
+		{"claude,antigravity", []string{"claude", "antigravity"}},
+		{" claude , antigravity , codex ", []string{"claude", "antigravity", "codex"}},
 		{",,claude,,", []string{"claude"}},
 	}
 	for _, tc := range cases {
@@ -48,7 +48,7 @@ func TestContains(t *testing.T) {
 
 func TestProviderCatalogShape(t *testing.T) {
 	// Defensive: rest of the wizard / CI assumes these are the npm-
-	// distributed catalog. Gemini was retired (superseded by
+	// distributed catalog. Gemini was removed (superseded by
 	// antigravity); binary CLIs (agy, grok) self-update and aren't here.
 	// If anyone adds a new npm provider, update this list.
 	expected := map[string]string{

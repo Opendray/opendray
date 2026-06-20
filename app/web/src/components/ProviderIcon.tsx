@@ -7,7 +7,7 @@
 // Monochrome marks (openai, shell) are authored as black-fill SVGs
 // for max contrast on light backgrounds. The admin currently runs
 // dark-only, so those get a CSS `invert` filter; full-colour marks
-// (claude, gemini) ship as-is.
+// (claude, antigravity) ship as-is.
 
 import { cn } from '@/lib/utils'
 
@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils'
 const PROVIDER_ICON_MAP: Record<string, string> = {
   claude: 'claude',
   codex: 'openai',
-  gemini: 'gemini',
   antigravity: 'antigravity',
   opencode: 'opencode',
   shell: 'shell',

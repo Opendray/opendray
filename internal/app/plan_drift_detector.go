@@ -13,7 +13,7 @@ import (
 // planDriftDetector is the M-PA implementation of
 // projectdoc.PlanDriftDetector. It routes through worker.Registry
 // so operators can pick per-task between the summarizer HTTP path
-// (cheap, local) and a headless Claude/Gemini agent (higher
+// (cheap, local) and a headless Claude/Antigravity agent (higher
 // quality, higher latency). Same shape as transcriptSummariser —
 // each touchpoint owns its own prompt assembly; only the LLM
 // dispatch is shared.

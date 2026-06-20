@@ -5,7 +5,7 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Gateway self-hosted pour Claude Code · Codex · Gemini · shell, avec une couche de mémoire local-first partagée entre tous.</strong>
+  <strong>Gateway self-hosted pour Claude Code · Codex · Antigravity · shell, avec une couche de mémoire local-first partagée entre tous.</strong>
   <br/>
   <sub>Fais tourner tes sessions sur ta propre infra. Pilote depuis le web, le mobile ou le chat. API REST + WebSocket ouverte pour les intégrations.</sub>
 </p>
@@ -39,7 +39,7 @@ Trois frictions du quotidien avec les CLI d'IA pour le code que opendray vient c
 
 **Tes sessions meurent quand ton laptop se met en veille.** Faire tourner Claude Code ou Codex via SSH, c'est voir l'agent mourir à la seconde où tu rabats l'écran ou perds le Wi-Fi. Le contexte, les tool calls en cours, le diff partiel que tu allais relire. Envolés. opendray exécute l'agent sur un host qui ne dort jamais (un Mac mini sous ton bureau, un NAS, un VPS) et te laisse t'y rattacher depuis une admin web, une app mobile Flutter ou un message de chat. La session continue de s'exécuter, que quelqu'un soit connecté ou non.
 
-**Atteindre une rate limit ne devrait pas tuer ce que tu étais en train de faire.** Si tu as plusieurs comptes Anthropic (pro + perso, plan famille + Pro), opendray les traite comme un pool : il expose tier, quota et nombre de sessions actives par compte, équilibre les nouvelles sessions entre eux, et te permet de basculer une session en cours vers un autre compte sans perdre la conversation. Le transcript te suit. Même logique pour les comptes Codex et Gemini.
+**Atteindre une rate limit ne devrait pas tuer ce que tu étais en train de faire.** Si tu as plusieurs comptes Anthropic (pro + perso, plan famille + Pro), opendray les traite comme un pool : il expose tier, quota et nombre de sessions actives par compte, équilibre les nouvelles sessions entre eux, et te permet de basculer une session en cours vers un autre compte sans perdre la conversation. Le transcript te suit. Même logique pour les comptes Codex.
 
 **La mémoire est une couche de premier ordre, pas un ajout après coup.** La plupart des CLI d'IA ré-indexent le contexte projet à zéro à chaque session, brûlant des tokens en retrieval répété. opendray embarque un vector store local-first (embeddings ONNX / Ollama / LM Studio) avec un retrieval sur trois domaines (utilisateur, projet, session), plus une détection de drift entre les couches. Chaque octet reste sur ton réseau.
 
@@ -47,7 +47,7 @@ Trois frictions du quotidien avec les CLI d'IA pour le code que opendray vient c
 
 ## C'est quoi opendray ?
 
-**opendray** enveloppe les CLI de coding IA que tu utilises déjà (Claude Code, Codex, Gemini, plus n'importe quel shell) et les transforme en quelque chose que tu peux piloter depuis n'importe où. Fais tourner tes sessions sur ton home server / NAS / VPS, reçois une notification Telegram quand l'une d'elles devient inactive, réponds depuis ton téléphone pour relancer le prochain prompt, le tout via un gateway self-hosted que tu contrôles de bout en bout.
+**opendray** enveloppe les CLI de coding IA que tu utilises déjà (Claude Code, Codex, Antigravity, plus n'importe quel shell) et les transforme en quelque chose que tu peux piloter depuis n'importe où. Fais tourner tes sessions sur ton home server / NAS / VPS, reçois une notification Telegram quand l'une d'elles devient inactive, réponds depuis ton téléphone pour relancer le prochain prompt, le tout via un gateway self-hosted que tu contrôles de bout en bout.
 
 - 🛰 **Un backend, trois surfaces.** Un seul binaire Go qui sert un admin web React et une app mobile Flutter, avec chaque action également exposée via une API REST + WebSocket pour des intégrations tierces.
 - 💬 **Six canaux bidirectionnels, pas de walled gardens.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), plus un adaptateur Bridge pour tout ce qui est custom. Les réponses sur n'importe quel canal sont routées vers la bonne session.
@@ -79,7 +79,7 @@ flowchart LR
     subgraph cli [AI CLIs · spawned via PTY]
         cc[Claude Code]
         co[Codex]
-        ge[Gemini]
+        ag[Antigravity]
         sh[Shell]
     end
 
@@ -93,7 +93,7 @@ flowchart LR
     http --> mem
     sess --> cc
     sess --> co
-    sess --> ge
+    sess --> ag
     sess --> sh
     sess -.-> mem
     mem --> pg
@@ -196,7 +196,7 @@ sudo opendray update --restart   # download latest release, verify SHA, atomic r
 ```
 
 ```sh
-sudo opendray providers update   # bump installed AI CLIs (claude / codex / gemini) to npm-latest
+sudo opendray providers update   # bump installed AI CLIs (claude / codex / antigravity) to npm-latest
 ```
 
 ```sh

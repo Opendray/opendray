@@ -1,7 +1,6 @@
 package session
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,7 +9,7 @@ import (
 )
 
 // M19 — verify the transcript readers handle synthetic Claude /
-// Codex / Gemini fixtures. Uses real on-disk files so the readers
+// Codex fixtures. Uses real on-disk files so the readers
 // exercise their actual filesystem path lookup, not just the parse
 // logic.
 
@@ -152,58 +151,6 @@ func TestCodexTranscript_FiltersByCwd(t *testing.T) {
 	turns := codexTranscript(CodexHistoryConfig{SessionsRoot: sessionsRoot}, "/tmp/want", time.Time{}, time.Time{}, 16*1024)
 	if len(turns) != 1 || !strings.Contains(turns[0].Text, "pick me") {
 		t.Errorf("wrong rollout matched: %+v", turns)
-	}
-}
-
-func TestGeminiTranscript_Synthetic(t *testing.T) {
-	dir := t.TempDir()
-	chatsPath := filepath.Join(dir, "chats.json")
-
-	doc := map[string]any{
-		"sessions": []map[string]any{
-			{
-				"cwd":     "/tmp/gemini-cw",
-				"updated": time.Now().UTC().Format(time.RFC3339),
-				"messages": []map[string]any{
-					{"role": "user", "content": "refactor please", "timestamp": "2026-05-12T10:00:00Z"},
-					{"role": "model", "content": "I extracted the bcrypt helper", "timestamp": "2026-05-12T10:01:00Z"},
-				},
-			},
-			{
-				"cwd":     "/tmp/other",
-				"updated": time.Now().UTC().Format(time.RFC3339),
-				"messages": []map[string]any{
-					{"role": "user", "content": "different project", "timestamp": "2026-05-12T11:00:00Z"},
-				},
-			},
-		},
-	}
-	body, _ := json.Marshal(doc)
-	_ = os.WriteFile(chatsPath, body, 0o644)
-
-	turns := geminiTranscript(
-		GeminiHistoryConfig{ProjectsFile: chatsPath},
-		"/tmp/gemini-cw", time.Time{}, time.Time{}, 16*1024,
-	)
-	if len(turns) != 2 {
-		t.Fatalf("want 2 turns, got %d: %+v", len(turns), turns)
-	}
-	if turns[0].Role != "user" || !strings.Contains(turns[0].Text, "refactor") {
-		t.Errorf("user turn wrong: %+v", turns[0])
-	}
-	// "model" should normalise to "assistant" so the journaler /
-	// summariser see a unified role enum.
-	if turns[1].Role != "assistant" {
-		t.Errorf("model role should normalise to assistant, got %q", turns[1].Role)
-	}
-	if !strings.Contains(turns[1].Text, "bcrypt") {
-		t.Errorf("assistant text wrong: %+v", turns[1])
-	}
-	// Verify the "other" session is excluded.
-	for _, tn := range turns {
-		if strings.Contains(tn.Text, "different project") {
-			t.Errorf("wrong session leaked: %+v", tn)
-		}
 	}
 }
 

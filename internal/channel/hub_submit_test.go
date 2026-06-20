@@ -45,7 +45,7 @@ func (r *recordingInputter) snapshot() []recordedInput {
 
 // The headline regression: forwarding "hi" must produce three
 // PTY writes — 'h', 'i', '\r' — each on its own. A single combined
-// write made Gemini classify the burst as a paste and swallow the
+// write made some Ink-based CLIs classify the burst as a paste and swallow the
 // trailing Enter. xterm.js emits one write per real keystroke; we
 // mirror that.
 func TestSubmitToSession_RuneByRuneThenEnter(t *testing.T) {

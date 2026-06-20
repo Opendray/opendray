@@ -8,7 +8,7 @@ import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/core/widgets/brand_avatar.dart';
 import 'package:opendray/features/providers/provider_config_screen.dart';
 
-// Providers — list of CLI providers (Claude / Codex / Gemini / Shell).
+// Providers — list of CLI providers (Claude / Codex / Antigravity / Shell).
 // Each row exposes the enabled toggle and taps into the per-provider
 // config page. Claude-specific affordances (multi-account list +
 // add/rename/set-token/delete) live inside the Claude provider's
@@ -202,7 +202,7 @@ class _ProviderTile extends StatelessWidget {
       onTap: onTap,
       // Use the same curated brand SVG as the web Providers page
       // (BrandAvatar → providerVisualFor → assets/provider_icons/*.svg),
-      // not the manifest's emoji/letter, so claude/codex/gemini/agy/shell
+      // not the manifest's emoji/letter, so claude/codex/agy/shell
       // render their real marks identically across web and mobile.
       leading: BrandAvatar(providerId: provider.id),
       title: Text(

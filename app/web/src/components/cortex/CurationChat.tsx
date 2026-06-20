@@ -42,10 +42,9 @@ import { listProviders } from '@/lib/memoryAmbient'
 import { probeEmbeddingEndpoint } from '@/lib/memory'
 
 // Cloud-agent providers selectable for a discussion. Mirrors the backend's
-// curation override set (claude | gemini | codex); '' = global curation worker.
+// curation override set (claude | codex | antigravity); '' = global curation worker.
 const CURATION_PROVIDERS: { id: AgentProviderID; label: string }[] = [
   { id: 'claude', label: 'Claude' },
-  { id: 'gemini', label: 'Gemini' },
   { id: 'codex', label: 'Codex' },
   { id: 'antigravity', label: 'Antigravity' },
 ]
@@ -72,7 +71,7 @@ export function CurationChat({
 
   // The picker selection encodes which model backs the discussion:
   //   ''           → global `curation` worker config
-  //   'agent:<id>' → cloud-agent CLI (claude/gemini/codex) + a model
+  //   'agent:<id>' → cloud-agent CLI (claude/codex/antigravity) + a model
   //   'local:<id>' → a configured summarizer/HTTP provider (local model)
   // Seeded from the active conversation once it loads (sync effect below).
   const [selection, setSelection] = useState('')

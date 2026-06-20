@@ -467,10 +467,6 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           child: Text(t.memoryWorkers.cliClaude),
         ),
         DropdownMenuItem(
-          value: 'gemini',
-          child: Text(t.memoryWorkers.cliGemini),
-        ),
-        DropdownMenuItem(
           value: 'codex',
           child: Text(t.memoryWorkers.cliCodex),
         ),
@@ -489,7 +485,7 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
     );
   }
 
-  // Per-agent model pin (claude --model / gemini --model). Dropdown of the
+  // Per-agent model pin (claude --model / antigravity --model). Dropdown of the
   // provider's catalog + "CLI default" + a custom-entry escape hatch, so an
   // unlisted/newer model id can still be pinned. Mirrors web ModelPicker.
   Widget _modelSelector() {

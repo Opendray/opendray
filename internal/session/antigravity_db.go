@@ -37,7 +37,7 @@ import (
 // 23, metadata 8/21/51/98/132…) are skipped for the transcript.
 //
 // CAVEAT: agy's database records NO working directory — only ephemeral
-// /tmp scratch dirs — so unlike claude/codex/gemini we cannot match a
+// /tmp scratch dirs — so unlike claude/codex we cannot match a
 // session to its db by cwd. We match purely by time: the newest .db
 // whose mtime falls inside the session's [StartedAt, EndedAt] window.
 // Good enough for a single operator; concurrent agy sessions in the

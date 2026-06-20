@@ -308,7 +308,7 @@ class _UnsupportedView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'This session uses a different provider (codex / gemini / '
+              'This session uses a different provider (codex / antigravity / '
               'shell). The transcript-driven prompt history only exists '
               'for Claude Code today.',
               textAlign: TextAlign.center,

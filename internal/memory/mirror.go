@@ -17,7 +17,7 @@ import (
 // pgvector store so cross-CLI search picks them up.
 //
 // V1 covers Claude Code only — its local memory format is well-known
-// and the most common case. Codex / Gemini have less concrete local
+// and the most common case. Codex / Antigravity have less concrete local
 // memory conventions; once their habits stabilise we add similar
 // ingestors here under per-CLI helpers.
 //

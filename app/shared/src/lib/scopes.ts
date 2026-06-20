@@ -72,7 +72,7 @@ const RAW: Record<string, Omit<ScopeInfo, 'id'>> = {
   'provider:read': {
     title: 'Read providers',
     description:
-      'List installed agent providers (claude, codex, gemini, shell) and their catalog metadata.',
+      'List installed agent providers (claude, codex, antigravity, shell) and their catalog metadata.',
     group: 'misc',
   },
   'memory:read': {

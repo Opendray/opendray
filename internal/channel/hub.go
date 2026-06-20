@@ -108,7 +108,7 @@ const defaultCooldown = 5 * time.Minute
 
 // submitDelay is the settle window between the final typed rune
 // and the carriage-return byte that fires Enter. Long enough that
-// Ink-style input handlers (Gemini in particular) process the
+// some Ink-based input handlers process the
 // preceding text as keystrokes before the Enter arrives — short
 // enough to feel instantaneous to the human on the other end.
 // ~30 ms is the empirical sweet spot; the human-perception
@@ -458,7 +458,7 @@ func (h *Hub) handleInbound(ctx context.Context, msg ChannelMessage) error {
 	// itself sends when the user hits Enter, so we mirror that.
 	//
 	// Why two separate writes (text, brief pause, then \r):
-	// Some Ink-based input handlers (notably Gemini CLI) treat a
+	// Some Ink-based input handlers treat a
 	// single combined "text+\r" PTY write as a paste-style burst
 	// and swallow the trailing \r as part of the paste payload —
 	// the text shows up at the prompt but the submit never fires.
@@ -1232,8 +1232,8 @@ func (h *Hub) ActiveSession(channelID string) string {
 // its own write, with a brief inter-key pause — then sends a
 // final \r on its own as the Enter keypress.
 //
-// Why not a single text+\r write: Gemini's Ink-based input handler
-// classifies any multi-byte PTY write as a paste burst. In paste
+// Why not a single text+\r write: some Ink-based input handlers
+// classify any multi-byte PTY write as a paste burst. In paste
 // mode the trailing Enter is swallowed as part of the paste
 // payload (multi-line paste with embedded newline) instead of
 // firing the submit handler. xterm.js sidesteps this by emitting
@@ -1243,7 +1243,7 @@ func (h *Hub) ActiveSession(channelID string) string {
 // Cost: ~5 ms per rune means a 20-rune chat message takes ~100 ms
 // to "type" — at or below the human-perception threshold for
 // chat interactions, and trivial compared to the round-trip to a
-// remote Gemini API. Long pastes (a multi-KB blob) would degrade,
+// remote model API. Long pastes (a multi-KB blob) would degrade,
 // but operators paste those into the web admin, not Telegram.
 //
 // Cancellable via ctx — partial sends are surfaced as errors so
@@ -1267,7 +1267,7 @@ func (h *Hub) submitToSession(ctx context.Context, sid, text string) error {
 	}
 	// A slightly larger settle window between the last keystroke
 	// and the Enter byte, mirroring the natural human pause before
-	// pressing Return. Empirically this is what makes Gemini fire
+	// pressing Return. Empirically this is what makes such CLIs fire
 	// the submit handler instead of treating Enter as part of the
 	// paste payload.
 	select {

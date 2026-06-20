@@ -24,8 +24,8 @@ func TestStripInjectionFlags(t *testing.T) {
 			[]string{"--model", "opus"},
 		},
 		{
-			"standalone bypass flags dropped (claude/gemini/codex)",
-			[]string{"--dangerously-skip-permissions", "--yolo", "--dangerously-bypass-approvals-and-sandbox", "keep"},
+			"standalone bypass flags dropped (claude/antigravity/codex)",
+			[]string{"--dangerously-skip-permissions", "--dangerously-bypass-approvals-and-sandbox", "keep"},
 			[]string{"keep"},
 		},
 		{

@@ -11,7 +11,7 @@ import (
 // transcriptSummariser is the M18 implementation of
 // projectdoc.TranscriptSummariser. As of M25 it routes through
 // worker.Registry so operators can pick per-task between the
-// summarizer HTTP path and a headless agent CLI (Claude/Gemini
+// summarizer HTTP path and a headless agent CLI (Claude/Antigravity
 // `--print` mode). The prompt + tag-extraction logic stays local
 // to this file because each touchpoint has its own
 // idiosyncrasies; only the LLM call dispatch is shared.

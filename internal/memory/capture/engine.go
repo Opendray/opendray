@@ -222,10 +222,13 @@ func (e *Engine) RunRuleNow(ctx context.Context, ruleID string) (int, error) {
 }
 
 // providerSupported is the allowlist of provider ids whose
-// transcripts capture can read via session.Manager.History.
+// transcripts capture can read via session.Manager.History. Only
+// claude + codex have an input-history reader; antigravity exposes a
+// conversation transcript (Manager.Transcript) but no History reader,
+// so it stays out of this list until one exists.
 func providerSupported(providerID string) bool {
 	switch providerID {
-	case "claude", "codex", "gemini":
+	case "claude", "codex":
 		return true
 	}
 	return false

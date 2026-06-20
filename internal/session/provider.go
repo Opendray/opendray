@@ -39,7 +39,7 @@ type PrepareOutput struct {
 	Env  map[string]string
 
 	// ClaudeSessionID is the agent-side session UUID for providers
-	// that accept a `--session-id` flag (claude, gemini). When set,
+	// that accept a `--session-id` flag (claude). When set,
 	// the manager persists it onto the session row so the M18
 	// transcript reader can find the right *.jsonl file without
 	// fragile mtime-based guessing. Empty for providers that don't
@@ -48,7 +48,7 @@ type PrepareOutput struct {
 
 	// Notices are one-time operator hints surfaced at the top of the
 	// session terminal (and the ring buffer / transcript) before the
-	// CLI's own output — e.g. "gemini will disable MCP here because the
+	// CLI's own output — e.g. "the CLI will disable MCP here because the
 	// folder is untrusted". Plain text; the manager adds styling.
 	Notices []string
 }

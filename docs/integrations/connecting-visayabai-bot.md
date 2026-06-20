@@ -1,7 +1,7 @@
 # Connecting the visayabai bot to opendray
 
 Goal: let the **visayabai bot** drive opendray-managed Claude Code (or
-Codex / Gemini / shell) sessions — send a user's message in, stream the
+Codex / Antigravity / shell) sessions — send a user's message in, stream the
 agent's reply back out — using opendray's **Integrations** system.
 
 > Scope note: this is the *legitimate* integration path — your own bot

@@ -103,7 +103,7 @@ export async function resendInput(
 export interface UploadResponse {
   // Absolute path of the file on the gateway host's tempdir.
   // The caller writes this into the PTY so the CLI (Claude / Codex /
-  // Gemini) can resolve it as an image attachment.
+  // Antigravity) can resolve it as an image attachment.
   path: string
   size: number
   original_name?: string

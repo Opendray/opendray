@@ -5,7 +5,7 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Claude Code・Codex・Gemini・shell のためのセルフホスト型ゲートウェイ。それらすべてにまたがる、ローカルファーストな共通メモリレイヤーを備えています。</strong>
+  <strong>Claude Code・Codex・Antigravity・shell のためのセルフホスト型ゲートウェイ。それらすべてにまたがる、ローカルファーストな共通メモリレイヤーを備えています。</strong>
   <br/>
   <sub>セッションは自前のインフラ上で動作。web、モバイル、チャットから操作できます。連携用にオープンな REST + WebSocket API を提供。</sub>
 </p>
@@ -39,7 +39,7 @@ AI コーディング CLI を日々使う中で生じる 3 つの摩擦を解消
 
 **ノート PC がスリープするとセッションが死んでしまう。** SSH 経由で Claude Code や Codex を動かしていると、蓋を閉じたり Wi-Fi が切れた瞬間にエージェントが落ちてしまいます。コンテキストも、実行中のツール呼び出しも、これからレビューしようとしていた差分も、すべて消えてしまいます。opendray はスリープしないホスト（机の下の Mac mini、NAS、VPS など）でエージェントを動かし、Web 管理画面、Flutter 製モバイルアプリ、あるいはチャットメッセージから再接続できるようにします。誰かが接続しているかどうかに関わらず、セッションは動き続けます。
 
-**レート制限に当たったからといって、作業が台無しになるべきではない。** 複数の Anthropic アカウント（仕事用と個人用、ファミリープランと Pro など）を持っている場合、opendray はそれらをプールとして扱います。アカウントごとのティア、クォータ、アクティブなセッション数を可視化し、新しいセッションをアカウント間でバランスよく割り振り、会話を失うことなくライブセッションを別のアカウントに差し替えることができます。トランスクリプトもそのまま引き継がれます。Codex と Gemini のアカウントについても同様です。
+**レート制限に当たったからといって、作業が台無しになるべきではない。** 複数の Anthropic アカウント（仕事用と個人用、ファミリープランと Pro など）を持っている場合、opendray はそれらをプールとして扱います。アカウントごとのティア、クォータ、アクティブなセッション数を可視化し、新しいセッションをアカウント間でバランスよく割り振り、会話を失うことなくライブセッションを別のアカウントに差し替えることができます。トランスクリプトもそのまま引き継がれます。Codex のアカウントについても同様です。
 
 **メモリは後付けではなく、第一級のレイヤーである。** ほとんどの AI CLI はセッションごとにプロジェクトコンテキストをゼロからインデックスし直し、繰り返しの検索でトークンを浪費しています。opendray はローカルファースト設計のベクトルストア（ONNX / Ollama / LM Studio のエンベディング）を標準搭載し、ユーザー、プロジェクト、セッションという 3 つのドメインにまたがる検索と、レイヤー間のドリフト検知を提供します。すべてのバイトはあなたのネットワーク内に留まります。
 
@@ -47,7 +47,7 @@ AI コーディング CLI を日々使う中で生じる 3 つの摩擦を解消
 
 ## opendray とは？
 
-**opendray** は、あなたが普段使っている AI コーディング CLI（Claude Code、Codex、Gemini、そして任意の shell）をラップし、どこからでも操作できるものへと変えます。セッションは自宅サーバー / NAS / VPS 上で動作させ、アイドル状態になれば Telegram で通知を受け取り、スマートフォンから返信すれば次のプロンプトとしてそのまま流し込めます。すべては、エンドツーエンドで自分が管理するセルフホスト型ゲートウェイ上で完結します。
+**opendray** は、あなたが普段使っている AI コーディング CLI（Claude Code、Codex、Antigravity、そして任意の shell）をラップし、どこからでも操作できるものへと変えます。セッションは自宅サーバー / NAS / VPS 上で動作させ、アイドル状態になれば Telegram で通知を受け取り、スマートフォンから返信すれば次のプロンプトとしてそのまま流し込めます。すべては、エンドツーエンドで自分が管理するセルフホスト型ゲートウェイ上で完結します。
 
 - 🛰 **1 つのバックエンド、3 つのサーフェス。** 単一の Go バイナリが React 製の web 管理画面と Flutter 製のモバイルアプリを配信し、すべての操作はサードパーティ連携用に REST + WebSocket API としても公開されます。
 - 💬 **6 つの双方向チャネル、囲い込みなし。** Telegram、Slack、Discord、Feishu（飞书）、DingTalk（钉钉）、WeCom（企业微信）、さらに任意のカスタム連携用の Bridge アダプターを用意。どのチャネルから返信しても、正しいセッションへルーティングされます。
@@ -79,7 +79,7 @@ flowchart LR
     subgraph cli [AI CLIs · spawned via PTY]
         cc[Claude Code]
         co[Codex]
-        ge[Gemini]
+        ag[Antigravity]
         sh[Shell]
     end
 
@@ -93,7 +93,7 @@ flowchart LR
     http --> mem
     sess --> cc
     sess --> co
-    sess --> ge
+    sess --> ag
     sess --> sh
     sess -.-> mem
     mem --> pg
@@ -195,7 +195,7 @@ sudo opendray update --restart   # download latest release, verify SHA, atomic r
 ```
 
 ```sh
-sudo opendray providers update   # bump installed AI CLIs (claude / codex / gemini) to npm-latest
+sudo opendray providers update   # bump installed AI CLIs (claude / codex / antigravity) to npm-latest
 ```
 
 ```sh

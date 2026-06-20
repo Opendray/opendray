@@ -1,7 +1,7 @@
 // Subcommand `opendray mcp-memory` — a stdio MCP (Model Context
 // Protocol) server that exposes opendray's in-process memory
 // subsystem to any agent CLI that supports MCP servers (Claude
-// Code, Codex, Gemini, Cursor, …).
+// Code, Codex, Cursor, …).
 //
 // Architecture:
 //

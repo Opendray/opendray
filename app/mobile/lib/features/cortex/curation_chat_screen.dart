@@ -17,14 +17,13 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // mobile parity with app/web/src/components/cortex/CurationChat.tsx. Bound
 // to a doc section or knowledge page; the operator asks the AI to update /
 // re-draft it. The model/provider picker mirrors web: global curation
-// worker, a cloud-agent CLI (claude/gemini/codex) + model, or a local
+// worker, a cloud-agent CLI (claude/codex/antigravity) + model, or a local
 // summarizer/HTTP provider + a probed model.
 
 // Cloud-agent providers selectable for a discussion (mirrors the backend's
 // curation override set). '' = the global curation worker.
 const _curationProviders = <({String id, String label})>[
   (id: 'claude', label: 'Claude'),
-  (id: 'gemini', label: 'Gemini'),
   (id: 'codex', label: 'Codex'),
   (id: 'antigravity', label: 'Antigravity'),
 ];

@@ -411,7 +411,6 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get agentCliPrint => 'Agente (CLI --print)';
 	@override String get cliLabel => 'CLI';
 	@override String get cliClaude => 'Claude';
-	@override String get cliGemini => 'Gemini';
 	@override String get cliCodex => 'Codex (codex exec)';
 	@override String get cliAntigravity => 'Antigravity (agy --print)';
 	@override String get modelLabel => 'Modelo';
@@ -422,13 +421,13 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get claudeAccountLabel => 'Cuenta de Claude';
 	@override String get claudeAccountDefault => 'Predeterminada';
 	@override String get test => 'Probar';
-	@override String get intro => 'Cada punto de contacto con el LLM del sistema de memoria puede atenderse de forma independiente mediante el endpoint del resumidor local (LM Studio / compatible con OpenAI) o lanzando un agente headless de Claude / Gemini en modo --print. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.';
+	@override String get intro => 'Cada punto de contacto con el LLM del sistema de memoria puede atenderse de forma independiente mediante el endpoint del resumidor local (LM Studio / compatible con OpenAI) o lanzando un agente headless de Claude / Antigravity en modo --print. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.';
 	@override String get errorTitle => 'Endpoint no accesible';
 	@override String get errorDetail => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.';
 	@override String get summarizerOnlyBadge => 'solo resumidor';
 	@override String get summarizerProviderLabel => 'Proveedor de resumidor';
 	@override String get registryDefault => 'Predeterminado del registro';
-	@override String get agentWarning => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.';
+	@override String get agentWarning => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Antigravity.';
 	@override String get noCalls24h => 'Sin llamadas en las últimas 24h.';
 	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK, ${duration}ms';
 	@override String testFailedReturnedSnack({required Object label, required Object error}) => '${label} falló: ${error}';
@@ -1209,7 +1208,7 @@ class _TranslationsWebMemoryWorkersEs extends TranslationsWebMemoryWorkersEn {
 	@override String get loading => 'Cargando configuración de workers…';
 	@override String get errorTitle => 'No se puede acceder al endpoint.';
 	@override String get errorDescription => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.';
-	@override String get intro => 'Cada punto de contacto del LLM con el sistema de memoria puede atenderse de forma independiente mediante el endpoint local <1>summarizer</1> (LM Studio / compatible con OpenAI) o lanzando un <3>agente Claude / Gemini</3> sin interfaz en modo <5>--print</5>. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.';
+	@override String get intro => 'Cada punto de contacto del LLM con el sistema de memoria puede atenderse de forma independiente mediante el endpoint local <1>summarizer</1> (LM Studio / compatible con OpenAI) o lanzando un <3>agente Claude / Antigravity</3> sin interfaz en modo <5>--print</5>. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.';
 	@override String get enabledBadge => 'habilitado';
 	@override String get disabledBadge => 'deshabilitado';
 	@override String get summarizerOnlyBadge => 'solo-summarizer';
@@ -1224,10 +1223,9 @@ class _TranslationsWebMemoryWorkersEs extends TranslationsWebMemoryWorkersEn {
 	@override String get cliLabel => 'CLI';
 	@override String get selectPlaceholder => 'Seleccionar';
 	@override String get cliClaude => 'Claude';
-	@override String get cliGemini => 'Gemini';
 	@override String get claudeAccountLabel => 'Cuenta de Claude';
 	@override String get claudeAccountDefault => 'Predeterminada';
-	@override String get agentWarning => 'El modo agente lanza un CLI sin interfaz por cada llamada. La latencia sube de <1>~1s</1> (summarizer) a <3>~5-15s</3>; el coste pasa de la CPU a tu quota de Claude/Gemini.';
+	@override String get agentWarning => 'El modo agente lanza un CLI sin interfaz por cada llamada. La latencia sube de <1>~1s</1> (summarizer) a <3>~5-15s</3>; el coste pasa de la CPU a tu quota de Claude/Antigravity.';
 	@override String get enabledCheckbox => 'Habilitado';
 	@override String get testButton => 'Probar';
 	@override String get saveButton => 'Guardar';
@@ -3176,7 +3174,6 @@ class _TranslationsWebSessionsSpawnEs extends TranslationsWebSessionsSpawnEn {
 	@override String get argsLabel => 'Argumentos de la CLI (uno por línea)';
 	@override String get bypassClaude => 'Omitir las confirmaciones de permisos';
 	@override String get bypassCodex => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)';
-	@override String get bypassGemini => 'Modo YOLO (--yolo)';
 	@override String get bypassAntigravity => 'Omitir permisos / YOLO (--dangerously-skip-permissions)';
 	@override String get bypassOpencode => 'Omitir permisos (--dangerously-skip-permissions)';
 	@override String get bypassOnHint => 'Esta session se ejecutará con autonomía elevada.';
@@ -3326,7 +3323,7 @@ class _TranslationsWebMemoryConfigSectionHintsEs extends TranslationsWebMemoryCo
 
 	// Translations
 	@override String get providers => 'Endpoints HTTP registrados (Ollama / LM Studio / Anthropic / OpenAI / Integration) a los que cualquier tarea puede despachar.';
-	@override String get workers => 'Para cada punto de contacto elige un provider HTTP (barato, local) o un Agent headless de Claude / Gemini (mayor calidad, consume tokens de CLI).';
+	@override String get workers => 'Para cada punto de contacto elige un provider HTTP (barato, local) o un Agent headless de Claude / Antigravity (mayor calidad, consume tokens de CLI).';
 	@override String get rules => 'Cuándo se activa el motor de captura en cada session (tras N mensajes / al estar inactivo / K caracteres / manual). Las reglas sin un provider fijado siguen el ajuste del worker de Captura de arriba.';
 	@override String get profiles => 'Cómo se inyectan las memorias previas en el prompt del sistema del agente al iniciar la session (recencia, relevancia, híbrido o desactivado).';
 	@override String get costs => 'Gasto agregado reconstruido a partir de memory_summarizer_calls. Los providers locales (Ollama, LM Studio, Integration) son gratuitos; los providers en la nube muestran el coste real.';
@@ -4539,10 +4536,10 @@ class _TranslationsWebPluginsMcpEs extends TranslationsWebPluginsMcpEn {
 	@override String get deleteFailedToast => 'Error al eliminar';
 	@override String get toggleFailedToast => 'Error al alternar';
 	@override String get codexUnsupportedBadge => 'Codex: no compatible';
-	@override String get codexUnsupportedTooltip => 'El CLI de codex solo admite el transport stdio. Este servidor se omitirá en las sessions de codex; claude y gemini lo seguirán usando.';
+	@override String get codexUnsupportedTooltip => 'El CLI de codex solo admite el transport stdio. Este servidor se omitirá en las sessions de codex; claude y antigravity lo seguirán usando.';
 	@override String get builtinBadge => 'Integrado';
 	@override String get builtinTooltip => 'Provisto por el propio opendray — se adjunta automáticamente a cada session que admite MCP. No se puede editar ni eliminar.';
-	@override String get builtinDescription => 'El servidor compartido de memoria y conocimiento de opendray: memory_search / memory_store, project_goal y project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Se adjunta automáticamente a cada session de Claude / Codex / Gemini.';
+	@override String get builtinDescription => 'El servidor compartido de memoria y conocimiento de opendray: memory_search / memory_store, project_goal y project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Se adjunta automáticamente a cada session de Claude / Codex / Antigravity.';
 	@override String get builtinAutoAttach => 'siempre activo';
 	@override late final _TranslationsWebPluginsMcpEditorEs editor = _TranslationsWebPluginsMcpEditorEs._(_root);
 	@override late final _TranslationsWebPluginsMcpTestEs test = _TranslationsWebPluginsMcpTestEs._(_root);
@@ -5002,7 +4999,6 @@ class _TranslationsWebServerSettingsSectionsEs extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsBackupEs backup = _TranslationsWebServerSettingsSectionsBackupEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsClaudeEs claude = _TranslationsWebServerSettingsSectionsClaudeEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexEs codex = _TranslationsWebServerSettingsSectionsCodexEs._(_root);
-	@override late final _TranslationsWebServerSettingsSectionsGeminiEs gemini = _TranslationsWebServerSettingsSectionsGeminiEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsAntigravityEs antigravity = _TranslationsWebServerSettingsSectionsAntigravityEs._(_root);
 }
 
@@ -5085,8 +5081,6 @@ class _TranslationsWebServerSettingsFieldsEs extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsClaudeHistoryRootsEs claudeHistoryRoots = _TranslationsWebServerSettingsFieldsClaudeHistoryRootsEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsClaudeAccountsDirEs claudeAccountsDir = _TranslationsWebServerSettingsFieldsClaudeAccountsDirEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsCodexSessionsRootEs codexSessionsRoot = _TranslationsWebServerSettingsFieldsCodexSessionsRootEs._(_root);
-	@override late final _TranslationsWebServerSettingsFieldsGeminiTmpRootEs geminiTmpRoot = _TranslationsWebServerSettingsFieldsGeminiTmpRootEs._(_root);
-	@override late final _TranslationsWebServerSettingsFieldsGeminiProjectsFileEs geminiProjectsFile = _TranslationsWebServerSettingsFieldsGeminiProjectsFileEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsAntigravityConversationsRootEs antigravityConversationsRoot = _TranslationsWebServerSettingsFieldsAntigravityConversationsRootEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupLocalDirEs backupLocalDir = _TranslationsWebServerSettingsFieldsBackupLocalDirEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupExportDirEs backupExportDir = _TranslationsWebServerSettingsFieldsBackupExportDirEs._(_root);
@@ -5871,7 +5865,7 @@ class _TranslationsMoreItemsProvidersEs extends TranslationsMoreItemsProvidersEn
 
 	// Translations
 	@override String get title => 'Proveedores';
-	@override String get subtitle => 'Estado de los CLI de Claude / Codex / Gemini';
+	@override String get subtitle => 'Estado de los CLI de Claude / Codex / Antigravity';
 }
 
 // Path: more.items.mcp
@@ -6290,7 +6284,6 @@ class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnS
 	// Translations
 	@override String get labelClaude => 'Omitir permisos';
 	@override String get labelCodex => 'Omitir aprobaciones y sandbox';
-	@override String get labelGemini => 'Modo YOLO';
 	@override String get labelAntigravity => 'Omitir permisos / YOLO';
 	@override String get labelOpencode => 'Omitir permisos';
 	@override String get subtitleOn => 'Esta session se ejecutará con autonomía elevada.';
@@ -6723,7 +6716,6 @@ class _TranslationsSettingsServerSettingsSectionsEs extends TranslationsSettings
 	@override String get backup => 'Copia de seguridad';
 	@override String get storageClaude => 'Almacenamiento · Claude';
 	@override String get storageCodex => 'Almacenamiento · Codex';
-	@override String get storageGemini => 'Almacenamiento · Gemini';
 	@override String get storageAntigravity => 'Almacenamiento · Antigravity';
 }
 
@@ -6743,7 +6735,6 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsEs extends Translati
 	@override String get backup => 'Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).';
 	@override String get storageClaude => 'Dónde viven los transcripts de Claude en disco.';
 	@override String get storageCodex => 'Raíz de las sessions de Codex.';
-	@override String get storageGemini => 'Rutas de tmp por proyecto + projects.json.';
 	@override String get storageAntigravity => 'Almacén SQLite por conversación de agy.';
 }
 
@@ -6809,8 +6800,6 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get httpDimensions => 'Dimensiones HTTP';
 	@override String get pgDumpPath => 'Ruta de pg_dump';
 	@override String get pgRestorePath => 'Ruta de pg_restore';
-	@override String get tmpRoot => 'Raíz de tmp';
-	@override String get projectsJson => 'projects.json';
 	@override String get conversationsRoot => 'Directorio de conversaciones';
 	@override String get dedupThreshold => 'Umbral de dedup';
 	@override String get dedupHelper => 'Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.';
@@ -7856,17 +7845,6 @@ class _TranslationsWebServerSettingsSectionsCodexEs extends TranslationsWebServe
 	@override String get desc => 'Raíz de sesiones de Codex.';
 }
 
-// Path: web.serverSettings.sections.gemini
-class _TranslationsWebServerSettingsSectionsGeminiEs extends TranslationsWebServerSettingsSectionsGeminiEn {
-	_TranslationsWebServerSettingsSectionsGeminiEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => 'Almacenamiento · Gemini';
-	@override String get desc => 'Carpeta tmp por proyecto de Gemini + projects.json.';
-}
-
 // Path: web.serverSettings.sections.antigravity
 class _TranslationsWebServerSettingsSectionsAntigravityEs extends TranslationsWebServerSettingsSectionsAntigravityEn {
 	_TranslationsWebServerSettingsSectionsAntigravityEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -8241,28 +8219,6 @@ class _TranslationsWebServerSettingsFieldsCodexSessionsRootEs extends Translatio
 	// Translations
 	@override String get label => 'Raíz de sesiones';
 	@override String get hint => 'Directorio que se recorre en busca de los archivos JSONL de rollout de Codex. Por defecto ~/.codex/sessions.';
-}
-
-// Path: web.serverSettings.fields.geminiTmpRoot
-class _TranslationsWebServerSettingsFieldsGeminiTmpRootEs extends TranslationsWebServerSettingsFieldsGeminiTmpRootEn {
-	_TranslationsWebServerSettingsFieldsGeminiTmpRootEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get label => 'Directorio tmp';
-	@override String get hint => 'Raíz que contiene las carpetas tmp por proyecto de Gemini. Por defecto ~/.gemini/tmp.';
-}
-
-// Path: web.serverSettings.fields.geminiProjectsFile
-class _TranslationsWebServerSettingsFieldsGeminiProjectsFileEs extends TranslationsWebServerSettingsFieldsGeminiProjectsFileEn {
-	_TranslationsWebServerSettingsFieldsGeminiProjectsFileEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get label => 'projects.json';
-	@override String get hint => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.';
 }
 
 // Path: web.serverSettings.fields.antigravityConversationsRoot
@@ -9103,7 +9059,6 @@ extension on TranslationsEs {
 			'web.sessions.spawn.argsLabel' => 'Argumentos de la CLI (uno por línea)',
 			'web.sessions.spawn.bypassClaude' => 'Omitir las confirmaciones de permisos',
 			'web.sessions.spawn.bypassCodex' => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)',
-			'web.sessions.spawn.bypassGemini' => 'Modo YOLO (--yolo)',
 			'web.sessions.spawn.bypassAntigravity' => 'Omitir permisos / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOpencode' => 'Omitir permisos (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => 'Esta session se ejecutará con autonomía elevada.',
@@ -9266,7 +9221,7 @@ extension on TranslationsEs {
 			'web.memoryConfig.sections.profiles' => 'Perfiles de inyección',
 			'web.memoryConfig.sections.costs' => 'Coste en tokens',
 			'web.memoryConfig.sectionHints.providers' => 'Endpoints HTTP registrados (Ollama / LM Studio / Anthropic / OpenAI / Integration) a los que cualquier tarea puede despachar.',
-			'web.memoryConfig.sectionHints.workers' => 'Para cada punto de contacto elige un provider HTTP (barato, local) o un Agent headless de Claude / Gemini (mayor calidad, consume tokens de CLI).',
+			'web.memoryConfig.sectionHints.workers' => 'Para cada punto de contacto elige un provider HTTP (barato, local) o un Agent headless de Claude / Antigravity (mayor calidad, consume tokens de CLI).',
 			'web.memoryConfig.sectionHints.rules' => 'Cuándo se activa el motor de captura en cada session (tras N mensajes / al estar inactivo / K caracteres / manual). Las reglas sin un provider fijado siguen el ajuste del worker de Captura de arriba.',
 			'web.memoryConfig.sectionHints.profiles' => 'Cómo se inyectan las memorias previas en el prompt del sistema del agente al iniciar la session (recencia, relevancia, híbrido o desactivado).',
 			'web.memoryConfig.sectionHints.costs' => 'Gasto agregado reconstruido a partir de memory_summarizer_calls. Los providers locales (Ollama, LM Studio, Integration) son gratuitos; los providers en la nube muestran el coste real.',
@@ -9286,7 +9241,7 @@ extension on TranslationsEs {
 			'web.memoryWorkers.loading' => 'Cargando configuración de workers…',
 			'web.memoryWorkers.errorTitle' => 'No se puede acceder al endpoint.',
 			'web.memoryWorkers.errorDescription' => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.',
-			'web.memoryWorkers.intro' => 'Cada punto de contacto del LLM con el sistema de memoria puede atenderse de forma independiente mediante el endpoint local <1>summarizer</1> (LM Studio / compatible con OpenAI) o lanzando un <3>agente Claude / Gemini</3> sin interfaz en modo <5>--print</5>. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.',
+			'web.memoryWorkers.intro' => 'Cada punto de contacto del LLM con el sistema de memoria puede atenderse de forma independiente mediante el endpoint local <1>summarizer</1> (LM Studio / compatible con OpenAI) o lanzando un <3>agente Claude / Antigravity</3> sin interfaz en modo <5>--print</5>. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.',
 			'web.memoryWorkers.enabledBadge' => 'habilitado',
 			'web.memoryWorkers.disabledBadge' => 'deshabilitado',
 			'web.memoryWorkers.summarizerOnlyBadge' => 'solo-summarizer',
@@ -9301,10 +9256,9 @@ extension on TranslationsEs {
 			'web.memoryWorkers.cliLabel' => 'CLI',
 			'web.memoryWorkers.selectPlaceholder' => 'Seleccionar',
 			'web.memoryWorkers.cliClaude' => 'Claude',
-			'web.memoryWorkers.cliGemini' => 'Gemini',
 			'web.memoryWorkers.claudeAccountLabel' => 'Cuenta de Claude',
 			'web.memoryWorkers.claudeAccountDefault' => 'Predeterminada',
-			'web.memoryWorkers.agentWarning' => 'El modo agente lanza un CLI sin interfaz por cada llamada. La latencia sube de <1>~1s</1> (summarizer) a <3>~5-15s</3>; el coste pasa de la CPU a tu quota de Claude/Gemini.',
+			'web.memoryWorkers.agentWarning' => 'El modo agente lanza un CLI sin interfaz por cada llamada. La latencia sube de <1>~1s</1> (summarizer) a <3>~5-15s</3>; el coste pasa de la CPU a tu quota de Claude/Antigravity.',
 			'web.memoryWorkers.enabledCheckbox' => 'Habilitado',
 			'web.memoryWorkers.testButton' => 'Probar',
 			'web.memoryWorkers.saveButton' => 'Guardar',
@@ -9471,10 +9425,10 @@ extension on TranslationsEs {
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'para este scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Hechos a largo plazo que el agente almacenó (preferencias del usuario, datos del proyecto). No se pueden recuperar.',
 			'web.project.reset.cancel' => 'Cancelar',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.deleteForever' => 'Eliminar para siempre',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Restablecido: se eliminó ${summary}',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} documento',
 			'web.project.reset.summary.docs_other' => ({required Object count}) => '${count} documentos',
 			'web.project.reset.summary.journal' => ({required Object count}) => '${count} diario',
@@ -9985,10 +9939,10 @@ extension on TranslationsEs {
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => 'Etiqueta legible para el adaptador. Se muestra en la lista de canales.',
 			'web.channels.bridge.tokenLabel' => 'Token del adaptador',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.regenerateTooltip' => 'Regenerar',
 			'web.channels.bridge.copyTooltip' => 'Copiar',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.tokenCopiedToast' => 'Token copiado',
 			'web.channels.bridge.tokenHint' => 'El adaptador se autentica enviándolo en el frame de registro de WS (o como cabecera <1>X-Bridge-Token</1>).',
 			'web.channels.bridge.capsLabel' => 'Aceptar capacidades (lista blanca opcional)',
@@ -10147,10 +10101,10 @@ extension on TranslationsEs {
 			'web.plugins.mcp.deleteFailedToast' => 'Error al eliminar',
 			'web.plugins.mcp.toggleFailedToast' => 'Error al alternar',
 			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: no compatible',
-			'web.plugins.mcp.codexUnsupportedTooltip' => 'El CLI de codex solo admite el transport stdio. Este servidor se omitirá en las sessions de codex; claude y gemini lo seguirán usando.',
+			'web.plugins.mcp.codexUnsupportedTooltip' => 'El CLI de codex solo admite el transport stdio. Este servidor se omitirá en las sessions de codex; claude y antigravity lo seguirán usando.',
 			'web.plugins.mcp.builtinBadge' => 'Integrado',
 			'web.plugins.mcp.builtinTooltip' => 'Provisto por el propio opendray — se adjunta automáticamente a cada session que admite MCP. No se puede editar ni eliminar.',
-			'web.plugins.mcp.builtinDescription' => 'El servidor compartido de memoria y conocimiento de opendray: memory_search / memory_store, project_goal y project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Se adjunta automáticamente a cada session de Claude / Codex / Gemini.',
+			'web.plugins.mcp.builtinDescription' => 'El servidor compartido de memoria y conocimiento de opendray: memory_search / memory_store, project_goal y project_plan get/set, session_log_append, decision_record, doc_read, skill_distill, project_search. Se adjunta automáticamente a cada session de Claude / Codex / Antigravity.',
 			'web.plugins.mcp.builtinAutoAttach' => 'siempre activo',
 			'web.plugins.mcp.editor.createTitle' => 'Nuevo servidor MCP',
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => 'Editar MCP: ${id}',
@@ -10499,10 +10453,10 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => 'Puerto',
 			'web.backups.targetEditor.smb.shareLabel' => 'Recurso compartido',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.shareHint' => 'Nombre del recurso compartido de nivel superior en el servidor SMB',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.smb.userLabel' => 'Usuario',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Prefijo de ruta',
@@ -10578,8 +10532,6 @@ extension on TranslationsEs {
 			'web.serverSettings.sections.claude.desc' => 'Dónde se guardan los transcripts de Claude en disco.',
 			'web.serverSettings.sections.codex.title' => 'Almacenamiento · Codex',
 			'web.serverSettings.sections.codex.desc' => 'Raíz de sesiones de Codex.',
-			'web.serverSettings.sections.gemini.title' => 'Almacenamiento · Gemini',
-			'web.serverSettings.sections.gemini.desc' => 'Carpeta tmp por proyecto de Gemini + projects.json.',
 			'web.serverSettings.sections.antigravity.title' => 'Almacenamiento · Antigravity',
 			'web.serverSettings.sections.antigravity.desc' => 'Almacén SQLite por conversación de Antigravity (agy).',
 			'web.serverSettings.loading' => 'Cargando ajustes del servidor…',
@@ -10687,10 +10639,6 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.claudeAccountsDir.hint' => 'Raíz usada para los ConfigDirs de las cuentas de Claude gestionadas por opendray. Por defecto ~/.claude-accounts.',
 			'web.serverSettings.fields.codexSessionsRoot.label' => 'Raíz de sesiones',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => 'Directorio que se recorre en busca de los archivos JSONL de rollout de Codex. Por defecto ~/.codex/sessions.',
-			'web.serverSettings.fields.geminiTmpRoot.label' => 'Directorio tmp',
-			'web.serverSettings.fields.geminiTmpRoot.hint' => 'Raíz que contiene las carpetas tmp por proyecto de Gemini. Por defecto ~/.gemini/tmp.',
-			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
-			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Ruta al archivo de mapeo cwd→nombre-corto de Gemini. Por defecto ~/.gemini/projects.json.',
 			'web.serverSettings.fields.antigravityConversationsRoot.label' => 'Directorio de conversaciones',
 			'web.serverSettings.fields.antigravityConversationsRoot.hint' => 'Raíz con los archivos .db por conversación de agy. Por defecto ~/.gemini/antigravity-cli/conversations.',
 			'web.serverSettings.fields.backupLocalDir.label' => 'Directorio local de copias de seguridad',
@@ -11013,8 +10961,6 @@ extension on TranslationsEs {
 			'web.export.form.memoriesHint' => 'Filas de memoria persistente entre CLI (texto + alcance + metadatos). Los vectores de embedding se omiten; el importador vuelve a generarlos.',
 			'web.export.form.integrations' => 'Integraciones',
 			'web.export.form.customTasks' => 'Tareas personalizadas',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.customTasksHint' => 'Tareas definidas por el operador que se muestran en la pestaña Tareas del Inspector.',
 			'web.export.form.integrationOptions.none' => 'Ninguna',
 			'web.export.form.integrationOptions.noneHint' => 'Omitir por completo la tabla de integraciones.',
@@ -11023,6 +10969,8 @@ extension on TranslationsEs {
 			'web.export.form.integrationOptions.plaintext' => 'Incluir las API keys en texto plano',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 solo con bcrypt: no existe texto plano recuperable. El manifiesto lo documenta; no se filtra nada.',
 			'web.export.form.confirmWarning' => 'Escribe <1>Lo entiendo</1> para confirmar. opendray actualmente almacena solo hashes bcrypt, así que seleccionar texto plano NO exporta ningún texto plano (la función está reservada para una versión futura que mantenga cachés de texto plano).',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.confirmPlaceholder' => 'Lo entiendo',
 			'web.export.form.confirmSentinel' => 'lo entiendo',
 			'web.export.form.footnote' => 'Los logs de auditoría y los transcripts de session quedan fuera del alcance; en su lugar los cubre /backups (volcado del operador).',
@@ -11321,7 +11269,7 @@ extension on TranslationsEs {
 			'more.items.channels.title' => 'Canales',
 			'more.items.channels.subtitle' => 'Destinos de notificaciones',
 			'more.items.providers.title' => 'Proveedores',
-			'more.items.providers.subtitle' => 'Estado de los CLI de Claude / Codex / Gemini',
+			'more.items.providers.subtitle' => 'Estado de los CLI de Claude / Codex / Antigravity',
 			'more.items.mcp.title' => 'MCP',
 			'more.items.mcp.subtitle' => 'Servidores y secretos de Model Context Protocol',
 			'more.items.skills.title' => 'Skills',
@@ -11527,8 +11475,6 @@ extension on TranslationsEs {
 			'sessions.inspector.tasks.filterHint' => 'Filtrar tareas…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'Ninguna tarea coincide con "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No hay tareas en esta carpeta',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => 'Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Insertado: @${path}',
 			'sessions.inspector.notes.myNotes' => 'Mis notas',
@@ -11537,6 +11483,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertAtRefShort' => 'Insertar @referencia',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nIdeas, tareas pendientes, contexto para el agente…',
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Falló al crear: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Cambiar la ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
@@ -11586,7 +11534,6 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.argsHelper' => 'Separados por espacios; en blanco usa los valores predeterminados del proveedor.',
 			'sessions.spawnSheet.bypass.labelClaude' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Omitir aprobaciones y sandbox',
-			'sessions.spawnSheet.bypass.labelGemini' => 'Modo YOLO',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Omitir permisos / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
@@ -11824,7 +11771,6 @@ extension on TranslationsEs {
 			'memoryWorkers.agentCliPrint' => 'Agente (CLI --print)',
 			'memoryWorkers.cliLabel' => 'CLI',
 			'memoryWorkers.cliClaude' => 'Claude',
-			'memoryWorkers.cliGemini' => 'Gemini',
 			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
 			'memoryWorkers.modelLabel' => 'Modelo',
@@ -11835,13 +11781,13 @@ extension on TranslationsEs {
 			'memoryWorkers.claudeAccountLabel' => 'Cuenta de Claude',
 			'memoryWorkers.claudeAccountDefault' => 'Predeterminada',
 			'memoryWorkers.test' => 'Probar',
-			'memoryWorkers.intro' => 'Cada punto de contacto con el LLM del sistema de memoria puede atenderse de forma independiente mediante el endpoint del resumidor local (LM Studio / compatible con OpenAI) o lanzando un agente headless de Claude / Gemini en modo --print. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.',
+			'memoryWorkers.intro' => 'Cada punto de contacto con el LLM del sistema de memoria puede atenderse de forma independiente mediante el endpoint del resumidor local (LM Studio / compatible con OpenAI) o lanzando un agente headless de Claude / Antigravity en modo --print. Las tareas narrativas de alta calidad (gitactivity, transcript) se benefician de los workers de agente; las tareas de alta frecuencia (gatekeeper) permanecen en el endpoint local por diseño.',
 			'memoryWorkers.errorTitle' => 'Endpoint no accesible',
 			'memoryWorkers.errorDetail' => 'Las rutas /api/v1/memory/workers son nuevas en M25. Puede que el binario de opendray necesite un reinicio para montarlas y ejecutar la migración 0029.',
 			'memoryWorkers.summarizerOnlyBadge' => 'solo resumidor',
 			'memoryWorkers.summarizerProviderLabel' => 'Proveedor de resumidor',
 			'memoryWorkers.registryDefault' => 'Predeterminado del registro',
-			'memoryWorkers.agentWarning' => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Gemini.',
+			'memoryWorkers.agentWarning' => 'El modo agente lanza un CLI headless por cada llamada. Latencia ~5-15s (frente a ~1s del resumidor); el coste pasa de la CPU a tu quota de Claude/Antigravity.',
 			'memoryWorkers.noCalls24h' => 'Sin llamadas en las últimas 24h.',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK, ${duration}ms',
 			'memoryWorkers.testFailedReturnedSnack' => ({required Object label, required Object error}) => '${label} falló: ${error}',
@@ -12041,8 +11987,6 @@ extension on TranslationsEs {
 			'backups.health.never' => 'nunca',
 			'backups.health.tiles.recentFailures' => 'Fallos recientes',
 			'backups.health.tiles.verifyFailures' => 'Verificación fallida',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.tiles.overdue' => 'Atrasadas',
 			'backups.health.tiles.schedules' => 'Programaciones',
 			'backups.failedToLoad' => 'Error al cargar las copias de seguridad',
@@ -12053,6 +11997,8 @@ extension on TranslationsEs {
 			'backups.encryption.generate' => 'Generar',
 			'backups.encryption.paste' => 'Pegar',
 			'backups.encryption.random256bit' => 'Clave aleatoria de 256 bits',
+			_ => null,
+		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => 'Tu passphrase',
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
@@ -12555,8 +12501,6 @@ extension on TranslationsEs {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => 'hace ${n}s',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => 'hace ${n}m',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => 'hace ${n}h',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.status.pending' => 'pendiente',
 			'dataExport.status.running' => 'en ejecución',
 			'dataExport.status.ready' => 'listo',
@@ -12567,6 +12511,8 @@ extension on TranslationsEs {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'memory.status.enabled' => 'habilitado',
 			'memory.status.disabled' => 'deshabilitado',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
@@ -12710,7 +12656,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.sections.backup' => 'Copia de seguridad',
 			'settings.serverSettings.sections.storageClaude' => 'Almacenamiento · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Almacenamiento · Codex',
-			'settings.serverSettings.sections.storageGemini' => 'Almacenamiento · Gemini',
 			'settings.serverSettings.sections.storageAntigravity' => 'Almacenamiento · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => 'Dirección de escucha, cuenta del operador, TTL del token.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosidad, formato y ruta del log en disco.',
@@ -12721,7 +12666,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.sectionDescriptions.backup' => 'Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Dónde viven los transcripts de Claude en disco.',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Raíz de las sessions de Codex.',
-			'settings.serverSettings.sectionDescriptions.storageGemini' => 'Rutas de tmp por proyecto + projects.json.',
 			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'Almacén SQLite por conversación de agy.',
 			'settings.serverSettings.fields.listenAddress' => 'Dirección de escucha',
 			'settings.serverSettings.fields.adminUser' => 'Usuario admin',
@@ -12778,8 +12722,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.httpDimensions' => 'Dimensiones HTTP',
 			'settings.serverSettings.fields.pgDumpPath' => 'Ruta de pg_dump',
 			'settings.serverSettings.fields.pgRestorePath' => 'Ruta de pg_restore',
-			'settings.serverSettings.fields.tmpRoot' => 'Raíz de tmp',
-			'settings.serverSettings.fields.projectsJson' => 'projects.json',
 			'settings.serverSettings.fields.conversationsRoot' => 'Directorio de conversaciones',
 			'settings.serverSettings.fields.dedupThreshold' => 'Umbral de dedup',
 			'settings.serverSettings.fields.dedupHelper' => 'Umbral de plegado al escribir; 0 = por defecto, negativo desactiva.',
