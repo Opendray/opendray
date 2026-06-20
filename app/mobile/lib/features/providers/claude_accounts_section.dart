@@ -11,7 +11,7 @@ import 'package:opendray/features/providers/claude_account_dialogs.dart'
 // Self-contained widget that owns the Claude accounts list (fetch +
 // per-row actions). Lives inside the Claude provider's config page
 // because accounts are scoped to the Claude provider — the other
-// providers (codex / gemini / shell) have no equivalent concept, so
+// providers (codex / antigravity / shell) have no equivalent concept, so
 // surfacing a peer "Claude accounts" section under all providers
 // reads as a flat-list bug.
 class ClaudeAccountsSection extends ConsumerStatefulWidget {

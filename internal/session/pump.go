@@ -13,7 +13,7 @@ import (
 
 // idleTailLines bounds how much of the recent stdout we ship inside
 // the session.idle event when no JSONL transcript is available
-// (Codex / Gemini / shell sessions). Generous on purpose — the
+// (Codex / shell sessions). Generous on purpose — the
 // channel layer (notify_snippet_max_chars, Telegram chunking) is
 // the right place to clamp for any specific transport. Set high
 // enough that a marathon session's last interesting screenful
@@ -119,10 +119,9 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 // output for a notification card. Source priority:
 //
 //  1. Claude JSONL transcript (claude provider)
-//  2. Gemini logs.json transcript (gemini provider)
-//  3. Virtual-terminal screen snapshot — what the user sees in the
+//  2. Virtual-terminal screen snapshot — what the user sees in the
 //     live web terminal right now
-//  4. Raw ring-buffer tail — defensive fallback
+//  3. Raw ring-buffer tail — defensive fallback
 //
 // We deliberately do NOT cap byte / line counts here. The channel
 // layer owns user-facing truncation (notify_snippet_max_chars +
@@ -139,14 +138,11 @@ func (m *Manager) recentResponseSnippet(rs *runningSession) string {
 	if provider == "claude" && cwd != "" {
 		snippet = claudeRecentResponse(cwd)
 	}
-	if snippet == "" && provider == "gemini" && cwd != "" {
-		snippet = geminiRecentResponse(cwd)
-	}
 	if snippet == "" && rs.vt != nil {
 		// Screen snapshots still need chrome stripping. Claude's busy TUI
 		// gets the aggressive FilterClaudeChrome (model bar, permission
 		// hint, separator runs, spinners); a shell — and the codex /
-		// gemini snapshot fallback — gets the light FilterShellChrome,
+		// antigravity snapshot fallback — gets the light FilterShellChrome,
 		// which preserves short / symbol-only output the Claude filter
 		// would mistake for debris. JSONL output (handled above) is
 		// already clean.

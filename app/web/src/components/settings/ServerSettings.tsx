@@ -64,7 +64,6 @@ export const SERVER_SECTIONS = [
   { id: 'backup' },
   { id: 'claude' },
   { id: 'codex' },
-  { id: 'gemini' },
   { id: 'antigravity' },
 ] as const
 
@@ -99,7 +98,6 @@ const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   backup: true, // pg_dump path + cipher are bound at NewService
   claude: false, // history paths are read on each request, no restart needed
   codex: false,
-  gemini: false,
   antigravity: false,
 }
 
@@ -1257,47 +1255,6 @@ function SectionForm({
         </FormGrid>
       )
 
-    case 'gemini':
-      return (
-        <FormGrid>
-          {F(
-            'geminiTmpRoot',
-            'providers.gemini.tmp_root',
-            <PathInput
-              value={c.providers.gemini.tmp_root}
-              onChange={(v) =>
-                setDraft({
-                  ...draft,
-                  providers: {
-                    ...c.providers,
-                    gemini: { ...c.providers.gemini, tmp_root: v },
-                  },
-                })
-              }
-              placeholder="~/.gemini/tmp"
-              expectDir
-            />,
-          )}
-          {F(
-            'geminiProjectsFile',
-            'providers.gemini.projects_file',
-            <PathInput
-              value={c.providers.gemini.projects_file}
-              onChange={(v) =>
-                setDraft({
-                  ...draft,
-                  providers: {
-                    ...c.providers,
-                    gemini: { ...c.providers.gemini, projects_file: v },
-                  },
-                })
-              }
-              placeholder="~/.gemini/projects.json"
-            />,
-          )}
-        </FormGrid>
-      )
-
     case 'antigravity':
       return (
         <FormGrid>
@@ -1604,12 +1561,6 @@ function mergeSection(
       out.providers = {
         ...out.providers,
         codex: src.providers.codex,
-      }
-      break
-    case 'gemini':
-      out.providers = {
-        ...out.providers,
-        gemini: src.providers.gemini,
       }
       break
     case 'antigravity':

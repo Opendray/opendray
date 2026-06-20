@@ -110,7 +110,7 @@ func (s *sessionStore) Reactivate(ctx context.Context, id string, pid int) error
 
 // SetClaudeSessionID updates the agent-side session UUID after spawn.
 // The Manager calls this when the provider's PrepareOutput carries a
-// freshly-generated UUID (claude / gemini via --session-id), so the
+// freshly-generated UUID (claude via --session-id), so the
 // M18 transcript reader can locate the right *.jsonl file directly
 // instead of relying on mtime heuristics.
 func (s *sessionStore) SetClaudeSessionID(ctx context.Context, id, claudeSessionID string) error {

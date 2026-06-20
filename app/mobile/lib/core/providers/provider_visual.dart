@@ -39,7 +39,7 @@ class ProviderVisual {
   /// True when the bundled SVG is a single-fill black mark (OpenAI /
   /// Shell / OpenCode). Those are rendered in the theme foreground so
   /// they read on the dark tile — mirroring the web admin, which inverts
-  /// the same marks to white. Multi-colour marks (Claude / Gemini /
+  /// the same marks to white. Multi-colour marks (Claude /
   /// Antigravity) carry their own ink and stay false.
   final bool monochrome;
 }
@@ -63,16 +63,10 @@ const _palette = <String, ProviderVisual>{
     fallbackLetter: 'C',
     monochrome: true,
   ),
-  'gemini': ProviderVisual(
-    iconAsset: 'assets/provider_icons/gemini.svg',
-    brandColor: Color(0xFF3186FF),
-    label: 'Gemini',
-    fallbackLetter: 'G',
-  ),
   'antigravity': ProviderVisual(
     // Antigravity (agy) ships its own multi-colour Google mark. Tint
-    // uses the lighter brand blue so the tile reads distinct from
-    // Gemini's. Keep in sync with web's PROVIDER_ICON_MAP.
+    // uses the lighter brand blue. Keep in sync with web's
+    // PROVIDER_ICON_MAP.
     iconAsset: 'assets/provider_icons/antigravity.svg',
     brandColor: Color(0xFF749BFF),
     label: 'Antigravity',

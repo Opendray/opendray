@@ -68,11 +68,6 @@ var agentModelCatalog = map[string][]ModelOption{
 		{ID: "claude-sonnet-4-6", Label: "claude-sonnet-4-6 (pinned)"},
 		{ID: "claude-opus-4-8", Label: "claude-opus-4-8 (pinned)"},
 	},
-	"gemini": {
-		{ID: "gemini-2.5-flash-lite", Label: "gemini-2.5-flash-lite — cheapest", Recommended: true},
-		{ID: "gemini-2.5-flash", Label: "gemini-2.5-flash — balanced", Recommended: true},
-		{ID: "gemini-2.5-pro", Label: "gemini-2.5-pro — deepest"},
-	},
 	"codex": {
 		{ID: "gpt-5.1-codex-mini", Label: "gpt-5.1-codex-mini — cheapest", Recommended: true},
 		{ID: "gpt-5.1-codex", Label: "gpt-5.1-codex — balanced", Recommended: true},
@@ -89,15 +84,15 @@ var agentModelCatalog = map[string][]ModelOption{
 	},
 }
 
-// listModels returns the model options for ?provider_id=claude|gemini|
-// codex|antigravity. Local/HTTP providers don't use this — their model
+// listModels returns the model options for ?provider_id=claude|codex|
+// antigravity. Local/HTTP providers don't use this — their model
 // list comes live from the endpoint itself (memory probe, /v1/models).
 func (h *Handlers) listModels(w http.ResponseWriter, r *http.Request) {
 	provider := r.URL.Query().Get("provider_id")
 	models, ok := agentModelCatalog[provider]
 	if !ok {
 		writeError(w, http.StatusBadRequest,
-			errors.New("provider_id must be claude, gemini, codex, or antigravity"))
+			errors.New("provider_id must be claude, codex, or antigravity"))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"models": models})

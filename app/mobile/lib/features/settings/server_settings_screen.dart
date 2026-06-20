@@ -457,30 +457,6 @@ List<_Section> _buildSections() => <_Section>[
     ],
   ),
   _Section(
-    id: 'gemini',
-    title: t.settings.serverSettings.sections.storageGemini,
-    description: t.settings.serverSettings.sectionDescriptions.storageGemini,
-    restartRequired: false,
-    fields: [
-      _Field(
-        label: t.settings.serverSettings.fields.tmpRoot,
-        path: 'providers.gemini.tmp_root',
-        kind: _FieldKind.text,
-        monospace: true,
-        // session/gemini_jsonl.go falls back to ~/.gemini/tmp.
-        placeholder: '~/.gemini/tmp',
-      ),
-      _Field(
-        label: t.settings.serverSettings.fields.projectsJson,
-        path: 'providers.gemini.projects_file',
-        kind: _FieldKind.text,
-        monospace: true,
-        // session/gemini_jsonl.go falls back to ~/.gemini/projects.json.
-        placeholder: '~/.gemini/projects.json',
-      ),
-    ],
-  ),
-  _Section(
     id: 'antigravity',
     title: t.settings.serverSettings.sections.storageAntigravity,
     description: t.settings.serverSettings.sectionDescriptions.storageAntigravity,

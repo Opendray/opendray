@@ -41,7 +41,7 @@ export function HistoryPanel({ session }: { session: Session }) {
         <p>History isn't available for this provider.</p>
         <p className="opacity-60">
           <code>{session.provider_id}</code> doesn't write a structured
-          transcript on disk. Supported: claude, codex, gemini.
+          transcript on disk. Supported: claude, codex.
         </p>
       </div>
     )

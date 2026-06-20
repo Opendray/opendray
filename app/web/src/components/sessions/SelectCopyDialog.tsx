@@ -22,7 +22,7 @@ interface SelectCopyDialogProps {
 // SelectCopyDialog renders the terminal output as native, selectable
 // DOM text. The live terminal is an xterm <canvas>: on touch devices a
 // finger drag can't select canvas text, and while a TUI has mouse
-// tracking on (Claude Code / Codex / Gemini all do), pointer gestures
+// tracking on (Claude Code / Codex / Antigravity all do), pointer gestures
 // are forwarded to the program as mouse events instead of forming a
 // selection. Reconstructing the buffer into a <pre> with user-select
 // sidesteps both — the OS's own selection (drag on desktop, long-press

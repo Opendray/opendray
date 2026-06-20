@@ -72,8 +72,8 @@ const (
 	PermissionModeDefault PermissionMode = "default"
 	// PermissionModeBypass auto-approves every tool call — for an
 	// unattended, app-driven session with no human at the TUI. Maps to the
-	// provider's bypass flag (claude --dangerously-skip-permissions /
-	// gemini --yolo / codex --dangerously-bypass-approvals-and-sandbox).
+	// provider's bypass flag (claude/antigravity --dangerously-skip-permissions /
+	// codex --dangerously-bypass-approvals-and-sandbox).
 	PermissionModeBypass PermissionMode = "bypass"
 )
 

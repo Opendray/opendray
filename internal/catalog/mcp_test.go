@@ -182,12 +182,12 @@ func TestRenderGeminiMCP_WritesWorkspaceSettings(t *testing.T) {
 	servers := []MCPServer{
 		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"}},
 	}
-	args, env, err := renderMCP("gemini", t.TempDir(), cwd, servers)
+	args, env, err := renderMCP("antigravity", t.TempDir(), cwd, servers)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(args) != 0 || len(env) != 0 {
-		t.Errorf("args=%v env=%v, want none (gemini reads <cwd>/.gemini/settings.json)", args, env)
+		t.Errorf("args=%v env=%v, want none (agy reads <cwd>/.gemini/settings.json)", args, env)
 	}
 	got := readGeminiSettings(t, cwd)
 	fs := got["mcpServers"].(map[string]any)["fs"].(map[string]any)
@@ -224,7 +224,7 @@ func TestRenderGeminiMCP_MergePreservesUserConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+	_, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
 		{Name: "fs", Command: "npx"},
 	})
 	if err != nil {
@@ -245,14 +245,14 @@ func TestRenderGeminiMCP_MergePreservesUserConfig(t *testing.T) {
 
 func TestRenderGeminiMCP_RemovesStaleManagedEntries(t *testing.T) {
 	cwd := t.TempDir()
-	if _, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
 		{Name: "fs", Command: "npx"},
 		{Name: "old", Command: "node"},
 	}); err != nil {
 		t.Fatal(err)
 	}
 	// Second spawn: "old" disabled / removed from the registry.
-	if _, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
 		{Name: "fs", Command: "npx"},
 	}); err != nil {
 		t.Fatal(err)
@@ -287,50 +287,10 @@ func TestRenderGeminiMCP_MalformedUserSettingsErrors(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "settings.json"), []byte("{not json"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := renderMCP("gemini", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
 		{Name: "fs", Command: "npx"},
 	}); err == nil {
 		t.Fatal("expected error on malformed user settings.json (must not clobber)")
-	}
-}
-
-func TestGeminiFolderUntrusted(t *testing.T) {
-	cfg := t.TempDir()
-	proj := filepath.Join(t.TempDir(), "proj")
-	if err := os.MkdirAll(proj, 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	// No trust store at all → untrusted (folder trust defaults to on).
-	if !geminiFolderUntrustedIn(cfg, proj) {
-		t.Error("expected untrusted with empty trust store")
-	}
-
-	// TRUST_FOLDER on an ancestor covers the subtree.
-	trust := `{"` + filepath.Dir(proj) + `": "TRUST_FOLDER"}`
-	if err := os.WriteFile(filepath.Join(cfg, "trustedFolders.json"), []byte(trust), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if geminiFolderUntrustedIn(cfg, proj) {
-		t.Error("expected trusted under a TRUST_FOLDER ancestor")
-	}
-
-	// Longest match wins: DO_NOT_TRUST on the folder itself overrides.
-	trust = `{"` + filepath.Dir(proj) + `": "TRUST_FOLDER", "` + proj + `": "DO_NOT_TRUST"}`
-	if err := os.WriteFile(filepath.Join(cfg, "trustedFolders.json"), []byte(trust), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if !geminiFolderUntrustedIn(cfg, proj) {
-		t.Error("expected untrusted when DO_NOT_TRUST matches more specifically")
-	}
-
-	// Feature explicitly disabled → everything trusted.
-	settings := `{"security": {"folderTrust": {"enabled": false}}}`
-	if err := os.WriteFile(filepath.Join(cfg, "settings.json"), []byte(settings), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if geminiFolderUntrustedIn(cfg, proj) {
-		t.Error("expected trusted when folderTrust is disabled")
 	}
 }
 

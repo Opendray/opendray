@@ -4,11 +4,12 @@
 // compatibility, but the admin UI prefers an official mark when one
 // is registered for the provider id. Add new providers here when
 // they ship.
+//
+// (claude, antigravity) ship as-is.
 
 const MAP: Record<string, string> = {
 	claude: 'claude',
 	codex: 'openai', // Codex CLI is OpenAI-branded
-	gemini: 'gemini',
 	antigravity: 'antigravity',
 	opencode: 'opencode',
 	shell: 'shell',

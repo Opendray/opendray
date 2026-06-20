@@ -468,7 +468,6 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	sessionOpts = append(sessionOpts,
 		session.WithClaudeHistoryConfig(resolveClaudeHistoryConfig(cfg.Providers.Claude)),
 		session.WithCodexHistoryConfig(resolveCodexHistoryConfig(cfg.Providers.Codex)),
-		session.WithGeminiHistoryConfig(resolveGeminiHistoryConfig(cfg.Providers.Gemini)),
 		session.WithAntigravityHistoryConfig(resolveAntigravityHistoryConfig(cfg.Providers.Antigravity)),
 		// Lets Manager.SwitchClaudeAccount migrate the conversation
 		// transcript JSONL into the new account's projects/ tree
@@ -767,7 +766,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 
 	// M25 — pluggable memory worker. Operators pick per-task
 	// between the summarizer HTTP path (existing) and a headless
-	// agent CLI (`claude --print` / `gemini --print`). All four
+	// agent CLI (`claude --print` / `agy --print`). All four
 	// memory touchpoints (gatekeeper, cleaner, gitactivity,
 	// transcript) read their config row from memory_workers.
 	memoryWorkerRegistry := memworker.NewRegistry(
@@ -1334,14 +1333,14 @@ func (a *App) Run(ctx context.Context) error {
 		"commit", version.Commit)
 
 	// W^X preflight: if executable memory can't be mapped, the V8-based
-	// CLIs (codex, gemini) will crash with a fatal SetPermissions error on
+	// CLIs (codex, antigravity) will crash with a fatal SetPermissions error on
 	// spawn while Claude keeps working. Surface it loudly here instead of
 	// leaving operators to decode a V8 stack trace inside a dead session.
 	// Common cause after an in-place `opendray update`: the systemd unit
 	// still carries MemoryDenyWriteExecute=true (the unit isn't refreshed
 	// by a binary update).
 	if err := canMapExecutable(); err != nil {
-		a.log.Warn("executable memory mapping is blocked — codex/gemini sessions will crash on spawn (Claude is unaffected). "+
+		a.log.Warn("executable memory mapping is blocked — codex/antigravity sessions will crash on spawn (Claude is unaffected). "+
 			"Likely MemoryDenyWriteExecute=true on the opendray systemd unit, or an exhausted vm.max_map_count. "+
 			"Fix: drop MemoryDenyWriteExecute (e.g. a no-mdwx.conf drop-in or re-run the installer), then `systemctl daemon-reload && systemctl restart opendray`; "+
 			"if it's already off, raise vm.max_map_count.",
@@ -2123,18 +2122,6 @@ func resolveCodexHistoryConfig(c config.CodexProviderConfig) session.CodexHistor
 	return out
 }
 
-// resolveGeminiHistoryConfig expands ~/ in [providers.gemini].
-func resolveGeminiHistoryConfig(c config.GeminiProviderConfig) session.GeminiHistoryConfig {
-	out := session.GeminiHistoryConfig{}
-	if c.TmpRoot != "" {
-		out.TmpRoot = expandPath(c.TmpRoot)
-	}
-	if c.ProjectsFile != "" {
-		out.ProjectsFile = expandPath(c.ProjectsFile)
-	}
-	return out
-}
-
 // resolveAntigravityHistoryConfig expands ~/ in [providers.antigravity].
 func resolveAntigravityHistoryConfig(c config.AntigravityProviderConfig) session.AntigravityHistoryConfig {
 	out := session.AntigravityHistoryConfig{}
@@ -2395,8 +2382,8 @@ func (a *projectdocSessionLookup) History(ctx context.Context, id string, limit 
 }
 
 // TranscriptText (M18) returns the full conversation transcript
-// for the session — Claude / Codex / Gemini each have their own
-// JSONL reader; Manager.TranscriptText dispatches by provider.
+// for the session — Claude / Codex / Antigravity each have their own
+// transcript reader; Manager.TranscriptText dispatches by provider.
 // Returns "" for providers we haven't taught yet rather than an
 // error so the journaler falls back to metadata-only.
 func (a *projectdocSessionLookup) TranscriptText(ctx context.Context, id string, maxBytes int) (string, error) {

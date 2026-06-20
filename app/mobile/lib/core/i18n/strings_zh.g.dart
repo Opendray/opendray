@@ -411,7 +411,6 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get agentCliPrint => 'Agent（CLI --print）';
 	@override String get cliLabel => 'CLI';
 	@override String get cliClaude => 'Claude';
-	@override String get cliGemini => 'Gemini';
 	@override String get cliCodex => 'Codex（codex exec）';
 	@override String get cliAntigravity => 'Antigravity（agy --print）';
 	@override String get modelLabel => '模型';
@@ -422,13 +421,13 @@ class _TranslationsMemoryWorkersZh extends TranslationsMemoryWorkersEn {
 	@override String get claudeAccountLabel => 'Claude 账号';
 	@override String get claudeAccountDefault => '默认';
 	@override String get test => '测试';
-	@override String get intro => '每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Gemini agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。';
+	@override String get intro => '每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Antigravity agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。';
 	@override String get errorTitle => '端点不可达';
 	@override String get errorDetail => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。';
 	@override String get summarizerOnlyBadge => '仅 summarizer';
 	@override String get summarizerProviderLabel => 'Summarizer 提供商';
 	@override String get registryDefault => '注册表默认';
-	@override String get agentWarning => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。';
+	@override String get agentWarning => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Antigravity 配额。';
 	@override String get noCalls24h => '过去 24 小时没有调用。';
 	@override String testOkSnack({required Object label, required Object duration}) => '${label} OK — ${duration}ms';
 	@override String testFailedReturnedSnack({required Object label, required Object error}) => '${label} 失败：${error}';
@@ -1209,7 +1208,7 @@ class _TranslationsWebMemoryWorkersZh extends TranslationsWebMemoryWorkersEn {
 	@override String get loading => '正在加载 worker 配置…';
 	@override String get errorTitle => '无法访问该接口。';
 	@override String get errorDescription => '/api/v1/memory/workers 路由在 M25 中新增 — opendray 二进制可能需要重启以挂载它们并执行 migration 0029。';
-	@override String get intro => 'Memory 子系统的每个 LLM 接入点都可由本地 <1>summarizer</1>（LM Studio / OpenAI 兼容）端点服务，或通过以 <5>--print</5> 模式启动的无头 <3>Claude / Gemini agent</3> 服务。叙事性任务（gitactivity、transcript）从 agent worker 中获益；高频任务（gatekeeper）按设计仍走本地端点。';
+	@override String get intro => 'Memory 子系统的每个 LLM 接入点都可由本地 <1>summarizer</1>（LM Studio / OpenAI 兼容）端点服务，或通过以 <5>--print</5> 模式启动的无头 <3>Claude / Antigravity agent</3> 服务。叙事性任务（gitactivity、transcript）从 agent worker 中获益；高频任务（gatekeeper）按设计仍走本地端点。';
 	@override String get enabledBadge => '已启用';
 	@override String get disabledBadge => '已禁用';
 	@override String get summarizerOnlyBadge => '仅 summarizer';
@@ -1224,10 +1223,9 @@ class _TranslationsWebMemoryWorkersZh extends TranslationsWebMemoryWorkersEn {
 	@override String get cliLabel => 'CLI';
 	@override String get selectPlaceholder => '选择';
 	@override String get cliClaude => 'Claude';
-	@override String get cliGemini => 'Gemini';
 	@override String get claudeAccountLabel => 'Claude 账号';
 	@override String get claudeAccountDefault => '默认';
-	@override String get agentWarning => 'Agent 模式每次调用都会启动一个无头 CLI。延迟从 <1>~1s</1>（summarizer）上升到 <3>~5-15s</3>；成本从 CPU 转移到 Claude/Gemini 配额。';
+	@override String get agentWarning => 'Agent 模式每次调用都会启动一个无头 CLI。延迟从 <1>~1s</1>（summarizer）上升到 <3>~5-15s</3>；成本从 CPU 转移到 Claude/Antigravity 配额。';
 	@override String get enabledCheckbox => '启用';
 	@override String get testButton => '测试';
 	@override String get saveButton => '保存';
@@ -3176,7 +3174,6 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get argsLabel => 'CLI 参数（每行一个）';
 	@override String get bypassClaude => '跳过权限提示';
 	@override String get bypassCodex => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)';
-	@override String get bypassGemini => 'YOLO 模式 (--yolo)';
 	@override String get bypassAntigravity => '跳过权限 / YOLO (--dangerously-skip-permissions)';
 	@override String get bypassOpencode => '跳过权限检查 (--dangerously-skip-permissions)';
 	@override String get bypassOnHint => '本次会话将以更高的自主权运行。';
@@ -3326,7 +3323,7 @@ class _TranslationsWebMemoryConfigSectionHintsZh extends TranslationsWebMemoryCo
 
 	// Translations
 	@override String get providers => '已注册的 HTTP endpoint 池 (Ollama / LM Studio / Anthropic / OpenAI / Integration)，所有任务都能引用。';
-	@override String get workers => '每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Gemini Agent（质量更高，消耗 CLI 配额）。';
+	@override String get workers => '每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Antigravity Agent（质量更高，消耗 CLI 配额）。';
 	@override String get rules => 'Capture 引擎何时触发（每 N 条消息 / 闲置 / 累计 K 字符 / 手动）。规则若没固定 provider，会跟随上面 Capture 任务的 worker 设置。';
 	@override String get profiles => 'Session 启动时把哪些历史记忆塞进 agent system prompt（按最近、按相关度、混合、关闭）。';
 	@override String get costs => 'memory_summarizer_calls 重算的累计花费。本地 provider（Ollama / LM Studio / Integration）免费；云 provider 显示真实成本。';
@@ -4539,10 +4536,10 @@ class _TranslationsWebPluginsMcpZh extends TranslationsWebPluginsMcpEn {
 	@override String get deleteFailedToast => '删除失败';
 	@override String get toggleFailedToast => '切换失败';
 	@override String get codexUnsupportedBadge => 'Codex: 不支持';
-	@override String get codexUnsupportedTooltip => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。';
+	@override String get codexUnsupportedTooltip => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 antigravity 仍会使用。';
 	@override String get builtinBadge => '内置';
 	@override String get builtinTooltip => '由 opendray 自身提供——自动附加到每个支持 MCP 的会话。不可编辑或删除。';
-	@override String get builtinDescription => 'opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Gemini 会话。';
+	@override String get builtinDescription => 'opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Antigravity 会话。';
 	@override String get builtinAutoAttach => '始终启用';
 	@override late final _TranslationsWebPluginsMcpEditorZh editor = _TranslationsWebPluginsMcpEditorZh._(_root);
 	@override late final _TranslationsWebPluginsMcpTestZh test = _TranslationsWebPluginsMcpTestZh._(_root);
@@ -5002,7 +4999,6 @@ class _TranslationsWebServerSettingsSectionsZh extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsBackupZh backup = _TranslationsWebServerSettingsSectionsBackupZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsClaudeZh claude = _TranslationsWebServerSettingsSectionsClaudeZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexZh codex = _TranslationsWebServerSettingsSectionsCodexZh._(_root);
-	@override late final _TranslationsWebServerSettingsSectionsGeminiZh gemini = _TranslationsWebServerSettingsSectionsGeminiZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsAntigravityZh antigravity = _TranslationsWebServerSettingsSectionsAntigravityZh._(_root);
 }
 
@@ -5085,8 +5081,6 @@ class _TranslationsWebServerSettingsFieldsZh extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsClaudeHistoryRootsZh claudeHistoryRoots = _TranslationsWebServerSettingsFieldsClaudeHistoryRootsZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsClaudeAccountsDirZh claudeAccountsDir = _TranslationsWebServerSettingsFieldsClaudeAccountsDirZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsCodexSessionsRootZh codexSessionsRoot = _TranslationsWebServerSettingsFieldsCodexSessionsRootZh._(_root);
-	@override late final _TranslationsWebServerSettingsFieldsGeminiTmpRootZh geminiTmpRoot = _TranslationsWebServerSettingsFieldsGeminiTmpRootZh._(_root);
-	@override late final _TranslationsWebServerSettingsFieldsGeminiProjectsFileZh geminiProjectsFile = _TranslationsWebServerSettingsFieldsGeminiProjectsFileZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsAntigravityConversationsRootZh antigravityConversationsRoot = _TranslationsWebServerSettingsFieldsAntigravityConversationsRootZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupLocalDirZh backupLocalDir = _TranslationsWebServerSettingsFieldsBackupLocalDirZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsBackupExportDirZh backupExportDir = _TranslationsWebServerSettingsFieldsBackupExportDirZh._(_root);
@@ -5871,7 +5865,7 @@ class _TranslationsMoreItemsProvidersZh extends TranslationsMoreItemsProvidersEn
 
 	// Translations
 	@override String get title => '提供商';
-	@override String get subtitle => 'Claude / Codex / Gemini CLI 状态';
+	@override String get subtitle => 'Claude / Codex / Antigravity CLI 状态';
 }
 
 // Path: more.items.mcp
@@ -6290,7 +6284,6 @@ class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnS
 	// Translations
 	@override String get labelClaude => '绕过权限';
 	@override String get labelCodex => '跳过批准与沙盒';
-	@override String get labelGemini => 'YOLO 模式';
 	@override String get labelAntigravity => '跳过权限 / YOLO';
 	@override String get labelOpencode => '跳过权限检查';
 	@override String get subtitleOn => '此会话将以提升的自主权运行。';
@@ -6723,7 +6716,6 @@ class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettings
 	@override String get backup => '备份';
 	@override String get storageClaude => '存储 · Claude';
 	@override String get storageCodex => '存储 · Codex';
-	@override String get storageGemini => '存储 · Gemini';
 	@override String get storageAntigravity => '存储 · Antigravity';
 }
 
@@ -6743,7 +6735,6 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsZh extends Translati
 	@override String get backup => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。';
 	@override String get storageClaude => 'Claude 会话记录在磁盘的存放位置。';
 	@override String get storageCodex => 'Codex 会话根目录。';
-	@override String get storageGemini => '按项目的临时目录 + projects.json 路径。';
 	@override String get storageAntigravity => 'agy 按会话存储的 SQLite 库。';
 }
 
@@ -6809,8 +6800,6 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get httpDimensions => 'HTTP dimensions';
 	@override String get pgDumpPath => 'pg_dump 路径';
 	@override String get pgRestorePath => 'pg_restore 路径';
-	@override String get tmpRoot => '临时根目录';
-	@override String get projectsJson => 'projects.json';
 	@override String get conversationsRoot => '会话目录';
 	@override String get dedupThreshold => '去重阈值';
 	@override String get dedupHelper => '写入折叠阈值；0=随嵌入器，负值关闭折叠。';
@@ -7856,17 +7845,6 @@ class _TranslationsWebServerSettingsSectionsCodexZh extends TranslationsWebServe
 	@override String get desc => 'Codex 会话根目录。';
 }
 
-// Path: web.serverSettings.sections.gemini
-class _TranslationsWebServerSettingsSectionsGeminiZh extends TranslationsWebServerSettingsSectionsGeminiEn {
-	_TranslationsWebServerSettingsSectionsGeminiZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get title => '存储 · Gemini';
-	@override String get desc => 'Gemini 每项目 tmp 与 projects.json。';
-}
-
 // Path: web.serverSettings.sections.antigravity
 class _TranslationsWebServerSettingsSectionsAntigravityZh extends TranslationsWebServerSettingsSectionsAntigravityEn {
 	_TranslationsWebServerSettingsSectionsAntigravityZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -8241,28 +8219,6 @@ class _TranslationsWebServerSettingsFieldsCodexSessionsRootZh extends Translatio
 	// Translations
 	@override String get label => '会话根目录';
 	@override String get hint => '遍历 Codex rollout JSONL 文件的目录。默认 ~/.codex/sessions。';
-}
-
-// Path: web.serverSettings.fields.geminiTmpRoot
-class _TranslationsWebServerSettingsFieldsGeminiTmpRootZh extends TranslationsWebServerSettingsFieldsGeminiTmpRootEn {
-	_TranslationsWebServerSettingsFieldsGeminiTmpRootZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get label => 'tmp 目录';
-	@override String get hint => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。';
-}
-
-// Path: web.serverSettings.fields.geminiProjectsFile
-class _TranslationsWebServerSettingsFieldsGeminiProjectsFileZh extends TranslationsWebServerSettingsFieldsGeminiProjectsFileEn {
-	_TranslationsWebServerSettingsFieldsGeminiProjectsFileZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get label => 'projects.json';
-	@override String get hint => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。';
 }
 
 // Path: web.serverSettings.fields.antigravityConversationsRoot
@@ -9103,7 +9059,6 @@ extension on TranslationsZh {
 			'web.sessions.spawn.argsLabel' => 'CLI 参数（每行一个）',
 			'web.sessions.spawn.bypassClaude' => '跳过权限提示',
 			'web.sessions.spawn.bypassCodex' => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)',
-			'web.sessions.spawn.bypassGemini' => 'YOLO 模式 (--yolo)',
 			'web.sessions.spawn.bypassAntigravity' => '跳过权限 / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOpencode' => '跳过权限检查 (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOnHint' => '本次会话将以更高的自主权运行。',
@@ -9266,7 +9221,7 @@ extension on TranslationsZh {
 			'web.memoryConfig.sections.profiles' => '注入策略 (Injection profiles)',
 			'web.memoryConfig.sections.costs' => 'Token 成本',
 			'web.memoryConfig.sectionHints.providers' => '已注册的 HTTP endpoint 池 (Ollama / LM Studio / Anthropic / OpenAI / Integration)，所有任务都能引用。',
-			'web.memoryConfig.sectionHints.workers' => '每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Gemini Agent（质量更高，消耗 CLI 配额）。',
+			'web.memoryConfig.sectionHints.workers' => '每个 task 选用 HTTP provider（便宜、本地）或 headless Claude / Antigravity Agent（质量更高，消耗 CLI 配额）。',
 			'web.memoryConfig.sectionHints.rules' => 'Capture 引擎何时触发（每 N 条消息 / 闲置 / 累计 K 字符 / 手动）。规则若没固定 provider，会跟随上面 Capture 任务的 worker 设置。',
 			'web.memoryConfig.sectionHints.profiles' => 'Session 启动时把哪些历史记忆塞进 agent system prompt（按最近、按相关度、混合、关闭）。',
 			'web.memoryConfig.sectionHints.costs' => 'memory_summarizer_calls 重算的累计花费。本地 provider（Ollama / LM Studio / Integration）免费；云 provider 显示真实成本。',
@@ -9286,7 +9241,7 @@ extension on TranslationsZh {
 			'web.memoryWorkers.loading' => '正在加载 worker 配置…',
 			'web.memoryWorkers.errorTitle' => '无法访问该接口。',
 			'web.memoryWorkers.errorDescription' => '/api/v1/memory/workers 路由在 M25 中新增 — opendray 二进制可能需要重启以挂载它们并执行 migration 0029。',
-			'web.memoryWorkers.intro' => 'Memory 子系统的每个 LLM 接入点都可由本地 <1>summarizer</1>（LM Studio / OpenAI 兼容）端点服务，或通过以 <5>--print</5> 模式启动的无头 <3>Claude / Gemini agent</3> 服务。叙事性任务（gitactivity、transcript）从 agent worker 中获益；高频任务（gatekeeper）按设计仍走本地端点。',
+			'web.memoryWorkers.intro' => 'Memory 子系统的每个 LLM 接入点都可由本地 <1>summarizer</1>（LM Studio / OpenAI 兼容）端点服务，或通过以 <5>--print</5> 模式启动的无头 <3>Claude / Antigravity agent</3> 服务。叙事性任务（gitactivity、transcript）从 agent worker 中获益；高频任务（gatekeeper）按设计仍走本地端点。',
 			'web.memoryWorkers.enabledBadge' => '已启用',
 			'web.memoryWorkers.disabledBadge' => '已禁用',
 			'web.memoryWorkers.summarizerOnlyBadge' => '仅 summarizer',
@@ -9301,10 +9256,9 @@ extension on TranslationsZh {
 			'web.memoryWorkers.cliLabel' => 'CLI',
 			'web.memoryWorkers.selectPlaceholder' => '选择',
 			'web.memoryWorkers.cliClaude' => 'Claude',
-			'web.memoryWorkers.cliGemini' => 'Gemini',
 			'web.memoryWorkers.claudeAccountLabel' => 'Claude 账号',
 			'web.memoryWorkers.claudeAccountDefault' => '默认',
-			'web.memoryWorkers.agentWarning' => 'Agent 模式每次调用都会启动一个无头 CLI。延迟从 <1>~1s</1>（summarizer）上升到 <3>~5-15s</3>；成本从 CPU 转移到 Claude/Gemini 配额。',
+			'web.memoryWorkers.agentWarning' => 'Agent 模式每次调用都会启动一个无头 CLI。延迟从 <1>~1s</1>（summarizer）上升到 <3>~5-15s</3>；成本从 CPU 转移到 Claude/Antigravity 配额。',
 			'web.memoryWorkers.enabledCheckbox' => '启用',
 			'web.memoryWorkers.testButton' => '测试',
 			'web.memoryWorkers.saveButton' => '保存',
@@ -9471,10 +9425,10 @@ extension on TranslationsZh {
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Agent 存储的长期事实（用户偏好、项目事实）。无法恢复。',
 			'web.project.reset.cancel' => '取消',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.deleteForever' => '永久删除',
 			'web.project.reset.successToast' => ({required Object summary}) => '重置：已删除 ${summary}',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} 份文档',
 			'web.project.reset.summary.docs_other' => ({required Object count}) => '${count} 份文档',
 			'web.project.reset.summary.journal' => ({required Object count}) => '${count} 条日志',
@@ -9985,10 +9939,10 @@ extension on TranslationsZh {
 			'web.channels.bridge.namePlaceholder' => 'wechat / discord-custom / whatsapp...',
 			'web.channels.bridge.nameHint' => '适配器的人类可读标签。会显示在频道列表中。',
 			'web.channels.bridge.tokenLabel' => '适配器 token',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.regenerateTooltip' => '重新生成',
 			'web.channels.bridge.copyTooltip' => '复制',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.bridge.tokenCopiedToast' => '已复制 token',
 			'web.channels.bridge.tokenHint' => '适配器通过 WS register 帧发送此 token（也可作为 <1>X-Bridge-Token</1> header）。',
 			'web.channels.bridge.capsLabel' => '接受的能力（可选白名单）',
@@ -10147,10 +10101,10 @@ extension on TranslationsZh {
 			'web.plugins.mcp.deleteFailedToast' => '删除失败',
 			'web.plugins.mcp.toggleFailedToast' => '切换失败',
 			'web.plugins.mcp.codexUnsupportedBadge' => 'Codex: 不支持',
-			'web.plugins.mcp.codexUnsupportedTooltip' => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 gemini 仍会使用。',
+			'web.plugins.mcp.codexUnsupportedTooltip' => 'Codex CLI 仅支持 stdio 传输方式。Codex 会话将跳过此服务器；claude 和 antigravity 仍会使用。',
 			'web.plugins.mcp.builtinBadge' => '内置',
 			'web.plugins.mcp.builtinTooltip' => '由 opendray 自身提供——自动附加到每个支持 MCP 的会话。不可编辑或删除。',
-			'web.plugins.mcp.builtinDescription' => 'opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Gemini 会话。',
+			'web.plugins.mcp.builtinDescription' => 'opendray 的共享记忆与知识服务器：memory_search / memory_store、project_goal 与 project_plan 读写、session_log_append、decision_record、doc_read、skill_distill、project_search。自动附加到每个 Claude / Codex / Antigravity 会话。',
 			'web.plugins.mcp.builtinAutoAttach' => '始终启用',
 			'web.plugins.mcp.editor.createTitle' => '新建 MCP 服务器',
 			'web.plugins.mcp.editor.editTitle' => ({required Object id}) => '编辑 MCP: ${id}',
@@ -10499,10 +10453,10 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.hostPlaceholder' => '192.168.1.20',
 			'web.backups.targetEditor.smb.portLabel' => '端口',
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.shareHint' => 'SMB 服务器上的顶层共享名',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetEditor.smb.userLabel' => '用户',
 			'web.backups.targetEditor.smb.passwordLabel' => '密码',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => '路径前缀',
@@ -10578,8 +10532,6 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.claude.desc' => 'Claude 会话记录在磁盘上的位置。',
 			'web.serverSettings.sections.codex.title' => '存储 · Codex',
 			'web.serverSettings.sections.codex.desc' => 'Codex 会话根目录。',
-			'web.serverSettings.sections.gemini.title' => '存储 · Gemini',
-			'web.serverSettings.sections.gemini.desc' => 'Gemini 每项目 tmp 与 projects.json。',
 			'web.serverSettings.sections.antigravity.title' => '存储 · Antigravity',
 			'web.serverSettings.sections.antigravity.desc' => 'Antigravity (agy) 按会话存储的 SQLite 库。',
 			'web.serverSettings.loading' => '正在加载服务器设置…',
@@ -10687,10 +10639,6 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.claudeAccountsDir.hint' => 'opendray 管理的 Claude 账号 ConfigDir 根目录。默认 ~/.claude-accounts。',
 			'web.serverSettings.fields.codexSessionsRoot.label' => '会话根目录',
 			'web.serverSettings.fields.codexSessionsRoot.hint' => '遍历 Codex rollout JSONL 文件的目录。默认 ~/.codex/sessions。',
-			'web.serverSettings.fields.geminiTmpRoot.label' => 'tmp 目录',
-			'web.serverSettings.fields.geminiTmpRoot.hint' => '存放 Gemini 每项目 tmp 文件夹的根目录。默认 ~/.gemini/tmp。',
-			'web.serverSettings.fields.geminiProjectsFile.label' => 'projects.json',
-			'web.serverSettings.fields.geminiProjectsFile.hint' => 'Gemini cwd→短名映射文件的路径。默认 ~/.gemini/projects.json。',
 			'web.serverSettings.fields.antigravityConversationsRoot.label' => '会话目录',
 			'web.serverSettings.fields.antigravityConversationsRoot.hint' => '存放 agy 按会话 .db 文件的根目录。默认 ~/.gemini/antigravity-cli/conversations。',
 			'web.serverSettings.fields.backupLocalDir.label' => '本地备份目录',
@@ -11013,8 +10961,6 @@ extension on TranslationsZh {
 			'web.export.form.memoriesHint' => '跨 CLI 持久化的记忆行（text + scope + metadata）。向量被省略；导入端重嵌入。',
 			'web.export.form.integrations' => '集成',
 			'web.export.form.customTasks' => '自定义任务',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.customTasksHint' => '在 Inspector 的 Tasks 标签里展示的运维自定义任务。',
 			'web.export.form.integrationOptions.none' => '无',
 			'web.export.form.integrationOptions.noneHint' => '完全跳过 integrations 表。',
@@ -11023,6 +10969,8 @@ extension on TranslationsZh {
 			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
 			'web.export.form.confirmWarning' => '输入 <1>I understand</1> 以确认。opendray 当前只存 bcrypt 哈希 — 选择明文也不会导出任何明文（该选项为将来保留明文缓存的版本而预留）。',
+			_ => null,
+		} ?? switch (path) {
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
 			'web.export.form.footnote' => '审计日志与会话记录不在范围内 — 由 /backups（运维 dump）覆盖。',
@@ -11321,7 +11269,7 @@ extension on TranslationsZh {
 			'more.items.channels.title' => '通道',
 			'more.items.channels.subtitle' => '通知目的地',
 			'more.items.providers.title' => '提供商',
-			'more.items.providers.subtitle' => 'Claude / Codex / Gemini CLI 状态',
+			'more.items.providers.subtitle' => 'Claude / Codex / Antigravity CLI 状态',
 			'more.items.mcp.title' => 'MCP',
 			'more.items.mcp.subtitle' => 'Model Context Protocol 服务与密钥',
 			'more.items.skills.title' => '技能',
@@ -11527,8 +11475,6 @@ extension on TranslationsZh {
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.tasks.emptyHint' => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => '已插入：@${path}',
 			'sessions.inspector.notes.myNotes' => '我的笔记',
@@ -11537,6 +11483,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertAtRefShort' => '插入 @引用',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\n想法、待办、为 agent 提供的上下文…',
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => '创建失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
@@ -11586,7 +11534,6 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.argsHelper' => '以空格分隔；留空使用提供商默认值。',
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
-			'sessions.spawnSheet.bypass.labelGemini' => 'YOLO 模式',
 			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
@@ -11824,7 +11771,6 @@ extension on TranslationsZh {
 			'memoryWorkers.agentCliPrint' => 'Agent（CLI --print）',
 			'memoryWorkers.cliLabel' => 'CLI',
 			'memoryWorkers.cliClaude' => 'Claude',
-			'memoryWorkers.cliGemini' => 'Gemini',
 			'memoryWorkers.cliCodex' => 'Codex（codex exec）',
 			'memoryWorkers.cliAntigravity' => 'Antigravity（agy --print）',
 			'memoryWorkers.modelLabel' => '模型',
@@ -11835,13 +11781,13 @@ extension on TranslationsZh {
 			'memoryWorkers.claudeAccountLabel' => 'Claude 账号',
 			'memoryWorkers.claudeAccountDefault' => '默认',
 			'memoryWorkers.test' => '测试',
-			'memoryWorkers.intro' => '每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Gemini agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。',
+			'memoryWorkers.intro' => '每个记忆系统的 LLM 触点都可以独立服务 — 由本地 summarizer 端点（LM Studio / OpenAI 兼容）或在 --print 模式下生成无头 Claude / Antigravity agent 来处理。高质量叙事任务（gitactivity、transcript）适合 agent 工作器；高频任务（gatekeeper）按设计保留在本地端点上。',
 			'memoryWorkers.errorTitle' => '端点不可达',
 			'memoryWorkers.errorDetail' => '/api/v1/memory/workers 路由在 M25 中是新增的 — opendray 二进制可能需要重启以挂载这些路由并运行迁移 0029。',
 			'memoryWorkers.summarizerOnlyBadge' => '仅 summarizer',
 			'memoryWorkers.summarizerProviderLabel' => 'Summarizer 提供商',
 			'memoryWorkers.registryDefault' => '注册表默认',
-			'memoryWorkers.agentWarning' => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Gemini 配额。',
+			'memoryWorkers.agentWarning' => 'Agent 模式每次调用都会生成无头 CLI。延迟约 5-15 秒（相比 summarizer 约 1 秒）；成本从 CPU 转移到你的 Claude / Antigravity 配额。',
 			'memoryWorkers.noCalls24h' => '过去 24 小时没有调用。',
 			'memoryWorkers.testOkSnack' => ({required Object label, required Object duration}) => '${label} OK — ${duration}ms',
 			'memoryWorkers.testFailedReturnedSnack' => ({required Object label, required Object error}) => '${label} 失败：${error}',
@@ -12041,8 +11987,6 @@ extension on TranslationsZh {
 			'backups.health.never' => '从未',
 			'backups.health.tiles.recentFailures' => '近期失败',
 			'backups.health.tiles.verifyFailures' => '校验失败',
-			_ => null,
-		} ?? switch (path) {
 			'backups.health.tiles.overdue' => '逾期',
 			'backups.health.tiles.schedules' => '计划',
 			'backups.failedToLoad' => '加载备份失败',
@@ -12053,6 +11997,8 @@ extension on TranslationsZh {
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
 			'backups.encryption.random256bit' => '256 位随机密钥',
+			_ => null,
+		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
@@ -12555,8 +12501,6 @@ extension on TranslationsZh {
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
 			'dataExport.relative.hoursAgo' => ({required Object n}) => '${n} 小时前',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.status.pending' => '等待',
 			'dataExport.status.running' => '运行中',
 			'dataExport.status.ready' => '就绪',
@@ -12567,6 +12511,8 @@ extension on TranslationsZh {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'memory.status.enabled' => '已启用',
 			'memory.status.disabled' => '已禁用',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
@@ -12710,7 +12656,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.backup' => '备份',
 			'settings.serverSettings.sections.storageClaude' => '存储 · Claude',
 			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
-			'settings.serverSettings.sections.storageGemini' => '存储 · Gemini',
 			'settings.serverSettings.sections.storageAntigravity' => '存储 · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
@@ -12721,7 +12666,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex 会话根目录。',
-			'settings.serverSettings.sectionDescriptions.storageGemini' => '按项目的临时目录 + projects.json 路径。',
 			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'agy 按会话存储的 SQLite 库。',
 			'settings.serverSettings.fields.listenAddress' => '监听地址',
 			'settings.serverSettings.fields.adminUser' => '管理员用户',
@@ -12778,8 +12722,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.httpDimensions' => 'HTTP dimensions',
 			'settings.serverSettings.fields.pgDumpPath' => 'pg_dump 路径',
 			'settings.serverSettings.fields.pgRestorePath' => 'pg_restore 路径',
-			'settings.serverSettings.fields.tmpRoot' => '临时根目录',
-			'settings.serverSettings.fields.projectsJson' => 'projects.json',
 			'settings.serverSettings.fields.conversationsRoot' => '会话目录',
 			'settings.serverSettings.fields.dedupThreshold' => '去重阈值',
 			'settings.serverSettings.fields.dedupHelper' => '写入折叠阈值；0=随嵌入器，负值关闭折叠。',

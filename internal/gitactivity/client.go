@@ -14,7 +14,7 @@ import (
 // prompt + response parser. M25 — replaced the direct HTTP client
 // with a Registry dispatch so the gitactivity touchpoint
 // independently picks between the summarizer HTTP path and a
-// headless Claude/Gemini agent based on the operator's choice in
+// headless Claude/Antigravity agent based on the operator's choice in
 // memory_workers.gitactivity.
 //
 // Why a separate client rather than re-using summarizer.Provider:

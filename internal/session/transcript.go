@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 )
@@ -22,8 +21,8 @@ type Turn struct {
 }
 
 // Transcript returns the latest CLI conversation as ordered turns.
-// Dispatches by provider so each backend (Claude / Codex / Gemini)
-// parses its own JSONL format. Returns ([], nil) for providers
+// Dispatches by provider so each backend (Claude / Codex / Antigravity)
+// parses its own format. Returns ([], nil) for providers
 // without a transcript reader yet — callers should fall back to
 // metadata-only journaling rather than treating it as an error.
 //
@@ -47,8 +46,6 @@ func (m *Manager) Transcript(ctx context.Context, sessionID string, maxBytes int
 		return claudeTranscript(m.claudeHistoryCfg, sess.Cwd, sess.ClaudeSessionID, sess.StartedAt, endedAt, maxBytes), nil
 	case "codex":
 		return codexTranscript(m.codexHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
-	case "gemini":
-		return geminiTranscript(m.geminiHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
 	case "antigravity":
 		return antigravityTranscript(m.antigravityHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
 	default:
@@ -413,112 +410,4 @@ func resolveLatestCodexJSONL(cfg CodexHistoryConfig, cwd string) string {
 		return nil
 	})
 	return best.path
-}
-
-// ── Gemini ────────────────────────────────────────────────────
-
-// geminiTranscript reads Gemini CLI's chats.json (NOT JSONL — it's
-// a single JSON document with a "messages" array). Picks the
-// session that ran in cwd. M22 time-window filter applies to
-// individual messages even after the right session is selected,
-// to defend against chats.json accumulating across spawns.
-func geminiTranscript(cfg GeminiHistoryConfig, cwd string, startedAt, endedAt time.Time, maxBytes int) []Turn {
-	path := resolveGeminiChatsFile(cfg)
-	if path == "" {
-		return nil
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	var doc struct {
-		Sessions []struct {
-			Cwd      string `json:"cwd"`
-			Messages []struct {
-				Role    string    `json:"role"`
-				Content string    `json:"content"`
-				Time    time.Time `json:"timestamp"`
-			} `json:"messages"`
-			Updated time.Time `json:"updated"`
-		} `json:"sessions"`
-	}
-	if err := json.Unmarshal(data, &doc); err != nil {
-		return nil
-	}
-	// Pick the most recent session matching cwd. Gemini uses
-	// "user" / "model" roles — normalise "model" → "assistant".
-	var best *struct {
-		Cwd      string `json:"cwd"`
-		Messages []struct {
-			Role    string    `json:"role"`
-			Content string    `json:"content"`
-			Time    time.Time `json:"timestamp"`
-		} `json:"messages"`
-		Updated time.Time `json:"updated"`
-	}
-	for i := range doc.Sessions {
-		s := &doc.Sessions[i]
-		if s.Cwd != cwd {
-			continue
-		}
-		if best == nil || s.Updated.After(best.Updated) {
-			best = s
-		}
-	}
-	if best == nil {
-		return nil
-	}
-	// Walk messages, normalise role + cap bytes.
-	sort.SliceStable(best.Messages, func(i, j int) bool {
-		return best.Messages[i].Time.Before(best.Messages[j].Time)
-	})
-	var windowStart, windowEnd time.Time
-	if !startedAt.IsZero() {
-		windowStart = startedAt.Add(-30 * time.Second)
-	}
-	if !endedAt.IsZero() {
-		windowEnd = endedAt.Add(30 * time.Second)
-	}
-	var turns []Turn
-	bytesUsed := 0
-	for _, m := range best.Messages {
-		role := strings.ToLower(m.Role)
-		if role == "model" {
-			role = "assistant"
-		}
-		if role != "user" && role != "assistant" {
-			continue
-		}
-		text := strings.TrimSpace(m.Content)
-		if text == "" {
-			continue
-		}
-		if !m.Time.IsZero() {
-			if !windowStart.IsZero() && m.Time.Before(windowStart) {
-				continue
-			}
-			if !windowEnd.IsZero() && m.Time.After(windowEnd) {
-				continue
-			}
-		}
-		bytesUsed += len(text) + len(role) + 4
-		if bytesUsed > maxBytes && len(turns) > 0 {
-			turns = trimTurnsHead(turns, &bytesUsed, maxBytes)
-		}
-		turns = append(turns, Turn{Role: role, Text: text, Ts: m.Time})
-	}
-	return turns
-}
-
-// resolveGeminiChatsFile picks the chats.json path from cfg or
-// from ~/.gemini/chats.json (the Gemini CLI default).
-func resolveGeminiChatsFile(cfg GeminiHistoryConfig) string {
-	if cfg.ProjectsFile != "" {
-		return cfg.ProjectsFile
-	}
-	home := os.Getenv("HOME")
-	if home == "" {
-		return ""
-	}
-	return filepath.Join(home, ".gemini", "chats.json")
 }

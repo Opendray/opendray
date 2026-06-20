@@ -14,22 +14,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// AgentWorker spawns a headless Claude or Gemini CLI in --print
-// mode to perform one LLM judgement / summary call.
+// AgentWorker spawns a headless Claude, Codex, or Antigravity CLI in
+// --print mode to perform one LLM judgement / summary call.
 //
 // Why this exists: the existing SummarizerWorker calls a generic
 // OpenAI-compatible endpoint (typically LM Studio with a 9-13B
 // local model). For high-frequency low-quality work that's fine,
 // but for the narrative summary tasks (gitactivity, transcript)
 // the operator may want frontier-model quality, and they already
-// pay for a Claude / Gemini subscription that opendray manages.
+// pay for a Claude subscription that opendray manages.
 // M25 lets them flip those touchpoints to "use one of my Claude
 // accounts as a one-shot worker" without standing up a separate
 // LLM service.
 //
 // Implementation contract:
 //   - Spawns `claude --print --append-system-prompt <prompt>
-//     --session-id <fresh-uuid> --bare` (or `gemini --print ...`).
+//     --session-id <fresh-uuid> --bare` (or `agy --print ...`).
 //   - Feeds Request.UserInput on stdin.
 //   - Captures stdout until EOF; that's the response Content.
 //   - Process gets killed if Request.Timeout elapses.
@@ -74,7 +74,7 @@ func (w *AgentWorker) Kind() WorkerKind { return WorkerAgent }
 
 func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	switch w.cfg.ProviderID {
-	case "claude", "gemini", "codex", "antigravity":
+	case "claude", "codex", "antigravity":
 	default:
 		return Response{}, ErrAgentUnsupported
 	}
@@ -87,8 +87,8 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	defer cancel()
 
 	// Scratch CWD — a per-call temp dir keeps the spawn isolated
-	// from the host filesystem layout. Claude / Gemini both read
-	// surrounding CLAUDE.md / GEMINI.md when invoked; an empty
+	// from the host filesystem layout. Claude / Antigravity both read
+	// surrounding CLAUDE.md / AGENTS.md when invoked; an empty
 	// scratch dir avoids accidentally pulling in unrelated
 	// project context.
 	scratch, err := os.MkdirTemp("", "opd-memory-worker-*")
@@ -133,11 +133,6 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	// JSON-schema instruction) is folded into stdin ahead of the
 	// user input.
 	input := req.UserInput
-	// Gemini receives the prompt via the --prompt arg (see buildCommand),
-	// not stdin, so leave its stdin empty to avoid duplicating the prompt.
-	if w.cfg.ProviderID == "gemini" {
-		input = ""
-	}
 	// codex and antigravity (agy) have no system-prompt CLI flag, so the
 	// system block (+ JSON-schema instruction) is folded into stdin ahead
 	// of the user input.
@@ -157,7 +152,7 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	}()
 
 	if err := cmd.Wait(); err != nil {
-		// Claude / Gemini CLIs print auth + 4xx errors to stdout
+		// Claude / Antigravity CLIs print auth + 4xx errors to stdout
 		// (not stderr), so include both streams in the error
 		// message — operators can't debug "exit status 1 (stderr: )"
 		// blind.
@@ -258,36 +253,6 @@ func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]st
 		}
 		args = append(args, "-")
 		return args, nil, nil
-	case "gemini":
-		// Gemini's headless flag is -p/--prompt (NOT --print, which is
-		// Claude-only — gemini errors "Unknown argument: print"). The
-		// prompt is passed as the flag value; the system block is read
-		// from GEMINI.md via --include-directories below. Run does not
-		// also pipe the prompt to stdin for gemini (it is here in args).
-		args := []string{
-			"--prompt", req.UserInput,
-			"--session-id", sessionID,
-		}
-		if w.cfg.Model != "" {
-			args = append(args, "--model", w.cfg.Model)
-		}
-		sys := req.SystemPrompt
-		if req.ResponseFormatJSONSchema != "" {
-			sys = sys + "\n\nReturn a single JSON object conforming to this schema:\n```json\n" +
-				req.ResponseFormatJSONSchema + "\n```\nOutput nothing else."
-		}
-		if sys != "" {
-			// Gemini ingests system instructions via GEMINI.md
-			// in workspace. Write a scratch one alongside the
-			// run dir; --include-directories pulls it in.
-			path := filepath.Join(os.TempDir(),
-				"opd-memory-worker-gemini-"+sessionID+".md")
-			if err := os.WriteFile(path, []byte(sys), 0o600); err != nil {
-				return nil, nil, fmt.Errorf("agent worker: write GEMINI.md: %w", err)
-			}
-			args = append(args, "--include-directories", filepath.Dir(path))
-		}
-		return args, nil, nil
 	case "antigravity":
 		// agy --print reads the prompt from stdin and prints the
 		// response to stdout (verified). No system-prompt flag — the
@@ -304,7 +269,7 @@ func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]st
 }
 
 // agentBinary maps a worker provider id to its executable. Identity for
-// claude/gemini/codex; antigravity's CLI is `agy`.
+// claude/codex; antigravity's CLI is `agy`.
 func agentBinary(providerID string) string {
 	if providerID == "antigravity" {
 		return "agy"

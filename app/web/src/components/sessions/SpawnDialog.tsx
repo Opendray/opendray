@@ -43,7 +43,6 @@ const HOME_HINT = '/Users/' // macOS-friendly default; user can edit.
 const BYPASS_FLAGS: Record<string, string[]> = {
   claude: ['--dangerously-skip-permissions'],
   codex: ['--dangerously-bypass-approvals-and-sandbox'],
-  gemini: ['--yolo'],
   antigravity: ['--dangerously-skip-permissions'],
   opencode: ['--dangerously-skip-permissions'],
 }
@@ -54,7 +53,6 @@ const BYPASS_FLAGS: Record<string, string[]> = {
 const BYPASS_LABEL_KEY: Record<string, string> = {
   claude: 'web.sessions.spawn.bypassClaude',
   codex: 'web.sessions.spawn.bypassCodex',
-  gemini: 'web.sessions.spawn.bypassGemini',
   antigravity: 'web.sessions.spawn.bypassAntigravity',
   opencode: 'web.sessions.spawn.bypassOpencode',
 }
@@ -79,8 +77,8 @@ export function SpawnDialog({
   const [cwd, setCwd] = useState(defaultCwd ?? HOME_HINT)
   const [argsText, setArgsText] = useState('')
   // Per-session bypass toggle (Claude --dangerously-skip-permissions,
-  // Codex --ask-for-approval never, Gemini --yolo). Defaults OFF;
-  // operators opt in per spawn. Independent of the provider's own
+  // Codex --ask-for-approval never, Antigravity --dangerously-skip-permissions).
+  // Defaults OFF; operators opt in per spawn. Independent of the provider's own
   // bypass config — additive only.
   const [bypassEnabled, setBypassEnabled] = useState(false)
   const [error, setError] = useState<string | null>(null)

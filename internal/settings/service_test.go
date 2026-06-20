@@ -139,8 +139,7 @@ func TestService_Update_PreservesProvidersSection(t *testing.T) {
 				HistoryRoots: []string{"/custom/claude"},
 				AccountsDir:  "/custom/accounts",
 			},
-			Codex:  config.CodexProviderConfig{SessionsRoot: "/custom/codex"},
-			Gemini: config.GeminiProviderConfig{TmpRoot: "/custom/gem"},
+			Codex: config.CodexProviderConfig{SessionsRoot: "/custom/codex"},
 		},
 	})
 
@@ -164,9 +163,6 @@ func TestService_Update_PreservesProvidersSection(t *testing.T) {
 	}
 	if roundTripped.Providers.Codex.SessionsRoot != "/custom/codex" {
 		t.Errorf("codex root lost on round-trip")
-	}
-	if roundTripped.Providers.Gemini.TmpRoot != "/custom/gem" {
-		t.Errorf("gemini tmp lost on round-trip")
 	}
 }
 

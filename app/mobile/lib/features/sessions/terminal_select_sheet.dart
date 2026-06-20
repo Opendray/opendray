@@ -7,7 +7,7 @@ import 'package:opendray/core/i18n/strings.g.dart';
 //
 // The live terminal is a custom-painted xterm canvas: the OS selection
 // handles don't reliably appear over it, and while a TUI has mouse
-// tracking on (Claude Code / Codex / Gemini all do) a long-press is
+// tracking on (Claude Code / Codex / Antigravity all do) a long-press is
 // forwarded to the program as a mouse event instead of starting a
 // selection. Rendering the buffer into a SelectableText sidesteps both
 // — long-press brings up the system selection handles, so the operator

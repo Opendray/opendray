@@ -51,57 +51,8 @@ func TestInjectAmbientMemory_Codex(t *testing.T) {
 	}
 }
 
-func TestInjectAmbientMemory_Gemini(t *testing.T) {
-	base := t.TempDir()
-	out := &session.PrepareOutput{}
-	if err := injectAmbientMemoryFor("gemini", base, "PROJECT_BANNER", out); err != nil {
-		t.Fatal(err)
-	}
-	geminiMd := filepath.Join(base, "GEMINI.md")
-	body, err := os.ReadFile(geminiMd)
-	if err != nil {
-		t.Fatalf("read GEMINI.md: %v", err)
-	}
-	if !strings.Contains(string(body), "PROJECT_BANNER") {
-		t.Errorf("gemini: GEMINI.md missing banner; got: %s", body)
-	}
-	// Should also add --include-directories=baseDir to args so
-	// gemini picks up GEMINI.md as workspace memory.
-	found := false
-	for i := 0; i+1 < len(out.Args); i++ {
-		if out.Args[i] == "--include-directories" && out.Args[i+1] == base {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("gemini: --include-directories <baseDir> arg missing; got %+v", out.Args)
-	}
-}
-
-func TestInjectAmbientMemory_GeminiIdempotent(t *testing.T) {
-	// If the caller (skills injection) already added
-	// --include-directories baseDir, we should NOT add a duplicate.
-	base := t.TempDir()
-	out := &session.PrepareOutput{
-		Args: []string{"--include-directories", base},
-	}
-	if err := injectAmbientMemoryFor("gemini", base, "BANNER", out); err != nil {
-		t.Fatal(err)
-	}
-	count := 0
-	for _, a := range out.Args {
-		if a == "--include-directories" {
-			count++
-		}
-	}
-	if count != 1 {
-		t.Errorf("expected exactly one --include-directories flag; got %d. args: %+v", count, out.Args)
-	}
-}
-
 func TestInjectAmbientMemory_EmptyTextNoop(t *testing.T) {
-	for _, prov := range []string{"claude", "codex", "gemini", "shell"} {
+	for _, prov := range []string{"claude", "codex", "shell"} {
 		out := &session.PrepareOutput{Env: map[string]string{}}
 		if err := injectAmbientMemoryFor(prov, t.TempDir(), "", out); err != nil {
 			t.Errorf("%s: empty text should not error: %v", prov, err)
@@ -154,19 +105,6 @@ func TestInjectSessionID_ClaudeResume(t *testing.T) {
 	}
 	if len(out.Args) != 2 || out.Args[0] != "--resume" || out.Args[1] != prior {
 		t.Errorf("resume: expected --resume %s, got %+v", prior, out.Args)
-	}
-}
-
-func TestInjectSessionID_Gemini(t *testing.T) {
-	out := &session.PrepareOutput{}
-	if !injectSessionIDFor(context.Background(), "gemini", out) {
-		t.Fatal("expected injection to fire for gemini")
-	}
-	if out.ClaudeSessionID == "" {
-		t.Errorf("gemini: ClaudeSessionID empty after inject")
-	}
-	if len(out.Args) != 2 || out.Args[0] != "--session-id" || out.Args[1] != out.ClaudeSessionID {
-		t.Errorf("gemini: expected --session-id <id> arg pair, got %+v", out.Args)
 	}
 }
 

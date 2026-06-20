@@ -12,7 +12,7 @@ If you're contributing to opendray itself, see [`CONTRIBUTING.md`](../CONTRIBUTI
 An integration is a separate process — your app — that registers with
 opendray and consumes its capabilities:
 
-- Create and drive PTY sessions backed by Claude Code, Codex, Gemini,
+- Create and drive PTY sessions backed by Claude Code, Codex, Antigravity,
   or arbitrary shells
 - Subscribe to event streams (session output, idle, ended, channel
   events, etc.)

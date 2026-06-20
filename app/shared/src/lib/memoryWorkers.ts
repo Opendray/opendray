@@ -1,13 +1,13 @@
 // Client for /api/v1/memory/workers/* — M25 per-task worker
 // configuration + metrics. Operators flip individual memory
 // touchpoints between the summarizer HTTP path (LM Studio /
-// OpenAI-compat) and the agent path (Claude / Gemini `--print`).
+// OpenAI-compat) and the agent path (Claude / Antigravity `--print`).
 
 import { api } from './api'
 
 export type TaskKind = 'gatekeeper' | 'cleaner' | 'gitactivity' | 'transcript'
 export type WorkerKind = 'summarizer' | 'agent'
-export type AgentProviderID = 'claude' | 'gemini' | 'codex' | 'antigravity'
+export type AgentProviderID = 'claude' | 'codex' | 'antigravity'
 
 export interface WorkerConfig {
   task: TaskKind
@@ -18,7 +18,7 @@ export interface WorkerConfig {
   provider_id?: AgentProviderID | ''
   /** When provider_id === 'claude': which multi-account row. */
   account_id?: string
-  /** Agent-CLI model pin (claude --model / gemini --model); empty = CLI default. */
+  /** Agent-CLI model pin (claude --model / antigravity --model); empty = CLI default. */
   model?: string
   enabled: boolean
   updated_at: string
@@ -148,7 +148,7 @@ export interface ModelOption {
   recommended?: boolean
 }
 
-/** Lists selectable models for an agent CLI (claude | gemini). Local
+/** Lists selectable models for an agent CLI (claude | antigravity). Local
  * HTTP providers list models live via the memory probe instead. */
 export async function listAgentModels(
   providerId: AgentProviderID,

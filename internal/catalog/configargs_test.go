@@ -234,29 +234,6 @@ func TestApplyConfigSchema_RealManifests(t *testing.T) {
 		}
 	})
 
-	t.Run("gemini yolo+sandbox+extraArgs", func(t *testing.T) {
-		m := manifests["gemini"]
-		args, _ := applyConfigSchema(m.ConfigSchema, map[string]any{
-			"yolo":      true,
-			"sandbox":   "none",
-			"extraArgs": []any{"--debug"},
-		})
-		want := []string{"--yolo", "-s", "none", "--debug"}
-		if !reflect.DeepEqual(args, want) {
-			t.Errorf("args: got %#v, want %#v", args, want)
-		}
-	})
-
-	t.Run("gemini empty sandbox is dropped", func(t *testing.T) {
-		m := manifests["gemini"]
-		args, _ := applyConfigSchema(m.ConfigSchema, map[string]any{
-			"sandbox": "",
-		})
-		if args != nil {
-			t.Errorf("got %#v, want nil", args)
-		}
-	})
-
 	t.Run("claude command override is not surfaced as an arg", func(t *testing.T) {
 		m := manifests["claude"]
 		args, env := applyConfigSchema(m.ConfigSchema, map[string]any{

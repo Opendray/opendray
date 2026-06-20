@@ -13,12 +13,12 @@ Each section maps to a specific field in the dashboard UI. Copy the block, paste
 
 ### Short bio (160 chars max)
 
-> Self-hosted gateway for AI coding agents (Claude Code, Codex, Gemini, shell) with one local-first memory layer. Apache-2.0. opendray.dev
+> Self-hosted gateway for AI coding agents (Claude Code, Codex, Antigravity, shell) with one local-first memory layer. Apache-2.0. opendray.dev
 
 ### Detailed bio (markdown, profile page)
 
 ```markdown
-**opendray** wraps the AI coding CLIs you already use (Claude Code, Codex, Gemini, plus any shell) and turns them into something you can drive from anywhere. Sessions live on your own infra (NAS, Mac mini, VPS), survive your laptop sleeping, and reattach from a web admin, a Flutter mobile app, or a Telegram / Slack / Discord / Feishu / DingTalk / WeCom message.
+**opendray** wraps the AI coding CLIs you already use (Claude Code, Codex, Antigravity, plus any shell) and turns them into something you can drive from anywhere. Sessions live on your own infra (NAS, Mac mini, VPS), survive your laptop sleeping, and reattach from a web admin, a Flutter mobile app, or a Telegram / Slack / Discord / Feishu / DingTalk / WeCom message.
 
 Built in the open under Apache-2.0. One static Go binary, cosign-signed releases, SPDX SBOM, no telemetry, no cloud account, no subscription.
 
@@ -141,12 +141,12 @@ Most of the org copy carries over. The differences:
 
 ### Short bio (160 chars max)
 
-> I maintain opendray, a self-hosted gateway for AI coding agents (Claude Code, Codex, Gemini, shell) with a local-first memory layer. Apache-2.0.
+> I maintain opendray, a self-hosted gateway for AI coding agents (Claude Code, Codex, Antigravity, shell) with a local-first memory layer. Apache-2.0.
 
 ### Detailed bio (markdown)
 
 ```markdown
-I'm Navid. I build [opendray](https://github.com/Opendray/opendray), an Apache-2.0 self-hosted gateway that wraps the AI coding CLIs you already use (Claude Code, Codex, Gemini, plus shell) and lets you drive sessions from web, mobile, or chat (Telegram / Slack / Discord / Feishu / DingTalk / WeCom).
+I'm Navid. I build [opendray](https://github.com/Opendray/opendray), an Apache-2.0 self-hosted gateway that wraps the AI coding CLIs you already use (Claude Code, Codex, Antigravity, plus shell) and lets you drive sessions from web, mobile, or chat (Telegram / Slack / Discord / Feishu / DingTalk / WeCom).
 
 Sponsorship at this personal account is the fallback when an employer's procurement can only pay individuals, not organizations. If your company can sponsor an organization, please use [the project account](https://github.com/sponsors/Opendray) instead.
 

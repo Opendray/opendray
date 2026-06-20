@@ -357,7 +357,7 @@ migrations **auto-apply on startup** (fail-closed). The rollout is therefore:
 
 This is not a feature; it is what makes opendray **uncopyable**:
 
-- **Cross-CLI brain.** opendray sits *above* Claude Code / Codex / Gemini /
+- **Cross-CLI brain.** opendray sits *above* Claude Code / Codex / Antigravity /
   shell. Its knowledge brain is the **only** one that learns across *all* your
   agents — what Claude learned, Codex applies. No single CLI can structurally
   do this.

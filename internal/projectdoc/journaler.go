@@ -45,7 +45,7 @@ type HistoryEntry struct {
 // TranscriptText (M18) returns the full conversation log
 // (user + assistant turns) formatted as plain markdown. The
 // journaler feeds this to an LLM to produce a real "what did the
-// agent do" summary across Claude / Codex / Gemini. Returns empty
+// agent do" summary across Claude / Codex / Antigravity. Returns empty
 // string for providers without a transcript reader yet — the
 // journaler falls back to metadata-only journaling in that case.
 type SessionLookup interface {
@@ -478,8 +478,8 @@ func providerLabel(id string) string {
 		return "Claude"
 	case "codex":
 		return "Codex"
-	case "gemini":
-		return "Gemini"
+	case "antigravity":
+		return "Antigravity"
 	case "shell":
 		return "Shell"
 	default:

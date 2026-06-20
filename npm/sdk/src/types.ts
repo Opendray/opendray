@@ -52,7 +52,7 @@ export type SessionState =
 
 export interface Session {
   id: string;
-  provider: string; // "claude" | "codex" | "gemini" | "shell" | ...
+  provider: string; // "claude" | "codex" | "antigravity" | "shell" | ...
   state: SessionState;
   cwd?: string;
   cols?: number;

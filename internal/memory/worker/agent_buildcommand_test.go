@@ -13,20 +13,19 @@ func argsContain(ss []string, want string) bool {
 	return false
 }
 
-func TestBuildCommand_GeminiUsesPromptNotPrint(t *testing.T) {
-	w := &AgentWorker{cfg: Config{ProviderID: "gemini"}}
+func TestBuildCommand_AntigravityUsesPrint(t *testing.T) {
+	w := &AgentWorker{cfg: Config{ProviderID: "antigravity"}}
 	args, _, err := w.buildCommand(Request{UserInput: "hello world"}, "sid-1", t.TempDir())
 	if err != nil {
 		t.Fatalf("buildCommand: %v", err)
 	}
-	if argsContain(args, "--print") {
-		t.Errorf("gemini must NOT use --print (Claude-only flag); got %v", args)
+	// agy --print reads the prompt from stdin (folded in by Run), so the
+	// user input is NOT carried as an arg.
+	if !argsContain(args, "--print") {
+		t.Errorf("antigravity must use --print for headless mode; got %v", args)
 	}
-	if !argsContain(args, "--prompt") {
-		t.Errorf("gemini must use --prompt for headless mode; got %v", args)
-	}
-	if !argsContain(args, "hello world") {
-		t.Errorf("gemini --prompt must carry the user input; got %v", args)
+	if argsContain(args, "--prompt") {
+		t.Errorf("antigravity must NOT use --prompt; got %v", args)
 	}
 }
 

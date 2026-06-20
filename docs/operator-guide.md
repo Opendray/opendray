@@ -326,7 +326,7 @@ the keyfile is deleted.
 ## Unified memory subsystem
 
 opendray ships with a cross-CLI project memory layer. Each Claude /
-Codex / Gemini spawn boots with a shared markdown banner derived
+Codex / Antigravity spawn boots with a shared markdown banner derived
 from five sources:
 
 - **Tech stack & structure** (scanner-managed, auto-refreshed)

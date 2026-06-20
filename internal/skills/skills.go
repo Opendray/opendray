@@ -12,7 +12,7 @@
 //
 // At session spawn time the catalog adapter calls Inject to materialise
 // enabled skills under the per-session scratch dir; downstream agents
-// (Claude Code's native Agent Skills, Codex/Gemini via instructions.md)
+// (Claude Code's native Agent Skills, Codex/Antigravity via instructions.md)
 // then discover and lazy-load them.
 package skills
 
@@ -231,7 +231,7 @@ func parseFrontmatter(body string) (name, description string) {
 
 // IndexPrompt returns the Tier 1 system-prompt block listing every
 // available skill. Designed to be passed via `claude --append-system-
-// prompt <text>` (or codex/gemini equivalents) — costs ~30 tokens per
+// prompt <text>` (or codex/antigravity equivalents) — costs ~30 tokens per
 // skill so it's safe to ship in every session. The agent loads full
 // instructions on demand by invoking `opendray skill describe <id>`
 // through its Bash tool.
@@ -350,7 +350,7 @@ func MirrorClaudeConfig(srcDir, destDir string, ourSkills []Skill) error {
 
 // Inject is the variant for fresh per-session config dirs (no existing
 // account state to mirror). Writes opendray skills + a Tier 1 index
-// CLAUDE.md describing what's available — used for codex / gemini and
+// CLAUDE.md describing what's available — used for codex / antigravity and
 // for the no-account claude path. NOT used when an account is bound;
 // MirrorClaudeConfig handles that case.
 func Inject(skills []Skill, destDir string) error {

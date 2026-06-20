@@ -24,7 +24,7 @@ and operator time:
 - **Two parallel memory stores.** A DB-backed pgvector store (shared,
   queryable, cross-CLI) *and* the Claude Code harness's file memory
   (`~/.claude-accounts/<acct>/projects/<cwd>/memory/*.md`). The file
-  store is Claude-only — Codex and Gemini cannot see it — so it
+  store is Claude-only — Codex and Antigravity cannot see it — so it
   actively undermines the system's reason to exist (cross-agent
   continuity). Today it is bridged one-way by a mirror
   (`internal/memory/mirror.go`), which is a sync band-aid, not unity.
@@ -60,7 +60,7 @@ the cleaner foundation.
 ## 2. Design constraints (fixed by the system owner)
 
 1. The memory system serves **all** cloud-agent CLIs (Claude, Codex,
-   Gemini, future ones) equally. Its job: accumulate each agent's
+   Antigravity, future ones) equally. Its job: accumulate each agent's
    contributions in one project brain so that **switching agents
    preserves project familiarity**.
 2. **Scopes collapse to two:** `project` (default; key = cwd) and
@@ -95,7 +95,7 @@ the cleaner foundation.
 ## 3. Target architecture — "one brain"
 
 ```
-   ┌────────────── all cloud agents (Claude / Codex / Gemini / …) ──────────────┐
+   ┌──────────── all cloud agents (Claude / Codex / Antigravity / …) ───────────┐
    │                                                                            │
    │   read at spawn  ◀───────────────┐               ┌──────▶  write any time  │
    └──────────────────────────────────┼───────────────┼────────────────────────┘
@@ -150,7 +150,7 @@ text into one better canonical statement is deferred to the background
 consolidation sweep (Pillar 5), where latency and cost do not matter.
 That sweep uses the pluggable-worker chain (M25): a local OpenAI-compatible
 worker if configured, else the **cloud-agent worker** (`claude --print` /
-`gemini --print`), which every opendray install has. Rationale: merge is
+`agy --print`), which every opendray install has. Rationale: merge is
 an easy LLM task (lighter than the gatekeeper/cleaner/conflict jobs these
 workers already do), so capability is not the concern — keeping it off
 the synchronous write path is.
@@ -186,8 +186,8 @@ the duplicate in the first place".
 At spawn there is no query yet, so injection ranks the project brain by
 `importance × recency` (no similarity term), fills a **token budget**,
 and assembles: goal + plan + top-N facts + recent journal. Delivery
-stays per-provider (`--append-system-prompt` for Claude, `AGENTS.md`
-for Codex, `GEMINI.md` for Gemini) — already provider-agnostic at the
+stays per-provider (`--append-system-prompt` for Claude and Antigravity,
+`AGENTS.md` for Codex) — already provider-agnostic at the
 source (`internal/catalog/adapter.go:363` `Prepare`). Once the agent has
 a task it uses `project_search`/`memory_search` with a real query.
 
@@ -222,10 +222,10 @@ The guaranteed-present backend differs by task type:
 | Task | Best (if present) | Guaranteed-present floor |
 |---|---|---|
 | **Embedding** (vectors) | local dense (`bge-m3` 1024, `nomic-embed-text`, `mxbai-embed-large`, …) served by **any** local runtime, or a cloud OpenAI-compatible embedding endpoint | **BM25** — pure-Go, zero-dependency, already built |
-| **LLM text** (merge, gatekeeper, cleaner, conflict) | local LLM via **any** runtime | **cloud-agent worker** (`claude --print` / `gemini --print`) |
+| **LLM text** (merge, gatekeeper, cleaner, conflict) | local LLM via **any** runtime | **cloud-agent worker** (`claude --print` / `agy --print`) |
 
 Critical distinction: a **cloud-agent CLI cannot produce embeddings** —
-Claude/Gemini `--print` are text generation, not vector models, and
+Claude/Antigravity `--print` are text generation, not vector models, and
 Anthropic exposes no embeddings API. So the embedding floor is **BM25**,
 not the cloud agent. The cloud agent is the floor for *LLM text* tasks
 (Pillar 2 / Pillar 5 merge, gatekeeper, cleaner, conflict) only.
@@ -473,7 +473,7 @@ one-click restore; operator inbox keeps conflicts only.
   has a "**Use this, not your built-in file memory**" section telling
   every agent to route durable facts through `memory_store` and **not**
   write Claude's `# Memory`/`MEMORY.md` (CLI-local → invisible to the
-  next Codex/Gemini), noting opendray already imports existing files and
+  next Codex/Antigravity), noting opendray already imports existing files and
   injects project memory at startup, so the file layer is redundant.
 - **Capture net kept (done).** The per-spawn mirror (`WithMemoryMirror`)
   stays wired, so any file memory an agent still writes during the
@@ -484,7 +484,7 @@ one-click restore; operator inbox keeps conflicts only.
 - **Acceptance:** a Claude session with no local memory files still
   receives full project memory at spawn — already true via the ambient +
   projectdoc DB injectors (unchanged here); agent-authored memories land
-  in DB (Phase 0 scope fix) and are visible to a subsequent Codex/Gemini
+  in DB (Phase 0 scope fix) and are visible to a subsequent Codex/Antigravity
   session in the same cwd.
 - **Validated:** `go build ./...` clean; `go test -race` green across
   memory/catalog/app; new DB-free unit tests for `matchesEncodedCwd`,
@@ -617,7 +617,7 @@ write hot path** (decisions 5–6).
    Background sweep = the **LLM text merge** via the pluggable-worker
    chain (M25): any local OpenAI-compatible runtime if configured,
    otherwise the **cloud-agent worker** (`claude --print` /
-   `gemini --print`), which every install has. The cloud agent is a
+   `agy --print`), which every install has. The cloud agent is a
    valid backend here because merge is an LLM *text* task (unlike
    embedding in decision 1).
 6. **LLM merge placement** — *background only, never the write hot

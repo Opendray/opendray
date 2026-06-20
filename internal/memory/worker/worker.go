@@ -19,7 +19,7 @@
 //
 //	SummarizerWorker — the existing summarizer.Registry path.
 //	                   Cheap, low-latency, local-private.
-//	AgentWorker      — spawns a headless Claude/Gemini agent in
+//	AgentWorker      — spawns a headless Claude/Antigravity agent in
 //	                   `--print` mode for one-shot judgement.
 //	                   Higher quality, higher latency, costs
 //	                   API tokens / agent quota.
@@ -52,7 +52,7 @@ const (
 	// capture engine talked to summarizer.Registry directly so it
 	// could only use HTTP summarizer providers. Routing through
 	// worker.Registry lets operators pick a headless Claude /
-	// Gemini agent for capture (higher quality but slower and
+	// Antigravity agent for capture (higher quality but slower and
 	// more expensive), matching the other 5 touchpoints.
 	TaskCapture TaskKind = "capture"
 	// TaskBlueprint is the Cortex doc-blueprint proposer: classify a
@@ -133,7 +133,7 @@ type Response struct {
 
 	// Provenance metadata for metrics / UI.
 	WorkerKind WorkerKind
-	ProviderID string // "claude" / "gemini" / summarizer-row id
+	ProviderID string // "claude" / "antigravity" / summarizer-row id
 	AccountID  string // empty for summarizer
 }
 
@@ -170,10 +170,10 @@ type Config struct {
 	Task         TaskKind   `json:"task"`
 	Kind         WorkerKind `json:"kind"`
 	SummarizerID string     `json:"summarizer_id"` // when Kind==WorkerSummarizer; "" → registry default
-	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: "claude" | "gemini"
+	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: "claude" | "antigravity"
 	AccountID    string     `json:"account_id"`    // when ProviderID=="claude"; "" → catalog's default account
 	// Model pins the agent CLI's model (`claude --model …` /
-	// `gemini --model …`) so cheap chores run on cheap models
+	// `agy --model …`) so cheap chores run on cheap models
 	// (e.g. haiku) and only the judgement-heavy touchpoints pay for
 	// frontier quality. Empty keeps the CLI default. Ignored for
 	// summarizer-kind workers (their model lives on the provider row).
@@ -197,10 +197,10 @@ func (c Config) Valid() error {
 		return nil
 	case WorkerAgent:
 		switch c.ProviderID {
-		case "claude", "gemini", "codex":
+		case "claude", "codex", "antigravity":
 			return nil
 		default:
-			return errors.New("memory worker: agent provider_id required (claude, gemini, or codex)")
+			return errors.New("memory worker: agent provider_id required (claude, codex, or antigravity)")
 		}
 	default:
 		return errors.New("memory worker: invalid kind")

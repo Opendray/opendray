@@ -44,7 +44,7 @@ does, how to use it day-to-day, and how to verify it's behaving.
 
 ## What it is
 
-Every Claude / Codex / Gemini session you spawn through opendray
+Every Claude / Codex / Antigravity session you spawn through opendray
 boots up reading the same five-layer project context. Sessions
 that end automatically write back a journal entry. Long-term facts
 agents discover go through a quality gate before they're stored,
@@ -126,12 +126,12 @@ Quickest smoke test:
    exactly."
 4. Codex should quote `TEST_2026_05_13` verbatim → the L2 goal
    layer reaches Codex
-5. Spawn a **Gemini** session in the same cwd, repeat → confirms
-   L2 reaches Gemini
+5. Spawn an **Antigravity** session in the same cwd, repeat → confirms
+   L2 reaches Antigravity
 
 If either step fails, check the spawn injection channel:
 - Codex: `cat $CODEX_HOME/AGENTS.md` should contain the banner
-- Gemini: `cat <baseDir>/GEMINI.md` should contain the banner
+- Antigravity: the banner is passed via `--append-system-prompt` at spawn
 
 ## Project isolation guarantees
 
@@ -321,9 +321,9 @@ gitactivity / transcript) can independently be served by either:
 
 - **SummarizerWorker** — the original OpenAI-compat HTTP path
   (LM Studio / OpenAI / ollama). ~1s latency.
-- **AgentWorker** — a headless `claude --print` or `gemini --print`
+- **AgentWorker** — a headless `claude --print` or `agy --print`
   spawn keyed to one of your multi-account OAuth tokens. ~5-15s
-  latency, frontier-model quality, draws from your Claude / Gemini
+  latency, frontier-model quality, draws from your Claude / Antigravity
   subscription quota.
 
 Operators flip per task on the **Memory → Workers** page (web +
@@ -543,7 +543,7 @@ an `onJumpTab(tab: string)` callback that flips it.
 - **Codex session UUID capture**. Codex lacks `--session-id`; a
   future patch could parse `session_meta.id` from the first
   rollout line post-spawn to get the same isolation guarantees
-  Claude/Gemini already have.
+  Claude/Antigravity already have.
 - **Self-healing cleaner**. Extend the cleaner to detect cross-cwd
   file references in journal summaries (hallucination signal)
   using opendray's own LLM provider chain.

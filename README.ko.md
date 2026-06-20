@@ -5,7 +5,7 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Claude Code · Codex · Gemini · shell을 위한 self-hosted 게이트웨이. 이 모두를 가로지르는 단일 local-first 메모리 레이어를 제공합니다.</strong>
+  <strong>Claude Code · Codex · Antigravity · shell을 위한 self-hosted 게이트웨이. 이 모두를 가로지르는 단일 local-first 메모리 레이어를 제공합니다.</strong>
   <br/>
   <sub>세션을 본인 인프라에서 실행하고, 웹·모바일·채팅 어디서든 제어하세요. 통합을 위한 개방형 REST + WebSocket API를 제공합니다.</sub>
 </p>
@@ -39,7 +39,7 @@ AI 코딩 CLI를 매일 사용하면서 마주치는 세 가지 불편함, opend
 
 **노트북이 잠들면 세션도 죽습니다.** SSH로 Claude Code나 Codex를 실행하면 노트북 덮개를 닫거나 Wi-Fi가 끊기는 순간 에이전트가 죽어버립니다. 컨텍스트, 진행 중이던 도구 호출, 막 검토하려던 부분 diff까지. 모두 사라집니다. opendray는 잠들지 않는 호스트(책상 아래 Mac mini, NAS, VPS)에서 에이전트를 실행하고, 웹 관리자 페이지나 Flutter 모바일 앱, 채팅 메시지로 다시 접속할 수 있게 해줍니다. 누가 연결되어 있든 없든 세션은 계속 실행됩니다.
 
-**레이트 리밋에 걸렸다고 하던 일이 중단되어서는 안 됩니다.** 여러 Anthropic 계정(업무용 + 개인용, 패밀리 플랜 + Pro)을 가지고 있다면, opendray는 이들을 하나의 풀로 다룹니다. 계정별 티어, 쿼터, 활성 세션 수를 보여주고, 새 세션을 계정 전반에 분산시키며, 진행 중인 세션을 대화 내용을 잃지 않고 다른 계정으로 옮길 수 있게 해줍니다. 트랜스크립트가 함께 따라옵니다. Codex와 Gemini 계정도 동일한 방식으로 동작합니다.
+**레이트 리밋에 걸렸다고 하던 일이 중단되어서는 안 됩니다.** 여러 Anthropic 계정(업무용 + 개인용, 패밀리 플랜 + Pro)을 가지고 있다면, opendray는 이들을 하나의 풀로 다룹니다. 계정별 티어, 쿼터, 활성 세션 수를 보여주고, 새 세션을 계정 전반에 분산시키며, 진행 중인 세션을 대화 내용을 잃지 않고 다른 계정으로 옮길 수 있게 해줍니다. 트랜스크립트가 함께 따라옵니다. Codex 계정도 동일한 방식으로 동작합니다.
 
 **메모리는 부가 기능이 아니라 일등급 레이어입니다.** 대부분의 AI CLI는 매 세션마다 프로젝트 컨텍스트를 처음부터 다시 인덱싱하면서 반복 검색에 토큰을 소모합니다. opendray는 로컬 우선 벡터 스토어(ONNX / Ollama / LM Studio 임베딩)와 세 가지 도메인 검색(사용자, 프로젝트, 세션)을 기본 제공하며, 레이어 간 드리프트 감지까지 갖추고 있습니다. 모든 바이트는 사용자의 네트워크 안에 머무릅니다.
 
@@ -47,7 +47,7 @@ AI 코딩 CLI를 매일 사용하면서 마주치는 세 가지 불편함, opend
 
 ## opendray란?
 
-**opendray**는 이미 쓰고 있는 AI 코딩 CLI들(Claude Code, Codex, Gemini, 그리고 임의의 shell)을 감싸서, 어디서든 제어 가능한 형태로 바꿔 줍니다. 홈 서버 / NAS / VPS에서 세션을 돌리고, idle 상태가 되면 Telegram으로 알림을 받고, 휴대폰에서 곧바로 다음 prompt를 흘려 넣을 수 있습니다. 모든 흐름이 처음부터 끝까지 본인이 통제하는 self-hosted 게이트웨이를 통해 이뤄집니다.
+**opendray**는 이미 쓰고 있는 AI 코딩 CLI들(Claude Code, Codex, Antigravity, 그리고 임의의 shell)을 감싸서, 어디서든 제어 가능한 형태로 바꿔 줍니다. 홈 서버 / NAS / VPS에서 세션을 돌리고, idle 상태가 되면 Telegram으로 알림을 받고, 휴대폰에서 곧바로 다음 prompt를 흘려 넣을 수 있습니다. 모든 흐름이 처음부터 끝까지 본인이 통제하는 self-hosted 게이트웨이를 통해 이뤄집니다.
 
 - 🛰 **하나의 backend, 세 가지 표면.** 단일 Go 바이너리가 React 웹 어드민과 Flutter 모바일 앱을 함께 서빙하며, 모든 동작은 서드파티 통합을 위해 REST + WebSocket API로도 노출됩니다.
 - 💬 **6개의 양방향 채널, 닫힌 정원 없음.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), 그리고 커스텀 용도를 위한 Bridge 어댑터. 어느 채널에서 답장을 보내든 알맞은 세션으로 다시 라우팅됩니다.
@@ -79,7 +79,7 @@ flowchart LR
     subgraph cli [AI CLIs · spawned via PTY]
         cc[Claude Code]
         co[Codex]
-        ge[Gemini]
+        ag[Antigravity]
         sh[Shell]
     end
 
@@ -93,7 +93,7 @@ flowchart LR
     http --> mem
     sess --> cc
     sess --> co
-    sess --> ge
+    sess --> ag
     sess --> sh
     sess -.-> mem
     mem --> pg
@@ -196,7 +196,7 @@ sudo opendray update --restart   # download latest release, verify SHA, atomic r
 ```
 
 ```sh
-sudo opendray providers update   # bump installed AI CLIs (claude / codex / gemini) to npm-latest
+sudo opendray providers update   # bump installed AI CLIs (claude / codex / antigravity) to npm-latest
 ```
 
 ```sh

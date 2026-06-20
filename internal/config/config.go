@@ -34,7 +34,7 @@ type Config struct {
 }
 
 // ProvidersConfig groups the on-disk locations where each external
-// CLI tool (Claude, Codex, Gemini) keeps its data. opendray reads
+// CLI tool (Claude, Codex, Antigravity) keeps its data. opendray reads
 // these to build the per-session History panel and to pick sane
 // defaults when creating new accounts.
 //
@@ -251,7 +251,6 @@ type MemoryGatekeeperConfig struct {
 type ProvidersConfig struct {
 	Claude      ClaudeProviderConfig      `toml:"claude" json:"claude"`
 	Codex       CodexProviderConfig       `toml:"codex" json:"codex"`
-	Gemini      GeminiProviderConfig      `toml:"gemini" json:"gemini"`
 	Antigravity AntigravityProviderConfig `toml:"antigravity" json:"antigravity"`
 }
 
@@ -308,15 +307,6 @@ func (c ClaudeProviderConfig) WatcherIsEnabled() bool {
 // rollouts directory. Default: ~/.codex/sessions.
 type CodexProviderConfig struct {
 	SessionsRoot string `toml:"sessions_root" json:"sessions_root"`
-}
-
-// GeminiProviderConfig points at the Google Gemini CLI's per-project
-// tmp directory and the projects.json mapping file.
-//
-// Defaults: ~/.gemini/tmp and ~/.gemini/projects.json.
-type GeminiProviderConfig struct {
-	TmpRoot      string `toml:"tmp_root" json:"tmp_root"`
-	ProjectsFile string `toml:"projects_file" json:"projects_file"`
 }
 
 // AntigravityProviderConfig points at the Antigravity (agy) CLI's

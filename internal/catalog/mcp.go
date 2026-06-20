@@ -60,11 +60,10 @@ func parseMCPServersJSON(raw string) []MCPServer {
 // returns the extra CLI args / env required to make the provider
 // pick them up. Provider IDs without a renderer return empty.
 //
-// cwd is the session's working directory. Only gemini needs it: the
-// Gemini CLI ignores GEMINI_CONFIG_DIR / GEMINI_CLI_CONFIG_DIR (verified
-// against gemini-cli 0.46 — servers rendered into a scratch config dir
-// never show up in `gemini mcp list`), so the only injection surface is
-// the workspace settings file at <cwd>/.gemini/settings.json.
+// cwd is the session's working directory. Only antigravity needs it: agy
+// reuses gemini-cli's config layout and ignores a scratch config dir, so
+// the only injection surface is the workspace settings file at
+// <cwd>/.gemini/settings.json.
 func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, map[string]string, error) {
 	if len(servers) == 0 {
 		return nil, nil, nil
@@ -74,14 +73,13 @@ func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, 
 		return renderClaudeMCP(baseDir, servers)
 	case "codex":
 		return renderCodexMCP(baseDir, servers)
-	case "gemini", "antigravity":
-		// Antigravity (agy) is gemini-cli's successor: verified live that
-		// it reads the SAME workspace <cwd>/.gemini/settings.json
-		// mcpServers map gemini does (it starts servers lazily, on first
-		// tool need — a fake server + a non-forcing prompt won't trigger
-		// the spawn, which is why an earlier probe looked negative). So
-		// the identical non-destructive merge attaches opendray-memory
-		// per-session, never globally.
+	case "antigravity":
+		// Antigravity (agy) is gemini-cli's successor and reads the
+		// workspace <cwd>/.gemini/settings.json mcpServers map (verified
+		// live; it starts servers lazily, on first tool need — a fake
+		// server + a non-forcing prompt won't trigger the spawn, which is
+		// why an earlier probe looked negative). The non-destructive merge
+		// attaches opendray-memory per-session, never globally.
 		return renderGeminiMCP(cwd, servers)
 	case "opencode":
 		// OpenCode reads MCP from its JSON config's `mcp` block; we merge
@@ -127,16 +125,11 @@ func renderClaudeMCP(baseDir string, servers []MCPServer) ([]string, map[string]
 const geminiManagedFile = ".opendray-managed.json"
 
 // renderGeminiMCP merges the session's MCP servers into
-// <cwd>/.gemini/settings.json — the only config surface the Gemini CLI
-// honours besides the user-level ~/.gemini/settings.json (which holds
-// auth + personal config and must not be clobbered). Merge is
-// non-destructive: existing user keys and user mcpServers entries are
-// preserved verbatim.
-//
-// Note: gemini's folder-trust feature disables ALL MCP servers (and
-// workspace settings) in untrusted folders. We can't force trust from
-// outside without editing the user's trust store, so the catalog
-// adapter surfaces a spawn-time hint instead (see geminiFolderUntrusted).
+// <cwd>/.gemini/settings.json — the workspace config surface Antigravity
+// (agy) honours (it reuses gemini-cli's settings layout) besides the
+// user-level ~/.gemini/settings.json (which holds auth + personal config
+// and must not be clobbered). Merge is non-destructive: existing user
+// keys and user mcpServers entries are preserved verbatim.
 func renderGeminiMCP(cwd string, servers []MCPServer) ([]string, map[string]string, error) {
 	if strings.TrimSpace(cwd) == "" {
 		return nil, nil, nil
@@ -159,7 +152,7 @@ func renderGeminiMCP(cwd string, servers []MCPServer) ([]string, map[string]stri
 // <cwd>/.gemini/settings.json. An empty desired map removes every
 // previously managed entry (server disabled / removed from the registry)
 // and is a no-op when nothing was ever managed — so calling this on
-// every gemini spawn keeps the workspace file converged with the
+// every agy spawn keeps the workspace file converged with the
 // registry without churning untouched projects.
 func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error {
 	dir := filepath.Join(cwd, ".gemini")
@@ -169,7 +162,7 @@ func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error
 		return nil
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("mkdir gemini workspace dir: %w", err)
+		return fmt.Errorf("mkdir agy workspace dir: %w", err)
 	}
 
 	settingsPath := filepath.Join(dir, "settings.json")
@@ -180,7 +173,7 @@ func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error
 			return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", settingsPath, err)
 		}
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("read gemini settings: %w", err)
+		return fmt.Errorf("read agy settings: %w", err)
 	}
 
 	mcpServers, _ := settings["mcpServers"].(map[string]any)
@@ -208,13 +201,13 @@ func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error
 
 	data, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
-		return fmt.Errorf("marshal gemini settings: %w", err)
+		return fmt.Errorf("marshal agy settings: %w", err)
 	}
 	// 0600 on create: managed entries may embed resolved credentials
 	// (e.g. the opendray-memory integration key). WriteFile keeps the
 	// existing mode when the user's file already exists.
 	if err := os.WriteFile(settingsPath, append(data, '\n'), 0o600); err != nil {
-		return fmt.Errorf("write gemini settings: %w", err)
+		return fmt.Errorf("write agy settings: %w", err)
 	}
 
 	if len(managed) == 0 {
@@ -222,10 +215,10 @@ func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error
 	} else {
 		body, err := json.MarshalIndent(managed, "", "  ")
 		if err != nil {
-			return fmt.Errorf("marshal gemini managed list: %w", err)
+			return fmt.Errorf("marshal agy managed list: %w", err)
 		}
 		if err := os.WriteFile(managedPath, append(body, '\n'), 0o600); err != nil {
-			return fmt.Errorf("write gemini managed list: %w", err)
+			return fmt.Errorf("write agy managed list: %w", err)
 		}
 	}
 	writeGeminiGitignore(dir)
@@ -262,71 +255,6 @@ func writeGeminiGitignore(dir string) {
 		geminiManagedFile + "\n" +
 		".gitignore\n"
 	_ = os.WriteFile(path, []byte(content), 0o644)
-}
-
-// geminiFolderUntrusted reports whether gemini-cli's folder-trust
-// feature would treat cwd as untrusted — in which case gemini disables
-// ALL MCP servers and ignores workspace settings for the session
-// ("MCP servers are configured but disabled because this folder is
-// untrusted"). Trust can't be granted programmatically without editing
-// the user's trust store, so callers surface a hint instead.
-//
-// Mirrors gemini-cli 0.46 behaviour:
-//   - security.folderTrust.enabled in ~/.gemini/settings.json defaults
-//     to TRUE; explicitly false → every folder is trusted.
-//   - ~/.gemini/trustedFolders.json maps path → TRUST_FOLDER (trusts the
-//     folder + everything below) / TRUST_PARENT (trusts the folder's
-//     parent subtree) / DO_NOT_TRUST. Longest matching rule wins.
-func geminiFolderUntrusted(cwd string) bool {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return false
-	}
-	return geminiFolderUntrustedIn(filepath.Join(home, ".gemini"), cwd)
-}
-
-// geminiFolderUntrustedIn is the testable core of geminiFolderUntrusted:
-// configDir is the user-level gemini config dir (normally ~/.gemini).
-func geminiFolderUntrustedIn(configDir, cwd string) bool {
-	if cwd == "" {
-		return false
-	}
-	// Feature toggle: explicitly disabled → all folders trusted.
-	if data, err := os.ReadFile(filepath.Join(configDir, "settings.json")); err == nil {
-		var settings struct {
-			Security struct {
-				FolderTrust struct {
-					Enabled *bool `json:"enabled"`
-				} `json:"folderTrust"`
-			} `json:"security"`
-		}
-		if json.Unmarshal(data, &settings) == nil &&
-			settings.Security.FolderTrust.Enabled != nil &&
-			!*settings.Security.FolderTrust.Enabled {
-			return false
-		}
-	}
-
-	rules := map[string]string{}
-	if data, err := os.ReadFile(filepath.Join(configDir, "trustedFolders.json")); err == nil {
-		_ = json.Unmarshal(data, &rules)
-	}
-	cwd = filepath.Clean(cwd)
-	bestLen, trusted := -1, false
-	for rulePath, level := range rules {
-		effective := filepath.Clean(rulePath)
-		if level == "TRUST_PARENT" {
-			effective = filepath.Dir(effective)
-		}
-		if cwd != effective && !strings.HasPrefix(cwd, effective+string(filepath.Separator)) {
-			continue
-		}
-		if len(effective) > bestLen {
-			bestLen = len(effective)
-			trusted = level == "TRUST_FOLDER" || level == "TRUST_PARENT"
-		}
-	}
-	return !trusted
 }
 
 func stdioMCPServerSpec(s MCPServer) map[string]any {

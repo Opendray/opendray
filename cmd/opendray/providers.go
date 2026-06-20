@@ -34,7 +34,7 @@ type providerSpec struct {
 // npm-distributed CLIs live here (this command npm-updates them).
 // Binary-distributed CLIs (antigravity `agy`, xAI `grok`) self-update
 // via their own installers and are intentionally absent. Gemini was
-// retired in favour of antigravity, so it is no longer offered.
+// removed in favour of antigravity, so it is no longer offered.
 var providerCatalog = []providerSpec{
 	{Bin: "claude", NpmPkg: "@anthropic-ai/claude-code", Display: "Claude Code"},
 	{Bin: "codex", NpmPkg: "@openai/codex", Display: "Codex CLI"},

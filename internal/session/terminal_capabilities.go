@@ -21,7 +21,7 @@ import "bytes"
 //     both would still leave any future client unfixed; the PTY
 //     boundary is a single chokepoint.
 //   - These responses arrive as fast as the emulator can write
-//     them — Gemini reliably enters a broken state because of one
+//     them — some Ink-based CLIs reliably enter a broken state because of one
 //     extra burst of bytes at startup. Filtering at the Go layer
 //     short-circuits the problem regardless of timing.
 //

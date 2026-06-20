@@ -71,7 +71,7 @@ const List<ScopeInfo> kScopeInfo = [
   ScopeInfo(
     'provider:read',
     'Read providers',
-    'List installed agent providers (claude, codex, gemini, shell) and their catalog metadata.',
+    'List installed agent providers (claude, codex, antigravity, shell) and their catalog metadata.',
     ScopeGroup.misc,
   ),
   ScopeInfo(

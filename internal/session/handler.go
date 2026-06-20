@@ -537,7 +537,7 @@ func (h *Handlers) upload(w http.ResponseWriter, r *http.Request) {
 
 // normalizeUploadExt extracts a safe file extension from the
 // client-supplied filename. We accept a small allowlist of image
-// types Claude / Codex / Gemini are known to read; anything else
+// types Claude / Codex are known to read; anything else
 // becomes ".bin" so the file lives somewhere predictable but the
 // CLI won't accidentally try to render it as JPEG.
 func normalizeUploadExt(filename string) string {
@@ -554,7 +554,7 @@ func normalizeUploadExt(filename string) string {
 // (default 200, max 1000) of the user's past prompts in this project,
 // pulled from Claude's JSONL transcripts under ~/.claude/projects.
 //
-// Sessions whose provider isn't Claude (codex/gemini/shell) get
+// Sessions whose provider isn't Claude (codex/shell) get
 // {entries: [], unsupported_provider: true} so the UI can render the
 // right empty state without a separate /providers lookup.
 func (h *Handlers) history(w http.ResponseWriter, r *http.Request) {

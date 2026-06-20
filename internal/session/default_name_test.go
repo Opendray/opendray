@@ -10,10 +10,10 @@ func TestDefaultSessionName(t *testing.T) {
 		want     string
 	}{
 		{"cwd basename", "claude", "/home/navid/projects/opendray", "opendray"},
-		{"trailing slash", "gemini", "/home/navid/projects/opendray/", "opendray"},
+		{"trailing slash", "antigravity", "/home/navid/projects/opendray/", "opendray"},
 		{"root falls back to provider", "claude", "/", "claude"},
 		{"empty falls back to provider", "codex", "", "codex"},
-		{"dot falls back to provider", "gemini", ".", "gemini"},
+		{"dot falls back to provider", "antigravity", ".", "antigravity"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

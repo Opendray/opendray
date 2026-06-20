@@ -20,7 +20,7 @@ const _claudeProviderId = 'claude';
 // toggle below is purely additive — when OFF we send no extra
 // args, when ON we append the flag(s) the user picked.
 //
-// claude/gemini bool flags are idempotent so duplicates are safe.
+// claude/antigravity bool flags are idempotent so duplicates are safe.
 // codex requires its true "skip everything" switch
 // (--dangerously-bypass-approvals-and-sandbox) — --ask-for-approval=never
 // only auto-approves shell exec, not MCP tool calls, and clap rejects
@@ -30,7 +30,6 @@ const _claudeProviderId = 'claude';
 const Map<String, List<String>> _bypassFlagsByProvider = {
   'claude': ['--dangerously-skip-permissions'],
   'codex': ['--dangerously-bypass-approvals-and-sandbox'],
-  'gemini': ['--yolo'],
   'antigravity': ['--dangerously-skip-permissions'],
   'opencode': ['--dangerously-skip-permissions'],
 };
@@ -42,7 +41,6 @@ String? _bypassLabelFor(String providerId) {
   return switch (providerId) {
     'claude' => t.sessions.spawnSheet.bypass.labelClaude,
     'codex' => t.sessions.spawnSheet.bypass.labelCodex,
-    'gemini' => t.sessions.spawnSheet.bypass.labelGemini,
     'antigravity' => t.sessions.spawnSheet.bypass.labelAntigravity,
     'opencode' => t.sessions.spawnSheet.bypass.labelOpencode,
     _ => null,

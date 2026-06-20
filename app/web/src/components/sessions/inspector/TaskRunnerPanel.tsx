@@ -465,7 +465,7 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
   // Tasks always run in a *new* shell session so the command is
   // executed by an actual shell (zsh/bash) and not typed into the
   // current session's prompt — which would just stuff text into
-  // claude/codex/gemini's input box. The new session inherits the
+  // claude/codex/antigravity's input box. The new session inherits the
   // current cwd; the user is auto-switched to its tab.
   const runner_ = useMutation({
     mutationFn: async (task: DiscoveredTask) => {

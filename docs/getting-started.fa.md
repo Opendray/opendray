@@ -15,7 +15,7 @@
 
 | ابزار | چرا | توضیح |
 |---|---|---|
-| حداقل یکی از موارد: Claude Code / Codex CLI / Gemini CLI | opendray یک «بسته‌کننده» است، نه مدل — آن‌ها یک CLI را روی میزبان شما اجرا می‌کند | گام ۱ پایین‌تر |
+| حداقل یکی از موارد: Claude Code / Codex CLI / Antigravity CLI | opendray یک «بسته‌کننده» است، نه مدل — آن‌ها یک CLI را روی میزبان شما اجرا می‌کند | گام ۱ پایین‌تر |
 | PostgreSQL 15 / 16 / 17 + `pgvector` extension | نگهداری وضعیت، جلسات، و بردارهای حافظه | گام ۲ پایین‌تر |
 | `go` 1.25+ و `pnpm` 10+ — تنها در صورتی که از سورس بسازید | اگر باینری انتشار را دانلود می‌کنید، لازم نیست | [صفحه انتشار ها](https://github.com/Opendray/opendray/releases) |
 | یک پورت شبکه قابل دسترس (پیش‌فرض `:8770`) برای مدیریت وب | رابط کاربری + API + WebSocketها | در صورت استفاده از پروکسی معکوس، به `127.0.0.1` محدود کنید |
@@ -44,17 +44,18 @@ claude login        # احراز هویت از طریق مرورگر
 codex --version     # بررسی سالم بودن
 ```
 
-### Gemini CLI (Google)
+### Antigravity CLI (agy)
 
 ```sh
-npm install -g @google/gemini-cli
-gemini auth login
+# Antigravity CLI را نصب کنید؛ چیزی که نصب می‌کنید باید `agy` را در PATH قرار دهد.
+# (Antigravity جایگزین Gemini CLI متوقف‌شده است.)
+agy --version       # بررسی سالم بودن
 ```
 
 ### بررسی اینکه حداقل یکی قابل دسترس است
 
 ```sh
-which claude codex gemini      # حداقل باید یک خط نتیجه بدهد
+which claude codex agy      # حداقل باید یک خط نتیجه بدهد
 ```
 
 > می‌توانید opendray را با تنها یک CLI نصب‌شده اجرا کنید و بعداً بقیه را اضافه کنید. فهرست ارائه‌دهنده‌ها پویا است — opendray در زمان اجرا باینری را پروب می‌کند و موارد گمشده در پنل Sessions به‌عنوان «executable file not found in $PATH» نمایش داده می‌شوند.
@@ -114,7 +115,7 @@ PGPASSWORD='<password>' psql -h <pg-host> -U opendray_user -d opendray -c "SELEC
 
 ## گام ۳ — انتخاب مسیر استقرار و نصب opendray
 
-پرسش تصمیم‌گیرنده: آیا برای قابلیت «spawn session» آماده می‌شوید (کنترل Claude / Codex / Gemini از طریق صفحهٔ Sessions وب)؟
+پرسش تصمیم‌گیرنده: آیا برای قابلیت «spawn session» آماده می‌شوید (کنترل Claude / Codex / Antigravity از طریق صفحهٔ Sessions وب)؟
 
 ### اگر پاسخ بله است — مسیر «Full» لازم دارید
 

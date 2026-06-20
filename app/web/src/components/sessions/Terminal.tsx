@@ -110,7 +110,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 
   // Upload an image and paste the resolved server path back into
   // the PTY so the CLI can attach it. Path-only — never the bytes —
-  // because Claude / Codex / Gemini all consume images via filename
+  // because Claude / Codex / Antigravity all consume images via filename
   // references, not stdin streams.
   const uploadFile = useCallback(
     async (file: File): Promise<void> => {
@@ -222,7 +222,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
 
     // Touch-scroll forwarding. A phone has no mouse wheel, and a
     // full-screen TUI that has grabbed the mouse (Claude Code / Codex /
-    // Gemini all enable mouse tracking, so modes.mouseTrackingMode is
+    // Antigravity all enable mouse tracking, so modes.mouseTrackingMode is
     // not 'none') runs in the alternate screen — which has no xterm
     // scrollback to scroll, AND xterm doesn't translate a finger swipe
     // into the wheel events the app is waiting for. The conversation is

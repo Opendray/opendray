@@ -3,7 +3,7 @@
 //
 // Source mix:
 //   - simple-icons npm pkg: official monochrome SVG paths + brand
-//     hex colour for everything that ships there (Claude, Gemini,
+//     hex colour for everything that ships there (Claude,
 //     Telegram, Discord, WeChat).
 //   - inline path map: for brands simple-icons does not carry
 //     (OpenAI, Slack, Feishu/Lark, DingTalk, WeCom). Paths are
@@ -18,7 +18,6 @@
 
 import {
 	siClaude,
-	siGooglegemini,
 	siTelegram,
 	siDiscord,
 	siWechat,
@@ -33,11 +32,6 @@ type IconData = {
 
 const SIMPLE: Record<string, IconData> = {
 	claude: { title: siClaude.title, hex: siClaude.hex, path: siClaude.path },
-	gemini: {
-		title: siGooglegemini.title,
-		hex: siGooglegemini.hex,
-		path: siGooglegemini.path,
-	},
 	telegram: { title: siTelegram.title, hex: siTelegram.hex, path: siTelegram.path },
 	discord: { title: siDiscord.title, hex: siDiscord.hex, path: siDiscord.path },
 	wechat: { title: siWechat.title, hex: siWechat.hex, path: siWechat.path },
@@ -140,7 +134,6 @@ export interface BrandIconProps {
 // inline paths are the abbreviated-by-hand fallbacks.
 const CURATED = new Set([
 	'claude',
-	'gemini',
 	'antigravity',
 	'opencode',
 	'openai',
@@ -154,7 +147,7 @@ const CURATED = new Set([
 // Curated SVGs that ship as monochrome black (#000000). On the
 // admin's dark theme these need `invert` so the glyph reads against
 // the popover surface. Multi-colour curated SVGs (claude orange,
-// gemini gem, slack 4-colour) carry their own ink and are excluded.
+// slack 4-colour) carry their own ink and are excluded.
 const CURATED_MONOCHROME_DARK_INVERT = new Set([
 	'opencode',
 	'openai',

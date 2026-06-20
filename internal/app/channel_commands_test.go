@@ -116,7 +116,7 @@ func TestListSessionsCardHandler_LiveFirstThenTerminated(t *testing.T) {
 	sessions := []session.Session{
 		{ID: "ses_old_ended", ProviderID: "claude", State: session.StateEnded,
 			StartedAt: now.Add(-2 * time.Hour), EndedAt: &end},
-		{ID: "ses_fresh_idle", ProviderID: "gemini", State: session.StateIdle,
+		{ID: "ses_fresh_idle", ProviderID: "antigravity", State: session.StateIdle,
 			StartedAt: now.Add(-5 * time.Minute)},
 		{ID: "ses_newest_running", ProviderID: "claude", State: session.StateRunning,
 			StartedAt: now.Add(-30 * time.Second)},
@@ -151,7 +151,7 @@ func TestListSessionsCardHandler_LeadsWithName(t *testing.T) {
 	sessions := []session.Session{
 		{ID: "ses_named01", Name: "deploy-bot", ProviderID: "claude",
 			State: session.StateIdle, StartedAt: now.Add(-time.Minute)},
-		{ID: "ses_unnamed1", ProviderID: "gemini",
+		{ID: "ses_unnamed1", ProviderID: "antigravity",
 			State: session.StateIdle, StartedAt: now.Add(-2 * time.Minute)},
 	}
 	h := listSessionsCardHandler(&fakeSessionOps{sessions: sessions})
@@ -211,7 +211,7 @@ func TestListSessionsCardHandler_ButtonsCarryFullIdAndCorrectVerb(t *testing.T) 
 	sessions := []session.Session{
 		{ID: "ses_running1", ProviderID: "claude", State: session.StateRunning,
 			StartedAt: now.Add(-1 * time.Minute)},
-		{ID: "ses_idle1", ProviderID: "gemini", State: session.StateIdle,
+		{ID: "ses_idle1", ProviderID: "antigravity", State: session.StateIdle,
 			StartedAt: now.Add(-2 * time.Minute)},
 		{ID: "ses_ended1", ProviderID: "claude", State: session.StateEnded,
 			StartedAt: now.Add(-1 * time.Hour), EndedAt: &end},
@@ -465,7 +465,7 @@ func TestSelectSessionHandler(t *testing.T) {
 	ch := &fakeChannel{id: "ch_test"}
 	mgr := &fakeSessionOps{sessions: []session.Session{
 		{ID: "ses_live1", Name: "deploy", ProviderID: "claude", State: session.StateRunning},
-		{ID: "ses_dead1", ProviderID: "gemini", State: session.StateEnded},
+		{ID: "ses_dead1", ProviderID: "antigravity", State: session.StateEnded},
 	}}
 	h := selectSessionHandler(mgr)
 	mk := func(args ...string) channel.CommandContext {
@@ -515,7 +515,7 @@ func TestPeekSessionHandler(t *testing.T) {
 	mgr := &fakeSessionOps{
 		sessions: []session.Session{
 			{ID: "ses_live1", Name: "deploy", ProviderID: "claude", State: session.StateRunning},
-			{ID: "ses_dead1", ProviderID: "gemini", State: session.StateEnded},
+			{ID: "ses_dead1", ProviderID: "antigravity", State: session.StateEnded},
 		},
 		snippet:    map[string]string{"ses_live1": "Build passed ✓"},
 		transcript: map[string]string{"ses_dead1": "USER: ship it\nASSISTANT: shipped"},

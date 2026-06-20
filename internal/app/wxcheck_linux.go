@@ -6,9 +6,9 @@ import "syscall"
 
 // canMapExecutable reports whether the process can flip a freshly-written
 // (writable) page to executable — the operation V8/Node's JIT performs at
-// runtime. codex and gemini are V8-based and crash with a fatal
+// runtime. codex and antigravity are V8-based and crash with a fatal
 // SetPermissions error the moment this is blocked; Claude survives via an
-// interpreter-only fallback, which is why "codex/gemini die, Claude works"
+// interpreter-only fallback, which is why "codex/antigravity die, Claude works"
 // is the tell-tale signature.
 //
 // Two things break it, both inherited by the CLIs we spawn:
