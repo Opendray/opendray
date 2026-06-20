@@ -102,6 +102,12 @@ func (c *Catalog) List(ctx context.Context) ([]Provider, error) {
 		if err != nil {
 			return nil, err
 		}
+		// Hidden providers stay resolvable via Get/Resolve (so sessions
+		// already pinned to them keep spawning) but are kept off every
+		// UI list + the wizard.
+		if p.Manifest.Hidden {
+			continue
+		}
 		out = append(out, p)
 	}
 	return out, nil

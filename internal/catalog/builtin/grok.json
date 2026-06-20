@@ -1,0 +1,68 @@
+{
+  "$schema": "https://opendray.dev/schemas/manifest-v2.json",
+  "id": "grok",
+  "displayName": "Grok",
+  "displayName_zh": "Grok",
+  "description": "xAI Grok Build CLI (grok) — agentic coding TUI driven by Grok models, with subagents, sandbox, and native MCP",
+  "description_zh": "xAI Grok Build CLI（grok）—— 由 Grok 模型驱动的智能编码 TUI，支持子智能体、沙盒与原生 MCP",
+  "icon": "🦾",
+  "version": "1.0.0",
+  "kind": "cli",
+  "executable": "grok",
+  "npmPackage": "",
+  "modelFlag": "--model",
+  "knownModels": [
+    "grok-build",
+    "grok-composer-2.5-fast"
+  ],
+  "capabilities": {
+    "supportsResume": true,
+    "supportsStream": true,
+    "supportsImages": false,
+    "supportsMcp": false
+  },
+  "configSchema": [
+    {
+      "key": "authNote",
+      "label": "Authentication",
+      "label_zh": "认证",
+      "type": "note",
+      "group": "auth",
+      "description": "Grok signs in with your xAI account. Install the CLI on the gateway host with `curl -fsSL https://x.ai/cli/install.sh | bash`, then run `grok login` once as the opendray user (or set GROK_DEPLOYMENT_KEY). Credentials are written to ~/.grok/auth.json, which the daemon reads at spawn time. No API key is set here.",
+      "description_zh": "Grok 使用你的 xAI 账号登录。在网关主机上用 `curl -fsSL https://x.ai/cli/install.sh | bash` 安装 CLI，然后以 opendray 用户身份运行一次 `grok login`（或设置 GROK_DEPLOYMENT_KEY）。凭据写入 ~/.grok/auth.json，守护进程在启动会话时读取。此处无需填写 API 密钥。"
+    },
+    {
+      "key": "bypassPermissions",
+      "label": "Bypass Permissions",
+      "label_zh": "跳过权限检查",
+      "type": "boolean",
+      "group": "runtime",
+      "default": false,
+      "cliFlag": "--always-approve",
+      "description": "Auto-approve all tool executions — full autonomous mode",
+      "description_zh": "自动批准所有工具执行 —— 完全自主模式"
+    },
+    {
+      "key": "command",
+      "label": "Command Path",
+      "label_zh": "命令路径",
+      "type": "string",
+      "group": "advanced",
+      "placeholder": "grok"
+    },
+    {
+      "key": "extraArgs",
+      "label": "Extra CLI Args",
+      "label_zh": "额外 CLI 参数",
+      "type": "args",
+      "group": "advanced"
+    }
+  ],
+  "ui": {
+    "activityBar": {
+      "id": "grok",
+      "icon": "🦾",
+      "title": "Grok"
+    }
+  }
+}

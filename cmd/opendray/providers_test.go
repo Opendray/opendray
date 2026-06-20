@@ -47,11 +47,12 @@ func TestContains(t *testing.T) {
 }
 
 func TestProviderCatalogShape(t *testing.T) {
-	// Defensive: rest of the wizard / CI assumes these three are
-	// the catalog. If anyone adds a new provider, update this list.
+	// Defensive: rest of the wizard / CI assumes these are the npm-
+	// distributed catalog. Gemini was retired (superseded by
+	// antigravity); binary CLIs (agy, grok) self-update and aren't here.
+	// If anyone adds a new npm provider, update this list.
 	expected := map[string]string{
 		"claude": "@anthropic-ai/claude-code",
-		"gemini": "@google/gemini-cli",
 		"codex":  "@openai/codex",
 	}
 	if len(providerCatalog) != len(expected) {

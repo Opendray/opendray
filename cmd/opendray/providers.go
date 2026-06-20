@@ -4,9 +4,9 @@
 //	opendray providers list --json                same but machine-readable
 //	opendray providers update                     re-run `npm install -g` for each detected CLI
 //	opendray providers update --check             show current vs npm-latest, don't install
-//	opendray providers update --only claude,gemini  restrict to a subset (comma-separated)
+//	opendray providers update --only claude,codex  restrict to a subset (comma-separated)
 //
-// The "providers" here are the Claude / Codex / Gemini CLIs the user
+// The "providers" here are the Claude / Codex CLIs the user
 // installed during the install wizard. opendray doesn't bundle them —
 // it spawns whatever's on $PATH. This subcommand just centralises the
 // "is it installed, what version, npm update it" busywork.
@@ -30,10 +30,13 @@ type providerSpec struct {
 	Display string // human label
 }
 
-// Order here is the same order the install wizard offers them.
+// Order here is the same order the install wizard offers them. Only
+// npm-distributed CLIs live here (this command npm-updates them).
+// Binary-distributed CLIs (antigravity `agy`, xAI `grok`) self-update
+// via their own installers and are intentionally absent. Gemini was
+// retired in favour of antigravity, so it is no longer offered.
 var providerCatalog = []providerSpec{
 	{Bin: "claude", NpmPkg: "@anthropic-ai/claude-code", Display: "Claude Code"},
-	{Bin: "gemini", NpmPkg: "@google/gemini-cli", Display: "Gemini CLI"},
 	{Bin: "codex", NpmPkg: "@openai/codex", Display: "Codex CLI"},
 }
 
@@ -66,7 +69,7 @@ usage:
   opendray providers list --json                machine-readable form
   opendray providers update                     re-run "npm install -g <pkg>" for each detected CLI
   opendray providers update --check             show current vs npm-latest; don't install
-  opendray providers update --only claude,gemini  restrict to a subset (comma-separated CLI names)
+  opendray providers update --only claude,codex  restrict to a subset (comma-separated CLI names)
 
 Privilege: npm install -g typically writes under /usr/lib/node_modules
 and needs root. Run via sudo (or whatever wrapper your npm install uses)
@@ -188,7 +191,7 @@ func providersUpdate(args []string) int {
 	}
 
 	if !checkedAny {
-		fmt.Fprintln(os.Stderr, "no providers matched --only — known names: claude, gemini, codex")
+		fmt.Fprintln(os.Stderr, "no providers matched --only — known names: claude, codex")
 		return 2
 	}
 	return rc

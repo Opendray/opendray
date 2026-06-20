@@ -43,6 +43,13 @@ type Manifest struct {
 	Capabilities Capabilities  `json:"capabilities"`
 	ConfigSchema []ConfigField `json:"configSchema,omitempty"`
 	UI           *UI           `json:"ui,omitempty"`
+	// Hidden keeps the manifest loaded and resolvable (existing sessions
+	// pinned to it still spawn) but drops it from Catalog.List, so it
+	// disappears from every UI provider picker and the wizard. Used to
+	// retire a provider without deleting its manifest/helper code or
+	// breaking sessions already bound to it (e.g. gemini, superseded by
+	// antigravity). Reversible: flip the flag back to false.
+	Hidden bool `json:"hidden,omitempty"`
 }
 
 // Capabilities is descriptive metadata used by clients to render the

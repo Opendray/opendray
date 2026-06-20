@@ -102,7 +102,7 @@ irreversible until then.
 
   1) Verify base tools (curl, tar — should already be on macOS)
   2) Install Node.js via brew                     (for AI CLIs)
-  3) Choose AI CLIs (Claude / Codex / Gemini)     (at least one)
+  3) Choose AI CLIs (Claude / Codex / Grok)       (at least one)
   4) Postgres:
        (a) connect to an existing PG host                 — recommended for prod
        (b) install Postgres 16 + pgvector via brew        — easiest for single-Mac
@@ -155,8 +155,8 @@ later by rerunning the npm install commands by hand.
 EOF
 
 ask_yes_no "Install Claude Code (npm @anthropic-ai/claude-code)?" "y" WANT_CLAUDE
-ask_yes_no "Install Gemini CLI (npm @google/gemini-cli)?"          "n" WANT_GEMINI
 ask_yes_no "Install Codex CLI (npm @openai/codex)?"                "n" WANT_CODEX
+ask_yes_no "Enable Grok Build CLI (grok) — install manually after wizard?" "n" WANT_GROK
 
 INSTALLED_ANY=0
 npm_install_global() {
@@ -179,10 +179,20 @@ npm_install_global() {
 }
 
 [ "$WANT_CLAUDE" = "y" ] && npm_install_global "@anthropic-ai/claude-code" claude
-[ "$WANT_GEMINI" = "y" ] && npm_install_global "@google/gemini-cli"        gemini
 [ "$WANT_CODEX"  = "y" ] && npm_install_global "@openai/codex"             codex
 
-if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd gemini && ! have_cmd codex; then
+# Grok Build (grok) is xAI's standalone binary (not npm). Surface the
+# one-liner rather than auto-fetching it into the wrong HOME.
+if [ "$WANT_GROK" = "y" ]; then
+    if have_cmd grok; then
+        log_ok "grok already on PATH: $(grok --version 2>/dev/null | head -1 || echo '?')"
+        INSTALLED_ANY=1
+    else
+        log_warn "Grok Build CLI (grok) is not on PATH. Install it with: curl -fsSL https://x.ai/cli/install.sh | bash — then run 'grok login'."
+    fi
+fi
+
+if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd codex && ! have_cmd grok; then
     log_warn "No AI CLI installed. opendray will run but session spawn will fail until you install one."
     ask_yes_no "Continue without an AI CLI?" "n" CONT_NO_CLI
     [ "$CONT_NO_CLI" = "y" ] || exit 0
@@ -193,8 +203,8 @@ cat <<'EOF'
   Reminder: CLIs are installed but not yet logged in. Run their
   login commands interactively after this wizard:
     claude login         # browser OAuth
-    gemini auth login
     codex login
+    grok login           # sign in with your xAI account
 
 EOF
 
@@ -631,7 +641,7 @@ fi
 # found". Seed the standard dirs, then prepend wherever each installed
 # CLI actually resolves right now, plus the native-installer location.
 SVC_PATH="${BREW_PREFIX}/bin:/usr/local/bin:/usr/bin:/bin"
-for _cli in claude gemini codex; do
+for _cli in claude codex agy grok; do
     _clipath="$(command -v "$_cli" 2>/dev/null || true)"
     [ -n "$_clipath" ] || continue
     _clidir="$(cd "$(dirname "$_clipath")" 2>/dev/null && pwd || true)"
@@ -782,7 +792,7 @@ cat <<EOF
   Next:
     1. Open the admin UI (link above is clickable in most terminals),
        log in as ${OD_ADMIN_USER}, rotate the admin password.
-    2. Run 'claude login' / 'gemini auth login' / 'codex login' to finish CLI auth.
+    2. Run 'claude login' / 'codex login' / 'grok login' to finish CLI auth.
     3. Providers → register the CLI binary path (e.g. \$(which claude)).
     4. Sessions → New session → spawn your first session.
 
