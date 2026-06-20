@@ -88,11 +88,12 @@ func (m *Manager) tryRateLimitFailover(rs *runningSession, now time.Time) {
 		return
 	}
 
-	// Automatic throttle failover keeps the clean-slate switch — no
-	// carry-context. The operator didn't opt in, and a rate-limit
-	// bounce shouldn't silently ship prior conversation to another
-	// account.
-	if _, err := m.SwitchClaudeAccount(ctx, sessID, target, false); err != nil {
+	// Automatic throttle failover carries context: a rate-limit bounce
+	// is involuntary, so dropping the conversation on the floor is worse
+	// than seeding the standby account with a recap. The target is one
+	// of the operator's own accounts (same trust domain), and the recap
+	// rides the same --append-system-prompt path as a manual carry.
+	if _, err := m.SwitchClaudeAccount(ctx, sessID, target, true); err != nil {
 		m.log.Warn("auto-failover switch failed",
 			"session", sessID,
 			"from_account", currentAccountID,
