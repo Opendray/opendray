@@ -3,7 +3,9 @@ package catalog
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/opendray/opendray-v2/internal/session"
@@ -13,8 +15,15 @@ import (
 // it on cleanup, so tests never depend on a running local endpoint.
 func stubOpenCodeProbe(t *testing.T, ids []string) {
 	t.Helper()
+	stubOpenCodeProbeResult(t, ids, nil)
+}
+
+// stubOpenCodeProbeResult lets a test drive both the returned model ids and
+// the probe error, to exercise the unreachable-endpoint notice path.
+func stubOpenCodeProbeResult(t *testing.T, ids []string, err error) {
+	t.Helper()
 	prev := probeOpenCodeModels
-	probeOpenCodeModels = func(context.Context, string, string) []string { return ids }
+	probeOpenCodeModels = func(context.Context, string, string) ([]string, error) { return ids, err }
 	t.Cleanup(func() { probeOpenCodeModels = prev })
 }
 
@@ -119,6 +128,45 @@ func TestInjectOpenCodeLocalProvider_EnumeratesProbedModels(t *testing.T) {
 	// Default-selects the first probed model when no localModel is pinned.
 	if got, _ := cfg["model"].(string); got != "opendray-local/qwen/qwen3-coder" {
 		t.Errorf("default model=%q, want opendray-local/qwen/qwen3-coder", got)
+	}
+}
+
+func TestInjectOpenCodeLocalProvider_SpawnNotice(t *testing.T) {
+	cfg := map[string]any{"localBaseUrl": "http://192.168.0.9:1234/v1"}
+	cases := []struct {
+		name       string
+		ids        []string
+		err        error
+		pinned     bool // set a localModel
+		wantNotice bool
+		wantSubstr string
+	}{
+		{"unreachable, no pinned model", nil, errors.New("connection refused"), false, true, "unreachable"},
+		{"unreachable but pinned model", nil, errors.New("connection refused"), true, true, "falling back"},
+		{"reachable but no chat models", nil, nil, false, true, "no chat-capable models"},
+		{"healthy enumeration stays silent", []string{"qwen/qwen3-coder"}, nil, false, false, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			stubOpenCodeProbeResult(t, tc.ids, tc.err)
+			c := map[string]any{}
+			for k, v := range cfg {
+				c[k] = v
+			}
+			if tc.pinned {
+				c["localModel"] = "qwen3-coder"
+			}
+			out := &session.PrepareOutput{Env: map[string]string{}}
+			if err := injectOpenCodeLocalProvider(context.Background(), t.TempDir(), c, out); err != nil {
+				t.Fatalf("inject: %v", err)
+			}
+			if got := len(out.Notices) > 0; got != tc.wantNotice {
+				t.Fatalf("notice present=%v, want %v (notices=%v)", got, tc.wantNotice, out.Notices)
+			}
+			if tc.wantNotice && !strings.Contains(out.Notices[0], tc.wantSubstr) {
+				t.Errorf("notice %q does not contain %q", out.Notices[0], tc.wantSubstr)
+			}
+		})
 	}
 }
 

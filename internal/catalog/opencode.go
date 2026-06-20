@@ -119,7 +119,9 @@ func injectOpenCodeLocalProvider(ctx context.Context, baseDir string, cfg map[st
 
 	// Best-effort enumeration — a probe failure (endpoint down) just falls
 	// back to the explicitly named localModel, so a spawn is never blocked.
-	modelIDs := probeOpenCodeModels(ctx, baseURL, apiKey)
+	// probeErr distinguishes "unreachable" from "reached but no chat model"
+	// so the spawn-time notice below can be specific.
+	modelIDs, probeErr := probeOpenCodeModels(ctx, baseURL, apiKey)
 
 	models := map[string]any{}
 	for _, id := range modelIDs {
@@ -160,32 +162,60 @@ func injectOpenCodeLocalProvider(ctx context.Context, baseDir string, cfg map[st
 		return err
 	}
 	setOpenCodeConfigEnv(baseDir, out)
+
+	// Spawn-time diagnostics. The probe is best-effort and never blocks the
+	// spawn, so without this the operator only sees OpenCode's opaque
+	// "[buffer unavailable]" when the session can't produce a response.
+	// Surface a one-time hint in the session terminal (and transcript)
+	// describing the actual failure. Only fires when no chat model is
+	// available — a healthy enumeration stays silent.
+	if len(modelIDs) == 0 {
+		havePinned := localModel != "" || explicitModel
+		switch {
+		case probeErr != nil && !havePinned:
+			out.Notices = append(out.Notices, fmt.Sprintf(
+				"opendray: the OpenCode local endpoint %s is unreachable (%v), so this session has no local model and OpenCode will fail with \"[buffer unavailable]\". "+
+					"From the gateway host run:  curl %s/models  — check the URL ends in /v1, the endpoint serves on the LAN (not just localhost), and a chat model is loaded; then set a Default Local Model and start a new session.",
+				baseURL, probeErr, baseURL))
+		case probeErr != nil && havePinned:
+			out.Notices = append(out.Notices, fmt.Sprintf(
+				"opendray: couldn't reach the OpenCode local endpoint %s (%v) to verify models; falling back to your pinned model. If the session can't respond, confirm the endpoint is up and reachable from the gateway host.",
+				baseURL, probeErr))
+		case probeErr == nil && !havePinned:
+			out.Notices = append(out.Notices, fmt.Sprintf(
+				"opendray: the OpenCode local endpoint %s is reachable but served no chat-capable models (only embeddings/rerank, or none loaded), so this session has no local model and OpenCode will fail with \"[buffer unavailable]\". "+
+					"Load a chat model on the endpoint, or set a Default Local Model, then start a new session.",
+				baseURL))
+		}
+	}
 	return nil
 }
 
 // probeOpenCodeModels lists the chat/coding model ids served at an
 // OpenAI-compatible endpoint (GET <baseURL>/models). Embedding /
 // transcription / rerank ids are filtered out so they don't clutter
-// OpenCode's /model picker. Best-effort: any error returns nil so a spawn is
-// never blocked on an unreachable endpoint. A package var so tests can stub
-// it without a live endpoint.
-var probeOpenCodeModels = func(ctx context.Context, baseURL, apiKey string) []string {
+// OpenCode's /model picker. Best-effort: a non-nil error means the
+// endpoint was unreachable / refused / unparseable (the caller never
+// blocks a spawn on it, but surfaces a one-time notice). A nil error with
+// an empty slice means "reached it, but it served no chat-capable model".
+// A package var so tests can stub it without a live endpoint.
+var probeOpenCodeModels = func(ctx context.Context, baseURL, apiKey string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(baseURL, "/")+"/models", nil)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	if apiKey != "" {
 		req.Header.Set("Authorization", "Bearer "+apiKey)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil
+		return nil, fmt.Errorf("endpoint returned HTTP %d", resp.StatusCode)
 	}
 	var body struct {
 		Data []struct {
@@ -193,7 +223,7 @@ var probeOpenCodeModels = func(ctx context.Context, baseURL, apiKey string) []st
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return nil
+		return nil, fmt.Errorf("decode /models response: %w", err)
 	}
 	ids := make([]string, 0, len(body.Data))
 	for _, m := range body.Data {
@@ -201,7 +231,7 @@ var probeOpenCodeModels = func(ctx context.Context, baseURL, apiKey string) []st
 			ids = append(ids, id)
 		}
 	}
-	return ids
+	return ids, nil
 }
 
 // isOpenCodeChatModel drops obvious non-chat model ids (embeddings,
