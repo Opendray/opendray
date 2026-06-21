@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -168,7 +169,18 @@ func (h *Handlers) listDocs(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) getDoc(w http.ResponseWriter, r *http.Request) {
 	kind := Kind(chi.URLParam(r, "kind"))
 	cwd := r.URL.Query().Get("cwd")
-	doc, err := h.svc.GetDoc(r.Context(), cwd, kind)
+	// Optional ?section= pulls one heading-section instead of the whole
+	// page — the on-demand path for large docs (e.g. kb_integrations).
+	section := r.URL.Query().Get("section")
+	var (
+		doc Doc
+		err error
+	)
+	if strings.TrimSpace(section) != "" {
+		doc, err = h.svc.GetDocSection(r.Context(), cwd, kind, section)
+	} else {
+		doc, err = h.svc.GetDoc(r.Context(), cwd, kind)
+	}
 	if errors.Is(err, ErrNotFound) {
 		// Treat absence as an empty doc so the UI doesn't need a
 		// separate "is there a doc?" probe. id stays blank so callers

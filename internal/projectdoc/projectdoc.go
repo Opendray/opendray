@@ -294,6 +294,34 @@ func (s *Service) GetDoc(ctx context.Context, cwd string, kind Kind) (Doc, error
 	return d, err
 }
 
+// GetDocSection returns ONE heading-section of a doc — the on-demand path
+// that lets an agent pull a single section of a large page (e.g. one
+// section of the 59K kb_integrations guide) instead of the whole thing.
+// cwd/kind resolution + ErrNotFound semantics match GetDoc. An empty
+// heading returns the whole doc. On a section MISS it returns a short doc
+// listing the page's available headings (never the whole page, never an
+// error) so the caller can retry with a real section.
+func (s *Service) GetDocSection(ctx context.Context, cwd string, kind Kind, heading string) (Doc, error) {
+	d, err := s.GetDoc(ctx, cwd, kind)
+	if err != nil {
+		return Doc{}, err
+	}
+	if strings.TrimSpace(heading) == "" {
+		return d, nil
+	}
+	if sec, ok := SliceSection(d.Content, heading); ok {
+		d.Content = sec
+		return d, nil
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "_(section %q not found in %s — pick one of the sections below and re-read with section=)_\n\n", heading, kind)
+	for _, h := range ListSectionHeadings(d.Content) {
+		fmt.Fprintf(&b, "- %s\n", h)
+	}
+	d.Content = b.String()
+	return d, nil
+}
+
 // ListDocsForCwd returns all docs (goal + plan, if present) for one
 // cwd in a single query. UI uses this to render the project page.
 func (s *Service) ListDocsForCwd(ctx context.Context, cwd string) ([]Doc, error) {
@@ -1167,10 +1195,16 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 	}
 	b.WriteString("\n")
 
-	b.WriteString("The indexes above are NOT loaded — fetch on demand via the opendray-memory MCP tools: " +
-		"`doc_read` (pass a section slug or kb_* page slug) for a specific document, " +
-		"`project_search` for cross-layer semantic search (facts, journal, docs, knowledge), " +
-		"`memory_search` for episodic facts. Fetch ONLY what the task needs.\n\n" +
+	b.WriteString("The headings above are NOT loaded — they are a MAP. Fetch on demand via the " +
+		"opendray-memory MCP tools. **Before any work that touches how our system works — " +
+		"integrating with opendray, provider/MCP/scope/auth wiring, team conventions, op's " +
+		"architecture, or reusing a known pattern — FIRST find the matching `kb_*` page above " +
+		"and `doc_read(slug, section=\"<heading>\")` the relevant section. Do NOT infer our " +
+		"system's design or rules from memory.** `doc_read` takes an optional `section=` to pull " +
+		"ONE heading-section (~1K) instead of a whole page (e.g. the 59K integration guide). " +
+		"If unsure which section, `project_search(\"<your task>\")` returns the best-matching " +
+		"section plus its `doc_read` pointer. `memory_search` covers episodic facts. " +
+		"Fetch ONLY what the task needs.\n\n" +
 		"Keep the project docs current. Use `current_objective_set` for the short-term " +
 		"objective we're working on right now — it writes the live doc directly (new " +
 		"objective set / current one finished / steps shift). For the long-term " +
