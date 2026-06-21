@@ -14,6 +14,7 @@ import { ProviderModelsSection } from '@/components/providers/ProviderModelsSect
 import { BrandAvatar } from '@/components/BrandAvatar'
 import { providerIconKey } from '@/lib/providerIcons'
 import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
+import { AntigravityAccountsPanel } from '@/components/providers/AntigravityAccountsPanel'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import {
   listProviders,
@@ -360,6 +361,12 @@ function ProviderDetail({
             <>
               <Separator className="my-6" />
               <ClaudeAccountsPanel />
+            </>
+          )}
+          {m.id === 'antigravity' && (
+            <>
+              <Separator className="my-6" />
+              <AntigravityAccountsPanel />
             </>
           )}
           <Separator className="my-6" />

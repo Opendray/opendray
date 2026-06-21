@@ -97,6 +97,33 @@ func WithClaudeAccountResolver(r ClaudeAccountResolver) ManagerOption {
 	return func(m *Manager) { m.claudeAccounts = r }
 }
 
+// AntigravityAccountResolver is the minimum agyacct surface the manager
+// needs to keep an antigravity session's conversation across a restart or
+// an account switch. agy stores conversations as portable per-HOME SQLite
+// dbs, so: resolve an account's HOME, find the conversation for a cwd, and
+// (on switch) copy it into the new account's HOME. Wired as an interface
+// to keep session free of an agyacct import. Nil disables resume/carry
+// (antigravity sessions then start fresh on restart/switch).
+type AntigravityAccountResolver interface {
+	// AccountHome returns the HOME dir for an account id ("" → the
+	// gateway user's default ~/.gemini login).
+	AccountHome(ctx context.Context, id string) (string, error)
+	// ConversationIDForCwd returns the most-recent agy conversation id
+	// for cwd under home, or "" if none.
+	ConversationIDForCwd(home, cwd string) string
+	// CopyConversation copies conversation convID from srcHome into
+	// dstHome and records cwd->convID there, so it resumes under the new
+	// account. No-op when src == dst.
+	CopyConversation(srcHome, dstHome, convID, cwd string) error
+}
+
+// WithAntigravityAccountResolver injects the agyacct resolver used to
+// resume/carry antigravity conversations across restart + account switch.
+// Defaults to nil (sessions start fresh).
+func WithAntigravityAccountResolver(r AntigravityAccountResolver) ManagerOption {
+	return func(m *Manager) { m.antigravityAccounts = r }
+}
+
 // WithAutoFailoverEnabled flips on the rate-limit-aware auto-failover
 // behavior: pumpStdout scans each Claude session's PTY output for the
 // "session limit · resets HH:MM" banner and, on a match, marks the
@@ -164,9 +191,10 @@ type Manager struct {
 	bus                 *eventbus.Hub
 	store               *sessionStore
 	providers           ProviderResolver
-	claudeAccounts      ClaudeAccountResolver    // optional; nil disables transcript migration + failover
-	autoFailoverEnabled bool                     // when true + claudeAccounts != nil, rate-limit scanner is hot
-	spawnProfiles       IntegrationSpawnProfiles // optional; nil disables integration spawn-profile injection
+	claudeAccounts      ClaudeAccountResolver      // optional; nil disables transcript migration + failover
+	antigravityAccounts AntigravityAccountResolver // optional; nil disables antigravity conversation resume/carry
+	autoFailoverEnabled bool                       // when true + claudeAccounts != nil, rate-limit scanner is hot
+	spawnProfiles       IntegrationSpawnProfiles   // optional; nil disables integration spawn-profile injection
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
@@ -540,18 +568,19 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		origin = OriginOperator
 	}
 	sess := Session{
-		ID:              sessID,
-		Name:            name,
-		ProviderID:      req.ProviderID,
-		Model:           req.Model,
-		Cwd:             req.Cwd,
-		Args:            req.Args,
-		State:           StateRunning,
-		ClaudeAccountID: req.ClaudeAccountID,
-		ParentSessionID: req.ParentSessionID,
-		Origin:          origin,
-		IntegrationID:   req.integrationID,
-		StartedAt:       time.Now().UTC(),
+		ID:                   sessID,
+		Name:                 name,
+		ProviderID:           req.ProviderID,
+		Model:                req.Model,
+		Cwd:                  req.Cwd,
+		Args:                 req.Args,
+		State:                StateRunning,
+		ClaudeAccountID:      req.ClaudeAccountID,
+		AntigravityAccountID: req.AntigravityAccountID,
+		ParentSessionID:      req.ParentSessionID,
+		Origin:               origin,
+		IntegrationID:        req.integrationID,
+		StartedAt:            time.Now().UTC(),
 	}
 	if sess.Args == nil {
 		sess.Args = []string{}
@@ -634,7 +663,15 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		return nil, fmt.Errorf("cwd is not a directory: %s", sess.Cwd)
 	}
 
-	resolveCtx := WithModel(WithOrigin(WithAccountID(ctx, sess.ClaudeAccountID), sess.Origin), sess.Model)
+	// Account selection is provider-specific: claude isolates accounts
+	// via CLAUDE_CONFIG_DIR (ClaudeAccountID), antigravity via HOME
+	// (AntigravityAccountID). WithAccountID carries whichever applies so
+	// the resolver/adapter looks up the right credential dir.
+	accountID := sess.ClaudeAccountID
+	if sess.ProviderID == "antigravity" {
+		accountID = sess.AntigravityAccountID
+	}
+	resolveCtx := WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model)
 	// Integration spawn profile: provider-agnostic MCP servers + system
 	// prompt + auto-approve declared on the creating integration, applied
 	// to every session it spawns (create AND reactivate). Best-effort: a
@@ -672,6 +709,22 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		prepareCtx := WithIntegrationSystemPrompt(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), spawnProfile.SystemPrompt)
 		if reactivate {
 			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
+			// Antigravity: resume the cwd's conversation so a restart (or a
+			// switch, which pre-sets the id after copying the db) continues
+			// the same chat instead of starting blank. The switch path sets
+			// the id on ctx already; for a plain restart we look it up from
+			// the session's account HOME.
+			if sess.ProviderID == "antigravity" {
+				convID := AntigravityResumeConversationFromContext(ctx)
+				if convID == "" && m.antigravityAccounts != nil {
+					if home, herr := m.antigravityAccounts.AccountHome(ctx, sess.AntigravityAccountID); herr == nil {
+						convID = m.antigravityAccounts.ConversationIDForCwd(home, sess.Cwd)
+					}
+				}
+				if convID != "" {
+					prepareCtx = WithAntigravityResumeConversation(prepareCtx, convID)
+				}
+			}
 		}
 		out, err := p.Prepare(prepareCtx, sess.ID, tempDir)
 		if err != nil {
@@ -1094,6 +1147,98 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 		// spawned process — gateway restarts are rare and the user can
 		// re-issue the switch if necessary.
 		m.log.Error("persist new claude account failed",
+			"session", id, "account", newAccountID, "err", err)
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.account_switched",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"account_id":  newAccountID,
+		},
+	})
+	return rs.sess, nil
+}
+
+// SwitchAntigravityAccount terminates the running `agy` process and
+// respawns it under a different antigravity account binding (a different
+// HOME), reusing the same row id. The conversation is CARRIED across: agy
+// stores each conversation as a portable per-HOME SQLite db, so we copy
+// the cwd's conversation into the new account's HOME and resume it there
+// (`--conversation <id>`) — the switch keeps the session, only the
+// credential/quota changes. Requires an AntigravityAccountResolver (via
+// WithAntigravityAccountResolver); without one it falls back to a clean
+// spawn. newAccountID == "" clears the binding (default ~/.gemini HOME).
+//
+// Rollback: if the respawn fails the row is left 'stopped' with the
+// *original* account_id preserved, so the user can Restart on it.
+func (m *Manager) SwitchAntigravityAccount(ctx context.Context, id, newAccountID string) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	current, err := m.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if current.ProviderID != "antigravity" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	if current.AntigravityAccountID == newAccountID {
+		// No-op: caller picked the binding already in place.
+		return current, nil
+	}
+
+	if err := m.Stop(ctx, id); err != nil {
+		return Session{}, fmt.Errorf("stop before switch: %w", err)
+	}
+
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+
+	sess.AntigravityAccountID = newAccountID
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	// Carry the running conversation onto the new account so the switch
+	// KEEPS the session rather than losing it. agy stores conversations as
+	// portable per-HOME SQLite dbs; the process is already stopped (above),
+	// so we copy the cwd's conversation from the old account's HOME into
+	// the new account's HOME and resume it there. Best-effort: any failure
+	// falls back to a clean spawn instead of blocking the switch.
+	spawnCtx := ctx
+	if m.antigravityAccounts != nil {
+		oldHome, oerr := m.antigravityAccounts.AccountHome(ctx, current.AntigravityAccountID)
+		newHome, nerr := m.antigravityAccounts.AccountHome(ctx, newAccountID)
+		if oerr == nil && nerr == nil {
+			if convID := m.antigravityAccounts.ConversationIDForCwd(oldHome, sess.Cwd); convID != "" {
+				if cerr := m.antigravityAccounts.CopyConversation(oldHome, newHome, convID, sess.Cwd); cerr != nil {
+					m.log.Warn("carry antigravity conversation across switch failed; new account starts fresh",
+						"session", id, "conversation", convID, "err", cerr)
+				} else {
+					spawnCtx = WithAntigravityResumeConversation(ctx, convID)
+				}
+			}
+		}
+	}
+
+	rs, err := m.spawn(spawnCtx, sess, true)
+	if err != nil {
+		// Row is still 'stopped' with the original account_id (never
+		// persisted the new value), so the user can Restart on it.
+		return Session{}, fmt.Errorf("respawn under new account: %w", err)
+	}
+
+	if err := m.store.UpdateAntigravityAccount(ctx, id, newAccountID); err != nil {
+		m.log.Error("persist new antigravity account failed",
 			"session", id, "account", newAccountID, "err", err)
 	}
 

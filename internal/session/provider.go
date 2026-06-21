@@ -216,6 +216,33 @@ func ResumeClaudeSessionIDFromContext(ctx context.Context) string {
 	return ""
 }
 
+// antigravityResumeConvCtxKey carries the agy conversation UUID a
+// reactivated or account-switched antigravity session should resume, so
+// the provider emits `--conversation <id>` instead of starting a fresh
+// chat. On a restart it's the cwd's existing conversation; on an account
+// switch it's the conversation just copied into the new account's HOME —
+// which is how a switch keeps the session instead of losing it.
+type antigravityResumeConvCtxKey struct{}
+
+// WithAntigravityResumeConversation returns a derived context carrying the
+// agy conversation id to resume. Empty is a no-op so fresh spawns needn't
+// guard.
+func WithAntigravityResumeConversation(ctx context.Context, convID string) context.Context {
+	if convID == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, antigravityResumeConvCtxKey{}, convID)
+}
+
+// AntigravityResumeConversationFromContext returns the conversation id set
+// by WithAntigravityResumeConversation, or "" for a fresh spawn.
+func AntigravityResumeConversationFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(antigravityResumeConvCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
 // carryoverContextCtxKey carries a block of prior-conversation text to
 // seed a freshly spawned session's system prompt. Set ONLY by
 // SwitchClaudeAccount when the operator opts into "carry context":

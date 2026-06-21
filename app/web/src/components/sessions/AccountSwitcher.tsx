@@ -14,7 +14,8 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
-import { switchClaudeAccount } from '@/lib/sessions'
+import { listAntigravityAccounts } from '@/lib/antigravityAccounts'
+import { switchClaudeAccount, switchAntigravityAccount } from '@/lib/sessions'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
 
@@ -22,44 +23,63 @@ interface AccountSwitcherProps {
   session: Session
 }
 
-// AccountSwitcher renders a header dropdown that lets the user rebind
-// a *running* Claude session to a different account. The backend
-// terminates the current child process and respawns it under the new
-// credential — the conversation context maintained inside the CLI is
-// lost (the underlying process is replaced), so the dropdown shows a
-// confirm prompt before firing.
+// Minimal shape shared by ClaudeAccount and AntigravityAccount — the
+// only fields this dropdown renders. Lets one component drive both
+// providers' multi-account switching.
+interface SwitcherAccount {
+  id: string
+  name: string
+  display_name: string
+  config_dir: string
+  enabled: boolean
+  token_filled: boolean
+}
+
+// AccountSwitcher renders a header dropdown that lets the user rebind a
+// *running* multi-account session (claude or antigravity) to a different
+// account. The backend terminates the current child process and respawns
+// it under the new credential — the in-CLI conversation is lost (the
+// process is replaced), so the dropdown confirms before firing.
+//
+// Claude isolates accounts via CLAUDE_CONFIG_DIR and supports carrying a
+// recap across the switch (the carry toggle). Antigravity isolates via
+// HOME and has no cross-account recap builder yet, so its switch is
+// always clean-slate and the carry toggle is hidden.
 export function AccountSwitcher({ session }: AccountSwitcherProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const { data: accounts } = useQuery({
-    queryKey: ['claude-accounts'],
-    queryFn: listClaudeAccounts,
+  const isAgy = session.provider_id === 'antigravity'
+
+  const { data: accounts } = useQuery<SwitcherAccount[]>({
+    queryKey: isAgy ? ['antigravity-accounts'] : ['claude-accounts'],
+    queryFn: isAgy ? listAntigravityAccounts : listClaudeAccounts,
     staleTime: 30_000,
   })
+  const currentId = isAgy
+    ? session.antigravity_account_id
+    : session.claude_account_id
   const enabled = (accounts ?? []).filter((a) => a.enabled)
-  const current = (accounts ?? []).find((a) => a.id === session.claude_account_id)
-  const currentLabel = session.claude_account_id
-    ? current?.display_name || current?.name || session.claude_account_id
+  const current = (accounts ?? []).find((a) => a.id === currentId)
+  const currentLabel = currentId
+    ? current?.display_name || current?.name || currentId
     : t('web.sessions.accountSwitcher.currentDefault')
 
-  // Carry-over toggle. When on, the switch seeds the new account's
-  // fresh session with a recap of the prior conversation (sent to the
-  // provider under the new account — see the helper text / confirm).
-  // Defaults ON: an account switch can't truly resume the old
-  // conversation across isolated accounts, so without a recap the new
-  // session starts blind — the common surprise was "I switched and lost
-  // everything". The confirm dialog uses the carry-consent copy so the
-  // cross-account data flow is still surfaced; untick for a clean slate.
+  // Carry-over toggle (claude only). When on, the switch seeds the new
+  // account's fresh session with a recap of the prior conversation.
   const [carryContext, setCarryContext] = useState(true)
 
   const mutation = useMutation({
     mutationFn: (accountId: string) =>
-      switchClaudeAccount(session.id, accountId, carryContext),
+      isAgy
+        ? switchAntigravityAccount(session.id, accountId)
+        : switchClaudeAccount(session.id, accountId, carryContext),
     onSuccess: (next) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
-      const account = next.claude_account_id
-        ? enabled.find((a) => a.id === next.claude_account_id)?.display_name ||
-          next.claude_account_id
+      const nextId = isAgy
+        ? next.antigravity_account_id
+        : next.claude_account_id
+      const account = nextId
+        ? enabled.find((a) => a.id === nextId)?.display_name || nextId
         : t('web.sessions.accountSwitcher.switchedDefault')
       toast.success(t('web.sessions.accountSwitcher.switchedToast'), {
         description: t('web.sessions.accountSwitcher.switchedDescription', {
@@ -75,10 +95,12 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
   })
 
   const pick = (accountId: string) => {
-    if (accountId === (session.claude_account_id ?? '')) return
-    const msg = carryContext
-      ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
-      : t('web.sessions.accountSwitcher.confirmSwitch')
+    if (accountId === (currentId ?? '')) return
+    const msg = isAgy
+      ? t('web.sessions.accountSwitcher.confirmSwitchAgy')
+      : carryContext
+        ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
+        : t('web.sessions.accountSwitcher.confirmSwitch')
     if (!confirm(msg)) {
       return
     }
@@ -93,7 +115,11 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
           size="sm"
           disabled={mutation.isPending}
           className="text-[11px] gap-1 hover:text-foreground"
-          title={t('web.sessions.accountSwitcher.tooltip')}
+          title={t(
+            isAgy
+              ? 'web.sessions.accountSwitcher.tooltipAgy'
+              : 'web.sessions.accountSwitcher.tooltip',
+          )}
         >
           {mutation.isPending ? (
             <Loader2 className="size-3 animate-spin" />
@@ -106,36 +132,44 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[220px]">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-          {t('web.sessions.accountSwitcher.menuTitle')}
+          {t(
+            isAgy
+              ? 'web.sessions.accountSwitcher.menuTitleAgy'
+              : 'web.sessions.accountSwitcher.menuTitle',
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {/* Carry-over toggle. Stays open on click (preventDefault) so
-            the operator sets it before picking a destination account.
-            The subtitle is the consent surface for the cross-account
-            data flow. */}
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault()
-            setCarryContext((v) => !v)
-          }}
-          className="gap-2"
-        >
-          <Check
-            className={cn(
-              'size-3 shrink-0',
-              carryContext ? 'opacity-100' : 'opacity-0',
-            )}
-          />
-          <div className="flex flex-col flex-1 min-w-0">
-            <span className="text-[12px]">
-              {t('web.sessions.accountSwitcher.carryContext')}
-            </span>
-            <span className="text-[10px] text-muted-foreground whitespace-normal">
-              {t('web.sessions.accountSwitcher.carryContextHelp')}
-            </span>
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        {/* Carry-over toggle (claude only). Stays open on click
+            (preventDefault) so the operator sets it before picking a
+            destination. The subtitle is the consent surface for the
+            cross-account data flow. */}
+        {!isAgy && (
+          <>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault()
+                setCarryContext((v) => !v)
+              }}
+              className="gap-2"
+            >
+              <Check
+                className={cn(
+                  'size-3 shrink-0',
+                  carryContext ? 'opacity-100' : 'opacity-0',
+                )}
+              />
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[12px]">
+                  {t('web.sessions.accountSwitcher.carryContext')}
+                </span>
+                <span className="text-[10px] text-muted-foreground whitespace-normal">
+                  {t('web.sessions.accountSwitcher.carryContextHelp')}
+                </span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem
           onSelect={(e) => {
             e.preventDefault()
@@ -146,7 +180,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
           <Check
             className={cn(
               'size-3 shrink-0',
-              session.claude_account_id ? 'opacity-0' : 'opacity-100',
+              currentId ? 'opacity-0' : 'opacity-100',
             )}
           />
           <div className="flex flex-col flex-1 min-w-0">
@@ -160,7 +194,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
         </DropdownMenuItem>
         {enabled.length > 0 && <DropdownMenuSeparator />}
         {enabled.map((a) => {
-          const active = session.claude_account_id === a.id
+          const active = currentId === a.id
           return (
             <DropdownMenuItem
               key={a.id}
