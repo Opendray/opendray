@@ -66,6 +66,42 @@ func TestBuildJournalBody_NoHistory(t *testing.T) {
 	}
 }
 
+func TestNewSessionSummaryEntry_StampsOutcome(t *testing.T) {
+	exit := 0
+	started := time.Date(2026, 6, 20, 9, 18, 37, 0, time.UTC)
+	ended := started.Add(5 * time.Minute)
+	sess := SessionInfo{ID: "ses_x", Cwd: "/proj", ExitCode: &exit, StartedAt: started, EndedAt: &ended}
+
+	e := newSessionSummaryEntry(sess, "stopped", "the title", "the body")
+
+	if e.Kind != LogKindSessionSummary || e.UpdatedBy != AuthorSummarizer {
+		t.Fatalf("kind/author = %q/%q", e.Kind, e.UpdatedBy)
+	}
+	if e.OutcomeState != "stopped" {
+		t.Errorf("OutcomeState = %q, want stopped", e.OutcomeState)
+	}
+	if e.ExitCode == nil || *e.ExitCode != 0 {
+		t.Errorf("ExitCode = %v, want 0", e.ExitCode)
+	}
+	if e.StartedAt == nil || !e.StartedAt.Equal(started) {
+		t.Errorf("StartedAt = %v, want %v", e.StartedAt, started)
+	}
+	if e.EndedAt == nil || !e.EndedAt.Equal(ended) {
+		t.Errorf("EndedAt = %v, want %v", e.EndedAt, ended)
+	}
+}
+
+func TestNewSessionSummaryEntry_NilEndAndExit(t *testing.T) {
+	sess := SessionInfo{ID: "ses_y", Cwd: "/p", StartedAt: time.Now().UTC()}
+	e := newSessionSummaryEntry(sess, "ended", "t", "b")
+	if e.ExitCode != nil || e.EndedAt != nil {
+		t.Errorf("expected nil exit/end, got %v/%v", e.ExitCode, e.EndedAt)
+	}
+	if e.StartedAt == nil {
+		t.Error("StartedAt should always be set")
+	}
+}
+
 func TestCompactOneLine(t *testing.T) {
 	for _, tc := range []struct {
 		in, want string
