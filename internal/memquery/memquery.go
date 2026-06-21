@@ -60,6 +60,12 @@ type Hit struct {
 	EffectiveScore float32     `json:"effective_score"`
 	HitCount       int64       `json:"hit_count,omitempty"`
 	Confidence     *float32    `json:"confidence,omitempty"`
+	// Slug + Section are set on global KB (SourceKnowledge) hits so the
+	// caller can render an actionable `doc_read(slug, section=…)` pointer.
+	// For KB hits Text is the matched SECTION, not the whole page — a
+	// big page (e.g. 59K kb_integrations) never crosses the wire whole.
+	Slug    string `json:"slug,omitempty"`
+	Section string `json:"section,omitempty"`
 }
 
 // SearchRequest scopes one cross-layer query.
@@ -284,14 +290,19 @@ func (s *Service) searchDocs(ctx context.Context, req SearchRequest, topK int) [
 						break
 					}
 					embedded[id] = true
-					out = append(out, Hit{
+					hit := Hit{
 						Source:     docLayer(cwd, projectdoc.Kind(kind)),
 						ID:         id,
 						Title:      string(kind),
 						Text:       content,
 						CreatedAt:  updatedAt,
 						Similarity: float32(similarity),
-					})
+					}
+					if cwd == projectdoc.GlobalCwd {
+						hit.Text, hit.Section = kbSection(content, req.Query)
+						hit.Slug = kind
+					}
+					out = append(out, hit)
 				}
 				rows.Close()
 			}
@@ -316,14 +327,109 @@ func (s *Service) searchDocs(ctx context.Context, req SearchRequest, topK int) [
 			if !strings.Contains(strings.ToLower(d.Content), q) {
 				continue
 			}
-			out = append(out, Hit{
+			hit := Hit{
 				Source:     docLayer(cwd, d.Kind),
 				ID:         d.ID,
 				Title:      string(d.Kind),
 				Text:       d.Content,
 				CreatedAt:  d.UpdatedAt,
 				Similarity: 0.6,
-			})
+			}
+			if cwd == projectdoc.GlobalCwd {
+				hit.Text, hit.Section = kbSection(d.Content, req.Query)
+				hit.Slug = string(d.Kind)
+			}
+			out = append(out, hit)
+		}
+	}
+	return out
+}
+
+// kbSection narrows a global KB page hit to the section most relevant to the
+// query. Per-section embeddings don't exist in Phase 0, so intra-page
+// selection is lexical: score each section by query-term frequency (heading
+// hits weigh more). Returns the section text + its heading; falls back to the
+// first section when there's no lexical signal, or the whole content when the
+// page has no headings. Keeps a big page (e.g. 59K kb_integrations) from
+// crossing the wire whole.
+func kbSection(content, query string) (text, section string) {
+	headings := projectdoc.ListSectionHeadings(content)
+	if len(headings) == 0 {
+		return cappedWhole(content), ""
+	}
+	terms := kbSectionTerms(query)
+	// Score by DENSITY (body hits per ~1K chars) + a strong heading-term
+	// bonus. Density is what stops a "container" section (e.g. the H1 whose
+	// slice is the whole 60K page, which trivially contains every term) from
+	// always winning over a focused subsection. A heading-term match is the
+	// strongest signal, so it dominates.
+	bestScore := 0.0
+	bestText, bestHeading := "", ""
+	for _, h := range headings {
+		sec, ok := projectdoc.SliceSection(content, h)
+		if !ok || len(sec) == len(content) {
+			continue // skip the whole-page container heading entirely
+		}
+		lowerSec := strings.ToLower(sec)
+		lowerH := strings.ToLower(h)
+		bodyHits, headingHits := 0, 0
+		for _, t := range terms {
+			bodyHits += strings.Count(lowerSec, t)
+			if strings.Contains(lowerH, t) {
+				headingHits++
+			}
+		}
+		density := float64(bodyHits) / (float64(len(sec))/1000.0 + 1.0)
+		score := float64(headingHits)*10.0 + density
+		if score > bestScore {
+			bestScore, bestText, bestHeading = score, sec, h
+		}
+	}
+	if bestScore == 0 {
+		// No lexical signal: return the first NON-container section as a
+		// teaser; the doc_read pointer guides the agent to the precise one.
+		for _, h := range headings {
+			if sec, ok := projectdoc.SliceSection(content, h); ok && len(sec) != len(content) {
+				return sec, h
+			}
+		}
+		return cappedWhole(content), ""
+	}
+	return bestText, bestHeading
+}
+
+// cappedWhole bounds a whole-page fallback so a big page (e.g. a single-H1
+// 59K KB page with no subsections) never crosses the wire whole as a search
+// hit. Truncates on a RUNE boundary (KB pages contain CJK) and points the
+// caller at doc_read for the full page.
+func cappedWhole(content string) string {
+	const maxRunes = 1500
+	r := []rune(content)
+	if len(r) <= maxRunes {
+		return content
+	}
+	return string(r[:maxRunes]) + "\n…(truncated — use doc_read(slug) for the full page)"
+}
+
+// kbSectionTerms reduces a free-text query to deduped 4-char stems, dropping
+// short/stopword tokens. The crude prefix-stem lets morphological variants
+// (authenticate/authentication, scope/scopes, session/sessions) share a match
+// key, and the length floor kills single-char substring noise (e.g. "i").
+func kbSectionTerms(query string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, w := range strings.Fields(strings.ToLower(query)) {
+		w = strings.Trim(w, ".,:;!?\"'`()[]{}<>")
+		if len(w) < 4 {
+			continue
+		}
+		stem := w
+		if len(stem) > 4 {
+			stem = stem[:4]
+		}
+		if !seen[stem] {
+			seen[stem] = true
+			out = append(out, stem)
 		}
 	}
 	return out

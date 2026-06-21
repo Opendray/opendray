@@ -210,7 +210,16 @@ each with a different rhythm and time-horizon — pick the right one:
                       something the next session should know.
   decision_record     ADR-style architectural locks-in (rare).
   project_search      CROSS-LAYER semantic search across facts, journal,
-                      goal, plan, and objective.
+                      goal, plan, objective, AND the global knowledge
+                      pages. A knowledge hit returns the matching SECTION
+                      plus a doc_read(slug, section=…) pointer — follow it.
+  doc_read            Pull ONE doc/section on demand. The knowledge index
+                      lists global kb_* pages (op architecture, conventions,
+                      integration contract, lessons, reusable features) by
+                      slug — they are NOT loaded at spawn. Use
+                      doc_read(slug="kb_integrations", section="…") to read
+                      just one heading-section of a large page (~1K) rather
+                      than the whole guide.
 
 CRITICAL HABITS:
 
@@ -233,7 +242,15 @@ CRITICAL HABITS:
 4. memory_store is for FUTURE-SESSION-USEFUL FACTS, not for
    tracking what you're currently doing. "Working on M5" is NOT
    a memory_store entry — that goes in session_log_append or as
-   a current_objective_set update.`
+   a current_objective_set update.
+
+5. Before doing anything that touches how OUR SYSTEM works —
+   integrating with opendray, provider/MCP/scope/auth wiring,
+   following team conventions, or reusing a known pattern — FIRST
+   scan the knowledge index for a relevant kb_* page and
+   doc_read(slug, section=…) the matching section. Do NOT infer
+   our system's design or rules from memory; the kb_* pages are the
+   source of truth and they update.`
 
 // toolDefs is the static list returned for tools/list.
 var toolDefs = []map[string]any{
@@ -489,7 +506,11 @@ var toolDefs = []map[string]any{
 			"custom section slug from the project doc index) or a global " +
 			"knowledge page (kb_* slug from the knowledge index). Use " +
 			"this to pull exactly the document a task needs instead of " +
-			"relying on whatever was injected at spawn.",
+			"relying on whatever was injected at spawn. Pass `section` to " +
+			"read just ONE heading-section of a large page — e.g. " +
+			"doc_read(slug=\"kb_integrations\", section=\"Authentication\") " +
+			"returns that section (~1K) instead of the whole 59K guide. A " +
+			"wrong section returns the page's section list so you can retry.",
 		"inputSchema": map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -497,6 +518,12 @@ var toolDefs = []map[string]any{
 					"type": "string",
 					"description": "Section slug (project doc) or kb_* slug " +
 						"(global knowledge page).",
+				},
+				"section": map[string]any{
+					"type": "string",
+					"description": "Optional. A heading from the page to read " +
+						"just that section (case/space-insensitive). Omit to " +
+						"read the whole document.",
 				},
 			},
 			"required": []string{"slug"},
@@ -898,7 +925,8 @@ func (s *memMCPServer) callProjectDocGet(kind string) (any, error) {
 // the agent pulls the actual content it needs.
 func (s *memMCPServer) callDocRead(args json.RawMessage) (any, error) {
 	var in struct {
-		Slug string `json:"slug"`
+		Slug    string `json:"slug"`
+		Section string `json:"section"`
 	}
 	if err := json.Unmarshal(args, &in); err != nil {
 		return nil, fmt.Errorf("bad arguments: %w", err)
@@ -915,6 +943,10 @@ func (s *memMCPServer) callDocRead(args json.RawMessage) (any, error) {
 		return nil, errors.New("doc_read requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
 	}
 	path := "/api/v1/project-docs/" + urlQuery(slug) + "?cwd=" + urlQuery(cwd)
+	// Optional section= pulls one heading-section instead of the whole page.
+	if section := strings.TrimSpace(in.Section); section != "" {
+		path += "&section=" + urlQuery(section)
+	}
 	var doc struct {
 		Kind      string `json:"kind"`
 		Content   string `json:"content"`
@@ -1117,6 +1149,8 @@ func (s *memMCPServer) callProjectSearch(args json.RawMessage) (any, error) {
 			Similarity     float32 `json:"similarity"`
 			EffectiveScore float32 `json:"effective_score"`
 			CreatedAt      string  `json:"created_at"`
+			Slug           string  `json:"slug"`
+			Section        string  `json:"section"`
 		} `json:"hits"`
 	}
 	if err := s.gatewayGetJSON(url, &resp); err != nil {
@@ -1141,6 +1175,17 @@ func (s *memMCPServer) callProjectSearch(args json.RawMessage) (any, error) {
 			text = text[:240] + "…"
 		}
 		fmt.Fprintf(&b, "- **%.2f · %s** — %s\n", h.EffectiveScore, h.Source, text)
+		// Knowledge hits carry a slug (+ section when the page has
+		// subsections) — surface the exact doc_read call so the agent pulls
+		// the full section cheaply instead of guessing a slug or swallowing
+		// the whole page.
+		if h.Slug != "" {
+			if h.Section != "" {
+				fmt.Fprintf(&b, "    → doc_read(slug=%q, section=%q)\n", h.Slug, h.Section)
+			} else {
+				fmt.Fprintf(&b, "    → doc_read(slug=%q)  # full page on demand\n", h.Slug)
+			}
+		}
 	}
 	return map[string]any{
 		"content": []map[string]any{
@@ -1232,9 +1277,16 @@ func stringField(m map[string]any, key string) string {
 }
 
 func urlQuery(s string) string {
-	// Minimal escaping — full url.QueryEscape pulls in net/url
-	// which is fine but the path is short and predictable.
+	// Minimal escaping for path segments + query values. `%` and `+` MUST
+	// be escaped: an unescaped `%` makes the server's url.ParseQuery choke
+	// (silent empty value), and an unescaped `+` decodes to a space — both
+	// would silently break a section= heading like "100% done" / "Auth +
+	// OAuth". NewReplacer scans the input once and never re-scans its own
+	// output, so escaping `%`→`%25` here can't double-escape the `%20`/`%2F`
+	// it also emits. Order: `%` first as defensive documentation of intent.
 	r := strings.NewReplacer(
+		"%", "%25",
+		"+", "%2B",
 		" ", "%20",
 		"/", "%2F",
 		"?", "%3F",
