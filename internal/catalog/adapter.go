@@ -1301,6 +1301,16 @@ func injectSessionIDFor(ctx context.Context, providerID string, out *session.Pre
 		out.Args = append(out.Args, "--session-id", id)
 		out.ClaudeSessionID = id
 		return true
+	case "antigravity":
+		// agy auto-creates a conversation per cwd on a fresh spawn, so we
+		// don't pre-assign an id. On restart / account switch the manager
+		// sets the cwd's conversation id (the switch also copies the db
+		// into the new account's HOME first), and we resume it.
+		if convID := session.AntigravityResumeConversationFromContext(ctx); convID != "" {
+			out.Args = append(out.Args, "--conversation", convID)
+			return true
+		}
+		return false
 	}
 	return false
 }

@@ -489,6 +489,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// match, automatically switches the session to the next
 		// non-throttled enabled account.
 		session.WithAutoFailoverEnabled(cfg.Providers.Claude.AutoFailoverIsEnabled()),
+		// Antigravity: resume a session's conversation on restart and
+		// carry it onto the new account on switch (agy stores portable
+		// per-HOME conversation dbs) — so an account switch keeps the
+		// session instead of losing it.
+		session.WithAntigravityAccountResolver(agyacctSvc),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	// Built before the session manager so spawn can inject an
