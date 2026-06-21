@@ -267,14 +267,7 @@ func (j *Journaler) process(ctx context.Context, ev eventbus.Event, state string
 		}
 	}
 
-	entry := LogEntry{
-		Cwd:       sess.Cwd,
-		SessionID: sess.ID,
-		Kind:      LogKindSessionSummary,
-		Title:     title,
-		Content:   body,
-		UpdatedBy: AuthorSummarizer,
-	}
+	entry := newSessionSummaryEntry(sess, state, title, body)
 	if _, err := j.docs.AppendLog(ctx, entry); err != nil {
 		j.log.Warn("journaler: append failed", "session_id", sessionID, "cwd", sess.Cwd, "err", err)
 		return
@@ -407,6 +400,27 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 	}
 	j.log.Info("journaler: drift proposal filed",
 		"cwd", sess.Cwd, "kind", kind, "session_id", sess.ID, "proposal_id", proposal.ID)
+}
+
+// newSessionSummaryEntry builds the session_summary LogEntry, denormalizing
+// the session OUTCOME onto the durable row so the experience compiler's
+// episode source survives `sessions` pruning (migration 0070). state is the
+// terminal event kind ("ended"/"stopped"). StartedAt is always set on a
+// spawned session, so &sess.StartedAt never points at a zero value; EndedAt
+// is already *time.Time (nil for a session with no recorded end).
+func newSessionSummaryEntry(sess SessionInfo, state, title, body string) LogEntry {
+	return LogEntry{
+		Cwd:          sess.Cwd,
+		SessionID:    sess.ID,
+		Kind:         LogKindSessionSummary,
+		Title:        title,
+		Content:      body,
+		UpdatedBy:    AuthorSummarizer,
+		OutcomeState: state,
+		ExitCode:     sess.ExitCode,
+		StartedAt:    &sess.StartedAt,
+		EndedAt:      sess.EndedAt,
+	}
 }
 
 // SessionSucceeded is the shared "did this session end well" heuristic:

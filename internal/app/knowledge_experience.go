@@ -24,12 +24,14 @@ func (e knowledgeEpisodeSource) ListEpisodes(ctx context.Context, since time.Tim
 	if limit <= 0 {
 		limit = 400
 	}
+	// Read the outcome straight off session_logs (denormalized by the
+	// journaler, migration 0070) — NO JOIN to the ephemeral `sessions` table,
+	// which is pruned and used to silently drop ~all historical episodes.
 	rows, err := e.pool.Query(ctx, `
 		SELECT l.session_id, l.cwd, l.title, l.content, l.created_at,
 		       COALESCE(l.embedding::text, ''), COALESCE(l.embedder, ''),
-		       s.started_at, s.ended_at, s.exit_code, s.state
+		       l.started_at, l.ended_at, l.exit_code, COALESCE(l.outcome_state, '')
 		  FROM session_logs l
-		  JOIN sessions s ON s.id = l.session_id
 		 WHERE l.kind = 'session_summary'
 		   AND l.session_id IS NOT NULL
 		   AND l.created_at >= $1
@@ -44,7 +46,7 @@ func (e knowledgeEpisodeSource) ListEpisodes(ctx context.Context, since time.Tim
 		var (
 			ep        knowledge.Episode
 			vecText   string
-			startedAt time.Time
+			startedAt *time.Time // nullable now (un-backfilled rows)
 			endedAt   *time.Time
 			exitCode  *int
 			state     string
@@ -58,10 +60,13 @@ func (e knowledgeEpisodeSource) ListEpisodes(ctx context.Context, since time.Tim
 			continue
 		}
 		ep.Embedding = knowledge.ParseVector(vecText)
-		if endedAt != nil {
-			ep.Duration = endedAt.Sub(startedAt)
+		if startedAt != nil && endedAt != nil {
+			ep.Duration = endedAt.Sub(*startedAt)
 		}
 		// Same heuristic the journaler applies to the skill-outcome loop.
+		// An unknown outcome (NULL state + NULL exit, e.g. an un-backfilled
+		// legacy row) is treated as success — lenient on purpose so the
+		// recovered corpus feeds the compiler rather than being dropped.
 		ep.Success = state == "stopped" || exitCode == nil || *exitCode == 0
 		out = append(out, ep)
 	}

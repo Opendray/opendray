@@ -1433,6 +1433,20 @@ func (a *App) Run(ctx context.Context) error {
 		close(docEmbedBackfillDone)
 	}()
 
+	// One-shot: recover the session OUTCOME for historical session_summary
+	// rows (migration 0070) by parsing their bodies, so the experience
+	// compiler's episode feedstock includes the whole journal instead of the
+	// ~2 rows whose ephemeral sessions row survived. Best-effort.
+	go func() {
+		if n, err := a.projectDocSvc.BackfillLogOutcomes(ctx); err != nil {
+			a.log.Warn("session-log outcome backfill failed", "err", err)
+		} else if n > 0 {
+			a.log.Info("session-log outcome backfill complete", "rows_recovered", n)
+		} else {
+			a.log.Debug("session-log outcome backfill: nothing to recover")
+		}
+	}()
+
 	// M-U Phase 5 — one-time import of pre-existing Claude file memories
 	// into the single DB store, so an upgrading operator lands them
 	// immediately rather than only after each project's next spawn. The

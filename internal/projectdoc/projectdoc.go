@@ -184,6 +184,15 @@ type LogEntry struct {
 	Content   string    `json:"content"`
 	UpdatedBy Author    `json:"updated_by"`
 	CreatedAt time.Time `json:"created_at"`
+
+	// Outcome fields — set by the journaler on session_summary rows so the
+	// experience compiler's episode source reads success/timing straight off
+	// the durable log instead of JOINing the pruned `sessions` table. Nil/
+	// empty on non-summary rows (manual / decision).
+	OutcomeState string     `json:"outcome_state,omitempty"` // "ended" | "stopped"
+	ExitCode     *int       `json:"exit_code,omitempty"`
+	StartedAt    *time.Time `json:"started_at,omitempty"`
+	EndedAt      *time.Time `json:"ended_at,omitempty"`
 }
 
 // Sentinel errors.
@@ -646,11 +655,20 @@ func (s *Service) AppendLog(ctx context.Context, e LogEntry) (LogEntry, error) {
 	if e.SessionID != "" {
 		sessID = e.SessionID
 	}
+	var outcomeState any
+	if e.OutcomeState != "" {
+		outcomeState = e.OutcomeState
+	}
+	// Outcome columns are populated only for session_summary rows (by the
+	// journaler); they stay NULL for manual/decision logs. Not in RETURNING —
+	// callers don't read them back, so scanLog is untouched.
 	row := s.pool.QueryRow(ctx, `
-		INSERT INTO session_logs (id, cwd, session_id, kind, title, content, updated_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO session_logs (id, cwd, session_id, kind, title, content, updated_by,
+		                          outcome_state, exit_code, started_at, ended_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id, cwd, COALESCE(session_id, ''), kind, title, content, updated_by, created_at`,
-		id, e.Cwd, sessID, string(e.Kind), e.Title, e.Content, string(e.UpdatedBy))
+		id, e.Cwd, sessID, string(e.Kind), e.Title, e.Content, string(e.UpdatedBy),
+		outcomeState, e.ExitCode, e.StartedAt, e.EndedAt)
 	out, err := scanLog(row)
 	if err == nil {
 		s.mirrorBestEffort(ctx, out.Cwd)
