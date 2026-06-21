@@ -10,6 +10,46 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.10.0] — 2026-06-21
+
+### Added
+
+- **Antigravity multi-account.** Bind a session to a specific Antigravity
+  (`agy`) login, switch accounts from the session header, and manage
+  accounts in Providers → Antigravity (discovery + guided `HOME=… agy`
+  login). Accounts are isolated by `$HOME` — the agy analogue of Claude's
+  `CLAUDE_CONFIG_DIR`. **Switching accounts keeps the conversation:** agy
+  stores each conversation as a portable per-`$HOME` SQLite db, so the
+  switch copies the current conversation into the new account's HOME and
+  resumes it (`--conversation <id>`) — you continue the same chat on the
+  other identity, only the credential/quota changes. Restarting an
+  antigravity session resumes its conversation too. (#396)
+- **Grok Build CLI provider.** xAI's `grok` as a first-class provider
+  (install with `curl -fsSL https://x.ai/cli/install.sh | bash`, then
+  `grok login`; models `grok-build` / `grok-composer-2.5-fast`, bypass via
+  `--always-approve`). Resolves exe/model/bypass generically — no per-CLI
+  adapter code. (#397)
+- **OpenCode local-endpoint diagnostics.** When a session's local endpoint
+  (LM Studio / Ollama / vLLM) is unreachable or serves no chat-capable
+  model, opendray now surfaces a one-time spawn notice explaining the cause
+  (check the URL ends in `/v1`, the endpoint serves on the LAN, a chat
+  model is loaded) instead of OpenCode's opaque `[buffer unavailable]`. (#398)
+
+### Changed
+
+- **Carry-context is ON by default when switching Claude accounts**, and
+  rate-limit auto-failover now carries context too — a switch seeds the new
+  account with a recap of the prior conversation instead of starting blank.
+  Untick the toggle for a clean-slate switch. (#395)
+
+### Removed
+
+- **Gemini CLI provider retired**, superseded by Antigravity. Removed from
+  the install wizard, the provider catalog/UI, the `opendray providers`
+  npm-update list, and the Cortex "discuss with AI" list. Existing Gemini
+  sessions and on-disk credentials are left untouched, but the provider is
+  no longer offered to new installs. (#397, #399)
+
 ## [v2.9.1] — 2026-06-19
 
 ### Fixed
