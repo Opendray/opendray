@@ -69,6 +69,11 @@ type Session struct {
 	PID             int      `json:"pid,omitempty"`
 	ClaudeAccountID string   `json:"claude_account_id,omitempty"`
 	ClaudeSessionID string   `json:"claude_session_id,omitempty"`
+	// AntigravityAccountID is the agyacct account this session is pinned
+	// to (provider "antigravity"). Empty means the CLI's default HOME
+	// (~/.gemini). Mirrors ClaudeAccountID for the agy provider, whose
+	// accounts are isolated by HOME rather than CLAUDE_CONFIG_DIR.
+	AntigravityAccountID string `json:"antigravity_account_id,omitempty"`
 	// ParentSessionID links a session spawned on behalf of another
 	// (e.g. the Inspector's Tasks tab spawns shell children of an
 	// AI session). Empty for top-level sessions. Used purely for UI
@@ -107,11 +112,12 @@ type CreateRequest struct {
 	// id for the claude provider). Empty means "use the provider config
 	// default". Applied at spawn via the provider's model flag, so a
 	// `--model` in Args still wins (the manager dedups overridden flags).
-	Model           string   `json:"model,omitempty"`
-	ClaudeAccountID string   `json:"claude_account_id,omitempty"`
-	ParentSessionID string   `json:"parent_session_id,omitempty"`
-	Cwd             string   `json:"cwd"`
-	Args            []string `json:"args"`
+	Model                string   `json:"model,omitempty"`
+	ClaudeAccountID      string   `json:"claude_account_id,omitempty"`
+	AntigravityAccountID string   `json:"antigravity_account_id,omitempty"`
+	ParentSessionID      string   `json:"parent_session_id,omitempty"`
+	Cwd                  string   `json:"cwd"`
+	Args                 []string `json:"args"`
 
 	// origin/integrationID are unexported on purpose: they are derived
 	// from the authenticated principal by the HTTP handler (SetOrigin)
@@ -172,7 +178,7 @@ var (
 	ErrAlreadyRunning           = errors.New("session already running")
 	ErrUnknownProvider          = errors.New("unknown provider")
 	ErrProviderUnavailable      = errors.New("provider unavailable")
-	ErrAccountSwitchUnsupported = errors.New("account switch only supported for claude provider")
+	ErrAccountSwitchUnsupported = errors.New("account switch only supported for claude and antigravity providers")
 )
 
 func newID() string {

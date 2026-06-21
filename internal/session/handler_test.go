@@ -136,6 +136,23 @@ func (f *fakeSvc) SwitchClaudeAccount(_ context.Context, id, accountID string, c
 	return s, nil
 }
 
+func (f *fakeSvc) SwitchAntigravityAccount(_ context.Context, id, accountID string) (Session, error) {
+	if f.switchErr != nil {
+		return Session{}, f.switchErr
+	}
+	s, ok := f.sessions[id]
+	if !ok {
+		return Session{}, ErrNotFound
+	}
+	if s.ProviderID != "antigravity" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	s.AntigravityAccountID = accountID
+	s.State = StateRunning
+	f.sessions[id] = s
+	return s, nil
+}
+
 func (f *fakeSvc) Buffer(_ context.Context, id string, since int64) (Replay, error) {
 	if _, ok := f.sessions[id]; !ok {
 		return Replay{}, ErrNotFound
