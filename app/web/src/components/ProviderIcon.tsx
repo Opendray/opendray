@@ -20,12 +20,13 @@ const PROVIDER_ICON_MAP: Record<string, string> = {
   codex: 'openai',
   antigravity: 'antigravity',
   opencode: 'opencode',
+  grok: 'grok',
   shell: 'shell',
 }
 
 // IDs whose source SVG is a monochrome black mark. These need
 // `invert` on dark themes so the glyph reads as light on dark.
-const MONOCHROME_DARK_INVERT = new Set(['openai', 'shell', 'opencode'])
+const MONOCHROME_DARK_INVERT = new Set(['openai', 'shell', 'opencode', 'grok'])
 
 export interface ProviderIconProps {
   providerId: string | undefined
