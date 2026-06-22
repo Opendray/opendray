@@ -10,6 +10,18 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- **MCP servers reach Grok.** Grok Build sessions now receive opendray's
+  enabled MCP registry (HashiCorp Vault, etc.), per-provider `mcp_servers`,
+  integration-scoped servers, and the opendray-memory server — the same
+  injection every other MCP-capable provider gets. opendray writes them
+  into the project-scoped `<cwd>/.grok/config.toml` `[mcp_servers]` table,
+  which Grok union-merges with your global `~/.grok/config.toml` (your
+  personal servers are untouched). Previously Grok shipped with MCP
+  injection disabled, so it could not see Vault or any other shared server
+  the operator had configured.
+
 ## [v2.10.0] — 2026-06-21
 
 ### Added
