@@ -1091,7 +1091,7 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	// drop human-courtesy framing (intro essays, "auto-generated"
 	// markers, last-scanned timestamps). Saves ~15-25% spawn tokens.
 	var b strings.Builder
-	header := "## Project context (cross-agent shared, read-only)\n\n"
+	header := "## Project context (cross-agent shared, read-only)\n\n" + cortexPrimacyPreamble
 	footer := "Keep the project docs current as you work. For the short-term objective we're working on right now, use `current_objective_set` — it writes the live doc directly: call it when a new immediate objective is set, when the current one is finished, or when its steps shift. For the long-term `project_goal_set` / medium-term `project_plan_set`, do **not** silently overwrite — those file a proposal the operator approves first.\n"
 	b.WriteString(header)
 
@@ -1147,6 +1147,19 @@ func (s *Service) RenderForSpawnWithBudget(ctx context.Context, cwd string, rece
 	return b.String(), nil
 }
 
+// cortexPrimacyPreamble frames the whole injected banner as op's authoritative
+// source, so an agent consults cortex FIRST and treats external/on-disk mirrors
+// (an Obsidian vault, a wiki, scattered notes) as a fallback. Fixes the case
+// where an agent went straight to Obsidian for infra/process knowledge that the
+// injected cortex already holds. Used by BOTH spawn-render modes.
+const cortexPrimacyPreamble = "This is op's authoritative cross-agent knowledge for this workspace: the " +
+	"foundational rules below plus the `kb_*` knowledge pages indexed further down are the source of " +
+	"truth. **Consult this cortex FIRST** — read the foundational rules, and `doc_read` / " +
+	"`project_search` the `kb_*` pages on demand. Treat any external or on-disk mirror (e.g. an " +
+	"Obsidian vault, a wiki, scattered README/notes) as a SECONDARY fallback: reach for it ONLY when " +
+	"cortex doesn't cover what you need, and prefer cortex when they disagree — it is the live, " +
+	"curated copy.\n\n"
+
 // renderLeanSpawn is the lean-mode banner: binding foundational rules
 // in full (they are the guardrails — never indexed away), then a
 // compact INDEX of the project's doc sections and the knowledge pages
@@ -1164,6 +1177,7 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 
 	var b strings.Builder
 	b.WriteString("## Project context (cross-agent shared, read-only)\n\n")
+	b.WriteString(cortexPrimacyPreamble)
 	if foundational != "" {
 		b.WriteString("### Foundational knowledge — RULES you MUST follow\n\n")
 		b.WriteString(foundational)
