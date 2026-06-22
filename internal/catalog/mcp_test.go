@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/BurntSushi/toml"
 )
 
 func TestRenderClaudeMCP_StdioServer(t *testing.T) {
@@ -291,6 +293,155 @@ func TestRenderGeminiMCP_MalformedUserSettingsErrors(t *testing.T) {
 		{Name: "fs", Command: "npx"},
 	}); err == nil {
 		t.Fatal("expected error on malformed user settings.json (must not clobber)")
+	}
+}
+
+func readGrokConfig(t *testing.T, cwd string) map[string]any {
+	t.Helper()
+	var got map[string]any
+	if _, err := toml.DecodeFile(filepath.Join(cwd, ".grok", "config.toml"), &got); err != nil {
+		t.Fatalf("decode grok config.toml: %v", err)
+	}
+	return got
+}
+
+func TestRenderGrokMCP_WritesProjectConfig(t *testing.T) {
+	cwd := t.TempDir()
+	servers := []MCPServer{
+		{Name: "vault", Command: "vault-mcp", Args: []string{"--addr", "https://v"}, Env: map[string]string{"VAULT_TOKEN": "s.xxx"}},
+	}
+	args, env, err := renderMCP("grok", t.TempDir(), cwd, servers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(args) != 0 || len(env) != 0 {
+		t.Errorf("args=%v env=%v, want none (grok reads <cwd>/.grok/config.toml)", args, env)
+	}
+	mcps, ok := readGrokConfig(t, cwd)["mcp_servers"].(map[string]any)
+	if !ok {
+		t.Fatalf("mcp_servers table missing")
+	}
+	vault, ok := mcps["vault"].(map[string]any)
+	if !ok {
+		t.Fatalf("vault server missing: %v", mcps)
+	}
+	if vault["command"].(string) != "vault-mcp" {
+		t.Errorf("command=%v", vault["command"])
+	}
+	if vault["env"].(map[string]any)["VAULT_TOKEN"].(string) != "s.xxx" {
+		t.Errorf("env not rendered: %v", vault["env"])
+	}
+	// Managed ledger + gitignore so stale entries can be pruned and the
+	// credential-bearing config never lands in version control.
+	if _, err := os.Stat(filepath.Join(cwd, ".grok", grokManagedFile)); err != nil {
+		t.Errorf("managed ledger missing: %v", err)
+	}
+	gi, err := os.ReadFile(filepath.Join(cwd, ".grok", ".gitignore"))
+	if err != nil {
+		t.Fatalf("gitignore missing: %v", err)
+	}
+	if !strings.Contains(string(gi), "config.toml") {
+		t.Errorf("gitignore does not cover config.toml: %s", gi)
+	}
+}
+
+func TestRenderGrokMCP_RemoteTransports(t *testing.T) {
+	cwd := t.TempDir()
+	_, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+		{Name: "sse_srv", Transport: "sse", URL: "http://h/sse", Headers: map[string]string{"X-Key": "v"}},
+		{Name: "http_srv", Transport: "http", URL: "http://h/mcp"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mcps := readGrokConfig(t, cwd)["mcp_servers"].(map[string]any)
+	sse := mcps["sse_srv"].(map[string]any)
+	if sse["url"].(string) != "http://h/sse" || sse["type"].(string) != "sse" {
+		t.Errorf("sse render wrong: %v", sse)
+	}
+	if sse["headers"].(map[string]any)["X-Key"].(string) != "v" {
+		t.Errorf("sse headers wrong: %v", sse)
+	}
+	httpSrv := mcps["http_srv"].(map[string]any)
+	if httpSrv["url"].(string) != "http://h/mcp" {
+		t.Errorf("http url wrong: %v", httpSrv)
+	}
+	// Streamable HTTP is grok's default for a url with no type.
+	if _, hasType := httpSrv["type"]; hasType {
+		t.Errorf("http server should omit type (streamable default): %v", httpSrv)
+	}
+}
+
+func TestRenderGrokMCP_MergePreservesUserConfig(t *testing.T) {
+	cwd := t.TempDir()
+	dir := filepath.Join(cwd, ".grok")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	user := "[mcp_servers.user-server]\ncommand = \"uvx\"\nargs = [\"my-mcp\"]\n"
+	if err := os.WriteFile(filepath.Join(dir, "config.toml"), []byte(user), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+		{Name: "vault", Command: "vault-mcp"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	mcps := readGrokConfig(t, cwd)["mcp_servers"].(map[string]any)
+	if _, ok := mcps["user-server"]; !ok {
+		t.Errorf("user mcp entry lost: %v", mcps)
+	}
+	if _, ok := mcps["vault"]; !ok {
+		t.Errorf("managed entry missing: %v", mcps)
+	}
+}
+
+func TestRenderGrokMCP_RemovesStaleManagedEntries(t *testing.T) {
+	cwd := t.TempDir()
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+		{Name: "vault", Command: "vault-mcp"},
+		{Name: "old", Command: "node"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+		{Name: "vault", Command: "vault-mcp"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	mcps := readGrokConfig(t, cwd)["mcp_servers"].(map[string]any)
+	if _, ok := mcps["old"]; ok {
+		t.Errorf("stale managed entry survived: %v", mcps)
+	}
+	if _, ok := mcps["vault"]; !ok {
+		t.Errorf("live managed entry missing: %v", mcps)
+	}
+
+	// Full cleanup (MCP off this spawn).
+	if err := syncGrokWorkspaceMCP(cwd, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := readGrokConfig(t, cwd)["mcp_servers"]; ok {
+		t.Errorf("managed entries not cleaned up")
+	}
+	if _, err := os.Stat(filepath.Join(cwd, ".grok", grokManagedFile)); !os.IsNotExist(err) {
+		t.Errorf("managed ledger should be removed after cleanup, err=%v", err)
+	}
+}
+
+func TestRenderGrokMCP_MalformedUserConfigErrors(t *testing.T) {
+	cwd := t.TempDir()
+	dir := filepath.Join(cwd, ".grok")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "config.toml"), []byte("[mcp_servers.x\nbroken"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+		{Name: "vault", Command: "vault-mcp"},
+	}); err == nil {
+		t.Fatal("expected error on malformed user config.toml (must not clobber)")
 	}
 }
 

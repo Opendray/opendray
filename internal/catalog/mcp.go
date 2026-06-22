@@ -1,12 +1,15 @@
 package catalog
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 // MCPServer is one entry from a provider's user config under the
@@ -85,6 +88,13 @@ func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, 
 		// OpenCode reads MCP from its JSON config's `mcp` block; we merge
 		// into the per-session OPENCODE_CONFIG file opendray generates.
 		return renderOpenCodeMCP(baseDir, servers)
+	case "grok":
+		// Grok (xAI Build CLI) reads project-scoped MCP from
+		// <cwd>/.grok/config.toml (only its [mcp_servers] table) and
+		// union-merges it with the user's ~/.grok/config.toml — global-only
+		// servers stay untouched, so injecting here never disturbs the
+		// operator's personal Grok setup.
+		return renderGrokMCP(cwd, servers)
 	default:
 		// Provider declared supportsMcp=true but we have no renderer
 		// for it; surface as a no-op rather than failing the spawn.
@@ -255,6 +265,182 @@ func writeGeminiGitignore(dir string) {
 		geminiManagedFile + "\n" +
 		".gitignore\n"
 	_ = os.WriteFile(path, []byte(content), 0o644)
+}
+
+// grokManagedFile records which [mcp_servers] entries inside the
+// project config.toml are opendray-managed, so subsequent renders can
+// update / remove exactly those without touching user-authored ones.
+const grokManagedFile = ".opendray-managed.json"
+
+// renderGrokMCP merges the session's MCP servers into
+// <cwd>/.grok/config.toml — the project-scoped surface Grok honours.
+// Grok reads ONLY [mcp_servers] from project config and union-merges it
+// with the user's global ~/.grok/config.toml (same-named servers are
+// replaced, global-only servers untouched), so this never disturbs the
+// operator's global Grok setup. Merge is non-destructive: user-authored
+// entries in an existing project file are preserved.
+func renderGrokMCP(cwd string, servers []MCPServer) ([]string, map[string]string, error) {
+	if strings.TrimSpace(cwd) == "" {
+		return nil, nil, nil
+	}
+	entries := map[string]map[string]any{}
+	for _, s := range servers {
+		spec := grokMCPServerSpec(s)
+		if spec == nil {
+			continue
+		}
+		entries[s.Name] = spec
+	}
+	if err := syncGrokWorkspaceMCP(cwd, entries); err != nil {
+		return nil, nil, err
+	}
+	return nil, nil, nil
+}
+
+// syncGrokWorkspaceMCP applies the desired opendray-managed [mcp_servers]
+// entries to <cwd>/.grok/config.toml. An empty desired map removes every
+// previously managed entry (server disabled / removed from the registry)
+// and is a no-op when nothing was ever managed — so calling this on every
+// grok spawn keeps the project config converged with the registry without
+// churning untouched projects.
+func syncGrokWorkspaceMCP(cwd string, desired map[string]map[string]any) error {
+	dir := filepath.Join(cwd, ".grok")
+	managedPath := filepath.Join(dir, grokManagedFile)
+	prevManaged := readGrokManaged(managedPath)
+	if len(desired) == 0 && len(prevManaged) == 0 {
+		return nil
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("mkdir grok workspace dir: %w", err)
+	}
+
+	configPath := filepath.Join(dir, "config.toml")
+	config := map[string]any{}
+	if data, err := os.ReadFile(configPath); err == nil {
+		if err := toml.Unmarshal(data, &config); err != nil {
+			// Never risk rewriting a user-authored file we can't parse.
+			return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", configPath, err)
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("read grok config: %w", err)
+	}
+
+	mcpServers, _ := config["mcp_servers"].(map[string]any)
+	if mcpServers == nil {
+		mcpServers = map[string]any{}
+	}
+	// Drop entries we managed before that are no longer desired.
+	// User-authored entries are never in the managed list.
+	for _, name := range prevManaged {
+		if _, still := desired[name]; !still {
+			delete(mcpServers, name)
+		}
+	}
+	managed := make([]string, 0, len(desired))
+	for name, spec := range desired {
+		mcpServers[name] = spec
+		managed = append(managed, name)
+	}
+	sort.Strings(managed)
+	if len(mcpServers) == 0 {
+		delete(config, "mcp_servers")
+	} else {
+		config["mcp_servers"] = mcpServers
+	}
+
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(config); err != nil {
+		return fmt.Errorf("marshal grok config: %w", err)
+	}
+	// 0600: managed entries may embed resolved credentials (e.g. a Vault
+	// token). WriteFile keeps the existing mode when the file already exists.
+	if err := os.WriteFile(configPath, buf.Bytes(), 0o600); err != nil {
+		return fmt.Errorf("write grok config: %w", err)
+	}
+
+	if len(managed) == 0 {
+		_ = os.Remove(managedPath)
+	} else {
+		body, err := json.MarshalIndent(managed, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal grok managed list: %w", err)
+		}
+		if err := os.WriteFile(managedPath, append(body, '\n'), 0o600); err != nil {
+			return fmt.Errorf("write grok managed list: %w", err)
+		}
+	}
+	writeGrokGitignore(dir)
+	return nil
+}
+
+// readGrokManaged loads the managed-entry names from a prior render.
+// Missing / malformed → nil (treated as "nothing managed yet").
+func readGrokManaged(path string) []string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	var names []string
+	if err := json.Unmarshal(data, &names); err != nil {
+		return nil
+	}
+	return names
+}
+
+// writeGrokGitignore drops a .gitignore next to the project config so the
+// opendray-managed config.toml — which can embed resolved credentials —
+// never lands in version control. Only created when missing: a
+// user-authored .grok/.gitignore always wins.
+func writeGrokGitignore(dir string) {
+	path := filepath.Join(dir, ".gitignore")
+	if _, err := os.Lstat(path); err == nil || !os.IsNotExist(err) {
+		return
+	}
+	content := "# Generated by opendray. config.toml carries opendray-managed MCP\n" +
+		"# server entries (may embed resolved credentials) — do not commit.\n" +
+		"config.toml\n" +
+		grokManagedFile + "\n" +
+		".gitignore\n"
+	_ = os.WriteFile(path, []byte(content), 0o644)
+}
+
+// grokMCPServerSpec converts one registry server into Grok's TOML
+// [mcp_servers.<name>] table shape. stdio uses command/args/env; sse uses
+// url + type="sse"; streamable HTTP uses url alone (Grok's default when no
+// type is set). Returns nil for entries missing their required field.
+func grokMCPServerSpec(s MCPServer) map[string]any {
+	switch s.Transport {
+	case "sse":
+		if s.URL == "" {
+			return nil
+		}
+		spec := map[string]any{"url": s.URL, "type": "sse"}
+		if len(s.Headers) > 0 {
+			spec["headers"] = s.Headers
+		}
+		return spec
+	case "http":
+		if s.URL == "" {
+			return nil
+		}
+		spec := map[string]any{"url": s.URL}
+		if len(s.Headers) > 0 {
+			spec["headers"] = s.Headers
+		}
+		return spec
+	default: // stdio
+		if s.Command == "" {
+			return nil
+		}
+		spec := map[string]any{"command": s.Command}
+		if len(s.Args) > 0 {
+			spec["args"] = s.Args
+		}
+		if len(s.Env) > 0 {
+			spec["env"] = s.Env
+		}
+		return spec
+	}
 }
 
 func stdioMCPServerSpec(s MCPServer) map[string]any {

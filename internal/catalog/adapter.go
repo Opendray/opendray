@@ -701,6 +701,19 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		// Grok renders MCP into <cwd>/.grok/config.toml (project-scoped
+		// config). Mirror the antigravity cleanup so disabling MCP this
+		// spawn prunes stale managed entries (and their credentials).
+		if providerID == "grok" {
+			cwd := session.Cwd(prepareCtx)
+			if cwd != "" && !mcpEnabled {
+				if err := syncGrokWorkspaceMCP(cwd, nil); err != nil {
+					sp.log.Warn("workspace MCP cleanup failed",
+						"provider", providerID, "cwd", cwd, "err", err)
+				}
+			}
+		}
+
 		if providerID == "codex" && out.Env["CODEX_HOME"] != "" {
 			if err := ensureCodexScratchTrust(out.Env["CODEX_HOME"], session.Cwd(prepareCtx)); err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("prepare codex config: %w", err)
