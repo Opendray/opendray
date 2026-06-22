@@ -1180,6 +1180,15 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		for _, d := range docs {
 			filled[string(d.Kind)] = d
 		}
+		// The current objective is the live "what we're doing RIGHT NOW" — the
+		// single highest-signal piece of project state. Always inject its BODY
+		// (not just an index line) so the agent works to it without having to
+		// fetch it. Short by design, so the cost is a few hundred tokens.
+		if d, ok := filled[string(KindCurrentObjective)]; ok && strings.TrimSpace(d.Content) != "" {
+			b.WriteString("### Current objective — work to THIS\n\n")
+			b.WriteString(strings.TrimSpace(d.Content))
+			b.WriteString("\n\n")
+		}
 		b.WriteString("### Project doc index\n\n")
 		for _, sec := range sections {
 			d, has := filled[sec.Slug]
@@ -1223,11 +1232,17 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		"If unsure which section, `project_search(\"<your task>\")` returns the best-matching " +
 		"section plus its `doc_read` pointer. `memory_search` covers episodic facts. " +
 		"Fetch ONLY what the task needs.\n\n" +
-		"Keep the project docs current. Use `current_objective_set` for the short-term " +
-		"objective we're working on right now — it writes the live doc directly (new " +
-		"objective set / current one finished / steps shift). For the long-term " +
-		"`project_goal_set` and medium-term `project_plan_set`, do **not** silently " +
-		"overwrite — those file a proposal the operator approves first.\n")
+		"**Maintain project state PROACTIVELY as you work — do not wait to be asked.** " +
+		"Treat the current objective shown above (if any) as your working brief and work to " +
+		"it; if none is set and the task is clear, set one. Call `current_objective_set` " +
+		"yourself whenever the situation changes — a new immediate objective is set, the " +
+		"current one is finished (roll to the next), or its steps shift; it writes the live " +
+		"doc directly, no approval. Use `session_log_append` every time you finish a " +
+		"meaningful step, make a decision, hit a blocker, or learn something the next session " +
+		"should know — a session that ends with no journal entries taught the next agent " +
+		"nothing. Save durable cross-session facts with `memory_store`. For the long-term " +
+		"`project_goal_set` and medium-term `project_plan_set`, do **not** silently overwrite " +
+		"— those file a proposal the operator approves first.\n")
 	return b.String(), nil
 }
 
