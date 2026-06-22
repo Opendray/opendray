@@ -10,6 +10,8 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.10.1] — 2026-06-22
+
 ### Added
 
 - **MCP servers reach Grok.** Grok Build sessions now receive opendray's
@@ -20,7 +22,36 @@ for the full rationale and what triggers a major bump.
   which Grok union-merges with your global `~/.grok/config.toml` (your
   personal servers are untouched). Previously Grok shipped with MCP
   injection disabled, so it could not see Vault or any other shared server
-  the operator had configured.
+  the operator had configured. (#404)
+- **Cortex-first knowledge framing.** The spawn banner now opens with a
+  preamble telling the agent to consult opendray's injected cortex
+  (`kb_*` pages) as the authoritative source first, treating any external
+  mirror (Obsidian vault, wiki) as a secondary fallback used only when the
+  cortex doesn't cover the topic. Stops agents from grounding infra/DB
+  process answers in stale external notes when the curated copy is already
+  in-context. (#406)
+- **Current objective always injected.** Lean-mode spawns now inject the
+  live `current_objective` body as a dedicated "work to THIS" block (not
+  just an index entry the agent had to remember to fetch), plus a stronger
+  proactive-maintenance directive so agents keep `current_objective`,
+  the journal, and durable memory current on their own. (#403)
+- **On-demand, section-level KB access.** `doc_read` and `project_search`
+  can now pull a single heading-section of a large global knowledge page
+  instead of the whole thing — a `kb_integrations` lookup drops from
+  ~15K tokens to ~300–1.3K, and search hits carry a
+  `doc_read(slug, section=…)` pointer instead of dead-ending on a teaser. (#400)
+- **Cross-project distilled knowledge now applies.** Fixed the experience
+  compiler reading session outcomes through an ephemeral table, which
+  starved it of feedstock (112 journal summaries → only 2 survived) so it
+  produced zero global playbooks. Outcomes are now denormalized onto the
+  durable journal row (migration `0070`, with a one-shot backfill of
+  historical rows), so the compiler sees the full corpus and its global
+  playbooks auto-inject at spawn. (#402)
+
+### Fixed
+
+- **Grok provider icon.** Grok now shows its real brand mark in the spawn
+  dialog and provider rail instead of the neutral letter-disc fallback. (#405)
 
 ## [v2.10.0] — 2026-06-21
 
