@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/providers_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/providers/antigravity_accounts_section.dart';
 import 'package:opendray/features/providers/claude_accounts_section.dart';
 
 // Provider config editor — schema-driven so we don't carry per-
@@ -170,6 +171,7 @@ class _ProviderConfigScreenState
 
   Widget _buildEditor(ProviderDetail p) {
     final isClaude = p.id == 'claude';
+    final isAntigravity = p.id == 'antigravity';
     final groups = <String, List<ConfigField>>{};
     for (final f in p.configSchema) {
       if (!_shouldShow(f)) continue;
@@ -177,7 +179,7 @@ class _ProviderConfigScreenState
       groups.putIfAbsent(g, () => []).add(f);
     }
     final hasFields = groups.isNotEmpty;
-    if (!hasFields && !isClaude) {
+    if (!hasFields && !isClaude && !isAntigravity) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -222,6 +224,11 @@ class _ProviderConfigScreenState
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: ClaudeAccountsSection(),
+          ),
+        if (isAntigravity)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: AntigravityAccountsSection(),
           ),
       ],
     );

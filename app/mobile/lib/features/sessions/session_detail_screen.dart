@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:opendray/core/api/antigravity_accounts_api.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
@@ -93,29 +94,40 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             ),
             orElse: SizedBox.shrink,
           ),
-          // Account switcher — Claude live sessions only. Rebinds the
-          // running session to a different OAuth account (mirrors the
-          // web header AccountSwitcher). Hidden for non-Claude providers
+          // Account switcher — Claude and Antigravity live sessions only.
+          // Rebinds the running session to a different account (mirrors
+          // the web header AccountSwitcher). Hidden for other providers
           // (no account concept) and terminated sessions (nothing to
           // rebind — /resume first).
           async.maybeWhen(
-            data: (s) => (s.providerId == 'claude' && s.isLive)
-                ? IconButton(
-                    icon: const Icon(Icons.manage_accounts_outlined),
-                    tooltip: t.sessions.detail.accountSwitcher.tooltip,
-                    onPressed: () async {
-                      final switched = await AccountSwitchSheet.show(
-                        context,
-                        session: s,
-                      );
-                      if (!switched || !context.mounted) return;
-                      ref
-                        ..invalidate(sessionByIdProvider(widget.sessionId))
-                        ..invalidate(sessionsListProvider)
-                        ..invalidate(claudeAccountsListProvider);
-                    },
-                  )
-                : const SizedBox.shrink(),
+            data: (s) {
+              final isClaude = s.providerId == 'claude';
+              final isAgy = s.providerId == 'antigravity';
+              if (!(isClaude || isAgy) || !s.isLive) {
+                return const SizedBox.shrink();
+              }
+              return IconButton(
+                icon: const Icon(Icons.manage_accounts_outlined),
+                tooltip: isAgy
+                    ? t.sessions.detail.accountSwitcher.tooltipAgy
+                    : t.sessions.detail.accountSwitcher.tooltip,
+                onPressed: () async {
+                  final switched = await AccountSwitchSheet.show(
+                    context,
+                    session: s,
+                  );
+                  if (!switched || !context.mounted) return;
+                  ref
+                    ..invalidate(sessionByIdProvider(widget.sessionId))
+                    ..invalidate(sessionsListProvider)
+                    ..invalidate(
+                      isAgy
+                          ? antigravityAccountsListProvider
+                          : claudeAccountsListProvider,
+                    );
+                },
+              );
+            },
             orElse: SizedBox.shrink,
           ),
           async.maybeWhen(

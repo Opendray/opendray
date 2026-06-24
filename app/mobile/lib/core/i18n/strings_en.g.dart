@@ -559,6 +559,7 @@ class TranslationsProvidersEn {
 
 	late final TranslationsProvidersUpdateCheckEn updateCheck = TranslationsProvidersUpdateCheckEn.internal(_root);
 	late final TranslationsProvidersAccountsEn accounts = TranslationsProvidersAccountsEn.internal(_root);
+	late final TranslationsProvidersAntigravityAccountsEn antigravityAccounts = TranslationsProvidersAntigravityAccountsEn.internal(_root);
 
 	/// en: 'Provider config'
 	String get configFallbackTitle => 'Provider config';
@@ -2912,6 +2913,7 @@ class TranslationsWebProvidersEn {
 	late final TranslationsWebProvidersDetailEn detail = TranslationsWebProvidersDetailEn.internal(_root);
 	late final TranslationsWebProvidersConfigFormEn configForm = TranslationsWebProvidersConfigFormEn.internal(_root);
 	late final TranslationsWebProvidersClaudeAccountsEn claudeAccounts = TranslationsWebProvidersClaudeAccountsEn.internal(_root);
+	late final TranslationsWebProvidersAntigravityAccountsEn antigravityAccounts = TranslationsWebProvidersAntigravityAccountsEn.internal(_root);
 	late final TranslationsWebProvidersModelsEn models = TranslationsWebProvidersModelsEn.internal(_root);
 }
 
@@ -4154,6 +4156,42 @@ class TranslationsProvidersAccountsEn {
 
 	/// en: 'Accept failed'
 	String get identityAcceptFailed => 'Accept failed';
+}
+
+// Path: providers.antigravityAccounts
+class TranslationsProvidersAntigravityAccountsEn {
+	TranslationsProvidersAntigravityAccountsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Adding a new account is gateway-host only.'
+	String get addHint => 'Adding a new account is gateway-host only.';
+
+	/// en: 'Give each account its own HOME on the gateway host (HOME=~/.antigravity-accounts/<name> agy), finish the Google sign-in, then tap Import local.'
+	String get addBody => 'Give each account its own HOME on the gateway host (HOME=~/.antigravity-accounts/<name> agy), finish the Google sign-in, then tap Import local.';
+
+	/// en: 'Sessions spawned with the Antigravity provider pick from these accounts (or fall back to the gateway default HOME).'
+	String get intro => 'Sessions spawned with the Antigravity provider pick from these accounts (or fall back to the gateway default HOME).';
+
+	/// en: 'No Antigravity accounts yet. Run HOME=~/.antigravity-accounts/<name> agy on the gateway host, finish the Google sign-in, then tap Import local.'
+	String get empty => 'No Antigravity accounts yet. Run HOME=~/.antigravity-accounts/<name> agy on the gateway host, finish the Google sign-in, then tap Import local.';
+
+	/// en: 'Remove account?'
+	String get deleteTitle => 'Remove account?';
+
+	/// en: 'Removes the account from opendray. The on-disk HOME directory is left untouched; sessions already using it stay running.'
+	String get deleteBody => 'Removes the account from opendray. The on-disk HOME directory is left untouched; sessions already using it stay running.';
+
+	/// en: 'Already in sync — gateway has no new accounts.'
+	String get importSyncedSnack => 'Already in sync — gateway has no new accounts.';
+
+	/// en: 'not logged in'
+	String get noTokenYet => 'not logged in';
+
+	/// en: 'home: {dir}'
+	String homeDir({required Object dir}) => 'home: ${dir}';
 }
 
 // Path: integrations.form
@@ -6303,11 +6341,20 @@ class TranslationsWebSessionsAccountSwitcherEn {
 	/// en: 'Switch Claude account (restarts the CLI process)'
 	String get tooltip => 'Switch Claude account (restarts the CLI process)';
 
+	/// en: 'Switch Antigravity account (restarts the CLI process)'
+	String get tooltipAgy => 'Switch Antigravity account (restarts the CLI process)';
+
 	/// en: 'default'
 	String get currentDefault => 'default';
 
 	/// en: 'Switch Claude account'
 	String get menuTitle => 'Switch Claude account';
+
+	/// en: 'Switch Antigravity account'
+	String get menuTitleAgy => 'Switch Antigravity account';
+
+	/// en: 'Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchAgy => 'Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?';
 
 	/// en: 'Default'
 	String get defaultName => 'Default';
@@ -8124,6 +8171,75 @@ class TranslationsWebProvidersClaudeAccountsEn {
 
 	/// en: 'Could not accept identity'
 	String get identityAcceptFailedToast => 'Could not accept identity';
+}
+
+// Path: web.providers.antigravityAccounts
+class TranslationsWebProvidersAntigravityAccountsEn {
+	TranslationsWebProvidersAntigravityAccountsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Antigravity accounts'
+	String get title => 'Antigravity accounts';
+
+	/// en: 'Import local'
+	String get importLocal => 'Import local';
+
+	/// en: 'Scan ~/.antigravity-accounts/ (and the gateway user's ~) on the host and register any logged-in account dirs. Gateway-host only.'
+	String get importLocalTooltip => 'Scan ~/.antigravity-accounts/ (and the gateway user\'s ~) on the host and register any logged-in account dirs. Gateway-host only.';
+
+	/// en: 'Nothing to import — accounts already in sync.'
+	String get importedNothingToast => 'Nothing to import — accounts already in sync.';
+
+	/// en: 'Imported {count} account from ~/.antigravity-accounts'
+	String importedToast_one({required Object count}) => 'Imported ${count} account from ~/.antigravity-accounts';
+
+	/// en: 'Imported {count} accounts from ~/.antigravity-accounts'
+	String importedToast_other({required Object count}) => 'Imported ${count} accounts from ~/.antigravity-accounts';
+
+	/// en: 'Import failed'
+	String get importFailedToast => 'Import failed';
+
+	/// en: 'Adding a new account.'
+	String get addingTitle => 'Adding a new account.';
+
+	/// en: 'Antigravity keys all state off $HOME. Give each account its own HOME and log in there on the gateway host:'
+	String get addingBodyPrefix => 'Antigravity keys all state off \$HOME. Give each account its own HOME and log in there on the gateway host:';
+
+	/// en: 'Then click <1>Import local</1> to register it. The directory only counts as an account once the Google sign-in has written its OAuth token.'
+	String get addingBodySuffix => 'Then click <1>Import local</1> to register it. The directory only counts as an account once the Google sign-in has written its OAuth token.';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'No Antigravity accounts yet. Run <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1> on the gateway host, complete the Google sign-in, then click Import local.'
+	String get empty => 'No Antigravity accounts yet. Run <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1> on the gateway host, complete the Google sign-in, then click Import local.';
+
+	/// en: 'not logged in'
+	String get noTokenYet => 'not logged in';
+
+	/// en: 'home:'
+	String get homeDir => 'home:';
+
+	/// en: 'Toggle failed'
+	String get toggleFailedToast => 'Toggle failed';
+
+	/// en: 'Remove account "{name}"?'
+	String removeConfirm({required Object name}) => 'Remove account "${name}"?';
+
+	/// en: 'Account removed'
+	String get removedToast => 'Account removed';
+
+	/// en: 'Remove failed'
+	String get removeFailedToast => 'Remove failed';
+
+	/// en: 'Toggle {name}'
+	String toggleAria({required Object name}) => 'Toggle ${name}';
+
+	/// en: 'Remove {name}'
+	String removeAria({required Object name}) => 'Remove ${name}';
 }
 
 // Path: web.providers.models
@@ -11740,6 +11856,18 @@ class TranslationsSessionsDetailAccountSwitcherEn {
 
 	/// en: 'No Claude accounts configured. Add them in More → Providers → Claude.'
 	String get noneHint => 'No Claude accounts configured. Add them in More → Providers → Claude.';
+
+	/// en: 'Switch Antigravity account'
+	String get tooltipAgy => 'Switch Antigravity account';
+
+	/// en: 'Switch Antigravity account'
+	String get sheetTitleAgy => 'Switch Antigravity account';
+
+	/// en: 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts (the session tab is kept).'
+	String get confirmBodyAgy => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).';
+
+	/// en: 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.'
+	String get noneHintAgy => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.';
 }
 
 // Path: sessions.terminal.snackbar
@@ -16899,8 +17027,11 @@ extension on Translations {
 			'web.sessions.spawn.spawnedDescription' => ({required Object provider, required Object pid}) => '${provider} · pid ${pid}',
 			'web.sessions.spawn.pidFallback' => '—',
 			'web.sessions.accountSwitcher.tooltip' => 'Switch Claude account (restarts the CLI process)',
+			'web.sessions.accountSwitcher.tooltipAgy' => 'Switch Antigravity account (restarts the CLI process)',
 			'web.sessions.accountSwitcher.currentDefault' => 'default',
 			'web.sessions.accountSwitcher.menuTitle' => 'Switch Claude account',
+			'web.sessions.accountSwitcher.menuTitleAgy' => 'Switch Antigravity account',
+			'web.sessions.accountSwitcher.confirmSwitchAgy' => 'Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?',
 			'web.sessions.accountSwitcher.defaultName' => 'Default',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI\'s system keychain / env',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·empty',
@@ -17251,11 +17382,11 @@ extension on Translations {
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Also delete pgvector memories',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'for this scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Long-term facts the agent stored (user preferences, project facts). Cannot be recovered.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.cancel' => 'Cancel',
 			'web.project.reset.deleteForever' => 'Delete forever',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Reset: deleted ${summary}',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} doc',
 			'web.project.reset.summary.docs_other' => ({required Object count}) => '${count} docs',
 			'web.project.reset.summary.journal' => ({required Object count}) => '${count} journal',
@@ -17671,6 +17802,26 @@ extension on Translations {
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
 			'web.providers.claudeAccounts.identityAcceptedToast' => 'New identity recorded',
 			'web.providers.claudeAccounts.identityAcceptFailedToast' => 'Could not accept identity',
+			'web.providers.antigravityAccounts.title' => 'Antigravity accounts',
+			'web.providers.antigravityAccounts.importLocal' => 'Import local',
+			'web.providers.antigravityAccounts.importLocalTooltip' => 'Scan ~/.antigravity-accounts/ (and the gateway user\'s ~) on the host and register any logged-in account dirs. Gateway-host only.',
+			'web.providers.antigravityAccounts.importedNothingToast' => 'Nothing to import — accounts already in sync.',
+			'web.providers.antigravityAccounts.importedToast_one' => ({required Object count}) => 'Imported ${count} account from ~/.antigravity-accounts',
+			'web.providers.antigravityAccounts.importedToast_other' => ({required Object count}) => 'Imported ${count} accounts from ~/.antigravity-accounts',
+			'web.providers.antigravityAccounts.importFailedToast' => 'Import failed',
+			'web.providers.antigravityAccounts.addingTitle' => 'Adding a new account.',
+			'web.providers.antigravityAccounts.addingBodyPrefix' => 'Antigravity keys all state off \$HOME. Give each account its own HOME and log in there on the gateway host:',
+			'web.providers.antigravityAccounts.addingBodySuffix' => 'Then click <1>Import local</1> to register it. The directory only counts as an account once the Google sign-in has written its OAuth token.',
+			'web.providers.antigravityAccounts.loading' => 'Loading…',
+			'web.providers.antigravityAccounts.empty' => 'No Antigravity accounts yet. Run <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1> on the gateway host, complete the Google sign-in, then click Import local.',
+			'web.providers.antigravityAccounts.noTokenYet' => 'not logged in',
+			'web.providers.antigravityAccounts.homeDir' => 'home:',
+			'web.providers.antigravityAccounts.toggleFailedToast' => 'Toggle failed',
+			'web.providers.antigravityAccounts.removeConfirm' => ({required Object name}) => 'Remove account "${name}"?',
+			'web.providers.antigravityAccounts.removedToast' => 'Account removed',
+			'web.providers.antigravityAccounts.removeFailedToast' => 'Remove failed',
+			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => 'Toggle ${name}',
+			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
 			'web.providers.models.title' => 'Models',
 			'web.providers.models.help' => 'Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.',
 			'web.providers.models.empty' => 'No models configured yet.',
@@ -17745,6 +17896,8 @@ extension on Translations {
 			'web.channels.notifications.onceReplyHint' => 'Replying with non-command text in this chat resets the suppression — opendray forwards your reply to the session\'s stdin and re-arms the notifier.',
 			'web.channels.notifications.terminalSnippetLabel' => 'Terminal snippet',
 			'web.channels.notifications.embedSnippetLabel' => 'Embed the recent terminal screen in idle notifications',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.snippetExplainer' => 'When enabled, the idle card includes a code-block snippet of what the user would see in the live web terminal — Claude TUI chrome (status spinner, "bypass permissions" hint, separator lines) is filtered out automatically.',
 			'web.channels.notifications.modes.onceLabel' => 'Once per session (recommended)',
 			'web.channels.notifications.modes.onceHint' => 'Fire once when a session goes idle, then stay silent until either the session ends or you reply via this channel.',
@@ -17768,8 +17921,6 @@ extension on Translations {
 			'web.channels.bridge.tokenLabel' => 'Adapter token',
 			'web.channels.bridge.regenerateTooltip' => 'Regenerate',
 			'web.channels.bridge.copyTooltip' => 'Copy',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.tokenCopiedToast' => 'Token copied',
 			'web.channels.bridge.tokenHint' => 'Adapter authenticates by sending this in the WS register frame (or as <1>X-Bridge-Token</1> header).',
 			'web.channels.bridge.capsLabel' => 'Accept capabilities (optional whitelist)',
@@ -18259,6 +18410,8 @@ extension on Translations {
 			'web.backups.targetsTab.columns.config' => 'Config',
 			'web.backups.targetsTab.columns.enabled' => 'Enabled',
 			'web.backups.targetsTab.columns.actions' => 'Actions',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetsTab.on' => 'on',
 			'web.backups.targetsTab.off' => 'off',
 			'web.backups.targetsTab.test' => 'Test',
@@ -18282,8 +18435,6 @@ extension on Translations {
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			'web.backups.targetEditor.smb.shareHint' => 'Top-level share name on the SMB server',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.userLabel' => 'User',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Password',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Path prefix',
@@ -18773,6 +18924,8 @@ extension on Translations {
 			'web.noteEditor.tagTitle' => ({required Object tag}) => 'tag #${tag}',
 			'web.noteEditor.emptyNote' => 'Empty note. Switch to Source to start writing.',
 			'web.noteEditor.saveFailedToast' => 'Save failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.noteEditor.status.saveFailed' => 'save failed',
 			'web.noteEditor.status.saving' => 'saving…',
 			'web.noteEditor.status.unsaved' => 'unsaved',
@@ -18796,8 +18949,6 @@ extension on Translations {
 			'web.export.form.integrationOptions.plaintext' => 'Include plaintext API keys',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 bcrypt-only: no recoverable plaintext exists. Manifest documents this; nothing leaks.',
 			'web.export.form.confirmWarning' => 'Type <1>I understand</1> to confirm. opendray currently stores only bcrypt hashes — selecting plaintext does NOT export any plaintext (the feature is reserved for a future release that keeps plaintext caches).',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
 			'web.export.form.footnote' => 'Audit logs and session transcripts are out of scope — covered by /backups (operator dump) instead.',
@@ -19214,6 +19365,10 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Switch failed: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No Claude accounts configured. Add them in More → Providers → Claude.',
+			'sessions.detail.accountSwitcher.tooltipAgy' => 'Switch Antigravity account',
+			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Switch Antigravity account',
+			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).',
+			'sessions.detail.accountSwitcher.noneHintAgy' => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
@@ -19283,6 +19438,8 @@ extension on Translations {
 			'sessions.inspector.files.readContent' => 'Read content',
 			'sessions.inspector.files.readContentSubtitle' => 'Up to 256 KiB plain text',
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Read failed (${status}): ${message}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
 			'sessions.inspector.files.parent' => 'Parent',
 			'sessions.inspector.files.backToCwd' => 'Back to session cwd',
@@ -19310,8 +19467,6 @@ extension on Translations {
 			'sessions.inspector.notes.insertAtRefShort' => 'Insert @reference',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nThoughts, todos, context for the agent…',
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Create failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Change project docs location',
 			'sessions.inspector.notes.filenameHint' => 'filename (e.g. spec or design.md)',
@@ -19508,6 +19663,15 @@ extension on Translations {
 			'providers.accounts.acceptIdentity' => 'Accept',
 			'providers.accounts.identityAcceptedSnack' => 'Identity change accepted',
 			'providers.accounts.identityAcceptFailed' => 'Accept failed',
+			'providers.antigravityAccounts.addHint' => 'Adding a new account is gateway-host only.',
+			'providers.antigravityAccounts.addBody' => 'Give each account its own HOME on the gateway host (HOME=~/.antigravity-accounts/<name> agy), finish the Google sign-in, then tap Import local.',
+			'providers.antigravityAccounts.intro' => 'Sessions spawned with the Antigravity provider pick from these accounts (or fall back to the gateway default HOME).',
+			'providers.antigravityAccounts.empty' => 'No Antigravity accounts yet. Run HOME=~/.antigravity-accounts/<name> agy on the gateway host, finish the Google sign-in, then tap Import local.',
+			'providers.antigravityAccounts.deleteTitle' => 'Remove account?',
+			'providers.antigravityAccounts.deleteBody' => 'Removes the account from opendray. The on-disk HOME directory is left untouched; sessions already using it stay running.',
+			'providers.antigravityAccounts.importSyncedSnack' => 'Already in sync — gateway has no new accounts.',
+			'providers.antigravityAccounts.noTokenYet' => 'not logged in',
+			'providers.antigravityAccounts.homeDir' => ({required Object dir}) => 'home: ${dir}',
 			'providers.configFallbackTitle' => 'Provider config',
 			'providers.saving' => 'Saving…',
 			'providers.save' => 'Save',
@@ -19788,6 +19952,8 @@ extension on Translations {
 			'backups.emptyMissingDeps.headline' => 'Backups can\'t run yet',
 			'backups.emptyMissingDeps.body' => 'Install postgresql-client and restart opendray.',
 			'backups.emptyNoTargets.headline' => 'No backup targets configured',
+			_ => null,
+		} ?? switch (path) {
 			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
 			'backups.emptyNoBackups.headline' => 'No backups yet',
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
@@ -19824,8 +19990,6 @@ extension on Translations {
 			'backups.encryption.generate' => 'Generate',
 			'backups.encryption.paste' => 'Paste',
 			'backups.encryption.random256bit' => '256-bit random key',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => 'Your passphrase',
 			'backups.encryption.passphraseHint' => 'At least 20 characters',
 			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
@@ -20302,6 +20466,8 @@ extension on Translations {
 			'dataExport.import.importing' => 'Importing…',
 			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
 			'dataExport.import.doneToast' => 'Import done',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memories',
@@ -20338,8 +20504,6 @@ extension on Translations {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'memory.status.enabled' => 'enabled',
 			'memory.status.disabled' => 'disabled',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
