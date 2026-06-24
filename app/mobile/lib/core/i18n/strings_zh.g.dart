@@ -323,6 +323,7 @@ class _TranslationsProvidersZh extends TranslationsProvidersEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}：${error}';
 	@override late final _TranslationsProvidersUpdateCheckZh updateCheck = _TranslationsProvidersUpdateCheckZh._(_root);
 	@override late final _TranslationsProvidersAccountsZh accounts = _TranslationsProvidersAccountsZh._(_root);
+	@override late final _TranslationsProvidersAntigravityAccountsZh antigravityAccounts = _TranslationsProvidersAntigravityAccountsZh._(_root);
 	@override String get configFallbackTitle => '提供商配置';
 	@override String get saving => '保存中…';
 	@override String get save => '保存';
@@ -1384,6 +1385,7 @@ class _TranslationsWebProvidersZh extends TranslationsWebProvidersEn {
 	@override late final _TranslationsWebProvidersDetailZh detail = _TranslationsWebProvidersDetailZh._(_root);
 	@override late final _TranslationsWebProvidersConfigFormZh configForm = _TranslationsWebProvidersConfigFormZh._(_root);
 	@override late final _TranslationsWebProvidersClaudeAccountsZh claudeAccounts = _TranslationsWebProvidersClaudeAccountsZh._(_root);
+	@override late final _TranslationsWebProvidersAntigravityAccountsZh antigravityAccounts = _TranslationsWebProvidersAntigravityAccountsZh._(_root);
 	@override late final _TranslationsWebProvidersModelsZh models = _TranslationsWebProvidersModelsZh._(_root);
 }
 
@@ -2090,6 +2092,24 @@ class _TranslationsProvidersAccountsZh extends TranslationsProvidersAccountsEn {
 	@override String get acceptIdentity => '接受';
 	@override String get identityAcceptedSnack => '已接受身份变更';
 	@override String get identityAcceptFailed => '接受失败';
+}
+
+// Path: providers.antigravityAccounts
+class _TranslationsProvidersAntigravityAccountsZh extends TranslationsProvidersAntigravityAccountsEn {
+	_TranslationsProvidersAntigravityAccountsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get addHint => '添加新账号仅可在网关主机上操作。';
+	@override String get addBody => '在网关主机上为每个账号分配独立的 HOME（HOME=~/.antigravity-accounts/<name> agy），完成 Google 登录后点按“导入本地”。';
+	@override String get intro => '以 Antigravity 提供商启动的会话会从这些账号中选择（或回退到网关默认 HOME）。';
+	@override String get empty => '尚无 Antigravity 账号。在网关主机上运行 HOME=~/.antigravity-accounts/<name> agy，完成 Google 登录后点按“导入本地”。';
+	@override String get deleteTitle => '移除账号？';
+	@override String get deleteBody => '从 opendray 移除该账号。磁盘上的 HOME 目录保持不变；已使用它的会话保持运行。';
+	@override String get importSyncedSnack => '已同步 — 网关没有新账号。';
+	@override String get noTokenYet => '未登录';
+	@override String homeDir({required Object dir}) => 'home：${dir}';
 }
 
 // Path: integrations.form
@@ -3196,8 +3216,11 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 
 	// Translations
 	@override String get tooltip => '切换 Claude 账号（将重启 CLI 进程）';
+	@override String get tooltipAgy => '切换 Antigravity 账号（将重启 CLI 进程）';
 	@override String get currentDefault => '默认';
 	@override String get menuTitle => '切换 Claude 账号';
+	@override String get menuTitleAgy => '切换 Antigravity 账号';
+	@override String get confirmSwitchAgy => '切换账号会以全新对话重启 Antigravity CLI——CLI 内的历史记录不会在账号间保留。任何进行中的工具执行或未发送的输入都会丢失。是否继续？';
 	@override String get defaultName => '默认';
 	@override String get defaultSubtitle => 'CLI 的系统 keychain / 环境变量';
 	@override String get tokenEmpty => '·未填';
@@ -4147,6 +4170,35 @@ class _TranslationsWebProvidersClaudeAccountsZh extends TranslationsWebProviders
 	@override String removeAria({required Object name}) => '移除 ${name}';
 	@override String get identityAcceptedToast => '已接受新身份';
 	@override String get identityAcceptFailedToast => '无法接受新身份';
+}
+
+// Path: web.providers.antigravityAccounts
+class _TranslationsWebProvidersAntigravityAccountsZh extends TranslationsWebProvidersAntigravityAccountsEn {
+	_TranslationsWebProvidersAntigravityAccountsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Antigravity 账号';
+	@override String get importLocal => '导入本地';
+	@override String get importLocalTooltip => '扫描主机上的 ~/.antigravity-accounts/（以及网关用户的 ~），注册已登录的账号目录。仅限网关主机。';
+	@override String get importedNothingToast => '无可导入——账号已同步。';
+	@override String importedToast_one({required Object count}) => '已从 ~/.antigravity-accounts 导入 ${count} 个账号';
+	@override String importedToast_other({required Object count}) => '已从 ~/.antigravity-accounts 导入 ${count} 个账号';
+	@override String get importFailedToast => '导入失败';
+	@override String get addingTitle => '添加新账号。';
+	@override String get addingBodyPrefix => 'Antigravity 的所有状态都基于 \$HOME。为每个账号分配独立的 HOME，并在网关主机上登录：';
+	@override String get addingBodySuffix => '然后点击 <1>导入本地</1> 进行注册。只有当 Google 登录写入 OAuth 令牌后，该目录才会被视为账号。';
+	@override String get loading => '加载中…';
+	@override String get empty => '尚无 Antigravity 账号。在网关主机上运行 <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1>，完成 Google 登录，然后点击“导入本地”。';
+	@override String get noTokenYet => '未登录';
+	@override String get homeDir => 'home：';
+	@override String get toggleFailedToast => '切换失败';
+	@override String removeConfirm({required Object name}) => '移除账号“${name}”？';
+	@override String get removedToast => '账号已移除';
+	@override String get removeFailedToast => '移除失败';
+	@override String toggleAria({required Object name}) => '切换 ${name}';
+	@override String removeAria({required Object name}) => '移除 ${name}';
 }
 
 // Path: web.providers.models
@@ -6032,6 +6084,10 @@ class _TranslationsSessionsDetailAccountSwitcherZh extends TranslationsSessionsD
 	@override String switchedSnack({required Object account}) => '已切换到 ${account}';
 	@override String switchFailed({required Object error}) => '切换失败：${error}';
 	@override String get noneHint => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。';
+	@override String get tooltipAgy => '切换 Antigravity 账号';
+	@override String get sheetTitleAgy => '切换 Antigravity 账号';
+	@override String get confirmBodyAgy => '这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。';
+	@override String get noneHintAgy => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。';
 }
 
 // Path: sessions.terminal.snackbar
@@ -9072,8 +9128,11 @@ extension on TranslationsZh {
 			'web.sessions.spawn.spawnedDescription' => ({required Object provider, required Object pid}) => '${provider} · pid ${pid}',
 			'web.sessions.spawn.pidFallback' => '—',
 			'web.sessions.accountSwitcher.tooltip' => '切换 Claude 账号（将重启 CLI 进程）',
+			'web.sessions.accountSwitcher.tooltipAgy' => '切换 Antigravity 账号（将重启 CLI 进程）',
 			'web.sessions.accountSwitcher.currentDefault' => '默认',
 			'web.sessions.accountSwitcher.menuTitle' => '切换 Claude 账号',
+			'web.sessions.accountSwitcher.menuTitleAgy' => '切换 Antigravity 账号',
+			'web.sessions.accountSwitcher.confirmSwitchAgy' => '切换账号会以全新对话重启 Antigravity CLI——CLI 内的历史记录不会在账号间保留。任何进行中的工具执行或未发送的输入都会丢失。是否继续？',
 			'web.sessions.accountSwitcher.defaultName' => '默认',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI 的系统 keychain / 环境变量',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·未填',
@@ -9424,11 +9483,11 @@ extension on TranslationsZh {
 			'web.project.reset.alsoDeleteMemoriesLabel' => '同时删除 pgvector 记忆',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Agent 存储的长期事实（用户偏好、项目事实）。无法恢复。',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.cancel' => '取消',
 			'web.project.reset.deleteForever' => '永久删除',
 			'web.project.reset.successToast' => ({required Object summary}) => '重置：已删除 ${summary}',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} 份文档',
 			'web.project.reset.summary.docs_other' => ({required Object count}) => '${count} 份文档',
 			'web.project.reset.summary.journal' => ({required Object count}) => '${count} 条日志',
@@ -9844,6 +9903,26 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => '移除 ${name}',
 			'web.providers.claudeAccounts.identityAcceptedToast' => '已接受新身份',
 			'web.providers.claudeAccounts.identityAcceptFailedToast' => '无法接受新身份',
+			'web.providers.antigravityAccounts.title' => 'Antigravity 账号',
+			'web.providers.antigravityAccounts.importLocal' => '导入本地',
+			'web.providers.antigravityAccounts.importLocalTooltip' => '扫描主机上的 ~/.antigravity-accounts/（以及网关用户的 ~），注册已登录的账号目录。仅限网关主机。',
+			'web.providers.antigravityAccounts.importedNothingToast' => '无可导入——账号已同步。',
+			'web.providers.antigravityAccounts.importedToast_one' => ({required Object count}) => '已从 ~/.antigravity-accounts 导入 ${count} 个账号',
+			'web.providers.antigravityAccounts.importedToast_other' => ({required Object count}) => '已从 ~/.antigravity-accounts 导入 ${count} 个账号',
+			'web.providers.antigravityAccounts.importFailedToast' => '导入失败',
+			'web.providers.antigravityAccounts.addingTitle' => '添加新账号。',
+			'web.providers.antigravityAccounts.addingBodyPrefix' => 'Antigravity 的所有状态都基于 \$HOME。为每个账号分配独立的 HOME，并在网关主机上登录：',
+			'web.providers.antigravityAccounts.addingBodySuffix' => '然后点击 <1>导入本地</1> 进行注册。只有当 Google 登录写入 OAuth 令牌后，该目录才会被视为账号。',
+			'web.providers.antigravityAccounts.loading' => '加载中…',
+			'web.providers.antigravityAccounts.empty' => '尚无 Antigravity 账号。在网关主机上运行 <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1>，完成 Google 登录，然后点击“导入本地”。',
+			'web.providers.antigravityAccounts.noTokenYet' => '未登录',
+			'web.providers.antigravityAccounts.homeDir' => 'home：',
+			'web.providers.antigravityAccounts.toggleFailedToast' => '切换失败',
+			'web.providers.antigravityAccounts.removeConfirm' => ({required Object name}) => '移除账号“${name}”？',
+			'web.providers.antigravityAccounts.removedToast' => '账号已移除',
+			'web.providers.antigravityAccounts.removeFailedToast' => '移除失败',
+			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => '切换 ${name}',
+			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => '移除 ${name}',
 			'web.providers.models.title' => '模型',
 			'web.providers.models.help' => '该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。',
 			'web.providers.models.empty' => '尚未配置任何模型。',
@@ -9918,6 +9997,8 @@ extension on TranslationsZh {
 			'web.channels.notifications.onceReplyHint' => '在该聊天中以非命令文本回复会重置抑制 — opendray 会把你的回复转发到会话的 stdin 并重新启用通知。',
 			'web.channels.notifications.terminalSnippetLabel' => '终端片段',
 			'web.channels.notifications.embedSnippetLabel' => '在 idle 通知中嵌入最近的终端画面',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.snippetExplainer' => '开启后，idle 卡片会包含一段代码块片段，呈现用户在网页终端中会看到的内容 — Claude TUI 自身的装饰（状态 spinner、"bypass permissions" 提示、分隔线）会被自动过滤。',
 			'web.channels.notifications.modes.onceLabel' => '每个会话仅一次（推荐）',
 			'web.channels.notifications.modes.onceHint' => '当会话变为 idle 时通知一次，然后保持静默，直到会话结束或你通过该频道回复。',
@@ -9941,8 +10022,6 @@ extension on TranslationsZh {
 			'web.channels.bridge.tokenLabel' => '适配器 token',
 			'web.channels.bridge.regenerateTooltip' => '重新生成',
 			'web.channels.bridge.copyTooltip' => '复制',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.tokenCopiedToast' => '已复制 token',
 			'web.channels.bridge.tokenHint' => '适配器通过 WS register 帧发送此 token（也可作为 <1>X-Bridge-Token</1> header）。',
 			'web.channels.bridge.capsLabel' => '接受的能力（可选白名单）',
@@ -10432,6 +10511,8 @@ extension on TranslationsZh {
 			'web.backups.targetsTab.columns.config' => '配置',
 			'web.backups.targetsTab.columns.enabled' => '启用',
 			'web.backups.targetsTab.columns.actions' => '操作',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetsTab.on' => '开',
 			'web.backups.targetsTab.off' => '关',
 			'web.backups.targetsTab.test' => '测试',
@@ -10455,8 +10536,6 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.smb.shareLabel' => 'Share',
 			'web.backups.targetEditor.smb.shareHint' => 'SMB 服务器上的顶层共享名',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.userLabel' => '用户',
 			'web.backups.targetEditor.smb.passwordLabel' => '密码',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => '路径前缀',
@@ -10946,6 +11025,8 @@ extension on TranslationsZh {
 			'web.noteEditor.tagTitle' => ({required Object tag}) => '标签 #${tag}',
 			'web.noteEditor.emptyNote' => '空白笔记。切换到源码标签开始书写。',
 			'web.noteEditor.saveFailedToast' => '保存失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.noteEditor.status.saveFailed' => '保存失败',
 			'web.noteEditor.status.saving' => '保存中…',
 			'web.noteEditor.status.unsaved' => '未保存',
@@ -10969,8 +11050,6 @@ extension on TranslationsZh {
 			'web.export.form.integrationOptions.plaintext' => '包含明文 API key',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 仅 bcrypt：不存在可恢复的明文。Manifest 会记录此事实；不会泄露任何内容。',
 			'web.export.form.confirmWarning' => '输入 <1>I understand</1> 以确认。opendray 当前只存 bcrypt 哈希 — 选择明文也不会导出任何明文（该选项为将来保留明文缓存的版本而预留）。',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.confirmPlaceholder' => 'I understand',
 			'web.export.form.confirmSentinel' => 'i understand',
 			'web.export.form.footnote' => '审计日志与会话记录不在范围内 — 由 /backups（运维 dump）覆盖。',
@@ -11387,6 +11466,10 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => '切换失败：${error}',
 			'sessions.detail.accountSwitcher.noneHint' => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。',
+			'sessions.detail.accountSwitcher.tooltipAgy' => '切换 Antigravity 账号',
+			'sessions.detail.accountSwitcher.sheetTitleAgy' => '切换 Antigravity 账号',
+			'sessions.detail.accountSwitcher.confirmBodyAgy' => '这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。',
+			'sessions.detail.accountSwitcher.noneHintAgy' => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
 			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
@@ -11456,6 +11539,8 @@ extension on TranslationsZh {
 			'sessions.inspector.files.readContent' => '读取内容',
 			'sessions.inspector.files.readContentSubtitle' => '最多 256 KiB 纯文本',
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => '读取失败（${status}）：${message}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
 			'sessions.inspector.files.parent' => '上级',
 			'sessions.inspector.files.backToCwd' => '返回会话目录',
@@ -11483,8 +11568,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertAtRefShort' => '插入 @引用',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\n想法、待办、为 agent 提供的上下文…',
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => '创建失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => '保存失败：${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => '更改项目文档位置',
 			'sessions.inspector.notes.filenameHint' => '文件名（例如：spec 或 design.md）',
@@ -11681,6 +11764,15 @@ extension on TranslationsZh {
 			'providers.accounts.acceptIdentity' => '接受',
 			'providers.accounts.identityAcceptedSnack' => '已接受身份变更',
 			'providers.accounts.identityAcceptFailed' => '接受失败',
+			'providers.antigravityAccounts.addHint' => '添加新账号仅可在网关主机上操作。',
+			'providers.antigravityAccounts.addBody' => '在网关主机上为每个账号分配独立的 HOME（HOME=~/.antigravity-accounts/<name> agy），完成 Google 登录后点按“导入本地”。',
+			'providers.antigravityAccounts.intro' => '以 Antigravity 提供商启动的会话会从这些账号中选择（或回退到网关默认 HOME）。',
+			'providers.antigravityAccounts.empty' => '尚无 Antigravity 账号。在网关主机上运行 HOME=~/.antigravity-accounts/<name> agy，完成 Google 登录后点按“导入本地”。',
+			'providers.antigravityAccounts.deleteTitle' => '移除账号？',
+			'providers.antigravityAccounts.deleteBody' => '从 opendray 移除该账号。磁盘上的 HOME 目录保持不变；已使用它的会话保持运行。',
+			'providers.antigravityAccounts.importSyncedSnack' => '已同步 — 网关没有新账号。',
+			'providers.antigravityAccounts.noTokenYet' => '未登录',
+			'providers.antigravityAccounts.homeDir' => ({required Object dir}) => 'home：${dir}',
 			'providers.configFallbackTitle' => '提供商配置',
 			'providers.saving' => '保存中…',
 			'providers.save' => '保存',
@@ -11961,6 +12053,8 @@ extension on TranslationsZh {
 			'backups.emptyMissingDeps.headline' => '备份暂时无法运行',
 			'backups.emptyMissingDeps.body' => '安装 postgresql-client 并重启 opendray。',
 			'backups.emptyNoTargets.headline' => '未配置任何备份目标',
+			_ => null,
+		} ?? switch (path) {
 			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
 			'backups.emptyNoBackups.headline' => '暂无备份',
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
@@ -11997,8 +12091,6 @@ extension on TranslationsZh {
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
 			'backups.encryption.random256bit' => '256 位随机密钥',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
@@ -12475,6 +12567,8 @@ extension on TranslationsZh {
 			'dataExport.import.importing' => '导入中…',
 			'dataExport.import.pickFileToast' => '请先选择数据包文件。',
 			'dataExport.import.doneToast' => '导入完成',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
 			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
 			'dataExport.import.summaryCard.memories' => '记忆',
@@ -12511,8 +12605,6 @@ extension on TranslationsZh {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'memory.status.enabled' => '已启用',
 			'memory.status.disabled' => '已禁用',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.floorNoModel' => '仅关键词（BM25）检索 — 未配置 embedding 模型。在 Settings 配置 dense 端点即可启用语义记忆。',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',

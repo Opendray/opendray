@@ -90,6 +90,7 @@ class SessionSummary {
     this.name,
     this.endedAt,
     this.claudeAccountId,
+    this.antigravityAccountId,
   });
 
   factory SessionSummary.fromJson(Map<String, dynamic> json) => SessionSummary(
@@ -107,6 +108,10 @@ class SessionSummary {
             (json['claude_account_id'] as String?)?.isNotEmpty ?? false
                 ? json['claude_account_id'] as String
                 : null,
+        antigravityAccountId:
+            (json['antigravity_account_id'] as String?)?.isNotEmpty ?? false
+                ? json['antigravity_account_id'] as String
+                : null,
       );
 
   final String id;
@@ -120,6 +125,10 @@ class SessionSummary {
   // CLI's system-default credential). Only meaningful for Claude
   // sessions; drives the in-session account switcher.
   final String? claudeAccountId;
+  // Which Antigravity (agy) account HOME this session is bound to
+  // (null = the gateway default HOME). Only meaningful for antigravity
+  // sessions; drives the in-session account switcher.
+  final String? antigravityAccountId;
 
   String get displayName => name?.isNotEmpty ?? false ? name! : id;
 
@@ -540,6 +549,64 @@ class ClaudeAccountSummary {
   final String? oauthEmail; // current Anthropic account email
   final String? previousEmail; // prior email when drift detected
   final bool identityDrift; // oauth_email differs from baseline
+
+  bool get isUsable => enabled && tokenFilled;
+}
+
+// One Antigravity (agy) account. Mirrors web app/shared/src/lib/types.ts
+// AntigravityAccount. Simpler than Claude: an account is a per-account
+// HOME directory (config_dir) the operator logs into on the gateway
+// host — there is no token-paste, rename, or identity-drift concept.
+class AntigravityAccountSummary {
+  AntigravityAccountSummary({
+    required this.id,
+    required this.name,
+    required this.displayName,
+    required this.configDir,
+    required this.enabled,
+    required this.tokenFilled,
+    this.description,
+    this.lastUsedAt,
+    this.activeSessions,
+  });
+
+  factory AntigravityAccountSummary.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String? ?? '';
+    final name = json['name'] as String? ?? '';
+    final display = json['display_name'] as String? ?? '';
+    String? str(String key) {
+      final v = json[key];
+      return v is String && v.isNotEmpty ? v : null;
+    }
+
+    return AntigravityAccountSummary(
+      id: id,
+      name: name,
+      // Fall back through display_name → name → id so the picker never
+      // shows a blank row.
+      displayName:
+          display.isNotEmpty ? display : (name.isNotEmpty ? name : id),
+      configDir: json['config_dir'] as String? ?? '',
+      enabled: json['enabled'] as bool? ?? false,
+      // True once the per-account HOME holds an OAuth token (i.e. the
+      // Google sign-in completed). Disabled/empty accounts can't spawn.
+      tokenFilled: json['token_filled'] as bool? ?? false,
+      description: str('description'),
+      // Decorated metadata — optional; older gateways omit these.
+      lastUsedAt: str('last_used_at'),
+      activeSessions: (json['active_sessions'] as num?)?.toInt(),
+    );
+  }
+
+  final String id;
+  final String name;
+  final String displayName;
+  final String configDir; // per-account HOME directory
+  final bool enabled;
+  final bool tokenFilled;
+  final String? description;
+  final String? lastUsedAt; // ISO timestamp
+  final int? activeSessions;
 
   bool get isUsable => enabled && tokenFilled;
 }

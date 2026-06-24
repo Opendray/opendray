@@ -323,6 +323,7 @@ class _TranslationsProvidersEs extends TranslationsProvidersEn {
 	@override String errorWithMessage({required Object prefix, required Object error}) => '${prefix}: ${error}';
 	@override late final _TranslationsProvidersUpdateCheckEs updateCheck = _TranslationsProvidersUpdateCheckEs._(_root);
 	@override late final _TranslationsProvidersAccountsEs accounts = _TranslationsProvidersAccountsEs._(_root);
+	@override late final _TranslationsProvidersAntigravityAccountsEs antigravityAccounts = _TranslationsProvidersAntigravityAccountsEs._(_root);
 	@override String get configFallbackTitle => 'Configuración del proveedor';
 	@override String get saving => 'Guardando…';
 	@override String get save => 'Guardar';
@@ -1384,6 +1385,7 @@ class _TranslationsWebProvidersEs extends TranslationsWebProvidersEn {
 	@override late final _TranslationsWebProvidersDetailEs detail = _TranslationsWebProvidersDetailEs._(_root);
 	@override late final _TranslationsWebProvidersConfigFormEs configForm = _TranslationsWebProvidersConfigFormEs._(_root);
 	@override late final _TranslationsWebProvidersClaudeAccountsEs claudeAccounts = _TranslationsWebProvidersClaudeAccountsEs._(_root);
+	@override late final _TranslationsWebProvidersAntigravityAccountsEs antigravityAccounts = _TranslationsWebProvidersAntigravityAccountsEs._(_root);
 	@override late final _TranslationsWebProvidersModelsEs models = _TranslationsWebProvidersModelsEs._(_root);
 }
 
@@ -2090,6 +2092,24 @@ class _TranslationsProvidersAccountsEs extends TranslationsProvidersAccountsEn {
 	@override String get acceptIdentity => 'Aceptar';
 	@override String get identityAcceptedSnack => 'Cambio de identidad aceptado';
 	@override String get identityAcceptFailed => 'Error al aceptar';
+}
+
+// Path: providers.antigravityAccounts
+class _TranslationsProvidersAntigravityAccountsEs extends TranslationsProvidersAntigravityAccountsEn {
+	_TranslationsProvidersAntigravityAccountsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get addHint => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.';
+	@override String get addBody => 'Dale a cada cuenta su propio HOME en el host del gateway (HOME=~/.antigravity-accounts/<nombre> agy), completa el inicio de sesión de Google y luego toca Importar locales.';
+	@override String get intro => 'Las sessions creadas con el proveedor Antigravity eligen entre estas cuentas (o recurren al HOME predeterminado del gateway).';
+	@override String get empty => 'Aún no hay cuentas de Antigravity. Ejecuta HOME=~/.antigravity-accounts/<nombre> agy en el host del gateway, completa el inicio de sesión de Google y luego toca Importar locales.';
+	@override String get deleteTitle => '¿Quitar la cuenta?';
+	@override String get deleteBody => 'Quita la cuenta de opendray. El directorio HOME en disco no se modifica; las sessions que ya lo usan siguen funcionando.';
+	@override String get importSyncedSnack => 'Ya está sincronizado, el gateway no tiene cuentas nuevas.';
+	@override String get noTokenYet => 'sin iniciar sesión';
+	@override String homeDir({required Object dir}) => 'home: ${dir}';
 }
 
 // Path: integrations.form
@@ -3196,8 +3216,11 @@ class _TranslationsWebSessionsAccountSwitcherEs extends TranslationsWebSessionsA
 
 	// Translations
 	@override String get tooltip => 'Cambiar de cuenta de Claude (reinicia el proceso de la CLI)';
+	@override String get tooltipAgy => 'Cambiar de cuenta de Antigravity (reinicia el proceso de la CLI)';
 	@override String get currentDefault => 'predeterminada';
 	@override String get menuTitle => 'Cambiar de cuenta de Claude';
+	@override String get menuTitleAgy => 'Cambiar de cuenta de Antigravity';
+	@override String get confirmSwitchAgy => 'Cambiar de cuenta reinicia la CLI de Antigravity con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
 	@override String get defaultName => 'Predeterminada';
 	@override String get defaultSubtitle => 'keychain del sistema / env de la CLI';
 	@override String get tokenEmpty => '·vacío';
@@ -4147,6 +4170,35 @@ class _TranslationsWebProvidersClaudeAccountsEs extends TranslationsWebProviders
 	@override String removeAria({required Object name}) => 'Quitar ${name}';
 	@override String get identityAcceptedToast => 'Nueva identidad registrada';
 	@override String get identityAcceptFailedToast => 'No se pudo aceptar la identidad';
+}
+
+// Path: web.providers.antigravityAccounts
+class _TranslationsWebProvidersAntigravityAccountsEs extends TranslationsWebProvidersAntigravityAccountsEn {
+	_TranslationsWebProvidersAntigravityAccountsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cuentas de Antigravity';
+	@override String get importLocal => 'Importar locales';
+	@override String get importLocalTooltip => 'Escanea ~/.antigravity-accounts/ (y el ~ del usuario del gateway) en el host y registra los directorios de cuentas con sesión iniciada. Solo en el host del gateway.';
+	@override String get importedNothingToast => 'Nada que importar: las cuentas ya están sincronizadas.';
+	@override String importedToast_one({required Object count}) => 'Se importó ${count} cuenta de ~/.antigravity-accounts';
+	@override String importedToast_other({required Object count}) => 'Se importaron ${count} cuentas de ~/.antigravity-accounts';
+	@override String get importFailedToast => 'Error al importar';
+	@override String get addingTitle => 'Añadir una cuenta nueva.';
+	@override String get addingBodyPrefix => 'Antigravity guarda todo su estado en \$HOME. Da a cada cuenta su propio HOME e inicia sesión allí en el host del gateway:';
+	@override String get addingBodySuffix => 'Luego haz clic en <1>Importar locales</1> para registrarla. El directorio solo cuenta como cuenta cuando el inicio de sesión de Google ha escrito su token OAuth.';
+	@override String get loading => 'Cargando…';
+	@override String get empty => 'Aún no hay cuentas de Antigravity. Ejecuta <1>HOME=~/.antigravity-accounts/&lt;nombre&gt; agy</1> en el host del gateway, completa el inicio de sesión de Google y luego haz clic en Importar locales.';
+	@override String get noTokenYet => 'sin sesión iniciada';
+	@override String get homeDir => 'home:';
+	@override String get toggleFailedToast => 'Error al alternar';
+	@override String removeConfirm({required Object name}) => '¿Quitar la cuenta "${name}"?';
+	@override String get removedToast => 'Cuenta eliminada';
+	@override String get removeFailedToast => 'Error al eliminar';
+	@override String toggleAria({required Object name}) => 'Alternar ${name}';
+	@override String removeAria({required Object name}) => 'Quitar ${name}';
 }
 
 // Path: web.providers.models
@@ -6032,6 +6084,10 @@ class _TranslationsSessionsDetailAccountSwitcherEs extends TranslationsSessionsD
 	@override String switchedSnack({required Object account}) => 'Cambiado a ${account}';
 	@override String switchFailed({required Object error}) => 'Cambio fallido: ${error}';
 	@override String get noneHint => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.';
+	@override String get tooltipAgy => 'Cambiar de cuenta de Antigravity';
+	@override String get sheetTitleAgy => 'Cambiar de cuenta de Antigravity';
+	@override String get confirmBodyAgy => 'Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).';
+	@override String get noneHintAgy => 'No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.';
 }
 
 // Path: sessions.terminal.snackbar
@@ -9072,8 +9128,11 @@ extension on TranslationsEs {
 			'web.sessions.spawn.spawnedDescription' => ({required Object provider, required Object pid}) => '${provider} · pid ${pid}',
 			'web.sessions.spawn.pidFallback' => '—',
 			'web.sessions.accountSwitcher.tooltip' => 'Cambiar de cuenta de Claude (reinicia el proceso de la CLI)',
+			'web.sessions.accountSwitcher.tooltipAgy' => 'Cambiar de cuenta de Antigravity (reinicia el proceso de la CLI)',
 			'web.sessions.accountSwitcher.currentDefault' => 'predeterminada',
 			'web.sessions.accountSwitcher.menuTitle' => 'Cambiar de cuenta de Claude',
+			'web.sessions.accountSwitcher.menuTitleAgy' => 'Cambiar de cuenta de Antigravity',
+			'web.sessions.accountSwitcher.confirmSwitchAgy' => 'Cambiar de cuenta reinicia la CLI de Antigravity con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
 			'web.sessions.accountSwitcher.defaultName' => 'Predeterminada',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'keychain del sistema / env de la CLI',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·vacío',
@@ -9424,11 +9483,11 @@ extension on TranslationsEs {
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Eliminar también las memorias de pgvector',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'para este scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Hechos a largo plazo que el agente almacenó (preferencias del usuario, datos del proyecto). No se pueden recuperar.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.cancel' => 'Cancelar',
 			'web.project.reset.deleteForever' => 'Eliminar para siempre',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Restablecido: se eliminó ${summary}',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.summary.docs_one' => ({required Object count}) => '${count} documento',
 			'web.project.reset.summary.docs_other' => ({required Object count}) => '${count} documentos',
 			'web.project.reset.summary.journal' => ({required Object count}) => '${count} diario',
@@ -9844,6 +9903,26 @@ extension on TranslationsEs {
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => 'Quitar ${name}',
 			'web.providers.claudeAccounts.identityAcceptedToast' => 'Nueva identidad registrada',
 			'web.providers.claudeAccounts.identityAcceptFailedToast' => 'No se pudo aceptar la identidad',
+			'web.providers.antigravityAccounts.title' => 'Cuentas de Antigravity',
+			'web.providers.antigravityAccounts.importLocal' => 'Importar locales',
+			'web.providers.antigravityAccounts.importLocalTooltip' => 'Escanea ~/.antigravity-accounts/ (y el ~ del usuario del gateway) en el host y registra los directorios de cuentas con sesión iniciada. Solo en el host del gateway.',
+			'web.providers.antigravityAccounts.importedNothingToast' => 'Nada que importar: las cuentas ya están sincronizadas.',
+			'web.providers.antigravityAccounts.importedToast_one' => ({required Object count}) => 'Se importó ${count} cuenta de ~/.antigravity-accounts',
+			'web.providers.antigravityAccounts.importedToast_other' => ({required Object count}) => 'Se importaron ${count} cuentas de ~/.antigravity-accounts',
+			'web.providers.antigravityAccounts.importFailedToast' => 'Error al importar',
+			'web.providers.antigravityAccounts.addingTitle' => 'Añadir una cuenta nueva.',
+			'web.providers.antigravityAccounts.addingBodyPrefix' => 'Antigravity guarda todo su estado en \$HOME. Da a cada cuenta su propio HOME e inicia sesión allí en el host del gateway:',
+			'web.providers.antigravityAccounts.addingBodySuffix' => 'Luego haz clic en <1>Importar locales</1> para registrarla. El directorio solo cuenta como cuenta cuando el inicio de sesión de Google ha escrito su token OAuth.',
+			'web.providers.antigravityAccounts.loading' => 'Cargando…',
+			'web.providers.antigravityAccounts.empty' => 'Aún no hay cuentas de Antigravity. Ejecuta <1>HOME=~/.antigravity-accounts/&lt;nombre&gt; agy</1> en el host del gateway, completa el inicio de sesión de Google y luego haz clic en Importar locales.',
+			'web.providers.antigravityAccounts.noTokenYet' => 'sin sesión iniciada',
+			'web.providers.antigravityAccounts.homeDir' => 'home:',
+			'web.providers.antigravityAccounts.toggleFailedToast' => 'Error al alternar',
+			'web.providers.antigravityAccounts.removeConfirm' => ({required Object name}) => '¿Quitar la cuenta "${name}"?',
+			'web.providers.antigravityAccounts.removedToast' => 'Cuenta eliminada',
+			'web.providers.antigravityAccounts.removeFailedToast' => 'Error al eliminar',
+			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => 'Alternar ${name}',
+			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => 'Quitar ${name}',
 			'web.providers.models.title' => 'Modelos',
 			'web.providers.models.help' => 'Modelos ofrecidos para este proveedor. El predeterminado se pasa a cada session mediante el flag de modelo; las sessions aún pueden sobrescribirlo.',
 			'web.providers.models.empty' => 'Aún no hay modelos configurados.',
@@ -9918,6 +9997,8 @@ extension on TranslationsEs {
 			'web.channels.notifications.onceReplyHint' => 'Responder con texto que no sea un comando en este chat restablece la supresión, opendray reenvía tu respuesta al stdin de la session y rearma el notificador.',
 			'web.channels.notifications.terminalSnippetLabel' => 'Fragmento de terminal',
 			'web.channels.notifications.embedSnippetLabel' => 'Incrustar la pantalla reciente del terminal en las notificaciones de inactividad',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.notifications.snippetExplainer' => 'Cuando está activado, la tarjeta de inactividad incluye un fragmento en bloque de código de lo que el usuario vería en el terminal web en vivo, los elementos de la interfaz del TUI de Claude (indicador de estado, aviso de "bypass permissions", líneas separadoras) se filtran automáticamente.',
 			'web.channels.notifications.modes.onceLabel' => 'Una vez por session (recomendado)',
 			'web.channels.notifications.modes.onceHint' => 'Se dispara una vez cuando una session queda inactiva, luego permanece en silencio hasta que la session termine o respondas por este canal.',
@@ -9941,8 +10022,6 @@ extension on TranslationsEs {
 			'web.channels.bridge.tokenLabel' => 'Token del adaptador',
 			'web.channels.bridge.regenerateTooltip' => 'Regenerar',
 			'web.channels.bridge.copyTooltip' => 'Copiar',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.bridge.tokenCopiedToast' => 'Token copiado',
 			'web.channels.bridge.tokenHint' => 'El adaptador se autentica enviándolo en el frame de registro de WS (o como cabecera <1>X-Bridge-Token</1>).',
 			'web.channels.bridge.capsLabel' => 'Aceptar capacidades (lista blanca opcional)',
@@ -10432,6 +10511,8 @@ extension on TranslationsEs {
 			'web.backups.targetsTab.columns.config' => 'Config',
 			'web.backups.targetsTab.columns.enabled' => 'Habilitado',
 			'web.backups.targetsTab.columns.actions' => 'Acciones',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetsTab.on' => 'activado',
 			'web.backups.targetsTab.off' => 'desactivado',
 			'web.backups.targetsTab.test' => 'Probar',
@@ -10455,8 +10536,6 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.smb.shareLabel' => 'Recurso compartido',
 			'web.backups.targetEditor.smb.shareHint' => 'Nombre del recurso compartido de nivel superior en el servidor SMB',
 			'web.backups.targetEditor.smb.sharePlaceholder' => 'Claude_Workspace',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetEditor.smb.userLabel' => 'Usuario',
 			'web.backups.targetEditor.smb.passwordLabel' => 'Contraseña',
 			'web.backups.targetEditor.smb.pathPrefixLabel' => 'Prefijo de ruta',
@@ -10946,6 +11025,8 @@ extension on TranslationsEs {
 			'web.noteEditor.tagTitle' => ({required Object tag}) => 'etiqueta #${tag}',
 			'web.noteEditor.emptyNote' => 'Nota vacía. Cambia a Origen para empezar a escribir.',
 			'web.noteEditor.saveFailedToast' => 'Error al guardar',
+			_ => null,
+		} ?? switch (path) {
 			'web.noteEditor.status.saveFailed' => 'error al guardar',
 			'web.noteEditor.status.saving' => 'guardando…',
 			'web.noteEditor.status.unsaved' => 'sin guardar',
@@ -10969,8 +11050,6 @@ extension on TranslationsEs {
 			'web.export.form.integrationOptions.plaintext' => 'Incluir las API keys en texto plano',
 			'web.export.form.integrationOptions.plaintextHint' => 'v1 solo con bcrypt: no existe texto plano recuperable. El manifiesto lo documenta; no se filtra nada.',
 			'web.export.form.confirmWarning' => 'Escribe <1>Lo entiendo</1> para confirmar. opendray actualmente almacena solo hashes bcrypt, así que seleccionar texto plano NO exporta ningún texto plano (la función está reservada para una versión futura que mantenga cachés de texto plano).',
-			_ => null,
-		} ?? switch (path) {
 			'web.export.form.confirmPlaceholder' => 'Lo entiendo',
 			'web.export.form.confirmSentinel' => 'lo entiendo',
 			'web.export.form.footnote' => 'Los logs de auditoría y los transcripts de session quedan fuera del alcance; en su lugar los cubre /backups (volcado del operador).',
@@ -11387,6 +11466,10 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Cambiado a ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Cambio fallido: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.',
+			'sessions.detail.accountSwitcher.tooltipAgy' => 'Cambiar de cuenta de Antigravity',
+			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Cambiar de cuenta de Antigravity',
+			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).',
+			'sessions.detail.accountSwitcher.noneHintAgy' => 'No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Falló el selector de imágenes: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Subiendo imagen…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Imagen adjuntada: ${path}',
@@ -11456,6 +11539,8 @@ extension on TranslationsEs {
 			'sessions.inspector.files.readContent' => 'Leer contenido',
 			'sessions.inspector.files.readContentSubtitle' => 'Hasta 256 KiB de texto plano',
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Falló la lectura (${status}): ${message}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Falló la lectura: ${error}',
 			'sessions.inspector.files.parent' => 'Superior',
 			'sessions.inspector.files.backToCwd' => 'Volver al cwd de la session',
@@ -11483,8 +11568,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.insertAtRefShort' => 'Insertar @referencia',
 			'sessions.inspector.notes.draftHint' => ({required Object project}) => '# ${project}\n\nIdeas, tareas pendientes, contexto para el agente…',
 			'sessions.inspector.notes.createFailed' => ({required Object error}) => 'Falló al crear: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.saveFailed' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.changeLocationTooltip' => 'Cambiar la ubicación de los documentos del proyecto',
 			'sessions.inspector.notes.filenameHint' => 'nombre de archivo (p. ej. spec o design.md)',
@@ -11681,6 +11764,15 @@ extension on TranslationsEs {
 			'providers.accounts.acceptIdentity' => 'Aceptar',
 			'providers.accounts.identityAcceptedSnack' => 'Cambio de identidad aceptado',
 			'providers.accounts.identityAcceptFailed' => 'Error al aceptar',
+			'providers.antigravityAccounts.addHint' => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.',
+			'providers.antigravityAccounts.addBody' => 'Dale a cada cuenta su propio HOME en el host del gateway (HOME=~/.antigravity-accounts/<nombre> agy), completa el inicio de sesión de Google y luego toca Importar locales.',
+			'providers.antigravityAccounts.intro' => 'Las sessions creadas con el proveedor Antigravity eligen entre estas cuentas (o recurren al HOME predeterminado del gateway).',
+			'providers.antigravityAccounts.empty' => 'Aún no hay cuentas de Antigravity. Ejecuta HOME=~/.antigravity-accounts/<nombre> agy en el host del gateway, completa el inicio de sesión de Google y luego toca Importar locales.',
+			'providers.antigravityAccounts.deleteTitle' => '¿Quitar la cuenta?',
+			'providers.antigravityAccounts.deleteBody' => 'Quita la cuenta de opendray. El directorio HOME en disco no se modifica; las sessions que ya lo usan siguen funcionando.',
+			'providers.antigravityAccounts.importSyncedSnack' => 'Ya está sincronizado, el gateway no tiene cuentas nuevas.',
+			'providers.antigravityAccounts.noTokenYet' => 'sin iniciar sesión',
+			'providers.antigravityAccounts.homeDir' => ({required Object dir}) => 'home: ${dir}',
 			'providers.configFallbackTitle' => 'Configuración del proveedor',
 			'providers.saving' => 'Guardando…',
 			'providers.save' => 'Guardar',
@@ -11961,6 +12053,8 @@ extension on TranslationsEs {
 			'backups.emptyMissingDeps.headline' => 'Las copias de seguridad aún no pueden ejecutarse',
 			'backups.emptyMissingDeps.body' => 'Instala postgresql-client y reinicia opendray.',
 			'backups.emptyNoTargets.headline' => 'No hay destinos de copia de seguridad configurados',
+			_ => null,
+		} ?? switch (path) {
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
@@ -11997,8 +12091,6 @@ extension on TranslationsEs {
 			'backups.encryption.generate' => 'Generar',
 			'backups.encryption.paste' => 'Pegar',
 			'backups.encryption.random256bit' => 'Clave aleatoria de 256 bits',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => 'Tu passphrase',
 			'backups.encryption.passphraseHint' => 'Al menos 20 caracteres',
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
@@ -12475,6 +12567,8 @@ extension on TranslationsEs {
 			'dataExport.import.importing' => 'Importando…',
 			'dataExport.import.pickFileToast' => 'Elige primero un archivo de paquete.',
 			'dataExport.import.doneToast' => 'Importación completada',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.finishedWithErrors' => 'Importación finalizada con errores',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Error en la importación: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memorias',
@@ -12511,8 +12605,6 @@ extension on TranslationsEs {
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim}-dim · ${state}',
 			'memory.status.enabled' => 'habilitado',
 			'memory.status.disabled' => 'deshabilitado',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
