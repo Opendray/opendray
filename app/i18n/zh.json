@@ -1361,6 +1361,7 @@
         "providerNone": "无默认",
         "modelLabel": "默认模型",
         "modelPlaceholder": "provider 默认(如 opus)",
+        "modelPickAria": "选择已知模型",
         "accountLabel": "默认 Claude 账号",
         "accountNone": "无默认",
         "accountTokenMissing": "(缺少 token)",

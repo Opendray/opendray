@@ -1361,6 +1361,7 @@
         "providerNone": "Sin predeterminado",
         "modelLabel": "Modelo predeterminado",
         "modelPlaceholder": "Predeterminado del proveedor (p. ej. opus)",
+        "modelPickAria": "Elegir un modelo conocido",
         "accountLabel": "Cuenta de Claude predeterminada",
         "accountNone": "Sin predeterminado",
         "accountTokenMissing": "(falta el token)",

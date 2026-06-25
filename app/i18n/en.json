@@ -1361,6 +1361,7 @@
         "providerNone": "No default",
         "modelLabel": "Default model",
         "modelPlaceholder": "Provider default (e.g. opus)",
+        "modelPickAria": "Choose a known model",
         "accountLabel": "Default Claude account",
         "accountNone": "No default",
         "accountTokenMissing": "(token missing)",
