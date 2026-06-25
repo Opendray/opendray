@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown } from 'lucide-react'
 
 import {
   Select,
@@ -8,8 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 import { listProviders } from '@/lib/catalog'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
 
@@ -33,11 +42,13 @@ interface DefaultAgentFieldsProps {
 // register and edit dialogs. Fully controlled and immutable: every
 // change emits a fresh value object, never mutating the prop.
 //
-// The model field is a free-text input with a datalist of the selected
-// provider's known models — defaults shouldn't be locked to a curated
-// list (knownModels is only a suggestion source). The claude-account
-// selector applies only when the default provider is "claude"; it stays
-// visible (as an advisory) but the hint makes the scope clear.
+// The model field is a free-text input with an explicit dropdown of the
+// selected provider's known models (chevron button) — picking one fills
+// the field, while typing a custom value still wins (knownModels is only
+// a suggestion source, defaults shouldn't be locked to a curated list).
+// The claude-account selector applies only when the default provider is
+// "claude"; it stays visible (as an advisory) but the hint makes the
+// scope clear.
 export function DefaultAgentFields({ value, onChange }: DefaultAgentFieldsProps) {
   const { t } = useTranslation()
   const providers = useQuery({ queryKey: ['providers'], queryFn: listProviders })
@@ -50,7 +61,6 @@ export function DefaultAgentFields({ value, onChange }: DefaultAgentFieldsProps)
     (p) => p.manifest.id === value.providerId,
   )
   const knownModels = selectedProvider?.manifest.knownModels ?? []
-  const modelListId = 'default-agent-models'
   const isClaude = value.providerId === 'claude'
 
   return (
@@ -109,19 +119,44 @@ export function DefaultAgentFields({ value, onChange }: DefaultAgentFieldsProps)
         >
           {t('web.integrations.defaultAgent.modelLabel')}
         </Label>
-        <Input
-          id="default_model"
-          value={value.model}
-          onChange={(e) => onChange({ ...value, model: e.target.value })}
-          placeholder={t('web.integrations.defaultAgent.modelPlaceholder')}
-          className="font-mono"
-          list={modelListId}
-        />
-        <datalist id={modelListId}>
-          {knownModels.map((m) => (
-            <option key={m} value={m} />
-          ))}
-        </datalist>
+        <div className="relative">
+          <Input
+            id="default_model"
+            value={value.model}
+            onChange={(e) => onChange({ ...value, model: e.target.value })}
+            placeholder={t('web.integrations.defaultAgent.modelPlaceholder')}
+            className={cn('font-mono', knownModels.length > 0 && 'pr-9')}
+          />
+          {knownModels.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-9 w-9 text-muted-foreground hover:text-foreground"
+                  aria-label={t('web.integrations.defaultAgent.modelPickAria')}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="max-h-64 overflow-y-auto"
+              >
+                {knownModels.map((m) => (
+                  <DropdownMenuItem
+                    key={m}
+                    className="font-mono text-xs"
+                    onSelect={() => onChange({ ...value, model: m })}
+                  >
+                    {m}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       <div className="space-y-1.5">
