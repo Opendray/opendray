@@ -151,6 +151,7 @@ class ProviderSummary {
     required this.manifestHash,
     required this.enabled,
     this.icon = '',
+    this.knownModels = const [],
   });
 
   factory ProviderSummary.fromGatewayJson(Map<String, dynamic> json) {
@@ -171,6 +172,10 @@ class ProviderSummary {
       manifestHash: json['manifest_hash'] as String? ?? '',
       enabled: json['enabled'] as bool? ?? false,
       icon: manifest['icon'] as String? ?? '',
+      knownModels: (manifest['knownModels'] as List?)
+              ?.whereType<String>()
+              .toList() ??
+          const [],
     );
   }
 
@@ -181,6 +186,12 @@ class ProviderSummary {
   // Manifest emoji glyph (🪐 Antigravity, 🟣 Claude, …). Rendered as the
   // mobile provider avatar; the web uses brand SVGs.
   final String icon;
+  // Suggested model names from the manifest (knownModels). The CLIs
+  // expose no live model-list, so this curated list is what the
+  // integration default-model picker offers as suggestions. Empty for
+  // providers with no model concept (e.g. shell). Mirrors web's
+  // manifest.knownModels datalist source.
+  final List<String> knownModels;
 }
 
 // One row from the gateway's audit log. Mirrors

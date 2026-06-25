@@ -40,6 +40,21 @@ class DefaultAgentFields extends ConsumerWidget {
     final isClaude = providerId == 'claude';
     final theme = Theme.of(context);
 
+    // Suggested models for the selected provider (manifest knownModels).
+    // Drives the model field's dropdown — mirrors the web datalist so any
+    // provider (not just Claude) can pick from its models. Empty for an
+    // unselected provider or one with no model concept (e.g. shell), in
+    // which case the field stays free-text only.
+    final knownModels = providers.maybeWhen(
+      data: (list) {
+        for (final p in list) {
+          if (p.id == providerId) return p.knownModels;
+        }
+        return const <String>[];
+      },
+      orElse: () => const <String>[],
+    );
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -90,7 +105,11 @@ class DefaultAgentFields extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
 
-          // Model free-text field (controller owned by parent).
+          // Model field (controller owned by parent). Free text, plus a
+          // dropdown of the selected provider's known models so any
+          // provider — not just Claude — can pick a model. knownModels is
+          // only a suggestion source, so a typed custom value still wins;
+          // the dropdown is hidden when the provider exposes no models.
           TextField(
             controller: modelController,
             autocorrect: false,
@@ -98,6 +117,19 @@ class DefaultAgentFields extends ConsumerWidget {
               labelText: t.integrations.defaultAgent.modelLabel,
               hintText: t.integrations.defaultAgent.modelHint,
               border: const OutlineInputBorder(),
+              suffixIcon: knownModels.isEmpty
+                  ? null
+                  : PopupMenuButton<String>(
+                      icon: const Icon(Icons.arrow_drop_down),
+                      onSelected: (m) => modelController.text = m,
+                      itemBuilder: (menuCtx) => [
+                        for (final m in knownModels)
+                          PopupMenuItem<String>(
+                            value: m,
+                            child: Text(m),
+                          ),
+                      ],
+                    ),
             ),
           ),
           const SizedBox(height: 12),
