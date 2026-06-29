@@ -249,7 +249,14 @@ func (h *Handlers) applyIntegrationDefaults(ctx context.Context, integrationID s
 	if req.ProviderID == "" {
 		req.ProviderID = provider
 	}
-	if req.Model == "" {
+	// default_model is a provider-specific string (e.g. an antigravity
+	// model name like "Gemini 3.5 Flash (Medium)"). Only inherit it when
+	// the session actually runs on the integration's default provider —
+	// otherwise a mismatched model would be passed to a different CLI
+	// (e.g. `claude --model "Gemini 3.5 Flash (Medium)"`), which fails to
+	// spawn. A session on another provider falls back to that provider's
+	// own default (no --model flag), which is always safe.
+	if req.Model == "" && req.ProviderID == provider {
 		req.Model = model
 	}
 	if req.ClaudeAccountID == "" {
