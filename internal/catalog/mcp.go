@@ -77,12 +77,23 @@ func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, 
 	case "codex":
 		return renderCodexMCP(baseDir, servers)
 	case "antigravity":
-		// Antigravity (agy) is gemini-cli's successor and reads the
-		// workspace <cwd>/.gemini/settings.json mcpServers map (verified
-		// live; it starts servers lazily, on first tool need — a fake
-		// server + a non-forcing prompt won't trigger the spawn, which is
-		// why an earlier probe looked negative). The non-destructive merge
-		// attaches opendray-memory per-session, never globally.
+		// KNOWN LIMITATION (verified 2026-06-25 against agy 1.0.12): agy does
+		// NOT consume the gemini-cli-style <cwd>/.gemini/settings.json
+		// mcpServers map. Its own config (~/.gemini/antigravity-cli/
+		// settings.json) has no mcpServers key at all; MCP servers are
+		// registered through agy's plugin system (`agy plugin import` from
+		// gemini/claude EXTENSIONS, or `agy plugin install` from a
+		// marketplace) and materialise as a protobuf-backed internal
+		// registry + per-tool descriptors under
+		// ~/.gemini/antigravity-cli/mcp/<server>/. Proof: a server present in
+		// ~/.gemini/settings.json (e.g. "pencil") never appears in agy's
+		// plugin list. There is no clean per-session file opendray can write
+		// to inject an MCP server (especially an HTTP-transport one) into
+		// agy, so integration MCP injection does NOT reach antigravity agents
+		// today — steer MCP-dependent integrations at claude until agy
+		// exposes a --mcp-config-style flag. We still write the workspace
+		// file (harmless, non-destructive) so operator-driven gemini-cli
+		// fallbacks keep working, but DO NOT rely on agy reading it.
 		return renderGeminiMCP(cwd, servers)
 	case "opencode":
 		// OpenCode reads MCP from its JSON config's `mcp` block; we merge
