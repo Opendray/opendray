@@ -608,44 +608,8 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		return
 	}
 
-	var (
-		result any
-		err    error
-	)
-	switch params.Name {
-	case "memory_search":
-		result, err = s.callSearch(params.Arguments)
-	case "memory_store":
-		result, err = s.callStore(params.Arguments)
-	case "memory_list":
-		result, err = s.callList(params.Arguments)
-	case "memory_load_context":
-		result, err = s.callLoadContext(params.Arguments)
-	case "memory_get_provenance":
-		result, err = s.callGetProvenance(params.Arguments)
-	case "project_goal_get":
-		result, err = s.callProjectDocGet("goal")
-	case "project_plan_get":
-		result, err = s.callProjectDocGet("plan")
-	case "current_objective_get":
-		result, err = s.callProjectDocGet("current_objective")
-	case "project_goal_set":
-		result, err = s.callProjectDocSet("goal", params.Arguments)
-	case "project_plan_set":
-		result, err = s.callProjectDocSet("plan", params.Arguments)
-	case "current_objective_set":
-		result, err = s.callProjectDocSet("current_objective", params.Arguments)
-	case "session_log_append":
-		result, err = s.callSessionLogAppend("manual", params.Arguments)
-	case "decision_record":
-		result, err = s.callSessionLogAppend("decision", params.Arguments)
-	case "doc_read":
-		result, err = s.callDocRead(params.Arguments)
-	case "skill_distill":
-		result, err = s.callSkillDistill(params.Arguments)
-	case "project_search":
-		result, err = s.callProjectSearch(params.Arguments)
-	default:
+	result, err, known := s.dispatchTool(params.Name, params.Arguments)
+	if !known {
 		s.respondErr(req.ID, -32601, "Unknown tool", params.Name)
 		return
 	}
@@ -663,6 +627,57 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		return
 	}
 	s.respond(req.ID, result)
+}
+
+// dispatchTool routes one tool call to its handler and returns the MCP
+// tool result (a {"content":[...]} map), a tool-level error, and whether
+// the tool name was recognised. Shared by the stdio MCP frontend
+// (handleToolCall) and the argv frontend (`opendray memory call`), so the
+// two surfaces can never drift in which tools they expose or how each
+// forwards to the gateway. known=false means "no such tool".
+func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result any, err error, known bool) {
+	if len(args) == 0 {
+		// argv callers may omit arguments for no-arg tools; the per-tool
+		// handlers unmarshal into a struct, which rejects empty input.
+		args = json.RawMessage("{}")
+	}
+	switch name {
+	case "memory_search":
+		result, err = s.callSearch(args)
+	case "memory_store":
+		result, err = s.callStore(args)
+	case "memory_list":
+		result, err = s.callList(args)
+	case "memory_load_context":
+		result, err = s.callLoadContext(args)
+	case "memory_get_provenance":
+		result, err = s.callGetProvenance(args)
+	case "project_goal_get":
+		result, err = s.callProjectDocGet("goal")
+	case "project_plan_get":
+		result, err = s.callProjectDocGet("plan")
+	case "current_objective_get":
+		result, err = s.callProjectDocGet("current_objective")
+	case "project_goal_set":
+		result, err = s.callProjectDocSet("goal", args)
+	case "project_plan_set":
+		result, err = s.callProjectDocSet("plan", args)
+	case "current_objective_set":
+		result, err = s.callProjectDocSet("current_objective", args)
+	case "session_log_append":
+		result, err = s.callSessionLogAppend("manual", args)
+	case "decision_record":
+		result, err = s.callSessionLogAppend("decision", args)
+	case "doc_read":
+		result, err = s.callDocRead(args)
+	case "skill_distill":
+		result, err = s.callSkillDistill(args)
+	case "project_search":
+		result, err = s.callProjectSearch(args)
+	default:
+		return nil, nil, false
+	}
+	return result, err, true
 }
 
 func (s *memMCPServer) callSearch(args json.RawMessage) (any, error) {
