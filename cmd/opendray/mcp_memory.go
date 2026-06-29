@@ -718,8 +718,10 @@ func (s *memMCPServer) callSearch(args json.RawMessage) (any, error) {
 	} else {
 		fmt.Fprintf(&b, "Found %d memory hit(s):\n\n", len(out.Hits))
 		for i, h := range out.Hits {
-			fmt.Fprintf(&b, "[%d] %s\n  similarity=%.3f id=%v\n\n",
+			fmt.Fprintf(&b, "[%d] %s\n  similarity=%.3f id=%v\n",
 				i+1, stringField(h.Memory, "text"), h.Similarity, h.Memory["id"])
+			b.WriteString(foldedVariantsBlock(h.Memory, "  "))
+			b.WriteByte('\n')
 		}
 	}
 	return map[string]any{
@@ -854,6 +856,7 @@ func (s *memMCPServer) callLoadContext(args json.RawMessage) (any, error) {
 				text = text[:i]
 			}
 			fmt.Fprintf(&b, "- %s\n", text)
+			b.WriteString(foldedVariantsBlock(memory, "  "))
 		}
 	}
 	return map[string]any{
@@ -1282,6 +1285,54 @@ func (s *memMCPServer) write(resp rpcResponse) {
 	defer s.outMu.Unlock()
 	_, _ = s.out.Write(raw)
 	_, _ = s.out.Write([]byte{'\n'})
+}
+
+// mergedFromTexts extracts the absorbed variant texts from a memory's
+// metadata.merged_from audit list (oldest first), or nil when the row was
+// never folded. Write-time dedup (memory.Service.Store) overwrites the
+// canonical text with the newest write and parks the superseded text here —
+// lossless in the DB, but invisible to search until we surface it. Two facts
+// that differ only in a critical token (a port, a provider tag, a version)
+// embed as near-duplicates and fold, so without this the distinguishing one
+// silently vanishes from recall.
+func mergedFromTexts(memory map[string]any) []string {
+	meta, ok := memory["metadata"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	raw, ok := meta["merged_from"].([]any)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	var out []string
+	for _, e := range raw {
+		em, ok := e.(map[string]any)
+		if !ok {
+			continue
+		}
+		if t, ok := em["text"].(string); ok && strings.TrimSpace(t) != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// foldedVariantsBlock renders the "folded in N earlier writes" suffix for a
+// search / load_context hit, or "" when the row was never deduped (the common
+// case, so normal output is unchanged). indent is prepended to every line so
+// it nests under the hit. Each variant is collapsed to a single line.
+func foldedVariantsBlock(memory map[string]any, indent string) string {
+	texts := mergedFromTexts(memory)
+	if len(texts) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s↳ folded in %d earlier write(s) (deduped, kept for recall):\n", indent, len(texts))
+	for _, t := range texts {
+		oneLine := strings.Join(strings.Fields(t), " ")
+		fmt.Fprintf(&b, "%s    • %s\n", indent, oneLine)
+	}
+	return b.String()
 }
 
 func stringField(m map[string]any, key string) string {
