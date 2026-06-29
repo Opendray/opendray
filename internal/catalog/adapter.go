@@ -321,14 +321,19 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// via context) wins over the per-provider operator default.
 	args = append(args, modelArgs(p.Manifest, p.Config, session.ModelFromContext(ctx))...)
 	if p.Manifest.ID == "codex" {
-		// Skip the operator's approval policy when the integration asked
-		// for bypass: codex's full bypass flag (appended below) is
-		// mutually exclusive with an approval policy, so applying both
-		// would conflict.
-		if session.PermissionModeFromContext(ctx) != "bypass" {
-			if approval, ok := p.Config["approval"].(string); ok && approval != "" {
-				args = append(args, "-c", "approval_policy="+tomlString(approval))
-			}
+		if session.PermissionModeFromContext(ctx) == "bypass" {
+			// codex's full bypass flag (--dangerously-bypass-approvals-and-
+			// sandbox, appended below) is a clap ArgGroup mutually exclusive
+			// with --ask-for-approval (-a) and --sandbox (-s). Those land in
+			// args from the provider's saved config schema, so strip them
+			// here — otherwise codex rejects the combo and the session exits
+			// within seconds of spawn. dropConflictingFlags can't catch this
+			// because it only fires on USER-supplied trigger flags, but for
+			// integration sessions the bypass flag is provider-side.
+			args = stripFlagsWithValues(args, "--ask-for-approval", "-a", "--sandbox", "-s")
+		} else if approval, ok := p.Config["approval"].(string); ok && approval != "" {
+			// Non-bypass: apply the operator's approval policy.
+			args = append(args, "-c", "approval_policy="+tomlString(approval))
 		}
 	}
 	// Integration bypass: append the provider's unattended/auto-approve
@@ -380,7 +385,20 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// sessions are unaffected (project data is already cwd-scoped; the
 	// shared global/KB layer stays available to them).
 	isIntegration := session.OriginFromContext(ctx) == session.OriginIntegration
-	if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
+	// Two delivery modes for opendray-memory:
+	//   - MCP server (claude/codex/opencode): the agent calls memory_* as
+	//     native MCP tools, attached here.
+	//   - CLI shim (antigravity): agy CANNOT load opendray's stdio MCP
+	//     server — its MCP is a closed plugin/protobuf system with no
+	//     per-session config file (see renderMCP). Attaching the server
+	//     would write an invisible entry to .gemini/settings.json and the
+	//     agent would never see the tools. So for those providers we skip
+	//     the MCP attach and instead, in Prepare, export the gateway creds
+	//     into the session env + inject guidance to use the `opendray
+	//     memory` CLI through Bash. See memoryViaCLI / the Prepare branch.
+	wantMemory := sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration
+	memoryCLIShim := wantMemory && memoryViaCLI(id)
+	if wantMemory && !memoryCLIShim {
 		servers = append(servers, MCPServer{
 			Name:    "opendray-memory",
 			Command: sp.memory.BinaryPath,
@@ -420,7 +438,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// no-Prepare fast path even when nothing else needs one.
 	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
 
-	if !wantClaudeAccount && !wantAgyAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
+	if !wantClaudeAccount && !wantAgyAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt && !memoryCLIShim {
 		return info, nil
 	}
 
@@ -516,14 +534,31 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
-		// Inject memory-tool guidance into the agent's system prompt
-		// when the memory MCP is being attached. Without this nudge,
-		// Claude (and to a lesser extent Codex/Antigravity) tends to use
-		// its built-in markdown memory feature instead of our shared
-		// MCP store, defeating the cross-CLI value prop. Done here
-		// (after skills, before MCP rendering) so the message ordering
-		// stays predictable.
-		if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp {
+		// Inject memory guidance into the agent's system prompt. Without
+		// this nudge, the CLI tends to use its built-in markdown memory
+		// instead of our shared store, defeating the cross-CLI value prop.
+		// Done here (after skills, before MCP rendering) so message
+		// ordering stays predictable. Two flavours:
+		//   - CLI shim (antigravity): the agent can't see MCP tools, so we
+		//     export the gateway creds into the session env and tell it to
+		//     use the `opendray memory` CLI through Bash.
+		//   - MCP (claude/codex/opencode): the native memory_* tool nudge.
+		if memoryCLIShim {
+			cwd := session.Cwd(prepareCtx)
+			out.Env["OPENDRAY_BASE_URL"] = sp.memory.BaseURL
+			out.Env["OPENDRAY_API_KEY"] = sp.memory.APIKey
+			out.Env["OPENDRAY_MEMORY_SCOPE"] = defaultStr(sp.memory.Scope, "project")
+			out.Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
+			// Absolute path to the opendray binary (os.Executable, resolved
+			// at startup — the same one that launches the MCP subprocess), so
+			// the agent can call the CLI even when `opendray` isn't on the
+			// session's PATH. Removes the only environmental dependency the
+			// shim would otherwise share with skill injection.
+			out.Env["OPENDRAY_BIN"] = sp.memory.BinaryPath
+			if err := injectMemoryCLIGuidanceFor(providerID, baseDir, sp.memory.BinaryPath, &out); err != nil {
+				return session.PrepareOutput{}, fmt.Errorf("inject memory CLI guidance: %w", err)
+			}
+		} else if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp {
 			if err := injectMemoryGuidanceFor(providerID, baseDir, &out); err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("inject memory guidance: %w", err)
 			}
@@ -1370,6 +1405,100 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 	return nil
 }
 
+// memoryViaCLI reports whether a provider must reach opendray-memory
+// through the `opendray memory` CLI shim instead of the stdio MCP server.
+// True for antigravity: agy can't load opendray's MCP server (its MCP is
+// a closed plugin/protobuf system with no per-session config file the
+// gateway can write — see renderMCP), so the only way to give it the
+// shared memory/project/journal tools is to export the gateway creds into
+// the session env and have it call the `opendray memory` CLI via Bash.
+func memoryViaCLI(providerID string) bool {
+	return providerID == "antigravity"
+}
+
+// injectMemoryCLIGuidanceFor injects the CLI-flavoured memory guidance
+// (use `opendray memory ...` through Bash) into the provider's
+// system-prompt surface. Used for providers in the memoryViaCLI bucket,
+// where the native MCP tools are unreachable. Same per-CLI dispatch shape
+// as injectMemoryGuidanceFor.
+func injectMemoryCLIGuidanceFor(providerID, baseDir, binPath string, out *session.PrepareOutput) error {
+	switch providerID {
+	case "antigravity":
+		return injectAgyContext(baseDir, "\n\n---\n\n"+memoryCLIGuidanceText(binPath), out)
+	}
+	// No other provider uses the CLI shim today; nothing to inject.
+	return nil
+}
+
+// memoryCLIGuidanceText returns the CLI memory guidance, appending a
+// concrete absolute-path fallback when binPath is known so the agent can
+// run the CLI even if `opendray` isn't on the session's PATH. binPath is
+// os.Executable() resolved at startup (the same binary that backs the MCP
+// server), exported to the session as OPENDRAY_BIN.
+func memoryCLIGuidanceText(binPath string) string {
+	if strings.TrimSpace(binPath) == "" {
+		return memoryGuidanceTextCLI
+	}
+	return memoryGuidanceTextCLI +
+		"\n\n> If your shell reports `opendray: command not found`, it isn't on " +
+		"PATH — use the absolute path, available in the `OPENDRAY_BIN` env var:\n" +
+		">  `\"$OPENDRAY_BIN\" memory call memory_search '{\"query\":\"...\"}'`\n" +
+		">  (it points to `" + binPath + "`)."
+}
+
+// memoryGuidanceTextCLI is the antigravity-flavoured memory guidance: same
+// shared store and the same when-to-store discipline as memoryGuidanceText,
+// but the agent reaches it through the `opendray memory` CLI (its Bash
+// tool) instead of MCP tool calls, because agy can't load opendray's MCP
+// server. Kept deliberately tighter than the MCP version — the agent only
+// needs the command shape + the core habits.
+const memoryGuidanceTextCLI = `## Persistent cross-agent memory (opendray)
+
+This session shares a cross-agent memory/knowledge store with every other
+opendray session in this project (Claude / Codex / others). You reach it
+through the ` + "`opendray memory`" + ` CLI via your shell/Bash tool — this
+CLI runtime cannot load it as MCP tools, so **do not** look for memory_*
+tools; run the command instead. Auth is already in your environment.
+
+### Commands
+
+- ` + "`opendray memory tools`" + ` — list every available tool + description.
+- ` + "`opendray memory call <tool> '<json-args>'`" + ` — invoke one. Examples:
+  - ` + "`opendray memory call memory_load_context '{\"query\":\"<task>\"}'`" + `
+  - ` + "`opendray memory call memory_search '{\"query\":\"db url\"}'`" + `
+  - ` + "`opendray memory call memory_store '{\"text\":\"...\",\"metadata\":{\"type\":\"project_fact\"}}'`" + `
+  - ` + "`opendray memory call session_log_append '{\"content\":\"what I just did\"}'`" + `
+  - ` + "`opendray memory call current_objective_set '{\"content\":\"...\"}'`" + `
+  - ` + "`opendray memory call current_objective_get`" + ` (no-arg tools omit the JSON)
+
+Arg keys per tool: memory_search/load_context use ` + "`query`" + `; memory_store
+uses ` + "`text`" + ` (+ ` + "`metadata`" + `); session_log_append / *_set use ` + "`content`" + `;
+doc_read uses ` + "`slug`" + ` (+ ` + "`section`" + `). Run ` + "`opendray memory tools`" + ` for the
+full schema if unsure.
+
+### Use this, not your built-in memory
+
+This shared store is the **only** memory you should write — not agy's own
+brain/notes. A fact you keep locally is invisible to the next Claude or
+Codex session in this project, which defeats the shared brain.
+
+### Habits (do these without being asked)
+
+1. **At start**: ` + "`memory_load_context`" + ` for the user's first ask, so you
+   don't repeat work prior sessions already did.
+2. **As you work**: ` + "`session_log_append`" + ` liberally — finished a step,
+   fixed a bug, hit a blocker, learned something the next session needs.
+   A session that ends with no journal taught the next agent nothing.
+3. **Keep ` + "`current_objective_set`" + ` live** — when the work establishes a
+   new immediate objective, finishes one, or shifts its steps.
+4. **Durable facts** → ` + "`memory_store`" + ` (user prefs, identifiers,
+   decisions, deploy topology). NOT transient "what I'm doing now" — that
+   is session_log_append / current_objective_set.
+5. **Before touching how OUR SYSTEM works** (opendray wiring, conventions,
+   a known pattern): ` + "`opendray memory call doc_read '{\"slug\":\"kb_integrations\",\"section\":\"...\"}'`" + `
+   — the kb_* pages are the source of truth and they update. Find them via
+   ` + "`opendray memory call project_search '{\"query\":\"...\"}'`" + `.`
+
 // injectAmbientMemoryFor injects the rendered "Recent project
 // memory" banner into the agent's system prompt. Same per-CLI
 // dispatch as injectMemoryGuidanceFor.
@@ -1410,6 +1539,44 @@ func bypassArgsFor(providerID string) []string {
 		return []string{"--dangerously-bypass-approvals-and-sandbox"}
 	}
 	return nil
+}
+
+// stripFlagsWithValues removes the named flags (and a following value
+// token when the flag takes one) from args. Both "--flag value" and
+// "--flag=value" forms are handled. Used to resolve codex's clap
+// ArgGroup conflict between the saved approval/sandbox config and the
+// integration bypass flag: both originate provider-side, so they escape
+// the user-triggered dropConflictingFlags pass in the session manager.
+func stripFlagsWithValues(args []string, flags ...string) []string {
+	if len(args) == 0 || len(flags) == 0 {
+		return args
+	}
+	drop := make(map[string]struct{}, len(flags))
+	for _, f := range flags {
+		drop[f] = struct{}{}
+	}
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		tok := args[i]
+		name := tok
+		if eq := strings.IndexByte(tok, '='); eq >= 0 {
+			name = tok[:eq]
+		}
+		if _, hit := drop[name]; !hit {
+			out = append(out, tok)
+			continue
+		}
+		// --flag=value is a single token — dropping it is enough.
+		if strings.Contains(tok, "=") {
+			continue
+		}
+		// --flag value: also skip the value token when present and not
+		// itself another flag.
+		if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+			i++
+		}
+	}
+	return out
 }
 
 func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.PrepareOutput) error {
