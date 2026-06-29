@@ -1255,7 +1255,6 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				summarizerHandlers.Mount(r)
 				memoryWorkerHandlers.Mount(r)
 				memhealthHandlers.Mount(r)
-				memqueryHandlers.Mount(r)
 				conflictHandlers.Mount(r)
 				captureHandlers.Mount(r)
 				injectorHandlers.Mount(r)
@@ -1284,6 +1283,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)
+				// project-search (cross-layer recall) is an MCP tool driven
+				// by the scoped-key memory subprocess, so it belongs on the
+				// dual-auth path next to /memory/search, not the admin-only
+				// group above (where it 401'd for every agent). Its own
+				// requireRead gate enforces the memory:read scope.
+				memqueryHandlers.Mount(r)
 				if knowledgeHandlers != nil {
 					knowledgeHandlers.Mount(r)
 				}
