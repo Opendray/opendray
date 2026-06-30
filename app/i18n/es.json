@@ -131,7 +131,9 @@
         "stopping": "Deteniendo…",
         "pid": "pid {pid}",
         "selectText": "Seleccionar y copiar",
-        "selectTextTooltip": "Abre una vista de texto seleccionable para copiar cualquier parte de la salida"
+        "selectTextTooltip": "Abre una vista de texto seleccionable para copiar cualquier parte de la salida",
+        "transcript": "Transcripción",
+        "transcriptTooltip": "Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)"
       },
       "terminal": {
         "uploadingToast": "Subiendo imagen…",
@@ -146,7 +148,13 @@
         "selectCopyCopySelection": "Copiar selección",
         "selectCopyCopyAll": "Copiar todo",
         "selectCopyNoSelection": "Selecciona primero algún texto",
-        "selectCopyEmpty": "Aún no hay salida que copiar"
+        "selectCopyEmpty": "Aún no hay salida que copiar",
+        "transcriptTitle": "Transcripción de la sesión",
+        "transcriptDesc": "Todo lo que el PTY ha escrito hasta ahora, sin códigos de control. Útil cuando la CLI en ejecución no permite desplazarse por su propia vista.",
+        "transcriptLoading": "Cargando transcripción…",
+        "transcriptEmpty": "Aún no hay salida.",
+        "transcriptFetchFailed": "No se pudo cargar la transcripción",
+        "transcriptRefresh": "Recargar"
       },
       "spawn": {
         "title": "Crear session",
