@@ -131,7 +131,9 @@
         "stopping": "停止中…",
         "pid": "pid {pid}",
         "selectText": "选择并复制",
-        "selectTextTooltip": "打开可选择文本视图,复制输出中的任意部分"
+        "selectTextTooltip": "打开可选择文本视图,复制输出中的任意部分",
+        "transcript": "完整记录",
+        "transcriptTooltip": "打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）"
       },
       "terminal": {
         "uploadingToast": "正在上传图片…",
@@ -146,7 +148,13 @@
         "selectCopyCopySelection": "复制选中",
         "selectCopyCopyAll": "全部复制",
         "selectCopyNoSelection": "请先选择文本",
-        "selectCopyEmpty": "暂无可复制的输出"
+        "selectCopyEmpty": "暂无可复制的输出",
+        "transcriptTitle": "会话完整记录",
+        "transcriptDesc": "PTY 至今输出的全部内容，已去除终端控制码。当运行中的 CLI 无法在其自身视图中向上滚动时尤其有用。",
+        "transcriptLoading": "正在加载完整记录…",
+        "transcriptEmpty": "暂无输出。",
+        "transcriptFetchFailed": "无法加载完整记录",
+        "transcriptRefresh": "刷新"
       },
       "spawn": {
         "title": "创建会话",

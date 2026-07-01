@@ -7,6 +7,7 @@ import {
   Plus,
   Power,
   RotateCcw,
+  ScrollText,
   Trash2,
   Loader2,
   PanelLeftClose,
@@ -33,6 +34,7 @@ import {
   type EndedSessionHandle,
 } from '@/components/sessions/EndedSessionView'
 import { SelectCopyDialog } from '@/components/sessions/SelectCopyDialog'
+import { TranscriptDialog } from '@/components/sessions/TranscriptDialog'
 import { SpawnDialog } from '@/components/sessions/SpawnDialog'
 import { StatePill } from '@/components/sessions/StatePill'
 import { AccountSwitcher } from '@/components/sessions/AccountSwitcher'
@@ -229,6 +231,12 @@ export function SessionsPage() {
     setSelectText(text ?? '')
   }
 
+  // Transcript overlay: full ring-buffer text view. Needed for CLIs
+  // that take the alt-screen but ignore wheel input (grok), and a
+  // generally useful "search the whole session" affordance for the
+  // others.
+  const [transcriptOpen, setTranscriptOpen] = useState(false)
+
   const handlePickImage = () => fileInputRef.current?.click()
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -294,6 +302,7 @@ export function SessionsPage() {
               }
               onAttachImage={handlePickImage}
               onSelectText={openSelectCopy}
+              onShowTranscript={() => setTranscriptOpen(true)}
               inspectorOpen={inspectorOpen}
               onToggleInspector={toggleInspector}
             />
@@ -381,6 +390,11 @@ export function SessionsPage() {
         open={selectText !== null}
         onOpenChange={(v) => !v && setSelectText(null)}
       />
+      <TranscriptDialog
+        sessionId={currentId}
+        open={transcriptOpen}
+        onOpenChange={setTranscriptOpen}
+      />
       {confirmDialogEl}
     </div>
   )
@@ -427,6 +441,7 @@ function WorkbenchHeader({
   attachImageEnabled,
   onAttachImage,
   onSelectText,
+  onShowTranscript,
   inspectorOpen,
   onToggleInspector,
 }: {
@@ -442,6 +457,7 @@ function WorkbenchHeader({
   attachImageEnabled: boolean
   onAttachImage: () => void
   onSelectText: () => void
+  onShowTranscript: () => void
   inspectorOpen: boolean
   onToggleInspector: () => void
 }) {
@@ -465,6 +481,8 @@ function WorkbenchHeader({
   const attachTooltip = t('web.sessions.header.attachImageTooltip')
   const selectLabel = t('web.sessions.header.selectText')
   const selectTooltip = t('web.sessions.header.selectTextTooltip')
+  const transcriptLabel = t('web.sessions.header.transcript')
+  const transcriptTooltip = t('web.sessions.header.transcriptTooltip')
   return (
     <div className="h-11 border-b border-border flex items-center px-3 gap-3">
       <Tooltip>
@@ -538,6 +556,20 @@ function WorkbenchHeader({
           </Button>
         </TooltipTrigger>
         <TooltipContent>{selectTooltip}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onShowTranscript}
+            aria-label={transcriptLabel}
+            className="size-7 shrink-0"
+          >
+            <ScrollText className="size-3.5" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{transcriptTooltip}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>

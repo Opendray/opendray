@@ -131,7 +131,9 @@
         "stopping": "Stopping…",
         "pid": "pid {pid}",
         "selectText": "Select & copy",
-        "selectTextTooltip": "Open a selectable text view to copy any part of the output"
+        "selectTextTooltip": "Open a selectable text view to copy any part of the output",
+        "transcript": "Transcript",
+        "transcriptTooltip": "Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)"
       },
       "terminal": {
         "uploadingToast": "Uploading image…",
@@ -146,7 +148,13 @@
         "selectCopyCopySelection": "Copy selection",
         "selectCopyCopyAll": "Copy all",
         "selectCopyNoSelection": "Select some text first",
-        "selectCopyEmpty": "No output to copy yet"
+        "selectCopyEmpty": "No output to copy yet",
+        "transcriptTitle": "Session transcript",
+        "transcriptDesc": "Everything the PTY has written so far, with terminal control codes stripped. Useful when the running CLI doesn't let you scroll its own view.",
+        "transcriptLoading": "Loading transcript…",
+        "transcriptEmpty": "No output yet.",
+        "transcriptFetchFailed": "Couldn't load transcript",
+        "transcriptRefresh": "Refresh"
       },
       "spawn": {
         "title": "Spawn session",
