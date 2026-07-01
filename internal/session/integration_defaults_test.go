@@ -118,6 +118,38 @@ func TestCreate_RequestOverridesIntegrationDefaults(t *testing.T) {
 	}
 }
 
+func TestCreate_DefaultModelNotInheritedAcrossProviders(t *testing.T) {
+	// The integration default model is provider-specific (an antigravity
+	// model name). When the request explicitly picks a DIFFERENT provider
+	// but omits the model, opendray must NOT carry the mismatched model
+	// over — `claude --model "Gemini 3.5 Flash (Medium)"` would fail to
+	// spawn. The session falls back to claude's own default (empty model).
+	svc := newFakeSvc()
+	checker := &fakeAcctChecker{}
+	defs := &fakeDefaults{
+		id: "int_A", provider: "antigravity", model: "Gemini 3.5 Flash (Medium)",
+	}
+	body := `{"provider_id":"claude","cwd":"/tmp"}`
+	req := httptest.NewRequest(http.MethodPost, "/sessions", bytes.NewBufferString(body))
+	req = asIntegration(req, "int_A")
+	rr := httptest.NewRecorder()
+	newRouterWithDefaults(svc, checker, defs).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status=%d body=%s; want 201", rr.Code, rr.Body)
+	}
+	var s Session
+	if err := json.Unmarshal(rr.Body.Bytes(), &s); err != nil {
+		t.Fatal(err)
+	}
+	if s.ProviderID != "claude" {
+		t.Errorf("provider: got %q, want request value 'claude'", s.ProviderID)
+	}
+	if s.Model != "" {
+		t.Errorf("model: got %q, want empty (antigravity model must not cross to claude)", s.Model)
+	}
+}
+
 func TestCreate_OperatorOriginIgnoresIntegrationDefaults(t *testing.T) {
 	// An admin/operator principal (or no integration principal) must not
 	// pick up any integration's defaults.

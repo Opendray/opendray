@@ -1369,6 +1369,7 @@
         "providerNone": "Sin predeterminado",
         "modelLabel": "Modelo predeterminado",
         "modelPlaceholder": "Predeterminado del proveedor (p. ej. opus)",
+        "modelPickAria": "Elegir un modelo conocido",
         "accountLabel": "Cuenta de Claude predeterminada",
         "accountNone": "Sin predeterminado",
         "accountTokenMissing": "(falta el token)",
@@ -3210,7 +3211,11 @@
         "cancel": "Cancelar",
         "switchedSnack": "Cambiado a {account}",
         "switchFailed": "Cambio fallido: {error}",
-        "noneHint": "No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude."
+        "noneHint": "No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.",
+        "tooltipAgy": "Cambiar de cuenta de Antigravity",
+        "sheetTitleAgy": "Cambiar de cuenta de Antigravity",
+        "confirmBodyAgy": "Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).",
+        "noneHintAgy": "No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity."
       }
     },
     "terminal": {
@@ -3574,6 +3579,17 @@
       "acceptIdentity": "Aceptar",
       "identityAcceptedSnack": "Cambio de identidad aceptado",
       "identityAcceptFailed": "Error al aceptar"
+    },
+    "antigravityAccounts": {
+      "addHint": "Añadir una cuenta nueva solo se puede hacer en el host del gateway.",
+      "addBody": "Dale a cada cuenta su propio HOME en el host del gateway (HOME=~/.antigravity-accounts/<nombre> agy), completa el inicio de sesión de Google y luego toca Importar locales.",
+      "intro": "Las sessions creadas con el proveedor Antigravity eligen entre estas cuentas (o recurren al HOME predeterminado del gateway).",
+      "empty": "Aún no hay cuentas de Antigravity. Ejecuta HOME=~/.antigravity-accounts/<nombre> agy en el host del gateway, completa el inicio de sesión de Google y luego toca Importar locales.",
+      "deleteTitle": "¿Quitar la cuenta?",
+      "deleteBody": "Quita la cuenta de opendray. El directorio HOME en disco no se modifica; las sessions que ya lo usan siguen funcionando.",
+      "importSyncedSnack": "Ya está sincronizado, el gateway no tiene cuentas nuevas.",
+      "noTokenYet": "sin iniciar sesión",
+      "homeDir": "home: {dir}"
     },
     "configFallbackTitle": "Configuración del proveedor",
     "saving": "Guardando…",

@@ -608,44 +608,8 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		return
 	}
 
-	var (
-		result any
-		err    error
-	)
-	switch params.Name {
-	case "memory_search":
-		result, err = s.callSearch(params.Arguments)
-	case "memory_store":
-		result, err = s.callStore(params.Arguments)
-	case "memory_list":
-		result, err = s.callList(params.Arguments)
-	case "memory_load_context":
-		result, err = s.callLoadContext(params.Arguments)
-	case "memory_get_provenance":
-		result, err = s.callGetProvenance(params.Arguments)
-	case "project_goal_get":
-		result, err = s.callProjectDocGet("goal")
-	case "project_plan_get":
-		result, err = s.callProjectDocGet("plan")
-	case "current_objective_get":
-		result, err = s.callProjectDocGet("current_objective")
-	case "project_goal_set":
-		result, err = s.callProjectDocSet("goal", params.Arguments)
-	case "project_plan_set":
-		result, err = s.callProjectDocSet("plan", params.Arguments)
-	case "current_objective_set":
-		result, err = s.callProjectDocSet("current_objective", params.Arguments)
-	case "session_log_append":
-		result, err = s.callSessionLogAppend("manual", params.Arguments)
-	case "decision_record":
-		result, err = s.callSessionLogAppend("decision", params.Arguments)
-	case "doc_read":
-		result, err = s.callDocRead(params.Arguments)
-	case "skill_distill":
-		result, err = s.callSkillDistill(params.Arguments)
-	case "project_search":
-		result, err = s.callProjectSearch(params.Arguments)
-	default:
+	result, err, known := s.dispatchTool(params.Name, params.Arguments)
+	if !known {
 		s.respondErr(req.ID, -32601, "Unknown tool", params.Name)
 		return
 	}
@@ -663,6 +627,57 @@ func (s *memMCPServer) handleToolCall(req rpcRequest) {
 		return
 	}
 	s.respond(req.ID, result)
+}
+
+// dispatchTool routes one tool call to its handler and returns the MCP
+// tool result (a {"content":[...]} map), a tool-level error, and whether
+// the tool name was recognised. Shared by the stdio MCP frontend
+// (handleToolCall) and the argv frontend (`opendray memory call`), so the
+// two surfaces can never drift in which tools they expose or how each
+// forwards to the gateway. known=false means "no such tool".
+func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result any, err error, known bool) {
+	if len(args) == 0 {
+		// argv callers may omit arguments for no-arg tools; the per-tool
+		// handlers unmarshal into a struct, which rejects empty input.
+		args = json.RawMessage("{}")
+	}
+	switch name {
+	case "memory_search":
+		result, err = s.callSearch(args)
+	case "memory_store":
+		result, err = s.callStore(args)
+	case "memory_list":
+		result, err = s.callList(args)
+	case "memory_load_context":
+		result, err = s.callLoadContext(args)
+	case "memory_get_provenance":
+		result, err = s.callGetProvenance(args)
+	case "project_goal_get":
+		result, err = s.callProjectDocGet("goal")
+	case "project_plan_get":
+		result, err = s.callProjectDocGet("plan")
+	case "current_objective_get":
+		result, err = s.callProjectDocGet("current_objective")
+	case "project_goal_set":
+		result, err = s.callProjectDocSet("goal", args)
+	case "project_plan_set":
+		result, err = s.callProjectDocSet("plan", args)
+	case "current_objective_set":
+		result, err = s.callProjectDocSet("current_objective", args)
+	case "session_log_append":
+		result, err = s.callSessionLogAppend("manual", args)
+	case "decision_record":
+		result, err = s.callSessionLogAppend("decision", args)
+	case "doc_read":
+		result, err = s.callDocRead(args)
+	case "skill_distill":
+		result, err = s.callSkillDistill(args)
+	case "project_search":
+		result, err = s.callProjectSearch(args)
+	default:
+		return nil, nil, false
+	}
+	return result, err, true
 }
 
 func (s *memMCPServer) callSearch(args json.RawMessage) (any, error) {
@@ -703,8 +718,10 @@ func (s *memMCPServer) callSearch(args json.RawMessage) (any, error) {
 	} else {
 		fmt.Fprintf(&b, "Found %d memory hit(s):\n\n", len(out.Hits))
 		for i, h := range out.Hits {
-			fmt.Fprintf(&b, "[%d] %s\n  similarity=%.3f id=%v\n\n",
+			fmt.Fprintf(&b, "[%d] %s\n  similarity=%.3f id=%v\n",
 				i+1, stringField(h.Memory, "text"), h.Similarity, h.Memory["id"])
+			b.WriteString(foldedVariantsBlock(h.Memory, "  "))
+			b.WriteByte('\n')
 		}
 	}
 	return map[string]any{
@@ -839,6 +856,7 @@ func (s *memMCPServer) callLoadContext(args json.RawMessage) (any, error) {
 				text = text[:i]
 			}
 			fmt.Fprintf(&b, "- %s\n", text)
+			b.WriteString(foldedVariantsBlock(memory, "  "))
 		}
 	}
 	return map[string]any{
@@ -1267,6 +1285,54 @@ func (s *memMCPServer) write(resp rpcResponse) {
 	defer s.outMu.Unlock()
 	_, _ = s.out.Write(raw)
 	_, _ = s.out.Write([]byte{'\n'})
+}
+
+// mergedFromTexts extracts the absorbed variant texts from a memory's
+// metadata.merged_from audit list (oldest first), or nil when the row was
+// never folded. Write-time dedup (memory.Service.Store) overwrites the
+// canonical text with the newest write and parks the superseded text here —
+// lossless in the DB, but invisible to search until we surface it. Two facts
+// that differ only in a critical token (a port, a provider tag, a version)
+// embed as near-duplicates and fold, so without this the distinguishing one
+// silently vanishes from recall.
+func mergedFromTexts(memory map[string]any) []string {
+	meta, ok := memory["metadata"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	raw, ok := meta["merged_from"].([]any)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	var out []string
+	for _, e := range raw {
+		em, ok := e.(map[string]any)
+		if !ok {
+			continue
+		}
+		if t, ok := em["text"].(string); ok && strings.TrimSpace(t) != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// foldedVariantsBlock renders the "folded in N earlier writes" suffix for a
+// search / load_context hit, or "" when the row was never deduped (the common
+// case, so normal output is unchanged). indent is prepended to every line so
+// it nests under the hit. Each variant is collapsed to a single line.
+func foldedVariantsBlock(memory map[string]any, indent string) string {
+	texts := mergedFromTexts(memory)
+	if len(texts) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s↳ folded in %d earlier write(s) (deduped, kept for recall):\n", indent, len(texts))
+	for _, t := range texts {
+		oneLine := strings.Join(strings.Fields(t), " ")
+		fmt.Fprintf(&b, "%s    • %s\n", indent, oneLine)
+	}
+	return b.String()
 }
 
 func stringField(m map[string]any, key string) string {

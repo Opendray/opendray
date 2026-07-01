@@ -7,14 +7,23 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/opendray/opendray-v2/internal/integration"
+	"github.com/opendray/opendray-v2/internal/memory"
 )
 
 // Handlers exposes cross-layer search over HTTP.
 //
 //	GET /api/v1/project-search?cwd=<cwd>&q=<query>&top_k=<N>
 //
-// Mount under admin auth — results expose every layer including
-// goal/plan content which can include private project context.
+// Mount under the dual-auth group (admin OR integration key) and gate
+// each route with the memory:read scope — the same bar as
+// /memory/search. project_search is an MCP tool driven by the
+// scoped-key `opendray mcp-memory` subprocess, so it must accept the
+// same credential path the other memory tools do; mounting it admin-only
+// made the advertised tool 401 for every agent. Results expose goal/plan
+// content, but no more than doc_read (also dual-auth + memory:read), and
+// scope_key already confines results to the caller's project.
 type Handlers struct {
 	svc *Service
 	log *slog.Logger
@@ -28,7 +37,26 @@ func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
 }
 
 func (h *Handlers) Mount(r chi.Router) {
-	r.Get("/project-search", h.search)
+	r.With(h.requireRead).Get("/project-search", h.search)
+}
+
+// requireRead admits an admin principal or an integration key carrying
+// memory:read, matching memory.Handlers' read gate. Mirrored here (rather
+// than reused) because the route lives in a different package; the scope
+// constant is shared so the two surfaces stay in lockstep.
+func (h *Handlers) requireRead(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p, ok := integration.CurrentPrincipal(r.Context())
+		if !ok {
+			writeError(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		if p.Kind == integration.KindAdmin || integration.HasScope(p.Scopes, memory.ScopeMemoryRead) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		writeError(w, http.StatusForbidden, "requires admin or the memory:read scope")
+	})
 }
 
 func (h *Handlers) search(w http.ResponseWriter, r *http.Request) {

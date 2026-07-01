@@ -1369,6 +1369,7 @@
         "providerNone": "无默认",
         "modelLabel": "默认模型",
         "modelPlaceholder": "provider 默认(如 opus)",
+        "modelPickAria": "选择已知模型",
         "accountLabel": "默认 Claude 账号",
         "accountNone": "无默认",
         "accountTokenMissing": "(缺少 token)",
@@ -3210,7 +3211,11 @@
         "cancel": "取消",
         "switchedSnack": "已切换到 {account}",
         "switchFailed": "切换失败：{error}",
-        "noneHint": "未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。"
+        "noneHint": "未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。",
+        "tooltipAgy": "切换 Antigravity 账号",
+        "sheetTitleAgy": "切换 Antigravity 账号",
+        "confirmBodyAgy": "这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。",
+        "noneHintAgy": "未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。"
       }
     },
     "terminal": {
@@ -3574,6 +3579,17 @@
       "acceptIdentity": "接受",
       "identityAcceptedSnack": "已接受身份变更",
       "identityAcceptFailed": "接受失败"
+    },
+    "antigravityAccounts": {
+      "addHint": "添加新账号仅可在网关主机上操作。",
+      "addBody": "在网关主机上为每个账号分配独立的 HOME（HOME=~/.antigravity-accounts/<name> agy），完成 Google 登录后点按“导入本地”。",
+      "intro": "以 Antigravity 提供商启动的会话会从这些账号中选择（或回退到网关默认 HOME）。",
+      "empty": "尚无 Antigravity 账号。在网关主机上运行 HOME=~/.antigravity-accounts/<name> agy，完成 Google 登录后点按“导入本地”。",
+      "deleteTitle": "移除账号？",
+      "deleteBody": "从 opendray 移除该账号。磁盘上的 HOME 目录保持不变；已使用它的会话保持运行。",
+      "importSyncedSnack": "已同步 — 网关没有新账号。",
+      "noTokenYet": "未登录",
+      "homeDir": "home：{dir}"
     },
     "configFallbackTitle": "提供商配置",
     "saving": "保存中…",

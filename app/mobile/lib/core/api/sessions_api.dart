@@ -138,6 +138,28 @@ class SessionsApi {
     }
   }
 
+  // PATCH /api/v1/sessions/:id/antigravity-account — rebind a running
+  // Antigravity session to a different account HOME. Like the Claude
+  // switch, the gateway restarts the agy child under a fresh conversation
+  // (in-CLI history doesn't carry across accounts); the session id / tab
+  // is preserved. `accountId == ''` clears the binding (gateway default
+  // HOME). Mirrors web switchAntigravityAccount
+  // (app/shared/src/lib/sessions.ts).
+  Future<SessionSummary> switchAntigravityAccount(
+    String id,
+    String accountId,
+  ) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/antigravity-account',
+        data: {'account_id': accountId},
+      );
+      return SessionSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // Upload a file (typically an image) and let the gateway hand
   // back the absolute path it landed at on the server's tempdir.
   // The caller pastes that path into the live PTY so the running

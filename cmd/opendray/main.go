@@ -69,6 +69,8 @@ func main() {
 		os.Exit(runMcp(args))
 	case "mcp-memory":
 		os.Exit(runMcpMemory(args))
+	case "memory":
+		os.Exit(runMemory(args))
 	case "hook":
 		os.Exit(runHook(args))
 	case "doctor":

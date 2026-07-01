@@ -1369,6 +1369,7 @@
         "providerNone": "No default",
         "modelLabel": "Default model",
         "modelPlaceholder": "Provider default (e.g. opus)",
+        "modelPickAria": "Choose a known model",
         "accountLabel": "Default Claude account",
         "accountNone": "No default",
         "accountTokenMissing": "(token missing)",
@@ -3210,7 +3211,11 @@
         "cancel": "Cancel",
         "switchedSnack": "Switched to {account}",
         "switchFailed": "Switch failed: {error}",
-        "noneHint": "No Claude accounts configured. Add them in More → Providers → Claude."
+        "noneHint": "No Claude accounts configured. Add them in More → Providers → Claude.",
+        "tooltipAgy": "Switch Antigravity account",
+        "sheetTitleAgy": "Switch Antigravity account",
+        "confirmBodyAgy": "This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts (the session tab is kept).",
+        "noneHintAgy": "No Antigravity accounts configured. Add them in More → Providers → Antigravity."
       }
     },
     "terminal": {
@@ -3574,6 +3579,17 @@
       "acceptIdentity": "Accept",
       "identityAcceptedSnack": "Identity change accepted",
       "identityAcceptFailed": "Accept failed"
+    },
+    "antigravityAccounts": {
+      "addHint": "Adding a new account is gateway-host only.",
+      "addBody": "Give each account its own HOME on the gateway host (HOME=~/.antigravity-accounts/<name> agy), finish the Google sign-in, then tap Import local.",
+      "intro": "Sessions spawned with the Antigravity provider pick from these accounts (or fall back to the gateway default HOME).",
+      "empty": "No Antigravity accounts yet. Run HOME=~/.antigravity-accounts/<name> agy on the gateway host, finish the Google sign-in, then tap Import local.",
+      "deleteTitle": "Remove account?",
+      "deleteBody": "Removes the account from opendray. The on-disk HOME directory is left untouched; sessions already using it stay running.",
+      "importSyncedSnack": "Already in sync — gateway has no new accounts.",
+      "noTokenYet": "not logged in",
+      "homeDir": "home: {dir}"
     },
     "configFallbackTitle": "Provider config",
     "saving": "Saving…",
