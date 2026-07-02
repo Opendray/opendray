@@ -385,20 +385,14 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// sessions are unaffected (project data is already cwd-scoped; the
 	// shared global/KB layer stays available to them).
 	isIntegration := session.OriginFromContext(ctx) == session.OriginIntegration
-	// Two delivery modes for opendray-memory:
-	//   - MCP server (claude/codex/opencode): the agent calls memory_* as
-	//     native MCP tools, attached here.
-	//   - CLI shim (antigravity): agy CANNOT load opendray's stdio MCP
-	//     server — its MCP is a closed plugin/protobuf system with no
-	//     per-session config file (see renderMCP). Attaching the server
-	//     would write an invisible entry to .gemini/settings.json and the
-	//     agent would never see the tools. So for those providers we skip
-	//     the MCP attach and instead, in Prepare, export the gateway creds
-	//     into the session env + inject guidance to use the `opendray
-	//     memory` CLI through Bash. See memoryViaCLI / the Prepare branch.
-	wantMemory := sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration
-	memoryCLIShim := wantMemory && memoryViaCLI(id)
-	if wantMemory && !memoryCLIShim {
+	// The agent calls memory_* as native MCP tools on every MCP-capable
+	// provider, antigravity included: agy loads servers from its global
+	// <$HOME>/.gemini/config/mcp_config.json, which renderMCP merges our
+	// entry into. (An earlier release drove agy through an `opendray
+	// memory` CLI shim because we believed agy had no MCP config surface
+	// — that belief came from testing the wrong file; see the renderMCP
+	// antigravity arm.)
+	if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
 		servers = append(servers, MCPServer{
 			Name:    "opendray-memory",
 			Command: sp.memory.BinaryPath,
@@ -409,7 +403,11 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				"OPENDRAY_MEMORY_SCOPE": defaultStr(sp.memory.Scope, "project"),
 				// Scope key is the cwd at spawn time — populated below
 				// inside Prepare since we need access to the live
-				// session.Cwd from context.
+				// session.Cwd from context. (Except antigravity, whose
+				// entry lands in a HOME-global file shared across
+				// sessions: there the mcp-memory subprocess derives the
+				// scope from its own cwd, which agy sets to the session
+				// workspace.)
 			},
 		})
 	}
@@ -438,7 +436,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// no-Prepare fast path even when nothing else needs one.
 	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
 
-	if !wantClaudeAccount && !wantAgyAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt && !memoryCLIShim {
+	if !wantClaudeAccount && !wantAgyAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
 		return info, nil
 	}
 
@@ -538,27 +536,8 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// this nudge, the CLI tends to use its built-in markdown memory
 		// instead of our shared store, defeating the cross-CLI value prop.
 		// Done here (after skills, before MCP rendering) so message
-		// ordering stays predictable. Two flavours:
-		//   - CLI shim (antigravity): the agent can't see MCP tools, so we
-		//     export the gateway creds into the session env and tell it to
-		//     use the `opendray memory` CLI through Bash.
-		//   - MCP (claude/codex/opencode): the native memory_* tool nudge.
-		if memoryCLIShim {
-			cwd := session.Cwd(prepareCtx)
-			out.Env["OPENDRAY_BASE_URL"] = sp.memory.BaseURL
-			out.Env["OPENDRAY_API_KEY"] = sp.memory.APIKey
-			out.Env["OPENDRAY_MEMORY_SCOPE"] = defaultStr(sp.memory.Scope, "project")
-			out.Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
-			// Absolute path to the opendray binary (os.Executable, resolved
-			// at startup — the same one that launches the MCP subprocess), so
-			// the agent can call the CLI even when `opendray` isn't on the
-			// session's PATH. Removes the only environmental dependency the
-			// shim would otherwise share with skill injection.
-			out.Env["OPENDRAY_BIN"] = sp.memory.BinaryPath
-			if err := injectMemoryCLIGuidanceFor(providerID, baseDir, sp.memory.BinaryPath, &out); err != nil {
-				return session.PrepareOutput{}, fmt.Errorf("inject memory CLI guidance: %w", err)
-			}
-		} else if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp {
+		// ordering stays predictable.
+		if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
 			if err := injectMemoryGuidanceFor(providerID, baseDir, &out); err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("inject memory guidance: %w", err)
 			}
@@ -686,18 +665,33 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		// Antigravity's MCP surface is keyed off the session's effective
+		// HOME — the account dir when the spawn is account-bound (set
+		// above), else the gateway user's real HOME.
+		sessionHome := out.Env["HOME"]
+		if sessionHome == "" {
+			sessionHome, _ = os.UserHomeDir()
+		}
+
 		if mcpEnabled {
 			// Memory MCP needs the live cwd as scope_key. We attach
 			// it here (rather than statically when servers is built)
 			// because Prepare runs per spawn and the cwd is only on
-			// the context at this point.
+			// the context at this point. Antigravity is the exception:
+			// its entry lands in the HOME-global mcp_config.json shared
+			// by every session under that HOME, so baking one session's
+			// cwd in would leak it into the others — the mcp-memory
+			// subprocess instead falls back to its own cwd (agy spawns
+			// MCP servers from the session workspace; verified).
 			cwd := session.Cwd(prepareCtx)
-			for i := range servers {
-				if servers[i].Name == "opendray-memory" {
-					if servers[i].Env == nil {
-						servers[i].Env = map[string]string{}
+			if providerID != "antigravity" {
+				for i := range servers {
+					if servers[i].Name == "opendray-memory" {
+						if servers[i].Env == nil {
+							servers[i].Env = map[string]string{}
+						}
+						servers[i].Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
 					}
-					servers[i].Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
 				}
 			}
 			// Resolve ${KEY} placeholders against the secrets file at
@@ -709,7 +703,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				sp.log.Warn("MCP servers reference unset secrets",
 					"provider", providerID, "missing", missing)
 			}
-			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, cwd, resolved)
+			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, cwd, sessionHome, resolved)
 			if err != nil {
 				return session.PrepareOutput{}, err
 			}
@@ -722,15 +716,21 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
-		// Antigravity (agy) renders MCP into <cwd>/.gemini/settings.json
-		// (it reuses gemini-cli's workspace settings file). Clean up
-		// stale entries when MCP is off this spawn so removed servers
-		// (and their credentials) don't linger.
+		// Antigravity (agy) renders MCP into <home>/.gemini/config/
+		// mcp_config.json. Converge it to empty when MCP is off this
+		// spawn so removed servers (and their credentials) don't linger,
+		// and always purge the legacy <cwd>/.gemini/settings.json
+		// entries a previous release wrote (agy never read that file).
 		if providerID == "antigravity" {
-			cwd := session.Cwd(prepareCtx)
-			if cwd != "" && !mcpEnabled {
+			if !mcpEnabled {
+				if err := syncAgyGlobalMCP(sessionHome, nil); err != nil {
+					sp.log.Warn("agy global MCP cleanup failed",
+						"provider", providerID, "home", sessionHome, "err", err)
+				}
+			}
+			if cwd := session.Cwd(prepareCtx); cwd != "" {
 				if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
-					sp.log.Warn("workspace MCP cleanup failed",
+					sp.log.Warn("legacy workspace MCP cleanup failed",
 						"provider", providerID, "cwd", cwd, "err", err)
 				}
 			}
@@ -1404,100 +1404,6 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 	// surface yet so the memory MCP wouldn't be attached anyway.
 	return nil
 }
-
-// memoryViaCLI reports whether a provider must reach opendray-memory
-// through the `opendray memory` CLI shim instead of the stdio MCP server.
-// True for antigravity: agy can't load opendray's MCP server (its MCP is
-// a closed plugin/protobuf system with no per-session config file the
-// gateway can write — see renderMCP), so the only way to give it the
-// shared memory/project/journal tools is to export the gateway creds into
-// the session env and have it call the `opendray memory` CLI via Bash.
-func memoryViaCLI(providerID string) bool {
-	return providerID == "antigravity"
-}
-
-// injectMemoryCLIGuidanceFor injects the CLI-flavoured memory guidance
-// (use `opendray memory ...` through Bash) into the provider's
-// system-prompt surface. Used for providers in the memoryViaCLI bucket,
-// where the native MCP tools are unreachable. Same per-CLI dispatch shape
-// as injectMemoryGuidanceFor.
-func injectMemoryCLIGuidanceFor(providerID, baseDir, binPath string, out *session.PrepareOutput) error {
-	switch providerID {
-	case "antigravity":
-		return injectAgyContext(baseDir, "\n\n---\n\n"+memoryCLIGuidanceText(binPath), out)
-	}
-	// No other provider uses the CLI shim today; nothing to inject.
-	return nil
-}
-
-// memoryCLIGuidanceText returns the CLI memory guidance, appending a
-// concrete absolute-path fallback when binPath is known so the agent can
-// run the CLI even if `opendray` isn't on the session's PATH. binPath is
-// os.Executable() resolved at startup (the same binary that backs the MCP
-// server), exported to the session as OPENDRAY_BIN.
-func memoryCLIGuidanceText(binPath string) string {
-	if strings.TrimSpace(binPath) == "" {
-		return memoryGuidanceTextCLI
-	}
-	return memoryGuidanceTextCLI +
-		"\n\n> If your shell reports `opendray: command not found`, it isn't on " +
-		"PATH — use the absolute path, available in the `OPENDRAY_BIN` env var:\n" +
-		">  `\"$OPENDRAY_BIN\" memory call memory_search '{\"query\":\"...\"}'`\n" +
-		">  (it points to `" + binPath + "`)."
-}
-
-// memoryGuidanceTextCLI is the antigravity-flavoured memory guidance: same
-// shared store and the same when-to-store discipline as memoryGuidanceText,
-// but the agent reaches it through the `opendray memory` CLI (its Bash
-// tool) instead of MCP tool calls, because agy can't load opendray's MCP
-// server. Kept deliberately tighter than the MCP version — the agent only
-// needs the command shape + the core habits.
-const memoryGuidanceTextCLI = `## Persistent cross-agent memory (opendray)
-
-This session shares a cross-agent memory/knowledge store with every other
-opendray session in this project (Claude / Codex / others). You reach it
-through the ` + "`opendray memory`" + ` CLI via your shell/Bash tool — this
-CLI runtime cannot load it as MCP tools, so **do not** look for memory_*
-tools; run the command instead. Auth is already in your environment.
-
-### Commands
-
-- ` + "`opendray memory tools`" + ` — list every available tool + description.
-- ` + "`opendray memory call <tool> '<json-args>'`" + ` — invoke one. Examples:
-  - ` + "`opendray memory call memory_load_context '{\"query\":\"<task>\"}'`" + `
-  - ` + "`opendray memory call memory_search '{\"query\":\"db url\"}'`" + `
-  - ` + "`opendray memory call memory_store '{\"text\":\"...\",\"metadata\":{\"type\":\"project_fact\"}}'`" + `
-  - ` + "`opendray memory call session_log_append '{\"content\":\"what I just did\"}'`" + `
-  - ` + "`opendray memory call current_objective_set '{\"content\":\"...\"}'`" + `
-  - ` + "`opendray memory call current_objective_get`" + ` (no-arg tools omit the JSON)
-
-Arg keys per tool: memory_search/load_context use ` + "`query`" + `; memory_store
-uses ` + "`text`" + ` (+ ` + "`metadata`" + `); session_log_append / *_set use ` + "`content`" + `;
-doc_read uses ` + "`slug`" + ` (+ ` + "`section`" + `). Run ` + "`opendray memory tools`" + ` for the
-full schema if unsure.
-
-### Use this, not your built-in memory
-
-This shared store is the **only** memory you should write — not agy's own
-brain/notes. A fact you keep locally is invisible to the next Claude or
-Codex session in this project, which defeats the shared brain.
-
-### Habits (do these without being asked)
-
-1. **At start**: ` + "`memory_load_context`" + ` for the user's first ask, so you
-   don't repeat work prior sessions already did.
-2. **As you work**: ` + "`session_log_append`" + ` liberally — finished a step,
-   fixed a bug, hit a blocker, learned something the next session needs.
-   A session that ends with no journal taught the next agent nothing.
-3. **Keep ` + "`current_objective_set`" + ` live** — when the work establishes a
-   new immediate objective, finishes one, or shifts its steps.
-4. **Durable facts** → ` + "`memory_store`" + ` (user prefs, identifiers,
-   decisions, deploy topology). NOT transient "what I'm doing now" — that
-   is session_log_append / current_objective_set.
-5. **Before touching how OUR SYSTEM works** (opendray wiring, conventions,
-   a known pattern): ` + "`opendray memory call doc_read '{\"slug\":\"kb_integrations\",\"section\":\"...\"}'`" + `
-   — the kb_* pages are the source of truth and they update. Find them via
-   ` + "`opendray memory call project_search '{\"query\":\"...\"}'`" + `.`
 
 // injectAmbientMemoryFor injects the rendered "Recent project
 // memory" banner into the agent's system prompt. Same per-CLI

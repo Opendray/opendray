@@ -15,7 +15,7 @@ func TestRenderClaudeMCP_StdioServer(t *testing.T) {
 	servers := []MCPServer{
 		{Name: "fs", Command: "npx", Args: []string{"-y", "@modelcontextprotocol/server-filesystem", "/tmp"}},
 	}
-	args, env, err := renderMCP("claude", dir, "", servers)
+	args, env, err := renderMCP("claude", dir, "", "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestRenderClaudeMCP_HTTPServer(t *testing.T) {
 		{Name: "remote", Transport: "http", URL: "https://api.example.com/mcp",
 			Headers: map[string]string{"Authorization": "Bearer xyz"}},
 	}
-	args, _, err := renderMCP("claude", dir, "", servers)
+	args, _, err := renderMCP("claude", dir, "", "", servers)
 	if err != nil || len(args) != 2 {
 		t.Fatalf("unexpected args=%v err=%v", args, err)
 	}
@@ -63,7 +63,7 @@ func TestRenderClaudeMCP_DropsInvalid(t *testing.T) {
 		{Name: "no-url", Transport: "sse"},                    // dropped (no url)
 		{Name: "ok", Command: "node", Args: []string{"x.js"}}, // kept
 	}
-	args, _, err := renderMCP("claude", dir, "", servers)
+	args, _, err := renderMCP("claude", dir, "", "", servers)
 	if err != nil || len(args) != 2 {
 		t.Fatalf("args=%v err=%v", args, err)
 	}
@@ -83,7 +83,7 @@ func TestRenderCodexMCP_TomlOutput(t *testing.T) {
 		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"},
 			Env: map[string]string{"DEBUG": "1", "PATH": "/usr/bin"}},
 	}
-	args, env, err := renderMCP("codex", dir, "", servers)
+	args, env, err := renderMCP("codex", dir, "", "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ trust_level = "trusted"
 		t.Fatal(err)
 	}
 
-	_, env, err := renderMCP("codex", t.TempDir(), "", []MCPServer{
+	_, env, err := renderMCP("codex", t.TempDir(), "", "", []MCPServer{
 		{Name: "fs", Command: "npx"},
 	})
 	if err != nil {
@@ -153,7 +153,7 @@ func TestRenderCodexMCP_SkipsNonStdio(t *testing.T) {
 		{Name: "remote", Transport: "http", URL: "https://x"},
 		{Name: "stdio", Command: "node"},
 	}
-	_, env, err := renderMCP("codex", dir, "", servers)
+	_, env, err := renderMCP("codex", dir, "", "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,9 +166,9 @@ func TestRenderCodexMCP_SkipsNonStdio(t *testing.T) {
 	}
 }
 
-func readGeminiSettings(t *testing.T, cwd string) map[string]any {
+func readAgyMCPConfig(t *testing.T, home string) map[string]any {
 	t.Helper()
-	body, err := os.ReadFile(filepath.Join(cwd, ".gemini", "settings.json"))
+	body, err := os.ReadFile(filepath.Join(home, ".gemini", "config", "mcp_config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,87 +179,90 @@ func readGeminiSettings(t *testing.T, cwd string) map[string]any {
 	return got
 }
 
-func TestRenderGeminiMCP_WritesWorkspaceSettings(t *testing.T) {
-	cwd := t.TempDir()
+func TestRenderAgyMCP_WritesGlobalConfig(t *testing.T) {
+	home := t.TempDir()
 	servers := []MCPServer{
 		{Name: "fs", Command: "npx", Args: []string{"-y", "server-fs"}},
+		{Name: "gw", Transport: "http", URL: "http://127.0.0.1:8770/mcp",
+			Headers: map[string]string{"Authorization": "Bearer k"}},
 	}
-	args, env, err := renderMCP("antigravity", t.TempDir(), cwd, servers)
+	args, env, err := renderMCP("antigravity", t.TempDir(), t.TempDir(), home, servers)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(args) != 0 || len(env) != 0 {
-		t.Errorf("args=%v env=%v, want none (agy reads <cwd>/.gemini/settings.json)", args, env)
+		t.Errorf("args=%v env=%v, want none (agy reads <home>/.gemini/config/mcp_config.json)", args, env)
 	}
-	got := readGeminiSettings(t, cwd)
-	fs := got["mcpServers"].(map[string]any)["fs"].(map[string]any)
+	mcps := readAgyMCPConfig(t, home)["mcpServers"].(map[string]any)
+	fs := mcps["fs"].(map[string]any)
 	if fs["command"].(string) != "npx" {
 		t.Errorf("command=%v", fs["command"])
 	}
-	// Managed-entry ledger + gitignore note must exist so the next render
-	// can prune stale entries and the file never lands in version control.
-	if _, err := os.Stat(filepath.Join(cwd, ".gemini", geminiManagedFile)); err != nil {
+	// Remote entries must use agy's serverUrl field — it rejects the
+	// url/httpUrl shapes other CLIs use.
+	gw := mcps["gw"].(map[string]any)
+	if gw["serverUrl"].(string) != "http://127.0.0.1:8770/mcp" {
+		t.Errorf("serverUrl=%v", gw["serverUrl"])
+	}
+	if _, ok := gw["url"]; ok {
+		t.Errorf("legacy url field leaked: %v", gw)
+	}
+	// Managed-entry ledger must exist so the next render can prune
+	// stale entries without touching user-authored ones.
+	if _, err := os.Stat(filepath.Join(home, ".gemini", "config", agyManagedFile)); err != nil {
 		t.Errorf("managed ledger missing: %v", err)
-	}
-	gi, err := os.ReadFile(filepath.Join(cwd, ".gemini", ".gitignore"))
-	if err != nil {
-		t.Fatalf("gitignore missing: %v", err)
-	}
-	if !strings.Contains(string(gi), "settings.json") {
-		t.Errorf("gitignore does not cover settings.json: %s", gi)
 	}
 }
 
-func TestRenderGeminiMCP_MergePreservesUserConfig(t *testing.T) {
-	cwd := t.TempDir()
-	dir := filepath.Join(cwd, ".gemini")
+func TestRenderAgyMCP_MergePreservesUserConfig(t *testing.T) {
+	home := t.TempDir()
+	dir := filepath.Join(home, ".gemini", "config")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	user := `{
-  "ui": {"theme": "Default"},
   "mcpServers": {
-    "user-server": {"command": "uvx", "args": ["my-mcp"]}
+    "user-server": {"command": "uvx", "args": ["my-mcp"]},
+    "user-remote": {"serverUrl": "https://example.com/mcp"}
   }
 }`
-	if err := os.WriteFile(filepath.Join(dir, "settings.json"), []byte(user), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mcp_config.json"), []byte(user), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	_, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
+	_, _, err := renderMCP("antigravity", t.TempDir(), t.TempDir(), home, []MCPServer{
 		{Name: "fs", Command: "npx"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := readGeminiSettings(t, cwd)
-	if _, ok := got["ui"].(map[string]any); !ok {
-		t.Errorf("user ui key lost: %v", got)
-	}
-	mcps := got["mcpServers"].(map[string]any)
+	mcps := readAgyMCPConfig(t, home)["mcpServers"].(map[string]any)
 	if _, ok := mcps["user-server"]; !ok {
-		t.Errorf("user mcp entry lost: %v", mcps)
+		t.Errorf("user stdio entry lost: %v", mcps)
+	}
+	if _, ok := mcps["user-remote"]; !ok {
+		t.Errorf("user remote entry lost: %v", mcps)
 	}
 	if _, ok := mcps["fs"]; !ok {
 		t.Errorf("managed entry missing: %v", mcps)
 	}
 }
 
-func TestRenderGeminiMCP_RemovesStaleManagedEntries(t *testing.T) {
-	cwd := t.TempDir()
-	if _, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
+func TestRenderAgyMCP_RemovesStaleManagedEntries(t *testing.T) {
+	home := t.TempDir()
+	if _, _, err := renderMCP("antigravity", t.TempDir(), t.TempDir(), home, []MCPServer{
 		{Name: "fs", Command: "npx"},
 		{Name: "old", Command: "node"},
 	}); err != nil {
 		t.Fatal(err)
 	}
 	// Second spawn: "old" disabled / removed from the registry.
-	if _, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("antigravity", t.TempDir(), t.TempDir(), home, []MCPServer{
 		{Name: "fs", Command: "npx"},
 	}); err != nil {
 		t.Fatal(err)
 	}
-	mcps := readGeminiSettings(t, cwd)["mcpServers"].(map[string]any)
+	mcps := readAgyMCPConfig(t, home)["mcpServers"].(map[string]any)
 	if _, ok := mcps["old"]; ok {
 		t.Errorf("stale managed entry survived: %v", mcps)
 	}
@@ -268,31 +271,60 @@ func TestRenderGeminiMCP_RemovesStaleManagedEntries(t *testing.T) {
 	}
 
 	// Full cleanup (no MCP servers at all this spawn).
-	if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
+	if err := syncAgyGlobalMCP(home, nil); err != nil {
 		t.Fatal(err)
 	}
-	got := readGeminiSettings(t, cwd)
-	if _, ok := got["mcpServers"]; ok {
-		t.Errorf("managed entries not cleaned up: %v", got)
+	mcps = readAgyMCPConfig(t, home)["mcpServers"].(map[string]any)
+	if len(mcps) != 0 {
+		t.Errorf("managed entries not cleaned up: %v", mcps)
 	}
-	if _, err := os.Stat(filepath.Join(cwd, ".gemini", geminiManagedFile)); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(home, ".gemini", "config", agyManagedFile)); !os.IsNotExist(err) {
 		t.Errorf("managed ledger should be removed after cleanup, err=%v", err)
 	}
 }
 
-func TestRenderGeminiMCP_MalformedUserSettingsErrors(t *testing.T) {
-	cwd := t.TempDir()
-	dir := filepath.Join(cwd, ".gemini")
+func TestRenderAgyMCP_MalformedUserConfigErrors(t *testing.T) {
+	home := t.TempDir()
+	dir := filepath.Join(home, ".gemini", "config")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "settings.json"), []byte("{not json"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mcp_config.json"), []byte("{not json"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := renderMCP("antigravity", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("antigravity", t.TempDir(), t.TempDir(), home, []MCPServer{
 		{Name: "fs", Command: "npx"},
 	}); err == nil {
-		t.Fatal("expected error on malformed user settings.json (must not clobber)")
+		t.Fatal("expected error on malformed user mcp_config.json (must not clobber)")
+	}
+}
+
+// The legacy <cwd>/.gemini/settings.json surface (a previous fix wrote
+// MCP entries there; agy never read it) must still be purgeable so agy
+// spawns can clean up what that release left behind.
+func TestSyncGeminiWorkspaceMCP_LegacyCleanup(t *testing.T) {
+	cwd := t.TempDir()
+	if err := syncGeminiWorkspaceMCP(cwd, map[string]map[string]any{
+		"stale": {"command": "npx"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := syncGeminiWorkspaceMCP(cwd, nil); err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(cwd, ".gemini", "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if _, ok := got["mcpServers"]; ok {
+		t.Errorf("legacy managed entries not cleaned up: %v", got)
+	}
+	if _, err := os.Stat(filepath.Join(cwd, ".gemini", geminiManagedFile)); !os.IsNotExist(err) {
+		t.Errorf("legacy managed ledger should be removed, err=%v", err)
 	}
 }
 
@@ -310,7 +342,7 @@ func TestRenderGrokMCP_WritesProjectConfig(t *testing.T) {
 	servers := []MCPServer{
 		{Name: "vault", Command: "vault-mcp", Args: []string{"--addr", "https://v"}, Env: map[string]string{"VAULT_TOKEN": "s.xxx"}},
 	}
-	args, env, err := renderMCP("grok", t.TempDir(), cwd, servers)
+	args, env, err := renderMCP("grok", t.TempDir(), cwd, "", servers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,7 +379,7 @@ func TestRenderGrokMCP_WritesProjectConfig(t *testing.T) {
 
 func TestRenderGrokMCP_RemoteTransports(t *testing.T) {
 	cwd := t.TempDir()
-	_, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+	_, _, err := renderMCP("grok", t.TempDir(), cwd, "", []MCPServer{
 		{Name: "sse_srv", Transport: "sse", URL: "http://h/sse", Headers: map[string]string{"X-Key": "v"}},
 		{Name: "http_srv", Transport: "http", URL: "http://h/mcp"},
 	})
@@ -382,7 +414,7 @@ func TestRenderGrokMCP_MergePreservesUserConfig(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "config.toml"), []byte(user), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, "", []MCPServer{
 		{Name: "vault", Command: "vault-mcp"},
 	}); err != nil {
 		t.Fatal(err)
@@ -398,13 +430,13 @@ func TestRenderGrokMCP_MergePreservesUserConfig(t *testing.T) {
 
 func TestRenderGrokMCP_RemovesStaleManagedEntries(t *testing.T) {
 	cwd := t.TempDir()
-	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, "", []MCPServer{
 		{Name: "vault", Command: "vault-mcp"},
 		{Name: "old", Command: "node"},
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, "", []MCPServer{
 		{Name: "vault", Command: "vault-mcp"},
 	}); err != nil {
 		t.Fatal(err)
@@ -438,7 +470,7 @@ func TestRenderGrokMCP_MalformedUserConfigErrors(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "config.toml"), []byte("[mcp_servers.x\nbroken"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := renderMCP("grok", t.TempDir(), cwd, []MCPServer{
+	if _, _, err := renderMCP("grok", t.TempDir(), cwd, "", []MCPServer{
 		{Name: "vault", Command: "vault-mcp"},
 	}); err == nil {
 		t.Fatal("expected error on malformed user config.toml (must not clobber)")
@@ -446,7 +478,7 @@ func TestRenderGrokMCP_MalformedUserConfigErrors(t *testing.T) {
 }
 
 func TestRenderMCP_UnknownProviderNoOp(t *testing.T) {
-	args, env, err := renderMCP("unknown-provider", t.TempDir(), "", []MCPServer{
+	args, env, err := renderMCP("unknown-provider", t.TempDir(), "", "", []MCPServer{
 		{Name: "x", Command: "y"},
 	})
 	if err != nil || args != nil || env != nil {
@@ -455,7 +487,7 @@ func TestRenderMCP_UnknownProviderNoOp(t *testing.T) {
 }
 
 func TestRenderMCP_EmptyServers(t *testing.T) {
-	args, env, err := renderMCP("claude", t.TempDir(), "", nil)
+	args, env, err := renderMCP("claude", t.TempDir(), "", "", nil)
 	if err != nil || args != nil || env != nil {
 		t.Errorf("expected no-op for empty servers, got args=%v env=%v err=%v", args, env, err)
 	}

@@ -1,3 +1,30 @@
+-- 0071 — kb_integrations refresh: re-seed the Third-Party Integration
+-- Guide after antigravity MCP injection became real. The guide (and the
+-- live KB page seeded by 0066/refreshed by 0068) documented antigravity's
+-- MCP surface as claude-style `--mcp-config`; in reality earlier releases
+-- wrote <cwd>/.gemini/settings.json — a file agy never reads — so
+-- integration `mcp_servers` silently never reached antigravity sessions.
+-- Verified against agy 1.0.15 (2026-07-02): agy loads MCP servers from
+-- exactly one file, $HOME/.gemini/config/mcp_config.json, and opendray now
+-- merges managed entries into it at spawn (remote descriptors translated
+-- to agy's serverUrl field). The guide's per-provider translation table,
+-- the provider-switch example, and §21 changed accordingly.
+--
+-- Why a new migration instead of editing 0068: the runner records applied
+-- versions by filename and never re-applies one, so the live KB page stays
+-- frozen at 0068's text on every DB that already ran it. This migration
+-- force-updates the page content (DO UPDATE), keeping updated_by='operator'
+-- so the AI KB drafter still treats it as human-locked.
+--
+-- Source of truth for the prose: docs/integrations/INTEGRATION_GUIDE.md.
+-- Keep them in sync (see the guide's "Versioning" section).
+
+INSERT INTO project_docs (id, cwd, kind, content, updated_by, updated_at)
+VALUES (
+    'doc_global_kb_integrations',
+    '__global__',
+    'kb_integrations',
+    $ODGUIDE$
 # opendray Third-Party Integration Guide
 
 This is the canonical, forward-looking contract that **every** third-party app or website MUST follow to integrate with opendray. opendray is a self-hosted gateway that drives AI coding CLIs (Claude Code, Codex, OpenCode, antigravity) over a PTY behind a unified REST + WebSocket API. A third-party app integrates by being **registered by an operator** (admin-only), receiving a **one-time scoped API key**, and then spawning and driving agent sessions over REST while optionally proxying its own UI and subscribing to a live event stream. This document states the rules as explicit **MUST / SHOULD / NEVER**, documents the current reality honestly (including what is *not* enforced yet), and gives you a runnable end-to-end path.
@@ -838,3 +865,11 @@ This guide describes the opendray `/api/v1` integration contract as of **opendra
 - **Roadmap:** per-route scope enforcement for the still-unenforced `session:*` / `channel:*` / `provider:read`. Design your client now to handle `403` on any endpoint without breaking.
 
 When the code changes (new enforced scopes, spawn-profile fields, memory-zone semantics, or any endpoint addition), this guide MUST be updated in lockstep and re-seeded into the `kb_integrations` knowledge page (add a new `project_docs` upsert migration — the original seed migration is immutable once applied).
+$ODGUIDE$,
+    'operator',
+    NOW()
+)
+ON CONFLICT (cwd, kind) DO UPDATE
+    SET content    = EXCLUDED.content,
+        updated_by = EXCLUDED.updated_by,
+        updated_at = EXCLUDED.updated_at;
