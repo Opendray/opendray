@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 )
@@ -63,11 +64,11 @@ func parseMCPServersJSON(raw string) []MCPServer {
 // returns the extra CLI args / env required to make the provider
 // pick them up. Provider IDs without a renderer return empty.
 //
-// cwd is the session's working directory. Only antigravity needs it: agy
-// reuses gemini-cli's config layout and ignores a scratch config dir, so
-// the only injection surface is the workspace settings file at
-// <cwd>/.gemini/settings.json.
-func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, map[string]string, error) {
+// cwd is the session's working directory (grok's injection surface lives
+// under it). home is the session's effective HOME — the multi-account
+// dir when the spawn is account-bound, else the gateway user's real HOME
+// — which is antigravity's injection surface.
+func renderMCP(providerID, baseDir, cwd, home string, servers []MCPServer) ([]string, map[string]string, error) {
 	if len(servers) == 0 {
 		return nil, nil, nil
 	}
@@ -77,24 +78,24 @@ func renderMCP(providerID, baseDir, cwd string, servers []MCPServer) ([]string, 
 	case "codex":
 		return renderCodexMCP(baseDir, servers)
 	case "antigravity":
-		// KNOWN LIMITATION (verified 2026-06-25 against agy 1.0.12): agy does
-		// NOT consume the gemini-cli-style <cwd>/.gemini/settings.json
-		// mcpServers map. Its own config (~/.gemini/antigravity-cli/
-		// settings.json) has no mcpServers key at all; MCP servers are
-		// registered through agy's plugin system (`agy plugin import` from
-		// gemini/claude EXTENSIONS, or `agy plugin install` from a
-		// marketplace) and materialise as a protobuf-backed internal
-		// registry + per-tool descriptors under
-		// ~/.gemini/antigravity-cli/mcp/<server>/. Proof: a server present in
-		// ~/.gemini/settings.json (e.g. "pencil") never appears in agy's
-		// plugin list. There is no clean per-session file opendray can write
-		// to inject an MCP server (especially an HTTP-transport one) into
-		// agy, so integration MCP injection does NOT reach antigravity agents
-		// today — steer MCP-dependent integrations at claude until agy
-		// exposes a --mcp-config-style flag. We still write the workspace
-		// file (harmless, non-destructive) so operator-driven gemini-cli
-		// fallbacks keep working, but DO NOT rely on agy reading it.
-		return renderGeminiMCP(cwd, servers)
+		// agy reads MCP servers from exactly one file (verified 2026-07-02
+		// against agy 1.0.15, empirically with marker stdio servers):
+		// <$HOME>/.gemini/config/mcp_config.json — the config surface shared
+		// by the whole Antigravity suite (CLI + IDE). It does NOT read the
+		// gemini-cli-style <cwd>/.gemini/settings.json (the surface a
+		// previous fix targeted — entries there never appear in a session),
+		// and it does NOT read a workspace-level .agents/mcp_config.json or
+		// <cwd>/.gemini/config/mcp_config.json (both tested, never loaded,
+		// git repo or not). `agy plugin` remains a separate, closed
+		// import/marketplace system — irrelevant for injection now that the
+		// documented mcp_config.json surface works.
+		//
+		// Because the file is keyed off $HOME, per-account spawns (which
+		// point HOME at a dedicated dir) are naturally isolated, while
+		// default spawns share the operator's real file — so the merge is
+		// managed-entry converged and strictly non-destructive to
+		// user-authored servers.
+		return renderAgyMCP(home, servers)
 	case "opencode":
 		// OpenCode reads MCP from its JSON config's `mcp` block; we merge
 		// into the per-session OPENCODE_CONFIG file opendray generates.
@@ -145,36 +146,198 @@ func renderClaudeMCP(baseDir string, servers []MCPServer) ([]string, map[string]
 // user-authored ones.
 const geminiManagedFile = ".opendray-managed.json"
 
-// renderGeminiMCP merges the session's MCP servers into
-// <cwd>/.gemini/settings.json — the workspace config surface Antigravity
-// (agy) honours (it reuses gemini-cli's settings layout) besides the
-// user-level ~/.gemini/settings.json (which holds auth + personal config
-// and must not be clobbered). Merge is non-destructive: existing user
-// keys and user mcpServers entries are preserved verbatim.
-func renderGeminiMCP(cwd string, servers []MCPServer) ([]string, map[string]string, error) {
-	if strings.TrimSpace(cwd) == "" {
+// agyManagedFile records which mcpServers entries inside the agy global
+// mcp_config.json are opendray-managed. Same converge contract as
+// geminiManagedFile, different directory.
+const agyManagedFile = ".opendray-managed.json"
+
+// renderAgyMCP merges the session's MCP servers into
+// <home>/.gemini/config/mcp_config.json — the only file agy loads MCP
+// servers from (see the renderMCP antigravity arm). home is the
+// session's effective HOME so account-bound spawns write their own
+// isolated copy. Merge is non-destructive: user-authored entries are
+// preserved verbatim, and only entries we managed before are ever
+// updated or removed.
+//
+// KNOWN LIMITATION: the file is per-HOME, not per-session. Two
+// concurrent agy sessions under the same HOME see the union of their
+// managed entries, and a spawn converging the file can remove an entry
+// a still-running session was using (agy watches the file). The
+// opendray-memory entry is identical for every session (no per-session
+// env — scope comes from the MCP subprocess cwd, which agy sets to the
+// session workspace), so the common case never churns; only concurrent
+// integration sessions with different MCP sets can fight.
+func renderAgyMCP(home string, servers []MCPServer) ([]string, map[string]string, error) {
+	if strings.TrimSpace(home) == "" {
 		return nil, nil, nil
 	}
 	entries := map[string]map[string]any{}
 	for _, s := range servers {
-		spec := stdioMCPServerSpec(s)
+		spec := agyMCPServerSpec(s)
 		if spec == nil {
 			continue
 		}
 		entries[s.Name] = spec
 	}
-	if err := syncGeminiWorkspaceMCP(cwd, entries); err != nil {
+	if err := syncAgyGlobalMCP(home, entries); err != nil {
 		return nil, nil, err
 	}
 	return nil, nil, nil
 }
 
+// agyMCPServerSpec converts one registry server into agy's
+// mcp_config.json entry shape. stdio uses command/args/env; remote (sse /
+// streamable HTTP) uses serverUrl + headers — agy rejects the legacy
+// url/httpUrl field names, and there is no transport-type field (the
+// endpoint is probed). Returns nil for entries missing their required
+// field.
+func agyMCPServerSpec(s MCPServer) map[string]any {
+	switch s.Transport {
+	case "sse", "http":
+		if s.URL == "" {
+			return nil
+		}
+		spec := map[string]any{"serverUrl": s.URL}
+		if len(s.Headers) > 0 {
+			spec["headers"] = s.Headers
+		}
+		return spec
+	default: // stdio
+		if s.Command == "" {
+			return nil
+		}
+		spec := map[string]any{"command": s.Command}
+		if len(s.Args) > 0 {
+			spec["args"] = s.Args
+		}
+		if len(s.Env) > 0 {
+			spec["env"] = s.Env
+		}
+		return spec
+	}
+}
+
+// agyGlobalMCPMu serialises syncAgyGlobalMCP's read-modify-write. The
+// workspace-scoped grok/gemini syncs get away without a lock because a
+// cwd rarely has two concurrent spawns; the agy file is per-HOME —
+// shared by every non-account-bound antigravity spawn across all
+// projects — so concurrent Prepares are normal, not an edge case. One
+// process-wide mutex is enough: the gateway is the only writer.
+var agyGlobalMCPMu sync.Mutex
+
+// syncAgyGlobalMCP applies the desired opendray-managed entries to
+// <home>/.gemini/config/mcp_config.json. An empty desired map removes
+// every previously managed entry and is a no-op when nothing was ever
+// managed — so calling this on every agy spawn keeps the file converged
+// with the registry without churning untouched setups.
+func syncAgyGlobalMCP(home string, desired map[string]map[string]any) error {
+	agyGlobalMCPMu.Lock()
+	defer agyGlobalMCPMu.Unlock()
+
+	dir := filepath.Join(home, ".gemini", "config")
+	managedPath := filepath.Join(dir, agyManagedFile)
+	prevManaged := readGeminiManaged(managedPath)
+	if len(desired) == 0 && len(prevManaged) == 0 {
+		return nil
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("mkdir agy config dir: %w", err)
+	}
+
+	configPath := filepath.Join(dir, "mcp_config.json")
+	config := map[string]any{}
+	if data, err := os.ReadFile(configPath); err == nil {
+		if err := json.Unmarshal(data, &config); err != nil {
+			// Never risk rewriting a user-authored file we can't parse.
+			return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", configPath, err)
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("read agy mcp_config: %w", err)
+	}
+
+	mcpServers, _ := config["mcpServers"].(map[string]any)
+	if mcpServers == nil {
+		mcpServers = map[string]any{}
+	}
+	// Drop entries we managed before that are no longer desired.
+	// User-authored entries are never in the managed list.
+	for _, name := range prevManaged {
+		if _, still := desired[name]; !still {
+			delete(mcpServers, name)
+		}
+	}
+	managed := make([]string, 0, len(desired))
+	for name, spec := range desired {
+		mcpServers[name] = spec
+		managed = append(managed, name)
+	}
+	sort.Strings(managed)
+	config["mcpServers"] = mcpServers
+
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal agy mcp_config: %w", err)
+	}
+	// Atomic (temp + rename): agy watches this file, and a torn write
+	// would not only feed it invalid JSON but also hard-fail every
+	// subsequent sync via the parse guard above. 0600 on create:
+	// managed entries may embed resolved credentials (e.g. the
+	// opendray-memory gateway key); an existing user file keeps its mode.
+	if err := writeFileAtomic(configPath, append(data, '\n'), 0o600); err != nil {
+		return fmt.Errorf("write agy mcp_config: %w", err)
+	}
+
+	if len(managed) == 0 {
+		_ = os.Remove(managedPath)
+	} else {
+		body, err := json.MarshalIndent(managed, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal agy managed list: %w", err)
+		}
+		if err := writeFileAtomic(managedPath, append(body, '\n'), 0o600); err != nil {
+			return fmt.Errorf("write agy managed list: %w", err)
+		}
+	}
+	return nil
+}
+
+// writeFileAtomic writes data to path via a same-directory temp file +
+// rename, so concurrent readers (agy watches its mcp_config.json) never
+// observe a torn write. An existing file keeps its permission bits;
+// mode applies on create only — matching os.WriteFile's semantics.
+func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
+	if fi, err := os.Stat(path); err == nil {
+		mode = fi.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name()) // no-op after successful rename
+	if err := tmp.Chmod(mode); err != nil {
+		tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
+}
+
 // syncGeminiWorkspaceMCP applies the desired opendray-managed entries to
 // <cwd>/.gemini/settings.json. An empty desired map removes every
 // previously managed entry (server disabled / removed from the registry)
-// and is a no-op when nothing was ever managed — so calling this on
-// every agy spawn keeps the workspace file converged with the
-// registry without churning untouched projects.
+// and is a no-op when nothing was ever managed.
+//
+// LEGACY: a previous fix targeted this file believing agy read it (it
+// does not — see the renderMCP antigravity arm). It is kept only so agy
+// spawns can purge the stale managed entries (and their embedded
+// credentials) that fix left behind in project workspaces; nothing
+// renders new entries into it.
 func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error {
 	dir := filepath.Join(cwd, ".gemini")
 	managedPath := filepath.Join(dir, geminiManagedFile)

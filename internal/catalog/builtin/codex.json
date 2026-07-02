@@ -12,9 +12,9 @@
   "npmPackage": "@openai/codex",
   "modelFlag": "--model",
   "knownModels": [
-    "gpt-5-codex",
-    "o3",
-    "o4-mini"
+    "gpt-5.5",
+    "gpt-5.4",
+    "gpt-5.4-mini"
   ],
   "capabilities": {
     "supportsResume": false,
