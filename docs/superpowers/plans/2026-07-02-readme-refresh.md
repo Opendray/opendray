@@ -4,7 +4,7 @@
 
 **Goal:** Refresh `README.md` + 9 translations, add `llms.txt`, sync GitHub repo description + topics so opendray accurately represents its current 5-CLI capability surface, looks comparable to top OSS repos, and is discoverable via both search engines and LLM answers.
 
-**Architecture:** One atomic PR on branch `docs/readme-refresh`. Sequential commits: screenshots first (visual assets are prerequisites for the README changes that reference them), then English canonical README, then `llms.txt`, then the 9 translations, then GitHub metadata. CI must be green before merge. No version bump (this is a docs change per VERSIONING.md).
+**Architecture:** One atomic PR on branch `docs/readme-refresh`. Sequential commits: screenshots first (visual assets are prerequisites for the README changes that reference them), then English canonical README, then `llms.txt`, then the 9 translations. Then PR + CI + merge. Then GitHub metadata update (after merge, so description on main is consistent with README on main). No version bump (this is a docs change per VERSIONING.md).
 
 **Tech Stack:** Playwright (headless Chromium) for screenshot capture; Node.js for scripts; `gh` CLI for GitHub metadata + PR ops; Markdown (GitHub-flavored) for content.
 
@@ -48,33 +48,90 @@
 
 ### Task 1: Capture product screenshots
 
+**Privacy constraint (operator-set):** Screenshots must come from a fresh
+seeded gateway, NOT from the production instance on `127.0.0.1:8770`. The
+production instance carries real user data; the shots go into a public README.
+
 **Files:**
 - Create: `docs/assets/screenshots/hero-web-admin.png`
 - Create: `docs/assets/screenshots/session-live.png`
 - Create: `docs/assets/screenshots/mobile-session.png`
 - Create: `docs/assets/screenshots/channels-telegram.png`
 - Create then delete: `scripts/capture-screenshots.mjs`
+- Create then delete: `/tmp/opendray-shots/config.toml`, `/tmp/opendray-shots/data/`
 
 **Interfaces:**
 - Consumes: none (first task)
 - Produces: four PNG files at the paths above, each ≤500KB, referenced by name in later tasks.
 
-- [ ] **Step 1: Verify a local gateway is running**
+- [ ] **Step 1: Spin up a seeded scratch gateway on `127.0.0.1:8771`**
 
-Run: `curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8770/admin/`
-
-Expected output: `200`
-
-If not running, start it in the background:
+Do NOT reuse the production instance on `:8770`. Create a fresh scratch
+instance:
 
 ```bash
 cd /var/lib/opendray/rcc/opendray
-go run ./cmd/opendray serve -config config.toml &
-sleep 5
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8770/admin/
+mkdir -p /tmp/opendray-shots/data
+export OPENDRAY_SHOTS_PG_DB=opendray_shots
+export OPENDRAY_SHOTS_PG_USER=opendray_shots
+export OPENDRAY_SHOTS_PG_PASS=$(openssl rand -base64 24 | tr -d '=+/')
+export OPENDRAY_SHOTS_ADMIN=$(openssl rand -base64 24 | tr -d '=+/')
+
+# Create a scratch Postgres database + role (assumes local PG accessible
+# from the operator user).
+sudo -u postgres psql -c "CREATE ROLE $OPENDRAY_SHOTS_PG_USER LOGIN PASSWORD '$OPENDRAY_SHOTS_PG_PASS';" 2>&1 || true
+sudo -u postgres psql -c "CREATE DATABASE $OPENDRAY_SHOTS_PG_DB OWNER $OPENDRAY_SHOTS_PG_USER;" 2>&1 || true
+sudo -u postgres psql -d $OPENDRAY_SHOTS_PG_DB -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>&1
+
+cat > /tmp/opendray-shots/config.toml <<EOF
+[server]
+listen = "127.0.0.1:8771"
+
+[database]
+url = "postgres://$OPENDRAY_SHOTS_PG_USER:$OPENDRAY_SHOTS_PG_PASS@127.0.0.1:5432/$OPENDRAY_SHOTS_PG_DB?sslmode=disable"
+
+[admin]
+password = "$OPENDRAY_SHOTS_ADMIN"
+
+[storage]
+data_dir = "/tmp/opendray-shots/data"
+EOF
 ```
 
-Expected output after sleep: `200`
+Apply schema, seed fake data (see Step 2), then start:
+
+```bash
+go run ./cmd/opendray migrate -config /tmp/opendray-shots/config.toml
+go run ./cmd/opendray serve -config /tmp/opendray-shots/config.toml &
+SHOTS_PID=$!
+sleep 5
+curl -s -o /dev/null -w "shots gateway HTTP=%{http_code}\n" http://127.0.0.1:8771/admin/
+```
+
+Expected: HTTP 200.
+
+- [ ] **Step 1b: Seed fake data**
+
+Write `/tmp/opendray-shots/seed.sql` with fake but plausible fixtures. Use
+generic names ("Prompt refactor", "Docs update", "Bug triage") and never
+real personal info. Seed:
+
+1. Four sessions in Sessions view, showing multi-provider coverage:
+   Claude Code / Codex / Grok Build / shell. Each with a fake project name
+   ("app/web", "internal/session", "docs/", "misc/").
+2. 8-12 memory entries with generic technical text (no personal data).
+3. Three channels configured but disabled: Telegram, Slack, Discord (do not
+   put real webhook URLs or tokens; use `sk_fake_xxx` style placeholders).
+
+Apply:
+
+```bash
+sudo -u postgres psql -d $OPENDRAY_SHOTS_PG_DB -f /tmp/opendray-shots/seed.sql
+```
+
+If direct SQL is fragile against the migration schema, fall back to using
+the REST API against `127.0.0.1:8771` with the admin credentials to POST
+the fixtures. Either path lands the same data.
 
 - [ ] **Step 2: Install Playwright + Chromium**
 
@@ -143,7 +200,8 @@ await browser.close()
 
 ```bash
 cd /var/lib/opendray/rcc/opendray
-export OPENDRAY_ADMIN_PASSWORD="$(grep -oP 'password\s*=\s*"\K[^"]+' config.toml | head -1)"
+export OPENDRAY_URL="http://127.0.0.1:8771"
+export OPENDRAY_ADMIN_PASSWORD="$OPENDRAY_SHOTS_ADMIN"
 node scripts/capture-screenshots.mjs
 ```
 
@@ -177,10 +235,14 @@ file docs/assets/screenshots/*.png
 
 Expected: 4 PNG files, each between 30KB and 500KB, each identified as `PNG image data, 1440 x 900` (desktop shots) or `390 x 844` (mobile shot). If any file is >500KB, compress with `optipng -o5 <file>` or reduce viewport.
 
-- [ ] **Step 6: Delete the throwaway script**
+- [ ] **Step 6: Tear down the scratch gateway and delete the throwaway script**
 
 ```bash
+kill $SHOTS_PID 2>/dev/null || true
 rm scripts/capture-screenshots.mjs
+rm -rf /tmp/opendray-shots
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS $OPENDRAY_SHOTS_PG_DB;"
+sudo -u postgres psql -c "DROP ROLE IF EXISTS $OPENDRAY_SHOTS_PG_USER;"
 ```
 
 - [ ] **Step 7: Commit**
@@ -841,7 +903,7 @@ paragraphs)."
 
 ---
 
-### Task 5: Update GitHub repo description + topics
+### Task 6 (reordered from 5): Update GitHub repo description + topics AFTER merge
 
 **Files:**
 - No local files. External state change on `Opendray/opendray` via `gh api`.
@@ -916,7 +978,7 @@ No commit here (no local files touched). The change is auditable via GitHub's ac
 
 ---
 
-### Task 6: Open PR, wait for CI, merge
+### Task 5 (reordered from 6): Open PR, wait for CI, merge
 
 **Files:**
 - No local files. PR creation, CI wait, merge on green.
