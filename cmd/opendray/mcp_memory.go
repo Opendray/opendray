@@ -27,9 +27,10 @@
 //
 // Optional env vars (defaults used when absent):
 //
-//	OPENDRAY_MEMORY_SCOPE        session | project | global   (default project)
-//	OPENDRAY_MEMORY_SCOPE_KEY    cwd / session id / operator   (default: process
-//	                             cwd when scope=project, else empty)
+//	OPENDRAY_MEMORY_SCOPE           session | project | global   (default project)
+//	OPENDRAY_MEMORY_SCOPE_KEY       cwd / session id / operator   (default empty)
+//	OPENDRAY_MEMORY_SCOPE_FROM_CWD  "1" = derive an unset scope key from the
+//	                                process cwd (antigravity's HOME-global entry)
 //
 // MCP protocol coverage is the minimum that real clients exercise:
 // initialize handshake, tools/list, tools/call. Resources, prompts,
@@ -117,14 +118,15 @@ func loadMemMCPConfig() (memMCPConfig, error) {
 	if c.scope == "" {
 		c.scope = "project"
 	}
-	// Project scope with no explicit key falls back to the process cwd.
-	// This is antigravity's path: its MCP entry lives in the HOME-global
-	// mcp_config.json shared by every session under that HOME, so the
-	// adapter can't bake a per-session cwd into the entry's env — but agy
-	// spawns MCP subprocesses from the session workspace, so Getwd IS the
-	// session's scope key. Providers with per-session config files
-	// (claude/codex/opencode) still pass the key explicitly.
-	if c.scope == "project" && c.scopeKey == "" {
+	// OPENDRAY_MEMORY_SCOPE_FROM_CWD=1 derives the scope key from the
+	// process cwd. This is antigravity's path: its MCP entry lives in
+	// the HOME-global mcp_config.json shared by every session under
+	// that HOME, so the adapter can't bake a per-session cwd into the
+	// entry's env — but agy spawns MCP subprocesses from the session
+	// workspace, so Getwd IS the session's scope key. Explicit opt-in
+	// (not "whenever the key is empty") so providers that pass the key
+	// per-session keep their exact semantics even when cwd is unset.
+	if os.Getenv("OPENDRAY_MEMORY_SCOPE_FROM_CWD") == "1" && c.scopeKey == "" {
 		if wd, err := os.Getwd(); err == nil {
 			c.scopeKey = wd
 		}

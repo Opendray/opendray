@@ -371,8 +371,26 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// created this session (provider-agnostic), merged after vault+config
 	// so the integration's own tools attach to whatever provider the
 	// operator pointed it at. Integration entries win on name collision.
+	//
+	// Antigravity exception: agy's only MCP surface is the HOME-global
+	// mcp_config.json (see renderMCP), and a spawn without an account
+	// binding uses the gateway user's REAL HOME — writing an
+	// integration's servers (with their resolved credentials) there
+	// would expose them to the operator's own agy sessions and to every
+	// other integration sharing that HOME. So integration MCP reaches
+	// antigravity only when the spawn is account-bound (dedicated HOME
+	// = per-account isolation); otherwise the servers are dropped with
+	// a warning and the operator should bind the integration to an
+	// antigravity account (or point it at claude, whose MCP surface is
+	// per-session).
 	if raw := session.IntegrationMCPServersFromContext(ctx); raw != "" {
-		servers = mergeMCPServers(servers, parseMCPServersJSON(raw))
+		accountBound := session.AccountID(ctx) != "" && sp.agyAccounts != nil
+		if integrationMCPAllowed(id, accountBound) {
+			servers = mergeMCPServers(servers, parseMCPServersJSON(raw))
+		} else {
+			sp.log.Warn("dropping integration MCP servers: antigravity spawn is not account-bound, refusing to write integration credentials into the shared HOME-global mcp_config.json",
+				"provider", id)
+		}
 	}
 	// Auto-attach opendray's memory MCP server when enabled at app
 	// startup. This is what makes "the agent remembers things across
@@ -680,16 +698,21 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			// the context at this point. Antigravity is the exception:
 			// its entry lands in the HOME-global mcp_config.json shared
 			// by every session under that HOME, so baking one session's
-			// cwd in would leak it into the others — the mcp-memory
-			// subprocess instead falls back to its own cwd (agy spawns
-			// MCP servers from the session workspace; verified).
+			// cwd in would leak it into the others — instead the entry
+			// carries a static opt-in flag telling the mcp-memory
+			// subprocess to derive the key from its own cwd (agy spawns
+			// MCP servers from the session workspace; verified). The
+			// flag is identical for every session, so the shared file
+			// never churns.
 			cwd := session.Cwd(prepareCtx)
-			if providerID != "antigravity" {
-				for i := range servers {
-					if servers[i].Name == "opendray-memory" {
-						if servers[i].Env == nil {
-							servers[i].Env = map[string]string{}
-						}
+			for i := range servers {
+				if servers[i].Name == "opendray-memory" {
+					if servers[i].Env == nil {
+						servers[i].Env = map[string]string{}
+					}
+					if providerID == "antigravity" {
+						servers[i].Env["OPENDRAY_MEMORY_SCOPE_FROM_CWD"] = "1"
+					} else {
 						servers[i].Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
 					}
 				}
@@ -761,6 +784,19 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		return out, nil
 	}
 	return info, nil
+}
+
+// integrationMCPAllowed reports whether an integration's declared MCP
+// servers may be rendered for this provider. Everywhere except
+// antigravity the answer is yes — those providers get per-session MCP
+// config files. Antigravity's only surface is the HOME-global
+// mcp_config.json: without an account binding the spawn shares the
+// gateway user's real HOME, and writing the integration's servers
+// (with their resolved credentials) there would expose them to the
+// operator's own agy sessions and to every other integration under
+// that HOME.
+func integrationMCPAllowed(providerID string, accountBound bool) bool {
+	return providerID != "antigravity" || accountBound
 }
 
 // providerSupportsSkills enumerates which CLI providers we have a

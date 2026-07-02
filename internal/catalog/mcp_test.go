@@ -2,9 +2,11 @@ package catalog
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/BurntSushi/toml"
@@ -296,6 +298,84 @@ func TestRenderAgyMCP_MalformedUserConfigErrors(t *testing.T) {
 		{Name: "fs", Command: "npx"},
 	}); err == nil {
 		t.Fatal("expected error on malformed user mcp_config.json (must not clobber)")
+	}
+}
+
+// The agy file is per-HOME — every non-account-bound antigravity spawn
+// converges the same file, so concurrent syncs are normal. Run with
+// -race: the mutex + atomic rename must keep the file parseable and the
+// user's entry intact under interleaving.
+func TestSyncAgyGlobalMCP_ConcurrentSpawns(t *testing.T) {
+	home := t.TempDir()
+	dir := filepath.Join(home, ".gemini", "config")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	user := `{"mcpServers":{"user-server":{"command":"uvx"}}}`
+	if err := os.WriteFile(filepath.Join(dir, "mcp_config.json"), []byte(user), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 16; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			desired := map[string]map[string]any{
+				"opendray-memory": {"command": "/bin/opendray", "args": []any{"mcp-memory"}},
+			}
+			if i%2 == 0 {
+				desired[fmt.Sprintf("extra-%d", i)] = map[string]any{"command": "npx"}
+			}
+			if err := syncAgyGlobalMCP(home, desired); err != nil {
+				t.Errorf("sync %d: %v", i, err)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	mcps := readAgyMCPConfig(t, home)["mcpServers"].(map[string]any)
+	if _, ok := mcps["user-server"]; !ok {
+		t.Errorf("user entry lost under concurrency: %v", mcps)
+	}
+	if _, ok := mcps["opendray-memory"]; !ok {
+		t.Errorf("memory entry missing after concurrent syncs: %v", mcps)
+	}
+	// And a final converge must still work (file parseable, ledger sane).
+	if err := syncAgyGlobalMCP(home, nil); err != nil {
+		t.Fatalf("final cleanup: %v", err)
+	}
+	mcps = readAgyMCPConfig(t, home)["mcpServers"].(map[string]any)
+	if _, ok := mcps["user-server"]; !ok {
+		t.Errorf("user entry lost on cleanup: %v", mcps)
+	}
+	if len(mcps) != 1 {
+		t.Errorf("managed entries should all be gone, got: %v", mcps)
+	}
+}
+
+// Integration-declared MCP servers must never land in antigravity's
+// shared HOME-global file: only an account-bound spawn (dedicated HOME)
+// may carry them. Every other provider renders per-session files, so
+// they're always allowed.
+func TestIntegrationMCPAllowed(t *testing.T) {
+	cases := []struct {
+		provider     string
+		accountBound bool
+		want         bool
+	}{
+		{"claude", false, true},
+		{"codex", false, true},
+		{"opencode", false, true},
+		{"grok", false, true},
+		{"antigravity", false, false},
+		{"antigravity", true, true},
+	}
+	for _, c := range cases {
+		if got := integrationMCPAllowed(c.provider, c.accountBound); got != c.want {
+			t.Errorf("integrationMCPAllowed(%q, %v) = %v, want %v",
+				c.provider, c.accountBound, got, c.want)
+		}
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 )
@@ -216,12 +217,23 @@ func agyMCPServerSpec(s MCPServer) map[string]any {
 	}
 }
 
+// agyGlobalMCPMu serialises syncAgyGlobalMCP's read-modify-write. The
+// workspace-scoped grok/gemini syncs get away without a lock because a
+// cwd rarely has two concurrent spawns; the agy file is per-HOME —
+// shared by every non-account-bound antigravity spawn across all
+// projects — so concurrent Prepares are normal, not an edge case. One
+// process-wide mutex is enough: the gateway is the only writer.
+var agyGlobalMCPMu sync.Mutex
+
 // syncAgyGlobalMCP applies the desired opendray-managed entries to
 // <home>/.gemini/config/mcp_config.json. An empty desired map removes
 // every previously managed entry and is a no-op when nothing was ever
 // managed — so calling this on every agy spawn keeps the file converged
 // with the registry without churning untouched setups.
 func syncAgyGlobalMCP(home string, desired map[string]map[string]any) error {
+	agyGlobalMCPMu.Lock()
+	defer agyGlobalMCPMu.Unlock()
+
 	dir := filepath.Join(home, ".gemini", "config")
 	managedPath := filepath.Join(dir, agyManagedFile)
 	prevManaged := readGeminiManaged(managedPath)
@@ -266,10 +278,12 @@ func syncAgyGlobalMCP(home string, desired map[string]map[string]any) error {
 	if err != nil {
 		return fmt.Errorf("marshal agy mcp_config: %w", err)
 	}
-	// 0600 on create: managed entries may embed resolved credentials
-	// (e.g. the opendray-memory gateway key). WriteFile keeps the
-	// existing mode when the user's file already exists.
-	if err := os.WriteFile(configPath, append(data, '\n'), 0o600); err != nil {
+	// Atomic (temp + rename): agy watches this file, and a torn write
+	// would not only feed it invalid JSON but also hard-fail every
+	// subsequent sync via the parse guard above. 0600 on create:
+	// managed entries may embed resolved credentials (e.g. the
+	// opendray-memory gateway key); an existing user file keeps its mode.
+	if err := writeFileAtomic(configPath, append(data, '\n'), 0o600); err != nil {
 		return fmt.Errorf("write agy mcp_config: %w", err)
 	}
 
@@ -280,11 +294,38 @@ func syncAgyGlobalMCP(home string, desired map[string]map[string]any) error {
 		if err != nil {
 			return fmt.Errorf("marshal agy managed list: %w", err)
 		}
-		if err := os.WriteFile(managedPath, append(body, '\n'), 0o600); err != nil {
+		if err := writeFileAtomic(managedPath, append(body, '\n'), 0o600); err != nil {
 			return fmt.Errorf("write agy managed list: %w", err)
 		}
 	}
 	return nil
+}
+
+// writeFileAtomic writes data to path via a same-directory temp file +
+// rename, so concurrent readers (agy watches its mcp_config.json) never
+// observe a torn write. An existing file keeps its permission bits;
+// mode applies on create only — matching os.WriteFile's semantics.
+func writeFileAtomic(path string, data []byte, mode os.FileMode) error {
+	if fi, err := os.Stat(path); err == nil {
+		mode = fi.Mode().Perm()
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name()) // no-op after successful rename
+	if err := tmp.Chmod(mode); err != nil {
+		tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
 
 // syncGeminiWorkspaceMCP applies the desired opendray-managed entries to
