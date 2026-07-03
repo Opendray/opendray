@@ -5,13 +5,11 @@
 <h1 align="center">opendray</h1>
 
 <p align="center">
-  <strong>Self-hosted gateway for Claude Code · Codex · Antigravity · shell, with one shared local-first memory layer across them.</strong>
-  <br/>
-  <sub>Run sessions on your own infra. Drive from web, mobile, or chat. Open REST + WebSocket API for integrations.</sub>
+  <strong>Self-hosted gateway for Claude Code, Codex, Antigravity, Grok Build, and OpenCode. Run agent sessions on your own infrastructure. Drive from web, mobile, or chat.</strong>
 </p>
 
 <p align="center">
-  <strong><a href="https://opendray.dev">🌐 opendray.dev</a></strong>
+  <strong><a href="https://opendray.dev">opendray.dev</a></strong>
 </p>
 
 <p align="center">
@@ -31,30 +29,145 @@
   🌐 <strong>English</strong> · <a href="README.zh.md">简体中文</a> · <a href="README.fa.md">فارسی</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ru.md">Русский</a>
 </p>
 
----
+<p align="center">
+  <a href="docs/getting-started.md"><img alt="Get started" src="https://img.shields.io/badge/get%20started-4f46e5?style=for-the-badge"></a>
+  <a href="#how-it-looks"><img alt="See it in action" src="https://img.shields.io/badge/see%20it%20in%20action-ec4899?style=for-the-badge"></a>
+  <a href="https://opendray.dev"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-F43F5E?style=for-the-badge"></a>
+</p>
 
-## Why opendray exists
+```mermaid
+flowchart LR
+    subgraph before ["❌ SSH direct"]
+        laptop1[Your laptop] -.->|ssh, dies on sleep| host1[Server + CLI]
+    end
 
-Three frictions in day-to-day work with AI coding CLIs that opendray is built to fix.
+    subgraph after ["✅ opendray gateway"]
+        web[Web] --> gw[opendray]
+        phone[Phone] --> gw
+        chat[Telegram / Slack / Discord] --> gw
+        gw -->|survives disconnect| cli[Claude Code · Codex · Antigravity · Grok Build · OpenCode · shell]
+    end
+```
 
-**Sessions die when your laptop sleeps.** Running Claude Code or Codex over SSH means the agent dies the moment your machine closes the lid or drops Wi-Fi. Context, in-flight tool calls, the partial diff you were about to review. Gone. opendray runs the agent on a host that doesn't sleep (a Mac mini under your desk, a NAS, a VPS) and lets you reattach from a web admin, a Flutter mobile app, or a chat message. The session keeps executing whether or not anyone's connected.
-
-**Hitting a rate limit shouldn't kill what you were doing.** If you have multiple Anthropic accounts (work + personal, family plan + Pro), opendray treats them as a pool. It surfaces tier, quota and active-session count per account, balances new sessions across them, and lets you swap a live session to a different account without losing the conversation. The transcript moves with you. Same model for Codex accounts.
-
-**Memory is a first-class layer, not an afterthought.** Most AI CLIs re-index project context from scratch every session, burning tokens on repeated retrieval. opendray ships a local-first vector store (ONNX / Ollama / LM Studio embeddings) with three-domain retrieval across user, project, and session, plus drift detection across layers. Every byte stays on your network.
+Running Claude Code or Codex over SSH means the agent dies the moment your laptop closes. opendray runs it on a host that stays awake (a Mac mini under your desk, a NAS, a VPS) and lets you reattach from a web admin, a mobile app, or a chat message. Sessions keep executing whether or not anyone is connected. Multiple accounts get pooled with per-tier balancing and live account-switch. A local-first memory layer keeps every embedding on your network.
 
 ---
 
 ## What is opendray?
 
-**opendray** wraps the AI coding CLIs you already use (Claude Code, Codex, Antigravity, plus any shell) and turns them into something you can drive from anywhere. Run sessions on your home server / NAS / VPS, get notified on Telegram when one goes idle, reply from your phone to feed the next prompt back in, all over a self-hosted gateway you control end to end.
+**opendray** wraps the AI coding CLIs you already use (Claude Code, Codex, Antigravity, Grok Build, OpenCode, plus any shell) and turns them into something you can drive from anywhere. Run sessions on your home server, NAS, or VPS. Get notified on Telegram when a session goes idle. Reply from your phone to feed the next prompt back in. All over a self-hosted gateway you control end to end.
 
 - 🛰 **One backend, three surfaces.** Single Go binary serving a React web admin and a Flutter mobile app, with every action also exposed over a REST + WebSocket API for third-party integrations.
-- 💬 **Six bidirectional channels, no walled gardens.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), plus a Bridge adapter for anything custom. Replies on any channel get routed back into the right session.
-- 🧠 **Local-first memory.** ONNX / Ollama / LM Studio embeddings with three-scope retrieval (user · project · session), smart ranking, and cross-layer conflict detection. No vector data leaves your network.
+- 💬 **Six bidirectional channels, no walled gardens.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), plus a Bridge adapter for anything custom. Replies on any channel route back into the right session.
+- 🧠 **Local-first memory.** ONNX / Ollama / LM Studio embeddings with three-scope retrieval (user, project, session), smart ranking, and cross-layer conflict detection. No vector data leaves your network.
 - 🔌 **Integration-grade API.** Scoped API keys, per-call audit log, reverse-proxy mounts. Treat opendray as the gateway behind your own product or just as a personal command centre.
-- 🔑 **Multi-Claude-account fleet.** Drop multiple `claude login` accounts into the gateway; the panel auto-discovers them via a filesystem watcher, balances new sessions across enabled accounts, and lets you switch a live session between accounts **without losing the conversation** (transcript is migrated under the hood). Each account row shows live capacity (subscription tier, rate-limit tier, active sessions, last-used, current Anthropic email) so you can pick the right one at a glance.
-- 🔒 **Self-hosted, license-clear.** Apache 2.0, one static binary, cosign-signed releases with SPDX SBOM. No telemetry, no cloud account, no subscription.
+- 🔑 **Multi-account fleet for Claude, Codex, Antigravity.** Drop multiple logged-in credential directories onto the host; opendray auto-discovers them via a filesystem watcher, balances new sessions across enabled accounts, and lets you switch a live session between accounts **without losing the conversation** (transcript migrates under the hood). Each account row shows live capacity (subscription tier, rate-limit tier, active sessions, last-used, current login email).
+- 🔒 **Self-hosted, licence-clear.** Apache 2.0, one static binary, cosign-signed releases with SPDX SBOM. No telemetry, no cloud account, no subscription.
+
+## How it looks
+
+opendray is a Go binary that serves a web admin at `/admin/` and a REST + WebSocket API at `/api/v1/*`. Here is what it does, in the shapes you would actually see.
+
+### List running sessions
+
+```
+$ opendray sessions ls
+ID        PROVIDER      PROJECT              STATE     STARTED
+ses_a1f   claude-code   app/web              running   2h ago
+ses_b2c   codex         internal/session     idle      5m ago
+ses_c9d   grok-build    docs/                running   14m ago
+ses_d34   shell         misc/deploy-logs     idle      1h ago
+```
+
+### List installed providers and their versions
+
+```
+$ opendray providers list
+PROVIDER      VERSION     ACCOUNTS   ACTIVE   NOTES
+claude-code   1.4.11      3          1        auto-discovered via CLAUDE_CONFIG_DIR
+codex         0.29.0      2          1        openai login
+antigravity   0.7.2       1          0        agy, HOME-isolated
+grok-build    2.5.1       1          1        xai
+opencode      0.6.3       -          0        local endpoint required
+shell         -           -          1        arbitrary
+```
+
+### Attach to a session from the browser and keep going after your laptop sleeps
+
+The web admin embeds xterm.js. You see the same PTY the CLI wrote to. Close the browser tab and the session keeps running on the host. Reopen it hours later and the transcript is where you left it.
+
+```
+[claude-code ses_a1f · app/web · 2h 14m]
+
+> refactor the router to lazy-load the mobile view
+
+I'll look at the current router and figure out the cleanest split.
+
+● Read(app/web/src/router.tsx)
+  ⎿ 342 lines
+● Grep(pattern: "loadable", path: "app/web/src")
+  ⎿ found 3 uses
+...
+```
+
+### Route a Telegram reply back into the same session
+
+```mermaid
+sequenceDiagram
+    participant U as You (Telegram)
+    participant TG as Telegram Bot
+    participant OD as opendray
+    participant S as Session ses_a1f
+
+    S->>OD: session emits "review needed on line 42"
+    OD->>TG: send message + session tag
+    TG->>U: notification with quick-reply
+    U->>TG: "yes, ship it"
+    TG->>OD: webhook incoming
+    OD->>S: inject "yes, ship it" as next PTY input
+    S->>OD: agent continues
+```
+
+Same shape for Slack, Discord, Feishu, DingTalk, WeCom, and any Bridge-adapter transport.
+
+### Fan out a memory query across three scopes at once
+
+```mermaid
+flowchart LR
+    prompt[Agent asks for context] --> ret[memory retrieve]
+    ret --> user[USER scope<br/>preferences, workflows]
+    ret --> proj[PROJECT scope<br/>architecture, decisions]
+    ret --> sess[SESSION scope<br/>this conversation]
+    user --> rank[cross-scope rank]
+    proj --> rank
+    sess --> rank
+    rank --> ctx[injected context]
+```
+
+Every scope stores embeddings from your own provider (ONNX bundled, Ollama, or LM Studio). Nothing leaves your network.
+
+### Swap accounts mid-conversation without losing the transcript
+
+```mermaid
+flowchart LR
+    a[Claude account A<br/>rate-limited] -->|switch| b[Claude account B<br/>fresh quota]
+    a -.->|transcript migrates| b
+    b --> cont[Session continues<br/>same conversation]
+```
+
+Same for Codex accounts and Antigravity accounts. `Carry-context` is on by default; untick to start clean on the new identity.
+
+## Features
+
+|  |  |
+| --- | --- |
+| **Sessions** | Attach to a running Claude Code, Codex, Antigravity, Grok Build, OpenCode, or shell session from web, mobile, or chat. Sessions survive client disconnect and host reboot. Live transcript overlay for TUIs that skip wheel input. |
+| **Providers** | 5 first-class AI coding CLIs plus arbitrary shell. Adding a new CLI is a JSON descriptor drop-in under `internal/catalog/builtin/`. Per-provider MCP-server injection (Vault, memory, integrations). |
+| **Memory** | Three-scope retrieval (user, project, session). Local-first embeddings via ONNX, Ollama, or LM Studio. Cross-layer conflict detection. Global knowledge pages injected at spawn. Compiler flywheel distils episodes into reusable playbooks. |
+| **Channels** | Telegram, Slack, Discord, Feishu, DingTalk, WeCom. Bridge adapter for custom transports. Bidirectional: sessions notify, replies feed back. |
+| **Integrations** | REST + WebSocket API with scoped API keys, per-call audit log, reverse-proxy mounts. HashiCorp Vault MCP for secret access. Public [`docs/integration-guide.md`](docs/integration-guide.md). |
+| **Ops** | Single Go binary. One-line installer (Linux, macOS, WSL2). Self-managing (`opendray update / start / stop / providers update`). Encrypted PostgreSQL backups + data exports. Goreleaser pipeline with cosign-signed releases + SPDX SBOM. |
+| **Security** | Apache 2.0. No telemetry, no cloud account. Cosign keyless (Sigstore) signing. `ProtectSystem=strict` systemd hardening. Multi-tenant-safe scoped tokens. |
 
 ## Architecture at a glance
 
@@ -80,6 +193,8 @@ flowchart LR
         cc[Claude Code]
         co[Codex]
         ag[Antigravity]
+        gb[Grok Build]
+        oc[OpenCode]
         sh[Shell]
     end
 
@@ -94,6 +209,8 @@ flowchart LR
     sess --> cc
     sess --> co
     sess --> ag
+    sess --> gb
+    sess --> oc
     sess --> sh
     sess -.-> mem
     mem --> pg
@@ -102,27 +219,40 @@ flowchart LR
 
 Everything in the diagram runs on your network. No cloud dependencies, no inference outside your control.
 
----
+## Comparison
 
-## Status
+### opendray vs known AI clients
 
-**v2.7.6** (latest). The v2 generation continues to iterate. See
-[`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy
-(major = product generation, not strict SemVer "breaking change") and
-[`CHANGELOG.md`](CHANGELOG.md) for the full release history.
+|  | opendray | Claude Desktop | Cursor | CLI over SSH | ChatGPT Desktop |
+| --- | --- | --- | --- | --- | --- |
+| Session survives client disconnect | ✅ | ❌ | ❌ | ⚠️ (tmux / screen) | ❌ |
+| Multi-account pool with live switch | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Cross-session memory layer | ✅ | ❌ | Partial | ❌ | Partial |
+| Host filesystem + tool use | ✅ | Limited | ✅ | ✅ | Limited |
+| Mobile client with feature parity | ✅ | ❌ | ❌ | ⚠️ (SSH client) | Partial |
+| Chat channel adaptors | ✅ (6) | ❌ | ❌ | ❌ | ❌ |
+| Self-hosted | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Licence | Apache 2.0 | Proprietary | Proprietary | (varies) | Proprietary |
 
-This generation ships:
+### opendray vs self-hosted chat frontends
 
-- **One-line installer + uninstaller wizards** (Linux + macOS;
-  Windows funnels through WSL2). Walks the operator through Postgres
-  bootstrap, AI-CLI install, admin credentials, listen address,
-  binary install, schema migration, and service registration.
-- **Self-managing binary.** `opendray update / start / stop /
-  restart / status / providers list / providers update` so operators
-  don't touch `systemctl` / `launchctl` for routine ops.
-- **Goreleaser release pipeline.** Cross-compiled binaries
-  (linux/darwin × amd64/arm64), cosign keyless signing (Sigstore),
-  SPDX SBOM, atomically verified self-update.
+|  | opendray | Open WebUI | LibreChat | Dify |
+| --- | --- | --- | --- | --- |
+| Runs actual agent CLI (not just chat) | ✅ | ❌ | ❌ | Partial |
+| Tool use + file writes on host | ✅ | ❌ | ❌ | Sandboxed |
+| Multiple AI coding CLIs in one gateway | ✅ (5) | ❌ | ❌ | ❌ |
+| Cross-session memory | ✅ | Basic | Basic | ✅ |
+| PTY session with terminal reattach | ✅ | ❌ | ❌ | ❌ |
+| Chat channel adaptors | ✅ (6) | Partial | Partial | ✅ |
+| Licence | Apache 2.0 | MIT | MIT | Apache 2.0 |
+
+## Who is this for?
+
+**Solo dev running a homelab.** You already have a Mac mini, NAS, or Proxmox box running 24/7. You've been running Claude Code over SSH but the session dies every time your laptop sleeps. You want the CLI to keep going, and you want to reattach from your phone on the train. opendray is the gateway that puts your host between you and the CLI.
+
+**Small-team lead standing up shared AI infrastructure.** Your team has 3-5 Anthropic accounts spread across work and personal plans. You want to pool them, watch usage per account, and let anyone on the team drive a session from the browser. opendray gives you multi-account pooling, per-account observability, scoped API keys per teammate, and a mobile app they can install without an App Store submission.
+
+**Integrator building on top of a session-runner.** You are building a product that needs to spawn Claude Code, Codex, or Grok Build sessions with tool use, and you don't want to reimplement session lifecycle, PTY handling, memory, or channel routing. opendray exposes every action over REST + WebSocket with scoped keys, per-call audit logs, and reverse-proxy mounts. Treat it as your agent runtime.
 
 ## Install
 
@@ -394,8 +524,8 @@ needed. Cloudflare Tunnel terminates TLS in front of `:8770`.
 
 ```
 cmd/opendray/   binary entry point
-internal/       Go backend — gateway, sessions, memory, channels,
-                integrations, git, search, … (one package per domain)
+internal/       Go backend (gateway, sessions, memory, channels,
+                integrations, git, search, one package per domain)
 app/web/        React + Vite admin SPA (embedded in the binary)
 app/mobile/     Flutter app (iOS + Android)
 app/shared*/    cross-surface shared UI + i18n strings
@@ -428,27 +558,83 @@ Zustand + xterm.js) and per-W milestone notes.
 ## Mobile app
 
 `app/mobile/` is a Flutter app for **iOS and Android** with feature
-parity with the web admin. It attaches to a running gateway over HTTPS —
-enter the **Gateway URL** + admin login on first launch and you get the
-same Sessions / Channels / Integrations / Memory / Git surfaces. There's
+parity with the web admin. It attaches to a running gateway over HTTPS.
+Enter the **Gateway URL** + admin login on first launch and you get the
+same Sessions / Channels / Integrations / Memory / Git surfaces. There is
 no App Store / Play Store build by design (self-hosted, single-tenant):
 you build it yourself and sign it with your own identity.
 
-**[→ Build & install guide](docs/mobile-app.md)** — make the gateway
+**[→ Build & install guide](docs/mobile-app.md).** Make the gateway
 reachable from the phone, then sideload an Android APK or install on
-iPhone via Xcode. ([all 10 languages](docs/mobile-app.md) — switch at the
+iPhone via Xcode. ([all 10 languages](docs/mobile-app.md); switch at the
 top of the guide.)
+
+## FAQ
+
+### What is opendray?
+
+opendray is a self-hosted gateway that wraps the AI coding CLIs you already use (Claude Code, Codex, Antigravity, Grok Build, OpenCode, and shell) and turns them into sessions you can drive from a web admin, a Flutter mobile app, or six chat channels (Telegram, Slack, Discord, Feishu, DingTalk, WeCom). One Go binary. Apache 2.0. Your infra, your data, your tokens.
+
+### Which AI CLIs does opendray support?
+
+Five first-class providers as of v2.10.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI), and **OpenCode**. Plus arbitrary shell for anything else. Adding a new CLI is a JSON descriptor under `internal/catalog/builtin/`; no adapter code required for common cases.
+
+### How is opendray different from Claude Desktop or ChatGPT Desktop?
+
+Claude Desktop and ChatGPT Desktop are chat clients that run on your laptop and die when the laptop closes. opendray runs the actual agentic CLI on a host that stays awake and lets you reattach from anywhere. Sessions survive client disconnect, laptop sleep, and network drops. Multiple accounts get pooled with live switch between them.
+
+### How is opendray different from running Claude Code over SSH?
+
+Four things SSH does not give you: (1) session survives when you disconnect (no `tmux` gymnastics required, though you can still use tmux inside), (2) attach from a phone or a chat channel, not just a terminal, (3) shared memory layer across every session on the host, (4) multi-account pool with per-tier balancing and live account-switch mid-conversation.
+
+### How is opendray different from Open WebUI, LibreChat, or Dify?
+
+Those are chat frontends against a model API. They send prompts to `api.openai.com` (or similar) and render the response. opendray runs the actual agent CLI process on your host, complete with tool use, file writes, memory, and MCP servers. If a task needs `Read` / `Edit` / `Bash` on your host filesystem, opendray does it; chat frontends do not.
+
+### Can I use multiple Claude, Codex, or Antigravity accounts?
+
+Yes. Drop the logged-in credential directories on the host (Claude uses `CLAUDE_CONFIG_DIR`, Antigravity uses `$HOME` isolation) and opendray auto-discovers them via a filesystem watcher. New sessions balance across enabled accounts by tier + capacity. You can switch a live session between accounts without losing the conversation (transcript migrates under the hood). Rate-limit auto-failover carries context by default.
+
+### Where is my data stored?
+
+PostgreSQL on your host (bring your own instance, or use the one the installer bootstraps). Embeddings come from your own provider (ONNX bundled, Ollama, or LM Studio). No vector data, transcripts, or memory entries leave your network. No telemetry. No cloud account. `opendray` never phones home.
+
+### Can I run this in Docker?
+
+Not currently (v2.x). opendray spawns AI CLIs via PTYs and shares host process state (credential directories, ssh-agent, project files) with them. That is incompatible with the container isolation production Docker imposes. Use the pre-built binary and systemd or launchd (Linux + macOS both have one-line installers). See [Production deploy](#production-deploy).
+
+### Does opendray work on a NAS, Mac mini, or Raspberry Pi?
+
+NAS: yes on Synology / QNAP / TrueNAS-Scale (anything with Linux + Postgres). Mac mini: yes, this is a common deploy (LaunchDaemon shipped). Raspberry Pi: works on Pi 4 / Pi 5 but underpowered for concurrent sessions; single-user hobby use only.
+
+### Is opendray free? What is the licence?
+
+Apache 2.0. Free forever. No paid tier, no telemetry, no phone-home. Sponsors welcomed (see [`.github/FUNDING.yml`](.github/FUNDING.yml)).
+
+### How do I contribute?
+
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Concrete ways in: (1) translate a README or docs page into a language we already ship, (2) add a provider descriptor for a new AI coding CLI under `internal/catalog/builtin/`, (3) write a channel adaptor for a chat platform we do not cover, (4) contribute screenshots for the docs, (5) file a bug or a feature request. PRs need CI green; translations are advisory-only; no CLA.
 
 ## Documentation
 
 - [`docs/getting-started.md`](docs/getting-started.md): **start here** if you're new. Zero to first session in 15 minutes, including installing the wrapped CLIs and bootstrapping Postgres.
 - [`docs/install-binary.md`](docs/install-binary.md): install from the npm package or a release binary (bring your own Postgres) and run it as a systemd / launchd service.
 - [`docs/quickstart.md`](docs/quickstart.md): 5-minute dev environment (assumes you already know the moving parts).
-- [`docs/mobile-app.md`](docs/mobile-app.md): build & install the Flutter mobile app — sideload an Android APK or install on iPhone via Xcode, then point it at your gateway.
+- [`docs/mobile-app.md`](docs/mobile-app.md): build & install the Flutter mobile app; sideload an Android APK or install on iPhone via Xcode, then point it at your gateway.
 - [`docs/operator-guide.md`](docs/operator-guide.md): deploy + ops reference for production-ish setups.
 - [`docs/integration-guide.md`](docs/integration-guide.md): how to write an external integration in any language.
 - [`VERSIONING.md`](VERSIONING.md): versioning strategy (major-as-generation).
 - [`CHANGELOG.md`](CHANGELOG.md): release history.
+
+## Status
+
+Current generation: **v2.10.x**. See [`CHANGELOG.md`](CHANGELOG.md) for release history and [`VERSIONING.md`](VERSIONING.md) for the major-as-generation policy (major = product generation, not strict SemVer "breaking change").
+
+This generation ships:
+
+- **One-line installer + uninstaller wizards** (Linux + macOS; Windows funnels through WSL2). Walks the operator through Postgres bootstrap, AI-CLI install, admin credentials, listen address, binary install, schema migration, and service registration.
+- **Self-managing binary.** `opendray update / start / stop / restart / status / providers list / providers update` so operators don't touch `systemctl` / `launchctl` for routine ops.
+- **Goreleaser release pipeline.** Cross-compiled binaries (linux/darwin × amd64/arm64), cosign keyless signing (Sigstore), SPDX SBOM, atomically verified self-update.
 
 ## Tests
 

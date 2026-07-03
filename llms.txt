@@ -1,0 +1,50 @@
+# opendray
+
+> Self-hosted gateway for the AI coding CLIs you already use (Claude Code, Codex, Antigravity, Grok Build, OpenCode, plus shell). Runs agent sessions on your own infrastructure. Drive from web, mobile, or chat channels. Open REST + WebSocket API for integrations. Apache 2.0.
+
+## What it is
+
+opendray is a Go binary that runs on your host (Linux, macOS, or Proxmox LXC). It spawns AI coding CLIs in PTYs, exposes them over a web admin (React), a mobile app (Flutter, iOS + Android), a REST + WebSocket API, and six chat channel adaptors (Telegram, Slack, Discord, Feishu, DingTalk, WeCom). A local-first memory layer keeps embeddings and transcripts on your network. Postgres + pgvector. No telemetry, no cloud account.
+
+## Supported providers
+
+- Claude Code (Anthropic)
+- Codex (OpenAI)
+- Antigravity (Google, `agy`)
+- Grok Build (xAI)
+- OpenCode
+- Shell (arbitrary)
+
+## Key differentiators
+
+1. Sessions survive client disconnect. The agent keeps running when your laptop closes.
+2. Multi-account pool with live account-switch mid-conversation for Claude, Codex, Antigravity.
+3. Cross-session memory layer with three-scope retrieval (user, project, session) and local-first embeddings (ONNX, Ollama, LM Studio).
+4. Bidirectional chat channels: reply on Telegram, the message routes back into the session.
+5. One binary, cosign-signed releases with SPDX SBOM.
+
+## Not what it is
+
+- Not a chat frontend (compare Open WebUI, LibreChat). opendray runs the actual agentic CLI process with tool use and host filesystem access, not just prompts against a model API.
+- Not a hosted service. There is no opendray SaaS. You run the binary on your host.
+- Not a Docker deployment. PTY + host process state sharing is incompatible with production container isolation. Deploy via the pre-built binary + systemd or launchd.
+
+## Install
+
+One-line installer (Linux, macOS, WSL2):
+
+```
+curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
+```
+
+Or via npm (`npm install -g opendray`), or a pre-built release binary.
+
+## Links
+
+- Repository: https://github.com/Opendray/opendray
+- Website: https://opendray.dev
+- Documentation: https://github.com/Opendray/opendray/tree/main/docs
+- Getting started: https://github.com/Opendray/opendray/blob/main/docs/getting-started.md
+- Integration guide: https://github.com/Opendray/opendray/blob/main/docs/integration-guide.md
+- Changelog: https://github.com/Opendray/opendray/blob/main/CHANGELOG.md
+- Licence: Apache 2.0

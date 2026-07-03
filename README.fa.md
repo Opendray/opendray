@@ -1,84 +1,177 @@
-# opendray
-
-<p dir="rtl" align="right">
-یک gateway خودمیزبان برای اجرای Claude Code، Codex، Antigravity و shell؛ همراه با یک لایه memory مشترک و local-first بین همه آن‌ها.
+<p align="center">
+  <a href="https://opendray.dev"><img src="docs/assets/logo.png" alt="opendray" width="180"></a>
 </p>
 
-<p dir="rtl" align="right">
-سشن‌های کاری را روی زیرساخت خودتان اجرا کنید، از طریق web، mobile یا chat کنترلشان کنید، و برای integrationهای دیگر هم یک REST + WebSocket API باز داشته باشید.
+<h1 align="center">opendray</h1>
+
+<p align="center">
+  <strong>gateway خودمیزبان برای Claude Code، Codex، Antigravity، Grok Build و OpenCode. سشن‌های agent را روی زیرساخت خودتان اجرا کنید. از web، mobile یا chat کنترل کنید.</strong>
 </p>
 
-<p align="right">
-<a href="https://opendray.dev">opendray.dev</a>
+<p align="center">
+  <strong><a href="https://opendray.dev">opendray.dev</a></strong>
 </p>
 
-<p dir="rtl" align="right">
-<a href="README.md">English</a> · <a href="README.zh.md">简体中文</a> · فارسی · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ru.md">Русский</a>
+<p align="center">
+  <a href="https://opendray.dev"><img alt="Website" src="https://img.shields.io/badge/website-opendray.dev-F43F5E"></a>
+  <a href="https://github.com/Opendray/opendray/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Opendray/opendray?label=release&color=4f46e5"></a>
+  <a href="LICENSE"><img alt="License Apache 2.0" src="https://img.shields.io/github/license/Opendray/opendray?color=blue"></a>
+  <a href="https://github.com/Opendray/opendray/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Opendray/opendray/ci.yml?branch=main&label=CI"></a>
+  <a href="https://github.com/Opendray/opendray/discussions"><img alt="Discussions" src="https://img.shields.io/github/discussions/Opendray/opendray?color=ec4899"></a>
+  <br/>
+  <img alt="Go" src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-mobile-02569B?logo=flutter&logoColor=white">
+  <img alt="Postgres" src="https://img.shields.io/badge/PostgreSQL-15%2F16%2F17-336791?logo=postgresql&logoColor=white">
 </p>
+
+<p align="center">
+  🌐 <a href="README.md">English</a> · <a href="README.zh.md">简体中文</a> · <strong>فارسی</strong> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ru.md">Русский</a>
+</p>
+
+<p align="center">
+  <a href="docs/getting-started.fa.md"><img alt="Get started" src="https://img.shields.io/badge/get%20started-4f46e5?style=for-the-badge"></a>
+  <a href="#how-it-looks"><img alt="See it in action" src="https://img.shields.io/badge/see%20it%20in%20action-ec4899?style=for-the-badge"></a>
+  <a href="https://opendray.dev"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-F43F5E?style=for-the-badge"></a>
+</p>
+
+```mermaid
+flowchart LR
+    subgraph before ["❌ SSH direct"]
+        laptop1[Your laptop] -.->|ssh, dies on sleep| host1[Server + CLI]
+    end
+
+    subgraph after ["✅ opendray gateway"]
+        web[Web] --> gw[opendray]
+        phone[Phone] --> gw
+        chat[Telegram / Slack / Discord] --> gw
+        gw -->|survives disconnect| cli[Claude Code · Codex · Antigravity · Grok Build · OpenCode · shell]
+    end
+```
+
+اجرای Claude Code یا Codex روی SSH یعنی به‌محض بسته شدن laptop، agent هم می‌میرد. opendray آن را روی hostای اجرا می‌کند که بیدار می‌ماند (یک Mac mini زیر میز، یک NAS، یک VPS) و اجازه می‌دهد از یک web admin، یک mobile app یا یک پیام chat دوباره reattach کنید. sessionها به اجرای خود ادامه می‌دهند، فارغ از این‌که کسی متصل باشد یا نه. چند account با balancing بر اساس tier و switch زنده بین accountها به‌صورت pool مدیریت می‌شوند. یک لایه memory local-first تمام embeddingها را روی network شما نگه می‌دارد.
 
 ---
 
-<h2 dir="rtl" align="right">چرا opendray وجود دارد؟</h2>
+## opendray چیست؟
 
-<p dir="rtl" align="right">
-این پروژه برای برطرف کردن چند مشکل جدی و تکراری در کار روزمره با AI coding CLIها ساخته شده است.
-</p>
+**opendray** ابزارهای AI coding CLI که قبلاً استفاده می‌کردید (Claude Code، Codex، Antigravity، Grok Build، OpenCode و هر shell دیگری) را در بر می‌گیرد و به چیزی تبدیل می‌کند که از هرجا قابل کنترل باشد. sessionها را روی home server، NAS یا VPS اجرا کنید. وقتی session idle می‌شود در Telegram notification بگیرید. با reply کردن از روی گوشی، prompt بعدی را دوباره داخل session بفرستید. همه این‌ها روی یک self-hosted gateway که سرتاسر آن در اختیار شماست.
 
-<h3 dir="rtl" align="right">وقتی laptop sleep می‌شود، session نباید از بین برود</h3>
+- 🛰 **یک backend، سه surface.** یک Go binary واحد که React web admin و Flutter mobile app را سرو می‌کند و هر action از طریق REST + WebSocket API برای third-party integrationها هم در دسترس است.
+- 💬 **شش channel دوطرفه، بدون walled garden.** Telegram، Slack، Discord، Feishu (飞书)، DingTalk (钉钉)، WeCom (企业微信)، به‌همراه یک Bridge adapter برای هر transport دلخواه. reply در هر channel به session درست routing می‌شود.
+- 🧠 **memory با معماری local-first.** embeddingهای ONNX / Ollama / LM Studio، retrieval سه‌scope‌ای (user، project، session)، ranking هوشمند و تشخیص conflict بین لایه‌ها. هیچ vector data از network شما خارج نمی‌شود.
+- 🔌 **API در سطح integration.** API keyهای scoped، audit log برای هر call، mount از طریق reverse-proxy. opendray را به‌عنوان gateway پشت محصول خودتان بگذارید، یا صرفاً به‌چشم یک command centre شخصی به آن نگاه کنید.
+- 🔑 **fleet چند-account برای Claude، Codex و Antigravity.** چند credential directoryای که login کرده‌اند را روی host بیندازید. opendray آن‌ها را با یک filesystem watcher به‌صورت خودکار discover می‌کند، sessionهای جدید را بین accountهای فعال balance می‌کند و اجازه می‌دهد یک live session را بین accountها جابه‌جا کنید **بدون این‌که conversation از دست برود** (transcript در پشت‌صحنه migrate می‌شود). هر ردیف account، ظرفیت زنده را نشان می‌دهد (subscription tier، rate-limit tier، active sessions، last-used، ایمیل ورود فعلی).
+- 🔒 **self-hosted، license شفاف.** Apache 2.0، یک static binary، releaseهای cosign-signed به‌همراه SPDX SBOM. بدون telemetry، بدون cloud account، بدون subscription.
 
-<p dir="rtl" align="right">
-اگر Claude Code یا Codex را از طریق SSH روی laptop اجرا کنید، به‌محض این‌که درِ دستگاه را ببندید یا Wi‑Fi قطع شود، agent هم عملاً از بین می‌رود. context، tool callهای در حال اجرا، diff نیمه‌کاره‌ای که قرار بوده review کنید، و هر چیزی که وسط کار بوده ممکن است از دست برود.
-</p>
+## How it looks
 
-<p dir="rtl" align="right">
-opendray agent را روی hostای اجرا می‌کند که قرار نیست sleep شود؛ مثلاً یک Mac mini زیر میز، یک NAS یا یک VPS. بعد می‌توانید از web panel، mobile app مبتنی بر Flutter یا حتی از طریق chat دوباره به همان session وصل شوید. session به کارش ادامه می‌دهد؛ چه online باشید، چه نباشید.
-</p>
+opendray یک Go binary است که web admin را روی `/admin/` و REST + WebSocket API را روی `/api/v1/*` سرو می‌کند. کاری که انجام می‌دهد، در همان شکلی که واقعاً می‌بینید:
 
-<h3 dir="rtl" align="right">rate limit نباید کارتان را خراب کند</h3>
+### لیست sessionهای در حال اجرا
 
-<p dir="rtl" align="right">
-اگر چند Anthropic account دارید، مثلاً work account و personal account یا Pro و Family، opendray آن‌ها را مثل یک capacity pool مدیریت می‌کند. status مربوط به quota، tier و تعداد active sessionهای هر account را نشان می‌دهد، sessionهای جدید را بین accountهای فعال balance می‌کند، و حتی اجازه می‌دهد یک live session را بدون از دست دادن conversation به account دیگری منتقل کنید. transcript همراه session جابه‌جا می‌شود. همین مدل برای Codex accountها هم در نظر گرفته شده است.
-</p>
+```
+$ opendray sessions ls
+ID        PROVIDER      PROJECT              STATE     STARTED
+ses_a1f   claude-code   app/web              running   2h ago
+ses_b2c   codex         internal/session     idle      5m ago
+ses_c9d   grok-build    docs/                running   14m ago
+ses_d34   shell         misc/deploy-logs     idle      1h ago
+```
 
-<h3 dir="rtl" align="right">memory باید جزء اصلی سیستم باشد، نه یک قابلیت اضافه‌شده در آخر</h3>
+### لیست providerهای نصب‌شده و نسخه‌های آن‌ها
 
-<p dir="rtl" align="right">
-بیشتر AI CLIها در هر session دوباره project context را از صفر index می‌کنند و tokenها را صرف retrievalهای تکراری می‌کنند. opendray یک local-first vector store ارائه می‌دهد که با ONNX، Ollama و LM Studio embeddings کار می‌کند و retrieval را در سه scope انجام می‌دهد: user، project و session. همچنین drift و ناسازگاری بین memory layerها را تشخیص می‌دهد. داده‌ها روی network و infrastructure خودتان باقی می‌مانند.
-</p>
+```
+$ opendray providers list
+PROVIDER      VERSION     ACCOUNTS   ACTIVE   NOTES
+claude-code   1.4.11      3          1        auto-discovered via CLAUDE_CONFIG_DIR
+codex         0.29.0      2          1        openai login
+antigravity   0.7.2       1          0        agy, HOME-isolated
+grok-build    2.5.1       1          1        xai
+opencode      0.6.3       -          0        local endpoint required
+shell         -           -          1        arbitrary
+```
 
----
+### attach به یک session از داخل browser و ادامه کار بعد از sleep laptop
 
-<h2 dir="rtl" align="right">OpenDray چیست؟</h2>
+web admin از xterm.js استفاده می‌کند. همان PTYای را می‌بینید که CLI روی آن نوشته است. tab browser را ببندید و session روی host به کارش ادامه می‌دهد. ساعت‌ها بعد آن را باز کنید و transcript همان‌جایی است که رهایش کرده بودید.
 
-<p dir="rtl" align="right">
-OpenDray ابزارهای AI CLI شما، مثل Claude Code، Codex، Antigravity و هر shell دیگری را به یک platform واحد تبدیل می‌کند؛ platformای که از هرجا قابل دسترسی است و کنترلش دست خودتان می‌ماند.
-</p>
+```
+[claude-code ses_a1f · app/web · 2h 14m]
 
-<p dir="rtl" align="right">
-می‌توانید working sessionها را روی home server، NAS یا VPS اجرا کنید، وقتی idle می‌شوند یا نیاز به input دارند در Telegram notification بگیرید، و فقط با reply کردن از روی گوشی، prompt بعدی را برای ادامه کار ارسال کنید.
-</p>
+> refactor the router to lazy-load the mobile view
 
-<p dir="rtl" align="right">
-همه این قابلیت‌ها از طریق یک self-hosted gateway ارائه می‌شود؛ بدون وابستگی به سرویس واسط، بدون lock-in، و با مالکیت کامل روی data و communication.
-</p>
+I'll look at the current router and figure out the cleanest split.
 
-<ul dir="rtl" align="right">
-<li><strong>یک backend، چند interface:</strong> یک Go binary واحد که React web admin و Flutter mobile app را سرویس می‌دهد. تمام operationها از طریق REST و WebSocket API هم برای third-party integrationها قابل استفاده است.</li>
-<li><strong>کانال‌های دوطرفه، بدون lock-in:</strong> Telegram، Slack، Discord، Feishu، DingTalk، WeCom و یک bridge adapter برای اتصال‌های custom. replyهایی که در هر channel می‌فرستید به session درست برمی‌گردند.</li>
-<li><strong>local-first memory:</strong> استفاده از ONNX، Ollama و LM Studio embeddings، retrieval در سطح user/project/session، smart ranking برای resultها، و تشخیص conflict بین memory layerها. vector data روی network خودتان می‌ماند و به بیرون ارسال نمی‌شود.</li>
-<li><strong>API مناسب integration:</strong> scoped API key، audit log برای هر call و reverse-proxy mountها. می‌توانید opendray را به‌عنوان gateway پشت محصول خودتان استفاده کنید یا فقط آن را command centre شخصی خودتان بدانید.</li>
-<li><strong>multi-account management برای Claude:</strong> چند <code>claude login</code> را داخل gateway قرار دهید. panel با filesystem watcher خودش آن‌ها را پیدا می‌کند، sessionهای جدید را بین accountهای فعال balance می‌کند، و اجازه می‌دهد یک live session را <strong>بدون از دست دادن conversation</strong> بین accountها جابه‌جا کنید. transcript در پشت صحنه منتقل می‌شود.</li>
-<li><strong>ظرفیت accountها در یک نگاه:</strong> هر ردیف، وضعیت account را live نشان می‌دهد؛ از جمله <code>subscription tier</code>، <code>rate-limit tier</code>، <code>active sessions</code>، <code>last-used</code> و <code>current Anthropic email</code> تا سریع‌تر account درست را انتخاب کنید.</li>
-<li><strong>self-hosted با license شفاف:</strong> Apache 2.0، یک static binary، releaseهای امضاشده با cosign و SPDX SBOM. بدون telemetry، بدون cloud account و بدون subscription.</li>
-</ul>
+● Read(app/web/src/router.tsx)
+  ⎿ 342 lines
+● Grep(pattern: "loadable", path: "app/web/src")
+  ⎿ found 3 uses
+...
+```
 
----
+### route کردن یک reply در Telegram به همان session
 
-<h2 dir="rtl" align="right">architecture در یک نگاه</h2>
+```mermaid
+sequenceDiagram
+    participant U as You (Telegram)
+    participant TG as Telegram Bot
+    participant OD as opendray
+    participant S as Session ses_a1f
 
-<p dir="rtl" align="right">
-یک Go binary روی host شما همه‌چیز را اداره می‌کند. clientها از طریق HTTP/WebSocket، sessionها را راه می‌اندازند، session manager هر AI CLI را در یک PTY مستقل spawn می‌کند، و memory layer شامل shared state در Postgres با vector embeddingsای است که از provider خودتان می‌آید.
-</p>
+    S->>OD: session emits "review needed on line 42"
+    OD->>TG: send message + session tag
+    TG->>U: notification with quick-reply
+    U->>TG: "yes, ship it"
+    TG->>OD: webhook incoming
+    OD->>S: inject "yes, ship it" as next PTY input
+    S->>OD: agent continues
+```
+
+همین الگو برای Slack، Discord، Feishu، DingTalk، WeCom و هر transport مبتنی بر Bridge adapter هم صادق است.
+
+### fan-out یک memory query در سه scope هم‌زمان
+
+```mermaid
+flowchart LR
+    prompt[Agent asks for context] --> ret[memory retrieve]
+    ret --> user[USER scope<br/>preferences, workflows]
+    ret --> proj[PROJECT scope<br/>architecture, decisions]
+    ret --> sess[SESSION scope<br/>this conversation]
+    user --> rank[cross-scope rank]
+    proj --> rank
+    sess --> rank
+    rank --> ctx[injected context]
+```
+
+هر scope، embeddingها را از provider خودتان (ONNX bundled، Ollama یا LM Studio) نگه می‌دارد. چیزی از network شما خارج نمی‌شود.
+
+### جابه‌جایی account در وسط conversation بدون از دست رفتن transcript
+
+```mermaid
+flowchart LR
+    a[Claude account A<br/>rate-limited] -->|switch| b[Claude account B<br/>fresh quota]
+    a -.->|transcript migrates| b
+    b --> cont[Session continues<br/>same conversation]
+```
+
+همین برای Codex accountها و Antigravity accountها هم برقرار است. `Carry-context` به‌صورت پیش‌فرض روشن است. اگر می‌خواهید با identity جدید از صفر شروع کنید، آن را بردارید.
+
+## قابلیت‌ها
+
+|  |  |
+| --- | --- |
+| **sessionها** | attach به یک session زنده Claude Code، Codex، Antigravity، Grok Build، OpenCode یا shell از web، mobile یا chat. sessionها در برابر disconnect کلاینت و reboot host مقاوم هستند. برای TUIهایی که wheel input را نادیده می‌گیرند، overlay زنده transcript وجود دارد. |
+| **providerها** | ۵ AI coding CLI first-class به‌همراه shell دلخواه. اضافه کردن یک CLI جدید، صرفاً drop-in یک JSON descriptor زیر `internal/catalog/builtin/` است. تزریق MCP-server per-provider (Vault، memory، integrations). |
+| **memory** | retrieval در سه scope (user، project، session). embeddingهای local-first از طریق ONNX، Ollama یا LM Studio. تشخیص conflict بین لایه‌ها. تزریق knowledge pageهای global هنگام spawn. compiler flywheel، episodeها را به playbookهای قابل استفاده مجدد تبدیل می‌کند. |
+| **channelها** | Telegram، Slack، Discord، Feishu، DingTalk، WeCom. Bridge adapter برای transportهای دلخواه. دوطرفه: sessionها notify می‌کنند، replyها بازمی‌گردند. |
+| **integrationها** | REST + WebSocket API با API keyهای scoped، audit log per-call و mount از طریق reverse-proxy. HashiCorp Vault MCP برای دسترسی به secret. مستندات عمومی در [`docs/integration-guide.md`](docs/integration-guide.md). |
+| **ops** | یک Go binary. installer یک‌خطی (Linux، macOS، WSL2). self-managing (`opendray update / start / stop / providers update`). backupهای encrypted PostgreSQL به‌همراه data export. pipeline Goreleaser با releaseهای cosign-signed و SPDX SBOM. |
+| **security** | Apache 2.0. بدون telemetry، بدون cloud account. cosign keyless (Sigstore) signing. hardening systemd با `ProtectSystem=strict`. tokenهای scoped برای مصرف multi-tenant. |
+
+## معماری در یک نگاه
+
+یک Go binary روی host شما همه چیز را می‌گرداند. clientها sessionها را از طریق HTTP/WebSocket کنترل می‌کنند، session manager هر AI CLI را در PTY مستقل خودش spawn می‌کند و لایه memory، state مشترک را در Postgres با vector embedding از provider خودتان نگه می‌دارد.
 
 ```mermaid
 flowchart LR
@@ -100,6 +193,8 @@ flowchart LR
         cc[Claude Code]
         co[Codex]
         ag[Antigravity]
+        gb[Grok Build]
+        oc[OpenCode]
         sh[Shell]
     end
 
@@ -114,528 +209,404 @@ flowchart LR
     sess --> cc
     sess --> co
     sess --> ag
+    sess --> gb
+    sess --> oc
     sess --> sh
     sess -.-> mem
     mem --> pg
     mem --> em
 ```
 
-<p dir="rtl" align="right">
-هرچه در دیاگرام می‌بینید روی network خودتان اجرا می‌شود. بدون وابستگی به cloud، بدون inference بیرون از کنترل شما.
-</p>
+هر چه در دیاگرام می‌بینید روی network شما اجرا می‌شود. بدون وابستگی cloud، بدون inference بیرون از کنترل شما.
 
----
+## مقایسه
 
-<h2 dir="rtl" align="right">وضعیت نسخه</h2>
+### opendray در برابر کلاینت‌های شناخته‌شده AI
 
-<p dir="rtl" align="right">
-نسخه ۲٫۷٫۶ آخرین release فعلی است و development روی v2 همچنان ادامه دارد.
-</p>
+|  | opendray | Claude Desktop | Cursor | CLI روی SSH | ChatGPT Desktop |
+| --- | --- | --- | --- | --- | --- |
+| بقای session در disconnect کلاینت | ✅ | ❌ | ❌ | ⚠️ (tmux / screen) | ❌ |
+| pool چند-account با switch زنده | ✅ | ❌ | ❌ | ❌ | ❌ |
+| لایه memory بین session | ✅ | ❌ | جزئی | ❌ | جزئی |
+| filesystem host و tool use | ✅ | محدود | ✅ | ✅ | محدود |
+| کلاینت mobile با featureهای برابر | ✅ | ❌ | ❌ | ⚠️ (کلاینت SSH) | جزئی |
+| adaptor برای chat channel | ✅ (۶) | ❌ | ❌ | ❌ | ❌ |
+| self-hosted | ✅ | ❌ | ❌ | ✅ | ❌ |
+| License | Apache 2.0 | Proprietary | Proprietary | (متغیر) | Proprietary |
 
-<p dir="rtl" align="right">
-برای policy مربوط به major-as-generation، فایل <a href="VERSIONING.md"><code>VERSIONING.md</code></a> را ببینید. در این پروژه، major الزاماً به معنی breaking change به معنای سخت‌گیرانه SemVer نیست؛ بیشتر به نسل محصول اشاره دارد. برای تاریخچه کامل releaseها هم <a href="CHANGELOG.md"><code>CHANGELOG.md</code></a> را بخوانید.
-</p>
+### opendray در برابر frontendهای chat خودمیزبان
 
-<p dir="rtl" align="right">
-این generation شامل موارد زیر است:
-</p>
+|  | opendray | Open WebUI | LibreChat | Dify |
+| --- | --- | --- | --- | --- |
+| اجرای واقعی agent CLI (نه صرفاً chat) | ✅ | ❌ | ❌ | جزئی |
+| tool use و نوشتن file روی host | ✅ | ❌ | ❌ | Sandboxed |
+| چند AI coding CLI در یک gateway | ✅ (۵) | ❌ | ❌ | ❌ |
+| memory بین session | ✅ | پایه‌ای | پایه‌ای | ✅ |
+| session PTY با reattach terminal | ✅ | ❌ | ❌ | ❌ |
+| adaptor برای chat channel | ✅ (۶) | جزئی | جزئی | ✅ |
+| License | Apache 2.0 | MIT | MIT | Apache 2.0 |
 
-<ul dir="rtl" align="right">
-<li><strong>one-line install و uninstall wizard</strong> برای Linux و macOS. مسیر Windows از طریق WSL2 انجام می‌شود. wizard، operator را مرحله‌به‌مرحله از Postgres setup، نصب AI CLIها، تنظیم admin credentialها، تعیین listen address، نصب binary، اجرای schema migration و ثبت service عبور می‌دهد.</li>
-<li><strong>self-managing binary:</strong> با دستورهای <code>opendray update / start / stop / restart / status / providers list / providers update</code> برای کارهای روزمره لازم نیست مستقیم سراغ <code>systemctl</code> یا <code>launchctl</code> بروید.</li>
-<li><strong>release pipeline با Goreleaser:</strong> شامل cross-compiled binaryها برای <code>linux/darwin × amd64/arm64</code>، keyless signing با cosign و Sigstore، SPDX SBOM و atomic verified self-update.</li>
-</ul>
+## این برای چه کسانی است؟
 
----
+**dev تک‌نفره‌ای که homelab دارد.** یک Mac mini، NAS یا Proxmox box دارید که ۲۴/۷ روشن است. Claude Code را روی SSH اجرا می‌کردید، اما هر بار laptop به sleep می‌رود session می‌میرد. می‌خواهید CLI به کارش ادامه دهد و می‌خواهید داخل قطار از روی گوشی reattach کنید. opendray همان gatewayای است که host شما را بین شما و CLI قرار می‌دهد.
 
-<h2 dir="rtl" align="right">نصب</h2>
+**lead تیم کوچک که در حال راه‌اندازی زیرساخت AI مشترک است.** تیم شما ۳ تا ۵ Anthropic account روی planهای کاری و شخصی دارد. می‌خواهید آن‌ها را pool کنید، مصرف هر account را رصد کنید و اجازه دهید هر کسی در تیم بتواند یک session را از browser اجرا کند. opendray به شما pool چند-account، observability per-account، API keyهای scoped برای هر همکار و یک mobile app می‌دهد که بدون submission به App Store قابل نصب است.
 
-<h3 dir="rtl" align="right">one-line installer</h3>
+**integratorای که روی یک session-runner می‌سازد.** در حال ساخت محصولی هستید که به spawn کردن session Claude Code، Codex یا Grok Build با tool use نیاز دارد و نمی‌خواهید session lifecycle، مدیریت PTY، memory یا routing کانال را دوباره پیاده‌سازی کنید. opendray هر action را از طریق REST + WebSocket با keyهای scoped، audit log per-call و mount از طریق reverse-proxy در معرض دسترس می‌گذارد. به‌عنوان agent runtime خودتان از آن استفاده کنید.
 
-<p dir="rtl" align="right">
-<strong>Linux / macOS / WSL2</strong>
-</p>
+## نصب
+
+### installer یک‌خطی
+
+**Linux / macOS / WSL2**
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
 ```
 
-<p dir="rtl" align="right">
-<strong>Windows:</strong> ابتدا WSL2 را راه‌اندازی می‌کند و سپس Linux installer را داخل آن اجرا می‌کند. <a href="scripts/README.md#windows">جزئیات →</a>
-</p>
+**Windows** ابتدا WSL2 را راه‌اندازی می‌کند و سپس installer لینوکس را داخل آن اجرا می‌کند. [جزئیات →](scripts/README.md#windows)
 
 ```powershell
 irm https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install-windows.ps1 | iex
 ```
 
-<p dir="rtl" align="right">
-این مسیر Postgres setup، نصب AI CLIها، admin credentialها و service registration را انجام می‌دهد و معمولاً بعد از حدود ۵ تا ۱۰ دقیقه یک gateway آماده تحویل می‌دهد. اگر می‌خواهید دقیقاً بدانید wizard چه کاری انجام می‌دهد، چه layoutای می‌سازد، چه optionهایی دارد و چطور باید debug کنید، به <a href="scripts/README.md"><strong><code>scripts/README.md</code></strong></a> سر بزنید.
-</p>
+wizard مسیر Postgres setup، نصب AI-CLI، admin credentials و ثبت service را طی می‌کند و در حدود ۵ تا ۱۰ دقیقه یک gateway در حال اجرا تحویل می‌دهد. برای این‌که ببینید wizard دقیقاً چه کاری می‌کند، چه layoutای می‌سازد، optionهایش و مسیر troubleshooting را [**`scripts/README.md`**](scripts/README.md) ببینید.
 
-<blockquote dir="rtl">
-<p align="right">
-<strong>راهنمای دستی و قدم‌به‌قدم می‌خواهید؟</strong><br>
-<a href="docs/getting-started.fa.md"><code>docs/getting-started.fa.md</code></a> را بخوانید. این راهنما همان مسیر wizard را در قالب یک walkthrough حدوداً ۱۵ دقیقه‌ای باز می‌کند تا بتوانید هر مرحله را خودتان بررسی کنید.
-</p>
-</blockquote>
+> **راهنمای دستی و قدم‌به‌قدم می‌خواهید؟** [**docs/getting-started.fa.md**](docs/getting-started.fa.md) را بخوانید، یک راهنمای ۱۵ دقیقه‌ای end-to-end که همان کار wizard را آیینه می‌کند تا هر مرحله را خودتان بررسی کنید.
 
----
+### npm / npx (Node ≥ 18)
 
-<h3 dir="rtl" align="right">npm / npx</h3>
-
-<p dir="rtl" align="right">
-نیازمند Node نسخه ۱۸ یا بالاتر.
-</p>
-
-<p dir="rtl" align="right">
-نصب global و اضافه شدن <code>opendray</code> به <code>PATH</code>:
-</p>
+نصب global و قرار گرفتن `opendray` روی `PATH`:
 
 ```sh
 npm install -g opendray
 ```
 
-<p dir="rtl" align="right">
-یا اجرای on-demand بدون نصب دائمی:
-</p>
+یا اجرای on-demand بدون نصب:
 
 ```sh
 npx opendray
 ```
 
-<p dir="rtl" align="right">
-این روش فقط <strong>binary</strong> را نصب می‌کند؛ نه wizard، نه service و نه Postgres.
-</p>
+این کار **فقط binary** را نصب می‌کند؛ بدون wizard، بدون service، بدون Postgres. package از طریق `optionalDependencies` بسته پلتفرم متناظر `opendray-{linux,darwin}-{x64,arm64}` را می‌کشد (همان الگوی esbuild / Biome، بدون `postinstall`، بدون network call در زمان نصب). مناسب برای environmentهای scripted، runnerهای ephemeral یا زمانی که Postgres و process supervisor خودتان را دارید.
 
-<p dir="rtl" align="right">
-binary package مناسب platform شما، مثل <code>opendray-{linux,darwin}-{x64,arm64}</code> از طریق <code>optionalDependencies</code> دریافت می‌شود. این مدل شبیه esbuild و Biome است: بدون <code>postinstall</code> و بدون network call هنگام نصب. این روش برای scripted environmentها، ephemeral runnerها یا زمانی مناسب است که Postgres و process supervisor خودتان را از قبل دارید.
-</p>
-
-<p dir="rtl" align="right">
-در این حالت، database و gateway را خودتان آماده و اجرا می‌کنید:
-</p>
+خودتان یک database می‌آورید و gateway را استارت می‌کنید:
 
 ```sh
-# 1. PostgreSQL 15+ with pgvector
-# یک DSN تعریف کنید و برای admin هم password بگذارید.
-
+# 1. PostgreSQL 15+ with pgvector. Point a DSN at it, set an admin password.
 export OPENDRAY_DATABASE_URL="postgres://opendray:pw@127.0.0.1:5432/opendray?sslmode=disable"
 export OPENDRAY_ADMIN_PASSWORD="$(openssl rand -base64 24)"
-
-# 2. schema را اعمال کنید و بعد gateway را در foreground اجرا کنید.
-
+# 2. Apply the schema, then run (foreground).
 opendray migrate
 opendray serve        # → http://127.0.0.1:8770/admin/
 ```
 
-<p dir="rtl" align="right">
-راهنمای کامل راه‌اندازی pgvector، تنظیم <code>config.toml</code>، اجرای systemd یا launchd service و update در <a href="docs/install-binary.fa.md"><code>docs/install-binary.fa.md</code></a> آمده است.
-</p>
+راهنمای کامل (راه‌اندازی pgvector، تنظیم `config.toml`، اجرا به‌عنوان systemd / launchd service و به‌روزرسانی) در [**docs/install-binary.fa.md**](docs/install-binary.fa.md).
 
----
+### حذف نصب (Linux / macOS)
 
-<h2 dir="rtl" align="right">حذف نصب در Linux و macOS</h2>
-
-<h3 dir="rtl" align="right">حذف پیش‌فرض</h3>
-
-<p dir="rtl" align="right">
-gateway را stop می‌کند و binary را حذف می‌کند، اما <code>config.toml</code>، مسیر data مثل bcrypt keyfile، sessionها، noteها و vault، logها و PostgreSQL database را نگه می‌دارد تا اگر دوباره نصب کردید، از همان‌جا ادامه دهید.
-</p>
+**پیش‌فرض.** gateway را stop و binary را حذف می‌کند، اما `config.toml`، مسیر data (bcrypt keyfile، sessions، notes، vault)، logها و PostgreSQL database را **نگه می‌دارد** تا re-install از همان‌جا ادامه یابد:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | bash
 ```
 
-<h3 dir="rtl" align="right">حذف کامل</h3>
-
-<p dir="rtl" align="right">
-علاوه بر موارد بالا، PostgreSQL database و role مربوطه، config، data، logها و service user را هم حذف می‌کند. بعد از حذف هم یک verification step اجرا می‌شود تا اگر چیزی باقی مانده بود، بی‌سروصدا نادیده گرفته نشود.
-</p>
+**purge کامل.** علاوه بر موارد بالا، database و role مربوطه در PG را drop می‌کند، config / data / logs را حذف می‌کند و service user را برمی‌دارد. یک verification step پس از حذف اجرا می‌شود که اگر چیزی باقی مانده باشد بلند اعتراض می‌کند:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/uninstall.sh | OPENDRAY_PURGE=1 bash
 ```
 
----
+### دستورات روزمره
 
-<h2 dir="rtl" align="right">دستورات روزمره</h2>
-
-<p dir="rtl" align="right">
-بعد از نصب، خود binary <code>opendray</code> lifecycle سرویس را مدیریت می‌کند. لازم نیست دستورهای طولانی <code>systemctl</code> یا <code>launchctl</code> را حفظ کنید.
-</p>
+بعد از نصب، خود binary `opendray` چرخه حیات خودش را مدیریت می‌کند و لازم نیست incantationهای `systemctl` / `launchctl` را حفظ کنید:
 
 ```sh
 sudo opendray update --restart   # download latest release, verify SHA, atomic replace + restart
-sudo opendray providers update   # bump installed AI CLIs: claude / codex / antigravity
-opendray providers list          # see installed AI CLIs and their versions
-sudo opendray start              # start | stop | restart | status via systemd / launchd
-opendray --help                  # show all subcommands
 ```
 
----
+```sh
+sudo opendray providers update   # bump installed AI CLIs (claude / codex / antigravity) to npm-latest
+```
 
-<h2 dir="rtl" align="right">انتخاب روش راه‌اندازی</h2>
+```sh
+opendray providers list          # see which AI CLIs are installed + their versions
+```
 
-<p dir="rtl" align="right">
-همه مسیرهای پشتیبانی‌شده امکان spawn کردن session، دسترسی به AI CLIها، encrypted backup و integration API کامل را دارند.
-</p>
+```sh
+sudo opendray start              # start | stop | restart | status, wraps systemd / launchd
+```
 
-<p dir="rtl" align="right">
-opendray یک host-resident gateway است. AI CLIها را از طریق PTY اجرا می‌کند و process state مثل <code>~/.claude</code>، <code>ssh-agent</code> و project fileها را با آن‌ها share می‌کند. این مدل با container isolationای که production Docker تحمیل می‌کند خوب جور درنمی‌آید؛ بنابراین Docker در v2.x مسیر پشتیبانی‌شده محسوب نمی‌شود.
-</p>
+`opendray --help` مجموعه کامل subcommandها را نشان می‌دهد.
 
-| Path | Best for | Next |
+### انتخاب مسیر deploy
+
+هر مسیر پشتیبانی‌شده شامل spawn session، دسترسی به AI-CLI، backupهای encrypted و integration API کامل است. opendray یک gateway مقیم روی host است؛ AI CLIها را از طریق PTY spawn می‌کند و process state (`~/.claude`، ssh-agent، project files) را با آن‌ها share می‌کند. این مدل با container isolation تولیدی Docker سازگار نیست، بنابراین Docker برای v2.x مسیر deploy پشتیبانی‌شده محسوب نمی‌شود.
+
+| مسیر | مناسب برای | برو به |
 |---|---|---|
-| **ready-made binary** | Run-only setup on Linux/macOS with your own process manager | [release page](https://github.com/Opendray/opendray/releases), then [production deployment](#انتشار-عملیاتی) |
-| **systemd unit** | bare-metal, VM, or Linux LXC | [Option 1: systemd](#گزینه-۱-systemd-برای-bare-metal--vm--lxc) |
-| **macOS LaunchDaemon** | Mac mini or Mac Studio used as a home server | [Option 3: macOS launchd](#گزینه-۳-macos-launchd-برای-mac-mini--mac-studio-بهعنوان-home-server) |
-| **build from source** | development, contribution, or custom builds | [Quickstart](#quickstart-مسیر-۵-دقیقهای-برای-dev) |
+| 📦 **binary از پیش build‌شده** | «فقط اجرایش کن»، Linux / macOS، هر supervisor | [Releases page](https://github.com/Opendray/opendray/releases) → [Production deploy](#production-deploy) |
+| 🐧 **systemd unit** | Linux روی bare-metal / VM / LXC | [Production deploy §A](#option-a-systemd-bare-metal--vm--lxc) |
+| 🍎 **macOS LaunchDaemon** | Mac mini / Mac Studio به‌عنوان home server | [Production deploy §C](#option-c-macos-launchd-mac-mini--studio-as-home-server) |
+| 🛠 **build از source** | dev / مشارکت / build کاستوم | [Quickstart](#quickstart-5-minute-dev-path) پایین‌تر |
 
----
+## Quickstart (مسیر ۵ دقیقه‌ای dev)
 
-<h2 dir="rtl" align="right">Quickstart: مسیر ۵ دقیقه‌ای برای dev</h2>
-
-<p dir="rtl" align="right">
-برای راهنمای کامل، همراه با prerequisiteها و troubleshooting، فایل <a href="docs/quickstart.md"><code>docs/quickstart.md</code></a> را ببینید.
-</p>
-
-<p dir="rtl" align="right">
-مسیر خلاصه development:
-</p>
+برای راهنمای کامل با prerequisiteها و troubleshooting، [`docs/quickstart.md`](docs/quickstart.md) را ببینید. مسیر خلاصه dev:
 
 ```bash
-# 1. Have a Postgres 15+ running on 127.0.0.1:5432 with pgvector enabled.
-#    Example:
-#    apt install postgresql-16 postgresql-16-pgvector
-#    or:
-#    brew install postgresql@16 pgvector
-#
-#    اگر remote PG را ترجیح می‌دهید،
-#    [database].url را به DSN همان database اشاره دهید.
+# 1. Have a Postgres 15+ running on 127.0.0.1:5432 with pgvector enabled
+#    (apt install postgresql-16 postgresql-16-pgvector / brew install postgresql@16 pgvector).
+#    Point [database].url at any other DSN if you'd rather use a remote PG.
 
-# 2. Local config. این فایل از قبل gitignored است.
-
+# 2. Local config, already gitignored.
 cp config.example.toml config.toml
 $EDITOR config.toml          # set [database].url, [admin].password
 
 # 3. Build the web bundle into the embed tree.
-
 cd app/web && pnpm install && pnpm build && cd ../..
 
 # 4. Apply schema.
-
 go run ./cmd/opendray migrate -config config.toml
 
 # 5. Run.
-
 go run ./cmd/opendray serve -config config.toml
-
 # → REST + WS:  http://127.0.0.1:8770/api/v1/...
 # → Web admin:  http://127.0.0.1:8770/admin/
 ```
 
-<p dir="rtl" align="right">
-این روش opendray را در foreground اجرا می‌کند و با <code>Ctrl-C</code> متوقف می‌شود. اگر daemonای می‌خواهید که برای مدت طولانی بالا بماند، بخش <strong>انتشار عملیاتی</strong> را ببینید.
-</p>
+این OpenDray را در foreground اجرا می‌کند و با Ctrl-C می‌میرد. برای یک daemon طولانی‌مدت، بخش **Production deploy** پایین‌تر را ببینید.
 
----
+## Production deploy
 
-<h2 dir="rtl" align="right">انتشار عملیاتی</h2>
+چهار مسیر deploy پشتیبانی‌شده. هرکدام که به environment شما می‌خورد را انتخاب کنید. همه آن‌ها auto-restart در crash، state پایدار و جداسازی secrets از config را می‌دهند.
 
-<p dir="rtl" align="right">
-چهار مسیر deployment پشتیبانی‌شده داریم؛ هرکدام که به environment شما می‌خورد همان را انتخاب کنید. همه آن‌ها auto-restart هنگام crash، state پایدار، و جداسازی secrets از config را فراهم می‌کنند.
-</p>
+### Option A: systemd (bare-metal / VM / LXC)
 
-<h3 dir="rtl" align="right">گزینه ۱: systemd برای bare-metal / VM / LXC</h3>
+مسیر پیشنهادی deploy Linux. یک unit hardened در [`deploy/systemd/opendray.service`](deploy/systemd/opendray.service) با sandboxing (`ProtectSystem=strict`، `NoNewPrivileges`، `MemoryDenyWriteExecute`، capability scrub)، boot به سبک `migrate`-سپس-`serve` و پنجره graceful-stop بیست‌ثانیه‌ای ارائه می‌شود.
 
-<p dir="rtl" align="right">
-این مسیر، روش پیشنهادی برای Linux deployment است.
-</p>
-
-<p dir="rtl" align="right">
-یک hardened unit در <a href="deploy/systemd/opendray.service"><code>deploy/systemd/opendray.service</code></a> ارائه می‌شود که شامل sandboxing مثل <code>ProtectSystem=strict</code>، <code>NoNewPrivileges</code>، <code>MemoryDenyWriteExecute</code> و capability scrub است. boot flow آن <code>migrate</code> سپس <code>serve</code> است و یک graceful stop window بیست‌ثانیه‌ای دارد.
-</p>
-
-<p dir="rtl" align="right">
-<strong>اول binary را بگیرید.</strong> یا یک archive آماده را از <a href="https://github.com/Opendray/opendray/releases">release page</a> بردارید، مثل <code>opendray_*_linux_.tar.gz</code> که به یک single <code>opendray</code> binary unpack می‌شود، یا از طریق <a href="#quickstart-مسیر-۵-دقیقهای-برای-dev">Quickstart</a> از source build بگیرید: <code>go build ./cmd/opendray</code>.
-</p>
+**اول binary را بگیرید.** یا یک archive آماده را از [Releases page](https://github.com/Opendray/opendray/releases) بردارید (`opendray_*_linux_<arch>.tar.gz` که به یک binary تنها `opendray` unpack می‌شود)، یا از source از طریق [Quickstart](#quickstart-5-minute-dev-path) بالا با `go build ./cmd/opendray` build کنید.
 
 ```bash
-# 1. Install the binary you just grabbed or built.
-
+# 1. Install the binary you just grabbed (or built).
 sudo install -m 0755 /path/to/opendray /usr/local/bin/opendray
 
-# 2. Create the service user and state dir.
-
+# 2. Create the service user + state dir.
 sudo useradd -r -s /usr/sbin/nologin -d /var/lib/opendray opendray
 sudo install -d -o opendray -g opendray -m 0700 /var/lib/opendray
 
-# 3. Drop config and secrets. root-owned; mode 0640.
-
+# 3. Drop config + secrets (root-owned; mode 0640).
 sudo install -D -m 0640 config.example.toml /etc/opendray/config.toml
-sudo $EDITOR /etc/opendray/config.toml     # set [database].url etc.
-
+sudo $EDITOR /etc/opendray/config.toml             # set [database].url etc.
 sudo install -D -m 0640 -o root -g opendray /dev/null /etc/opendray/env.d/secrets
-sudo $EDITOR /etc/opendray/env.d/secrets   # OPENDRAY_ADMIN_PASSWORD=...
+sudo $EDITOR /etc/opendray/env.d/secrets           # OPENDRAY_ADMIN_PASSWORD=…
 
-# 4. Install and enable the unit.
-
+# 4. Install + enable the unit.
 sudo cp deploy/systemd/opendray.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now opendray
 
 # 5. Verify.
-
 sudo systemctl status opendray
 sudo journalctl -u opendray -f --no-pager
 ```
 
-<p dir="rtl" align="right">
-این unit، دستور <code>opendray migrate</code> را به‌عنوان <code>ExecStartPre</code> اجرا می‌کند؛ بنابراین در اولین boot، همه migrationها قبل از شروع <code>serve</code> اعمال می‌شوند. restartها هم <code>on-failure</code> هستند، با back-off پنج‌ثانیه‌ای و limit پنج‌بار در دقیقه.
-</p>
+این unit، `opendray migrate` را به‌عنوان `ExecStartPre` اجرا می‌کند، پس در اولین boot همه migrationها قبل از شروع `serve` اعمال می‌شوند. restartها `on-failure` هستند، با back-off پنج‌ثانیه‌ای و limit پنج burst در دقیقه.
 
----
+### Option B: Direct binary + process supervisor دلخواه
 
-<h3 dir="rtl" align="right">گزینه ۲: direct binary + process manager دلخواه</h3>
-
-<p dir="rtl" align="right">
-برای LXC بدون systemd، FreeBSD <code>rc.d</code>، OpenRC یا هر process manager دیگری.
-</p>
-
-<p dir="rtl" align="right">
-یک بار build بگیرید و با process managerی که از قبل دارید اجرا کنید:
-</p>
+برای LXC بدون systemd، `rc.d` در FreeBSD، OpenRC یا هر چیز دیگری. یک بار build کنید و با هر supervisorای که قبلاً استفاده می‌کنید اجرا کنید:
 
 ```bash
 # Cross-compile a release archive locally:
-
 goreleaser release --clean --snapshot
-ls dist/        # opendray_*_linux_amd64.tar.gz etc.
+ls dist/                  # opendray_*_linux_amd64.tar.gz etc.
 
 # Or grab a published release artefact:
 # https://github.com/Opendray/opendray/releases
 ```
 
-<p dir="rtl" align="right">
-بعد process manager خودتان مثل s6، runit، supervisord یا runwhen را به این command اشاره دهید:
-</p>
+سپس supervisor خود (s6، runit، supervisord، runwhen) را به این نقطه اشاره دهید:
 
-```sh
+```
 /usr/local/bin/opendray serve -config /etc/opendray/config.toml
 ```
 
-<p dir="rtl" align="right">
-قبل از اولین <code>serve</code>، یک بار این command را اجرا کنید:
-</p>
+Pre-flight: قبل از اولین `serve`، یک بار `opendray migrate -config /etc/opendray/config.toml` را اجرا کنید یا آن را به‌عنوان pre-start hook در supervisor دلخواهتان قرار دهید.
 
-```sh
-opendray migrate -config /etc/opendray/config.toml
-```
+### Option C: macOS launchd (Mac mini / Studio به‌عنوان home server)
 
-<p dir="rtl" align="right">
-یا آن را به‌عنوان pre-start hook در process manager دلخواهتان قرار دهید.
-</p>
-
----
-
-<h3 dir="rtl" align="right">گزینه ۳: macOS launchd برای Mac mini / Mac Studio به‌عنوان home server</h3>
-
-<p dir="rtl" align="right">
-برای Apple Silicon Mac mini یا Mac Studio که ۲۴/۷ روشن است.
-</p>
-
-<p dir="rtl" align="right">
-یک LaunchDaemon در <a href="deploy/launchd/com.opendray.opendray.plist"><code>deploy/launchd/com.opendray.opendray.plist</code></a> ارائه می‌شود که هنگام boot و قبل از user login بالا می‌آید، در صورت crash با throttle پنج‌ثانیه‌ای دوباره start می‌شود، و در <code>/usr/local/var/log/opendray/</code> log می‌نویسد.
-</p>
+برای Mac mini / Mac Studio روی Apple Silicon که ۲۴/۷ روشن است. یک LaunchDaemon در [`deploy/launchd/com.opendray.opendray.plist`](deploy/launchd/com.opendray.opendray.plist) ارائه می‌شود که هنگام boot و قبل از login هر user استارت می‌شود، در crash با throttle پنج‌ثانیه‌ای دوباره اجرا می‌شود و در `/usr/local/var/log/opendray/` log می‌نویسد.
 
 ```bash
-# 1. Install the darwin binary, config and state dirs.
-
+# 1. Install the darwin binary + config + state dirs.
 sudo install -m 0755 ./opendray /usr/local/bin/opendray
 sudo install -d -m 0755 \
   /usr/local/etc/opendray \
   /usr/local/var/lib/opendray \
   /usr/local/var/log/opendray
-
 sudo install -m 0640 config.example.toml /usr/local/etc/opendray/config.toml
-sudo $EDITOR /usr/local/etc/opendray/config.toml   # set [database].url etc.
+sudo $EDITOR /usr/local/etc/opendray/config.toml    # set [database].url etc.
 
 # 2. Apply migrations once.
-
 sudo /usr/local/bin/opendray migrate \
   -config /usr/local/etc/opendray/config.toml
 
-# 3. Install and load the LaunchDaemon.
-
+# 3. Install + load the LaunchDaemon.
 sudo cp deploy/launchd/com.opendray.opendray.plist /Library/LaunchDaemons/
 sudo chown root:wheel /Library/LaunchDaemons/com.opendray.opendray.plist
 sudo chmod 0644 /Library/LaunchDaemons/com.opendray.opendray.plist
 sudo launchctl bootstrap system /Library/LaunchDaemons/com.opendray.opendray.plist
 
 # 4. Verify.
-
 sudo launchctl print system/com.opendray.opendray
 tail -f /usr/local/var/log/opendray/opendray.log
 ```
 
-```sh
-# Restart
-sudo launchctl kickstart -k system/com.opendray.opendray
+restart با `sudo launchctl kickstart -k system/com.opendray.opendray`؛ unload کامل با `sudo launchctl bootout system/com.opendray.opendray`.
 
-# Full unload
-sudo launchctl bootout system/com.opendray.opendray
-```
-
-```sh
-# PostgreSQL on macOS
-brew install postgresql@17 && brew services start postgresql@17
-
-# pgvector
-brew install pgvector
-```
-
-```text
-postgres://$USER@127.0.0.1:5432/opendray
-```
-
-```sql
-CREATE EXTENSION vector;
-```
-
-<p dir="rtl" align="right">
-برای noteهای مخصوص Proxmox LXC، مثل PTY داخل unprivileged containerها، networking و cgroup settingها، به <a href="deploy/lxc/proxmox-pty-notes.md"><code>deploy/lxc/proxmox-pty-notes.md</code></a> نگاه کنید.
-</p>
-
-<p dir="rtl" align="right">
-برای reverse-proxy و TLS termination، مثل nginx، Caddy، Traefik و Cloudflare Tunnel، بخش Topology در <a href="docs/operator-guide.md"><code>docs/operator-guide.md</code></a> را ببینید.
-</p>
+Postgres روی macOS: از طریق Homebrew نصب کنید (`brew install postgresql@17 && brew services start postgresql@17`) و `[database].url` را به `postgres://$USER@127.0.0.1:5432/opendray` اشاره دهید. `pgvector` را با `brew install pgvector` اضافه کنید و در database opendray `CREATE EXTENSION vector` را اجرا کنید.
 
 ---
 
-<h2 dir="rtl" align="right">اختیاری: فعال‌سازی encrypted DB backup و data export</h2>
+برای noteهای مخصوص Proxmox LXC (PTY در containerهای unprivileged، شبکه، تنظیمات cgroup)، [`deploy/lxc/proxmox-pty-notes.md`](deploy/lxc/proxmox-pty-notes.md) را ببینید.
+
+برای reverse-proxy / TLS termination (nginx، Caddy، Traefik، Cloudflare Tunnel)، بخش Topology در [`docs/operator-guide.md`](docs/operator-guide.md) را ببینید.
+
+### اختیاری: فعال‌سازی backup encrypted DB و data export
 
 ```bash
-# Master passphrase. env-only: never write it into config.toml.
-
+# Master passphrase (env-only, never write into config.toml).
 export OPENDRAY_BACKUP_KEY="$(openssl rand -base64 32)"
 export OPENDRAY_BACKUP_ENABLED=1
 
-# pg_dump / pg_restore must match the server's major version.
-# Example for Apple Silicon dev machines pointing at a PG17 server:
-
+# pg_dump / pg_restore must match the server's major version. On
+# Apple Silicon dev machines pointing at a PG17 server:
 export OPENDRAY_BACKUP_PG_DUMP_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_dump
 export OPENDRAY_BACKUP_PG_RESTORE_PATH=/opt/homebrew/opt/postgresql@17/bin/pg_restore
 ```
 
-<p dir="rtl" align="right">
-opendray را restart کنید. sidebar یک صفحه Backups در مسیر <code>/backups</code> برای encrypted PostgreSQL dump و restore اضافه می‌کند. مسیر <code>/export</code> هم برای zip-bundle data export و import استفاده می‌شود. برای چرخه کامل، بخش Backup در <a href="docs/operator-guide.md"><code>docs/operator-guide.md</code></a> را ببینید.
-</p>
+opendray را restart کنید؛ sidebar یک صفحه Backups در `/backups` برای dump / restore encrypted PostgreSQL و `/export` برای data export / import در قالب zip-bundle اضافه می‌کند. برای چرخه کامل، بخش Backup در [`docs/operator-guide.md`](docs/operator-guide.md) را ببینید.
 
-<p dir="rtl" align="right">
-کل web UI داخل یک Go binary قرار گرفته است؛ بنابراین در runtime نیازی به Node.js، static file server جداگانه یا ابزارهایی مثل Caddy و Nginx ندارید. البته Cloudflare Tunnel همچنان می‌تواند TLS را قبل از رسیدن traffic به پورت <code>8770</code> terminate کند.
-</p>
+یک Go binary واحد، کل web bundle را حمل می‌کند، پس در runtime نه Node لازم است، نه static-file server جدا، نه Caddy/nginx. Cloudflare Tunnel می‌تواند TLS را در جلوی `:8770` terminate کند.
 
----
+## ساختار پروژه
 
-<h2 dir="rtl" align="right">ساختار پروژه</h2>
-
-```text
-cmd/opendray/   entrypoint اصلی binary
-internal/       Go backend — gateway، sessions، memory، channels، integrations، git، search، … (یک package برای هر domain)
-app/web/        React + Vite admin SPA (در binary embed شده)
+```
+cmd/opendray/   binary entry point
+internal/       Go backend (gateway, sessions, memory, channels,
+                integrations, git, search, one package per domain)
+app/web/        React + Vite admin SPA (embedded in the binary)
 app/mobile/     Flutter app (iOS + Android)
-app/shared*/    shared UI و i18n stringها بین surfaceها
-docs/           راهنماها: install، getting-started، integration، ops
-deploy/         systemd / launchd / LXC unitها + install scriptها
+app/shared*/    cross-surface shared UI + i18n strings
+docs/           guides: install, getting-started, integration, ops
+deploy/         systemd / launchd / LXC units + install scripts
 ```
 
----
+## web frontend
 
-<h2 dir="rtl" align="right">web frontend</h2>
-
-<p dir="rtl" align="right">
-<code>app/web/</code> یک SPA واحد را در <code>internal/web/dist/</code> build می‌کند. Go binary آن را embed می‌کند و از مسیر <code>/admin/*</code> سرو می‌کند. Vite dev server روی <code>:5173</code> مسیر <code>/api</code> را به <code>:8770</code> proxy می‌کند تا development با HMR انجام شود.
-</p>
+`app/web/` یک SPA واحد را در `internal/web/dist/` build می‌کند که Go binary آن را embed کرده و روی `/admin/*` سرو می‌کند. Vite dev server روی `:5173` مسیر `/api` را به `:8770` proxy می‌کند تا development با HMR انجام شود.
 
 ```bash
-# dev: hot reload on React side, separate Go server for API
-
-cd app/web && pnpm dev       # http://localhost:5173
-
+# dev (hot reload on the React side, separate Go server for the API)
+cd app/web && pnpm dev               # http://localhost:5173
 go run ./cmd/opendray serve -config ../../config.toml   # other terminal
 
-# prod: one binary delivers everything
-
-cd app/web && pnpm build     # writes ../../internal/web/dist
+# prod (one binary delivers everything)
+cd app/web && pnpm build              # writes ../../internal/web/dist
 cd ../..
-go build ./cmd/opendray      # bakes dist into the binary
+go build ./cmd/opendray               # bakes dist into the binary
 ./opendray serve -config config.toml
 ```
 
-<p dir="rtl" align="right">
-برای frontend stack، یعنی <code>React</code> + <code>Vite</code> + <code>Tailwind v4</code> + <code>shadcn/ui</code> + <code>TanStack Router/Query</code> + <code>Zustand</code> + <code>xterm.js</code>، و noteهای مربوط به milestoneهای W، به <a href="app/web/README.md"><code>app/web/README.md</code></a> نگاه کنید.
-</p>
+برای stack frontend (React + Vite + Tailwind v4 + shadcn/ui + TanStack Router/Query + Zustand + xterm.js) و noteهای milestone W، [`app/web/README.md`](app/web/README.md) را ببینید.
 
----
+## اپ موبایل
 
-<h2 dir="rtl" align="right">اپ موبایل</h2>
+`app/mobile/` یک Flutter app برای **iOS و Android** با featureهای برابر با web admin است. از طریق HTTPS به یک gateway در حال اجرا وصل می‌شود. در اولین اجرا **Gateway URL** به‌همراه login admin را وارد می‌کنید و همان surfaceهای Sessions / Channels / Integrations / Memory / Git را در اختیار می‌گیرید. build مربوط به App Store / Play Store به‌صورت طراحی وجود ندارد (self-hosted، single-tenant): خودتان build می‌کنید و با هویت خودتان امضا می‌کنید.
 
-<p dir="rtl" align="right">
-<code>app/mobile/</code> یک Flutter app برای iOS و Android است که از نظر featureها با web admin برابری دارد. از طریق HTTPS به یک gateway فعال وصل می‌شود — در اولین اجرا <code>Gateway URL</code> و اطلاعات ورود admin را وارد می‌کنید و همان surfaceهای Sessions / Channels / Integrations / Memory / Git را در اختیار می‌گیرید. به‌صورت عمدی هیچ build مربوط به App Store / Play Store وجود ندارد (self-hosted و single-tenant): خودتان آن را build می‌کنید و با هویت خودتان امضایش می‌کنید.
-</p>
+**[→ راهنمای build و نصب](docs/mobile-app.fa.md).** gateway را از گوشی در دسترس کنید، سپس یک Android APK را sideload کنید یا با Xcode روی iPhone نصب کنید. ([هر ۱۰ زبان](docs/mobile-app.md)؛ در بالای راهنما زبان را عوض کنید.)
 
-<p dir="rtl" align="right">
-<strong>← <a href="docs/mobile-app.fa.md">راهنمای build و نصب</a></strong> — کاری کنید gateway از گوشی در دسترس باشد، بعد یک Android APK را sideload کنید یا با Xcode روی iPhone نصبش کنید.
-</p>
+## سوالات متداول
 
----
+### opendray چیست؟
 
-<h2 dir="rtl" align="right">مستندات</h2>
+opendray یک self-hosted gateway است که ابزارهای AI coding CLI که استفاده می‌کردید (Claude Code، Codex، Antigravity، Grok Build، OpenCode و shell) را می‌پیچد و به sessionهایی تبدیل می‌کند که از web admin، Flutter mobile app یا شش chat channel (Telegram، Slack، Discord، Feishu، DingTalk، WeCom) قابل کنترل باشند. یک Go binary. Apache 2.0. زیرساخت خودتان، data خودتان، tokenهای خودتان.
 
-<ul dir="rtl" align="right">
-<li><a href="docs/getting-started.fa.md"><code>docs/getting-started.fa.md</code></a>: اگر تازه شروع کرده‌اید، از اینجا شروع کنید؛ از صفر تا اولین session در حدود ۱۵ دقیقه، شامل نصب CLIهای موردنیاز و bootstrap کردن Postgres.</li>
-<li><a href="docs/install-binary.fa.md"><code>docs/install-binary.fa.md</code></a>: نصب از npm package یا release binary، با فرض این‌که Postgres را خودتان آماده می‌کنید، و اجرا به‌عنوان systemd یا launchd service.</li>
-<li><a href="docs/quickstart.md"><code>docs/quickstart.md</code></a>: مسیر پنج‌دقیقه‌ای برای dev environment؛ مناسب وقتی که moving partها را از قبل می‌شناسید.</li>
-<li><a href="docs/mobile-app.fa.md"><code>docs/mobile-app.fa.md</code></a>: ساخت و نصب اپ موبایل Flutter — یک Android APK را sideload کنید یا با Xcode روی iPhone نصب کنید، و بعد آن را به gateway خودتان وصل کنید.</li>
-<li><a href="docs/operator-guide.md"><code>docs/operator-guide.md</code></a>: مرجع deploy و ops برای production-like setupها.</li>
-<li><a href="docs/integration-guide.md"><code>docs/integration-guide.md</code></a>: راهنمای نوشتن external integration با هر زبان برنامه‌نویسی.</li>
-<li><a href="VERSIONING.md"><code>VERSIONING.md</code></a>: استراتژی versioning مبتنی بر major-as-generation.</li>
-<li><a href="CHANGELOG.md"><code>CHANGELOG.md</code></a>: تاریخچه releaseها.</li>
-</ul>
+### opendray چه AI CLIهایی را پشتیبانی می‌کند؟
 
----
+پنج provider first-class در نسخه v2.10.x: **Claude Code** (Anthropic)، **Codex** (OpenAI)، **Antigravity** (Google `agy`)، **Grok Build** (xAI) و **OpenCode**. به‌همراه shell دلخواه برای هر چیز دیگر. اضافه کردن یک CLI جدید، یک JSON descriptor زیر `internal/catalog/builtin/` است؛ در موارد رایج به کد adapter نیازی نیست.
 
-<h2 dir="rtl" align="right">تست‌ها</h2>
+### opendray در مقابل Claude Desktop یا ChatGPT Desktop چه فرقی دارد؟
+
+Claude Desktop و ChatGPT Desktop، chat clientهایی هستند که روی laptop شما اجرا می‌شوند و به‌محض بسته شدن laptop می‌میرند. opendray پروسه واقعی agentic CLI را روی hostای اجرا می‌کند که بیدار می‌ماند و اجازه می‌دهد از هرجا reattach کنید. sessionها در برابر disconnect، sleep laptop و drop شبکه بقا دارند. چند account با switch زنده بین آن‌ها pool می‌شوند.
+
+### opendray در مقابل اجرای Claude Code روی SSH چه فرقی دارد؟
+
+چهار چیزی که SSH به شما نمی‌دهد: (۱) بقای session در disconnect (بدون نیاز به ژیمناستیک `tmux`، هرچند می‌توانید داخل session از tmux هم استفاده کنید)، (۲) attach از گوشی یا یک chat channel، نه فقط terminal، (۳) لایه memory مشترک بین همه sessionهای host، (۴) pool چند-account با balancing بر اساس tier و switch زنده account در وسط conversation.
+
+### opendray در مقابل Open WebUI، LibreChat یا Dify چه فرقی دارد؟
+
+آن‌ها frontendهای chat در برابر یک model API هستند. promptها را به `api.openai.com` (یا مشابه) می‌فرستند و response را render می‌کنند. opendray پروسه واقعی agent CLI را روی host شما اجرا می‌کند، به‌همراه tool use، نوشتن file، memory و MCP serverها. اگر یک task به `Read` / `Edit` / `Bash` روی filesystem host نیاز دارد، opendray انجامش می‌دهد؛ frontendهای chat نه.
+
+### آیا می‌توانم چند Claude، Codex یا Antigravity account استفاده کنم؟
+
+بله. credential directoryهای loggedin را روی host بگذارید (Claude از `CLAUDE_CONFIG_DIR` استفاده می‌کند، Antigravity از isolation `$HOME` استفاده می‌کند) و opendray آن‌ها را از طریق filesystem watcher به‌صورت خودکار discover می‌کند. sessionهای جدید بر اساس tier + capacity بین accountهای فعال balance می‌شوند. می‌توانید یک session زنده را بین accountها جابه‌جا کنید بدون از دست دادن conversation (transcript در پشت‌صحنه migrate می‌شود). failover خودکار rate-limit به‌صورت پیش‌فرض context را حمل می‌کند.
+
+### data من کجا ذخیره می‌شود؟
+
+PostgreSQL روی host خودتان (instance خودتان را بیاورید یا از instanceای که installer bootstrap می‌کند استفاده کنید). embeddingها از provider خودتان می‌آیند (ONNX bundled، Ollama یا LM Studio). هیچ vector data، transcript یا memory entry از network شما خارج نمی‌شود. بدون telemetry. بدون cloud account. `opendray` هرگز به خانه زنگ نمی‌زند.
+
+### آیا می‌توانم این را در Docker اجرا کنم؟
+
+فعلاً نه (v2.x). opendray از طریق PTY، AI CLIها را spawn می‌کند و process state host (credential directories، ssh-agent، project files) را با آن‌ها share می‌کند. این با container isolationی که production Docker تحمیل می‌کند سازگار نیست. از binary از پیش build‌شده و systemd یا launchd استفاده کنید (Linux و macOS هر دو installer یک‌خطی دارند). [Production deploy](#production-deploy) را ببینید.
+
+### آیا opendray روی NAS، Mac mini یا Raspberry Pi کار می‌کند؟
+
+NAS: بله روی Synology / QNAP / TrueNAS-Scale (هر چیزی با Linux + Postgres). Mac mini: بله، این یکی از deployهای پرکاربرد است (LaunchDaemon همراه است). Raspberry Pi: روی Pi 4 / Pi 5 کار می‌کند اما برای sessionهای همزمان کم‌توان است؛ فقط برای استفاده hobby تک‌کاربره.
+
+### آیا opendray رایگان است؟ license چیست؟
+
+Apache 2.0. برای همیشه رایگان. بدون paid tier، بدون telemetry، بدون phone-home. اسپانسرها خوشامد هستند ([`.github/FUNDING.yml`](.github/FUNDING.yml) را ببینید).
+
+### چطور مشارکت کنم؟
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) و [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) را بخوانید. راه‌های ورود عملی: (۱) ترجمه یک صفحه README یا doc به یکی از زبان‌هایی که پشتیبانی می‌کنیم، (۲) اضافه کردن یک provider descriptor برای یک AI coding CLI جدید زیر `internal/catalog/builtin/`، (۳) نوشتن یک channel adaptor برای یک platform chat که پوشش نمی‌دهیم، (۴) مشارکت در screenshotهای docs، (۵) گزارش bug یا feature request. PRها CI سبز می‌خواهند؛ ترجمه‌ها advisory هستند؛ بدون CLA.
+
+## مستندات
+
+- [`docs/getting-started.fa.md`](docs/getting-started.fa.md): **از اینجا شروع کنید** اگر تازه‌واردید. صفر تا اولین session در ۱۵ دقیقه، شامل نصب CLIهای wrapped و bootstrap کردن Postgres.
+- [`docs/install-binary.fa.md`](docs/install-binary.fa.md): نصب از npm package یا release binary (Postgres را خودتان بیاورید) و اجرا به‌عنوان systemd / launchd service.
+- [`docs/quickstart.md`](docs/quickstart.md): environment dev پنج‌دقیقه‌ای (فرض بر این‌که با moving partها آشنا هستید).
+- [`docs/mobile-app.fa.md`](docs/mobile-app.fa.md): build و نصب اپ Flutter؛ Android APK را sideload کنید یا با Xcode روی iPhone نصب کنید، سپس آن را به gateway خودتان اشاره دهید.
+- [`docs/operator-guide.md`](docs/operator-guide.md): مرجع deploy + ops برای setupهای production-ish.
+- [`docs/integration-guide.md`](docs/integration-guide.md): چطور یک integration خارجی با هر زبانی بنویسید.
+- [`VERSIONING.md`](VERSIONING.md): استراتژی versioning (major-as-generation).
+- [`CHANGELOG.md`](CHANGELOG.md): تاریخچه release.
+
+## Status
+
+نسل فعلی: **v2.10.x**. برای تاریخچه release به [`CHANGELOG.md`](CHANGELOG.md) و برای policy مربوط به major-as-generation به [`VERSIONING.md`](VERSIONING.md) نگاه کنید (major به معنای نسل محصول است، نه breaking change به معنای سخت‌گیرانه SemVer).
+
+این نسل شامل موارد زیر است:
+
+- **wizardهای one-line installer و uninstaller** (Linux + macOS؛ Windows از طریق WSL2 عبور می‌کند). operator را مرحله‌به‌مرحله از bootstrap Postgres، نصب AI-CLI، admin credentials، تعیین listen address، نصب binary، schema migration و ثبت service عبور می‌دهد.
+- **binary خودمدیریت.** `opendray update / start / stop / restart / status / providers list / providers update` تا operatorها برای ops روزمره به `systemctl` / `launchctl` دست نزنند.
+- **release pipeline Goreleaser.** binaryهای cross-compiled (linux/darwin × amd64/arm64)، cosign keyless signing (Sigstore)، SPDX SBOM، self-update اتومیک تأییدشده.
+
+## تست‌ها
 
 ```bash
-go test -race ./...          # backend
-cd app/web && pnpm build     # web: TS strict + Vite production build
+go test -race ./...        # backend
+cd app/web && pnpm build   # web (TS strict + vite production build)
 ```
 
-<p dir="rtl" align="right">
-smoke flowهای end-to-end را بر اساس هر milestone در commit messageها track می‌کنیم. یک Playwright harness هم به‌عنوان follow-up برنامه‌ریزی شده است.
-</p>
+flowهای smoke end-to-end در commit messageهای هر milestone track می‌شوند. یک harness Playwright به‌عنوان follow-up برنامه‌ریزی شده است.
 
----
+## نسبت به v1
 
-<h2 dir="rtl" align="right">نسبت به v1</h2>
+v1 (`Opendray/opendray`) codebase قدیمی است که حالا archived شده. v2 نسل فعلی و فعال است، feature-complete است و تنها branchای است که development روی آن انجام می‌شود. از ۱۶ builtin نسخه v1، چهار مورد به backend نسخه v2 مهاجرت کرده‌اند؛ بقیه به featureهای سمت client، channel adaptor یا مصرف‌کننده integration API تبدیل شده‌اند.
 
-<p dir="rtl" align="right">
-v1 یعنی <code>Opendray/opendray</code> codebase قدیمی پروژه است که حالا archived شده. v2 نسل فعلی و active پروژه است؛ feature-complete است و تنها branchای است که development می‌گیرد.
-</p>
+## License
 
-<p dir="rtl" align="right">
-از ۱۶ builtin موجود در v1، چهار مورد به backend در v2 منتقل شده‌اند. بقیه به سمت client-side featureها، channel adapterها یا integration API consumerها منتقل شده‌اند.
-</p>
-
----
-
-<h2 dir="rtl" align="right">License</h2>
-
-<p dir="rtl" align="right">
-Apache 2.0. فایل <a href="LICENSE"><code>LICENSE</code></a> را ببینید.
-</p>
-
-<p dir="rtl" align="right">
-v1 تحت MIT license بود؛ v2 license جداگانه خودش را دارد.
-</p>
+Apache 2.0. [`LICENSE`](LICENSE) را ببینید. (v1 تحت MIT بود؛ v2 license مستقل خودش را دارد.)
