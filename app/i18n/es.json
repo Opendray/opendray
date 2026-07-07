@@ -555,7 +555,8 @@
         "conflicts": "Conflictos",
         "archived": "Archivadas",
         "overview": "Resumen",
-        "hygiene": "Higiene"
+        "hygiene": "Higiene",
+        "database": "Base de datos"
       },
       "docLabel": {
         "goal": "Objetivo",
@@ -3011,6 +3012,79 @@
           "saveFailed": "Error al guardar",
           "note": "En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice."
         }
+      }
+    },
+    "database": {
+      "dialog": {
+        "createTitle": "Añadir conexión de base de datos",
+        "editTitle": "Editar conexión",
+        "description": "Conéctate a la base de datos de este proyecto para explorar y editar sus datos. Las credenciales se almacenan cifradas.",
+        "name": "Nombre",
+        "host": "Host",
+        "port": "Puerto",
+        "database": "Base de datos",
+        "username": "Usuario",
+        "password": "Contraseña",
+        "passwordKept": "sin cambios — déjalo vacío para conservarla",
+        "sslMode": "Modo SSL",
+        "readOnly": "Solo lectura (bloquear escrituras desde esta conexión)",
+        "superuserWarning": "Este usuario es superusuario (o el administrador linivek). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.",
+        "test": "Probar",
+        "save": "Guardar",
+        "testFailed": "La prueba de conexión falló",
+        "testOk": "Conectado — PostgreSQL {version} ({ms} ms)",
+        "savedCreate": "Conexión añadida",
+        "savedEdit": "Conexión actualizada",
+        "missingFields": "Nombre, host, base de datos y usuario son obligatorios"
+      },
+      "results": {
+        "noColumns": "{command} — {rows} fila(s) afectada(s)"
+      },
+      "tree": {
+        "loading": "Cargando esquemas…",
+        "noSchemas": "No hay esquemas visibles para este usuario"
+      },
+      "row": {
+        "insertTitle": "Insertar fila",
+        "editTitle": "Editar fila",
+        "setNull": "poner NULL",
+        "save": "Guardar",
+        "savedInsert": "Fila insertada",
+        "savedEdit": "Fila actualizada",
+        "noChanges": "No hay cambios que guardar"
+      },
+      "grid": {
+        "insert": "Insertar",
+        "refresh": "Actualizar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "deleted": "Fila eliminada",
+        "confirmDelete": "¿Eliminar esta fila?",
+        "loading": "Cargando filas…",
+        "readOnlyHint": "Esta conexión es de solo lectura — no se pueden editar filas.",
+        "noPkHint": "Esta tabla no tiene clave primaria — la edición de filas está deshabilitada.",
+        "pageInfo": "Filas {from}–{to}"
+      },
+      "console": {
+        "placeholder": "SELECT * FROM …",
+        "run": "Ejecutar",
+        "runHint": "Cmd/Ctrl+Enter para ejecutar",
+        "stats": "{command} · {rows} fila(s) · {ms} ms",
+        "truncated": "truncado",
+        "empty": "Ejecuta una consulta para ver resultados.",
+        "truncatedNote": "resultados truncados"
+      },
+      "panel": {
+        "loading": "Cargando conexiones…",
+        "emptyTitle": "Sin conexiones de base de datos",
+        "emptyBody": "Registra una conexión para explorar la base de datos del proyecto, editar filas y ejecutar SQL. Las conexiones son por proyecto y se almacenan cifradas.",
+        "addConnection": "Añadir conexión",
+        "add": "Añadir",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "deleted": "Conexión eliminada",
+        "confirmDelete": "¿Eliminar esta conexión?",
+        "console": "Consola SQL"
       }
     }
   },
