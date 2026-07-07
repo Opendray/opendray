@@ -158,10 +158,10 @@ func classifyExplain(rest []string) (StatementClass, error) {
 
 // tokenize splits sql into uppercase word tokens plus "(", ")" and ";"
 // punctuation, skipping whitespace, line comments (--), nested block
-// comments (/* */), single-quoted strings (with '' and E'\' escapes),
-// dollar-quoted strings ($tag$ … $tag$) and double-quoted identifiers
-// (emitted as a placeholder token so quoted identifiers never look like
-// keywords).
+// comments (slash-star), single-quoted strings (doubled-quote and
+// backslash escapes), dollar-quoted strings ($tag$ ... $tag$) and
+// double-quoted identifiers (emitted as a placeholder token so quoted
+// identifiers never look like keywords).
 func tokenize(sql string) []string {
 	var tokens []string
 	src := []rune(sql)

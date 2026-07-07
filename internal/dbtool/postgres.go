@@ -323,7 +323,7 @@ func buildTableDataSQL(req TableDataReq) (string, []any, error) {
 		sb.WriteString(op)
 		if takesValue {
 			args = append(args, f.Value)
-			sb.WriteString(fmt.Sprintf(" $%d", len(args)))
+			fmt.Fprintf(&sb, " $%d", len(args))
 		}
 	}
 	for i, s := range req.Sort {
@@ -345,10 +345,10 @@ func buildTableDataSQL(req TableDataReq) (string, []any, error) {
 		limit = 100
 	}
 	args = append(args, limit+1) // +1 row to detect truncation
-	sb.WriteString(fmt.Sprintf(" LIMIT $%d", len(args)))
+	fmt.Fprintf(&sb, " LIMIT $%d", len(args))
 	if req.Offset > 0 {
 		args = append(args, req.Offset)
-		sb.WriteString(fmt.Sprintf(" OFFSET $%d", len(args)))
+		fmt.Fprintf(&sb, " OFFSET $%d", len(args))
 	}
 	return sb.String(), args, nil
 }
@@ -392,7 +392,7 @@ func buildInsertSQL(req RowInsertReq) (string, []any, error) {
 			sb.WriteString(", ")
 		}
 		args = append(args, req.Values[c])
-		sb.WriteString(fmt.Sprintf("$%d", len(args)))
+		fmt.Fprintf(&sb, "$%d", len(args))
 	}
 	sb.WriteString(") RETURNING *")
 	return sb.String(), args, nil
@@ -429,7 +429,7 @@ func buildUpdateSQL(req RowUpdateReq) (string, []any, error) {
 		}
 		args = append(args, req.Values[c])
 		sb.WriteString(pgx.Identifier{c}.Sanitize())
-		sb.WriteString(fmt.Sprintf(" = $%d", len(args)))
+		fmt.Fprintf(&sb, " = $%d", len(args))
 	}
 	sb.WriteString(" WHERE ")
 	writePKWhere(&sb, &args, req.PK)
@@ -501,7 +501,7 @@ func writePKWhere(sb *strings.Builder, args *[]any, pk map[string]any) {
 		}
 		*args = append(*args, pk[c])
 		sb.WriteString(pgx.Identifier{c}.Sanitize())
-		sb.WriteString(fmt.Sprintf(" IS NOT DISTINCT FROM $%d", len(*args)))
+		fmt.Fprintf(sb, " IS NOT DISTINCT FROM $%d", len(*args))
 	}
 }
 
