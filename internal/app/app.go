@@ -36,6 +36,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/cortex"
+	"github.com/opendray/opendray-v2/internal/dbtool"
 	customtask "github.com/opendray/opendray-v2/internal/customtask"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	fsapi "github.com/opendray/opendray-v2/internal/fs"
@@ -100,6 +101,7 @@ type App struct {
 	knowledgeSvc         *knowledge.Service             // M-KG Phase 6 embed backfill; nil when disabled
 	knowledgeKBDrafter   *knowledge.KBDrafter           // M-KB curated KB-page drafting; nil when disabled
 	knowledgeConsolidate *knowledge.ConsolidationEngine // P-C unified anchor→compile→KB loop; nil when disabled
+	dbtoolSvc            *dbtool.Service                // Database tool; nil when [dbtool] disabled. Close() releases external pools.
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -775,6 +777,23 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// Same at-rest encryption for channel config secrets (bot tokens,
 	// app secrets, webhook keys).
 	channelHub.SetCipher(ambientCipher)
+
+	// Database tool — per-project external DB connections (schema
+	// browser, row CRUD, SQL console). Passwords ride the same live
+	// cipher as channel/git-host secrets. Disabled via [dbtool]
+	// enabled = false: no routes mounted, no MCP attach.
+	var dbtoolSvc *dbtool.Service
+	var dbtoolHandlers *dbtool.Handlers
+	if cfg.Dbtool.IsEnabled() {
+		dbtoolStore := dbtool.NewStore(st.Pool(), ambientCipher)
+		dbtoolSvc = dbtool.NewService(dbtoolStore, dbtool.Options{
+			QueryTimeout: cfg.Dbtool.QueryTimeoutDuration(),
+			MaxRows:      cfg.Dbtool.MaxRows,
+			PoolMaxConns: cfg.Dbtool.PoolMaxConns,
+			PoolIdleTTL:  cfg.Dbtool.PoolIdleTTLDuration(),
+		}, log)
+		dbtoolHandlers = dbtool.NewHandlers(dbtoolSvc, log)
+	}
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
 	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
@@ -1292,6 +1311,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				if knowledgeHandlers != nil {
 					knowledgeHandlers.Mount(r)
 				}
+				if dbtoolHandlers != nil {
+					dbtoolHandlers.Mount(r)
+				}
 				cortexHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
@@ -1333,6 +1355,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		knowledgeSvc:         knowledgeSvc,
 		knowledgeKBDrafter:   knowledgeKBDrafter,
 		knowledgeConsolidate: knowledgeConsolidate,
+		dbtoolSvc:            dbtoolSvc,
 	}, nil
 }
 
@@ -1630,6 +1653,9 @@ func (a *App) Logger() *slog.Logger { return a.log }
 func (a *App) Close() {
 	if a.sessions != nil {
 		_ = a.sessions.Shutdown(context.Background())
+	}
+	if a.dbtoolSvc != nil {
+		a.dbtoolSvc.Close()
 	}
 	if a.channels != nil {
 		_ = a.channels.Shutdown(context.Background())
