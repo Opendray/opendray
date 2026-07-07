@@ -61,6 +61,12 @@ type SessionProvider struct {
 	// agent can't authenticate.
 	memory MemoryAutoAttach
 
+	// dbtool describes the auto-attached Database-tool MCP server.
+	// Same lifecycle as memory: zero value skips injection, set via
+	// WithDbtoolAutoAttach when the feature is enabled and a key was
+	// minted.
+	dbtool DbtoolAutoAttach
+
 	// memoryMirror, when set, is invoked from a background goroutine
 	// right after the session's PrepareFunc returns — it pulls
 	// Claude's local .claude/.../memory/*.md files into the shared
@@ -220,6 +226,25 @@ func NewSessionProvider(
 // default). Returns the receiver for fluent setup at app startup.
 func (sp *SessionProvider) WithMemoryAutoAttach(cfg MemoryAutoAttach) *SessionProvider {
 	sp.memory = cfg
+	return sp
+}
+
+// DbtoolAutoAttach holds the runtime knobs for injecting the
+// Database-tool MCP server (`opendray mcp-dbtool`) into spawned
+// sessions. Field semantics mirror MemoryAutoAttach; the key is a
+// dedicated `opendray-dbtool` integration carrying db:read/db:write —
+// deliberately NOT the memory key, so neither key's blast radius grows.
+type DbtoolAutoAttach struct {
+	Enabled    bool
+	BinaryPath string
+	BaseURL    string
+	APIKey     string
+}
+
+// WithDbtoolAutoAttach enables auto-injection of the Database-tool MCP
+// server into every spawned session. Zero value = off.
+func (sp *SessionProvider) WithDbtoolAutoAttach(cfg DbtoolAutoAttach) *SessionProvider {
+	sp.dbtool = cfg
 	return sp
 }
 
@@ -426,6 +451,23 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				// sessions: there the mcp-memory subprocess derives the
 				// scope from its own cwd, which agy sets to the session
 				// workspace.)
+			},
+		})
+	}
+	// Auto-attach the Database-tool MCP server under the same rules as
+	// memory: MCP-capable provider, never for isolated integration
+	// sessions (an integration must not reach the operator's registered
+	// project databases through a spawned session's ambient tools).
+	if sp.dbtool.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
+		servers = append(servers, MCPServer{
+			Name:    "opendray-dbtool",
+			Command: sp.dbtool.BinaryPath,
+			Args:    []string{"mcp-dbtool"},
+			Env: map[string]string{
+				"OPENDRAY_BASE_URL": sp.dbtool.BaseURL,
+				"OPENDRAY_API_KEY":  sp.dbtool.APIKey,
+				// Project key (the session cwd) is populated inside
+				// Prepare, exactly like memory's scope key.
 			},
 		})
 	}
@@ -706,14 +748,21 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			// never churns.
 			cwd := session.Cwd(prepareCtx)
 			for i := range servers {
-				if servers[i].Name == "opendray-memory" {
-					if servers[i].Env == nil {
-						servers[i].Env = map[string]string{}
-					}
+				if servers[i].Env == nil && (servers[i].Name == "opendray-memory" || servers[i].Name == "opendray-dbtool") {
+					servers[i].Env = map[string]string{}
+				}
+				switch servers[i].Name {
+				case "opendray-memory":
 					if providerID == "antigravity" {
 						servers[i].Env["OPENDRAY_MEMORY_SCOPE_FROM_CWD"] = "1"
 					} else {
 						servers[i].Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
+					}
+				case "opendray-dbtool":
+					if providerID == "antigravity" {
+						servers[i].Env["OPENDRAY_DBTOOL_CWD_FROM_CWD"] = "1"
+					} else {
+						servers[i].Env["OPENDRAY_DBTOOL_CWD"] = cwd
 					}
 				}
 			}
