@@ -10,6 +10,32 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- **Database tool — direct project database access.** opendray can now
+  hold per-project (cwd-keyed) database connections and expose them like a
+  JetBrains-style database tool: browse schemas/tables, read table data,
+  edit rows, and run a SQL console. It surfaces two ways — a **Database
+  tab** on each project screen (web: connection manager, lazy schema tree,
+  paginated data grid with row insert/edit/delete, and a CodeMirror SQL
+  console with schema-aware autocompletion; mobile: connection management,
+  schema browse, read-only query) and an auto-attached **`opendray-dbtool`
+  MCP server** (`db_connections_list` / `db_schema` / `db_table_data` /
+  `db_query` / `db_execute`) so agent sessions can query and mutate a
+  project's database directly. PostgreSQL only for now (a driver interface
+  reserves MySQL/SQLite). Connection passwords are encrypted at rest with
+  the same field cipher as channel/git-host secrets and are never returned
+  by any read endpoint. Two new scopes — `db:read` (browse + read-only
+  SQL) and `db:write` (row CRUD + write/DDL) — gate integration access;
+  **registering a connection stays admin-only** (an integration can never
+  point opendray at a new host). Reads run inside a server-side `READ ONLY`
+  transaction with a statement timeout, and per-connection `read_only`
+  refuses every write regardless of scope. The dbtool MCP is withheld from
+  `origin=integration` sessions, matching memory isolation. Configurable
+  via `[dbtool]` (enabled by default; the feature is inert until a
+  connection is registered). Migrations `0072` (schema) and `0073`
+  (kb_integrations reseed).
+
 ## [v2.10.1] — 2026-06-22
 
 ### Added
