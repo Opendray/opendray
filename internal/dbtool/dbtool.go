@@ -503,6 +503,10 @@ func (s *Service) Query(ctx context.Context, id string, req QueryReq, allowWrite
 
 func newID() string {
 	var b [9]byte
-	_, _ = rand.Read(b[:])
+	if _, err := rand.Read(b[:]); err != nil {
+		// crypto/rand should never fail; if it somehow does, refuse to
+		// mint a weak (all-zero) id rather than silently continue.
+		panic(fmt.Sprintf("dbtool: crypto/rand failed: %v", err))
+	}
 	return "dbc_" + base64.RawURLEncoding.EncodeToString(b[:])
 }

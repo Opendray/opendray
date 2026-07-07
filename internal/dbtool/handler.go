@@ -69,6 +69,45 @@ func (h *Handlers) requireAdmin(next http.Handler) http.Handler {
 	})
 }
 
+// requireConnCwd enforces per-project isolation for non-admin principals:
+// the target connection must belong to the cwd the caller is bound to.
+// The auto-attached opendray-dbtool MCP always sends its spawn cwd as the
+// `cwd` query parameter, so an agent session driving project A can only
+// reach connections registered under project A — it cannot enumerate or
+// touch another project's database by guessing an id. Admin principals
+// (the web UI) bypass so the operator can browse across projects.
+//
+// This is the honest-path boundary; it is NOT a cryptographic one — an
+// agent that extracts the injected system key from its rendered MCP
+// config could still call the REST API directly with a forged cwd. That
+// residual is identical to the memory MCP's shared-key model; a
+// per-project key would close it (tracked as a follow-up).
+//
+// Returns false (and writes the response) when access is denied.
+func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
+	p, _ := integration.CurrentPrincipal(r.Context())
+	if p.Kind == integration.KindAdmin {
+		return true
+	}
+	cwd := r.URL.Query().Get("cwd")
+	if cwd == "" {
+		writeError(w, http.StatusForbidden,
+			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
+		return false
+	}
+	conn, err := h.svc.GetConnection(r.Context(), chi.URLParam(r, "id"))
+	if err != nil {
+		writeServiceError(w, err)
+		return false
+	}
+	if conn.Cwd != cwd {
+		// Do not reveal that the id exists under another project.
+		writeError(w, http.StatusNotFound, ErrNotFound)
+		return false
+	}
+	return true
+}
+
 // Mount registers all /dbtool/* routes on r. r should already carry the
 // dual-auth middleware (admin OR integration).
 func (h *Handlers) Mount(r chi.Router) {
@@ -177,7 +216,16 @@ func (h *Handlers) testConnection(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) listConnections(w http.ResponseWriter, r *http.Request) {
-	conns, err := h.svc.ListConnections(r.Context(), r.URL.Query().Get("cwd"))
+	cwd := r.URL.Query().Get("cwd")
+	// Non-admin callers may only enumerate their own project's
+	// connections — never the whole cross-project registry. Admin (web
+	// UI) may omit cwd to list everything.
+	if p, _ := integration.CurrentPrincipal(r.Context()); p.Kind != integration.KindAdmin && cwd == "" {
+		writeError(w, http.StatusForbidden,
+			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
+		return
+	}
+	conns, err := h.svc.ListConnections(r.Context(), cwd)
 	if err != nil {
 		writeServiceError(w, err)
 		return
@@ -189,6 +237,9 @@ func (h *Handlers) listConnections(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) schemas(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	schemas, err := h.svc.Schemas(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
 		writeServiceError(w, err)
@@ -201,6 +252,9 @@ func (h *Handlers) schemas(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) tables(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	tables, err := h.svc.Tables(r.Context(), chi.URLParam(r, "id"), pathParam(r, "schema"))
 	if err != nil {
 		writeServiceError(w, err)
@@ -213,6 +267,9 @@ func (h *Handlers) tables(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) tableMeta(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	meta, err := h.svc.TableMeta(r.Context(), chi.URLParam(r, "id"),
 		pathParam(r, "schema"), pathParam(r, "table"))
 	if err != nil {
@@ -223,6 +280,9 @@ func (h *Handlers) tableMeta(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) tableData(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	var req TableDataReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
@@ -237,12 +297,19 @@ func (h *Handlers) tableData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) query(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	var req QueryReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
 		return
 	}
-	p, _ := integration.CurrentPrincipal(r.Context())
+	p, ok := integration.CurrentPrincipal(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
 	allowWrite := p.Kind == integration.KindAdmin || integration.HasScope(p.Scopes, ScopeDBWrite)
 	rs, err := h.svc.Query(r.Context(), chi.URLParam(r, "id"), req, allowWrite)
 	if err != nil {
@@ -253,6 +320,9 @@ func (h *Handlers) query(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) insertRow(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	var req RowInsertReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
@@ -267,6 +337,9 @@ func (h *Handlers) insertRow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) updateRow(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	var req RowUpdateReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
@@ -281,6 +354,9 @@ func (h *Handlers) updateRow(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) deleteRows(w http.ResponseWriter, r *http.Request) {
+	if !h.requireConnCwd(w, r) {
+		return
+	}
 	var req RowDeleteReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))

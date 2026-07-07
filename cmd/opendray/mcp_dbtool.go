@@ -37,6 +37,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // runMcpDbtool is the subcommand entry point. Returns a process exit code.
@@ -51,8 +52,11 @@ func runMcpDbtool(args []string) int {
 	}
 
 	srv := &dbtoolMCPServer{
-		cfg:    cfg,
-		client: &http.Client{},
+		cfg: cfg,
+		// The stdin loop dispatches synchronously, so a hung gateway
+		// would otherwise freeze the whole MCP session — bound every
+		// call so a stall surfaces as a tool error instead.
+		client: &http.Client{Timeout: 60 * time.Second},
 		out:    os.Stdout,
 		outMu:  &sync.Mutex{},
 		errLog: os.Stderr,
@@ -342,6 +346,17 @@ func (s *dbtoolMCPServer) handleToolCall(req rpcRequest) {
 	s.respond(req.ID, result)
 }
 
+// cwdQuery returns the "?cwd=…" project-binding parameter the gateway
+// requires from non-admin callers on every dbtool call, or "" when no
+// project key is bound (which will make the gateway reject the call —
+// the surfaced 403 tells the agent the session has no project context).
+func (s *dbtoolMCPServer) cwdQuery() string {
+	if s.cfg.cwd == "" {
+		return ""
+	}
+	return "?cwd=" + url.QueryEscape(s.cfg.cwd)
+}
+
 func (s *dbtoolMCPServer) callConnectionsList() (any, error) {
 	var out struct {
 		Connections []struct {
@@ -354,11 +369,7 @@ func (s *dbtoolMCPServer) callConnectionsList() (any, error) {
 			ReadOnly bool   `json:"read_only"`
 		} `json:"connections"`
 	}
-	path := "/api/v1/dbtool/connections"
-	if s.cfg.cwd != "" {
-		path += "?cwd=" + url.QueryEscape(s.cfg.cwd)
-	}
-	if err := s.gatewayGetJSON(path, &out); err != nil {
+	if err := s.gatewayGetJSON("/api/v1/dbtool/connections"+s.cwdQuery(), &out); err != nil {
 		return nil, err
 	}
 	var b strings.Builder
@@ -391,6 +402,7 @@ func (s *dbtoolMCPServer) callSchema(args json.RawMessage) (any, error) {
 		return nil, errors.New("connection_id is required")
 	}
 	base := "/api/v1/dbtool/connections/" + url.PathEscape(in.ConnectionID)
+	q := s.cwdQuery()
 	switch {
 	case in.Schema == "":
 		var out struct {
@@ -398,7 +410,7 @@ func (s *dbtoolMCPServer) callSchema(args json.RawMessage) (any, error) {
 				Name string `json:"name"`
 			} `json:"schemas"`
 		}
-		if err := s.gatewayGetJSON(base+"/schemas", &out); err != nil {
+		if err := s.gatewayGetJSON(base+"/schemas"+q, &out); err != nil {
 			return nil, err
 		}
 		names := make([]string, 0, len(out.Schemas))
@@ -408,14 +420,14 @@ func (s *dbtoolMCPServer) callSchema(args json.RawMessage) (any, error) {
 		return textResult("schemas: " + strings.Join(names, ", ")), nil
 	case in.Table == "":
 		var out json.RawMessage
-		if err := s.gatewayGetJSON(base+"/schemas/"+url.PathEscape(in.Schema)+"/tables", &out); err != nil {
+		if err := s.gatewayGetJSON(base+"/schemas/"+url.PathEscape(in.Schema)+"/tables"+q, &out); err != nil {
 			return nil, err
 		}
 		return jsonResult(out), nil
 	default:
 		var out json.RawMessage
 		if err := s.gatewayGetJSON(base+"/schemas/"+url.PathEscape(in.Schema)+
-			"/tables/"+url.PathEscape(in.Table)+"/meta", &out); err != nil {
+			"/tables/"+url.PathEscape(in.Table)+"/meta"+q, &out); err != nil {
 			return nil, err
 		}
 		return jsonResult(out), nil
@@ -452,7 +464,7 @@ func (s *dbtoolMCPServer) callTableData(args json.RawMessage) (any, error) {
 	}
 	var out json.RawMessage
 	if err := s.gatewayPostJSON("/api/v1/dbtool/connections/"+
-		url.PathEscape(in.ConnectionID)+"/table-data", body, &out); err != nil {
+		url.PathEscape(in.ConnectionID)+"/table-data"+s.cwdQuery(), body, &out); err != nil {
 		return nil, err
 	}
 	return jsonResult(out), nil
@@ -479,7 +491,7 @@ func (s *dbtoolMCPServer) callQuery(args json.RawMessage) (any, error) {
 	}
 	var out json.RawMessage
 	if err := s.gatewayPostJSON("/api/v1/dbtool/connections/"+
-		url.PathEscape(in.ConnectionID)+"/query", body, &out); err != nil {
+		url.PathEscape(in.ConnectionID)+"/query"+s.cwdQuery(), body, &out); err != nil {
 		return nil, err
 	}
 	return jsonResult(out), nil

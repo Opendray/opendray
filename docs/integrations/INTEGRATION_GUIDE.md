@@ -469,8 +469,9 @@ opendray can hold **per-project database connections** (a JetBrains-style databa
 - **`db:read`** gates browsing: `GET /dbtool/connections?cwd=…`, `…/schemas`, `…/tables`, `…/meta`, `POST …/table-data`, and read-only `POST …/query` (SELECT/EXPLAIN/SHOW…). Read statements execute inside a server-side `READ ONLY` transaction with a statement timeout, so a data-modifying CTE fails server-side even if it slips past classification.
 - **`db:write`** gates mutation: `POST …/rows/{insert,update,delete}` and write/DDL statements through `…/query`. **A connection the operator marked `read_only` refuses every write regardless of scope** (`403 dbtool: connection is read-only`). Row edits require the table's full primary key; PK-less tables cannot be edited.
 - **The auto-attached `opendray-dbtool` MCP is not given to `origin=integration` sessions** — same isolation rule as memory. Your integration reaches the Database tool through its own scoped key over REST, not through a spawned session's ambient tools, and only for connections registered under a project it is allowed to see.
+- **Non-admin callers are bound to one project (`cwd`).** Every `/dbtool/*` call from an integration key MUST carry a `?cwd=<project>` query parameter; the gateway rejects a by-id call whose connection belongs to a different project (`404`) and refuses a connection list with no `cwd` (`403`). This keeps one project's agent from enumerating or touching another project's databases. Admin callers (the operator's web UI) may omit `cwd` to browse across projects. The auto-attached MCP sends its spawn `cwd` automatically.
 
-**MUST:** request `db:read` alone unless you genuinely mutate data; handle `403` on write paths as "this connection is read-only or my key lacks `db:write`", not a retryable error. **MUST NOT** assume a connection exists — call `GET /dbtool/connections?cwd=…` first; an empty list means the operator configured no database for that project.
+**MUST:** always pass `?cwd=`; request `db:read` alone unless you genuinely mutate data; handle `403` on write paths as "this connection is read-only or my key lacks `db:write`", not a retryable error. **MUST NOT** assume a connection exists — call `GET /dbtool/connections?cwd=…` first; an empty list means the operator configured no database for that project.
 
 ---
 
@@ -688,11 +689,11 @@ Base path: `https://<host>/api/v1`. Auth: `Authorization: Bearer odk_live_…` (
 | POST | `/dbtool/connections` | Register a DB connection | **admin** |
 | PATCH/DELETE | `/dbtool/connections/{id}` | Edit / remove a connection | **admin** |
 | POST | `/dbtool/connections[/{id}]/test` | Test connectivity (returns `is_superuser`) | **admin** |
-| GET | `/dbtool/connections?cwd=` | List a project's connections (no password) | integration (`db:read`) / admin |
-| GET | `/dbtool/connections/{id}/schemas[/{s}/tables[/{t}/meta]]` | Introspect | integration (`db:read`) / admin |
-| POST | `/dbtool/connections/{id}/table-data` | Paged table rows | integration (`db:read`) / admin |
-| POST | `/dbtool/connections/{id}/query` | Run one SQL statement (read gate; write needs `db:write`) | integration (`db:read`) / admin |
-| POST | `/dbtool/connections/{id}/rows/{insert,update,delete}` | Row CRUD (writable connection only) | integration (`db:write`) / admin |
+| GET | `/dbtool/connections?cwd=` | List a project's connections (no password; `cwd` required for non-admin) | integration (`db:read`) / admin |
+| GET | `/dbtool/connections/{id}/schemas[/{s}/tables[/{t}/meta]]?cwd=` | Introspect (`cwd` must match the connection's project for non-admin) | integration (`db:read`) / admin |
+| POST | `/dbtool/connections/{id}/table-data?cwd=` | Paged table rows | integration (`db:read`) / admin |
+| POST | `/dbtool/connections/{id}/query?cwd=` | Run one SQL statement (read gate; write needs `db:write`) | integration (`db:read`) / admin |
+| POST | `/dbtool/connections/{id}/rows/{insert,update,delete}?cwd=` | Row CRUD (writable connection only) | integration (`db:write`) / admin |
 
 ---
 

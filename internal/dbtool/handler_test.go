@@ -52,3 +52,42 @@ func TestScopeGates(t *testing.T) {
 		})
 	}
 }
+
+// requireConnCwd binds a non-admin caller to its own project. These
+// cases resolve before the service is touched, so a nil svc is safe:
+// admin bypasses, and a non-admin without a cwd param is rejected up
+// front (project-enumeration prevention).
+func TestRequireConnCwd(t *testing.T) {
+	h := NewHandlers(nil, nil)
+
+	tests := []struct {
+		name    string
+		p       *integration.Principal
+		query   string
+		allowed bool
+	}{
+		{
+			"admin bypasses cwd binding",
+			&integration.Principal{Kind: integration.KindAdmin},
+			"", true,
+		},
+		{
+			"non-admin without cwd rejected",
+			&integration.Principal{Kind: integration.KindIntegration, Scopes: []string{ScopeDBRead}},
+			"", false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/x"+tt.query, nil)
+			if tt.p != nil {
+				req = req.WithContext(integration.WithPrincipal(req.Context(), *tt.p))
+			}
+			rec := httptest.NewRecorder()
+			got := h.requireConnCwd(rec, req)
+			if got != tt.allowed {
+				t.Fatalf("requireConnCwd = %v, want %v (status %d)", got, tt.allowed, rec.Code)
+			}
+		})
+	}
+}
