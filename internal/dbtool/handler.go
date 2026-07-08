@@ -118,17 +118,10 @@ func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
 			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
 		return false
 	}
-	// A db:signed key must prove the cwd binding with an HMAC signature:
-	// its sessions each get their own MCP config, so opendray injects a
-	// per-cwd signature the agent cannot forge (it has no signing secret).
-	// Keys without db:signed (antigravity — HOME-global MCP config) fall
-	// through to the honest-path cwd check below.
-	if integration.HasScope(p.Scopes, ScopeDBSigned) && len(h.signSecret) > 0 {
-		if !verifyCwdSig(h.signSecret, cwd, r.Header.Get(cwdSigHeader)) {
-			writeError(w, http.StatusForbidden,
-				errors.New("dbtool: missing or invalid cwd signature"))
-			return false
-		}
+	// A db:signed key must prove the cwd binding with an HMAC signature
+	// (shared with listConnections so no cwd-gated route can skip it).
+	if !h.enforceSignedCwd(w, r, p, cwd) {
+		return false
 	}
 	conn, err := h.svc.GetConnection(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
@@ -139,6 +132,23 @@ func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
 		// Do not reveal that the id exists under another project.
 		writeError(w, http.StatusNotFound, ErrNotFound)
 		return false
+	}
+	return true
+}
+
+// enforceSignedCwd verifies the per-session HMAC(cwd) signature when the
+// caller holds a db:signed key. Returns false (writing 403) on a missing
+// or invalid signature. Keys WITHOUT db:signed (antigravity, third-party
+// integrations) pass through — their weaker honest-path binding is the
+// cwd match at each call site. Every non-admin, cwd-gated route MUST run
+// this so a future route can't silently skip the proof.
+func (h *Handlers) enforceSignedCwd(w http.ResponseWriter, r *http.Request, p integration.Principal, cwd string) bool {
+	if integration.HasScope(p.Scopes, ScopeDBSigned) && len(h.signSecret) > 0 {
+		if !verifyCwdSig(h.signSecret, cwd, r.Header.Get(cwdSigHeader)) {
+			writeError(w, http.StatusForbidden,
+				errors.New("dbtool: missing or invalid cwd signature"))
+			return false
+		}
 	}
 	return true
 }
@@ -270,11 +280,20 @@ func (h *Handlers) listConnections(w http.ResponseWriter, r *http.Request) {
 	cwd := r.URL.Query().Get("cwd")
 	// Non-admin callers may only enumerate their own project's
 	// connections — never the whole cross-project registry. Admin (web
-	// UI) may omit cwd to list everything.
-	if p, _ := integration.CurrentPrincipal(r.Context()); p.Kind != integration.KindAdmin && cwd == "" {
-		writeError(w, http.StatusForbidden,
-			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
-		return
+	// UI) may omit cwd to list everything. A db:signed key must also prove
+	// the cwd binding (same gate as the by-id routes) — otherwise it could
+	// enumerate another project's connection metadata with just a guessed
+	// cwd string.
+	p, _ := integration.CurrentPrincipal(r.Context())
+	if p.Kind != integration.KindAdmin {
+		if cwd == "" {
+			writeError(w, http.StatusForbidden,
+				errors.New("dbtool: cwd query parameter is required for non-admin callers"))
+			return
+		}
+		if !h.enforceSignedCwd(w, r, p, cwd) {
+			return
+		}
 	}
 	conns, err := h.svc.ListConnections(r.Context(), cwd)
 	if err != nil {

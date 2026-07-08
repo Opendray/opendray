@@ -182,3 +182,23 @@ func TestRequireConnCwdSignatureEnforced(t *testing.T) {
 		})
 	}
 }
+
+// listConnections must also enforce the signature for db:signed keys —
+// otherwise a signed key could enumerate another project's connection
+// metadata with just a guessed cwd. Rejection happens before the service
+// is touched, so a nil svc is safe.
+func TestListConnectionsSignatureEnforced(t *testing.T) {
+	secret := []byte("sign-secret-abcdefghijklmnop")
+	h := NewHandlers(nil, secret, nil)
+	signed := integration.Principal{
+		Kind:   integration.KindIntegration,
+		Scopes: []string{ScopeDBRead, ScopeDBSigned},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/dbtool/connections?cwd=/proj", nil)
+	req = req.WithContext(integration.WithPrincipal(req.Context(), signed))
+	rec := httptest.NewRecorder()
+	h.listConnections(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("signed list without signature: status = %d, want 403", rec.Code)
+	}
+}

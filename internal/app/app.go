@@ -814,6 +814,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			[]string{"db:read", "db:write"}, dbtoolAgyKeyFile)
 		binPath, perr := os.Executable()
 		switch {
+		case secErr != nil:
+			// Fail closed: without the secret the gateway can't verify
+			// signatures, so a db:signed key would silently degrade to
+			// honest-path. Don't advertise a scope we can't enforce —
+			// leave the MCP unattached (the web UI still works).
+			log.Warn("dbtool MCP auto-attach disabled — signing secret unavailable", "err", secErr)
 		case err != nil:
 			log.Warn("dbtool MCP auto-attach disabled — could not mint signed key", "err", err)
 		case agyErr != nil:
