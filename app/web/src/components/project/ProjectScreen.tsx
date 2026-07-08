@@ -77,7 +77,6 @@ import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 import { JournalStalePanel } from '@/components/project/JournalStalePanel'
 import { CurationChat } from '@/components/cortex/CurationChat'
 import { BlueprintEditor } from '@/components/cortex/BlueprintEditor'
-import { DatabasePanel } from '@/components/database/DatabasePanel'
 
 // strip the drafter's hidden signature marker before display/edit
 function stripSig(s: string): string {
@@ -158,7 +157,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
   // to the overview front page.
   useEffect(() => {
     if (sections.length === 0) return
-    const fixed = ['journal', 'inbox', 'hygiene', 'database']
+    const fixed = ['journal', 'inbox', 'hygiene']
     if (fixed.includes(activeTab)) return
     if (!sections.some((s) => s.slug === activeTab)) setActiveTab('overview')
   }, [sections, activeTab])
@@ -300,9 +299,6 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
           <TabsTrigger value="hygiene">
             {t('web.project.tabs.hygiene')}
           </TabsTrigger>
-          <TabsTrigger value="database">
-            {t('web.project.tabs.database')}
-          </TabsTrigger>
         </TabsList>
 
         {sections.map((sec) => (
@@ -349,10 +345,6 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         <TabsContent value="journal" className="flex-1 overflow-auto p-4">
           <JournalStalePanel cwd={cwd} />
           <JournalTab entries={logsQuery.data ?? []} loading={logsQuery.isLoading} />
-        </TabsContent>
-
-        <TabsContent value="database" className="flex-1 overflow-auto">
-          <DatabasePanel cwd={cwd} />
         </TabsContent>
 
         <TabsContent value="inbox" className="flex-1 overflow-auto p-4">

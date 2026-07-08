@@ -42,7 +42,8 @@
     "knowledge": "知识",
     "vault": "文档库",
     "cortex": "心智中枢",
-    "updateAvailable": "有可用更新"
+    "updateAvailable": "有可用更新",
+    "database": "数据库"
   },
   "web": {
     "brand": "opendray",
@@ -555,8 +556,7 @@
         "conflicts": "冲突",
         "archived": "已归档",
         "overview": "概览",
-        "hygiene": "记忆卫生",
-        "database": "数据库"
+        "hygiene": "记忆卫生"
       },
       "docLabel": {
         "goal": "目标",
@@ -3085,6 +3085,11 @@
         "deleted": "连接已删除",
         "confirmDelete": "删除此连接?",
         "console": "SQL 控制台"
+      },
+      "page": {
+        "pickTitle": "数据库",
+        "pickSubtitle": "选择一个项目,管理它的数据库连接、浏览表、运行 SQL。",
+        "changeProject": "切换项目"
       }
     }
   },

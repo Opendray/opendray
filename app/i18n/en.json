@@ -42,7 +42,8 @@
     "knowledge": "Knowledge",
     "vault": "Vault",
     "cortex": "Cortex",
-    "updateAvailable": "Update available"
+    "updateAvailable": "Update available",
+    "database": "Database"
   },
   "web": {
     "brand": "opendray",
@@ -555,8 +556,7 @@
         "conflicts": "Conflicts",
         "archived": "Archived",
         "overview": "Overview",
-        "hygiene": "Hygiene",
-        "database": "Database"
+        "hygiene": "Hygiene"
       },
       "docLabel": {
         "goal": "Goal",
@@ -3085,6 +3085,11 @@
         "deleted": "Connection deleted",
         "confirmDelete": "Delete this connection?",
         "console": "SQL console"
+      },
+      "page": {
+        "pickTitle": "Database",
+        "pickSubtitle": "Pick a project to manage its database connections, browse tables, and run SQL.",
+        "changeProject": "Change project"
       }
     }
   },

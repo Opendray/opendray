@@ -42,7 +42,8 @@
     "knowledge": "Conocimiento",
     "vault": "Bóveda",
     "cortex": "Cortex",
-    "updateAvailable": "Actualización disponible"
+    "updateAvailable": "Actualización disponible",
+    "database": "Base de datos"
   },
   "web": {
     "brand": "opendray",
@@ -555,8 +556,7 @@
         "conflicts": "Conflictos",
         "archived": "Archivadas",
         "overview": "Resumen",
-        "hygiene": "Higiene",
-        "database": "Base de datos"
+        "hygiene": "Higiene"
       },
       "docLabel": {
         "goal": "Objetivo",
@@ -3085,6 +3085,11 @@
         "deleted": "Conexión eliminada",
         "confirmDelete": "¿Eliminar esta conexión?",
         "console": "Consola SQL"
+      },
+      "page": {
+        "pickTitle": "Base de datos",
+        "pickSubtitle": "Elige un proyecto para gestionar sus conexiones de base de datos, explorar tablas y ejecutar SQL.",
+        "changeProject": "Cambiar de proyecto"
       }
     }
   },

@@ -6,6 +6,7 @@ import {
   Cpu,
   MessageSquare,
   Plug,
+  Database,
   Activity,
   Settings,
   Boxes,
@@ -53,6 +54,7 @@ const groups: NavItem[][] = [
     { to: '/providers', icon: Cpu, labelKey: 'nav.providers', shortcut: 'g p' },
     { to: '/channels', icon: MessageSquare, labelKey: 'nav.channels', shortcut: 'g c' },
     { to: '/integrations', icon: Plug, labelKey: 'nav.integrations', shortcut: 'g i' },
+    { to: '/database', icon: Database, labelKey: 'nav.database', shortcut: 'g d' },
   ],
   [
     { to: '/vault', icon: BookText, labelKey: 'nav.vault', shortcut: 'g v' },
