@@ -3371,7 +3371,8 @@
           "tasks": "Tareas",
           "history": "Historial",
           "vault": "Bóveda",
-          "cortex": "Cortex"
+          "cortex": "Cortex",
+          "database": "BD"
         }
       },
       "cortex": {
