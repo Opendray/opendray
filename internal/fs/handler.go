@@ -461,8 +461,12 @@ func (h *Handlers) upload(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
-	final := filepath.Join(dir, rel)
-	if _, err := resolveWithinRoot(final, root); err != nil {
+	// resolveWithinRoot is the path-injection barrier (filepath.Rel + ".."
+	// check); use its *return* value for every filesystem sink below, so we
+	// operate on a validated path rather than the raw user-supplied join —
+	// same pattern /download and /zip use with os.Open.
+	final, err := resolveWithinRoot(filepath.Join(dir, rel), root)
+	if err != nil {
 		writeError(w, http.StatusForbidden, err)
 		return
 	}
