@@ -74,14 +74,16 @@ class _FilesTabState extends ConsumerState<FilesTab>
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final api = ref.read(fsApiProvider);
-    final rel = p.relative(dir, from: root);
+    // The server confines writes to `root` but expects `dir` as an
+    // ABSOLUTE path (it canonicalises and rejects relatives), so send the
+    // current directory itself — not a path relative to root.
     setState(() => _uploading = true);
     var ok = 0;
     for (final f in picked.files) {
       final path = f.path;
       if (path == null) continue;
       try {
-        await api.upload(root: root, dir: rel, relpath: f.name, filePath: path);
+        await api.upload(root: root, dir: dir, relpath: f.name, filePath: path);
         ok++;
       } on ApiException catch (e) {
         messenger.showSnackBar(SnackBar(

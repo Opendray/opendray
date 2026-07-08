@@ -122,15 +122,17 @@ class FsApi {
     void Function(int sent, int total)? onProgress,
   }) async {
     try {
-      final file = File(filePath);
-      final length = await file.length();
+      final bytes = await File(filePath).readAsBytes();
+      // Send the raw bytes as a single-chunk stream. dio only treats a
+      // Stream body as raw bytes (a List<int> body would be stringified);
+      // the explicit Content-Length lets the server size the write.
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/fs/upload',
         queryParameters: {'root': root, 'dir': dir, 'relpath': relpath},
-        data: file.openRead(),
+        data: Stream<List<int>>.fromIterable([bytes]),
         options: Options(
           headers: {
-            Headers.contentLengthHeader: length,
+            Headers.contentLengthHeader: bytes.length,
             Headers.contentTypeHeader: 'application/octet-stream',
           },
         ),
