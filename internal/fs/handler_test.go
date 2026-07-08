@@ -80,6 +80,24 @@ func TestUpload_AutoRenamesOnConflict(t *testing.T) {
 	}
 }
 
+func TestUpload_RejectsSymlinkEscapeInRelpath(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	// A symlink inside root pointing outside it.
+	if err := os.Symlink(outside, filepath.Join(root, "sub")); err != nil {
+		t.Fatal(err)
+	}
+	h := NewHandlers(nil)
+	w := httptest.NewRecorder()
+	h.upload(w, newUploadReq(root, root, "sub/evil.txt", "pwned"))
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want 403; body=%s", w.Code, w.Body.String())
+	}
+	if _, err := os.Stat(filepath.Join(outside, "evil.txt")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("file escaped root into the symlink target")
+	}
+}
+
 func TestUpload_EnforcesSizeCap(t *testing.T) {
 	root := t.TempDir()
 	h := NewHandlers(nil)

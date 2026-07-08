@@ -466,6 +466,10 @@ func (h *Handlers) upload(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusForbidden, err)
 		return
 	}
+	if err := ensureNoSymlinkEscape(dir, rel, root); err != nil {
+		writeError(w, http.StatusForbidden, err)
+		return
+	}
 	if err := os.MkdirAll(filepath.Dir(final), 0o755); err != nil {
 		writeError(w, http.StatusInternalServerError, err)
 		return
@@ -534,6 +538,41 @@ func sanitizeRelpath(rel string) (string, error) {
 		}
 	}
 	return filepath.Join(segs...), nil
+}
+
+// ensureNoSymlinkEscape rejects an upload whose relpath traverses an
+// existing symlink pointing outside root. resolveWithinRoot cannot catch
+// this on the write path: the destination leaf does not exist yet, so
+// EvalSymlinks fails and falls back to the lexical path, leaving
+// intermediate symlink components unresolved. We walk the existing prefix
+// of the destination and reject BEFORE os.MkdirAll can follow (or create
+// through) an escaping symlink. `dir` is already the symlink-resolved,
+// within-root directory returned by resolveWithinRoot.
+func ensureNoSymlinkEscape(dir, rel, root string) error {
+	rootAbs, err := canonicalize(root)
+	if err != nil {
+		return err
+	}
+	rootResolved, err := filepath.EvalSymlinks(rootAbs)
+	if err != nil {
+		return err
+	}
+	cur := dir
+	for _, seg := range strings.Split(rel, string(filepath.Separator)) {
+		cur = filepath.Join(cur, seg)
+		resolved, err := filepath.EvalSymlinks(cur)
+		if err != nil {
+			// This component doesn't exist yet; nothing deeper can exist
+			// either, so there's no symlink left to follow.
+			break
+		}
+		relToRoot, err := filepath.Rel(rootResolved, resolved)
+		if err != nil || relToRoot == ".." ||
+			strings.HasPrefix(relToRoot, ".."+string(filepath.Separator)) {
+			return errors.New("path escapes the allowed root via a symlink")
+		}
+	}
+	return nil
 }
 
 // nonCollidingPath returns p unchanged if nothing exists there,
