@@ -3085,8 +3085,10 @@
         "deleted": "连接已删除",
         "confirmDelete": "删除此连接?",
         "console": "SQL 控制台",
-        "browse": "浏览",
-        "pickTable": "选择一张表查看数据。"
+        "openWorkbench": "展开工作台"
+      },
+      "workbench": {
+        "title": "数据库工作台"
       }
     }
   },

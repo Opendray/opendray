@@ -3085,8 +3085,10 @@
         "deleted": "Connection deleted",
         "confirmDelete": "Delete this connection?",
         "console": "SQL console",
-        "browse": "Browse",
-        "pickTable": "Select a table to view its data."
+        "openWorkbench": "Open workbench"
+      },
+      "workbench": {
+        "title": "Database workbench"
       }
     }
   },

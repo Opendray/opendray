@@ -3085,8 +3085,10 @@
         "deleted": "Conexión eliminada",
         "confirmDelete": "¿Eliminar esta conexión?",
         "console": "Consola SQL",
-        "browse": "Explorar",
-        "pickTable": "Selecciona una tabla para ver sus datos."
+        "openWorkbench": "Abrir banco de trabajo"
+      },
+      "workbench": {
+        "title": "Banco de trabajo de BD"
       }
     }
   },

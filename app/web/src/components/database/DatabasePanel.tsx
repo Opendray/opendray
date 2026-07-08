@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { SQLNamespace } from '@codemirror/lang-sql'
 import {
   Database,
   Lock,
   Loader2,
+  Maximize2,
   Pencil,
   Plus,
-  Table2,
-  TerminalSquare,
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -29,26 +27,25 @@ import {
 } from '@/lib/database'
 import { ConnectionDialog } from './ConnectionDialog'
 import { SchemaTree, type TableRef } from './SchemaTree'
-import { DataGrid } from './DataGrid'
-import { SQLConsole } from './SQLConsole'
+import { DatabaseWorkbenchDialog } from './DatabaseWorkbenchDialog'
 
 interface DatabasePanelProps {
   cwd: string
 }
 
-// DatabasePanel is the per-project database workbench: a connection
-// selector plus two modes — Browse (schema tree → table data grid) and
-// SQL console. It renders in a vertical, compact layout so it fits the
-// Session inspector's narrow sidebar; every query is scoped to the
-// project cwd it is given (the current session's working directory).
+// DatabasePanel is the compact Database entry inside the Session
+// inspector sidebar: a connection selector and a schema tree for quick
+// browsing. Anything that needs real width — the data grid, the SQL
+// console — opens in the near-fullscreen DatabaseWorkbenchDialog instead
+// of being cramped into the sidebar. Scoped to the current session cwd.
 export function DatabasePanel({ cwd }: DatabasePanelProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editConn, setEditConn] = useState<DBConnection | null>(null)
-  const [mode, setMode] = useState<'browse' | 'console'>('browse')
-  const [table, setTable] = useState<TableRef | null>(null)
+  const [wbOpen, setWbOpen] = useState(false)
+  const [wbTable, setWbTable] = useState<TableRef | null>(null)
 
   const connQuery = useQuery({
     queryKey: ['db-connections', cwd],
@@ -60,6 +57,11 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
     () => connections.find((c) => c.id === activeId) ?? connections[0] ?? null,
     [connections, activeId],
   )
+
+  const openWorkbench = (table: TableRef | null) => {
+    setWbTable(table)
+    setWbOpen(true)
+  }
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteConnection(id),
@@ -109,10 +111,7 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
       <div className="flex items-center gap-1">
         <Select
           value={active?.id ?? ''}
-          onValueChange={(v) => {
-            setActiveId(v)
-            setTable(null)
-          }}
+          onValueChange={(v) => setActiveId(v)}
         >
           <SelectTrigger className="h-8 flex-1">
             <SelectValue />
@@ -164,59 +163,35 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
         )}
       </div>
 
-      {/* Mode switch */}
-      <div className="flex gap-1">
-        <Button
-          size="sm"
-          className="h-7 flex-1"
-          variant={mode === 'browse' ? 'default' : 'outline'}
-          onClick={() => setMode('browse')}
-        >
-          <Table2 className="mr-1 h-3 w-3" />
-          {t('web.database.panel.browse')}
-        </Button>
-        <Button
-          size="sm"
-          className="h-7 flex-1"
-          variant={mode === 'console' ? 'default' : 'outline'}
-          onClick={() => setMode('console')}
-        >
-          <TerminalSquare className="mr-1 h-3 w-3" />
-          {t('web.database.panel.console')}
-        </Button>
-      </div>
+      {active && (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 w-full"
+            onClick={() => openWorkbench(null)}
+          >
+            <Maximize2 className="mr-1 h-3 w-3" />
+            {t('web.database.panel.openWorkbench')}
+          </Button>
 
-      {active && mode === 'browse' && (
-        <div className="space-y-2">
-          <div className="max-h-52 overflow-auto rounded-md border p-1">
+          <div className="max-h-[calc(100vh-16rem)] overflow-auto rounded-md border p-1">
             <SchemaTree
               connectionId={active.id}
-              selected={table}
-              onSelect={setTable}
+              selected={null}
+              onSelect={(ref) => openWorkbench(ref)}
             />
           </div>
-          {table ? (
-            <div className="h-80 overflow-hidden rounded-md border">
-              <DataGrid
-                connectionId={active.id}
-                table={table}
-                readOnly={active.read_only}
-              />
-            </div>
-          ) : (
-            <div className="text-muted-foreground p-2 text-xs">
-              {t('web.database.panel.pickTable')}
-            </div>
-          )}
-        </div>
+        </>
       )}
 
-      {active && mode === 'console' && (
-        <div className="h-96 overflow-hidden rounded-md border">
-          <SQLConsole connectionId={active.id} schema={emptyNamespace} />
-        </div>
-      )}
-
+      <DatabaseWorkbenchDialog
+        cwd={cwd}
+        open={wbOpen}
+        onOpenChange={setWbOpen}
+        connectionId={active?.id}
+        table={wbTable}
+      />
       <ConnectionDialog
         cwd={cwd}
         open={dialogOpen}
@@ -232,8 +207,3 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
     </div>
   )
 }
-
-// emptyNamespace is a placeholder autocompletion schema; table/column
-// completion refines as the operator browses. Kept minimal to avoid
-// eagerly introspecting every table just to power the editor.
-const emptyNamespace: SQLNamespace = {}
