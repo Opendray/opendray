@@ -76,8 +76,12 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
     // parent created by the walk).
     const dirs = new Set<string>([dir])
     for (const it of items) {
-      const slash = it.relpath.lastIndexOf('/')
-      if (slash > 0) dirs.add(`${dir}/${it.relpath.slice(0, slash)}`)
+      const parts = it.relpath.split('/').slice(0, -1)
+      let acc = dir
+      for (const seg of parts) {
+        acc = `${acc}/${seg}`
+        dirs.add(acc)
+      }
     }
     await Promise.all(
       [...dirs].map((d) => qc.invalidateQueries({ queryKey: ['fs', d] })),
