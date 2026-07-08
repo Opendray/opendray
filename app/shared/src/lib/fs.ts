@@ -1,4 +1,5 @@
 import { api, APIError } from './api'
+import { useAuth } from '@/stores/auth'
 
 export interface FsEntry {
   name: string
@@ -104,4 +105,118 @@ export function triggerDownload(url: string, suggestedName?: string): void {
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
+}
+
+export interface WalkedFile {
+  relpath: string
+  file: File
+}
+
+/**
+ * Expand a drag-and-drop DataTransfer into a flat list of files, each
+ * tagged with its path relative to the drop. Folder drops preserve
+ * their subtree; loose files get `relpath = file.name`. Uses the
+ * non-standard-but-universal webkitGetAsEntry API, falling back to a
+ * flat `dt.files` list when no entries are exposed. Pure: no network,
+ * no store.
+ */
+export async function walkDropEntries(dt: DataTransfer): Promise<WalkedFile[]> {
+  const roots: FileSystemEntry[] = []
+  for (const item of Array.from(dt.items)) {
+    if (item.kind !== 'file') continue
+    const entry = item.webkitGetAsEntry?.()
+    if (entry) roots.push(entry)
+  }
+  if (roots.length === 0) {
+    return Array.from(dt.files).map((file) => ({ relpath: file.name, file }))
+  }
+  const out: WalkedFile[] = []
+  for (const entry of roots) await walkEntry(entry, '', out)
+  return out
+}
+
+async function walkEntry(
+  entry: FileSystemEntry,
+  prefix: string,
+  out: WalkedFile[],
+): Promise<void> {
+  if (entry.isFile) {
+    const file = await new Promise<File>((resolve, reject) =>
+      (entry as FileSystemFileEntry).file(resolve, reject),
+    )
+    out.push({ relpath: prefix + entry.name, file })
+    return
+  }
+  const reader = (entry as FileSystemDirectoryEntry).createReader()
+  const dirPrefix = `${prefix}${entry.name}/`
+  // readEntries yields at most 100 per call — drain until empty.
+  for (;;) {
+    const batch = await new Promise<FileSystemEntry[]>((resolve, reject) =>
+      reader.readEntries(resolve, reject),
+    )
+    if (batch.length === 0) break
+    for (const child of batch) await walkEntry(child, dirPrefix, out)
+  }
+}
+
+export interface UploadResult {
+  path: string
+  size: number
+  renamed_from?: string
+}
+
+export interface UploadArgs {
+  root: string
+  dir: string
+  relpath: string
+  file: File
+  signal?: AbortSignal
+  onProgress?: (loaded: number, total: number) => void
+}
+
+/**
+ * Upload a single file to /fs/upload. Metadata rides in the query
+ * string (mirroring /fs/download); the raw file bytes are the body so
+ * large files stream once. Uses XMLHttpRequest solely for
+ * `upload.onprogress`; the bearer token is attached the same way api()
+ * does, read synchronously from the auth store.
+ */
+export function uploadFile(args: UploadArgs): Promise<UploadResult> {
+  const { root, dir, relpath, file, signal, onProgress } = args
+  const url =
+    `/api/v1/fs/upload?root=${encodeURIComponent(root)}` +
+    `&dir=${encodeURIComponent(dir)}` +
+    `&relpath=${encodeURIComponent(relpath)}`
+  return new Promise<UploadResult>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    const token = useAuth.getState().token
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.responseType = 'json'
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(e.loaded, e.total)
+      }
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(xhr.response as UploadResult)
+      } else {
+        const body = xhr.response as { error?: string } | null
+        reject(
+          new APIError(
+            xhr.status,
+            body,
+            body?.error ?? `upload failed (${xhr.status})`,
+          ),
+        )
+      }
+    }
+    xhr.onerror = () => reject(new APIError(0, null, 'network error'))
+    if (signal) {
+      signal.addEventListener('abort', () => xhr.abort(), { once: true })
+      xhr.onabort = () => reject(new DOMException('aborted', 'AbortError'))
+    }
+    xhr.send(file)
+  })
 }
