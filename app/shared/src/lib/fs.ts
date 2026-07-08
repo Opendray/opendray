@@ -188,7 +188,13 @@ export function uploadFile(args: UploadArgs): Promise<UploadResult> {
     `&dir=${encodeURIComponent(dir)}` +
     `&relpath=${encodeURIComponent(relpath)}`
   return new Promise<UploadResult>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('aborted', 'AbortError'))
+      return
+    }
     const xhr = new XMLHttpRequest()
+    const onAbort = () => xhr.abort()
+    const cleanup = () => signal?.removeEventListener('abort', onAbort)
     xhr.open('POST', url)
     const token = useAuth.getState().token
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
@@ -199,6 +205,7 @@ export function uploadFile(args: UploadArgs): Promise<UploadResult> {
       }
     }
     xhr.onload = () => {
+      cleanup()
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.response as UploadResult)
       } else {
@@ -212,10 +219,16 @@ export function uploadFile(args: UploadArgs): Promise<UploadResult> {
         )
       }
     }
-    xhr.onerror = () => reject(new APIError(0, null, 'network error'))
+    xhr.onerror = () => {
+      cleanup()
+      reject(new APIError(0, null, 'network error'))
+    }
     if (signal) {
-      signal.addEventListener('abort', () => xhr.abort(), { once: true })
-      xhr.onabort = () => reject(new DOMException('aborted', 'AbortError'))
+      signal.addEventListener('abort', onAbort, { once: true })
+      xhr.onabort = () => {
+        cleanup()
+        reject(new DOMException('aborted', 'AbortError'))
+      }
     }
     xhr.send(file)
   })
