@@ -15,6 +15,7 @@
 //	opendray skill     <subcommand> ... inspect / load agent skills (no gateway needed)
 //	opendray mcp       <subcommand> ... inspect MCP server registry (no gateway needed)
 //	opendray mcp-memory                 stdio MCP server bridging agents to opendray memory (run by Claude/Codex/etc.)
+//	opendray mcp-dbtool                 stdio MCP server bridging agents to the Database tool (project DB access)
 //	opendray version                    print build info and exit
 package main
 
@@ -69,6 +70,8 @@ func main() {
 		os.Exit(runMcp(args))
 	case "mcp-memory":
 		os.Exit(runMcpMemory(args))
+	case "mcp-dbtool":
+		os.Exit(runMcpDbtool(args))
 	case "memory":
 		os.Exit(runMemory(args))
 	case "hook":

@@ -38,6 +38,16 @@ func (h *Handlers) SetBuiltins(servers []Server) {
 	h.builtins = servers
 }
 
+// AddBuiltins appends gateway-provided server descriptors without
+// disturbing ones installed earlier (memory and dbtool auto-attach are
+// decided independently at startup).
+func (h *Handlers) AddBuiltins(servers ...Server) {
+	for i := range servers {
+		servers[i].Builtin = true
+	}
+	h.builtins = append(h.builtins, servers...)
+}
+
 // isBuiltin reports whether id belongs to a gateway-provided server.
 func (h *Handlers) isBuiltin(id string) bool {
 	for _, b := range h.builtins {

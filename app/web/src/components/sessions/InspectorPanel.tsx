@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react'
 import {
   Brain,
   BookText,
+  Database,
   Folder,
   GitBranch,
   Search,
@@ -27,6 +28,7 @@ import { CortexPanel } from './inspector/CortexPanel'
 import { VaultPanel } from './inspector/VaultPanel'
 import { SearchPanel } from './inspector/SearchPanel'
 import { TaskRunnerPanel } from './inspector/TaskRunnerPanel'
+import { DatabasePanel } from '@/components/database/DatabasePanel'
 
 interface InspectorPanelProps {
   session: Session
@@ -156,10 +158,17 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
             </TabsTrigger>
             <TabsTrigger
               value="cortex"
-              className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
+              className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
             >
               <Brain className="size-3" />
               {t('web.sessions.inspector.tabs.cortex')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="database"
+              className="flex items-center justify-center gap-1.5 col-span-2 data-[state=active]:bg-card"
+            >
+              <Database className="size-3" />
+              {t('web.sessions.inspector.tabs.database')}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -185,6 +194,9 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           </TabsContent>
           <TabsContent value="cortex" className="m-0 p-3">
             <CortexPanel cwd={session.cwd} />
+          </TabsContent>
+          <TabsContent value="database" className="m-0 p-3">
+            <DatabasePanel cwd={session.cwd} />
           </TabsContent>
         </ScrollArea>
       </Tabs>

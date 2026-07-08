@@ -174,6 +174,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebExportZh export = _TranslationsWebExportZh._(_root);
 	@override late final _TranslationsWebKnowledgeZh knowledge = _TranslationsWebKnowledgeZh._(_root);
 	@override late final _TranslationsWebCortexZh cortex = _TranslationsWebCortexZh._(_root);
+	@override late final _TranslationsWebDatabaseZh database = _TranslationsWebDatabaseZh._(_root);
 }
 
 // Path: more
@@ -1676,6 +1677,22 @@ class _TranslationsWebCortexZh extends TranslationsWebCortexEn {
 	@override late final _TranslationsWebCortexSettingsZh settings = _TranslationsWebCortexSettingsZh._(_root);
 }
 
+// Path: web.database
+class _TranslationsWebDatabaseZh extends TranslationsWebDatabaseEn {
+	_TranslationsWebDatabaseZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebDatabaseDialogZh dialog = _TranslationsWebDatabaseDialogZh._(_root);
+	@override late final _TranslationsWebDatabaseResultsZh results = _TranslationsWebDatabaseResultsZh._(_root);
+	@override late final _TranslationsWebDatabaseTreeZh tree = _TranslationsWebDatabaseTreeZh._(_root);
+	@override late final _TranslationsWebDatabaseRowZh row = _TranslationsWebDatabaseRowZh._(_root);
+	@override late final _TranslationsWebDatabaseGridZh grid = _TranslationsWebDatabaseGridZh._(_root);
+	@override late final _TranslationsWebDatabaseConsoleZh console = _TranslationsWebDatabaseConsoleZh._(_root);
+	@override late final _TranslationsWebDatabasePanelZh panel = _TranslationsWebDatabasePanelZh._(_root);
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityZh extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -3144,6 +3161,8 @@ class _TranslationsWebSessionsHeaderZh extends TranslationsWebSessionsHeaderEn {
 	@override String pid({required Object pid}) => 'pid ${pid}';
 	@override String get selectText => '选择并复制';
 	@override String get selectTextTooltip => '打开可选择文本视图,复制输出中的任意部分';
+	@override String get transcript => '完整记录';
+	@override String get transcriptTooltip => '打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）';
 }
 
 // Path: web.sessions.terminal
@@ -3166,6 +3185,12 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get selectCopyCopyAll => '全部复制';
 	@override String get selectCopyNoSelection => '请先选择文本';
 	@override String get selectCopyEmpty => '暂无可复制的输出';
+	@override String get transcriptTitle => '会话完整记录';
+	@override String get transcriptDesc => 'PTY 至今输出的全部内容，已去除终端控制码。当运行中的 CLI 无法在其自身视图中向上滚动时尤其有用。';
+	@override String get transcriptLoading => '正在加载完整记录…';
+	@override String get transcriptEmpty => '暂无输出。';
+	@override String get transcriptFetchFailed => '无法加载完整记录';
+	@override String get transcriptRefresh => '刷新';
 }
 
 // Path: web.sessions.spawn
@@ -3453,6 +3478,7 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get archived => '已归档';
 	@override String get overview => '概览';
 	@override String get hygiene => '记忆卫生';
+	@override String get database => '数据库';
 }
 
 // Path: web.project.docLabel
@@ -4435,6 +4461,7 @@ class _TranslationsWebIntegrationsDefaultAgentZh extends TranslationsWebIntegrat
 	@override String get providerNone => '无默认';
 	@override String get modelLabel => '默认模型';
 	@override String get modelPlaceholder => 'provider 默认(如 opus)';
+	@override String get modelPickAria => '选择已知模型';
 	@override String get accountLabel => '默认 Claude 账号';
 	@override String get accountNone => '无默认';
 	@override String get accountTokenMissing => '(缺少 token)';
@@ -5863,6 +5890,126 @@ class _TranslationsWebCortexSettingsZh extends TranslationsWebCortexSettingsEn {
 
 	// Translations
 	@override late final _TranslationsWebCortexSettingsInjectionZh injection = _TranslationsWebCortexSettingsInjectionZh._(_root);
+}
+
+// Path: web.database.dialog
+class _TranslationsWebDatabaseDialogZh extends TranslationsWebDatabaseDialogEn {
+	_TranslationsWebDatabaseDialogZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get createTitle => '添加数据库连接';
+	@override String get editTitle => '编辑连接';
+	@override String get description => '连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。';
+	@override String get name => '名称';
+	@override String get host => '主机';
+	@override String get port => '端口';
+	@override String get database => '数据库';
+	@override String get username => '用户名';
+	@override String get password => '密码';
+	@override String get passwordKept => '保持不变 —— 留空即保留';
+	@override String get sslMode => 'SSL 模式';
+	@override String get readOnly => '只读(禁止此连接写入)';
+	@override String get superuserWarning => '该用户是超级用户(或 linivek 管理员)。日常工作请优先使用仅 CRUD 权限的项目角色。';
+	@override String get test => '测试';
+	@override String get save => '保存';
+	@override String get testFailed => '连接测试失败';
+	@override String testOk({required Object version, required Object ms}) => '已连接 —— PostgreSQL ${version}(${ms} 毫秒)';
+	@override String get savedCreate => '连接已添加';
+	@override String get savedEdit => '连接已更新';
+	@override String get missingFields => '名称、主机、数据库和用户名为必填项';
+}
+
+// Path: web.database.results
+class _TranslationsWebDatabaseResultsZh extends TranslationsWebDatabaseResultsEn {
+	_TranslationsWebDatabaseResultsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String noColumns({required Object command, required Object rows}) => '${command} —— 影响 ${rows} 行';
+}
+
+// Path: web.database.tree
+class _TranslationsWebDatabaseTreeZh extends TranslationsWebDatabaseTreeEn {
+	_TranslationsWebDatabaseTreeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => '正在加载 schema…';
+	@override String get noSchemas => '该用户无可见 schema';
+}
+
+// Path: web.database.row
+class _TranslationsWebDatabaseRowZh extends TranslationsWebDatabaseRowEn {
+	_TranslationsWebDatabaseRowZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get insertTitle => '插入行';
+	@override String get editTitle => '编辑行';
+	@override String get setNull => '设为 NULL';
+	@override String get save => '保存';
+	@override String get savedInsert => '行已插入';
+	@override String get savedEdit => '行已更新';
+	@override String get noChanges => '没有需要保存的更改';
+}
+
+// Path: web.database.grid
+class _TranslationsWebDatabaseGridZh extends TranslationsWebDatabaseGridEn {
+	_TranslationsWebDatabaseGridZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get insert => '插入';
+	@override String get refresh => '刷新';
+	@override String get edit => '编辑';
+	@override String get delete => '删除';
+	@override String get deleted => '行已删除';
+	@override String get confirmDelete => '删除此行?';
+	@override String get loading => '正在加载数据…';
+	@override String get readOnlyHint => '此连接为只读 —— 无法编辑行。';
+	@override String get noPkHint => '此表没有主键 —— 行编辑已禁用。';
+	@override String pageInfo({required Object from, required Object to}) => '第 ${from}–${to} 行';
+}
+
+// Path: web.database.console
+class _TranslationsWebDatabaseConsoleZh extends TranslationsWebDatabaseConsoleEn {
+	_TranslationsWebDatabaseConsoleZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => 'SELECT * FROM …';
+	@override String get run => '运行';
+	@override String get runHint => 'Cmd/Ctrl+Enter 运行';
+	@override String stats({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} 行 · ${ms} 毫秒';
+	@override String get truncated => '已截断';
+	@override String get empty => '运行查询以查看结果。';
+	@override String get truncatedNote => '结果已截断';
+}
+
+// Path: web.database.panel
+class _TranslationsWebDatabasePanelZh extends TranslationsWebDatabasePanelEn {
+	_TranslationsWebDatabasePanelZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => '正在加载连接…';
+	@override String get emptyTitle => '暂无数据库连接';
+	@override String get emptyBody => '注册一个连接以浏览此项目的数据库、编辑行并运行 SQL。连接按项目隔离并加密存储。';
+	@override String get addConnection => '添加连接';
+	@override String get add => '添加';
+	@override String get edit => '编辑';
+	@override String get delete => '删除';
+	@override String get deleted => '连接已删除';
+	@override String get confirmDelete => '删除此连接?';
+	@override String get console => 'SQL 控制台';
 }
 
 // Path: more.items.integrations
@@ -9083,6 +9230,8 @@ extension on TranslationsZh {
 			'web.sessions.header.pid' => ({required Object pid}) => 'pid ${pid}',
 			'web.sessions.header.selectText' => '选择并复制',
 			'web.sessions.header.selectTextTooltip' => '打开可选择文本视图,复制输出中的任意部分',
+			'web.sessions.header.transcript' => '完整记录',
+			'web.sessions.header.transcriptTooltip' => '打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）',
 			'web.sessions.terminal.uploadingToast' => '正在上传图片…',
 			'web.sessions.terminal.uploadedToast' => '图片已附加',
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
@@ -9096,6 +9245,12 @@ extension on TranslationsZh {
 			'web.sessions.terminal.selectCopyCopyAll' => '全部复制',
 			'web.sessions.terminal.selectCopyNoSelection' => '请先选择文本',
 			'web.sessions.terminal.selectCopyEmpty' => '暂无可复制的输出',
+			'web.sessions.terminal.transcriptTitle' => '会话完整记录',
+			'web.sessions.terminal.transcriptDesc' => 'PTY 至今输出的全部内容，已去除终端控制码。当运行中的 CLI 无法在其自身视图中向上滚动时尤其有用。',
+			'web.sessions.terminal.transcriptLoading' => '正在加载完整记录…',
+			'web.sessions.terminal.transcriptEmpty' => '暂无输出。',
+			'web.sessions.terminal.transcriptFetchFailed' => '无法加载完整记录',
+			'web.sessions.terminal.transcriptRefresh' => '刷新',
 			'web.sessions.spawn.title' => '创建会话',
 			'web.sessions.spawn.description' => '在已注册的 Provider 下启动一个 CLI 会话。',
 			'web.sessions.spawn.provider' => 'Provider',
@@ -9425,6 +9580,7 @@ extension on TranslationsZh {
 			'web.project.tabs.archived' => '已归档',
 			'web.project.tabs.overview' => '概览',
 			'web.project.tabs.hygiene' => '记忆卫生',
+			'web.project.tabs.database' => '数据库',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.current_objective' => '当前目标',
@@ -9474,6 +9630,8 @@ extension on TranslationsZh {
 			'web.project.archived.restoredToast' => '已恢复',
 			'web.project.archived.restoreFailedToast' => '恢复失败',
 			'web.project.reset.button' => '重置',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
 			'web.project.reset.alwaysDeleted' => '始终删除：目标、计划、提案、日志、清理决策。',
@@ -9483,8 +9641,6 @@ extension on TranslationsZh {
 			'web.project.reset.alsoDeleteMemoriesLabel' => '同时删除 pgvector 记忆',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => '（该 scope_key 下的）。',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Agent 存储的长期事实（用户偏好、项目事实）。无法恢复。',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.cancel' => '取消',
 			'web.project.reset.deleteForever' => '永久删除',
 			'web.project.reset.successToast' => ({required Object summary}) => '重置：已删除 ${summary}',
@@ -9988,6 +10144,8 @@ extension on TranslationsZh {
 			'web.channels.dialog.nameRequired' => 'name 不能为空',
 			'web.channels.dialog.tokenRequired' => 'token 不能为空',
 			'web.channels.dialog.topicIdsNumeric' => ({required Object value}) => 'Topic ID 必须是数字（收到 ${value}）',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.fieldRequired' => ({required Object label}) => '${label} 不能为空',
 			'web.channels.dialog.cooldownInvalid' => 'Cooldown 必须是非负整数秒',
 			'web.channels.dialog.snippetCapInvalid' => 'Snippet cap 必须是非负数字',
@@ -9997,8 +10155,6 @@ extension on TranslationsZh {
 			'web.channels.notifications.onceReplyHint' => '在该聊天中以非命令文本回复会重置抑制 — opendray 会把你的回复转发到会话的 stdin 并重新启用通知。',
 			'web.channels.notifications.terminalSnippetLabel' => '终端片段',
 			'web.channels.notifications.embedSnippetLabel' => '在 idle 通知中嵌入最近的终端画面',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.snippetExplainer' => '开启后，idle 卡片会包含一段代码块片段，呈现用户在网页终端中会看到的内容 — Claude TUI 自身的装饰（状态 spinner、"bypass permissions" 提示、分隔线）会被自动过滤。',
 			'web.channels.notifications.modes.onceLabel' => '每个会话仅一次（推荐）',
 			'web.channels.notifications.modes.onceHint' => '当会话变为 idle 时通知一次，然后保持静默，直到会话结束或你通过该频道回复。',
@@ -10076,6 +10232,7 @@ extension on TranslationsZh {
 			'web.integrations.defaultAgent.providerNone' => '无默认',
 			'web.integrations.defaultAgent.modelLabel' => '默认模型',
 			'web.integrations.defaultAgent.modelPlaceholder' => 'provider 默认(如 opus)',
+			'web.integrations.defaultAgent.modelPickAria' => '选择已知模型',
 			'web.integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
 			'web.integrations.defaultAgent.accountNone' => '无默认',
 			'web.integrations.defaultAgent.accountTokenMissing' => '(缺少 token)',
@@ -10501,6 +10658,8 @@ extension on TranslationsZh {
 			'web.backups.targetsTab.newTarget' => '新建目标',
 			'web.backups.targetsTab.listFailedToast' => '加载目标列表失败',
 			'web.backups.targetsTab.deleteConfirm' => ({required Object id}) => '删除目标 ${id}? 引用它的计划会阻止删除。',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetsTab.deletedToast' => '目标已删除',
 			'web.backups.targetsTab.deleteFailedToast' => '删除失败',
 			'web.backups.targetsTab.connectionOkToast' => '连接成功',
@@ -10511,8 +10670,6 @@ extension on TranslationsZh {
 			'web.backups.targetsTab.columns.config' => '配置',
 			'web.backups.targetsTab.columns.enabled' => '启用',
 			'web.backups.targetsTab.columns.actions' => '操作',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetsTab.on' => '开',
 			'web.backups.targetsTab.off' => '关',
 			'web.backups.targetsTab.test' => '测试',
@@ -11015,6 +11172,8 @@ extension on TranslationsZh {
 			'web.memoryAmbient.cost.intro' => '按 provider 聚合自 <1>memory_summarizer_calls</1>。本地 provider（Ollama、LM Studio、Integration）按 \$0 计价 — 硬件成本由运维承担。',
 			'web.memoryAmbient.cost.empty' => '暂无已启用的 provider — 没有成本数据。',
 			'web.memoryAmbient.cost.columns.provider' => 'Provider',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.cost.columns.calls' => '调用',
 			'web.memoryAmbient.cost.columns.inTokens' => '输入 token',
 			'web.memoryAmbient.cost.columns.outTokens' => '输出 token',
@@ -11025,8 +11184,6 @@ extension on TranslationsZh {
 			'web.noteEditor.tagTitle' => ({required Object tag}) => '标签 #${tag}',
 			'web.noteEditor.emptyNote' => '空白笔记。切换到源码标签开始书写。',
 			'web.noteEditor.saveFailedToast' => '保存失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.noteEditor.status.saveFailed' => '保存失败',
 			'web.noteEditor.status.saving' => '保存中…',
 			'web.noteEditor.status.unsaved' => '未保存',
@@ -11331,6 +11488,63 @@ extension on TranslationsZh {
 			'web.cortex.settings.injection.savedToast' => '注入模式已保存——新建会话立即采用，后端无需重启',
 			'web.cortex.settings.injection.saveFailed' => '保存失败',
 			'web.cortex.settings.injection.note' => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。',
+			'web.database.dialog.createTitle' => '添加数据库连接',
+			'web.database.dialog.editTitle' => '编辑连接',
+			'web.database.dialog.description' => '连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。',
+			'web.database.dialog.name' => '名称',
+			'web.database.dialog.host' => '主机',
+			'web.database.dialog.port' => '端口',
+			'web.database.dialog.database' => '数据库',
+			'web.database.dialog.username' => '用户名',
+			'web.database.dialog.password' => '密码',
+			'web.database.dialog.passwordKept' => '保持不变 —— 留空即保留',
+			'web.database.dialog.sslMode' => 'SSL 模式',
+			'web.database.dialog.readOnly' => '只读(禁止此连接写入)',
+			'web.database.dialog.superuserWarning' => '该用户是超级用户(或 linivek 管理员)。日常工作请优先使用仅 CRUD 权限的项目角色。',
+			'web.database.dialog.test' => '测试',
+			'web.database.dialog.save' => '保存',
+			'web.database.dialog.testFailed' => '连接测试失败',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => '已连接 —— PostgreSQL ${version}(${ms} 毫秒)',
+			'web.database.dialog.savedCreate' => '连接已添加',
+			'web.database.dialog.savedEdit' => '连接已更新',
+			'web.database.dialog.missingFields' => '名称、主机、数据库和用户名为必填项',
+			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} —— 影响 ${rows} 行',
+			'web.database.tree.loading' => '正在加载 schema…',
+			'web.database.tree.noSchemas' => '该用户无可见 schema',
+			'web.database.row.insertTitle' => '插入行',
+			'web.database.row.editTitle' => '编辑行',
+			'web.database.row.setNull' => '设为 NULL',
+			'web.database.row.save' => '保存',
+			'web.database.row.savedInsert' => '行已插入',
+			'web.database.row.savedEdit' => '行已更新',
+			'web.database.row.noChanges' => '没有需要保存的更改',
+			'web.database.grid.insert' => '插入',
+			'web.database.grid.refresh' => '刷新',
+			'web.database.grid.edit' => '编辑',
+			'web.database.grid.delete' => '删除',
+			'web.database.grid.deleted' => '行已删除',
+			'web.database.grid.confirmDelete' => '删除此行?',
+			'web.database.grid.loading' => '正在加载数据…',
+			'web.database.grid.readOnlyHint' => '此连接为只读 —— 无法编辑行。',
+			'web.database.grid.noPkHint' => '此表没有主键 —— 行编辑已禁用。',
+			'web.database.grid.pageInfo' => ({required Object from, required Object to}) => '第 ${from}–${to} 行',
+			'web.database.console.placeholder' => 'SELECT * FROM …',
+			'web.database.console.run' => '运行',
+			'web.database.console.runHint' => 'Cmd/Ctrl+Enter 运行',
+			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} 行 · ${ms} 毫秒',
+			'web.database.console.truncated' => '已截断',
+			'web.database.console.empty' => '运行查询以查看结果。',
+			'web.database.console.truncatedNote' => '结果已截断',
+			'web.database.panel.loading' => '正在加载连接…',
+			'web.database.panel.emptyTitle' => '暂无数据库连接',
+			'web.database.panel.emptyBody' => '注册一个连接以浏览此项目的数据库、编辑行并运行 SQL。连接按项目隔离并加密存储。',
+			'web.database.panel.addConnection' => '添加连接',
+			'web.database.panel.add' => '添加',
+			'web.database.panel.edit' => '编辑',
+			'web.database.panel.delete' => '删除',
+			'web.database.panel.deleted' => '连接已删除',
+			'web.database.panel.confirmDelete' => '删除此连接?',
+			'web.database.panel.console' => 'SQL 控制台',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -11472,6 +11686,8 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.noneHintAgy' => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
 			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
 			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => '上传失败（${status}）：${message}',
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => '上传失败：${error}',
@@ -11539,8 +11755,6 @@ extension on TranslationsZh {
 			'sessions.inspector.files.readContent' => '读取内容',
 			'sessions.inspector.files.readContentSubtitle' => '最多 256 KiB 纯文本',
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => '读取失败（${status}）：${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
 			'sessions.inspector.files.parent' => '上级',
 			'sessions.inspector.files.backToCwd' => '返回会话目录',
@@ -11986,6 +12200,8 @@ extension on TranslationsZh {
 			'project.resetDoneSnack' => ({required Object parts}) => '已重置：${parts}',
 			'project.resetFailed' => ({required Object error}) => '重置失败：${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} 已保存',
+			_ => null,
+		} ?? switch (path) {
 			'project.docSaveFailed' => ({required Object error}) => '保存失败：${error}',
 			'project.docHintTemplate' => ({required Object kind}) => '以 Markdown 编写 ${kind}…',
 			'project.deleteEntryTooltip' => '删除条目',
@@ -12053,8 +12269,6 @@ extension on TranslationsZh {
 			'backups.emptyMissingDeps.headline' => '备份暂时无法运行',
 			'backups.emptyMissingDeps.body' => '安装 postgresql-client 并重启 opendray。',
 			'backups.emptyNoTargets.headline' => '未配置任何备份目标',
-			_ => null,
-		} ?? switch (path) {
 			'backups.emptyNoTargets.body' => '打开「更多」菜单 → 目标，添加一个目的地（本地 / S3 / SMB / SFTP / WebDAV / rclone）。然后返回并点击「立即运行」。',
 			'backups.emptyNoBackups.headline' => '暂无备份',
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
@@ -12500,6 +12714,8 @@ extension on TranslationsZh {
 			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
 			'notesPage.validatePath' => '必须填写路径',
 			'notesPage.validatePathDots' => '路径不能包含「..」',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => '保存中…',
@@ -12567,8 +12783,6 @@ extension on TranslationsZh {
 			'dataExport.import.importing' => '导入中…',
 			'dataExport.import.pickFileToast' => '请先选择数据包文件。',
 			'dataExport.import.doneToast' => '导入完成',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
 			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
 			'dataExport.import.summaryCard.memories' => '记忆',
