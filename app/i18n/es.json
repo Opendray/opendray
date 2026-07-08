@@ -3400,7 +3400,10 @@
         "readFailedApi": "Falló la lectura ({status}): {message}",
         "readFailedGeneric": "Falló la lectura: {error}",
         "parent": "Superior",
-        "backToCwd": "Volver al cwd de la session"
+        "backToCwd": "Volver al cwd de la session",
+        "upload": "Subir archivos",
+        "uploaded": "Subidos {count} archivo(s)",
+        "uploadFailed": "{name}: error al subir — {message}"
       },
       "git": {
         "insertAtRef": "Insertar como @referencia",

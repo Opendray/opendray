@@ -12422,6 +12422,15 @@ class TranslationsSessionsInspectorFilesEn {
 
 	/// en: 'Back to session cwd'
 	String get backToCwd => 'Back to session cwd';
+
+	/// en: 'Upload files'
+	String get upload => 'Upload files';
+
+	/// en: 'Uploaded {count} file(s)'
+	String uploaded({required Object count}) => 'Uploaded ${count} file(s)';
+
+	/// en: '{name}: upload failed — {message}'
+	String uploadFailed({required Object name, required Object message}) => '${name}: upload failed — ${message}';
 }
 
 // Path: sessions.inspector.git
@@ -19813,6 +19822,9 @@ extension on Translations {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
 			'sessions.inspector.files.parent' => 'Parent',
 			'sessions.inspector.files.backToCwd' => 'Back to session cwd',
+			'sessions.inspector.files.upload' => 'Upload files',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => 'Uploaded ${count} file(s)',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name}: upload failed — ${message}',
 			'sessions.inspector.git.insertAtRef' => 'Insert as @reference',
 			'sessions.inspector.git.insertPath' => 'Insert path',
 			'sessions.inspector.git.showDiff' => 'Show diff',
@@ -20249,11 +20261,11 @@ extension on Translations {
 			'project.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
 			'project.resetConfirmTitle' => 'Reset project memory?',
+			_ => null,
+		} ?? switch (path) {
 			'project.alsoDeleteScanner' => 'Also delete scanner docs',
 			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
 			'project.deleteForever' => 'Delete forever',
-			_ => null,
-		} ?? switch (path) {
 			'project.resetDoneSnack' => ({required Object parts}) => 'Reset: ${parts}',
 			'project.resetFailed' => ({required Object error}) => 'Reset failed: ${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} saved',
@@ -20763,11 +20775,11 @@ extension on Translations {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Create',
 			'notesPage.popupDelete' => 'Delete',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => 'No notes match "${query}".',
 			'notesPage.emptyVault' => 'Vault is empty. Tap + to create your first note.',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.emptyFolder' => ({required Object path}) => 'Folder "${path}" is empty.',
 			'notesPage.validatePath' => 'Path is required',
 			'notesPage.validatePathDots' => 'Path cannot contain ".."',

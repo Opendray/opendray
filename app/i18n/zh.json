@@ -3400,7 +3400,10 @@
         "readFailedApi": "读取失败（{status}）：{message}",
         "readFailedGeneric": "读取失败：{error}",
         "parent": "上级",
-        "backToCwd": "返回会话目录"
+        "backToCwd": "返回会话目录",
+        "upload": "上传文件",
+        "uploaded": "已上传 {count} 个文件",
+        "uploadFailed": "{name} 上传失败:{message}"
       },
       "git": {
         "insertAtRef": "作为 @引用 插入",

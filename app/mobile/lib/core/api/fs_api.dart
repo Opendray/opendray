@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -100,6 +102,41 @@ class FsApi {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/fs/mkdir',
         data: {'parent': parent, 'name': name},
+      );
+      return res.data?['path'] as String? ?? '';
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /api/v1/fs/upload — writes one file into `dir` (relative to the
+  // session-cwd `root` fence). Metadata rides in the query string and the
+  // raw bytes are the body, streamed once from disk (mirrors the web
+  // uploadFile). Returns the final server path (may carry a "-N" suffix if
+  // the name collided). onProgress reports (sent, total) bytes.
+  Future<String> upload({
+    required String root,
+    required String dir,
+    required String relpath,
+    required String filePath,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    try {
+      final bytes = await File(filePath).readAsBytes();
+      // Send the raw bytes as a single-chunk stream. dio only treats a
+      // Stream body as raw bytes (a List<int> body would be stringified);
+      // the explicit Content-Length lets the server size the write.
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/fs/upload',
+        queryParameters: {'root': root, 'dir': dir, 'relpath': relpath},
+        data: Stream<List<int>>.fromIterable([bytes]),
+        options: Options(
+          headers: {
+            Headers.contentLengthHeader: bytes.length,
+            Headers.contentTypeHeader: 'application/octet-stream',
+          },
+        ),
+        onSendProgress: onProgress,
       );
       return res.data?['path'] as String? ?? '';
     } on Object catch (e) {
