@@ -10,6 +10,29 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Security
+
+- **Database tool — cryptographic per-project isolation for the
+  auto-attached MCP.** The `opendray-dbtool` MCP now holds a `db:signed`
+  key and sends a per-session `X-OpenDray-Dbtool-Sig = HMAC(secret, cwd)`
+  header; the gateway rejects a signed-key call whose signature doesn't
+  match the `cwd`. An agent that extracts the injected key can no longer
+  forge another project's `cwd` — closing the residual the honest-path
+  check left open. Antigravity (whose MCP config is HOME-global and can't
+  carry a per-session signature — a Google limitation) and third-party
+  integration keys keep the plain `?cwd=` check via a separate honest-path
+  key. Migration `0074` reseeds the kb_integrations page.
+
+### Fixed
+
+- **Database tool — bigint primary keys stay exact.** Row update/delete
+  and filters decode JSON with `UseNumber`, so a 64-bit primary key above
+  2^53 is no longer rounded through `float64` (which could address the
+  wrong row or match none). Numbers beyond int64 keep their exact string.
+- **Database tool — consistent table metadata.** `TableMeta` runs its four
+  catalog queries (columns / PK / indexes / FKs) inside one read-only
+  transaction, so concurrent DDL can't produce a half-updated view.
+
 ## [v2.11.0] — 2026-07-08
 
 ### Added

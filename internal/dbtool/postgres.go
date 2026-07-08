@@ -178,7 +178,15 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 	defer cancel()
 	meta := TableMeta{Schema: schema, Table: table}
 
-	rows, err := pool.Query(ctx, `
+	// One read-only snapshot so the four catalog queries (columns / PK /
+	// indexes / FKs) see a consistent view even if DDL runs concurrently.
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return meta, fmt.Errorf("dbtool: begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	rows, err := tx.Query(ctx, `
 		SELECT column_name, data_type, is_nullable = 'YES',
 		       COALESCE(column_default, ''), ordinal_position
 		FROM information_schema.columns
@@ -203,7 +211,7 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		return meta, fmt.Errorf("dbtool: table %s.%s not found", schema, table)
 	}
 
-	pkRows, err := pool.Query(ctx, `
+	pkRows, err := tx.Query(ctx, `
 		SELECT a.attname
 		FROM pg_index i
 		JOIN pg_class c ON c.oid = i.indrelid
@@ -227,7 +235,7 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		return meta, err
 	}
 
-	idxRows, err := pool.Query(ctx, `
+	idxRows, err := tx.Query(ctx, `
 		SELECT ci.relname, pg_get_indexdef(i.indexrelid), i.indisunique, i.indisprimary
 		FROM pg_index i
 		JOIN pg_class c  ON c.oid  = i.indrelid
@@ -251,7 +259,7 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		return meta, err
 	}
 
-	fkRows, err := pool.Query(ctx, `
+	fkRows, err := tx.Query(ctx, `
 		SELECT con.conname,
 		       (SELECT array_agg(a.attname ORDER BY x.ord)
 		        FROM unnest(con.conkey) WITH ORDINALITY AS x(attnum, ord)
