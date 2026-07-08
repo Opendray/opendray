@@ -42,8 +42,7 @@
     "knowledge": "知识",
     "vault": "文档库",
     "cortex": "心智中枢",
-    "updateAvailable": "有可用更新",
-    "database": "数据库"
+    "updateAvailable": "有可用更新"
   },
   "web": {
     "brand": "opendray",
@@ -217,7 +216,8 @@
           "tasks": "任务",
           "history": "历史",
           "vault": "文档库",
-          "cortex": "心智中枢"
+          "cortex": "心智中枢",
+          "database": "数据库"
         },
         "vaultPanel": {
           "open": "打开文档库",
@@ -3084,12 +3084,9 @@
         "delete": "删除",
         "deleted": "连接已删除",
         "confirmDelete": "删除此连接?",
-        "console": "SQL 控制台"
-      },
-      "page": {
-        "pickTitle": "数据库",
-        "pickSubtitle": "选择一个项目,管理它的数据库连接、浏览表、运行 SQL。",
-        "changeProject": "切换项目"
+        "console": "SQL 控制台",
+        "browse": "浏览",
+        "pickTable": "选择一张表查看数据。"
       }
     }
   },

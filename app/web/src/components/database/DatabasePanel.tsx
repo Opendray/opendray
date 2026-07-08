@@ -7,6 +7,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Table2,
   TerminalSquare,
   Trash2,
 } from 'lucide-react'
@@ -35,18 +36,19 @@ interface DatabasePanelProps {
   cwd: string
 }
 
-type RightView = { kind: 'table'; ref: TableRef } | { kind: 'console' }
-
-// DatabasePanel is the Database project tab: a connection selector, a
-// left schema tree, and a right pane that shows either a table's data
-// grid or the SQL console.
+// DatabasePanel is the per-project database workbench: a connection
+// selector plus two modes — Browse (schema tree → table data grid) and
+// SQL console. It renders in a vertical, compact layout so it fits the
+// Session inspector's narrow sidebar; every query is scoped to the
+// project cwd it is given (the current session's working directory).
 export function DatabasePanel({ cwd }: DatabasePanelProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editConn, setEditConn] = useState<DBConnection | null>(null)
-  const [view, setView] = useState<RightView>({ kind: 'console' })
+  const [mode, setMode] = useState<'browse' | 'console'>('browse')
+  const [table, setTable] = useState<TableRef | null>(null)
 
   const connQuery = useQuery({
     queryKey: ['db-connections', cwd],
@@ -79,12 +81,12 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
 
   if (connections.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
-        <Database className="text-muted-foreground h-8 w-8" />
+      <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
+        <Database className="text-muted-foreground h-7 w-7" />
         <div className="text-sm font-medium">
           {t('web.database.panel.emptyTitle')}
         </div>
-        <div className="text-muted-foreground max-w-sm text-xs">
+        <div className="text-muted-foreground text-xs">
           {t('web.database.panel.emptyBody')}
         </div>
         <Button size="sm" onClick={() => setDialogOpen(true)}>
@@ -102,16 +104,17 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
   }
 
   return (
-    <div className="flex h-[70vh] flex-col">
-      <div className="flex items-center gap-2 border-b px-3 py-2">
+    <div className="space-y-2">
+      {/* Connection row */}
+      <div className="flex items-center gap-1">
         <Select
           value={active?.id ?? ''}
           onValueChange={(v) => {
             setActiveId(v)
-            setView({ kind: 'console' })
+            setTable(null)
           }}
         >
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="h-8 flex-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -125,64 +128,92 @@ export function DatabasePanel({ cwd }: DatabasePanelProps) {
             ))}
           </SelectContent>
         </Select>
-        <Button size="sm" variant="ghost" onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-1 h-3 w-3" />
-          {t('web.database.panel.add')}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          onClick={() => setDialogOpen(true)}
+          title={t('web.database.panel.add')}
+        >
+          <Plus className="h-3.5 w-3.5" />
         </Button>
         {active && (
           <>
             <Button
-              size="sm"
+              size="icon"
               variant="ghost"
+              className="h-8 w-8"
               onClick={() => setEditConn(active)}
               title={t('web.database.panel.edit')}
             >
-              <Pencil className="h-3 w-3" />
+              <Pencil className="h-3.5 w-3.5" />
             </Button>
             <Button
-              size="sm"
+              size="icon"
               variant="ghost"
+              className="h-8 w-8"
               onClick={() => {
                 if (window.confirm(t('web.database.panel.confirmDelete')))
                   deleteMut.mutate(active.id)
               }}
               title={t('web.database.panel.delete')}
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </>
         )}
+      </div>
+
+      {/* Mode switch */}
+      <div className="flex gap-1">
         <Button
           size="sm"
-          variant={view.kind === 'console' ? 'default' : 'outline'}
-          className="ml-auto"
-          onClick={() => setView({ kind: 'console' })}
+          className="h-7 flex-1"
+          variant={mode === 'browse' ? 'default' : 'outline'}
+          onClick={() => setMode('browse')}
+        >
+          <Table2 className="mr-1 h-3 w-3" />
+          {t('web.database.panel.browse')}
+        </Button>
+        <Button
+          size="sm"
+          className="h-7 flex-1"
+          variant={mode === 'console' ? 'default' : 'outline'}
+          onClick={() => setMode('console')}
         >
           <TerminalSquare className="mr-1 h-3 w-3" />
           {t('web.database.panel.console')}
         </Button>
       </div>
 
-      {active && (
-        <div className="flex min-h-0 flex-1">
-          <div className="w-56 flex-none overflow-auto border-r p-2">
+      {active && mode === 'browse' && (
+        <div className="space-y-2">
+          <div className="max-h-52 overflow-auto rounded-md border p-1">
             <SchemaTree
               connectionId={active.id}
-              selected={view.kind === 'table' ? view.ref : null}
-              onSelect={(ref) => setView({ kind: 'table', ref })}
+              selected={table}
+              onSelect={setTable}
             />
           </div>
-          <div className="min-w-0 flex-1">
-            {view.kind === 'table' ? (
+          {table ? (
+            <div className="h-80 overflow-hidden rounded-md border">
               <DataGrid
                 connectionId={active.id}
-                table={view.ref}
+                table={table}
                 readOnly={active.read_only}
               />
-            ) : (
-              <SQLConsole connectionId={active.id} schema={emptyNamespace} />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-muted-foreground p-2 text-xs">
+              {t('web.database.panel.pickTable')}
+            </div>
+          )}
+        </div>
+      )}
+
+      {active && mode === 'console' && (
+        <div className="h-96 overflow-hidden rounded-md border">
+          <SQLConsole connectionId={active.id} schema={emptyNamespace} />
         </div>
       )}
 

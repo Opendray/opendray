@@ -42,8 +42,7 @@
     "knowledge": "Conocimiento",
     "vault": "Bóveda",
     "cortex": "Cortex",
-    "updateAvailable": "Actualización disponible",
-    "database": "Base de datos"
+    "updateAvailable": "Actualización disponible"
   },
   "web": {
     "brand": "opendray",
@@ -217,7 +216,8 @@
           "tasks": "Tareas",
           "history": "Historial",
           "vault": "Bóveda",
-          "cortex": "Cortex"
+          "cortex": "Cortex",
+          "database": "BD"
         },
         "vaultPanel": {
           "open": "Abrir Bóveda",
@@ -3084,12 +3084,9 @@
         "delete": "Eliminar",
         "deleted": "Conexión eliminada",
         "confirmDelete": "¿Eliminar esta conexión?",
-        "console": "Consola SQL"
-      },
-      "page": {
-        "pickTitle": "Base de datos",
-        "pickSubtitle": "Elige un proyecto para gestionar sus conexiones de base de datos, explorar tablas y ejecutar SQL.",
-        "changeProject": "Cambiar de proyecto"
+        "console": "Consola SQL",
+        "browse": "Explorar",
+        "pickTable": "Selecciona una tabla para ver sus datos."
       }
     }
   },

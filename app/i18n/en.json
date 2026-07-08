@@ -42,8 +42,7 @@
     "knowledge": "Knowledge",
     "vault": "Vault",
     "cortex": "Cortex",
-    "updateAvailable": "Update available",
-    "database": "Database"
+    "updateAvailable": "Update available"
   },
   "web": {
     "brand": "opendray",
@@ -217,7 +216,8 @@
           "tasks": "Tasks",
           "history": "History",
           "vault": "Vault",
-          "cortex": "Cortex"
+          "cortex": "Cortex",
+          "database": "Database"
         },
         "vaultPanel": {
           "open": "Open Vault",
@@ -3084,12 +3084,9 @@
         "delete": "Delete",
         "deleted": "Connection deleted",
         "confirmDelete": "Delete this connection?",
-        "console": "SQL console"
-      },
-      "page": {
-        "pickTitle": "Database",
-        "pickSubtitle": "Pick a project to manage its database connections, browse tables, and run SQL.",
-        "changeProject": "Change project"
+        "console": "SQL console",
+        "browse": "Browse",
+        "pickTable": "Select a table to view its data."
       }
     }
   },

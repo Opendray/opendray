@@ -11,7 +11,6 @@ import { SessionsPage } from '@/pages/Sessions'
 import { ProvidersPage } from '@/pages/Providers'
 import { ChannelsPage } from '@/pages/Channels'
 import { IntegrationsPage } from '@/pages/Integrations'
-import { DatabasePage } from '@/pages/Database'
 import { ActivityPage } from '@/pages/Activity'
 import { MemoryPage } from '@/pages/Memory'
 import { MemoryWorkersPage } from '@/pages/MemoryWorkers'
@@ -82,15 +81,6 @@ const integrationsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/integrations',
   component: IntegrationsPage,
-})
-
-const databaseRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/database',
-  component: DatabasePage,
-  validateSearch: (search) => ({
-    cwd: typeof search.cwd === 'string' ? search.cwd : '',
-  }),
 })
 
 const activityRoute = createRoute({
@@ -260,7 +250,6 @@ const routeTree = rootRoute.addChildren([
     providersRoute,
     channelsRoute,
     integrationsRoute,
-    databaseRoute,
     activityRoute,
     cortexRoute,
     cortexProjectRoute,
