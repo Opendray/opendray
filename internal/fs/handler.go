@@ -28,20 +28,25 @@ import (
 )
 
 type Handlers struct {
-	log *slog.Logger
+	log            *slog.Logger
+	maxUploadBytes int64
 }
 
 func NewHandlers(log *slog.Logger) *Handlers {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Handlers{log: log.With("component", "fs.http")}
+	return &Handlers{
+		log:            log.With("component", "fs.http"),
+		maxUploadBytes: fsUploadMaxBytes,
+	}
 }
 
 func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/fs", func(r chi.Router) {
 		r.Get("/list", h.list)
 		r.Post("/mkdir", h.mkdir)
+		r.Post("/upload", h.upload)
 		r.Get("/home", h.home)
 		r.Get("/read", h.read)
 		// download streams a single file with Content-Disposition:
@@ -419,6 +424,179 @@ func (h *Handlers) mkdir(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, MkdirResponse{Path: full})
+}
+
+// fsUploadMaxBytes caps a single /fs/upload body. Generous enough for
+// real inputs (datasets, media, archives) without buffering the file
+// in memory — the body streams to disk via io.Copy.
+const fsUploadMaxBytes = 250 * 1024 * 1024 // 250 MiB
+
+type UploadResponse struct {
+	Path        string `json:"path"`
+	Size        int64  `json:"size"`
+	RenamedFrom string `json:"renamed_from,omitempty"`
+}
+
+// upload writes a single file into a directory confined to `root` (the
+// session cwd). Metadata rides in the query string — matching /download
+// and /zip — and the raw request body is the file's bytes, so a large
+// upload streams once to disk instead of being spooled through
+// multipart's temp files first.
+//
+// Unlike /mkdir (which is root-agnostic), every write here is validated
+// against `root` with resolveWithinRoot, twice: once for the target
+// directory and once for the final joined path. On name collision the
+// file lands under a non-colliding "-N" suffix rather than overwriting
+// whatever the session already produced.
+func (h *Handlers) upload(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	root := q.Get("root")
+	dir, err := resolveWithinRoot(q.Get("dir"), root)
+	if err != nil {
+		writeError(w, http.StatusForbidden, err)
+		return
+	}
+	rel, err := sanitizeRelpath(q.Get("relpath"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	// resolveWithinRoot is the path-injection barrier (filepath.Rel + ".."
+	// check); use its *return* value for every filesystem sink below, so we
+	// operate on a validated path rather than the raw user-supplied join —
+	// same pattern /download and /zip use with os.Open.
+	final, err := resolveWithinRoot(filepath.Join(dir, rel), root)
+	if err != nil {
+		writeError(w, http.StatusForbidden, err)
+		return
+	}
+	if err := ensureNoSymlinkEscape(dir, rel, root); err != nil {
+		writeError(w, http.StatusForbidden, err)
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(final), 0o755); err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	dest, renamedFrom := nonCollidingPath(final)
+
+	r.Body = http.MaxBytesReader(w, r.Body, h.maxUploadBytes)
+	// Stream to a temp file in the destination dir, then rename into
+	// place so the model never observes a half-written file.
+	tmp, err := os.CreateTemp(filepath.Dir(dest), ".upload-*")
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	tmpName := tmp.Name()
+	size, copyErr := io.Copy(tmp, r.Body)
+	closeErr := tmp.Close()
+	if copyErr != nil {
+		_ = os.Remove(tmpName)
+		var maxErr *http.MaxBytesError
+		if errors.As(copyErr, &maxErr) {
+			writeError(w, http.StatusRequestEntityTooLarge,
+				fmt.Errorf("file exceeds %d bytes", h.maxUploadBytes))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, copyErr)
+		return
+	}
+	if closeErr != nil {
+		_ = os.Remove(tmpName)
+		writeError(w, http.StatusInternalServerError, closeErr)
+		return
+	}
+	if err := os.Rename(tmpName, dest); err != nil {
+		_ = os.Remove(tmpName)
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, UploadResponse{
+		Path:        dest,
+		Size:        size,
+		RenamedFrom: renamedFrom,
+	})
+}
+
+// sanitizeRelpath validates a browser-supplied path relative to the
+// upload directory. webkitGetAsEntry always uses forward slashes, so we
+// split on "/" and reject anything that could escape: empty input,
+// absolute paths, "." / ".." segments, backslashes, and null bytes. The
+// cleaned result is returned as an OS-native relative path.
+func sanitizeRelpath(rel string) (string, error) {
+	rel = strings.TrimSpace(rel)
+	if rel == "" {
+		return "", errors.New("relpath is required")
+	}
+	if strings.ContainsRune(rel, 0) {
+		return "", errors.New("relpath contains a null byte")
+	}
+	if strings.HasPrefix(rel, "/") || filepath.IsAbs(rel) {
+		return "", errors.New("relpath must be relative")
+	}
+	segs := strings.Split(rel, "/")
+	for _, s := range segs {
+		if s == "" || s == "." || s == ".." || strings.ContainsRune(s, '\\') {
+			return "", errors.New("invalid relpath segment")
+		}
+	}
+	return filepath.Join(segs...), nil
+}
+
+// ensureNoSymlinkEscape rejects an upload whose relpath traverses an
+// existing symlink pointing outside root. resolveWithinRoot cannot catch
+// this on the write path: the destination leaf does not exist yet, so
+// EvalSymlinks fails and falls back to the lexical path, leaving
+// intermediate symlink components unresolved. We walk the existing prefix
+// of the destination and reject BEFORE os.MkdirAll can follow (or create
+// through) an escaping symlink. `dir` is already the symlink-resolved,
+// within-root directory returned by resolveWithinRoot.
+func ensureNoSymlinkEscape(dir, rel, root string) error {
+	rootAbs, err := canonicalize(root)
+	if err != nil {
+		return err
+	}
+	rootResolved, err := filepath.EvalSymlinks(rootAbs)
+	if err != nil {
+		return err
+	}
+	cur := dir
+	for _, seg := range strings.Split(rel, string(filepath.Separator)) {
+		cur = filepath.Join(cur, seg)
+		resolved, err := filepath.EvalSymlinks(cur)
+		if err != nil {
+			// This component doesn't exist yet; nothing deeper can exist
+			// either, so there's no symlink left to follow.
+			break
+		}
+		relToRoot, err := filepath.Rel(rootResolved, resolved)
+		if err != nil || relToRoot == ".." ||
+			strings.HasPrefix(relToRoot, ".."+string(filepath.Separator)) {
+			return errors.New("path escapes the allowed root via a symlink")
+		}
+	}
+	return nil
+}
+
+// nonCollidingPath returns p unchanged if nothing exists there,
+// otherwise the first free "<base>-N<ext>" variant. The second return
+// is the path originally requested when a rename happened (empty
+// otherwise), so the response can report the new name. There is a small
+// TOCTOU window between the stat and the later create; acceptable for a
+// single-operator admin tool where a folder walk yields unique paths.
+func nonCollidingPath(p string) (string, string) {
+	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
+		return p, ""
+	}
+	ext := filepath.Ext(p)
+	base := strings.TrimSuffix(p, ext)
+	for i := 1; ; i++ {
+		cand := fmt.Sprintf("%s-%d%s", base, i, ext)
+		if _, err := os.Stat(cand); errors.Is(err, os.ErrNotExist) {
+			return cand, p
+		}
+	}
 }
 
 func (h *Handlers) home(w http.ResponseWriter, _ *http.Request) {

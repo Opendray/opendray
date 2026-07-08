@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
   ChevronRight,
   ChevronDown,
@@ -7,18 +8,25 @@ import {
   Folder,
   Loader2,
   Download,
+  FolderPlus,
+  Upload,
 } from 'lucide-react'
 
 import {
   listDir,
+  makeDir,
+  walkDropEntries,
+  type WalkedFile,
   fsDownloadURL,
   fsZipURL,
   triggerDownload,
 } from '@/lib/fs'
 import { useAuth } from '@/stores/auth'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 import { FileViewerDialog } from './FileViewerDialog'
+import { runUploads, type UploadItem } from './uploads'
 
 interface FilesPanelProps {
   cwd: string
@@ -30,23 +38,207 @@ interface FilesPanelProps {
 // a modal viewer backed by /api/v1/fs/read.
 export function FilesPanel({ cwd }: FilesPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  )
+  const [dragging, setDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const folderInputRef = useRef<HTMLInputElement>(null)
+  const qc = useQueryClient()
+
+  async function handleNewFolder() {
+    const name = window.prompt('New folder name')?.trim()
+    if (!name) return
+    try {
+      await makeDir(cwd, name)
+      await qc.invalidateQueries({ queryKey: ['fs', cwd] })
+      toast.success(`Created folder ${name}`)
+    } catch (e) {
+      toast.error('Could not create folder', {
+        description: (e as Error).message,
+      })
+    }
+  }
+
+  // Drive an upload of walked files into a destination dir, showing
+  // aggregate progress, refreshing every affected directory, and
+  // reporting renames + failures.
+  async function drive(walked: WalkedFile[], dir: string) {
+    if (walked.length === 0) return
+    const items: UploadItem[] = walked.map((w) => ({ ...w, dir }))
+    setProgress({ done: 0, total: items.length })
+    const { results, errors } = await runUploads(items, cwd, {
+      onSettled: () => setProgress((p) => (p ? { ...p, done: p.done + 1 } : p)),
+    })
+    setProgress(null)
+
+    // Refresh every directory that received a file (dir + each nested
+    // parent created by the walk).
+    const dirs = new Set<string>([dir])
+    for (const it of items) {
+      const parts = it.relpath.split('/').slice(0, -1)
+      let acc = dir
+      for (const seg of parts) {
+        acc = `${acc}/${seg}`
+        dirs.add(acc)
+      }
+    }
+    await Promise.all(
+      [...dirs].map((d) => qc.invalidateQueries({ queryKey: ['fs', d] })),
+    )
+
+    const renamed = results.filter((r) => r.renamed_from).length
+    if (errors.length === 0) {
+      toast.success(
+        `Uploaded ${results.length} file${results.length === 1 ? '' : 's'}` +
+          (renamed ? ` (${renamed} auto-renamed)` : ''),
+      )
+    } else {
+      toast.error(
+        `Uploaded ${results.length}, ${errors.length} failed`,
+        { description: errors[0]?.error.message },
+      )
+    }
+  }
+
+  function onDropFiles(dir: string, dt: DataTransfer) {
+    void walkDropEntries(dt)
+      .then((w) => drive(w, dir))
+      .catch((err) =>
+        toast.error('Upload failed', {
+          description: (err as Error).message,
+        }),
+      )
+  }
+
+  async function handleInputFiles(list: FileList | null, webkitRelative: boolean) {
+    if (!list || list.length === 0) return
+    const walked: WalkedFile[] = Array.from(list).map((file) => ({
+      // The folder <input webkitdirectory> exposes webkitRelativePath
+      // ("picked/dir/file.txt"); strip the top-level picked dir name so
+      // the subtree lands under cwd, matching a drag of that folder.
+      relpath: webkitRelative
+        ? file.webkitRelativePath.split('/').slice(1).join('/') || file.name
+        : file.name,
+      file,
+    }))
+    await drive(walked, cwd)
+  }
 
   return (
     <>
-      <div className="flex flex-col gap-0.5 font-mono">
+      <div className="flex items-center gap-1 px-1 pb-1">
+        <Button variant="ghost" size="sm" onClick={handleNewFolder}>
+          <FolderPlus className="size-3.5" />
+          New folder
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={progress != null}
+        >
+          <Upload className="size-3.5" />
+          Upload
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => folderInputRef.current?.click()}
+          disabled={progress != null}
+        >
+          <FolderPlus className="size-3.5" />
+          Upload folder
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            void handleInputFiles(e.target.files, false)
+            e.target.value = ''
+          }}
+        />
+        <input
+          ref={folderInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          // webkitdirectory/directory aren't in React's JSX types; the
+          // `as any` spread is the standard escape hatch (a `// @ts-
+          // expect-error` inside JSX props does not compile).
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          {...({ webkitdirectory: '', directory: '' } as any)}
+          onChange={(e) => {
+            void handleInputFiles(e.target.files, true)
+            e.target.value = ''
+          }}
+        />
+      </div>
+
+      {progress && (
+        <div className="px-2 pb-1">
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Loader2 className="size-3 animate-spin" />
+            Uploading {progress.done} of {progress.total}…
+          </div>
+          <div className="mt-0.5 h-1 w-full overflow-hidden rounded bg-border">
+            <div
+              className="h-full bg-accent transition-all"
+              style={{
+                width: `${Math.round((progress.done / progress.total) * 100)}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('Files')) {
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'copy'
+            setDragging(true)
+          }
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget === e.target) setDragging(false)
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDragging(false)
+          void walkDropEntries(e.dataTransfer)
+            .then((w) => drive(w, cwd))
+            .catch((err) =>
+              toast.error('Upload failed', {
+                description: (err as Error).message,
+              }),
+            )
+        }}
+        className={cn(
+          'flex flex-col gap-0.5 rounded-sm font-mono',
+          dragging && 'ring-2 ring-accent/70',
+        )}
+      >
         <FsNode
           path={cwd}
           name={cwd}
           isRoot
           // downloadRoot is the cwd: the server-side download/zip
-          // endpoints reject any resolved path that escapes it, so
-          // the operator's reach via the inspector matches what they
-          // can browse here — files outside the session subtree
-          // can't be exfiltrated through a hand-crafted URL.
+          // endpoints reject any resolved path that escapes it, so the
+          // operator's reach matches what they can browse here.
           downloadRoot={cwd}
           onOpenFile={(p) => setViewing(p)}
+          onDropFiles={onDropFiles}
         />
+        {dragging && (
+          <div className="px-2 py-1 text-[11px] text-muted-foreground">
+            Drop files or folders here
+          </div>
+        )}
       </div>
+
       <FileViewerDialog
         path={viewing}
         open={viewing != null}
@@ -66,6 +258,7 @@ interface FsNodeProps {
   // whole subtree shares the same confinement.
   downloadRoot: string
   onOpenFile: (path: string) => void
+  onDropFiles: (dir: string, dt: DataTransfer) => void
 }
 
 function FsNode({
@@ -75,8 +268,10 @@ function FsNode({
   depth = 0,
   downloadRoot,
   onOpenFile,
+  onDropFiles,
 }: FsNodeProps) {
   const [open, setOpen] = useState(isRoot)
+  const [rowDrag, setRowDrag] = useState(false)
   const indent = { paddingLeft: `${depth * 12}px` }
   const token = useAuth((s) => s.token)
 
@@ -89,7 +284,27 @@ function FsNode({
 
   return (
     <div className="flex flex-col">
-      <div className="group relative flex items-stretch">
+      <div
+        className={cn(
+          'group relative flex items-stretch rounded-sm',
+          rowDrag && 'ring-2 ring-accent/70',
+        )}
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('Files')) {
+            e.preventDefault()
+            e.stopPropagation()
+            e.dataTransfer.dropEffect = 'copy'
+            setRowDrag(true)
+          }
+        }}
+        onDragLeave={() => setRowDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setRowDrag(false)
+          onDropFiles(path, e.dataTransfer)
+        }}
+      >
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -148,6 +363,7 @@ function FsNode({
                 depth={depth + 1}
                 downloadRoot={downloadRoot}
                 onOpenFile={onOpenFile}
+                onDropFiles={onDropFiles}
               />
             ) : (
               <div key={e.path} className="group relative flex items-stretch">
