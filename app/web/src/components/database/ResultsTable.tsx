@@ -14,7 +14,11 @@ interface ResultsTableProps {
 // row editing lives in DataGrid, which is table-aware.
 export function ResultsTable({ result, className }: ResultsTableProps) {
   const { t } = useTranslation()
-  if (result.columns.length === 0) {
+  // The API returns [] for these; guard against null so a stray null can't
+  // crash the console with "Cannot read properties of null (reading 'map')".
+  const columns = result.columns ?? []
+  const rows = result.rows ?? []
+  if (columns.length === 0) {
     return (
       <div className="text-muted-foreground p-3 text-xs">
         {t('web.database.results.noColumns', {
@@ -30,7 +34,7 @@ export function ResultsTable({ result, className }: ResultsTableProps) {
         <table className="w-full border-collapse text-xs">
           <thead className="bg-muted/50 sticky top-0">
             <tr>
-              {result.columns.map((c) => (
+              {columns.map((c) => (
                 <th
                   key={c.name}
                   className="border-b px-2 py-1 text-left font-semibold whitespace-nowrap"
@@ -45,7 +49,7 @@ export function ResultsTable({ result, className }: ResultsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {result.rows.map((row, ri) => (
+            {rows.map((row, ri) => (
               <tr key={ri} className="hover:bg-muted/30">
                 {row.map((cell, ci) => (
                   <td

@@ -172,6 +172,14 @@ func TestPostgresIntrospection(t *testing.T) {
 	if len(noPK.PrimaryKey) != 0 {
 		t.Fatalf("no_pk pk = %v", noPK.PrimaryKey)
 	}
+	// Regression: a PK-less table must return EMPTY (non-nil) slices, not
+	// nil — nil JSON-encodes as `null` and the web grid does `.map()` on
+	// primary_key/indexes/foreign_keys, crashing with
+	// "Cannot read properties of null (reading 'map')".
+	if noPK.PrimaryKey == nil || noPK.Indexes == nil || noPK.ForeignKeys == nil {
+		t.Fatalf("no_pk meta slices must be non-nil: pk=%#v idx=%#v fk=%#v",
+			noPK.PrimaryKey, noPK.Indexes, noPK.ForeignKeys)
+	}
 }
 
 func TestPostgresTableDataAndCRUD(t *testing.T) {
@@ -204,6 +212,24 @@ func TestPostgresTableDataAndCRUD(t *testing.T) {
 	}
 	if len(filtered.Rows) != 1 || filtered.Rows[0][1] != "cherry" {
 		t.Fatalf("filter broken: %v", filtered.Rows)
+	}
+
+	// Regression: a query that matches zero rows must return EMPTY
+	// (non-nil) Rows/Columns so the JSON is `[]`, not `null` (the web
+	// grid maps over both).
+	empty, err := drv.TableData(ctx, h, TableDataReq{
+		Schema: testSchema, Table: tblItems,
+		Filters: []Filter{{Column: "name", Op: "=", Value: "__nope__"}},
+	}, timeout)
+	if err != nil {
+		t.Fatalf("empty query: %v", err)
+	}
+	if empty.Rows == nil || empty.Columns == nil {
+		t.Fatalf("empty result slices must be non-nil: rows=%#v cols=%#v",
+			empty.Rows, empty.Columns)
+	}
+	if len(empty.Rows) != 0 {
+		t.Fatalf("expected 0 rows, got %d", len(empty.Rows))
 	}
 
 	ins, err := drv.InsertRow(ctx, h, RowInsertReq{

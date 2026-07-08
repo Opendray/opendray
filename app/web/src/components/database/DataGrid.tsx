@@ -70,12 +70,16 @@ export function DataGrid({ connectionId, table, readOnly }: DataGridProps) {
   })
 
   const meta = metaQuery.data
-  const canEdit = !readOnly && (meta?.primary_key.length ?? 0) > 0
+  // Defensive: the API returns [] for these, but guard against null so a
+  // stray null (older data, a proxy, an MCP round-trip) can't crash the
+  // grid with "Cannot read properties of null (reading 'map')".
+  const primaryKey = meta?.primary_key ?? []
+  const canEdit = !readOnly && primaryKey.length > 0
 
   const pkIndex = useMemo(() => {
     if (!meta || !dataQuery.data) return []
-    return meta.primary_key.map((pk) =>
-      dataQuery.data.columns.findIndex((c) => c.name === pk),
+    return (meta.primary_key ?? []).map((pk) =>
+      (dataQuery.data?.columns ?? []).findIndex((c) => c.name === pk),
     )
   }, [meta, dataQuery.data])
 
@@ -91,7 +95,7 @@ export function DataGrid({ connectionId, table, readOnly }: DataGridProps) {
 
   const rowToRecord = (row: unknown[]): Record<string, unknown> => {
     const rec: Record<string, unknown> = {}
-    dataQuery.data?.columns.forEach((c, i) => {
+    ;(dataQuery.data?.columns ?? []).forEach((c, i) => {
       rec[c.name] = row[i]
     })
     return rec
@@ -101,7 +105,7 @@ export function DataGrid({ connectionId, table, readOnly }: DataGridProps) {
     mutationFn: (row: unknown[]) => {
       if (!meta) throw new Error('metadata not loaded')
       const pk: Record<string, unknown> = {}
-      meta.primary_key.forEach((k, i) => {
+      ;(meta.primary_key ?? []).forEach((k, i) => {
         pk[k] = row[pkIndex[i]]
       })
       return deleteRows(connectionId, table.schema, table.table, [pk])
@@ -147,7 +151,7 @@ export function DataGrid({ connectionId, table, readOnly }: DataGridProps) {
           {t('web.database.grid.readOnlyHint')}
         </div>
       )}
-      {!readOnly && meta && meta.primary_key.length === 0 && (
+      {!readOnly && meta && primaryKey.length === 0 && (
         <div className="border-b bg-amber-500/10 px-3 py-1 text-[11px] text-amber-700 dark:text-amber-400">
           {t('web.database.grid.noPkHint')}
         </div>
@@ -168,7 +172,7 @@ export function DataGrid({ connectionId, table, readOnly }: DataGridProps) {
             <thead className="bg-muted/50 sticky top-0">
               <tr>
                 {canEdit && <th className="w-16 border-b px-2 py-1" />}
-                {data.columns.map((c) => {
+                {(data.columns ?? []).map((c) => {
                   const s = sortFor(c.name)
                   return (
                     <th
@@ -188,7 +192,7 @@ export function DataGrid({ connectionId, table, readOnly }: DataGridProps) {
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((row, ri) => (
+              {(data.rows ?? []).map((row, ri) => (
                 <tr key={ri} className="hover:bg-muted/30">
                   {canEdit && (
                     <td className="border-b px-1 py-0.5 whitespace-nowrap">

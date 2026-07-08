@@ -282,6 +282,18 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 	if err := fkRows.Err(); err != nil {
 		return meta, err
 	}
+	// Never hand back nil slices: they JSON-encode as `null`, and the
+	// web grid does `.map()` on each of these — a PK-less table (or one
+	// with no indexes / FKs) would crash the UI otherwise.
+	if meta.PrimaryKey == nil {
+		meta.PrimaryKey = []string{}
+	}
+	if meta.Indexes == nil {
+		meta.Indexes = []Index{}
+	}
+	if meta.ForeignKeys == nil {
+		meta.ForeignKeys = []ForeignKey{}
+	}
 	return meta, nil
 }
 
@@ -602,6 +614,15 @@ func (postgresDriver) execute(ctx context.Context, h Handle, sqlText string, arg
 		return nil, normalizePGError(err)
 	}
 	rs.DurationMs = time.Since(start).Milliseconds()
+	// nil slices JSON-encode as `null`; the web results table maps over
+	// both — an empty table (0 rows) or a no-column statement must come
+	// back as `[]`, not `null`.
+	if rs.Columns == nil {
+		rs.Columns = []ColumnMeta{}
+	}
+	if rs.Rows == nil {
+		rs.Rows = [][]any{}
+	}
 	return rs, nil
 }
 
