@@ -102,7 +102,13 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
   }
 
   function onDropFiles(dir: string, dt: DataTransfer) {
-    void walkDropEntries(dt).then((w) => drive(w, dir))
+    void walkDropEntries(dt)
+      .then((w) => drive(w, dir))
+      .catch((err) =>
+        toast.error('Upload failed', {
+          description: (err as Error).message,
+        }),
+      )
   }
 
   async function handleInputFiles(list: FileList | null, webkitRelative: boolean) {
@@ -202,7 +208,13 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
         onDrop={(e) => {
           e.preventDefault()
           setDragging(false)
-          void walkDropEntries(e.dataTransfer).then((w) => drive(w, cwd))
+          void walkDropEntries(e.dataTransfer)
+            .then((w) => drive(w, cwd))
+            .catch((err) =>
+              toast.error('Upload failed', {
+                description: (err as Error).message,
+              }),
+            )
         }}
         className={cn(
           'flex flex-col gap-0.5 rounded-sm font-mono',
