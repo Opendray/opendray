@@ -25,6 +25,7 @@ type Config struct {
 	Memory    MemoryConfig    `toml:"memory" json:"memory"`
 	Backup    BackupConfig    `toml:"backup" json:"backup"`
 	Knowledge KnowledgeConfig `toml:"knowledge" json:"knowledge"`
+	Dbtool    DbtoolConfig    `toml:"dbtool" json:"dbtool"`
 
 	// FilePath is the path config.toml was loaded from. Set by Load
 	// after a successful read so the runtime can find the same file
@@ -408,6 +409,54 @@ type KnowledgeConfig struct {
 	Enabled bool `toml:"enabled" json:"enabled"`
 }
 
+// DbtoolConfig drives the Database tool (internal/dbtool): per-project
+// external database connections with schema browsing, row CRUD and a SQL
+// console, exposed over REST and as the opendray-dbtool MCP server.
+//
+// Enabled defaults to TRUE (nil pointer = on): unlike the knowledge tier
+// there is no background cost — the feature is inert until an admin
+// registers a connection. Set enabled = false to unmount the routes and
+// skip the MCP auto-attach entirely.
+type DbtoolConfig struct {
+	Enabled *bool `toml:"enabled" json:"enabled"`
+	// QueryTimeout caps each statement (both ctx deadline and a server-side
+	// SET LOCAL statement_timeout). Empty → "30s".
+	QueryTimeout string `toml:"query_timeout" json:"query_timeout"`
+	// MaxRows is the default result-row cap when a request doesn't pass its
+	// own limit. Empty/0 → 500. Requests may raise it up to 10000.
+	MaxRows int `toml:"max_rows" json:"max_rows"`
+	// PoolMaxConns caps each external connection's pgx pool. Empty/0 → 3.
+	PoolMaxConns int `toml:"pool_max_conns" json:"pool_max_conns"`
+	// PoolIdleTTL is how long an unused external pool stays open before the
+	// eviction ticker closes it. Empty → "5m".
+	PoolIdleTTL string `toml:"pool_idle_ttl" json:"pool_idle_ttl"`
+}
+
+// IsEnabled returns the effective feature state: nil pointer (omitted in
+// config) → true; explicit false → disabled.
+func (c DbtoolConfig) IsEnabled() bool {
+	if c.Enabled == nil {
+		return true
+	}
+	return *c.Enabled
+}
+
+// QueryTimeoutDuration parses QueryTimeout; returns 30s if unset.
+func (c DbtoolConfig) QueryTimeoutDuration() time.Duration {
+	if d, err := time.ParseDuration(c.QueryTimeout); err == nil && d > 0 {
+		return d
+	}
+	return 30 * time.Second
+}
+
+// PoolIdleTTLDuration parses PoolIdleTTL; returns 5m if unset.
+func (c DbtoolConfig) PoolIdleTTLDuration() time.Duration {
+	if d, err := time.ParseDuration(c.PoolIdleTTL); err == nil && d > 0 {
+		return d
+	}
+	return 5 * time.Minute
+}
+
 type AdminConfig struct {
 	User     string `toml:"user" json:"user"`
 	Password string `toml:"password" json:"password"`
@@ -557,6 +606,26 @@ func applyEnv(cfg *Config) {
 	if v := os.Getenv("OPENDRAY_KNOWLEDGE_ENABLED"); v == "1" || v == "true" {
 		cfg.Knowledge.Enabled = true
 	}
+	if v := os.Getenv("OPENDRAY_DBTOOL_ENABLED"); v != "" {
+		b := v == "1" || v == "true"
+		cfg.Dbtool.Enabled = &b
+	}
+	if v := os.Getenv("OPENDRAY_DBTOOL_QUERY_TIMEOUT"); v != "" {
+		cfg.Dbtool.QueryTimeout = v
+	}
+	if v := os.Getenv("OPENDRAY_DBTOOL_MAX_ROWS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.Dbtool.MaxRows = n
+		}
+	}
+	if v := os.Getenv("OPENDRAY_DBTOOL_POOL_MAX_CONNS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.Dbtool.PoolMaxConns = n
+		}
+	}
+	if v := os.Getenv("OPENDRAY_DBTOOL_POOL_IDLE_TTL"); v != "" {
+		cfg.Dbtool.PoolIdleTTL = v
+	}
 }
 
 func (c Config) Validate() error {
@@ -585,6 +654,19 @@ func (c Config) Validate() error {
 		if _, err := time.ParseDuration(c.Admin.MobileTokenTTL); err != nil {
 			return fmt.Errorf("config: admin.mobile_token_ttl: %w", err)
 		}
+	}
+	if c.Dbtool.QueryTimeout != "" {
+		if _, err := time.ParseDuration(c.Dbtool.QueryTimeout); err != nil {
+			return fmt.Errorf("config: dbtool.query_timeout: %w", err)
+		}
+	}
+	if c.Dbtool.PoolIdleTTL != "" {
+		if _, err := time.ParseDuration(c.Dbtool.PoolIdleTTL); err != nil {
+			return fmt.Errorf("config: dbtool.pool_idle_ttl: %w", err)
+		}
+	}
+	if c.Dbtool.MaxRows < 0 || c.Dbtool.MaxRows > 10000 {
+		return fmt.Errorf("config: dbtool.max_rows must be 0..10000, got %d", c.Dbtool.MaxRows)
 	}
 	return nil
 }

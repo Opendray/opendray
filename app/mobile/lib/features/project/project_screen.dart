@@ -12,6 +12,7 @@ import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/blueprint_editor_screen.dart';
 import 'package:opendray/features/cortex/curation_chat_screen.dart';
+import 'package:opendray/features/database/database_tab.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
@@ -161,7 +162,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       setState(() {
         _sections = secs;
         _blueprintError = null;
-        _ensureTabController(secs.length + 3);
+        _ensureTabController(secs.length + 4);
       });
     } on ApiException catch (e) {
       // Web parity: NEVER substitute a hardcoded section set on failure —
@@ -172,7 +173,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
       if (!mounted) return;
       setState(() {
         _blueprintError = e;
-        _ensureTabController(_sections.length + 3);
+        _ensureTabController(_sections.length + 4);
       });
     }
     try {
@@ -370,6 +371,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                   Tab(text: t.web.project.tabs.journal),
                   Tab(text: t.web.project.tabs.inbox),
                   Tab(text: t.web.project.tabs.hygiene),
+                  Tab(text: t.web.project.tabs.database),
                 ],
               ),
       ),
@@ -393,6 +395,7 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
                       _journalTab(),
                       _inboxTab(),
                       _hygieneTab(),
+                      _databaseTab(),
                     ],
                   ),
           ),
@@ -1301,6 +1304,17 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
         ],
       ),
     );
+  }
+
+  // _databaseTab hosts the per-project Database tool (connections,
+  // schema browse, read-only query). Keyed by the selected cwd so it
+  // reloads when the operator switches projects.
+  Widget _databaseTab() {
+    final cwd = _selectedKey;
+    if (cwd == null || cwd.isEmpty) {
+      return Center(child: Text(t.project.pickFirst));
+    }
+    return DatabaseTab(key: ValueKey(cwd), cwd: cwd);
   }
 
   Widget _healthTab() {

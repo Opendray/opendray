@@ -216,7 +216,8 @@
           "tasks": "Tasks",
           "history": "History",
           "vault": "Vault",
-          "cortex": "Cortex"
+          "cortex": "Cortex",
+          "database": "Database"
         },
         "vaultPanel": {
           "open": "Open Vault",
@@ -3011,6 +3012,83 @@
           "saveFailed": "Save failed",
           "note": "Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed."
         }
+      }
+    },
+    "database": {
+      "dialog": {
+        "createTitle": "Add database connection",
+        "editTitle": "Edit connection",
+        "description": "Connect to this project's database to browse and edit its data. Credentials are stored encrypted.",
+        "name": "Name",
+        "host": "Host",
+        "port": "Port",
+        "database": "Database",
+        "username": "Username",
+        "password": "Password",
+        "passwordKept": "unchanged — leave blank to keep",
+        "sslMode": "SSL mode",
+        "readOnly": "Read-only (block writes from this connection)",
+        "superuserWarning": "This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.",
+        "test": "Test",
+        "save": "Save",
+        "testFailed": "Connection test failed",
+        "testOk": "Connected — PostgreSQL {version} ({ms} ms)",
+        "savedCreate": "Connection added",
+        "savedEdit": "Connection updated",
+        "missingFields": "Name, host, database and username are required"
+      },
+      "results": {
+        "noColumns": "{command} — {rows} row(s) affected"
+      },
+      "tree": {
+        "loading": "Loading schemas…",
+        "noSchemas": "No schemas visible to this user"
+      },
+      "row": {
+        "insertTitle": "Insert row",
+        "editTitle": "Edit row",
+        "setNull": "set NULL",
+        "save": "Save",
+        "savedInsert": "Row inserted",
+        "savedEdit": "Row updated",
+        "noChanges": "No changes to save"
+      },
+      "grid": {
+        "insert": "Insert",
+        "refresh": "Refresh",
+        "edit": "Edit",
+        "delete": "Delete",
+        "deleted": "Row deleted",
+        "confirmDelete": "Delete this row?",
+        "loading": "Loading rows…",
+        "readOnlyHint": "This connection is read-only — rows cannot be edited.",
+        "noPkHint": "This table has no primary key — row editing is disabled.",
+        "pageInfo": "Rows {from}–{to}"
+      },
+      "console": {
+        "placeholder": "SELECT * FROM …",
+        "run": "Run",
+        "runHint": "Cmd/Ctrl+Enter to run",
+        "stats": "{command} · {rows} row(s) · {ms} ms",
+        "truncated": "truncated",
+        "empty": "Run a query to see results.",
+        "truncatedNote": "results truncated"
+      },
+      "panel": {
+        "loading": "Loading connections…",
+        "emptyTitle": "No database connections",
+        "emptyBody": "Register a connection to browse this project's database, edit rows and run SQL. Connections are per-project and stored encrypted.",
+        "addConnection": "Add connection",
+        "add": "Add",
+        "edit": "Edit",
+        "delete": "Delete",
+        "deleted": "Connection deleted",
+        "confirmDelete": "Delete this connection?",
+        "console": "SQL console",
+        "openWorkbench": "Open workbench"
+      },
+      "workbench": {
+        "title": "Database workbench"
       }
     }
   },

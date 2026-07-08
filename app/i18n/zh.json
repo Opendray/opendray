@@ -216,7 +216,8 @@
           "tasks": "任务",
           "history": "历史",
           "vault": "文档库",
-          "cortex": "心智中枢"
+          "cortex": "心智中枢",
+          "database": "数据库"
         },
         "vaultPanel": {
           "open": "打开文档库",
@@ -3011,6 +3012,83 @@
           "saveFailed": "保存失败",
           "note": "完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。"
         }
+      }
+    },
+    "database": {
+      "dialog": {
+        "createTitle": "添加数据库连接",
+        "editTitle": "编辑连接",
+        "description": "连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。",
+        "name": "名称",
+        "host": "主机",
+        "port": "端口",
+        "database": "数据库",
+        "username": "用户名",
+        "password": "密码",
+        "passwordKept": "保持不变 —— 留空即保留",
+        "sslMode": "SSL 模式",
+        "readOnly": "只读(禁止此连接写入)",
+        "superuserWarning": "该用户是超级用户(或 linivek 管理员)。日常工作请优先使用仅 CRUD 权限的项目角色。",
+        "test": "测试",
+        "save": "保存",
+        "testFailed": "连接测试失败",
+        "testOk": "已连接 —— PostgreSQL {version}({ms} 毫秒)",
+        "savedCreate": "连接已添加",
+        "savedEdit": "连接已更新",
+        "missingFields": "名称、主机、数据库和用户名为必填项"
+      },
+      "results": {
+        "noColumns": "{command} —— 影响 {rows} 行"
+      },
+      "tree": {
+        "loading": "正在加载 schema…",
+        "noSchemas": "该用户无可见 schema"
+      },
+      "row": {
+        "insertTitle": "插入行",
+        "editTitle": "编辑行",
+        "setNull": "设为 NULL",
+        "save": "保存",
+        "savedInsert": "行已插入",
+        "savedEdit": "行已更新",
+        "noChanges": "没有需要保存的更改"
+      },
+      "grid": {
+        "insert": "插入",
+        "refresh": "刷新",
+        "edit": "编辑",
+        "delete": "删除",
+        "deleted": "行已删除",
+        "confirmDelete": "删除此行?",
+        "loading": "正在加载数据…",
+        "readOnlyHint": "此连接为只读 —— 无法编辑行。",
+        "noPkHint": "此表没有主键 —— 行编辑已禁用。",
+        "pageInfo": "第 {from}–{to} 行"
+      },
+      "console": {
+        "placeholder": "SELECT * FROM …",
+        "run": "运行",
+        "runHint": "Cmd/Ctrl+Enter 运行",
+        "stats": "{command} · {rows} 行 · {ms} 毫秒",
+        "truncated": "已截断",
+        "empty": "运行查询以查看结果。",
+        "truncatedNote": "结果已截断"
+      },
+      "panel": {
+        "loading": "正在加载连接…",
+        "emptyTitle": "暂无数据库连接",
+        "emptyBody": "注册一个连接以浏览此项目的数据库、编辑行并运行 SQL。连接按项目隔离并加密存储。",
+        "addConnection": "添加连接",
+        "add": "添加",
+        "edit": "编辑",
+        "delete": "删除",
+        "deleted": "连接已删除",
+        "confirmDelete": "删除此连接?",
+        "console": "SQL 控制台",
+        "openWorkbench": "展开工作台"
+      },
+      "workbench": {
+        "title": "数据库工作台"
       }
     }
   },

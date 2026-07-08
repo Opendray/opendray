@@ -37,6 +37,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/cortex"
 	customtask "github.com/opendray/opendray-v2/internal/customtask"
+	"github.com/opendray/opendray-v2/internal/dbtool"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 	fsapi "github.com/opendray/opendray-v2/internal/fs"
 	"github.com/opendray/opendray-v2/internal/gateway"
@@ -100,6 +101,7 @@ type App struct {
 	knowledgeSvc         *knowledge.Service             // M-KG Phase 6 embed backfill; nil when disabled
 	knowledgeKBDrafter   *knowledge.KBDrafter           // M-KB curated KB-page drafting; nil when disabled
 	knowledgeConsolidate *knowledge.ConsolidationEngine // P-C unified anchor→compile→KB loop; nil when disabled
+	dbtoolSvc            *dbtool.Service                // Database tool; nil when [dbtool] disabled. Close() releases external pools.
 }
 
 // knowledgeMemorySource adapts *memory.Service to knowledge.MemorySource so
@@ -775,6 +777,51 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// Same at-rest encryption for channel config secrets (bot tokens,
 	// app secrets, webhook keys).
 	channelHub.SetCipher(ambientCipher)
+
+	// Database tool — per-project external DB connections (schema
+	// browser, row CRUD, SQL console). Passwords ride the same live
+	// cipher as channel/git-host secrets. Disabled via [dbtool]
+	// enabled = false: no routes mounted, no MCP attach.
+	var dbtoolSvc *dbtool.Service
+	var dbtoolHandlers *dbtool.Handlers
+	if cfg.Dbtool.IsEnabled() {
+		dbtoolStore := dbtool.NewStore(st.Pool(), ambientCipher)
+		dbtoolSvc = dbtool.NewService(dbtoolStore, dbtool.Options{
+			QueryTimeout: cfg.Dbtool.QueryTimeoutDuration(),
+			MaxRows:      cfg.Dbtool.MaxRows,
+			PoolMaxConns: cfg.Dbtool.PoolMaxConns,
+			PoolIdleTTL:  cfg.Dbtool.PoolIdleTTLDuration(),
+		}, log)
+		dbtoolHandlers = dbtool.NewHandlers(dbtoolSvc, log)
+
+		// Mint the dedicated `opendray-dbtool` integration key and
+		// auto-attach the MCP server to spawned sessions — mirroring the
+		// memory auto-attach, but on its own key so the memory key never
+		// silently gains db scopes (and vice versa).
+		if key, err := ensureDbtoolIntegration(ctx, intgrSvc); err != nil {
+			log.Warn("dbtool MCP auto-attach disabled — could not mint integration key",
+				"err", err)
+		} else if binPath, perr := os.Executable(); perr != nil {
+			log.Warn("dbtool MCP auto-attach disabled — os.Executable failed",
+				"err", perr)
+		} else {
+			sessionProvider.WithDbtoolAutoAttach(catalog.DbtoolAutoAttach{
+				Enabled:    true,
+				BinaryPath: binPath,
+				BaseURL:    listenLoopback(cfg.Listen),
+				APIKey:     key,
+			})
+			mcpHandlers.AddBuiltins(mcpapi.Server{
+				ID:        "opendray-dbtool",
+				Name:      "opendray-dbtool",
+				Transport: "stdio",
+				Command:   binPath,
+				Args:      []string{"mcp-dbtool"},
+				Enabled:   true,
+			})
+			log.Info("dbtool MCP auto-attach enabled", "bin", binPath)
+		}
+	}
 	summarizerStore := summarizer.NewStore(st.Pool(), ambientCipher)
 	summarizerRegistry := summarizer.NewRegistry(summarizerStore, log).
 		WithIntegrationLookup(&summarizerIntegrationLookup{svc: intgrSvc})
@@ -1292,6 +1339,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				if knowledgeHandlers != nil {
 					knowledgeHandlers.Mount(r)
 				}
+				if dbtoolHandlers != nil {
+					dbtoolHandlers.Mount(r)
+				}
 				cortexHandlers.Mount(r)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
@@ -1333,6 +1383,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		knowledgeSvc:         knowledgeSvc,
 		knowledgeKBDrafter:   knowledgeKBDrafter,
 		knowledgeConsolidate: knowledgeConsolidate,
+		dbtoolSvc:            dbtoolSvc,
 	}, nil
 }
 
@@ -1631,6 +1682,9 @@ func (a *App) Close() {
 	if a.sessions != nil {
 		_ = a.sessions.Shutdown(context.Background())
 	}
+	if a.dbtoolSvc != nil {
+		a.dbtoolSvc.Close()
+	}
 	if a.channels != nil {
 		_ = a.channels.Shutdown(context.Background())
 	}
@@ -1831,6 +1885,92 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	}
 	_ = writeMemoryKey(res.APIKey)
 	return res.APIKey, nil
+}
+
+// ensureDbtoolIntegration guarantees an integration row named
+// "opendray-dbtool" exists with the db scopes and returns its plaintext
+// key, cached at ~/.opendray/dbtool.key. Same contract as
+// ensureMemoryIntegration: reuse cache when present, rotate once when
+// missing, reconcile scopes on upgrade.
+func ensureDbtoolIntegration(ctx context.Context, svc *integration.Service) (string, error) {
+	const name = "opendray-dbtool"
+	scopes := []string{
+		// The auto-attached mcp-dbtool subprocess authenticates as this
+		// key. db:write is included so db_execute / row CRUD work; the
+		// real write fence is per-connection (read_only flag) plus the
+		// gateway's statement classification — the operator decides per
+		// database whether agents may mutate it.
+		"db:read",
+		"db:write",
+	}
+
+	all, err := svc.List(ctx)
+	if err != nil {
+		return "", fmt.Errorf("list integrations: %w", err)
+	}
+	var existing *integration.Integration
+	for i := range all {
+		if all[i].Name == name {
+			existing = &all[i]
+			break
+		}
+	}
+	if existing == nil {
+		res, err := svc.Register(ctx, integration.RegisterRequest{
+			Name:     name,
+			Scopes:   scopes,
+			Version:  "internal",
+			IsSystem: true,
+		})
+		if err != nil {
+			return "", fmt.Errorf("register %s: %w", name, err)
+		}
+		_ = writeCachedKey(dbtoolKeyFile, res.APIKey)
+		return res.APIKey, nil
+	}
+	id := existing.ID
+
+	if !scopesCover(existing.Scopes, scopes) {
+		if _, err := svc.Update(ctx, id, integration.UpdatePatch{Scopes: &scopes}); err != nil {
+			return "", fmt.Errorf("update %s scopes: %w", name, err)
+		}
+	}
+
+	if cached, ok := readCachedKey(dbtoolKeyFile); ok {
+		return cached, nil
+	}
+
+	res, err := svc.RotateKey(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("rotate %s: %w", name, err)
+	}
+	_ = writeCachedKey(dbtoolKeyFile, res.APIKey)
+	return res.APIKey, nil
+}
+
+const dbtoolKeyFile = "~/.opendray/dbtool.key"
+
+// readCachedKey / writeCachedKey are the generic twins of
+// readMemoryKey / writeMemoryKey for additional system-integration
+// key caches.
+func readCachedKey(file string) (string, bool) {
+	body, err := os.ReadFile(expandPath(file))
+	if err != nil {
+		return "", false
+	}
+	key := strings.TrimSpace(string(body))
+	if key == "" {
+		return "", false
+	}
+	return key, true
+}
+
+func writeCachedKey(file, key string) error {
+	path := expandPath(file)
+	if err := os.MkdirAll(filepathDir(path), 0o700); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(key+"\n"), 0o600)
 }
 
 // scopesCover reports whether every scope in want is granted by have

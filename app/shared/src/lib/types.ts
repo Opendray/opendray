@@ -301,6 +301,8 @@ export const ALL_SCOPES = [
   'provider:read',
   'memory:read',
   'memory:write',
+  'db:read',
+  'db:write',
 ] as const
 
 export type Scope = (typeof ALL_SCOPES)[number] | string
