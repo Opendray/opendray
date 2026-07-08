@@ -10,8 +10,46 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Security
+
+- **Database tool — cryptographic per-project isolation for the
+  auto-attached MCP.** The `opendray-dbtool` MCP now holds a `db:signed`
+  key and sends a per-session `X-OpenDray-Dbtool-Sig = HMAC(secret, cwd)`
+  header; the gateway rejects a signed-key call whose signature doesn't
+  match the `cwd`. An agent that extracts the injected key can no longer
+  forge another project's `cwd` — closing the residual the honest-path
+  check left open. Antigravity (whose MCP config is HOME-global and can't
+  carry a per-session signature — a Google limitation) and third-party
+  integration keys keep the plain `?cwd=` check via a separate honest-path
+  key. Migration `0074` reseeds the kb_integrations page.
+
+### Fixed
+
+- **Database tool — bigint primary keys stay exact.** Row update/delete
+  and filters decode JSON with `UseNumber`, so a 64-bit primary key above
+  2^53 is no longer rounded through `float64` (which could address the
+  wrong row or match none). Numbers beyond int64 keep their exact string.
+- **Database tool — consistent table metadata.** `TableMeta` runs its four
+  catalog queries (columns / PK / indexes / FKs) inside one read-only
+  transaction, so concurrent DDL can't produce a half-updated view.
+
+## [v2.11.0] — 2026-07-08
+
 ### Added
 
+- **Upload files & folders into a session from the files sidebar.** The
+  session inspector's files panel can now create folders and upload files
+  or whole folders (recursively, preserving the subtree) via an upload
+  button or drag-and-drop — including dropping onto a specific folder row
+  to target it, or the panel background to target the session cwd.
+  Uploads land in the session's working directory where the AI model reads
+  them, streamed to disk (250 MiB per file) and confined to the session
+  cwd by the same `resolveWithinRoot` sandbox the download/zip endpoints
+  use — path traversal and symlinked-intermediate escapes are rejected.
+  Conflicting names auto-rename (`name-1.ext`) instead of overwriting what
+  the session produced. New admin-only endpoint `POST /api/v1/fs/upload`
+  on the existing `/fs` group; the tree refreshes to show new files
+  (including renames). (#420)
 - **Database tool — direct project database access.** opendray can now
   hold per-project (cwd-keyed) database connections and expose them like a
   JetBrains-style database tool: browse schemas/tables, read table data,
@@ -35,6 +73,33 @@ for the full rationale and what triggers a major bump.
   via `[dbtool]` (enabled by default; the feature is inert until a
   connection is registered). Migrations `0072` (schema) and `0073`
   (kb_integrations reseed).
+- **Mobile: antigravity multi-account parity with web.** The mobile app
+  gains the antigravity multi-account management already shipped on web
+  (#396). (#409)
+- **Mobile: Grok provider brand mark**, syncing the real Grok icon added
+  to web in #405. (#408)
+- **Memory search surfaces folded (deduped) variants** in `memory_search`
+  and `memory_load_context`, so callers see the merged form rather than
+  near-duplicate rows. (#414)
+
+### Fixed
+
+- **antigravity MCP injection now targets the real config surface**, so
+  injected servers actually reach antigravity sessions. (#416)
+- **Transcript overlay for CLIs with unscrollable TUIs** — the web
+  terminal can surface scrollback for tools whose full-screen TUI can't be
+  scrolled natively. (#415)
+- **`project_search` moved from admin-only to dual-auth + `memory:read`
+  scope**, so integrations can search project memory. (#413)
+- **Per-provider spawn parity** — codex bypass, antigravity memory CLI,
+  and a default-model guard for integration-originated sessions. (#412)
+- **Integration default-agent model is an explicit dropdown** rather than
+  a free-text datalist, on both web (#411) and mobile (#410).
+
+### Docs
+
+- **README refresh** — reworked hero, added comparison + FAQ, and synced
+  the 5-CLI provider list across all 10 translations. (#417)
 
 ## [v2.10.1] — 2026-06-22
 

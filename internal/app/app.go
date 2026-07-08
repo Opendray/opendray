@@ -8,6 +8,8 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -792,24 +794,46 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			PoolMaxConns: cfg.Dbtool.PoolMaxConns,
 			PoolIdleTTL:  cfg.Dbtool.PoolIdleTTLDuration(),
 		}, log)
-		dbtoolHandlers = dbtool.NewHandlers(dbtoolSvc, log)
+		// HMAC secret for the per-session cwd binding (server-side only).
+		signSecret, secErr := ensureDbtoolSignSecret()
+		if secErr != nil {
+			log.Warn("dbtool per-session cwd signing disabled — sign secret unavailable",
+				"err", secErr)
+		}
+		dbtoolHandlers = dbtool.NewHandlers(dbtoolSvc, signSecret, log)
 
-		// Mint the dedicated `opendray-dbtool` integration key and
-		// auto-attach the MCP server to spawned sessions — mirroring the
-		// memory auto-attach, but on its own key so the memory key never
-		// silently gains db scopes (and vice versa).
-		if key, err := ensureDbtoolIntegration(ctx, intgrSvc); err != nil {
-			log.Warn("dbtool MCP auto-attach disabled — could not mint integration key",
-				"err", err)
-		} else if binPath, perr := os.Executable(); perr != nil {
-			log.Warn("dbtool MCP auto-attach disabled — os.Executable failed",
-				"err", perr)
-		} else {
+		// Two auto-attach keys (see ensureDbtoolKey): the SIGNED key for
+		// providers whose MCP config is per-session (the gateway then
+		// requires an HMAC(cwd) proof, closing the "extract key + forge
+		// cwd" residual), and the ANTIGRAVITY key (honest-path) because
+		// antigravity's MCP config is HOME-global and cannot carry a
+		// per-session signature.
+		key, err := ensureDbtoolKey(ctx, intgrSvc, "opendray-dbtool",
+			[]string{"db:read", "db:write", "db:signed"}, dbtoolKeyFile)
+		agyKey, agyErr := ensureDbtoolKey(ctx, intgrSvc, "opendray-dbtool-agy",
+			[]string{"db:read", "db:write"}, dbtoolAgyKeyFile)
+		binPath, perr := os.Executable()
+		switch {
+		case secErr != nil:
+			// Fail closed: without the secret the gateway can't verify
+			// signatures, so a db:signed key would silently degrade to
+			// honest-path. Don't advertise a scope we can't enforce —
+			// leave the MCP unattached (the web UI still works).
+			log.Warn("dbtool MCP auto-attach disabled — signing secret unavailable", "err", secErr)
+		case err != nil:
+			log.Warn("dbtool MCP auto-attach disabled — could not mint signed key", "err", err)
+		case agyErr != nil:
+			log.Warn("dbtool MCP auto-attach disabled — could not mint antigravity key", "err", agyErr)
+		case perr != nil:
+			log.Warn("dbtool MCP auto-attach disabled — os.Executable failed", "err", perr)
+		default:
 			sessionProvider.WithDbtoolAutoAttach(catalog.DbtoolAutoAttach{
 				Enabled:    true,
 				BinaryPath: binPath,
 				BaseURL:    listenLoopback(cfg.Listen),
 				APIKey:     key,
+				AgyAPIKey:  agyKey,
+				SignSecret: signSecret,
 			})
 			mcpHandlers.AddBuiltins(mcpapi.Server{
 				ID:        "opendray-dbtool",
@@ -1887,23 +1911,15 @@ func ensureMemoryIntegration(ctx context.Context, svc *integration.Service) (str
 	return res.APIKey, nil
 }
 
-// ensureDbtoolIntegration guarantees an integration row named
-// "opendray-dbtool" exists with the db scopes and returns its plaintext
-// key, cached at ~/.opendray/dbtool.key. Same contract as
-// ensureMemoryIntegration: reuse cache when present, rotate once when
-// missing, reconcile scopes on upgrade.
-func ensureDbtoolIntegration(ctx context.Context, svc *integration.Service) (string, error) {
-	const name = "opendray-dbtool"
-	scopes := []string{
-		// The auto-attached mcp-dbtool subprocess authenticates as this
-		// key. db:write is included so db_execute / row CRUD work; the
-		// real write fence is per-connection (read_only flag) plus the
-		// gateway's statement classification — the operator decides per
-		// database whether agents may mutate it.
-		"db:read",
-		"db:write",
-	}
-
+// ensureDbtoolKey guarantees an integration row `name` with `scopes`
+// exists and returns its plaintext key, cached at keyFile. Same contract
+// as ensureMemoryIntegration: reuse cache when present, rotate once when
+// missing, reconcile scopes on upgrade. dbtool mints two keys through
+// this: the SIGNED key (carries db:signed — used by providers whose MCP
+// config is per-session, so the gateway can require an HMAC(cwd) proof),
+// and the ANTIGRAVITY key (honest-path, no db:signed — antigravity's MCP
+// config is HOME-global and cannot carry a per-session signature).
+func ensureDbtoolKey(ctx context.Context, svc *integration.Service, name string, scopes []string, keyFile string) (string, error) {
 	all, err := svc.List(ctx)
 	if err != nil {
 		return "", fmt.Errorf("list integrations: %w", err)
@@ -1925,7 +1941,7 @@ func ensureDbtoolIntegration(ctx context.Context, svc *integration.Service) (str
 		if err != nil {
 			return "", fmt.Errorf("register %s: %w", name, err)
 		}
-		_ = writeCachedKey(dbtoolKeyFile, res.APIKey)
+		_ = writeCachedKey(keyFile, res.APIKey)
 		return res.APIKey, nil
 	}
 	id := existing.ID
@@ -1936,7 +1952,7 @@ func ensureDbtoolIntegration(ctx context.Context, svc *integration.Service) (str
 		}
 	}
 
-	if cached, ok := readCachedKey(dbtoolKeyFile); ok {
+	if cached, ok := readCachedKey(keyFile); ok {
 		return cached, nil
 	}
 
@@ -1944,11 +1960,34 @@ func ensureDbtoolIntegration(ctx context.Context, svc *integration.Service) (str
 	if err != nil {
 		return "", fmt.Errorf("rotate %s: %w", name, err)
 	}
-	_ = writeCachedKey(dbtoolKeyFile, res.APIKey)
+	_ = writeCachedKey(keyFile, res.APIKey)
 	return res.APIKey, nil
 }
 
-const dbtoolKeyFile = "~/.opendray/dbtool.key"
+// ensureDbtoolSignSecret loads (or generates + caches) the HMAC secret
+// the gateway uses to sign/verify the per-session cwd binding. It lives
+// only on disk (~/.opendray/dbtool-sign.key), never in the DB and never
+// injected into a session — an agent that could read it could forge any
+// cwd, defeating the whole point.
+func ensureDbtoolSignSecret() ([]byte, error) {
+	if cached, ok := readCachedKey(dbtoolSignKeyFile); ok {
+		if raw, err := base64.StdEncoding.DecodeString(cached); err == nil && len(raw) >= 32 {
+			return raw, nil
+		}
+	}
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return nil, fmt.Errorf("generate dbtool sign secret: %w", err)
+	}
+	_ = writeCachedKey(dbtoolSignKeyFile, base64.StdEncoding.EncodeToString(b))
+	return b, nil
+}
+
+const (
+	dbtoolKeyFile     = "~/.opendray/dbtool.key"
+	dbtoolAgyKeyFile  = "~/.opendray/dbtool-agy.key"
+	dbtoolSignKeyFile = "~/.opendray/dbtool-sign.key"
+)
 
 // readCachedKey / writeCachedKey are the generic twins of
 // readMemoryKey / writeMemoryKey for additional system-integration

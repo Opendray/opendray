@@ -8,7 +8,7 @@ import 'package:opendray/features/database/schema_browser.dart';
 
 // DatabaseTab is the mobile Database surface (simplified vs web): manage
 // per-project connections, then drill into a connection to browse its
-// schema and run read-only queries. Row-level editing is web-only.
+// schema, edit rows, and run SQL (reads + writes on writable connections).
 class DatabaseTab extends ConsumerStatefulWidget {
   const DatabaseTab({required this.cwd, super.key});
 
