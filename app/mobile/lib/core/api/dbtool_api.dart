@@ -144,6 +144,73 @@ class DbtoolApi {
       throw toApiException(e);
     }
   }
+
+  // Table metadata — columns + primary key — needed to edit rows (the
+  // primary key addresses the row; a table with no PK can't be edited).
+  Future<DbTableMeta> tableMeta(String id, String schema, String table) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/dbtool/connections/$id/schemas/'
+        '${Uri.encodeComponent(schema)}/tables/'
+        '${Uri.encodeComponent(table)}/meta',
+      );
+      return DbTableMeta.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<DbResultSet> insertRow(
+    String id, {
+    required String schema,
+    required String table,
+    required Map<String, dynamic> values,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/dbtool/connections/$id/rows/insert',
+        data: {'schema': schema, 'table': table, 'values': values},
+      );
+      return DbResultSet.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<int> updateRow(
+    String id, {
+    required String schema,
+    required String table,
+    required Map<String, dynamic> pk,
+    required Map<String, dynamic> values,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/dbtool/connections/$id/rows/update',
+        data: {'schema': schema, 'table': table, 'pk': pk, 'values': values},
+      );
+      return (res.data?['rows_affected'] as num?)?.toInt() ?? 0;
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  Future<int> deleteRows(
+    String id, {
+    required String schema,
+    required String table,
+    required List<Map<String, dynamic>> pks,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/dbtool/connections/$id/rows/delete',
+        data: {'schema': schema, 'table': table, 'pks': pks},
+      );
+      return (res.data?['rows_affected'] as num?)?.toInt() ?? 0;
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 }
 
 class DbConnection {
@@ -273,6 +340,65 @@ class DbColumnMeta {
 
   final String name;
   final String type;
+}
+
+// DbColumn is one column of a table's structure (distinct from
+// DbColumnMeta, which is a result-set column). Used by the row editor.
+class DbColumn {
+  DbColumn({
+    required this.name,
+    required this.dataType,
+    required this.nullable,
+  });
+
+  factory DbColumn.fromJson(Map<String, dynamic> j) => DbColumn(
+    name: j['name']?.toString() ?? '',
+    dataType: j['data_type']?.toString() ?? '',
+    nullable: j['nullable'] == true,
+  );
+
+  final String name;
+  final String dataType;
+  final bool nullable;
+}
+
+// DbTableMeta describes a table's columns and primary key — enough to
+// render the row editor and address a row for update/delete.
+class DbTableMeta {
+  DbTableMeta({
+    required this.schema,
+    required this.table,
+    required this.columns,
+    required this.primaryKey,
+  });
+
+  factory DbTableMeta.fromJson(Map<String, dynamic> j) {
+    final cols = <DbColumn>[];
+    final rawCols = j['columns'];
+    if (rawCols is List) {
+      for (final c in rawCols.whereType<Map<String, dynamic>>()) {
+        cols.add(DbColumn.fromJson(c));
+      }
+    }
+    final pk = <String>[];
+    final rawPk = j['primary_key'];
+    if (rawPk is List) {
+      for (final k in rawPk) {
+        if (k != null) pk.add(k.toString());
+      }
+    }
+    return DbTableMeta(
+      schema: j['schema']?.toString() ?? '',
+      table: j['table']?.toString() ?? '',
+      columns: cols,
+      primaryKey: pk,
+    );
+  }
+
+  final String schema;
+  final String table;
+  final List<DbColumn> columns;
+  final List<String> primaryKey;
 }
 
 class DbResultSet {

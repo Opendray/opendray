@@ -3371,7 +3371,8 @@
           "tasks": "任务",
           "history": "历史",
           "vault": "文档库",
-          "cortex": "心智中枢"
+          "cortex": "心智中枢",
+          "database": "数据库"
         }
       },
       "cortex": {

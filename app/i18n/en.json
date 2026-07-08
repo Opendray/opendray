@@ -3371,7 +3371,8 @@
           "tasks": "Tasks",
           "history": "History",
           "vault": "Vault",
-          "cortex": "Cortex"
+          "cortex": "Cortex",
+          "database": "Database"
         }
       },
       "cortex": {

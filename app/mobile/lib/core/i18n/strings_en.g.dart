@@ -3405,6 +3405,7 @@ class TranslationsWebDatabaseEn {
 	late final TranslationsWebDatabaseGridEn grid = TranslationsWebDatabaseGridEn.internal(_root);
 	late final TranslationsWebDatabaseConsoleEn console = TranslationsWebDatabaseConsoleEn.internal(_root);
 	late final TranslationsWebDatabasePanelEn panel = TranslationsWebDatabasePanelEn.internal(_root);
+	late final TranslationsWebDatabaseWorkbenchEn workbench = TranslationsWebDatabaseWorkbenchEn.internal(_root);
 }
 
 // Path: more.identity
@@ -6816,9 +6817,6 @@ class TranslationsWebProjectTabsEn {
 
 	/// en: 'Hygiene'
 	String get hygiene => 'Hygiene';
-
-	/// en: 'Database'
-	String get database => 'Database';
 }
 
 // Path: web.project.docLabel
@@ -11816,6 +11814,21 @@ class TranslationsWebDatabasePanelEn {
 
 	/// en: 'SQL console'
 	String get console => 'SQL console';
+
+	/// en: 'Open workbench'
+	String get openWorkbench => 'Open workbench';
+}
+
+// Path: web.database.workbench
+class TranslationsWebDatabaseWorkbenchEn {
+	TranslationsWebDatabaseWorkbenchEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Database workbench'
+	String get title => 'Database workbench';
 }
 
 // Path: more.items.integrations
@@ -13657,6 +13670,9 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -17058,6 +17074,9 @@ class TranslationsSessionsInspectorShellTabsEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -17339,6 +17358,7 @@ extension on Translations {
 			'web.sessions.inspector.tabs.history' => 'History',
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
+			'web.sessions.inspector.tabs.database' => 'Database',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
@@ -17613,7 +17633,6 @@ extension on Translations {
 			'web.project.tabs.archived' => 'Archived',
 			'web.project.tabs.overview' => 'Overview',
 			'web.project.tabs.hygiene' => 'Hygiene',
-			'web.project.tabs.database' => 'Database',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.current_objective' => 'Current objective',
@@ -19578,6 +19597,8 @@ extension on Translations {
 			'web.database.panel.deleted' => 'Connection deleted',
 			'web.database.panel.confirmDelete' => 'Delete this connection?',
 			'web.database.panel.console' => 'SQL console',
+			'web.database.panel.openWorkbench' => 'Open workbench',
+			'web.database.workbench.title' => 'Database workbench',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -19717,10 +19738,10 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Switch Antigravity account',
 			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).',
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.',
-			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
-			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
+			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
 			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => 'Upload failed (${status}): ${message}',
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => 'Upload failed: ${error}',
@@ -19772,6 +19793,7 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.history' => 'History',
 			'sessions.inspector.shell.tabs.vault' => 'Vault',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
+			'sessions.inspector.shell.tabs.database' => 'Database',
 			'sessions.inspector.cortex.title' => 'Cortex workspace',
 			'sessions.inspector.cortex.blurb' => 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.',
 			'sessions.inspector.cortex.open' => 'Open Cortex workspace',
@@ -20230,11 +20252,11 @@ extension on Translations {
 			'project.alsoDeleteScanner' => 'Also delete scanner docs',
 			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
 			'project.deleteForever' => 'Delete forever',
+			_ => null,
+		} ?? switch (path) {
 			'project.resetDoneSnack' => ({required Object parts}) => 'Reset: ${parts}',
 			'project.resetFailed' => ({required Object error}) => 'Reset failed: ${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} saved',
-			_ => null,
-		} ?? switch (path) {
 			'project.docSaveFailed' => ({required Object error}) => 'Save failed: ${error}',
 			'project.docHintTemplate' => ({required Object kind}) => 'Write the ${kind} as markdown…',
 			'project.deleteEntryTooltip' => 'Delete entry',
@@ -20744,11 +20766,11 @@ extension on Translations {
 			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => 'No notes match "${query}".',
 			'notesPage.emptyVault' => 'Vault is empty. Tap + to create your first note.',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.emptyFolder' => ({required Object path}) => 'Folder "${path}" is empty.',
 			'notesPage.validatePath' => 'Path is required',
 			'notesPage.validatePathDots' => 'Path cannot contain ".."',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => 'Saving…',
