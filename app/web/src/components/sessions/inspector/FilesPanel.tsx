@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import {
   ChevronRight,
   ChevronDown,
@@ -7,16 +8,19 @@ import {
   Folder,
   Loader2,
   Download,
+  FolderPlus,
 } from 'lucide-react'
 
 import {
   listDir,
+  makeDir,
   fsDownloadURL,
   fsZipURL,
   triggerDownload,
 } from '@/lib/fs'
 import { useAuth } from '@/stores/auth'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 import { FileViewerDialog } from './FileViewerDialog'
 
@@ -30,19 +34,35 @@ interface FilesPanelProps {
 // a modal viewer backed by /api/v1/fs/read.
 export function FilesPanel({ cwd }: FilesPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null)
+  const qc = useQueryClient()
+
+  async function handleNewFolder() {
+    const name = window.prompt('New folder name')?.trim()
+    if (!name) return
+    try {
+      await makeDir(cwd, name)
+      await qc.invalidateQueries({ queryKey: ['fs', cwd] })
+      toast.success(`Created folder ${name}`)
+    } catch (e) {
+      toast.error('Could not create folder', {
+        description: (e as Error).message,
+      })
+    }
+  }
 
   return (
     <>
+      <div className="flex items-center gap-1 px-1 pb-1">
+        <Button variant="ghost" size="sm" onClick={handleNewFolder}>
+          <FolderPlus className="size-3.5" />
+          New folder
+        </Button>
+      </div>
       <div className="flex flex-col gap-0.5 font-mono">
         <FsNode
           path={cwd}
           name={cwd}
           isRoot
-          // downloadRoot is the cwd: the server-side download/zip
-          // endpoints reject any resolved path that escapes it, so
-          // the operator's reach via the inspector matches what they
-          // can browse here — files outside the session subtree
-          // can't be exfiltrated through a hand-crafted URL.
           downloadRoot={cwd}
           onOpenFile={(p) => setViewing(p)}
         />
