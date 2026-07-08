@@ -101,6 +101,10 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
     }
   }
 
+  function onDropFiles(dir: string, dt: DataTransfer) {
+    void walkDropEntries(dt).then((w) => drive(w, dir))
+  }
+
   async function handleInputFiles(list: FileList | null, webkitRelative: boolean) {
     if (!list || list.length === 0) return
     const walked: WalkedFile[] = Array.from(list).map((file) => ({
@@ -214,6 +218,7 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
           // operator's reach matches what they can browse here.
           downloadRoot={cwd}
           onOpenFile={(p) => setViewing(p)}
+          onDropFiles={onDropFiles}
         />
         {dragging && (
           <div className="px-2 py-1 text-[11px] text-muted-foreground">
@@ -241,6 +246,7 @@ interface FsNodeProps {
   // whole subtree shares the same confinement.
   downloadRoot: string
   onOpenFile: (path: string) => void
+  onDropFiles: (dir: string, dt: DataTransfer) => void
 }
 
 function FsNode({
@@ -250,8 +256,10 @@ function FsNode({
   depth = 0,
   downloadRoot,
   onOpenFile,
+  onDropFiles,
 }: FsNodeProps) {
   const [open, setOpen] = useState(isRoot)
+  const [rowDrag, setRowDrag] = useState(false)
   const indent = { paddingLeft: `${depth * 12}px` }
   const token = useAuth((s) => s.token)
 
@@ -264,7 +272,27 @@ function FsNode({
 
   return (
     <div className="flex flex-col">
-      <div className="group relative flex items-stretch">
+      <div
+        className={cn(
+          'group relative flex items-stretch rounded-sm',
+          rowDrag && 'ring-2 ring-accent/70',
+        )}
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('Files')) {
+            e.preventDefault()
+            e.stopPropagation()
+            e.dataTransfer.dropEffect = 'copy'
+            setRowDrag(true)
+          }
+        }}
+        onDragLeave={() => setRowDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setRowDrag(false)
+          onDropFiles(path, e.dataTransfer)
+        }}
+      >
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -323,6 +351,7 @@ function FsNode({
                 depth={depth + 1}
                 downloadRoot={downloadRoot}
                 onOpenFile={onOpenFile}
+                onDropFiles={onDropFiles}
               />
             ) : (
               <div key={e.path} className="group relative flex items-stretch">
