@@ -6,9 +6,10 @@ import 'package:opendray/core/api/dbtool_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // QueryScreen is the mobile SQL console: a multiline field plus a
-// read-only results grid. Write statements are rejected server-side
-// unless the connection is writable and the key carries db:write — the
-// mobile client only surfaces the outcome.
+// results grid. One statement per run — reads (SELECT/EXPLAIN/SHOW…)
+// render a grid; writes (INSERT/UPDATE/DELETE/DDL) run against a writable
+// connection and report rows affected. A write on a read-only connection
+// is rejected server-side and shown as an error.
 class QueryScreen extends ConsumerStatefulWidget {
   const QueryScreen({required this.connection, super.key});
 
@@ -65,6 +66,16 @@ class _QueryScreenState extends ConsumerState<QueryScreen> {
       ),
       body: Column(
         children: [
+          if (widget.connection.readOnly)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              child: Text(
+                t.web.database.grid.readOnlyHint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
