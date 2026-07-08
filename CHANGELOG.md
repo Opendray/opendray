@@ -10,6 +10,22 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.11.1] — 2026-07-09
+
+### Added
+
+- **Mobile parity — Database tool in the session inspector.** The mobile
+  app's session inspector gains a Database tab mirroring the web tool:
+  browse schemas and tables, page through rows, insert / update / delete
+  by primary key, and run read or write SQL against the project's
+  registered connections — honouring `db:read` / `db:write` scopes and
+  read-only connections, and reusing the session's `cwd` for isolation.
+- **Mobile parity — upload files into a session.** The mobile session
+  inspector's Files tab gains an upload button: pick one or more files and
+  stream them into the current directory via `POST /api/v1/fs/upload`,
+  matching the web files-sidebar upload shipped in v2.11.0 (same
+  `resolveWithinRoot` sandbox, auto-rename on name collision).
+
 ### Security
 
 - **Database tool — cryptographic per-project isolation for the
@@ -32,6 +48,12 @@ for the full rationale and what triggers a major bump.
 - **Database tool — consistent table metadata.** `TableMeta` runs its four
   catalog queries (columns / PK / indexes / FKs) inside one read-only
   transaction, so concurrent DDL can't produce a half-updated view.
+
+### Changed
+
+- **Dependencies.** Bump `golang.org/x/crypto` 0.50.0 → 0.52.0 (#421) and
+  `golang.org/x/net` 0.52.0 → 0.55.0 (#418), pulling transitive `x/sys`
+  and `x/text` updates. Build and vet clean.
 
 ## [v2.11.0] — 2026-07-08
 
