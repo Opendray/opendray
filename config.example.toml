@@ -91,3 +91,15 @@ enabled = false
 # Default scope for stored memories: "project" (default) or "global".
 [memory.scope]
 default = "project"
+
+# Database tool — per-project external database connections (schema browser,
+# row CRUD, SQL console) over REST + the opendray-dbtool MCP server.
+# Enabled by default; the feature is inert until an admin registers a
+# connection. Passwords are encrypted at rest with the backup field cipher
+# when backups are armed.
+[dbtool]
+# enabled = true
+# query_timeout = "30s"     # per-statement cap (ctx deadline + statement_timeout)
+# max_rows = 500            # default result-row cap (requests may raise to 10000)
+# pool_max_conns = 3        # pgx pool cap per external connection
+# pool_idle_ttl = "5m"      # close external pools idle longer than this

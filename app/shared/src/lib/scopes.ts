@@ -11,7 +11,12 @@
 
 import { ALL_SCOPES } from './types'
 
-export type ScopeGroup = 'sessions' | 'channels' | 'events' | 'misc'
+export type ScopeGroup =
+  | 'sessions'
+  | 'channels'
+  | 'events'
+  | 'database'
+  | 'misc'
 
 export interface ScopeInfo {
   id: string
@@ -87,6 +92,18 @@ const RAW: Record<string, Omit<ScopeInfo, 'id'>> = {
       'Store new memories. Used by the memory MCP so agents can persist durable facts. Does not grant delete/re-embed (admin only).',
     group: 'misc',
   },
+  'db:read': {
+    title: 'Read databases',
+    description:
+      'Browse a project\'s registered databases: schemas, tables, table data, and read-only SQL. Used by the Database-tool MCP. Cannot register connections (admin only).',
+    group: 'database',
+  },
+  'db:write': {
+    title: 'Write databases',
+    description:
+      'Run INSERT/UPDATE/DELETE and row edits against writable connections. Blocked on connections the operator marked read-only. Cannot register connections (admin only).',
+    group: 'database',
+  },
 }
 
 export const SCOPE_INFO: ScopeInfo[] = ALL_SCOPES.map((id) => {
@@ -118,6 +135,12 @@ export const SCOPE_GROUPS: { id: ScopeGroup; label: string; blurb: string }[] = 
     label: 'Event subscriptions',
     blurb:
       'Live-tail topics from the gateway event bus over WebSocket. Each subscription is a separate scope.',
+  },
+  {
+    id: 'database',
+    label: 'Databases',
+    blurb:
+      'Browse and query a project\'s registered databases via the Database tool.',
   },
   {
     id: 'misc',

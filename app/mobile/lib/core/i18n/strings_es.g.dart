@@ -174,6 +174,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebExportEs export = _TranslationsWebExportEs._(_root);
 	@override late final _TranslationsWebKnowledgeEs knowledge = _TranslationsWebKnowledgeEs._(_root);
 	@override late final _TranslationsWebCortexEs cortex = _TranslationsWebCortexEs._(_root);
+	@override late final _TranslationsWebDatabaseEs database = _TranslationsWebDatabaseEs._(_root);
 }
 
 // Path: more
@@ -1676,6 +1677,23 @@ class _TranslationsWebCortexEs extends TranslationsWebCortexEn {
 	@override late final _TranslationsWebCortexSettingsEs settings = _TranslationsWebCortexSettingsEs._(_root);
 }
 
+// Path: web.database
+class _TranslationsWebDatabaseEs extends TranslationsWebDatabaseEn {
+	_TranslationsWebDatabaseEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebDatabaseDialogEs dialog = _TranslationsWebDatabaseDialogEs._(_root);
+	@override late final _TranslationsWebDatabaseResultsEs results = _TranslationsWebDatabaseResultsEs._(_root);
+	@override late final _TranslationsWebDatabaseTreeEs tree = _TranslationsWebDatabaseTreeEs._(_root);
+	@override late final _TranslationsWebDatabaseRowEs row = _TranslationsWebDatabaseRowEs._(_root);
+	@override late final _TranslationsWebDatabaseGridEs grid = _TranslationsWebDatabaseGridEs._(_root);
+	@override late final _TranslationsWebDatabaseConsoleEs console = _TranslationsWebDatabaseConsoleEs._(_root);
+	@override late final _TranslationsWebDatabasePanelEs panel = _TranslationsWebDatabasePanelEs._(_root);
+	@override late final _TranslationsWebDatabaseWorkbenchEs workbench = _TranslationsWebDatabaseWorkbenchEs._(_root);
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityEs extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -3144,6 +3162,8 @@ class _TranslationsWebSessionsHeaderEs extends TranslationsWebSessionsHeaderEn {
 	@override String pid({required Object pid}) => 'pid ${pid}';
 	@override String get selectText => 'Seleccionar y copiar';
 	@override String get selectTextTooltip => 'Abre una vista de texto seleccionable para copiar cualquier parte de la salida';
+	@override String get transcript => 'Transcripción';
+	@override String get transcriptTooltip => 'Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)';
 }
 
 // Path: web.sessions.terminal
@@ -3166,6 +3186,12 @@ class _TranslationsWebSessionsTerminalEs extends TranslationsWebSessionsTerminal
 	@override String get selectCopyCopyAll => 'Copiar todo';
 	@override String get selectCopyNoSelection => 'Selecciona primero algún texto';
 	@override String get selectCopyEmpty => 'Aún no hay salida que copiar';
+	@override String get transcriptTitle => 'Transcripción de la sesión';
+	@override String get transcriptDesc => 'Todo lo que el PTY ha escrito hasta ahora, sin códigos de control. Útil cuando la CLI en ejecución no permite desplazarse por su propia vista.';
+	@override String get transcriptLoading => 'Cargando transcripción…';
+	@override String get transcriptEmpty => 'Aún no hay salida.';
+	@override String get transcriptFetchFailed => 'No se pudo cargar la transcripción';
+	@override String get transcriptRefresh => 'Recargar';
 }
 
 // Path: web.sessions.spawn
@@ -4435,6 +4461,7 @@ class _TranslationsWebIntegrationsDefaultAgentEs extends TranslationsWebIntegrat
 	@override String get providerNone => 'Sin predeterminado';
 	@override String get modelLabel => 'Modelo predeterminado';
 	@override String get modelPlaceholder => 'Predeterminado del proveedor (p. ej. opus)';
+	@override String get modelPickAria => 'Elegir un modelo conocido';
 	@override String get accountLabel => 'Cuenta de Claude predeterminada';
 	@override String get accountNone => 'Sin predeterminado';
 	@override String get accountTokenMissing => '(falta el token)';
@@ -5865,6 +5892,137 @@ class _TranslationsWebCortexSettingsEs extends TranslationsWebCortexSettingsEn {
 	@override late final _TranslationsWebCortexSettingsInjectionEs injection = _TranslationsWebCortexSettingsInjectionEs._(_root);
 }
 
+// Path: web.database.dialog
+class _TranslationsWebDatabaseDialogEs extends TranslationsWebDatabaseDialogEn {
+	_TranslationsWebDatabaseDialogEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get createTitle => 'Añadir conexión de base de datos';
+	@override String get editTitle => 'Editar conexión';
+	@override String get description => 'Conéctate a la base de datos de este proyecto para explorar y editar sus datos. Las credenciales se almacenan cifradas.';
+	@override String get name => 'Nombre';
+	@override String get host => 'Host';
+	@override String get port => 'Puerto';
+	@override String get database => 'Base de datos';
+	@override String get username => 'Usuario';
+	@override String get password => 'Contraseña';
+	@override String get passwordKept => 'sin cambios — déjalo vacío para conservarla';
+	@override String get sslMode => 'Modo SSL';
+	@override String get readOnly => 'Solo lectura (bloquear escrituras desde esta conexión)';
+	@override String get superuserWarning => 'Este usuario es superusuario (o el administrador linivek). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.';
+	@override String get test => 'Probar';
+	@override String get save => 'Guardar';
+	@override String get testFailed => 'La prueba de conexión falló';
+	@override String testOk({required Object version, required Object ms}) => 'Conectado — PostgreSQL ${version} (${ms} ms)';
+	@override String get savedCreate => 'Conexión añadida';
+	@override String get savedEdit => 'Conexión actualizada';
+	@override String get missingFields => 'Nombre, host, base de datos y usuario son obligatorios';
+}
+
+// Path: web.database.results
+class _TranslationsWebDatabaseResultsEs extends TranslationsWebDatabaseResultsEn {
+	_TranslationsWebDatabaseResultsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String noColumns({required Object command, required Object rows}) => '${command} — ${rows} fila(s) afectada(s)';
+}
+
+// Path: web.database.tree
+class _TranslationsWebDatabaseTreeEs extends TranslationsWebDatabaseTreeEn {
+	_TranslationsWebDatabaseTreeEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => 'Cargando esquemas…';
+	@override String get noSchemas => 'No hay esquemas visibles para este usuario';
+}
+
+// Path: web.database.row
+class _TranslationsWebDatabaseRowEs extends TranslationsWebDatabaseRowEn {
+	_TranslationsWebDatabaseRowEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get insertTitle => 'Insertar fila';
+	@override String get editTitle => 'Editar fila';
+	@override String get setNull => 'poner NULL';
+	@override String get save => 'Guardar';
+	@override String get savedInsert => 'Fila insertada';
+	@override String get savedEdit => 'Fila actualizada';
+	@override String get noChanges => 'No hay cambios que guardar';
+}
+
+// Path: web.database.grid
+class _TranslationsWebDatabaseGridEs extends TranslationsWebDatabaseGridEn {
+	_TranslationsWebDatabaseGridEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get insert => 'Insertar';
+	@override String get refresh => 'Actualizar';
+	@override String get edit => 'Editar';
+	@override String get delete => 'Eliminar';
+	@override String get deleted => 'Fila eliminada';
+	@override String get confirmDelete => '¿Eliminar esta fila?';
+	@override String get loading => 'Cargando filas…';
+	@override String get readOnlyHint => 'Esta conexión es de solo lectura — no se pueden editar filas.';
+	@override String get noPkHint => 'Esta tabla no tiene clave primaria — la edición de filas está deshabilitada.';
+	@override String pageInfo({required Object from, required Object to}) => 'Filas ${from}–${to}';
+}
+
+// Path: web.database.console
+class _TranslationsWebDatabaseConsoleEs extends TranslationsWebDatabaseConsoleEn {
+	_TranslationsWebDatabaseConsoleEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => 'SELECT * FROM …';
+	@override String get run => 'Ejecutar';
+	@override String get runHint => 'Cmd/Ctrl+Enter para ejecutar';
+	@override String stats({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} fila(s) · ${ms} ms';
+	@override String get truncated => 'truncado';
+	@override String get empty => 'Ejecuta una consulta para ver resultados.';
+	@override String get truncatedNote => 'resultados truncados';
+}
+
+// Path: web.database.panel
+class _TranslationsWebDatabasePanelEs extends TranslationsWebDatabasePanelEn {
+	_TranslationsWebDatabasePanelEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => 'Cargando conexiones…';
+	@override String get emptyTitle => 'Sin conexiones de base de datos';
+	@override String get emptyBody => 'Registra una conexión para explorar la base de datos del proyecto, editar filas y ejecutar SQL. Las conexiones son por proyecto y se almacenan cifradas.';
+	@override String get addConnection => 'Añadir conexión';
+	@override String get add => 'Añadir';
+	@override String get edit => 'Editar';
+	@override String get delete => 'Eliminar';
+	@override String get deleted => 'Conexión eliminada';
+	@override String get confirmDelete => '¿Eliminar esta conexión?';
+	@override String get console => 'Consola SQL';
+	@override String get openWorkbench => 'Abrir banco de trabajo';
+}
+
+// Path: web.database.workbench
+class _TranslationsWebDatabaseWorkbenchEs extends TranslationsWebDatabaseWorkbenchEn {
+	_TranslationsWebDatabaseWorkbenchEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Banco de trabajo de BD';
+}
+
 // Path: more.items.integrations
 class _TranslationsMoreItemsIntegrationsEs extends TranslationsMoreItemsIntegrationsEn {
 	_TranslationsMoreItemsIntegrationsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -6247,6 +6405,9 @@ class _TranslationsSessionsInspectorFilesEs extends TranslationsSessionsInspecto
 	@override String readFailedGeneric({required Object error}) => 'Falló la lectura: ${error}';
 	@override String get parent => 'Superior';
 	@override String get backToCwd => 'Volver al cwd de la session';
+	@override String get upload => 'Subir archivos';
+	@override String uploaded({required Object count}) => 'Subidos ${count} archivo(s)';
+	@override String uploadFailed({required Object name, required Object message}) => '${name}: error al subir — ${message}';
 }
 
 // Path: sessions.inspector.git
@@ -6909,6 +7070,7 @@ class _TranslationsWebSessionsInspectorTabsEs extends TranslationsWebSessionsIns
 	@override String get history => 'Historial';
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
+	@override String get database => 'BD';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -8902,6 +9064,7 @@ class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInsp
 	@override String get history => 'Historial';
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
+	@override String get database => 'BD';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9083,6 +9246,8 @@ extension on TranslationsEs {
 			'web.sessions.header.pid' => ({required Object pid}) => 'pid ${pid}',
 			'web.sessions.header.selectText' => 'Seleccionar y copiar',
 			'web.sessions.header.selectTextTooltip' => 'Abre una vista de texto seleccionable para copiar cualquier parte de la salida',
+			'web.sessions.header.transcript' => 'Transcripción',
+			'web.sessions.header.transcriptTooltip' => 'Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)',
 			'web.sessions.terminal.uploadingToast' => 'Subiendo imagen…',
 			'web.sessions.terminal.uploadedToast' => 'Imagen adjuntada',
 			'web.sessions.terminal.uploadFailedToast' => 'Error al subir',
@@ -9096,6 +9261,12 @@ extension on TranslationsEs {
 			'web.sessions.terminal.selectCopyCopyAll' => 'Copiar todo',
 			'web.sessions.terminal.selectCopyNoSelection' => 'Selecciona primero algún texto',
 			'web.sessions.terminal.selectCopyEmpty' => 'Aún no hay salida que copiar',
+			'web.sessions.terminal.transcriptTitle' => 'Transcripción de la sesión',
+			'web.sessions.terminal.transcriptDesc' => 'Todo lo que el PTY ha escrito hasta ahora, sin códigos de control. Útil cuando la CLI en ejecución no permite desplazarse por su propia vista.',
+			'web.sessions.terminal.transcriptLoading' => 'Cargando transcripción…',
+			'web.sessions.terminal.transcriptEmpty' => 'Aún no hay salida.',
+			'web.sessions.terminal.transcriptFetchFailed' => 'No se pudo cargar la transcripción',
+			'web.sessions.terminal.transcriptRefresh' => 'Recargar',
 			'web.sessions.spawn.title' => 'Crear session',
 			'web.sessions.spawn.description' => 'Inicia una session de la CLI con un proveedor registrado.',
 			'web.sessions.spawn.provider' => 'Proveedor',
@@ -9151,6 +9322,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.tabs.history' => 'Historial',
 			'web.sessions.inspector.tabs.vault' => 'Bóveda',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
+			'web.sessions.inspector.tabs.database' => 'BD',
 			'web.sessions.inspector.vaultPanel.open' => 'Abrir Bóveda',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Docs del proyecto',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Docs del proyecto escritos por el agente en la bóveda. Revincula la carpeta si las notas de este proyecto viven en otro sitio.',
@@ -9474,6 +9646,8 @@ extension on TranslationsEs {
 			'web.project.archived.restoredToast' => 'Restaurado',
 			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.reset.button' => 'Restablecer',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
 			'web.project.reset.alwaysDeleted' => 'Siempre se elimina: objetivo, plan, propuestas, diario, decisiones de limpieza.',
@@ -9483,8 +9657,6 @@ extension on TranslationsEs {
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Eliminar también las memorias de pgvector',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'para este scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Hechos a largo plazo que el agente almacenó (preferencias del usuario, datos del proyecto). No se pueden recuperar.',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.cancel' => 'Cancelar',
 			'web.project.reset.deleteForever' => 'Eliminar para siempre',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Restablecido: se eliminó ${summary}',
@@ -9988,6 +10160,8 @@ extension on TranslationsEs {
 			'web.channels.dialog.nameRequired' => 'el nombre es obligatorio',
 			'web.channels.dialog.tokenRequired' => 'el token es obligatorio',
 			'web.channels.dialog.topicIdsNumeric' => ({required Object value}) => 'Los ID de tema deben ser numéricos (se recibió ${value})',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.fieldRequired' => ({required Object label}) => '${label} es obligatorio',
 			'web.channels.dialog.cooldownInvalid' => 'El cooldown debe ser un número de segundos no negativo',
 			'web.channels.dialog.snippetCapInvalid' => 'El límite del fragmento debe ser un número no negativo',
@@ -9997,8 +10171,6 @@ extension on TranslationsEs {
 			'web.channels.notifications.onceReplyHint' => 'Responder con texto que no sea un comando en este chat restablece la supresión, opendray reenvía tu respuesta al stdin de la session y rearma el notificador.',
 			'web.channels.notifications.terminalSnippetLabel' => 'Fragmento de terminal',
 			'web.channels.notifications.embedSnippetLabel' => 'Incrustar la pantalla reciente del terminal en las notificaciones de inactividad',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.snippetExplainer' => 'Cuando está activado, la tarjeta de inactividad incluye un fragmento en bloque de código de lo que el usuario vería en el terminal web en vivo, los elementos de la interfaz del TUI de Claude (indicador de estado, aviso de "bypass permissions", líneas separadoras) se filtran automáticamente.',
 			'web.channels.notifications.modes.onceLabel' => 'Una vez por session (recomendado)',
 			'web.channels.notifications.modes.onceHint' => 'Se dispara una vez cuando una session queda inactiva, luego permanece en silencio hasta que la session termine o respondas por este canal.',
@@ -10076,6 +10248,7 @@ extension on TranslationsEs {
 			'web.integrations.defaultAgent.providerNone' => 'Sin predeterminado',
 			'web.integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
 			'web.integrations.defaultAgent.modelPlaceholder' => 'Predeterminado del proveedor (p. ej. opus)',
+			'web.integrations.defaultAgent.modelPickAria' => 'Elegir un modelo conocido',
 			'web.integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
 			'web.integrations.defaultAgent.accountNone' => 'Sin predeterminado',
 			'web.integrations.defaultAgent.accountTokenMissing' => '(falta el token)',
@@ -10501,6 +10674,8 @@ extension on TranslationsEs {
 			'web.backups.targetsTab.newTarget' => 'Nuevo destino',
 			'web.backups.targetsTab.listFailedToast' => 'No se pudieron listar los destinos',
 			'web.backups.targetsTab.deleteConfirm' => ({required Object id}) => '¿Eliminar el destino ${id}? Las programaciones que lo referencien bloquearán la eliminación.',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetsTab.deletedToast' => 'Destino eliminado',
 			'web.backups.targetsTab.deleteFailedToast' => 'Error al eliminar',
 			'web.backups.targetsTab.connectionOkToast' => 'Conexión correcta',
@@ -10511,8 +10686,6 @@ extension on TranslationsEs {
 			'web.backups.targetsTab.columns.config' => 'Config',
 			'web.backups.targetsTab.columns.enabled' => 'Habilitado',
 			'web.backups.targetsTab.columns.actions' => 'Acciones',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetsTab.on' => 'activado',
 			'web.backups.targetsTab.off' => 'desactivado',
 			'web.backups.targetsTab.test' => 'Probar',
@@ -11015,6 +11188,8 @@ extension on TranslationsEs {
 			'web.memoryAmbient.cost.intro' => 'Resumen por proveedor agregado a partir de <1>memory_summarizer_calls</1>. Los proveedores locales (Ollama, LM Studio, Integración) tienen precio de \$0: el operador asume el coste del hardware.',
 			'web.memoryAmbient.cost.empty' => 'No hay proveedores habilitados: no hay datos de coste.',
 			'web.memoryAmbient.cost.columns.provider' => 'Proveedor',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.cost.columns.calls' => 'Llamadas',
 			'web.memoryAmbient.cost.columns.inTokens' => 'Tokens de entrada',
 			'web.memoryAmbient.cost.columns.outTokens' => 'Tokens de salida',
@@ -11025,8 +11200,6 @@ extension on TranslationsEs {
 			'web.noteEditor.tagTitle' => ({required Object tag}) => 'etiqueta #${tag}',
 			'web.noteEditor.emptyNote' => 'Nota vacía. Cambia a Origen para empezar a escribir.',
 			'web.noteEditor.saveFailedToast' => 'Error al guardar',
-			_ => null,
-		} ?? switch (path) {
 			'web.noteEditor.status.saveFailed' => 'error al guardar',
 			'web.noteEditor.status.saving' => 'guardando…',
 			'web.noteEditor.status.unsaved' => 'sin guardar',
@@ -11331,6 +11504,65 @@ extension on TranslationsEs {
 			'web.cortex.settings.injection.savedToast' => 'Modo guardado — las sesiones nuevas lo usan de inmediato (sin reiniciar el backend)',
 			'web.cortex.settings.injection.saveFailed' => 'Error al guardar',
 			'web.cortex.settings.injection.note' => 'En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice.',
+			'web.database.dialog.createTitle' => 'Añadir conexión de base de datos',
+			'web.database.dialog.editTitle' => 'Editar conexión',
+			'web.database.dialog.description' => 'Conéctate a la base de datos de este proyecto para explorar y editar sus datos. Las credenciales se almacenan cifradas.',
+			'web.database.dialog.name' => 'Nombre',
+			'web.database.dialog.host' => 'Host',
+			'web.database.dialog.port' => 'Puerto',
+			'web.database.dialog.database' => 'Base de datos',
+			'web.database.dialog.username' => 'Usuario',
+			'web.database.dialog.password' => 'Contraseña',
+			'web.database.dialog.passwordKept' => 'sin cambios — déjalo vacío para conservarla',
+			'web.database.dialog.sslMode' => 'Modo SSL',
+			'web.database.dialog.readOnly' => 'Solo lectura (bloquear escrituras desde esta conexión)',
+			'web.database.dialog.superuserWarning' => 'Este usuario es superusuario (o el administrador linivek). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.',
+			'web.database.dialog.test' => 'Probar',
+			'web.database.dialog.save' => 'Guardar',
+			'web.database.dialog.testFailed' => 'La prueba de conexión falló',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Conectado — PostgreSQL ${version} (${ms} ms)',
+			'web.database.dialog.savedCreate' => 'Conexión añadida',
+			'web.database.dialog.savedEdit' => 'Conexión actualizada',
+			'web.database.dialog.missingFields' => 'Nombre, host, base de datos y usuario son obligatorios',
+			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} — ${rows} fila(s) afectada(s)',
+			'web.database.tree.loading' => 'Cargando esquemas…',
+			'web.database.tree.noSchemas' => 'No hay esquemas visibles para este usuario',
+			'web.database.row.insertTitle' => 'Insertar fila',
+			'web.database.row.editTitle' => 'Editar fila',
+			'web.database.row.setNull' => 'poner NULL',
+			'web.database.row.save' => 'Guardar',
+			'web.database.row.savedInsert' => 'Fila insertada',
+			'web.database.row.savedEdit' => 'Fila actualizada',
+			'web.database.row.noChanges' => 'No hay cambios que guardar',
+			'web.database.grid.insert' => 'Insertar',
+			'web.database.grid.refresh' => 'Actualizar',
+			'web.database.grid.edit' => 'Editar',
+			'web.database.grid.delete' => 'Eliminar',
+			'web.database.grid.deleted' => 'Fila eliminada',
+			'web.database.grid.confirmDelete' => '¿Eliminar esta fila?',
+			'web.database.grid.loading' => 'Cargando filas…',
+			'web.database.grid.readOnlyHint' => 'Esta conexión es de solo lectura — no se pueden editar filas.',
+			'web.database.grid.noPkHint' => 'Esta tabla no tiene clave primaria — la edición de filas está deshabilitada.',
+			'web.database.grid.pageInfo' => ({required Object from, required Object to}) => 'Filas ${from}–${to}',
+			'web.database.console.placeholder' => 'SELECT * FROM …',
+			'web.database.console.run' => 'Ejecutar',
+			'web.database.console.runHint' => 'Cmd/Ctrl+Enter para ejecutar',
+			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} fila(s) · ${ms} ms',
+			'web.database.console.truncated' => 'truncado',
+			'web.database.console.empty' => 'Ejecuta una consulta para ver resultados.',
+			'web.database.console.truncatedNote' => 'resultados truncados',
+			'web.database.panel.loading' => 'Cargando conexiones…',
+			'web.database.panel.emptyTitle' => 'Sin conexiones de base de datos',
+			'web.database.panel.emptyBody' => 'Registra una conexión para explorar la base de datos del proyecto, editar filas y ejecutar SQL. Las conexiones son por proyecto y se almacenan cifradas.',
+			'web.database.panel.addConnection' => 'Añadir conexión',
+			'web.database.panel.add' => 'Añadir',
+			'web.database.panel.edit' => 'Editar',
+			'web.database.panel.delete' => 'Eliminar',
+			'web.database.panel.deleted' => 'Conexión eliminada',
+			'web.database.panel.confirmDelete' => '¿Eliminar esta conexión?',
+			'web.database.panel.console' => 'Consola SQL',
+			'web.database.panel.openWorkbench' => 'Abrir banco de trabajo',
+			'web.database.workbench.title' => 'Banco de trabajo de BD',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -11470,6 +11702,8 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Cambiar de cuenta de Antigravity',
 			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).',
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Falló el selector de imágenes: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Subiendo imagen…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Imagen adjuntada: ${path}',
@@ -11523,6 +11757,7 @@ extension on TranslationsEs {
 			'sessions.inspector.shell.tabs.history' => 'Historial',
 			'sessions.inspector.shell.tabs.vault' => 'Bóveda',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
+			'sessions.inspector.shell.tabs.database' => 'BD',
 			'sessions.inspector.cortex.title' => 'Espacio Cortex',
 			'sessions.inspector.cortex.blurb' => 'Objetivo, plan, diario, bandeja y limpieza de memoria de este proyecto — el Cortex mantenido por IA.',
 			'sessions.inspector.cortex.open' => 'Abrir espacio Cortex',
@@ -11539,11 +11774,12 @@ extension on TranslationsEs {
 			'sessions.inspector.files.readContent' => 'Leer contenido',
 			'sessions.inspector.files.readContentSubtitle' => 'Hasta 256 KiB de texto plano',
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Falló la lectura (${status}): ${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Falló la lectura: ${error}',
 			'sessions.inspector.files.parent' => 'Superior',
 			'sessions.inspector.files.backToCwd' => 'Volver al cwd de la session',
+			'sessions.inspector.files.upload' => 'Subir archivos',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => 'Subidos ${count} archivo(s)',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name}: error al subir — ${message}',
 			'sessions.inspector.git.insertAtRef' => 'Insertar como @referencia',
 			'sessions.inspector.git.insertPath' => 'Insertar ruta',
 			'sessions.inspector.git.showDiff' => 'Mostrar diff',
@@ -11980,6 +12216,8 @@ extension on TranslationsEs {
 			'project.approveFailed' => ({required Object error}) => 'Error al aprobar: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Error al rechazar: ${error}',
 			'project.resetConfirmTitle' => '¿Restablecer la memoria del proyecto?',
+			_ => null,
+		} ?? switch (path) {
 			'project.alsoDeleteScanner' => 'Eliminar también los documentos del scanner',
 			'project.alsoDeletePgvector' => 'Eliminar también las memorias de pgvector',
 			'project.deleteForever' => 'Eliminar para siempre',
@@ -12053,8 +12291,6 @@ extension on TranslationsEs {
 			'backups.emptyMissingDeps.headline' => 'Las copias de seguridad aún no pueden ejecutarse',
 			'backups.emptyMissingDeps.body' => 'Instala postgresql-client y reinicia opendray.',
 			'backups.emptyNoTargets.headline' => 'No hay destinos de copia de seguridad configurados',
-			_ => null,
-		} ?? switch (path) {
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
@@ -12494,6 +12730,8 @@ extension on TranslationsEs {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Crear',
 			'notesPage.popupDelete' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteBody' => 'Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => 'Ninguna nota coincide con "${query}".',
 			'notesPage.emptyVault' => 'El vault está vacío. Toca + para crear tu primera nota.',
@@ -12567,8 +12805,6 @@ extension on TranslationsEs {
 			'dataExport.import.importing' => 'Importando…',
 			'dataExport.import.pickFileToast' => 'Elige primero un archivo de paquete.',
 			'dataExport.import.doneToast' => 'Importación completada',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.finishedWithErrors' => 'Importación finalizada con errores',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Error en la importación: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memorias',

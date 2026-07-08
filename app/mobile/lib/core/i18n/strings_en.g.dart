@@ -258,6 +258,7 @@ class TranslationsWebEn {
 	late final TranslationsWebExportEn export = TranslationsWebExportEn.internal(_root);
 	late final TranslationsWebKnowledgeEn knowledge = TranslationsWebKnowledgeEn.internal(_root);
 	late final TranslationsWebCortexEn cortex = TranslationsWebCortexEn.internal(_root);
+	late final TranslationsWebDatabaseEn database = TranslationsWebDatabaseEn.internal(_root);
 }
 
 // Path: more
@@ -3390,6 +3391,23 @@ class TranslationsWebCortexEn {
 	late final TranslationsWebCortexSettingsEn settings = TranslationsWebCortexSettingsEn.internal(_root);
 }
 
+// Path: web.database
+class TranslationsWebDatabaseEn {
+	TranslationsWebDatabaseEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebDatabaseDialogEn dialog = TranslationsWebDatabaseDialogEn.internal(_root);
+	late final TranslationsWebDatabaseResultsEn results = TranslationsWebDatabaseResultsEn.internal(_root);
+	late final TranslationsWebDatabaseTreeEn tree = TranslationsWebDatabaseTreeEn.internal(_root);
+	late final TranslationsWebDatabaseRowEn row = TranslationsWebDatabaseRowEn.internal(_root);
+	late final TranslationsWebDatabaseGridEn grid = TranslationsWebDatabaseGridEn.internal(_root);
+	late final TranslationsWebDatabaseConsoleEn console = TranslationsWebDatabaseConsoleEn.internal(_root);
+	late final TranslationsWebDatabasePanelEn panel = TranslationsWebDatabasePanelEn.internal(_root);
+	late final TranslationsWebDatabaseWorkbenchEn workbench = TranslationsWebDatabaseWorkbenchEn.internal(_root);
+}
+
 // Path: more.identity
 class TranslationsMoreIdentityEn {
 	TranslationsMoreIdentityEn.internal(this._root);
@@ -6178,6 +6196,12 @@ class TranslationsWebSessionsHeaderEn {
 
 	/// en: 'Open a selectable text view to copy any part of the output'
 	String get selectTextTooltip => 'Open a selectable text view to copy any part of the output';
+
+	/// en: 'Transcript'
+	String get transcript => 'Transcript';
+
+	/// en: 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)'
+	String get transcriptTooltip => 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)';
 }
 
 // Path: web.sessions.terminal
@@ -6226,6 +6250,24 @@ class TranslationsWebSessionsTerminalEn {
 
 	/// en: 'No output to copy yet'
 	String get selectCopyEmpty => 'No output to copy yet';
+
+	/// en: 'Session transcript'
+	String get transcriptTitle => 'Session transcript';
+
+	/// en: 'Everything the PTY has written so far, with terminal control codes stripped. Useful when the running CLI doesn't let you scroll its own view.'
+	String get transcriptDesc => 'Everything the PTY has written so far, with terminal control codes stripped. Useful when the running CLI doesn\'t let you scroll its own view.';
+
+	/// en: 'Loading transcript…'
+	String get transcriptLoading => 'Loading transcript…';
+
+	/// en: 'No output yet.'
+	String get transcriptEmpty => 'No output yet.';
+
+	/// en: 'Couldn't load transcript'
+	String get transcriptFetchFailed => 'Couldn\'t load transcript';
+
+	/// en: 'Refresh'
+	String get transcriptRefresh => 'Refresh';
 }
 
 // Path: web.sessions.spawn
@@ -8727,6 +8769,9 @@ class TranslationsWebIntegrationsDefaultAgentEn {
 
 	/// en: 'Provider default (e.g. opus)'
 	String get modelPlaceholder => 'Provider default (e.g. opus)';
+
+	/// en: 'Choose a known model'
+	String get modelPickAria => 'Choose a known model';
 
 	/// en: 'Default Claude account'
 	String get accountLabel => 'Default Claude account';
@@ -11537,6 +11582,255 @@ class TranslationsWebCortexSettingsEn {
 	late final TranslationsWebCortexSettingsInjectionEn injection = TranslationsWebCortexSettingsInjectionEn.internal(_root);
 }
 
+// Path: web.database.dialog
+class TranslationsWebDatabaseDialogEn {
+	TranslationsWebDatabaseDialogEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Add database connection'
+	String get createTitle => 'Add database connection';
+
+	/// en: 'Edit connection'
+	String get editTitle => 'Edit connection';
+
+	/// en: 'Connect to this project's database to browse and edit its data. Credentials are stored encrypted.'
+	String get description => 'Connect to this project\'s database to browse and edit its data. Credentials are stored encrypted.';
+
+	/// en: 'Name'
+	String get name => 'Name';
+
+	/// en: 'Host'
+	String get host => 'Host';
+
+	/// en: 'Port'
+	String get port => 'Port';
+
+	/// en: 'Database'
+	String get database => 'Database';
+
+	/// en: 'Username'
+	String get username => 'Username';
+
+	/// en: 'Password'
+	String get password => 'Password';
+
+	/// en: 'unchanged — leave blank to keep'
+	String get passwordKept => 'unchanged — leave blank to keep';
+
+	/// en: 'SSL mode'
+	String get sslMode => 'SSL mode';
+
+	/// en: 'Read-only (block writes from this connection)'
+	String get readOnly => 'Read-only (block writes from this connection)';
+
+	/// en: 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.'
+	String get superuserWarning => 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.';
+
+	/// en: 'Test'
+	String get test => 'Test';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Connection test failed'
+	String get testFailed => 'Connection test failed';
+
+	/// en: 'Connected — PostgreSQL {version} ({ms} ms)'
+	String testOk({required Object version, required Object ms}) => 'Connected — PostgreSQL ${version} (${ms} ms)';
+
+	/// en: 'Connection added'
+	String get savedCreate => 'Connection added';
+
+	/// en: 'Connection updated'
+	String get savedEdit => 'Connection updated';
+
+	/// en: 'Name, host, database and username are required'
+	String get missingFields => 'Name, host, database and username are required';
+}
+
+// Path: web.database.results
+class TranslationsWebDatabaseResultsEn {
+	TranslationsWebDatabaseResultsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: '{command} — {rows} row(s) affected'
+	String noColumns({required Object command, required Object rows}) => '${command} — ${rows} row(s) affected';
+}
+
+// Path: web.database.tree
+class TranslationsWebDatabaseTreeEn {
+	TranslationsWebDatabaseTreeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loading schemas…'
+	String get loading => 'Loading schemas…';
+
+	/// en: 'No schemas visible to this user'
+	String get noSchemas => 'No schemas visible to this user';
+}
+
+// Path: web.database.row
+class TranslationsWebDatabaseRowEn {
+	TranslationsWebDatabaseRowEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Insert row'
+	String get insertTitle => 'Insert row';
+
+	/// en: 'Edit row'
+	String get editTitle => 'Edit row';
+
+	/// en: 'set NULL'
+	String get setNull => 'set NULL';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Row inserted'
+	String get savedInsert => 'Row inserted';
+
+	/// en: 'Row updated'
+	String get savedEdit => 'Row updated';
+
+	/// en: 'No changes to save'
+	String get noChanges => 'No changes to save';
+}
+
+// Path: web.database.grid
+class TranslationsWebDatabaseGridEn {
+	TranslationsWebDatabaseGridEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Insert'
+	String get insert => 'Insert';
+
+	/// en: 'Refresh'
+	String get refresh => 'Refresh';
+
+	/// en: 'Edit'
+	String get edit => 'Edit';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Row deleted'
+	String get deleted => 'Row deleted';
+
+	/// en: 'Delete this row?'
+	String get confirmDelete => 'Delete this row?';
+
+	/// en: 'Loading rows…'
+	String get loading => 'Loading rows…';
+
+	/// en: 'This connection is read-only — rows cannot be edited.'
+	String get readOnlyHint => 'This connection is read-only — rows cannot be edited.';
+
+	/// en: 'This table has no primary key — row editing is disabled.'
+	String get noPkHint => 'This table has no primary key — row editing is disabled.';
+
+	/// en: 'Rows {from}–{to}'
+	String pageInfo({required Object from, required Object to}) => 'Rows ${from}–${to}';
+}
+
+// Path: web.database.console
+class TranslationsWebDatabaseConsoleEn {
+	TranslationsWebDatabaseConsoleEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'SELECT * FROM …'
+	String get placeholder => 'SELECT * FROM …';
+
+	/// en: 'Run'
+	String get run => 'Run';
+
+	/// en: 'Cmd/Ctrl+Enter to run'
+	String get runHint => 'Cmd/Ctrl+Enter to run';
+
+	/// en: '{command} · {rows} row(s) · {ms} ms'
+	String stats({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} row(s) · ${ms} ms';
+
+	/// en: 'truncated'
+	String get truncated => 'truncated';
+
+	/// en: 'Run a query to see results.'
+	String get empty => 'Run a query to see results.';
+
+	/// en: 'results truncated'
+	String get truncatedNote => 'results truncated';
+}
+
+// Path: web.database.panel
+class TranslationsWebDatabasePanelEn {
+	TranslationsWebDatabasePanelEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Loading connections…'
+	String get loading => 'Loading connections…';
+
+	/// en: 'No database connections'
+	String get emptyTitle => 'No database connections';
+
+	/// en: 'Register a connection to browse this project's database, edit rows and run SQL. Connections are per-project and stored encrypted.'
+	String get emptyBody => 'Register a connection to browse this project\'s database, edit rows and run SQL. Connections are per-project and stored encrypted.';
+
+	/// en: 'Add connection'
+	String get addConnection => 'Add connection';
+
+	/// en: 'Add'
+	String get add => 'Add';
+
+	/// en: 'Edit'
+	String get edit => 'Edit';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Connection deleted'
+	String get deleted => 'Connection deleted';
+
+	/// en: 'Delete this connection?'
+	String get confirmDelete => 'Delete this connection?';
+
+	/// en: 'SQL console'
+	String get console => 'SQL console';
+
+	/// en: 'Open workbench'
+	String get openWorkbench => 'Open workbench';
+}
+
+// Path: web.database.workbench
+class TranslationsWebDatabaseWorkbenchEn {
+	TranslationsWebDatabaseWorkbenchEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Database workbench'
+	String get title => 'Database workbench';
+}
+
 // Path: more.items.integrations
 class TranslationsMoreItemsIntegrationsEn {
 	TranslationsMoreItemsIntegrationsEn.internal(this._root);
@@ -12128,6 +12422,15 @@ class TranslationsSessionsInspectorFilesEn {
 
 	/// en: 'Back to session cwd'
 	String get backToCwd => 'Back to session cwd';
+
+	/// en: 'Upload files'
+	String get upload => 'Upload files';
+
+	/// en: 'Uploaded {count} file(s)'
+	String uploaded({required Object count}) => 'Uploaded ${count} file(s)';
+
+	/// en: '{name}: upload failed — {message}'
+	String uploadFailed({required Object name, required Object message}) => '${name}: upload failed — ${message}';
 }
 
 // Path: sessions.inspector.git
@@ -13376,6 +13679,9 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -16777,6 +17083,9 @@ class TranslationsSessionsInspectorShellTabsEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -16982,6 +17291,8 @@ extension on Translations {
 			'web.sessions.header.pid' => ({required Object pid}) => 'pid ${pid}',
 			'web.sessions.header.selectText' => 'Select & copy',
 			'web.sessions.header.selectTextTooltip' => 'Open a selectable text view to copy any part of the output',
+			'web.sessions.header.transcript' => 'Transcript',
+			'web.sessions.header.transcriptTooltip' => 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)',
 			'web.sessions.terminal.uploadingToast' => 'Uploading image…',
 			'web.sessions.terminal.uploadedToast' => 'Image attached',
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
@@ -16995,6 +17306,12 @@ extension on Translations {
 			'web.sessions.terminal.selectCopyCopyAll' => 'Copy all',
 			'web.sessions.terminal.selectCopyNoSelection' => 'Select some text first',
 			'web.sessions.terminal.selectCopyEmpty' => 'No output to copy yet',
+			'web.sessions.terminal.transcriptTitle' => 'Session transcript',
+			'web.sessions.terminal.transcriptDesc' => 'Everything the PTY has written so far, with terminal control codes stripped. Useful when the running CLI doesn\'t let you scroll its own view.',
+			'web.sessions.terminal.transcriptLoading' => 'Loading transcript…',
+			'web.sessions.terminal.transcriptEmpty' => 'No output yet.',
+			'web.sessions.terminal.transcriptFetchFailed' => 'Couldn\'t load transcript',
+			'web.sessions.terminal.transcriptRefresh' => 'Refresh',
 			'web.sessions.spawn.title' => 'Spawn session',
 			'web.sessions.spawn.description' => 'Start a CLI session under a registered provider.',
 			'web.sessions.spawn.provider' => 'Provider',
@@ -17050,6 +17367,7 @@ extension on Translations {
 			'web.sessions.inspector.tabs.history' => 'History',
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
+			'web.sessions.inspector.tabs.database' => 'Database',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
@@ -17373,6 +17691,8 @@ extension on Translations {
 			'web.project.archived.restoredToast' => 'Restored',
 			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
 			'web.project.reset.alwaysDeleted' => 'Always deleted: goal, plan, proposals, journal, cleanup decisions.',
@@ -17382,8 +17702,6 @@ extension on Translations {
 			'web.project.reset.alsoDeleteMemoriesLabel' => 'Also delete pgvector memories',
 			'web.project.reset.alsoDeleteMemoriesSuffix' => 'for this scope_key.',
 			'web.project.reset.alsoDeleteMemoriesHint' => 'Long-term facts the agent stored (user preferences, project facts). Cannot be recovered.',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.cancel' => 'Cancel',
 			'web.project.reset.deleteForever' => 'Delete forever',
 			'web.project.reset.successToast' => ({required Object summary}) => 'Reset: deleted ${summary}',
@@ -17887,6 +18205,8 @@ extension on Translations {
 			'web.channels.dialog.nameRequired' => 'name is required',
 			'web.channels.dialog.tokenRequired' => 'token is required',
 			'web.channels.dialog.topicIdsNumeric' => ({required Object value}) => 'Topic IDs must be numeric (got ${value})',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.fieldRequired' => ({required Object label}) => '${label} is required',
 			'web.channels.dialog.cooldownInvalid' => 'Cooldown must be a non-negative number of seconds',
 			'web.channels.dialog.snippetCapInvalid' => 'Snippet cap must be a non-negative number',
@@ -17896,8 +18216,6 @@ extension on Translations {
 			'web.channels.notifications.onceReplyHint' => 'Replying with non-command text in this chat resets the suppression — opendray forwards your reply to the session\'s stdin and re-arms the notifier.',
 			'web.channels.notifications.terminalSnippetLabel' => 'Terminal snippet',
 			'web.channels.notifications.embedSnippetLabel' => 'Embed the recent terminal screen in idle notifications',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.notifications.snippetExplainer' => 'When enabled, the idle card includes a code-block snippet of what the user would see in the live web terminal — Claude TUI chrome (status spinner, "bypass permissions" hint, separator lines) is filtered out automatically.',
 			'web.channels.notifications.modes.onceLabel' => 'Once per session (recommended)',
 			'web.channels.notifications.modes.onceHint' => 'Fire once when a session goes idle, then stay silent until either the session ends or you reply via this channel.',
@@ -17975,6 +18293,7 @@ extension on Translations {
 			'web.integrations.defaultAgent.providerNone' => 'No default',
 			'web.integrations.defaultAgent.modelLabel' => 'Default model',
 			'web.integrations.defaultAgent.modelPlaceholder' => 'Provider default (e.g. opus)',
+			'web.integrations.defaultAgent.modelPickAria' => 'Choose a known model',
 			'web.integrations.defaultAgent.accountLabel' => 'Default Claude account',
 			'web.integrations.defaultAgent.accountNone' => 'No default',
 			'web.integrations.defaultAgent.accountTokenMissing' => '(token missing)',
@@ -18400,6 +18719,8 @@ extension on Translations {
 			'web.backups.targetsTab.newTarget' => 'New target',
 			'web.backups.targetsTab.listFailedToast' => 'Failed to list targets',
 			'web.backups.targetsTab.deleteConfirm' => ({required Object id}) => 'Delete target ${id}? Schedules referencing it will block the delete.',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.targetsTab.deletedToast' => 'Target deleted',
 			'web.backups.targetsTab.deleteFailedToast' => 'Delete failed',
 			'web.backups.targetsTab.connectionOkToast' => 'Connection OK',
@@ -18410,8 +18731,6 @@ extension on Translations {
 			'web.backups.targetsTab.columns.config' => 'Config',
 			'web.backups.targetsTab.columns.enabled' => 'Enabled',
 			'web.backups.targetsTab.columns.actions' => 'Actions',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetsTab.on' => 'on',
 			'web.backups.targetsTab.off' => 'off',
 			'web.backups.targetsTab.test' => 'Test',
@@ -18914,6 +19233,8 @@ extension on Translations {
 			'web.memoryAmbient.cost.intro' => 'Per-provider summary aggregated from <1>memory_summarizer_calls</1>. Local providers (Ollama, LM Studio, Integration) are priced as \$0 — operator owns hardware cost.',
 			'web.memoryAmbient.cost.empty' => 'No enabled providers — no cost data.',
 			'web.memoryAmbient.cost.columns.provider' => 'Provider',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.cost.columns.calls' => 'Calls',
 			'web.memoryAmbient.cost.columns.inTokens' => 'In tokens',
 			'web.memoryAmbient.cost.columns.outTokens' => 'Out tokens',
@@ -18924,8 +19245,6 @@ extension on Translations {
 			'web.noteEditor.tagTitle' => ({required Object tag}) => 'tag #${tag}',
 			'web.noteEditor.emptyNote' => 'Empty note. Switch to Source to start writing.',
 			'web.noteEditor.saveFailedToast' => 'Save failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.noteEditor.status.saveFailed' => 'save failed',
 			'web.noteEditor.status.saving' => 'saving…',
 			'web.noteEditor.status.unsaved' => 'unsaved',
@@ -19230,6 +19549,65 @@ extension on Translations {
 			'web.cortex.settings.injection.savedToast' => 'Injection mode saved — new sessions use it immediately (no backend restart)',
 			'web.cortex.settings.injection.saveFailed' => 'Save failed',
 			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
+			'web.database.dialog.createTitle' => 'Add database connection',
+			'web.database.dialog.editTitle' => 'Edit connection',
+			'web.database.dialog.description' => 'Connect to this project\'s database to browse and edit its data. Credentials are stored encrypted.',
+			'web.database.dialog.name' => 'Name',
+			'web.database.dialog.host' => 'Host',
+			'web.database.dialog.port' => 'Port',
+			'web.database.dialog.database' => 'Database',
+			'web.database.dialog.username' => 'Username',
+			'web.database.dialog.password' => 'Password',
+			'web.database.dialog.passwordKept' => 'unchanged — leave blank to keep',
+			'web.database.dialog.sslMode' => 'SSL mode',
+			'web.database.dialog.readOnly' => 'Read-only (block writes from this connection)',
+			'web.database.dialog.superuserWarning' => 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.',
+			'web.database.dialog.test' => 'Test',
+			'web.database.dialog.save' => 'Save',
+			'web.database.dialog.testFailed' => 'Connection test failed',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Connected — PostgreSQL ${version} (${ms} ms)',
+			'web.database.dialog.savedCreate' => 'Connection added',
+			'web.database.dialog.savedEdit' => 'Connection updated',
+			'web.database.dialog.missingFields' => 'Name, host, database and username are required',
+			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} — ${rows} row(s) affected',
+			'web.database.tree.loading' => 'Loading schemas…',
+			'web.database.tree.noSchemas' => 'No schemas visible to this user',
+			'web.database.row.insertTitle' => 'Insert row',
+			'web.database.row.editTitle' => 'Edit row',
+			'web.database.row.setNull' => 'set NULL',
+			'web.database.row.save' => 'Save',
+			'web.database.row.savedInsert' => 'Row inserted',
+			'web.database.row.savedEdit' => 'Row updated',
+			'web.database.row.noChanges' => 'No changes to save',
+			'web.database.grid.insert' => 'Insert',
+			'web.database.grid.refresh' => 'Refresh',
+			'web.database.grid.edit' => 'Edit',
+			'web.database.grid.delete' => 'Delete',
+			'web.database.grid.deleted' => 'Row deleted',
+			'web.database.grid.confirmDelete' => 'Delete this row?',
+			'web.database.grid.loading' => 'Loading rows…',
+			'web.database.grid.readOnlyHint' => 'This connection is read-only — rows cannot be edited.',
+			'web.database.grid.noPkHint' => 'This table has no primary key — row editing is disabled.',
+			'web.database.grid.pageInfo' => ({required Object from, required Object to}) => 'Rows ${from}–${to}',
+			'web.database.console.placeholder' => 'SELECT * FROM …',
+			'web.database.console.run' => 'Run',
+			'web.database.console.runHint' => 'Cmd/Ctrl+Enter to run',
+			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} row(s) · ${ms} ms',
+			'web.database.console.truncated' => 'truncated',
+			'web.database.console.empty' => 'Run a query to see results.',
+			'web.database.console.truncatedNote' => 'results truncated',
+			'web.database.panel.loading' => 'Loading connections…',
+			'web.database.panel.emptyTitle' => 'No database connections',
+			'web.database.panel.emptyBody' => 'Register a connection to browse this project\'s database, edit rows and run SQL. Connections are per-project and stored encrypted.',
+			'web.database.panel.addConnection' => 'Add connection',
+			'web.database.panel.add' => 'Add',
+			'web.database.panel.edit' => 'Edit',
+			'web.database.panel.delete' => 'Delete',
+			'web.database.panel.deleted' => 'Connection deleted',
+			'web.database.panel.confirmDelete' => 'Delete this connection?',
+			'web.database.panel.console' => 'SQL console',
+			'web.database.panel.openWorkbench' => 'Open workbench',
+			'web.database.workbench.title' => 'Database workbench',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -19369,6 +19747,8 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Switch Antigravity account',
 			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).',
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
@@ -19422,6 +19802,7 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.history' => 'History',
 			'sessions.inspector.shell.tabs.vault' => 'Vault',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
+			'sessions.inspector.shell.tabs.database' => 'Database',
 			'sessions.inspector.cortex.title' => 'Cortex workspace',
 			'sessions.inspector.cortex.blurb' => 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.',
 			'sessions.inspector.cortex.open' => 'Open Cortex workspace',
@@ -19438,11 +19819,12 @@ extension on Translations {
 			'sessions.inspector.files.readContent' => 'Read content',
 			'sessions.inspector.files.readContentSubtitle' => 'Up to 256 KiB plain text',
 			'sessions.inspector.files.readFailedApi' => ({required Object status, required Object message}) => 'Read failed (${status}): ${message}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
 			'sessions.inspector.files.parent' => 'Parent',
 			'sessions.inspector.files.backToCwd' => 'Back to session cwd',
+			'sessions.inspector.files.upload' => 'Upload files',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => 'Uploaded ${count} file(s)',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name}: upload failed — ${message}',
 			'sessions.inspector.git.insertAtRef' => 'Insert as @reference',
 			'sessions.inspector.git.insertPath' => 'Insert path',
 			'sessions.inspector.git.showDiff' => 'Show diff',
@@ -19879,6 +20261,8 @@ extension on Translations {
 			'project.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
 			'project.resetConfirmTitle' => 'Reset project memory?',
+			_ => null,
+		} ?? switch (path) {
 			'project.alsoDeleteScanner' => 'Also delete scanner docs',
 			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
 			'project.deleteForever' => 'Delete forever',
@@ -19952,8 +20336,6 @@ extension on Translations {
 			'backups.emptyMissingDeps.headline' => 'Backups can\'t run yet',
 			'backups.emptyMissingDeps.body' => 'Install postgresql-client and restart opendray.',
 			'backups.emptyNoTargets.headline' => 'No backup targets configured',
-			_ => null,
-		} ?? switch (path) {
 			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
 			'backups.emptyNoBackups.headline' => 'No backups yet',
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
@@ -20393,6 +20775,8 @@ extension on Translations {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Create',
 			'notesPage.popupDelete' => 'Delete',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => 'No notes match "${query}".',
 			'notesPage.emptyVault' => 'Vault is empty. Tap + to create your first note.',
@@ -20466,8 +20850,6 @@ extension on Translations {
 			'dataExport.import.importing' => 'Importing…',
 			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
 			'dataExport.import.doneToast' => 'Import done',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',
 			'dataExport.import.summaryCard.memories' => 'Memories',

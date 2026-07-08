@@ -18,7 +18,7 @@ require (
 	github.com/studio-b12/gowebdav v0.12.0
 	github.com/yalue/onnxruntime_go v1.30.0
 	github.com/zalando/go-keyring v0.2.8
-	golang.org/x/crypto v0.51.0
+	golang.org/x/crypto v0.52.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	modernc.org/sqlite v1.47.0
 )

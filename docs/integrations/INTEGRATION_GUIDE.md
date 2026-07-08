@@ -251,6 +251,9 @@ On failure: `401` with `WWW-Authenticate: Bearer realm="opendray"` and body `{"e
 | `providers:update` | Trigger a provider CLI self-update (`POST /providers/{id}/update`, runs `npm install -g`) | **YES** |
 | `memory:read` | `GET /memory/status,list,archived,scope-keys`, `POST /memory/search` | **YES** |
 | `memory:write` | `POST /memory/store` | **YES** |
+| `db:read` | Browse Database-tool connections: schemas/tables/meta, table data, read-only `POST /dbtool/.../query` | **YES** |
+| `db:write` | Database-tool row CRUD + write/DDL statements (`/dbtool/.../rows/*`, mutating `query`) | **YES** |
+| `db:signed` | Internal marker on opendray's auto-attached dbtool key: the gateway then requires a per-session `X-OpenDray-Dbtool-Sig` = HMAC(secret, cwd) proof. Not something a third party requests. | **YES** |
 | `event:subscribe:<topic>` | Subscribe to an event topic on the event WS | **YES** |
 
 > Note the spelling: the (unenforced) read scope is `provider:read` (singular), while the (enforced) mutation scopes are `providers:write` / `providers:update` (plural). They are distinct strings — grant exactly what the code checks.
@@ -262,7 +265,7 @@ On failure: `401` with `WWW-Authenticate: Bearer realm="opendray"` and body `{"e
 
 ### Enforcement reality and what you MUST do
 
-- **Enforced today:** `event:subscribe:<topic>` (event WS), `memory:read`, `memory:write`, and `providers:write` / `providers:update` (the provider *mutation* routes).
+- **Enforced today:** `event:subscribe:<topic>` (event WS), `memory:read`, `memory:write`, `db:read`, `db:write`, and `providers:write` / `providers:update` (the provider *mutation* routes).
 - **Declared but unenforced:** `session:*`, `channel:*`, `provider:read`. Any valid integration token can call `POST /sessions`, `GET /providers`, etc., regardless of declared scopes (deferred — see roadmap in [§21](#21-versioning-of-this-guide)).
 
 **You MUST:**
@@ -275,6 +278,7 @@ On failure: `401` with `WWW-Authenticate: Bearer realm="opendray"` and body `{"e
 The `403` body text differs per surface (not one canonical message):
 - Event WS: `missing scope: event:subscribe:<topic>`
 - Memory: `requires admin or the "memory:read" scope` (or `memory:write`)
+- Database tool: `requires admin or the "db:read" scope` (or `db:write`)
 - Provider mutation: `requires admin or the "providers:write" scope` (or `providers:update`)
 
 ---
@@ -455,6 +459,21 @@ create ──► running ──(/stop, SIGTERM)──► stopped ──(/start)�
 - **You do not need to micro-manage cwd for memory isolation anymore.** A distinct stable `cwd` per integration is still good hygiene (file isolation — see [§12](#12-operating-many-integrations-multi-tenancy)), but memory capture no longer leaks across integrations even if two share a cwd. The operator purges your zone with `POST /memory/delete-by-scope` using `scope_key = "integration:<your-id>"` ([§13](#13-upgrades-restarts--offboarding)).
 
 **SHOULD:** default to `none`; escalate to `quarantine`/`full` only after the operator vets your data quality and trust. For PII/regulated data, stay `none`.
+
+### The Database tool (`/dbtool/*`)
+
+opendray can hold **per-project database connections** (a JetBrains-style database tool): the operator registers a connection against a project `cwd`, and agents/integrations browse its schema, read table data, run SQL, and — on writable connections — edit rows. Passwords are encrypted at rest with the same field cipher as channel/git-host secrets and are never returned by any read endpoint (`has_password: true` instead).
+
+**Trust model — read before using:**
+
+- **Registering a connection is admin-only.** `POST/PATCH/DELETE /dbtool/connections` and the test endpoints reject integration keys (`requires admin`). An integration can never point opendray at a new database host — that is the SSRF-shaped surface, reserved for the operator. You only *use* connections the operator already approved.
+- **`db:read`** gates browsing: `GET /dbtool/connections?cwd=…`, `…/schemas`, `…/tables`, `…/meta`, `POST …/table-data`, and read-only `POST …/query` (SELECT/EXPLAIN/SHOW…). Read statements execute inside a server-side `READ ONLY` transaction with a statement timeout, so a data-modifying CTE fails server-side even if it slips past classification.
+- **`db:write`** gates mutation: `POST …/rows/{insert,update,delete}` and write/DDL statements through `…/query`. **A connection the operator marked `read_only` refuses every write regardless of scope** (`403 dbtool: connection is read-only`). Row edits require the table's full primary key; PK-less tables cannot be edited.
+- **The auto-attached `opendray-dbtool` MCP is not given to `origin=integration` sessions** — same isolation rule as memory. Your integration reaches the Database tool through its own scoped key over REST, not through a spawned session's ambient tools, and only for connections registered under a project it is allowed to see.
+- **Non-admin callers are bound to one project (`cwd`).** Every `/dbtool/*` call from an integration key MUST carry a `?cwd=<project>` query parameter; the gateway rejects a by-id call whose connection belongs to a different project (`404`) and refuses a connection list with no `cwd` (`403`). Admin callers (the operator's web UI) may omit `cwd` to browse across projects.
+- **For opendray's own auto-attached MCP, the cwd binding is cryptographic.** The `opendray-dbtool` key is `db:signed`; per session opendray injects an `X-OpenDray-Dbtool-Sig` = HMAC(server-secret, cwd) header, and the gateway rejects a signed-key call whose signature doesn't match `cwd`. So even an agent that extracts the injected key cannot forge another project's `cwd`. Two exceptions fall back to the plain `?cwd=` check: **antigravity** (its HOME-global MCP config can't carry a per-session signature — a Google limitation), and **third-party integration keys** you were granted (which are not `db:signed`). You never compute this header yourself; it applies only to opendray's own injected MCP.
+
+**MUST:** always pass `?cwd=`; request `db:read` alone unless you genuinely mutate data; handle `403` on write paths as "this connection is read-only or my key lacks `db:write`", not a retryable error. **MUST NOT** assume a connection exists — call `GET /dbtool/connections?cwd=…` first; an empty list means the operator configured no database for that project.
 
 ---
 
@@ -669,6 +688,14 @@ Base path: `https://<host>/api/v1`. Auth: `Authorization: Bearer odk_live_…` (
 | POST | `/memory/search` | Search | integration (`memory:read`) / admin |
 | GET | `/memory/list,status,archived,scope-keys` | Read surfaces | integration (`memory:read`) / admin |
 | POST | `/memory/delete-by-scope` | Purge a scope zone | **admin** |
+| POST | `/dbtool/connections` | Register a DB connection | **admin** |
+| PATCH/DELETE | `/dbtool/connections/{id}` | Edit / remove a connection | **admin** |
+| POST | `/dbtool/connections[/{id}]/test` | Test connectivity (returns `is_superuser`) | **admin** |
+| GET | `/dbtool/connections?cwd=` | List a project's connections (no password; `cwd` required for non-admin) | integration (`db:read`) / admin |
+| GET | `/dbtool/connections/{id}/schemas[/{s}/tables[/{t}/meta]]?cwd=` | Introspect (`cwd` must match the connection's project for non-admin) | integration (`db:read`) / admin |
+| POST | `/dbtool/connections/{id}/table-data?cwd=` | Paged table rows | integration (`db:read`) / admin |
+| POST | `/dbtool/connections/{id}/query?cwd=` | Run one SQL statement (read gate; write needs `db:write`) | integration (`db:read`) / admin |
+| POST | `/dbtool/connections/{id}/rows/{insert,update,delete}?cwd=` | Row CRUD (writable connection only) | integration (`db:write`) / admin |
 
 ---
 
@@ -833,7 +860,7 @@ wss://HOST/api/v1/channels/bridge/ws?token=<BRIDGE_TOKEN>
 This guide describes the opendray `/api/v1` integration contract as of **opendray v2.9.0** (2026-06-19). It is verified against the current code in `internal/integration`, `internal/session`, `internal/catalog`, and `internal/memory`.
 
 - The API path `/api/v1` is the stable surface; proxied requests carry `X-OpenDray-API: v1`. There is no opendray-version discovery endpoint; the `version` field on an integration is **yours**, not opendray's.
-- **Landed since the first cut of this guide (now current, no longer forthcoming):** the provider-agnostic `permission_mode` field replacing the old `bypass_permissions` boolean ([§6](#6-the-unified-spawn-profile--configuring-what-runs)); the per-principal `integration:<id>` memory zone ([§8](#8-memory--privacy)); scope enforcement on the provider *mutation* routes (`providers:write` / `providers:update`, [§5](#5-scopes--authorization)); and real MCP injection for `antigravity` sessions via `~/.gemini/config/mcp_config.json` ([§6](#6-the-unified-spawn-profile--configuring-what-runs) — earlier releases silently dropped `mcp_servers` on antigravity). Build against `permission_mode` + `memory_policy=none`.
+- **Landed since the first cut of this guide (now current, no longer forthcoming):** the provider-agnostic `permission_mode` field replacing the old `bypass_permissions` boolean ([§6](#6-the-unified-spawn-profile--configuring-what-runs)); the per-principal `integration:<id>` memory zone ([§8](#8-memory--privacy)); scope enforcement on the provider *mutation* routes (`providers:write` / `providers:update`, [§5](#5-scopes--authorization)); real MCP injection for `antigravity` sessions via `~/.gemini/config/mcp_config.json` ([§6](#6-the-unified-spawn-profile--configuring-what-runs) — earlier releases silently dropped `mcp_servers` on antigravity); and the **Database tool** with `db:read` / `db:write` scopes and admin-only connection registration ([§5](#5-scopes--authorization), [§8](#8-memory--privacy)). Build against `permission_mode` + `memory_policy=none`.
 - **Reserved for the future:** the `agent_id` field ([§3](#3-registration--the-api-key)) — accepted and stored today but not read at runtime; the eventual home for a named, reusable agent bundle. Leave it empty.
 - **Roadmap:** per-route scope enforcement for the still-unenforced `session:*` / `channel:*` / `provider:read`. Design your client now to handle `403` on any endpoint without breaking.
 

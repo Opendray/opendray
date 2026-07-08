@@ -2,6 +2,9 @@ package catalog
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -60,6 +63,12 @@ type SessionProvider struct {
 	// available — otherwise we'd render an MCP server config the
 	// agent can't authenticate.
 	memory MemoryAutoAttach
+
+	// dbtool describes the auto-attached Database-tool MCP server.
+	// Same lifecycle as memory: zero value skips injection, set via
+	// WithDbtoolAutoAttach when the feature is enabled and a key was
+	// minted.
+	dbtool DbtoolAutoAttach
 
 	// memoryMirror, when set, is invoked from a background goroutine
 	// right after the session's PrepareFunc returns — it pulls
@@ -221,6 +230,43 @@ func NewSessionProvider(
 func (sp *SessionProvider) WithMemoryAutoAttach(cfg MemoryAutoAttach) *SessionProvider {
 	sp.memory = cfg
 	return sp
+}
+
+// DbtoolAutoAttach holds the runtime knobs for injecting the
+// Database-tool MCP server (`opendray mcp-dbtool`) into spawned
+// sessions. Field semantics mirror MemoryAutoAttach; the key is a
+// dedicated `opendray-dbtool` integration carrying db:read/db:write —
+// deliberately NOT the memory key, so neither key's blast radius grows.
+type DbtoolAutoAttach struct {
+	Enabled    bool
+	BinaryPath string
+	BaseURL    string
+	// APIKey is the SIGNED key (db:signed) used by providers whose MCP
+	// config is per-session; those spawns also get a per-cwd HMAC
+	// signature the gateway verifies.
+	APIKey string
+	// AgyAPIKey is the honest-path key for antigravity, whose MCP config
+	// is HOME-global and can't carry a per-session signature.
+	AgyAPIKey string
+	// SignSecret signs the per-session cwd binding (HMAC-SHA256). Shared
+	// with the gateway's verifier; never injected into a session.
+	SignSecret []byte
+}
+
+// WithDbtoolAutoAttach enables auto-injection of the Database-tool MCP
+// server into every spawned session. Zero value = off.
+func (sp *SessionProvider) WithDbtoolAutoAttach(cfg DbtoolAutoAttach) *SessionProvider {
+	sp.dbtool = cfg
+	return sp
+}
+
+// signDbtoolCwd is hex HMAC-SHA256(secret, cwd) — the per-session cwd
+// proof injected for signed-key providers. It MUST stay byte-identical to
+// the gateway's verifier (internal/dbtool.verifyCwdSig).
+func signDbtoolCwd(secret []byte, cwd string) string {
+	m := hmac.New(sha256.New, secret)
+	m.Write([]byte(cwd))
+	return hex.EncodeToString(m.Sum(nil))
 }
 
 // WithAmbientInjector installs the ambient-memory injector — used
@@ -426,6 +472,23 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				// sessions: there the mcp-memory subprocess derives the
 				// scope from its own cwd, which agy sets to the session
 				// workspace.)
+			},
+		})
+	}
+	// Auto-attach the Database-tool MCP server under the same rules as
+	// memory: MCP-capable provider, never for isolated integration
+	// sessions (an integration must not reach the operator's registered
+	// project databases through a spawned session's ambient tools).
+	if sp.dbtool.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
+		servers = append(servers, MCPServer{
+			Name:    "opendray-dbtool",
+			Command: sp.dbtool.BinaryPath,
+			Args:    []string{"mcp-dbtool"},
+			Env: map[string]string{
+				"OPENDRAY_BASE_URL": sp.dbtool.BaseURL,
+				"OPENDRAY_API_KEY":  sp.dbtool.APIKey,
+				// Project key (the session cwd) is populated inside
+				// Prepare, exactly like memory's scope key.
 			},
 		})
 	}
@@ -706,14 +769,31 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			// never churns.
 			cwd := session.Cwd(prepareCtx)
 			for i := range servers {
-				if servers[i].Name == "opendray-memory" {
-					if servers[i].Env == nil {
-						servers[i].Env = map[string]string{}
-					}
+				if servers[i].Env == nil && (servers[i].Name == "opendray-memory" || servers[i].Name == "opendray-dbtool") {
+					servers[i].Env = map[string]string{}
+				}
+				switch servers[i].Name {
+				case "opendray-memory":
 					if providerID == "antigravity" {
 						servers[i].Env["OPENDRAY_MEMORY_SCOPE_FROM_CWD"] = "1"
 					} else {
 						servers[i].Env["OPENDRAY_MEMORY_SCOPE_KEY"] = cwd
+					}
+				case "opendray-dbtool":
+					if providerID == "antigravity" {
+						// HOME-global MCP config: the honest-path key
+						// (no db:signed), no per-session signature — a
+						// shared config can't carry a per-cwd one.
+						servers[i].Env["OPENDRAY_API_KEY"] = sp.dbtool.AgyAPIKey
+						servers[i].Env["OPENDRAY_DBTOOL_CWD_FROM_CWD"] = "1"
+					} else {
+						// Per-session MCP config: the signed key plus a
+						// per-cwd HMAC proof the agent can't forge.
+						servers[i].Env["OPENDRAY_DBTOOL_CWD"] = cwd
+						if len(sp.dbtool.SignSecret) > 0 {
+							servers[i].Env["OPENDRAY_DBTOOL_CWD_SIG"] =
+								signDbtoolCwd(sp.dbtool.SignSecret, cwd)
+						}
 					}
 				}
 			}
