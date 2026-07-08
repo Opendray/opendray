@@ -6405,6 +6405,9 @@ class _TranslationsSessionsInspectorFilesEs extends TranslationsSessionsInspecto
 	@override String readFailedGeneric({required Object error}) => 'Falló la lectura: ${error}';
 	@override String get parent => 'Superior';
 	@override String get backToCwd => 'Volver al cwd de la session';
+	@override String get upload => 'Subir archivos';
+	@override String uploaded({required Object count}) => 'Subidos ${count} archivo(s)';
+	@override String uploadFailed({required Object name, required Object message}) => '${name}: error al subir — ${message}';
 }
 
 // Path: sessions.inspector.git
@@ -11774,6 +11777,9 @@ extension on TranslationsEs {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Falló la lectura: ${error}',
 			'sessions.inspector.files.parent' => 'Superior',
 			'sessions.inspector.files.backToCwd' => 'Volver al cwd de la session',
+			'sessions.inspector.files.upload' => 'Subir archivos',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => 'Subidos ${count} archivo(s)',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name}: error al subir — ${message}',
 			'sessions.inspector.git.insertAtRef' => 'Insertar como @referencia',
 			'sessions.inspector.git.insertPath' => 'Insertar ruta',
 			'sessions.inspector.git.showDiff' => 'Mostrar diff',
@@ -12210,11 +12216,11 @@ extension on TranslationsEs {
 			'project.approveFailed' => ({required Object error}) => 'Error al aprobar: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Error al rechazar: ${error}',
 			'project.resetConfirmTitle' => '¿Restablecer la memoria del proyecto?',
+			_ => null,
+		} ?? switch (path) {
 			'project.alsoDeleteScanner' => 'Eliminar también los documentos del scanner',
 			'project.alsoDeletePgvector' => 'Eliminar también las memorias de pgvector',
 			'project.deleteForever' => 'Eliminar para siempre',
-			_ => null,
-		} ?? switch (path) {
 			'project.resetDoneSnack' => ({required Object parts}) => 'Restablecido: ${parts}',
 			'project.resetFailed' => ({required Object error}) => 'Error al restablecer: ${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} guardado',
@@ -12724,11 +12730,11 @@ extension on TranslationsEs {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Crear',
 			'notesPage.popupDelete' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteBody' => 'Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => 'Ninguna nota coincide con "${query}".',
 			'notesPage.emptyVault' => 'El vault está vacío. Toca + para crear tu primera nota.',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.emptyFolder' => ({required Object path}) => 'La carpeta "${path}" está vacía.',
 			'notesPage.validatePath' => 'La ruta es obligatoria',
 			'notesPage.validatePathDots' => 'La ruta no puede contener ".."',

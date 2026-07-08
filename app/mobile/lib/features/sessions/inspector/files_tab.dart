@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
@@ -33,6 +34,7 @@ class _FilesTabState extends ConsumerState<FilesTab>
   AsyncValue<FsListResponse> _state = const AsyncValue.loading();
   String? _currentPath;
   String? _parentPath;
+  bool _uploading = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -57,6 +59,44 @@ class _FilesTabState extends ConsumerState<FilesTab>
       if (mounted) setState(() => _state = AsyncValue.error(e, StackTrace.current));
     } on Object catch (e, st) {
       if (mounted) setState(() => _state = AsyncValue.error(e, st));
+    }
+  }
+
+  // Uploads one or more picked files into the current directory. root is
+  // the session-cwd fence; dir is the current path relative to it (the
+  // server rejects a path that escapes root). Names that collide land
+  // under a "-N" suffix server-side.
+  Future<void> _upload() async {
+    final root = widget.initialPath;
+    final dir = _currentPath ?? root;
+    final picked = await FilePicker.platform.pickFiles(allowMultiple: true);
+    if (picked == null || picked.files.isEmpty) return;
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final api = ref.read(fsApiProvider);
+    final rel = p.relative(dir, from: root);
+    setState(() => _uploading = true);
+    var ok = 0;
+    for (final f in picked.files) {
+      final path = f.path;
+      if (path == null) continue;
+      try {
+        await api.upload(root: root, dir: rel, relpath: f.name, filePath: path);
+        ok++;
+      } on ApiException catch (e) {
+        messenger.showSnackBar(SnackBar(
+          content: Text(t.sessions.inspector.files
+              .uploadFailed(name: f.name, message: e.message)),
+        ));
+      }
+    }
+    if (!mounted) return;
+    setState(() => _uploading = false);
+    if (ok > 0) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(t.sessions.inspector.files.uploaded(count: ok)),
+      ));
+      if (_currentPath != null) await _load(_currentPath!);
     }
   }
 
@@ -249,6 +289,8 @@ class _FilesTabState extends ConsumerState<FilesTab>
           onRefresh:
               _currentPath != null ? () => _load(_currentPath!) : null,
           onGoToCwd: () => _load(widget.initialPath),
+          onUpload: _currentPath != null ? _upload : null,
+          uploading: _uploading,
         ),
         const Divider(height: 1),
         Expanded(
@@ -320,6 +362,8 @@ class _PathBar extends StatelessWidget {
     required this.onUp,
     required this.onRefresh,
     required this.onGoToCwd,
+    required this.onUpload,
+    required this.uploading,
   });
 
   final String? path;
@@ -327,6 +371,8 @@ class _PathBar extends StatelessWidget {
   final VoidCallback? onUp;
   final VoidCallback? onRefresh;
   final VoidCallback onGoToCwd;
+  final VoidCallback? onUpload;
+  final bool uploading;
 
   @override
   Widget build(BuildContext context) {
@@ -361,6 +407,18 @@ class _PathBar extends StatelessWidget {
             icon: const Icon(Icons.refresh),
             tooltip: t.sessions.inspector.shared.refresh,
             onPressed: onRefresh,
+            visualDensity: VisualDensity.compact,
+          ),
+          IconButton(
+            icon: uploading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.upload_file_outlined),
+            tooltip: t.sessions.inspector.files.upload,
+            onPressed: uploading ? null : onUpload,
             visualDensity: VisualDensity.compact,
           ),
         ],

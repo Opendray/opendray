@@ -3400,7 +3400,10 @@
         "readFailedApi": "Read failed ({status}): {message}",
         "readFailedGeneric": "Read failed: {error}",
         "parent": "Parent",
-        "backToCwd": "Back to session cwd"
+        "backToCwd": "Back to session cwd",
+        "upload": "Upload files",
+        "uploaded": "Uploaded {count} file(s)",
+        "uploadFailed": "{name}: upload failed — {message}"
       },
       "git": {
         "insertAtRef": "Insert as @reference",

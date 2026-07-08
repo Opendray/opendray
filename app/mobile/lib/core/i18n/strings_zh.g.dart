@@ -6405,6 +6405,9 @@ class _TranslationsSessionsInspectorFilesZh extends TranslationsSessionsInspecto
 	@override String readFailedGeneric({required Object error}) => '读取失败：${error}';
 	@override String get parent => '上级';
 	@override String get backToCwd => '返回会话目录';
+	@override String get upload => '上传文件';
+	@override String uploaded({required Object count}) => '已上传 ${count} 个文件';
+	@override String uploadFailed({required Object name, required Object message}) => '${name} 上传失败:${message}';
 }
 
 // Path: sessions.inspector.git
@@ -11774,6 +11777,9 @@ extension on TranslationsZh {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
 			'sessions.inspector.files.parent' => '上级',
 			'sessions.inspector.files.backToCwd' => '返回会话目录',
+			'sessions.inspector.files.upload' => '上传文件',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => '已上传 ${count} 个文件',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name} 上传失败:${message}',
 			'sessions.inspector.git.insertAtRef' => '作为 @引用 插入',
 			'sessions.inspector.git.insertPath' => '插入路径',
 			'sessions.inspector.git.showDiff' => '查看 diff',
@@ -12210,11 +12216,11 @@ extension on TranslationsZh {
 			'project.approveFailed' => ({required Object error}) => '批准失败：${error}',
 			'project.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
 			'project.resetConfirmTitle' => '重置项目记忆？',
+			_ => null,
+		} ?? switch (path) {
 			'project.alsoDeleteScanner' => '同时删除扫描器文档',
 			'project.alsoDeletePgvector' => '同时删除 pgvector 记忆',
 			'project.deleteForever' => '永久删除',
-			_ => null,
-		} ?? switch (path) {
 			'project.resetDoneSnack' => ({required Object parts}) => '已重置：${parts}',
 			'project.resetFailed' => ({required Object error}) => '重置失败：${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} 已保存',
@@ -12724,11 +12730,11 @@ extension on TranslationsZh {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => '创建',
 			'notesPage.popupDelete' => '删除',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的笔记。',
 			'notesPage.emptyVault' => '仓库为空。点击 + 创建第一条笔记。',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
 			'notesPage.validatePath' => '必须填写路径',
 			'notesPage.validatePathDots' => '路径不能包含「..」',
