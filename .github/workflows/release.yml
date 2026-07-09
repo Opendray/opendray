@@ -125,11 +125,10 @@ jobs:
       # ── Goreleaser: archives + checksums in ./dist, published release on GH.
       #    --release-notes overrides the static header in .goreleaser.yml
       #    with the extracted CHANGELOG section. SHA-pinned for supply-
-      #    chain integrity. Intentionally pinned on v6 (not v7) to
-      #    avoid the v7 ESM/Node 24 breaking change until we explicitly
-      #    validate it.
+      #    chain integrity. On v7 (node24) — validated end-to-end against a
+      #    v0.0.0-test prerelease tag before this landed.
       - name: Run goreleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a  # v6
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94  # v7.2.3
         with:
           version: latest
           args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
