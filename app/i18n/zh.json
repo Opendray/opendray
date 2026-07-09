@@ -42,7 +42,23 @@
     "knowledge": "知识",
     "vault": "文档库",
     "cortex": "心智中枢",
-    "updateAvailable": "有可用更新"
+    "updateAvailable": "有可用更新",
+    "resources": "资源",
+    "docs": "文档与安装",
+    "community": "社区",
+    "sponsor": "赞助",
+    "updates": {
+      "title": "更新",
+      "whatsNew": "{version} 新内容",
+      "loading": "正在加载更新说明…",
+      "loadFailed": "无法加载更新说明（{error}）。",
+      "noHighlights": "此版本没有简短亮点。请打开完整更新日志查看详情。",
+      "openFull": "打开完整更新日志",
+      "markRead": "标为已读",
+      "unread": "未读更新说明",
+      "badgeCount": "更新 · {count}",
+      "sourceChangelog": "亮点来自 CHANGELOG.md（GitHub Release 正文为占位）。"
+    }
   },
   "web": {
     "brand": "opendray",
