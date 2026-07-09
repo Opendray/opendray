@@ -260,10 +260,13 @@ export async function deleteBackup(id: string): Promise<void> {
   })
 }
 
-/** Browser-friendly download URL — admin token rides via cookie/auth header
- *  on the underlying fetch the browser issues when the user clicks. */
-export function backupDownloadURL(id: string): string {
-  return `/api/v1/backups/${encodeURIComponent(id)}/download`
+/** Browser-friendly download URL. Auth rides in the query string — a
+ *  browser anchor navigation can't set an Authorization header, and there
+ *  is no auth cookie, so the admin bearer must go via the `?token=`
+ *  fallback the gateway middleware accepts (same path fs/export downloads
+ *  use). Without it the endpoint returns {"error":"unauthorized"}. */
+export function backupDownloadURL(id: string, token: string): string {
+  return `/api/v1/backups/${encodeURIComponent(id)}/download?token=${encodeURIComponent(token)}`
 }
 
 export async function listTargets(): Promise<TargetSpec[]> {
