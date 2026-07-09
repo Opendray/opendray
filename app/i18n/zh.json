@@ -157,6 +157,9 @@
         "uploadFailedToast": "上传失败",
         "uploadInvalidTypeToast": "仅支持图片文件",
         "dropToAttach": "释放以附加图片",
+        "attachInsert": "插入",
+        "attachClear": "全部清除",
+        "attachRemove": "移除 {name}",
         "copiedToast": "已复制到剪贴板",
         "copyFailedToast": "无法复制到剪贴板",
         "selectCopyTitle": "选择并复制",
@@ -3338,6 +3341,11 @@
         "attachImage": "附加图片",
         "enter": "回车",
         "selectText": "选择文本"
+      },
+      "attachments": {
+        "insert": "插入",
+        "clear": "全部清除",
+        "remove": "移除 {name}"
       },
       "connection": {
         "connecting": "连接中…",

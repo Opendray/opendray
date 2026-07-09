@@ -157,6 +157,9 @@
         "uploadFailedToast": "Upload failed",
         "uploadInvalidTypeToast": "Only image files can be attached",
         "dropToAttach": "Drop image to attach",
+        "attachInsert": "Insert",
+        "attachClear": "Clear all",
+        "attachRemove": "Remove {name}",
         "copiedToast": "Copied to clipboard",
         "copyFailedToast": "Couldn't copy to clipboard",
         "selectCopyTitle": "Select & copy",
@@ -3338,6 +3341,11 @@
         "attachImage": "Attach image",
         "enter": "Enter",
         "selectText": "Select text"
+      },
+      "attachments": {
+        "insert": "Insert",
+        "clear": "Clear all",
+        "remove": "Remove {name}"
       },
       "connection": {
         "connecting": "Connecting…",
