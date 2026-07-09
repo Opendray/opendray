@@ -153,7 +153,6 @@
       },
       "terminal": {
         "uploadingToast": "正在上传图片…",
-        "uploadedToast": "图片已附加",
         "uploadFailedToast": "上传失败",
         "uploadInvalidTypeToast": "仅支持图片文件",
         "dropToAttach": "释放以附加图片",

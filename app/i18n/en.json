@@ -153,7 +153,6 @@
       },
       "terminal": {
         "uploadingToast": "Uploading image…",
-        "uploadedToast": "Image attached",
         "uploadFailedToast": "Upload failed",
         "uploadInvalidTypeToast": "Only image files can be attached",
         "dropToAttach": "Drop image to attach",

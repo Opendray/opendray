@@ -448,16 +448,19 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   }, [themeApplied])
 
   // While attachments are staged, Esc clears them instead of reaching the
-  // CLI. Capture phase so we win before xterm's own key handling (same
-  // pattern WikiLinkSuggestions uses).
+  // CLI. Capture-phase window listener wins before xterm's own key handling.
   useEffect(() => {
     if (pendingAttachments.length === 0) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        e.stopPropagation()
-        setPendingAttachments([])
-      }
+      if (e.key !== 'Escape') return
+      // Only swallow Esc when focus is inside the terminal pane. Otherwise an
+      // open dialog (Radix closes on a document bubble-phase Esc) would be
+      // robbed of its Escape and the staged tray cleared unexpectedly.
+      const root = rootRef.current
+      if (root && !root.contains(e.target as Node)) return
+      e.preventDefault()
+      e.stopPropagation()
+      setPendingAttachments([])
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)

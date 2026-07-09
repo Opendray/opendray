@@ -153,7 +153,6 @@
       },
       "terminal": {
         "uploadingToast": "Subiendo imagen…",
-        "uploadedToast": "Imagen adjuntada",
         "uploadFailedToast": "Error al subir",
         "uploadInvalidTypeToast": "Solo se pueden adjuntar archivos de imagen",
         "dropToAttach": "Suelta la imagen para adjuntarla",
