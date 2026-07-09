@@ -74,12 +74,25 @@ func TestSQLiteDriverRoundTrip(t *testing.T) {
 		t.Fatalf("table data rows = %d, want 1", len(td.Rows))
 	}
 
-	// Read-only fence: a write forced down the read path (readOnly tx via
-	// PRAGMA query_only) must be refused by SQLite, not silently applied.
+	// Read-only fence: a write forced down the read path must be refused.
+	// SQLite reads go through a separate mode=ro connection pool that
+	// rejects writes at the file layer (modernc has no read-only
+	// transaction). Assert BOTH that the write errors AND that the row is
+	// genuinely unchanged — so the test can't pass on an unrelated error.
 	if _, err := d.Query(ctx, h, QueryReq{
 		SQL: `UPDATE users SET name = 'x' WHERE id = 1`,
 	}, ClassRead, 100, to); err == nil {
-		t.Fatal("read-only transaction allowed a write")
+		t.Fatal("read path allowed a write")
+	}
+	guard, err := d.TableData(ctx, h,
+		TableDataReq{Schema: "main", Table: "users", Limit: 10}, to)
+	if err != nil {
+		t.Fatalf("post-fence read: %v", err)
+	}
+	// Columns are id(0), name(1), note(2): the refused UPDATE tried to set
+	// name='x'; it must still be 'alice'.
+	if len(guard.Rows) != 1 || guard.Rows[0][1] != "alice" {
+		t.Fatalf("read-only fence let a write through: rows = %#v", guard.Rows)
 	}
 
 	n, err := d.UpdateRow(ctx, h, RowUpdateReq{
