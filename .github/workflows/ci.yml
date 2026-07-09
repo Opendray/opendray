@@ -24,9 +24,9 @@ jobs:
 
       # Reads `packageManager` from root package.json so this stays
       # in lockstep with what local devs install via corepack.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: pnpm
@@ -42,7 +42,7 @@ jobs:
         run: pnpm --filter web build
 
       # Hand the built bundle to the backend job so `go:embed` finds it.
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: web-dist
           path: internal/web/dist
@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: web-dist
           path: internal/web/dist
@@ -89,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: web-dist
           path: internal/web/dist
@@ -98,7 +98,7 @@ jobs:
         with:
           go-version: "1.25"
 
-      - uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v9
         with:
           # Pin to a specific version. Bumps go through a PR so a
           # surprise lint regression can be reviewed, not absorbed.
@@ -110,7 +110,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
 
@@ -136,7 +136,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
 
