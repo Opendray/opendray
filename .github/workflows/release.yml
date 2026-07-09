@@ -69,9 +69,9 @@ jobs:
       #    pnpm version is read from `packageManager` in package.json
       #    so the action-setup invocation stays version-less here.
       #    Setting `version:` here too triggers ERR_PNPM_BAD_PM_VERSION
-      #    (pnpm/action-setup@v4 refuses multiple sources of truth).
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      #    (pnpm/action-setup@v6 refuses multiple sources of truth).
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: pnpm
@@ -202,7 +202,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
