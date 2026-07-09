@@ -354,6 +354,7 @@ func (s *Service) TestParams(ctx context.Context, p CreateParams) PingResult {
 		return PingResult{OK: false, Error: err.Error()}
 	}
 	c := Connection{
+		Cwd: p.Cwd, Driver: p.Driver,
 		Host: p.Host, Port: p.Port, DBName: p.DBName,
 		Username: p.Username, Password: p.Password, SSLMode: p.SSLMode,
 	}

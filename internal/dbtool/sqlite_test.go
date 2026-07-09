@@ -133,3 +133,19 @@ func TestSQLiteResolvePath(t *testing.T) {
 		t.Fatalf("resolved = %q, want %q", got, want)
 	}
 }
+
+// TestParams (the "Test" button on an unsaved connection) must carry the
+// cwd through to the driver — SQLite's Ping needs it for the file-path
+// fence. Regression: TestParams built the Connection without Cwd, so every
+// SQLite Test failed with "requires a project cwd".
+func TestTestParamsSQLiteCarriesCwd(t *testing.T) {
+	dir := t.TempDir()
+	svc := NewService(nil, Options{}, nil)
+	defer svc.Close()
+	res := svc.TestParams(context.Background(), CreateParams{
+		Cwd: dir, Name: "probe", Driver: "sqlite", DBName: "probe.db",
+	})
+	if !res.OK {
+		t.Fatalf("sqlite TestParams failed: %s", res.Error)
+	}
+}
