@@ -153,10 +153,12 @@
       },
       "terminal": {
         "uploadingToast": "Subiendo imagen…",
-        "uploadedToast": "Imagen adjuntada",
         "uploadFailedToast": "Error al subir",
         "uploadInvalidTypeToast": "Solo se pueden adjuntar archivos de imagen",
         "dropToAttach": "Suelta la imagen para adjuntarla",
+        "attachInsert": "Insertar",
+        "attachClear": "Quitar todo",
+        "attachRemove": "Quitar {name}",
         "copiedToast": "Copiado al portapapeles",
         "copyFailedToast": "No se pudo copiar al portapapeles",
         "selectCopyTitle": "Seleccionar y copiar",
@@ -3338,6 +3340,11 @@
         "attachImage": "Adjuntar imagen",
         "enter": "Intro",
         "selectText": "Seleccionar texto"
+      },
+      "attachments": {
+        "insert": "Insertar",
+        "clear": "Quitar todo",
+        "remove": "Quitar {name}"
       },
       "connection": {
         "connecting": "Conectando…",
