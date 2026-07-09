@@ -10,6 +10,17 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.12.0] — 2026-07-09
+
+### Added
+
+- **Sidebar Updates drawer + resource links.** A new "Resources" block at
+  the bottom of the web admin left nav (under Settings) adds a native
+  "What's new" drawer — pulling release highlights from GitHub Releases,
+  falling back to CHANGELOG.md when the release body is a stub — with an
+  unread badge and local "mark read" state, plus quick links to Docs &
+  Setup, Community, and Sponsor. (#433)
+
 ## [v2.11.2] — 2026-07-09
 
 ### Added
