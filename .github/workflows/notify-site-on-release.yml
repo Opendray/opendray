@@ -1,9 +1,15 @@
 name: Notify site on release
 
-# When a GitHub release is flipped from draft to published, ping
-# Opendray/opendray.dev so it rebuilds and the changelog/version card
-# updates immediately. Without this, opendray.dev only rebuilds on its
-# own push-to-main, so new releases can sit unseen on the site for days.
+# Pings Opendray/opendray.dev so it rebuilds and the changelog/version
+# card updates immediately.
+#
+# NOTE: the `release: published` trigger below does NOT fire for the
+# releases goreleaser cuts — GitHub suppresses workflow-triggering events
+# for releases created with the automatic GITHUB_TOKEN (loop prevention),
+# and goreleaser publishes as github-actions[bot]. Real releases are
+# therefore dispatched directly from release.yml's "Rebuild opendray.dev"
+# step. This workflow is kept for manual re-sync (workflow_dispatch) and
+# for releases published by a human/PAT (which do fire the event).
 #
 # Required secret:
 #   ODSITE_DISPATCH_PAT — fine-grained PAT scoped to Opendray/opendray.dev
