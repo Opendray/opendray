@@ -1,12 +1,16 @@
 package dbtool
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -23,21 +27,36 @@ import (
 const (
 	ScopeDBRead  = "db:read"
 	ScopeDBWrite = "db:write"
+	// ScopeDBSigned marks a key whose sessions each get their own MCP
+	// config, so the gateway can require an HMAC(cwd) signature — closing
+	// the "extract the shared key + forge cwd" residual. Keys without it
+	// (antigravity, whose MCP config is HOME-global and cannot carry a
+	// per-session signature) fall back to the honest-path cwd check.
+	ScopeDBSigned = "db:signed"
 )
+
+// cwdSigHeader carries the hex HMAC-SHA256(signSecret, cwd) that proves a
+// signed-key caller is bound to the cwd it claims.
+const cwdSigHeader = "X-OpenDray-Dbtool-Sig"
 
 // Handlers exposes the dbtool subsystem over HTTP under /dbtool/*.
 // Mount under the dual-auth route group (admin OR integration key).
 type Handlers struct {
 	svc *Service
-	log *slog.Logger
+	// signSecret verifies the per-session cwd signature from db:signed
+	// keys. Empty disables signature enforcement (all callers fall back to
+	// honest-path) — used in tests and if the secret can't be loaded.
+	signSecret []byte
+	log        *slog.Logger
 }
 
-// NewHandlers builds the HTTP wrapper around svc.
-func NewHandlers(svc *Service, log *slog.Logger) *Handlers {
+// NewHandlers builds the HTTP wrapper around svc. signSecret is the HMAC
+// secret shared with the catalog's per-session cwd signer (may be nil).
+func NewHandlers(svc *Service, signSecret []byte, log *slog.Logger) *Handlers {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Handlers{svc: svc, log: log.With("component", "dbtool.http")}
+	return &Handlers{svc: svc, signSecret: signSecret, log: log.With("component", "dbtool.http")}
 }
 
 // requireScope allows admins, and integration keys holding `scope`.
@@ -77,11 +96,15 @@ func (h *Handlers) requireAdmin(next http.Handler) http.Handler {
 // touch another project's database by guessing an id. Admin principals
 // (the web UI) bypass so the operator can browse across projects.
 //
-// This is the honest-path boundary; it is NOT a cryptographic one — an
-// agent that extracts the injected system key from its rendered MCP
-// config could still call the REST API directly with a forged cwd. That
-// residual is identical to the memory MCP's shared-key model; a
-// per-project key would close it (tracked as a follow-up).
+// Two enforcement tiers by key type:
+//   - db:signed keys (providers whose MCP config is per-session) MUST also
+//     present a valid HMAC(cwd) signature — verified below. An agent that
+//     extracts the key still cannot forge a different cwd (it has no
+//     signing secret), so cross-project access is genuinely closed.
+//   - keys without db:signed (antigravity, whose MCP config is HOME-global
+//     and cannot carry a per-session signature) use the honest-path check
+//     only. That residual is inherent to antigravity's shared config
+//     (Google has an open per-workspace-config feature request).
 //
 // Returns false (and writes the response) when access is denied.
 func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
@@ -95,6 +118,11 @@ func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
 			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
 		return false
 	}
+	// A db:signed key must prove the cwd binding with an HMAC signature
+	// (shared with listConnections so no cwd-gated route can skip it).
+	if !h.enforceSignedCwd(w, r, p, cwd) {
+		return false
+	}
 	conn, err := h.svc.GetConnection(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
 		writeServiceError(w, err)
@@ -106,6 +134,39 @@ func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	return true
+}
+
+// enforceSignedCwd verifies the per-session HMAC(cwd) signature when the
+// caller holds a db:signed key. Returns false (writing 403) on a missing
+// or invalid signature. Keys WITHOUT db:signed (antigravity, third-party
+// integrations) pass through — their weaker honest-path binding is the
+// cwd match at each call site. Every non-admin, cwd-gated route MUST run
+// this so a future route can't silently skip the proof.
+func (h *Handlers) enforceSignedCwd(w http.ResponseWriter, r *http.Request, p integration.Principal, cwd string) bool {
+	if integration.HasScope(p.Scopes, ScopeDBSigned) && len(h.signSecret) > 0 {
+		if !verifyCwdSig(h.signSecret, cwd, r.Header.Get(cwdSigHeader)) {
+			writeError(w, http.StatusForbidden,
+				errors.New("dbtool: missing or invalid cwd signature"))
+			return false
+		}
+	}
+	return true
+}
+
+// signCwd is hex HMAC-SHA256(secret, cwd) — the per-session cwd proof.
+// The catalog signer computes the identical value at spawn time.
+func signCwd(secret []byte, cwd string) string {
+	m := hmac.New(sha256.New, secret)
+	m.Write([]byte(cwd))
+	return hex.EncodeToString(m.Sum(nil))
+}
+
+// verifyCwdSig constant-time checks provided against HMAC(secret, cwd).
+func verifyCwdSig(secret []byte, cwd, provided string) bool {
+	if provided == "" {
+		return false
+	}
+	return hmac.Equal([]byte(signCwd(secret, cwd)), []byte(provided))
 }
 
 // Mount registers all /dbtool/* routes on r. r should already carry the
@@ -219,11 +280,20 @@ func (h *Handlers) listConnections(w http.ResponseWriter, r *http.Request) {
 	cwd := r.URL.Query().Get("cwd")
 	// Non-admin callers may only enumerate their own project's
 	// connections — never the whole cross-project registry. Admin (web
-	// UI) may omit cwd to list everything.
-	if p, _ := integration.CurrentPrincipal(r.Context()); p.Kind != integration.KindAdmin && cwd == "" {
-		writeError(w, http.StatusForbidden,
-			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
-		return
+	// UI) may omit cwd to list everything. A db:signed key must also prove
+	// the cwd binding (same gate as the by-id routes) — otherwise it could
+	// enumerate another project's connection metadata with just a guessed
+	// cwd string.
+	p, _ := integration.CurrentPrincipal(r.Context())
+	if p.Kind != integration.KindAdmin {
+		if cwd == "" {
+			writeError(w, http.StatusForbidden,
+				errors.New("dbtool: cwd query parameter is required for non-admin callers"))
+			return
+		}
+		if !h.enforceSignedCwd(w, r, p, cwd) {
+			return
+		}
 	}
 	conns, err := h.svc.ListConnections(r.Context(), cwd)
 	if err != nil {
@@ -284,9 +354,12 @@ func (h *Handlers) tableData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req TableDataReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
 		return
+	}
+	for i := range req.Filters {
+		req.Filters[i].Value = normalizeNumber(req.Filters[i].Value)
 	}
 	rs, err := h.svc.TableData(r.Context(), chi.URLParam(r, "id"), req)
 	if err != nil {
@@ -301,7 +374,7 @@ func (h *Handlers) query(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req QueryReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
 		return
 	}
@@ -324,10 +397,11 @@ func (h *Handlers) insertRow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req RowInsertReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
 		return
 	}
+	req.Values = normalizeNumberMap(req.Values)
 	rs, err := h.svc.InsertRow(r.Context(), chi.URLParam(r, "id"), req)
 	if err != nil {
 		writeServiceError(w, err)
@@ -341,10 +415,12 @@ func (h *Handlers) updateRow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req RowUpdateReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
 		return
 	}
+	req.PK = normalizeNumberMap(req.PK)
+	req.Values = normalizeNumberMap(req.Values)
 	n, err := h.svc.UpdateRow(r.Context(), chi.URLParam(r, "id"), req)
 	if err != nil {
 		writeServiceError(w, err)
@@ -358,9 +434,12 @@ func (h *Handlers) deleteRows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req RowDeleteReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Errorf("invalid JSON: %w", err))
 		return
+	}
+	for i := range req.PKs {
+		req.PKs[i] = normalizeNumberMap(req.PKs[i])
 	}
 	n, err := h.svc.DeleteRows(r.Context(), chi.URLParam(r, "id"), req)
 	if err != nil {
@@ -368,6 +447,61 @@ func (h *Handlers) deleteRows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"rows_affected": n})
+}
+
+// decodeJSON decodes the request body with UseNumber so large integers
+// (bigint primary keys above 2^53) survive as json.Number instead of
+// being rounded through float64 by the default decoder.
+func decodeJSON(r *http.Request, dst any) error {
+	dec := json.NewDecoder(r.Body)
+	dec.UseNumber()
+	return dec.Decode(dst)
+}
+
+// normalizeNumber turns json.Number values (from decodeJSON) into int64
+// when they fit — exact for bigint — else float64, recursing through the
+// maps/slices that become SQL parameters. Non-number values pass through.
+// This keeps a 64-bit primary key exact all the way to pgx.
+func normalizeNumber(v any) any {
+	switch x := v.(type) {
+	case json.Number:
+		s := x.String()
+		// Integer literal: keep it int64 when it fits (exact for bigint),
+		// else keep the exact string (numeric beyond int64) rather than
+		// lose precision through float64. Only fractional/exponent forms
+		// become float64.
+		if !strings.ContainsAny(s, ".eE") {
+			if i, err := x.Int64(); err == nil {
+				return i
+			}
+			return s
+		}
+		if f, err := x.Float64(); err == nil {
+			return f
+		}
+		return s
+	case map[string]any:
+		for k, vv := range x {
+			x[k] = normalizeNumber(vv)
+		}
+		return x
+	case []any:
+		for i, vv := range x {
+			x[i] = normalizeNumber(vv)
+		}
+		return x
+	default:
+		return v
+	}
+}
+
+// normalizeNumberMap applies normalizeNumber to every value in m and
+// returns it (nil-safe — a nil map ranges zero times).
+func normalizeNumberMap(m map[string]any) map[string]any {
+	for k, v := range m {
+		m[k] = normalizeNumber(v)
+	}
+	return m
 }
 
 // pathParam URL-decodes a chi path parameter (schema/table names may

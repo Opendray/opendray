@@ -3032,10 +3032,19 @@
         "test": "测试",
         "save": "保存",
         "testFailed": "连接测试失败",
-        "testOk": "已连接 —— PostgreSQL {version}({ms} 毫秒)",
+        "testOk": "已连接 — {version}（{ms} ms）",
         "savedCreate": "连接已添加",
         "savedEdit": "连接已更新",
-        "missingFields": "名称、主机、数据库和用户名为必填项"
+        "missingFields": "需要填写名称和数据库（服务器引擎还需主机和用户名）",
+        "driver": "数据库类型",
+        "drivers": {
+          "postgres": "PostgreSQL",
+          "mysql": "MySQL",
+          "mariadb": "MariaDB",
+          "sqlite": "SQLite"
+        },
+        "filePath": "数据库文件",
+        "filePathHint": "项目目录内的 SQLite 文件路径。"
       },
       "results": {
         "noColumns": "{command} —— 影响 {rows} 行"
@@ -3371,7 +3380,8 @@
           "tasks": "任务",
           "history": "历史",
           "vault": "文档库",
-          "cortex": "心智中枢"
+          "cortex": "心智中枢",
+          "database": "数据库"
         }
       },
       "cortex": {
@@ -3399,7 +3409,10 @@
         "readFailedApi": "读取失败（{status}）：{message}",
         "readFailedGeneric": "读取失败：{error}",
         "parent": "上级",
-        "backToCwd": "返回会话目录"
+        "backToCwd": "返回会话目录",
+        "upload": "上传文件",
+        "uploaded": "已上传 {count} 个文件",
+        "uploadFailed": "{name} 上传失败:{message}"
       },
       "git": {
         "insertAtRef": "作为 @引用 插入",

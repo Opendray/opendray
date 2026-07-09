@@ -10,6 +10,66 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- **Database tool — MySQL, MariaDB and SQLite.** The Database tool now
+  connects to MySQL and MariaDB (host/port/username like PostgreSQL; a
+  MySQL "schema" is a database) and SQLite in addition to PostgreSQL. The
+  connection form (web and mobile) gains an engine picker with per-engine
+  default ports. **SQLite is a file-path connection**: the path is fenced
+  to the connection's project `cwd` (a path escaping it via `../` or a
+  symlink is rejected) and extension loading is disabled. Reads run behind
+  the same read-only fence on every engine (SQLite via a dedicated
+  read-only connection pool). All engines are pure-Go drivers
+  (`go-sql-driver/mysql`, `modernc.org/sqlite`), so the binary still
+  cross-compiles without cgo. Migration `0075` widens the driver
+  constraint; `0076` reseeds the kb_integrations page.
+
+## [v2.11.1] — 2026-07-09
+
+### Added
+
+- **Mobile parity — Database tool in the session inspector.** The mobile
+  app's session inspector gains a Database tab mirroring the web tool:
+  browse schemas and tables, page through rows, insert / update / delete
+  by primary key, and run read or write SQL against the project's
+  registered connections — honouring `db:read` / `db:write` scopes and
+  read-only connections, and reusing the session's `cwd` for isolation.
+- **Mobile parity — upload files into a session.** The mobile session
+  inspector's Files tab gains an upload button: pick one or more files and
+  stream them into the current directory via `POST /api/v1/fs/upload`,
+  matching the web files-sidebar upload shipped in v2.11.0 (same
+  `resolveWithinRoot` sandbox, auto-rename on name collision).
+
+### Security
+
+- **Database tool — cryptographic per-project isolation for the
+  auto-attached MCP.** The `opendray-dbtool` MCP now holds a `db:signed`
+  key and sends a per-session `X-OpenDray-Dbtool-Sig = HMAC(secret, cwd)`
+  header; the gateway rejects a signed-key call whose signature doesn't
+  match the `cwd`. An agent that extracts the injected key can no longer
+  forge another project's `cwd` — closing the residual the honest-path
+  check left open. Antigravity (whose MCP config is HOME-global and can't
+  carry a per-session signature — a Google limitation) and third-party
+  integration keys keep the plain `?cwd=` check via a separate honest-path
+  key. Migration `0074` reseeds the kb_integrations page.
+
+### Fixed
+
+- **Database tool — bigint primary keys stay exact.** Row update/delete
+  and filters decode JSON with `UseNumber`, so a 64-bit primary key above
+  2^53 is no longer rounded through `float64` (which could address the
+  wrong row or match none). Numbers beyond int64 keep their exact string.
+- **Database tool — consistent table metadata.** `TableMeta` runs its four
+  catalog queries (columns / PK / indexes / FKs) inside one read-only
+  transaction, so concurrent DDL can't produce a half-updated view.
+
+### Changed
+
+- **Dependencies.** Bump `golang.org/x/crypto` 0.50.0 → 0.52.0 (#421) and
+  `golang.org/x/net` 0.52.0 → 0.55.0 (#418), pulling transitive `x/sys`
+  and `x/text` updates. Build and vet clean.
+
 ## [v2.11.0] — 2026-07-08
 
 ### Added

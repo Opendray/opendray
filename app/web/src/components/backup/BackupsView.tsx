@@ -75,6 +75,7 @@ import {
 } from '@/lib/backup'
 import { TargetEditor, targetSummary } from './TargetEditor'
 import { APIError } from '@/lib/api'
+import { useAuth } from '@/stores/auth'
 import { cn } from '@/lib/utils'
 
 export function BackupsView() {
@@ -1051,6 +1052,7 @@ function BackupTable({
   onDelete: (id: string) => void | Promise<void>
 }) {
   const { t } = useTranslation()
+  const token = useAuth((s) => s.token)
   if (rows === null) {
     return <div className="text-muted-foreground text-sm">{t('web.backups.loading')}</div>
   }
@@ -1132,7 +1134,7 @@ function BackupTable({
                 <div className="flex justify-end gap-1">
                   {b.status === 'succeeded' && (
                     <a
-                      href={backupDownloadURL(b.id)}
+                      href={backupDownloadURL(b.id, token ?? '')}
                       className="inline-flex items-center justify-center h-7 w-7 rounded-md border border-border hover:bg-card"
                       title={t('web.backups.backupsTab.downloadTooltip')}
                     >

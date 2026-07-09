@@ -25,8 +25,8 @@ var ErrWriteScope = errors.New("dbtool: statement modifies data — requires the
 // without a primary key.
 var ErrNoPrimaryKey = errors.New("dbtool: table has no primary key — row editing is disabled")
 
-// ErrUnsupportedDriver is returned for a driver name v1 doesn't ship.
-var ErrUnsupportedDriver = errors.New("dbtool: unsupported driver (v1 supports \"postgres\")")
+// ErrUnsupportedDriver is returned for a driver name we don't ship.
+var ErrUnsupportedDriver = errors.New("dbtool: unsupported driver (supported: postgres, mysql, mariadb, sqlite)")
 
 // Options are the service's runtime knobs, resolved from [dbtool] config.
 type Options struct {
@@ -86,12 +86,17 @@ func NewService(store *Store, opts Options, log *slog.Logger) *Service {
 		log = slog.Default()
 	}
 	s := &Service{
-		store:   store,
-		opts:    opts,
-		log:     log.With("component", "dbtool"),
-		drivers: map[string]Driver{"postgres": postgresDriver{}},
-		pools:   map[string]*poolEntry{},
-		stop:    make(chan struct{}),
+		store: store,
+		opts:  opts,
+		log:   log.With("component", "dbtool"),
+		drivers: map[string]Driver{
+			"postgres": postgresDriver{},
+			"mysql":    mysqlDriver{},
+			"mariadb":  mysqlDriver{}, // same wire protocol as MySQL
+			"sqlite":   sqliteDriver{},
+		},
+		pools: map[string]*poolEntry{},
+		stop:  make(chan struct{}),
 	}
 	go s.evictLoop()
 	return s
@@ -223,6 +228,15 @@ func (p CreateParams) validate() error {
 	if strings.TrimSpace(p.Name) == "" {
 		return errors.New("dbtool: name is required")
 	}
+	// SQLite is a file-path connection: db_name holds the path (validated
+	// against the project cwd by the driver at Open time); there is no
+	// host / port / username.
+	if p.Driver == "sqlite" {
+		if strings.TrimSpace(p.DBName) == "" {
+			return errors.New("dbtool: sqlite requires a database file path")
+		}
+		return nil
+	}
 	if strings.TrimSpace(p.Host) == "" {
 		return errors.New("dbtool: host is required")
 	}
@@ -244,13 +258,26 @@ func (p *CreateParams) normalize() {
 		p.Driver = "postgres"
 	}
 	if p.Port == 0 {
-		p.Port = 5432
+		p.Port = defaultPort(p.Driver)
 	}
 	if p.SSLMode == "" {
 		p.SSLMode = "prefer"
 	}
 	if p.Options == nil {
 		p.Options = map[string]any{}
+	}
+}
+
+// defaultPort is the well-known port for a driver (0 for the file-based
+// SQLite, which has no port).
+func defaultPort(driver string) int {
+	switch driver {
+	case "mysql", "mariadb":
+		return 3306
+	case "sqlite":
+		return 0
+	default:
+		return 5432
 	}
 }
 
@@ -327,6 +354,7 @@ func (s *Service) TestParams(ctx context.Context, p CreateParams) PingResult {
 		return PingResult{OK: false, Error: err.Error()}
 	}
 	c := Connection{
+		Cwd: p.Cwd, Driver: p.Driver,
 		Host: p.Host, Port: p.Port, DBName: p.DBName,
 		Username: p.Username, Password: p.Password, SSLMode: p.SSLMode,
 	}

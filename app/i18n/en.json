@@ -3032,10 +3032,19 @@
         "test": "Test",
         "save": "Save",
         "testFailed": "Connection test failed",
-        "testOk": "Connected — PostgreSQL {version} ({ms} ms)",
+        "testOk": "Connected — {version} ({ms} ms)",
         "savedCreate": "Connection added",
         "savedEdit": "Connection updated",
-        "missingFields": "Name, host, database and username are required"
+        "missingFields": "Name and database are required (plus host and username for server engines)",
+        "driver": "Database engine",
+        "drivers": {
+          "postgres": "PostgreSQL",
+          "mysql": "MySQL",
+          "mariadb": "MariaDB",
+          "sqlite": "SQLite"
+        },
+        "filePath": "Database file",
+        "filePathHint": "Path to a SQLite file, inside the project directory."
       },
       "results": {
         "noColumns": "{command} — {rows} row(s) affected"
@@ -3371,7 +3380,8 @@
           "tasks": "Tasks",
           "history": "History",
           "vault": "Vault",
-          "cortex": "Cortex"
+          "cortex": "Cortex",
+          "database": "Database"
         }
       },
       "cortex": {
@@ -3399,7 +3409,10 @@
         "readFailedApi": "Read failed ({status}): {message}",
         "readFailedGeneric": "Read failed: {error}",
         "parent": "Parent",
-        "backToCwd": "Back to session cwd"
+        "backToCwd": "Back to session cwd",
+        "upload": "Upload files",
+        "uploaded": "Uploaded {count} file(s)",
+        "uploadFailed": "{name}: upload failed — {message}"
       },
       "git": {
         "insertAtRef": "Insert as @reference",

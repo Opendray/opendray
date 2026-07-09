@@ -67,7 +67,7 @@ func TestBuildTableDataSQL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql, args, err := buildTableDataSQL(tt.req)
+			sql, args, err := buildTableDataSQL(tt.req, pgDialect{})
 			if tt.wantErr {
 				if err == nil {
 					t.Fatalf("expected error, got sql %q", sql)
@@ -91,7 +91,7 @@ func TestBuildInsertSQL(t *testing.T) {
 	sql, args, err := buildInsertSQL(RowInsertReq{
 		Schema: "public", Table: "users",
 		Values: map[string]any{"name": "bob", "age": 42},
-	})
+	}, pgDialect{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestBuildInsertSQL(t *testing.T) {
 		t.Fatalf("args = %#v", args)
 	}
 
-	if _, _, err := buildInsertSQL(RowInsertReq{Schema: "s", Table: "t"}); err == nil {
+	if _, _, err := buildInsertSQL(RowInsertReq{Schema: "s", Table: "t"}, pgDialect{}); err == nil {
 		t.Fatal("expected error for empty values")
 	}
 }
@@ -114,7 +114,7 @@ func TestBuildUpdateSQL(t *testing.T) {
 		Schema: "public", Table: "users",
 		PK:     map[string]any{"id": 7},
 		Values: map[string]any{"name": "alice"},
-	})
+	}, pgDialect{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -126,10 +126,10 @@ func TestBuildUpdateSQL(t *testing.T) {
 		t.Fatalf("args = %#v", args)
 	}
 
-	if _, _, err := buildUpdateSQL(RowUpdateReq{Schema: "s", Table: "t", Values: map[string]any{"a": 1}}); err == nil {
+	if _, _, err := buildUpdateSQL(RowUpdateReq{Schema: "s", Table: "t", Values: map[string]any{"a": 1}}, pgDialect{}); err == nil {
 		t.Fatal("expected error for missing pk")
 	}
-	if _, _, err := buildUpdateSQL(RowUpdateReq{Schema: "s", Table: "t", PK: map[string]any{"id": 1}}); err == nil {
+	if _, _, err := buildUpdateSQL(RowUpdateReq{Schema: "s", Table: "t", PK: map[string]any{"id": 1}}, pgDialect{}); err == nil {
 		t.Fatal("expected error for empty values")
 	}
 }
@@ -139,7 +139,7 @@ func TestBuildUpdateSQLCompositePK(t *testing.T) {
 		Schema: "s", Table: "t",
 		PK:     map[string]any{"b": 2, "a": 1},
 		Values: map[string]any{"v": "x"},
-	})
+	}, pgDialect{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
