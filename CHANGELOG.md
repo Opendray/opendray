@@ -10,6 +10,8 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.11.2] — 2026-07-09
+
 ### Added
 
 - **Database tool — MySQL, MariaDB and SQLite.** The Database tool now
@@ -24,6 +26,12 @@ for the full rationale and what triggers a major bump.
   (`go-sql-driver/mysql`, `modernc.org/sqlite`), so the binary still
   cross-compiles without cgo. Migration `0075` widens the driver
   constraint; `0076` reseeds the kb_integrations page.
+
+### Fixed
+
+- **Backup download link authorises correctly.** The backup download URL
+  now carries the admin token, so downloading a backup from the web UI no
+  longer fails auth. (#428)
 
 ## [v2.11.1] — 2026-07-09
 
