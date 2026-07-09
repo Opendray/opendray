@@ -11638,8 +11638,8 @@ class TranslationsWebDatabaseDialogEn {
 	/// en: 'Connection test failed'
 	String get testFailed => 'Connection test failed';
 
-	/// en: 'Connected — PostgreSQL {version} ({ms} ms)'
-	String testOk({required Object version, required Object ms}) => 'Connected — PostgreSQL ${version} (${ms} ms)';
+	/// en: 'Connected — {version} ({ms} ms)'
+	String testOk({required Object version, required Object ms}) => 'Connected — ${version} (${ms} ms)';
 
 	/// en: 'Connection added'
 	String get savedCreate => 'Connection added';
@@ -11647,8 +11647,19 @@ class TranslationsWebDatabaseDialogEn {
 	/// en: 'Connection updated'
 	String get savedEdit => 'Connection updated';
 
-	/// en: 'Name, host, database and username are required'
-	String get missingFields => 'Name, host, database and username are required';
+	/// en: 'Name and database are required (plus host and username for server engines)'
+	String get missingFields => 'Name and database are required (plus host and username for server engines)';
+
+	/// en: 'Database engine'
+	String get driver => 'Database engine';
+
+	late final TranslationsWebDatabaseDialogDriversEn drivers = TranslationsWebDatabaseDialogDriversEn.internal(_root);
+
+	/// en: 'Database file'
+	String get filePath => 'Database file';
+
+	/// en: 'Path to a SQLite file, inside the project directory.'
+	String get filePathHint => 'Path to a SQLite file, inside the project directory.';
 }
 
 // Path: web.database.results
@@ -17058,6 +17069,27 @@ class TranslationsWebCortexSettingsInjectionEn {
 	String get note => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.';
 }
 
+// Path: web.database.dialog.drivers
+class TranslationsWebDatabaseDialogDriversEn {
+	TranslationsWebDatabaseDialogDriversEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'PostgreSQL'
+	String get postgres => 'PostgreSQL';
+
+	/// en: 'MySQL'
+	String get mysql => 'MySQL';
+
+	/// en: 'MariaDB'
+	String get mariadb => 'MariaDB';
+
+	/// en: 'SQLite'
+	String get sqlite => 'SQLite';
+}
+
 // Path: sessions.inspector.shell.tabs
 class TranslationsSessionsInspectorShellTabsEn {
 	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
@@ -19565,10 +19597,17 @@ extension on Translations {
 			'web.database.dialog.test' => 'Test',
 			'web.database.dialog.save' => 'Save',
 			'web.database.dialog.testFailed' => 'Connection test failed',
-			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Connected — PostgreSQL ${version} (${ms} ms)',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Connected — ${version} (${ms} ms)',
 			'web.database.dialog.savedCreate' => 'Connection added',
 			'web.database.dialog.savedEdit' => 'Connection updated',
-			'web.database.dialog.missingFields' => 'Name, host, database and username are required',
+			'web.database.dialog.missingFields' => 'Name and database are required (plus host and username for server engines)',
+			'web.database.dialog.driver' => 'Database engine',
+			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
+			'web.database.dialog.drivers.mysql' => 'MySQL',
+			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			'web.database.dialog.drivers.sqlite' => 'SQLite',
+			'web.database.dialog.filePath' => 'Database file',
+			'web.database.dialog.filePathHint' => 'Path to a SQLite file, inside the project directory.',
 			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} — ${rows} row(s) affected',
 			'web.database.tree.loading' => 'Loading schemas…',
 			'web.database.tree.noSchemas' => 'No schemas visible to this user',
@@ -19740,6 +19779,8 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Switch',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Switch failed: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No Claude accounts configured. Add them in More → Providers → Claude.',
@@ -19747,8 +19788,6 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Switch Antigravity account',
 			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).',
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
@@ -20254,6 +20293,8 @@ extension on Translations {
 			'project.browseFolder' => 'Browse folder…',
 			'project.resetTooltip' => 'Reset project memory',
 			'project.append' => 'Append',
+			_ => null,
+		} ?? switch (path) {
 			'project.appendDialogTitle' => 'Append journal entry',
 			'project.titleFieldLabel' => 'Title (optional)',
 			'project.contentFieldLabel' => 'Content (markdown)',
@@ -20261,8 +20302,6 @@ extension on Translations {
 			'project.approveFailed' => ({required Object error}) => 'Approve failed: ${error}',
 			'project.rejectFailed' => ({required Object error}) => 'Reject failed: ${error}',
 			'project.resetConfirmTitle' => 'Reset project memory?',
-			_ => null,
-		} ?? switch (path) {
 			'project.alsoDeleteScanner' => 'Also delete scanner docs',
 			'project.alsoDeletePgvector' => 'Also delete pgvector memories',
 			'project.deleteForever' => 'Delete forever',
@@ -20768,6 +20807,8 @@ extension on Translations {
 			'notesPage.deleteTitle' => 'Delete note?',
 			'notesPage.deletedSnack' => ({required Object path}) => 'Deleted ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
@@ -20775,8 +20816,6 @@ extension on Translations {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => 'Create',
 			'notesPage.popupDelete' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => 'No notes match "${query}".',
 			'notesPage.emptyVault' => 'Vault is empty. Tap + to create your first note.',

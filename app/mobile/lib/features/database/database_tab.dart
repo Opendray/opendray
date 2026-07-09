@@ -120,7 +120,9 @@ class _DatabaseTabState extends ConsumerState<DatabaseTab> {
         ),
         title: Text(c.name),
         subtitle: Text(
-          '${c.driver} · ${c.host}:${c.port}/${c.dbName}',
+          c.driver == 'sqlite'
+              ? '${c.driver} · ${c.dbName}'
+              : '${c.driver} · ${c.host}:${c.port}/${c.dbName}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -210,6 +212,28 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
   bool _readOnly = false;
   bool _busy = false;
   DbPingResult? _ping;
+  String _driver = 'postgres';
+
+  static const _drivers = ['postgres', 'mysql', 'mariadb', 'sqlite'];
+  static const _defaultPorts = <String, int>{
+    'postgres': 5432,
+    'mysql': 3306,
+    'mariadb': 3306,
+    'sqlite': 0,
+  };
+
+  bool get _isSqlite => _driver == 'sqlite';
+
+  // Switching engine resets the port to that engine's default (SQLite is a
+  // file path, no port) and clears the last ping.
+  void _onDriver(String? v) {
+    if (v == null) return;
+    setState(() {
+      _driver = v;
+      _port.text = v == 'sqlite' ? '' : '${_defaultPorts[v] ?? 5432}';
+      _ping = null;
+    });
+  }
 
   @override
   void dispose() {
@@ -222,19 +246,22 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
   DbConnectionInput _input() => DbConnectionInput(
     cwd: widget.cwd,
     name: _name.text.trim(),
-    host: _host.text.trim(),
-    port: int.tryParse(_port.text.trim()) ?? 5432,
+    driver: _driver,
+    host: _isSqlite ? '' : _host.text.trim(),
+    port: _isSqlite
+        ? 0
+        : (int.tryParse(_port.text.trim()) ?? (_defaultPorts[_driver] ?? 5432)),
     dbName: _db.text.trim(),
-    username: _user.text.trim(),
-    password: _pass.text,
+    username: _isSqlite ? '' : _user.text.trim(),
+    password: _isSqlite ? '' : _pass.text,
     readOnly: _readOnly,
   );
 
   bool get _valid =>
       _name.text.trim().isNotEmpty &&
-      _host.text.trim().isNotEmpty &&
       _db.text.trim().isNotEmpty &&
-      _user.text.trim().isNotEmpty;
+      (_isSqlite ||
+          (_host.text.trim().isNotEmpty && _user.text.trim().isNotEmpty));
 
   Future<void> _test() async {
     setState(() => _busy = true);
@@ -291,11 +318,48 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             _field(_name, d.name, onChanged: () => setState(() {})),
-            _field(_host, d.host),
-            _field(_port, d.port, keyboard: TextInputType.number),
-            _field(_db, d.database, onChanged: () => setState(() {})),
-            _field(_user, d.username, onChanged: () => setState(() {})),
-            _field(_pass, d.password, obscure: true),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: DropdownButtonFormField<String>(
+                initialValue: _driver,
+                decoration: InputDecoration(
+                  labelText: d.driver,
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+                items: _drivers.map((v) {
+                  final label = switch (v) {
+                    'mysql' => d.drivers.mysql,
+                    'mariadb' => d.drivers.mariadb,
+                    'sqlite' => d.drivers.sqlite,
+                    _ => d.drivers.postgres,
+                  };
+                  return DropdownMenuItem(value: v, child: Text(label));
+                }).toList(),
+                onChanged: _onDriver,
+              ),
+            ),
+            if (!_isSqlite) ...[
+              _field(_host, d.host),
+              _field(_port, d.port, keyboard: TextInputType.number),
+            ],
+            _field(
+              _db,
+              _isSqlite ? d.filePath : d.database,
+              onChanged: () => setState(() {}),
+            ),
+            if (_isSqlite)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  d.filePathHint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            if (!_isSqlite) ...[
+              _field(_user, d.username, onChanged: () => setState(() {})),
+              _field(_pass, d.password, obscure: true),
+            ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(d.readOnly),
