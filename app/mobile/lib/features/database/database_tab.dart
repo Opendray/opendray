@@ -128,9 +128,14 @@ class _DatabaseTabState extends ConsumerState<DatabaseTab> {
         ),
         trailing: PopupMenuButton<String>(
           onSelected: (v) {
+            if (v == 'edit') _openEditSheet(c);
             if (v == 'delete') _confirmDelete(c);
           },
           itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'edit',
+              child: Text(t.web.database.panel.edit),
+            ),
             PopupMenuItem(
               value: 'delete',
               child: Text(t.web.database.panel.delete),
@@ -184,19 +189,30 @@ class _DatabaseTabState extends ConsumerState<DatabaseTab> {
     if ((saved ?? false) && mounted) await _refresh();
   }
 
+  Future<void> _openEditSheet(DbConnection c) async {
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _ConnectionForm(cwd: widget.cwd, existing: c),
+    );
+    if ((saved ?? false) && mounted) await _refresh();
+  }
+
   void _snack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 }
 
-// _ConnectionForm is the add-connection bottom sheet: the minimal fields
-// plus a Test button. Editing an existing connection is web-only; mobile
-// stays add/delete for now.
+// _ConnectionForm is the add/edit-connection bottom sheet: the minimal
+// fields plus a Test button. When `existing` is set it edits that
+// connection (driver locked, password kept if left blank), mirroring the
+// web ConnectionDialog; otherwise it creates a new one.
 class _ConnectionForm extends ConsumerStatefulWidget {
-  const _ConnectionForm({required this.cwd});
+  const _ConnectionForm({required this.cwd, this.existing});
 
   final String cwd;
+  final DbConnection? existing;
 
   @override
   ConsumerState<_ConnectionForm> createState() => _ConnectionFormState();
@@ -223,6 +239,23 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
   };
 
   bool get _isSqlite => _driver == 'sqlite';
+  bool get _editing => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.existing;
+    if (e != null) {
+      _name.text = e.name;
+      _driver = e.driver;
+      _host.text = e.host;
+      _port.text = e.driver == 'sqlite' ? '' : '${e.port}';
+      _db.text = e.dbName;
+      _user.text = e.username;
+      _readOnly = e.readOnly;
+      // password left blank — kept unless the user types a new one
+    }
+  }
 
   // Switching engine resets the port to that engine's default (SQLite is a
   // file path, no port) and clears the last ping.
@@ -281,11 +314,43 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
     }
   }
 
+  // Edit patch mirrors the web dialog: SQLite carries only name / path /
+  // read_only; server engines carry host/port/user/ssl/read_only, and the
+  // password only when the user typed a new one (blank keeps the stored
+  // secret). ssl_mode is preserved from the existing connection (the mobile
+  // form has no ssl field).
+  Map<String, dynamic> _patch() {
+    if (_isSqlite) {
+      return {
+        'name': _name.text.trim(),
+        'db_name': _db.text.trim(),
+        'read_only': _readOnly,
+      };
+    }
+    final p = <String, dynamic>{
+      'name': _name.text.trim(),
+      'host': _host.text.trim(),
+      'port':
+          int.tryParse(_port.text.trim()) ?? (_defaultPorts[_driver] ?? 5432),
+      'db_name': _db.text.trim(),
+      'username': _user.text.trim(),
+      'ssl_mode': widget.existing!.sslMode,
+      'read_only': _readOnly,
+    };
+    if (_pass.text.isNotEmpty) p['password'] = _pass.text;
+    return p;
+  }
+
   Future<void> _save() async {
     if (!_valid) return;
     setState(() => _busy = true);
     try {
-      await ref.read(dbtoolApiProvider).createConnection(_input());
+      final api = ref.read(dbtoolApiProvider);
+      if (widget.existing != null) {
+        await api.updateConnection(widget.existing!.id, _patch());
+      } else {
+        await api.createConnection(_input());
+      }
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (mounted) {
@@ -314,7 +379,7 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(d.createTitle,
+            Text(_editing ? d.editTitle : d.createTitle,
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             _field(_name, d.name, onChanged: () => setState(() {})),
@@ -336,7 +401,7 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
                   };
                   return DropdownMenuItem(value: v, child: Text(label));
                 }).toList(),
-                onChanged: _onDriver,
+                onChanged: _editing ? null : _onDriver,
               ),
             ),
             if (!_isSqlite) ...[
@@ -358,7 +423,14 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
               ),
             if (!_isSqlite) ...[
               _field(_user, d.username, onChanged: () => setState(() {})),
-              _field(_pass, d.password, obscure: true),
+              _field(
+                _pass,
+                d.password,
+                obscure: true,
+                hint: _editing && widget.existing!.hasPassword
+                    ? d.passwordKept
+                    : null,
+              ),
             ],
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -408,6 +480,7 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
     bool obscure = false,
     TextInputType? keyboard,
     VoidCallback? onChanged,
+    String? hint,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -418,6 +491,7 @@ class _ConnectionFormState extends ConsumerState<_ConnectionForm> {
         onChanged: onChanged == null ? null : (_) => onChanged(),
         decoration: InputDecoration(
           labelText: label,
+          hintText: hint,
           isDense: true,
           border: const OutlineInputBorder(),
         ),
