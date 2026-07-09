@@ -167,7 +167,7 @@ func (sqliteDriver) Tables(ctx context.Context, h Handle, schema string, timeout
 	if err != nil {
 		return nil, fmt.Errorf("dbtool: list tables: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []Table
 	for rows.Next() {
 		var t Table
@@ -211,7 +211,7 @@ func (d sqliteDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		var name, ctype string
 		var dflt sql.NullString
 		if err := colRows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
-			colRows.Close()
+			_ = colRows.Close()
 			return meta, err
 		}
 		meta.Columns = append(meta.Columns, Column{
@@ -222,7 +222,7 @@ func (d sqliteDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 			pks = append(pks, pkCol{name: name, ord: pk})
 		}
 	}
-	colRows.Close()
+	_ = colRows.Close()
 	if err := colRows.Err(); err != nil {
 		return meta, err
 	}
@@ -251,12 +251,12 @@ func (d sqliteDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		var seq, unique, partial int
 		var name, origin string
 		if err := idxRows.Scan(&seq, &name, &unique, &origin, &partial); err != nil {
-			idxRows.Close()
+			_ = idxRows.Close()
 			return meta, err
 		}
 		idxList = append(idxList, idxInfo{name: name, unique: unique == 1})
 	}
-	idxRows.Close()
+	_ = idxRows.Close()
 	if err := idxRows.Err(); err != nil {
 		return meta, err
 	}
@@ -282,7 +282,7 @@ func (d sqliteDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		var id, seq int
 		var refTable, from, to, onUpdate, onDelete, match string
 		if err := fkRows.Scan(&id, &seq, &refTable, &from, &to, &onUpdate, &onDelete, &match); err != nil {
-			fkRows.Close()
+			_ = fkRows.Close()
 			return meta, err
 		}
 		fk, ok := fkByID[id]
@@ -294,7 +294,7 @@ func (d sqliteDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		fk.Columns = append(fk.Columns, from)
 		fk.RefColumns = append(fk.RefColumns, to)
 	}
-	fkRows.Close()
+	_ = fkRows.Close()
 	if err := fkRows.Err(); err != nil {
 		return meta, err
 	}
@@ -310,7 +310,7 @@ func sqliteIndexColumns(ctx context.Context, db *sql.DB, index string) ([]string
 	if err != nil {
 		return nil, fmt.Errorf("dbtool: index columns: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var cols []string
 	for rows.Next() {
 		var seqno, cid int

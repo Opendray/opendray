@@ -96,7 +96,7 @@ func mysqlIsSuper(ctx context.Context, db *sql.DB) bool {
 	if err != nil {
 		return false
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var g string
 		if rows.Scan(&g) != nil {
@@ -124,7 +124,7 @@ func (mysqlDriver) Schemas(ctx context.Context, h Handle, timeout time.Duration)
 	if err != nil {
 		return nil, fmt.Errorf("dbtool: list schemas: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []Schema
 	for rows.Next() {
 		var s Schema
@@ -151,7 +151,7 @@ func (mysqlDriver) Tables(ctx context.Context, h Handle, schema string, timeout 
 	if err != nil {
 		return nil, fmt.Errorf("dbtool: list tables: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []Table
 	for rows.Next() {
 		var t Table
@@ -196,12 +196,12 @@ func (mysqlDriver) TableMeta(ctx context.Context, h Handle, schema, table string
 	for colRows.Next() {
 		var c Column
 		if err := colRows.Scan(&c.Name, &c.DataType, &c.Nullable, &c.Default, &c.Position); err != nil {
-			colRows.Close()
+			_ = colRows.Close()
 			return meta, err
 		}
 		meta.Columns = append(meta.Columns, c)
 	}
-	colRows.Close()
+	_ = colRows.Close()
 	if err := colRows.Err(); err != nil {
 		return meta, err
 	}
@@ -220,12 +220,12 @@ func (mysqlDriver) TableMeta(ctx context.Context, h Handle, schema, table string
 	for pkRows.Next() {
 		var col string
 		if err := pkRows.Scan(&col); err != nil {
-			pkRows.Close()
+			_ = pkRows.Close()
 			return meta, err
 		}
 		meta.PrimaryKey = append(meta.PrimaryKey, col)
 	}
-	pkRows.Close()
+	_ = pkRows.Close()
 	if err := pkRows.Err(); err != nil {
 		return meta, err
 	}
@@ -245,14 +245,14 @@ func (mysqlDriver) TableMeta(ctx context.Context, h Handle, schema, table string
 		var ix Index
 		var cols string
 		if err := idxRows.Scan(&ix.Name, &ix.Unique, &cols); err != nil {
-			idxRows.Close()
+			_ = idxRows.Close()
 			return meta, err
 		}
 		ix.Primary = ix.Name == "PRIMARY"
 		ix.Definition = fmt.Sprintf("(%s)", cols)
 		meta.Indexes = append(meta.Indexes, ix)
 	}
-	idxRows.Close()
+	_ = idxRows.Close()
 	if err := idxRows.Err(); err != nil {
 		return meta, err
 	}
@@ -272,7 +272,7 @@ func (mysqlDriver) TableMeta(ctx context.Context, h Handle, schema, table string
 	for fkRows.Next() {
 		var name, col, refSchema, refTable, refCol string
 		if err := fkRows.Scan(&name, &col, &refSchema, &refTable, &refCol); err != nil {
-			fkRows.Close()
+			_ = fkRows.Close()
 			return meta, err
 		}
 		fk, ok := fkByName[name]
@@ -284,7 +284,7 @@ func (mysqlDriver) TableMeta(ctx context.Context, h Handle, schema, table string
 		fk.Columns = append(fk.Columns, col)
 		fk.RefColumns = append(fk.RefColumns, refCol)
 	}
-	fkRows.Close()
+	_ = fkRows.Close()
 	if err := fkRows.Err(); err != nil {
 		return meta, err
 	}

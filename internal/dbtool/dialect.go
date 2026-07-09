@@ -56,8 +56,8 @@ type pgDialect struct{}
 func (pgDialect) QuoteIdent(parts ...string) string { return pgx.Identifier(parts).Sanitize() }
 func (pgDialect) Placeholder(n int) string          { return "$" + strconv.Itoa(n) }
 func (pgDialect) NullSafeEq() string                { return "IS NOT DISTINCT FROM" }
-func (pgDialect) SupportsReturning() bool            { return true }
-func (pgDialect) FilterOps() map[string]bool         { return pgFilterOps }
+func (pgDialect) SupportsReturning() bool           { return true }
+func (pgDialect) FilterOps() map[string]bool        { return pgFilterOps }
 
 // mysqlDialect — MySQL and MariaDB. Backtick identifiers, "?" params,
 // "<=>" null-safe equality. MySQL 8 has no RETURNING; MariaDB 10.5+ does,
@@ -67,8 +67,8 @@ type mysqlDialect struct{ returning bool }
 func (mysqlDialect) QuoteIdent(parts ...string) string { return quoteJoin(parts, '`') }
 func (mysqlDialect) Placeholder(int) string            { return "?" }
 func (mysqlDialect) NullSafeEq() string                { return "<=>" }
-func (d mysqlDialect) SupportsReturning() bool          { return d.returning }
-func (mysqlDialect) FilterOps() map[string]bool         { return sqlFilterOps }
+func (d mysqlDialect) SupportsReturning() bool         { return d.returning }
+func (mysqlDialect) FilterOps() map[string]bool        { return sqlFilterOps }
 
 // sqliteDialect — SQLite. Standard double-quoted identifiers, "?" params,
 // "IS" null-safe equality, RETURNING (3.35+, satisfied by modernc v1.47).
@@ -77,8 +77,8 @@ type sqliteDialect struct{}
 func (sqliteDialect) QuoteIdent(parts ...string) string { return quoteJoin(parts, '"') }
 func (sqliteDialect) Placeholder(int) string            { return "?" }
 func (sqliteDialect) NullSafeEq() string                { return "IS" }
-func (sqliteDialect) SupportsReturning() bool            { return true }
-func (sqliteDialect) FilterOps() map[string]bool         { return sqlFilterOps }
+func (sqliteDialect) SupportsReturning() bool           { return true }
+func (sqliteDialect) FilterOps() map[string]bool        { return sqlFilterOps }
 
 // quoteJoin quotes each part with q, escaping an embedded quote by
 // doubling it, and joins with ".". This is the standard SQL identifier

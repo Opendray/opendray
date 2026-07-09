@@ -86,17 +86,17 @@ func NewService(store *Store, opts Options, log *slog.Logger) *Service {
 		log = slog.Default()
 	}
 	s := &Service{
-		store:   store,
-		opts:    opts,
-		log:     log.With("component", "dbtool"),
+		store: store,
+		opts:  opts,
+		log:   log.With("component", "dbtool"),
 		drivers: map[string]Driver{
 			"postgres": postgresDriver{},
 			"mysql":    mysqlDriver{},
 			"mariadb":  mysqlDriver{}, // same wire protocol as MySQL
 			"sqlite":   sqliteDriver{},
 		},
-		pools:   map[string]*poolEntry{},
-		stop:    make(chan struct{}),
+		pools: map[string]*poolEntry{},
+		stop:  make(chan struct{}),
 	}
 	go s.evictLoop()
 	return s

@@ -93,7 +93,7 @@ func TestSQLiteDriverRoundTrip(t *testing.T) {
 
 	del, err := d.DeleteRows(ctx, h, RowDeleteReq{
 		Schema: "main", Table: "users",
-		PKs:    []map[string]any{{"id": 1}},
+		PKs: []map[string]any{{"id": 1}},
 	}, to)
 	if err != nil || del != 1 {
 		t.Fatalf("delete affected %d, err %v", del, err)

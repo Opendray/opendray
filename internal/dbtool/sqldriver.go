@@ -95,7 +95,7 @@ func sqlExecute(ctx context.Context, db *sql.DB, sqlText string, args []any, rea
 	}
 	cols, err := rows.Columns()
 	if err != nil {
-		rows.Close()
+		_ = rows.Close()
 		return nil, err
 	}
 	colTypes, _ := rows.ColumnTypes()
@@ -119,7 +119,7 @@ func sqlExecute(ctx context.Context, db *sql.DB, sqlText string, args []any, rea
 			ptrs[i] = &holders[i]
 		}
 		if err := rows.Scan(ptrs...); err != nil {
-			rows.Close()
+			_ = rows.Close()
 			return nil, fmt.Errorf("dbtool: read row: %w", err)
 		}
 		row := make([]any, len(cols))
@@ -128,7 +128,7 @@ func sqlExecute(ctx context.Context, db *sql.DB, sqlText string, args []any, rea
 		}
 		rs.Rows = append(rs.Rows, row)
 	}
-	rows.Close()
+	_ = rows.Close()
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
