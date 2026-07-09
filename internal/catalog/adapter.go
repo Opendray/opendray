@@ -2,6 +2,9 @@ package catalog
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -238,7 +241,16 @@ type DbtoolAutoAttach struct {
 	Enabled    bool
 	BinaryPath string
 	BaseURL    string
-	APIKey     string
+	// APIKey is the SIGNED key (db:signed) used by providers whose MCP
+	// config is per-session; those spawns also get a per-cwd HMAC
+	// signature the gateway verifies.
+	APIKey string
+	// AgyAPIKey is the honest-path key for antigravity, whose MCP config
+	// is HOME-global and can't carry a per-session signature.
+	AgyAPIKey string
+	// SignSecret signs the per-session cwd binding (HMAC-SHA256). Shared
+	// with the gateway's verifier; never injected into a session.
+	SignSecret []byte
 }
 
 // WithDbtoolAutoAttach enables auto-injection of the Database-tool MCP
@@ -246,6 +258,15 @@ type DbtoolAutoAttach struct {
 func (sp *SessionProvider) WithDbtoolAutoAttach(cfg DbtoolAutoAttach) *SessionProvider {
 	sp.dbtool = cfg
 	return sp
+}
+
+// signDbtoolCwd is hex HMAC-SHA256(secret, cwd) — the per-session cwd
+// proof injected for signed-key providers. It MUST stay byte-identical to
+// the gateway's verifier (internal/dbtool.verifyCwdSig).
+func signDbtoolCwd(secret []byte, cwd string) string {
+	m := hmac.New(sha256.New, secret)
+	m.Write([]byte(cwd))
+	return hex.EncodeToString(m.Sum(nil))
 }
 
 // WithAmbientInjector installs the ambient-memory injector — used
@@ -760,9 +781,19 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 					}
 				case "opendray-dbtool":
 					if providerID == "antigravity" {
+						// HOME-global MCP config: the honest-path key
+						// (no db:signed), no per-session signature — a
+						// shared config can't carry a per-cwd one.
+						servers[i].Env["OPENDRAY_API_KEY"] = sp.dbtool.AgyAPIKey
 						servers[i].Env["OPENDRAY_DBTOOL_CWD_FROM_CWD"] = "1"
 					} else {
+						// Per-session MCP config: the signed key plus a
+						// per-cwd HMAC proof the agent can't forge.
 						servers[i].Env["OPENDRAY_DBTOOL_CWD"] = cwd
+						if len(sp.dbtool.SignSecret) > 0 {
+							servers[i].Env["OPENDRAY_DBTOOL_CWD_SIG"] =
+								signDbtoolCwd(sp.dbtool.SignSecret, cwd)
+						}
 					}
 				}
 			}

@@ -3,7 +3,29 @@
 // Wraps the /api/v1/dbtool/* endpoints via the shared api<T>() helper.
 import { api } from './api'
 
-export type DBDriver = 'postgres'
+export type DBDriver = 'postgres' | 'mysql' | 'mariadb' | 'sqlite'
+
+// Drivers offered in the connection form, in display order.
+export const DB_DRIVERS: readonly DBDriver[] = [
+  'postgres',
+  'mysql',
+  'mariadb',
+  'sqlite',
+]
+
+// Well-known default port per driver (0 for the file-based SQLite).
+export const DB_DEFAULT_PORTS: Record<DBDriver, number> = {
+  postgres: 5432,
+  mysql: 3306,
+  mariadb: 3306,
+  sqlite: 0,
+}
+
+// SQLite is a file-path connection (db_name is the path); the others use
+// host/port/username/password/ssl.
+export function driverUsesServer(driver: DBDriver): boolean {
+  return driver !== 'sqlite'
+}
 
 export interface DBConnection {
   id: string
@@ -150,6 +172,13 @@ export const DB_FILTER_OPS = [
 
 // Operators that don't take a value (the value input is hidden).
 export const DB_VALUELESS_OPS = new Set(['IS NULL', 'IS NOT NULL'])
+
+// Filter operators available for a given driver. ILIKE is PostgreSQL-only;
+// MySQL/SQLite reject it, so they get the shared subset.
+export function dbFilterOps(driver: DBDriver): readonly string[] {
+  if (driver === 'postgres') return DB_FILTER_OPS
+  return DB_FILTER_OPS.filter((op) => op !== 'ILIKE' && op !== 'NOT ILIKE')
+}
 
 export async function listConnections(cwd: string): Promise<DBConnection[]> {
   const res = await api<{ connections: DBConnection[] }>(

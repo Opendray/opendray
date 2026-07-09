@@ -3405,6 +3405,7 @@ class TranslationsWebDatabaseEn {
 	late final TranslationsWebDatabaseGridEn grid = TranslationsWebDatabaseGridEn.internal(_root);
 	late final TranslationsWebDatabaseConsoleEn console = TranslationsWebDatabaseConsoleEn.internal(_root);
 	late final TranslationsWebDatabasePanelEn panel = TranslationsWebDatabasePanelEn.internal(_root);
+	late final TranslationsWebDatabaseWorkbenchEn workbench = TranslationsWebDatabaseWorkbenchEn.internal(_root);
 }
 
 // Path: more.identity
@@ -6816,9 +6817,6 @@ class TranslationsWebProjectTabsEn {
 
 	/// en: 'Hygiene'
 	String get hygiene => 'Hygiene';
-
-	/// en: 'Database'
-	String get database => 'Database';
 }
 
 // Path: web.project.docLabel
@@ -11640,8 +11638,8 @@ class TranslationsWebDatabaseDialogEn {
 	/// en: 'Connection test failed'
 	String get testFailed => 'Connection test failed';
 
-	/// en: 'Connected — PostgreSQL {version} ({ms} ms)'
-	String testOk({required Object version, required Object ms}) => 'Connected — PostgreSQL ${version} (${ms} ms)';
+	/// en: 'Connected — {version} ({ms} ms)'
+	String testOk({required Object version, required Object ms}) => 'Connected — ${version} (${ms} ms)';
 
 	/// en: 'Connection added'
 	String get savedCreate => 'Connection added';
@@ -11649,8 +11647,19 @@ class TranslationsWebDatabaseDialogEn {
 	/// en: 'Connection updated'
 	String get savedEdit => 'Connection updated';
 
-	/// en: 'Name, host, database and username are required'
-	String get missingFields => 'Name, host, database and username are required';
+	/// en: 'Name and database are required (plus host and username for server engines)'
+	String get missingFields => 'Name and database are required (plus host and username for server engines)';
+
+	/// en: 'Database engine'
+	String get driver => 'Database engine';
+
+	late final TranslationsWebDatabaseDialogDriversEn drivers = TranslationsWebDatabaseDialogDriversEn.internal(_root);
+
+	/// en: 'Database file'
+	String get filePath => 'Database file';
+
+	/// en: 'Path to a SQLite file, inside the project directory.'
+	String get filePathHint => 'Path to a SQLite file, inside the project directory.';
 }
 
 // Path: web.database.results
@@ -11816,6 +11825,21 @@ class TranslationsWebDatabasePanelEn {
 
 	/// en: 'SQL console'
 	String get console => 'SQL console';
+
+	/// en: 'Open workbench'
+	String get openWorkbench => 'Open workbench';
+}
+
+// Path: web.database.workbench
+class TranslationsWebDatabaseWorkbenchEn {
+	TranslationsWebDatabaseWorkbenchEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Database workbench'
+	String get title => 'Database workbench';
 }
 
 // Path: more.items.integrations
@@ -12409,6 +12433,15 @@ class TranslationsSessionsInspectorFilesEn {
 
 	/// en: 'Back to session cwd'
 	String get backToCwd => 'Back to session cwd';
+
+	/// en: 'Upload files'
+	String get upload => 'Upload files';
+
+	/// en: 'Uploaded {count} file(s)'
+	String uploaded({required Object count}) => 'Uploaded ${count} file(s)';
+
+	/// en: '{name}: upload failed — {message}'
+	String uploadFailed({required Object name, required Object message}) => '${name}: upload failed — ${message}';
 }
 
 // Path: sessions.inspector.git
@@ -13657,6 +13690,9 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -17033,6 +17069,27 @@ class TranslationsWebCortexSettingsInjectionEn {
 	String get note => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.';
 }
 
+// Path: web.database.dialog.drivers
+class TranslationsWebDatabaseDialogDriversEn {
+	TranslationsWebDatabaseDialogDriversEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'PostgreSQL'
+	String get postgres => 'PostgreSQL';
+
+	/// en: 'MySQL'
+	String get mysql => 'MySQL';
+
+	/// en: 'MariaDB'
+	String get mariadb => 'MariaDB';
+
+	/// en: 'SQLite'
+	String get sqlite => 'SQLite';
+}
+
 // Path: sessions.inspector.shell.tabs
 class TranslationsSessionsInspectorShellTabsEn {
 	TranslationsSessionsInspectorShellTabsEn.internal(this._root);
@@ -17058,6 +17115,9 @@ class TranslationsSessionsInspectorShellTabsEn {
 
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
+
+	/// en: 'Database'
+	String get database => 'Database';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -17339,6 +17399,7 @@ extension on Translations {
 			'web.sessions.inspector.tabs.history' => 'History',
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
+			'web.sessions.inspector.tabs.database' => 'Database',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
@@ -17613,7 +17674,6 @@ extension on Translations {
 			'web.project.tabs.archived' => 'Archived',
 			'web.project.tabs.overview' => 'Overview',
 			'web.project.tabs.hygiene' => 'Hygiene',
-			'web.project.tabs.database' => 'Database',
 			'web.project.docLabel.goal' => 'Goal',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.current_objective' => 'Current objective',
@@ -19537,10 +19597,17 @@ extension on Translations {
 			'web.database.dialog.test' => 'Test',
 			'web.database.dialog.save' => 'Save',
 			'web.database.dialog.testFailed' => 'Connection test failed',
-			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Connected — PostgreSQL ${version} (${ms} ms)',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Connected — ${version} (${ms} ms)',
 			'web.database.dialog.savedCreate' => 'Connection added',
 			'web.database.dialog.savedEdit' => 'Connection updated',
-			'web.database.dialog.missingFields' => 'Name, host, database and username are required',
+			'web.database.dialog.missingFields' => 'Name and database are required (plus host and username for server engines)',
+			'web.database.dialog.driver' => 'Database engine',
+			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
+			'web.database.dialog.drivers.mysql' => 'MySQL',
+			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			'web.database.dialog.drivers.sqlite' => 'SQLite',
+			'web.database.dialog.filePath' => 'Database file',
+			'web.database.dialog.filePathHint' => 'Path to a SQLite file, inside the project directory.',
 			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} — ${rows} row(s) affected',
 			'web.database.tree.loading' => 'Loading schemas…',
 			'web.database.tree.noSchemas' => 'No schemas visible to this user',
@@ -19578,6 +19645,8 @@ extension on Translations {
 			'web.database.panel.deleted' => 'Connection deleted',
 			'web.database.panel.confirmDelete' => 'Delete this connection?',
 			'web.database.panel.console' => 'SQL console',
+			'web.database.panel.openWorkbench' => 'Open workbench',
+			'web.database.workbench.title' => 'Database workbench',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -19710,6 +19779,8 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Switch',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Switch failed: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No Claude accounts configured. Add them in More → Providers → Claude.',
@@ -19719,8 +19790,6 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
 			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => 'Upload failed (${status}): ${message}',
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => 'Upload failed: ${error}',
@@ -19772,6 +19841,7 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.history' => 'History',
 			'sessions.inspector.shell.tabs.vault' => 'Vault',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
+			'sessions.inspector.shell.tabs.database' => 'Database',
 			'sessions.inspector.cortex.title' => 'Cortex workspace',
 			'sessions.inspector.cortex.blurb' => 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.',
 			'sessions.inspector.cortex.open' => 'Open Cortex workspace',
@@ -19791,6 +19861,9 @@ extension on Translations {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Read failed: ${error}',
 			'sessions.inspector.files.parent' => 'Parent',
 			'sessions.inspector.files.backToCwd' => 'Back to session cwd',
+			'sessions.inspector.files.upload' => 'Upload files',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => 'Uploaded ${count} file(s)',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name}: upload failed — ${message}',
 			'sessions.inspector.git.insertAtRef' => 'Insert as @reference',
 			'sessions.inspector.git.insertPath' => 'Insert path',
 			'sessions.inspector.git.showDiff' => 'Show diff',
@@ -20220,6 +20293,8 @@ extension on Translations {
 			'project.browseFolder' => 'Browse folder…',
 			'project.resetTooltip' => 'Reset project memory',
 			'project.append' => 'Append',
+			_ => null,
+		} ?? switch (path) {
 			'project.appendDialogTitle' => 'Append journal entry',
 			'project.titleFieldLabel' => 'Title (optional)',
 			'project.contentFieldLabel' => 'Content (markdown)',
@@ -20233,8 +20308,6 @@ extension on Translations {
 			'project.resetDoneSnack' => ({required Object parts}) => 'Reset: ${parts}',
 			'project.resetFailed' => ({required Object error}) => 'Reset failed: ${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} saved',
-			_ => null,
-		} ?? switch (path) {
 			'project.docSaveFailed' => ({required Object error}) => 'Save failed: ${error}',
 			'project.docHintTemplate' => ({required Object kind}) => 'Write the ${kind} as markdown…',
 			'project.deleteEntryTooltip' => 'Delete entry',
@@ -20734,6 +20807,8 @@ extension on Translations {
 			'notesPage.deleteTitle' => 'Delete note?',
 			'notesPage.deletedSnack' => ({required Object path}) => 'Deleted ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
@@ -20747,8 +20822,6 @@ extension on Translations {
 			'notesPage.emptyFolder' => ({required Object path}) => 'Folder "${path}" is empty.',
 			'notesPage.validatePath' => 'Path is required',
 			'notesPage.validatePathDots' => 'Path cannot contain ".."',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => 'Saving…',

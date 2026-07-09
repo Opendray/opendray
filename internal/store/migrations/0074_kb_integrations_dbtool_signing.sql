@@ -1,3 +1,26 @@
+-- 0074 — kb_integrations refresh: the Database tool's per-session cwd
+-- binding is now cryptographic for opendray's own auto-attached MCP.
+-- The opendray-dbtool key is db:signed; per session opendray injects an
+-- X-OpenDray-Dbtool-Sig = HMAC(server-secret, cwd) header and the gateway
+-- rejects a signed-key call whose signature doesn't match cwd — closing
+-- the "extract key + forge cwd" residual for per-session-config providers.
+-- Antigravity (HOME-global MCP config) and third-party integration keys
+-- keep the plain ?cwd= check. New scope row: db:signed.
+--
+-- Why a new migration instead of editing 0073: the runner records applied
+-- versions by filename and never re-applies one. This force-updates the
+-- page (DO UPDATE), keeping updated_by='operator' so the AI KB drafter
+-- still treats it as human-locked.
+--
+-- Source of truth: docs/integrations/INTEGRATION_GUIDE.md — regenerated,
+-- do not hand-edit this heredoc.
+
+INSERT INTO project_docs (id, cwd, kind, content, updated_by, updated_at)
+VALUES (
+    'doc_global_kb_integrations',
+    '__global__',
+    'kb_integrations',
+    $ODGUIDE$
 # opendray Third-Party Integration Guide
 
 This is the canonical, forward-looking contract that **every** third-party app or website MUST follow to integrate with opendray. opendray is a self-hosted gateway that drives AI coding CLIs (Claude Code, Codex, OpenCode, antigravity) over a PTY behind a unified REST + WebSocket API. A third-party app integrates by being **registered by an operator** (admin-only), receiving a **one-time scoped API key**, and then spawning and driving agent sessions over REST while optionally proxying its own UI and subscribing to a live event stream. This document states the rules as explicit **MUST / SHOULD / NEVER**, documents the current reality honestly (including what is *not* enforced yet), and gives you a runnable end-to-end path.
@@ -464,8 +487,6 @@ create ──► running ──(/stop, SIGTERM)──► stopped ──(/start)�
 
 opendray can hold **per-project database connections** (a JetBrains-style database tool): the operator registers a connection against a project `cwd`, and agents/integrations browse its schema, read table data, run SQL, and — on writable connections — edit rows. Passwords are encrypted at rest with the same field cipher as channel/git-host secrets and are never returned by any read endpoint (`has_password: true` instead).
 
-**Supported engines:** `postgres`, `mysql`, `mariadb`, `sqlite` (the connection's `driver` field). MySQL and MariaDB share one implementation and use host/port/username/password like PostgreSQL (a MySQL "schema" is a database). **SQLite is a file-path connection**: `db_name` holds the path (no host/port/username), the path is fenced to the connection's project `cwd` — a path escaping it via `../` or a symlink is rejected at open time — and extension loading is disabled. All engines share the same REST surface, read-only fence and read/write scopes below; only the connection form differs.
-
 **Trust model — read before using:**
 
 - **Registering a connection is admin-only.** `POST/PATCH/DELETE /dbtool/connections` and the test endpoints reject integration keys (`requires admin`). An integration can never point opendray at a new database host — that is the SSRF-shaped surface, reserved for the operator. You only *use* connections the operator already approved.
@@ -867,3 +888,11 @@ This guide describes the opendray `/api/v1` integration contract as of **opendra
 - **Roadmap:** per-route scope enforcement for the still-unenforced `session:*` / `channel:*` / `provider:read`. Design your client now to handle `403` on any endpoint without breaking.
 
 When the code changes (new enforced scopes, spawn-profile fields, memory-zone semantics, or any endpoint addition), this guide MUST be updated in lockstep and re-seeded into the `kb_integrations` knowledge page (add a new `project_docs` upsert migration — the original seed migration is immutable once applied).
+$ODGUIDE$,
+    'operator',
+    NOW()
+)
+ON CONFLICT (cwd, kind) DO UPDATE
+    SET content    = EXCLUDED.content,
+        updated_by = EXCLUDED.updated_by,
+        updated_at = EXCLUDED.updated_at;

@@ -27,8 +27,12 @@ import {
   createConnection,
   updateConnection,
   testConnectionParams,
+  DB_DRIVERS,
+  DB_DEFAULT_PORTS,
+  driverUsesServer,
   type DBConnection,
   type DBConnectionInput,
+  type DBDriver,
   type DBPingResult,
 } from '@/lib/database'
 
@@ -44,6 +48,7 @@ const SSL_MODES = ['disable', 'prefer', 'require', 'verify-ca', 'verify-full']
 
 interface FormState {
   name: string
+  driver: DBDriver
   host: string
   port: string
   db_name: string
@@ -55,6 +60,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '',
+  driver: 'postgres',
   host: '',
   port: '5432',
   db_name: '',
@@ -87,6 +93,7 @@ export function ConnectionDialog({
     if (connection) {
       setForm({
         name: connection.name,
+        driver: connection.driver,
         host: connection.host,
         port: String(connection.port),
         db_name: connection.db_name,
@@ -103,16 +110,29 @@ export function ConnectionDialog({
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
 
+  // Switching driver resets the port to that engine's default (file-based
+  // SQLite has none) and clears the last ping.
+  const onDriverChange = (driver: DBDriver) => {
+    setPing(null)
+    setForm((f) => ({
+      ...f,
+      driver,
+      port: driverUsesServer(driver) ? String(DB_DEFAULT_PORTS[driver]) : '',
+    }))
+  }
+
+  const isSqlite = form.driver === 'sqlite'
+
   const toInput = (): DBConnectionInput => ({
     cwd,
     name: form.name.trim(),
-    driver: 'postgres',
-    host: form.host.trim(),
-    port: Number(form.port) || 5432,
+    driver: form.driver,
+    host: isSqlite ? '' : form.host.trim(),
+    port: isSqlite ? 0 : Number(form.port) || DB_DEFAULT_PORTS[form.driver],
     db_name: form.db_name.trim(),
-    username: form.username.trim(),
-    password: form.password,
-    ssl_mode: form.ssl_mode,
+    username: isSqlite ? '' : form.username.trim(),
+    password: isSqlite ? '' : form.password,
+    ssl_mode: isSqlite ? '' : form.ssl_mode,
     read_only: form.read_only,
   })
 
@@ -129,16 +149,22 @@ export function ConnectionDialog({
     mutationFn: () => {
       if (connection) {
         // Omit password when left blank so the stored secret is kept.
-        const patch = {
-          name: form.name.trim(),
-          host: form.host.trim(),
-          port: Number(form.port) || 5432,
-          db_name: form.db_name.trim(),
-          username: form.username.trim(),
-          ssl_mode: form.ssl_mode,
-          read_only: form.read_only,
-          ...(form.password ? { password: form.password } : {}),
-        }
+        const patch = isSqlite
+          ? {
+              name: form.name.trim(),
+              db_name: form.db_name.trim(),
+              read_only: form.read_only,
+            }
+          : {
+              name: form.name.trim(),
+              host: form.host.trim(),
+              port: Number(form.port) || DB_DEFAULT_PORTS[form.driver],
+              db_name: form.db_name.trim(),
+              username: form.username.trim(),
+              ssl_mode: form.ssl_mode,
+              read_only: form.read_only,
+              ...(form.password ? { password: form.password } : {}),
+            }
         return updateConnection(connection.id, patch)
       }
       return createConnection(toInput())
@@ -157,7 +183,11 @@ export function ConnectionDialog({
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.host.trim() || !form.db_name.trim() || !form.username.trim()) {
+    if (
+      !form.name.trim() ||
+      !form.db_name.trim() ||
+      (!isSqlite && (!form.host.trim() || !form.username.trim()))
+    ) {
       toast.error(t('web.database.dialog.missingFields'))
       return
     }
@@ -192,76 +222,117 @@ export function ConnectionDialog({
                 placeholder="prod-db"
               />
             </div>
-            <div className="col-span-2 sm:col-span-1">
-              <Label htmlFor="db-host">{t('web.database.dialog.host')}</Label>
-              <Input
-                id="db-host"
-                value={form.host}
-                onChange={(e) => set('host', e.target.value)}
-                placeholder="192.168.3.88"
-              />
-            </div>
-            <div>
-              <Label htmlFor="db-port">{t('web.database.dialog.port')}</Label>
-              <Input
-                id="db-port"
-                value={form.port}
-                onChange={(e) => set('port', e.target.value)}
-                inputMode="numeric"
-              />
-            </div>
-            <div>
-              <Label htmlFor="db-database">
-                {t('web.database.dialog.database')}
-              </Label>
-              <Input
-                id="db-database"
-                value={form.db_name}
-                onChange={(e) => set('db_name', e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="db-user">{t('web.database.dialog.username')}</Label>
-              <Input
-                id="db-user"
-                value={form.username}
-                onChange={(e) => set('username', e.target.value)}
-              />
-            </div>
-            <div className="col-span-2 sm:col-span-1">
-              <Label htmlFor="db-pass">
-                {t('web.database.dialog.password')}
-              </Label>
-              <Input
-                id="db-pass"
-                type="password"
-                value={form.password}
-                onChange={(e) => set('password', e.target.value)}
-                placeholder={
-                  editing && connection?.has_password
-                    ? t('web.database.dialog.passwordKept')
-                    : ''
-                }
-              />
-            </div>
-            <div>
-              <Label>{t('web.database.dialog.sslMode')}</Label>
+            <div className="col-span-2">
+              <Label>{t('web.database.dialog.driver')}</Label>
               <Select
-                value={form.ssl_mode}
-                onValueChange={(v) => set('ssl_mode', v)}
+                value={form.driver}
+                onValueChange={(v) => onDriverChange(v as DBDriver)}
+                disabled={editing}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SSL_MODES.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
+                  {DB_DRIVERS.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {t(`web.database.dialog.drivers.${d}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            {driverUsesServer(form.driver) && (
+              <>
+                <div className="col-span-2 sm:col-span-1">
+                  <Label htmlFor="db-host">
+                    {t('web.database.dialog.host')}
+                  </Label>
+                  <Input
+                    id="db-host"
+                    value={form.host}
+                    onChange={(e) => set('host', e.target.value)}
+                    placeholder="192.168.3.88"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="db-port">
+                    {t('web.database.dialog.port')}
+                  </Label>
+                  <Input
+                    id="db-port"
+                    value={form.port}
+                    onChange={(e) => set('port', e.target.value)}
+                    inputMode="numeric"
+                  />
+                </div>
+              </>
+            )}
+            <div className={isSqlite ? 'col-span-2' : ''}>
+              <Label htmlFor="db-database">
+                {isSqlite
+                  ? t('web.database.dialog.filePath')
+                  : t('web.database.dialog.database')}
+              </Label>
+              <Input
+                id="db-database"
+                value={form.db_name}
+                onChange={(e) => set('db_name', e.target.value)}
+                placeholder={isSqlite ? 'data/app.db' : ''}
+              />
+              {isSqlite && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('web.database.dialog.filePathHint')}
+                </p>
+              )}
+            </div>
+            {driverUsesServer(form.driver) && (
+              <>
+                <div>
+                  <Label htmlFor="db-user">
+                    {t('web.database.dialog.username')}
+                  </Label>
+                  <Input
+                    id="db-user"
+                    value={form.username}
+                    onChange={(e) => set('username', e.target.value)}
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <Label htmlFor="db-pass">
+                    {t('web.database.dialog.password')}
+                  </Label>
+                  <Input
+                    id="db-pass"
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => set('password', e.target.value)}
+                    placeholder={
+                      editing && connection?.has_password
+                        ? t('web.database.dialog.passwordKept')
+                        : ''
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>{t('web.database.dialog.sslMode')}</Label>
+                  <Select
+                    value={form.ssl_mode}
+                    onValueChange={(v) => set('ssl_mode', v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SSL_MODES.map((m) => (
+                        <SelectItem key={m} value={m}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

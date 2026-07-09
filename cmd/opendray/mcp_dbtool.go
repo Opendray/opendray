@@ -82,6 +82,10 @@ type dbtoolMCPConfig struct {
 	baseURL string
 	apiKey  string
 	cwd     string
+	// cwdSig is the HMAC(cwd) proof the gateway requires from signed keys
+	// (non-antigravity). Empty for antigravity (honest-path) or when the
+	// gateway didn't inject one.
+	cwdSig string
 }
 
 func loadDbtoolMCPConfig() (dbtoolMCPConfig, error) {
@@ -89,6 +93,7 @@ func loadDbtoolMCPConfig() (dbtoolMCPConfig, error) {
 		baseURL: strings.TrimRight(os.Getenv("OPENDRAY_BASE_URL"), "/"),
 		apiKey:  os.Getenv("OPENDRAY_API_KEY"),
 		cwd:     os.Getenv("OPENDRAY_DBTOOL_CWD"),
+		cwdSig:  os.Getenv("OPENDRAY_DBTOOL_CWD_SIG"),
 	}
 	if c.baseURL == "" {
 		return c, errors.New("mcp-dbtool: OPENDRAY_BASE_URL is required")
@@ -540,6 +545,11 @@ func (s *dbtoolMCPServer) gatewayGetJSON(path string, out any) error {
 }
 
 func (s *dbtoolMCPServer) doJSON(req *http.Request, path string, out any) error {
+	// Signed keys (non-antigravity) carry the per-cwd HMAC proof the
+	// gateway requires; header name must match dbtool's cwdSigHeader.
+	if s.cfg.cwdSig != "" {
+		req.Header.Set("X-OpenDray-Dbtool-Sig", s.cfg.cwdSig)
+	}
 	res, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("gateway %s: %w", path, err)

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -178,7 +177,15 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 	defer cancel()
 	meta := TableMeta{Schema: schema, Table: table}
 
-	rows, err := pool.Query(ctx, `
+	// One read-only snapshot so the four catalog queries (columns / PK /
+	// indexes / FKs) see a consistent view even if DDL runs concurrently.
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return meta, fmt.Errorf("dbtool: begin: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	rows, err := tx.Query(ctx, `
 		SELECT column_name, data_type, is_nullable = 'YES',
 		       COALESCE(column_default, ''), ordinal_position
 		FROM information_schema.columns
@@ -203,7 +210,7 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		return meta, fmt.Errorf("dbtool: table %s.%s not found", schema, table)
 	}
 
-	pkRows, err := pool.Query(ctx, `
+	pkRows, err := tx.Query(ctx, `
 		SELECT a.attname
 		FROM pg_index i
 		JOIN pg_class c ON c.oid = i.indrelid
@@ -227,7 +234,7 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		return meta, err
 	}
 
-	idxRows, err := pool.Query(ctx, `
+	idxRows, err := tx.Query(ctx, `
 		SELECT ci.relname, pg_get_indexdef(i.indexrelid), i.indisunique, i.indisprimary
 		FROM pg_index i
 		JOIN pg_class c  ON c.oid  = i.indrelid
@@ -251,7 +258,7 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 		return meta, err
 	}
 
-	fkRows, err := pool.Query(ctx, `
+	fkRows, err := tx.Query(ctx, `
 		SELECT con.conname,
 		       (SELECT array_agg(a.attname ORDER BY x.ord)
 		        FROM unnest(con.conkey) WITH ORDINALITY AS x(attnum, ord)
@@ -297,76 +304,8 @@ func (postgresDriver) TableMeta(ctx context.Context, h Handle, schema, table str
 	return meta, nil
 }
 
-// filterOps whitelists the operators a table-data filter may use and
-// whether each takes a value parameter.
-var filterOps = map[string]bool{
-	"=": true, "!=": true, "<>": true, "<": true, ">": true, "<=": true, ">=": true,
-	"LIKE": true, "ILIKE": true, "NOT LIKE": true, "NOT ILIKE": true,
-	"IS NULL": false, "IS NOT NULL": false,
-}
-
-// buildTableDataSQL renders the paged SELECT for req. Split out (and
-// exported to tests) so identifier quoting and parameter numbering can be
-// unit-tested without a live database.
-func buildTableDataSQL(req TableDataReq) (string, []any, error) {
-	if req.Schema == "" || req.Table == "" {
-		return "", nil, errors.New("dbtool: schema and table are required")
-	}
-	var sb strings.Builder
-	var args []any
-	sb.WriteString("SELECT * FROM ")
-	sb.WriteString(pgx.Identifier{req.Schema, req.Table}.Sanitize())
-	for i, f := range req.Filters {
-		op := strings.ToUpper(strings.TrimSpace(f.Op))
-		takesValue, ok := filterOps[op]
-		if !ok {
-			return "", nil, fmt.Errorf("dbtool: unsupported filter operator %q", f.Op)
-		}
-		if f.Column == "" {
-			return "", nil, errors.New("dbtool: filter column is required")
-		}
-		if i == 0 {
-			sb.WriteString(" WHERE ")
-		} else {
-			sb.WriteString(" AND ")
-		}
-		sb.WriteString(pgx.Identifier{f.Column}.Sanitize())
-		sb.WriteString(" ")
-		sb.WriteString(op)
-		if takesValue {
-			args = append(args, f.Value)
-			fmt.Fprintf(&sb, " $%d", len(args))
-		}
-	}
-	for i, s := range req.Sort {
-		if s.Column == "" {
-			return "", nil, errors.New("dbtool: sort column is required")
-		}
-		if i == 0 {
-			sb.WriteString(" ORDER BY ")
-		} else {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(pgx.Identifier{s.Column}.Sanitize())
-		if s.Desc {
-			sb.WriteString(" DESC")
-		}
-	}
-	limit := req.Limit
-	if limit <= 0 {
-		limit = 100
-	}
-	args = append(args, limit+1) // +1 row to detect truncation
-	fmt.Fprintf(&sb, " LIMIT $%d", len(args))
-	if req.Offset > 0 {
-		args = append(args, req.Offset)
-		fmt.Fprintf(&sb, " OFFSET $%d", len(args))
-	}
-	return sb.String(), args, nil
-}
-
 func (d postgresDriver) TableData(ctx context.Context, h Handle, req TableDataReq, timeout time.Duration) (*ResultSet, error) {
-	sqlText, args, err := buildTableDataSQL(req)
+	sqlText, args, err := buildTableDataSQL(req, pgDialect{})
 	if err != nil {
 		return nil, err
 	}
@@ -377,79 +316,16 @@ func (d postgresDriver) TableData(ctx context.Context, h Handle, req TableDataRe
 	return d.execute(ctx, h, sqlText, args, true, limit, timeout)
 }
 
-// buildInsertSQL renders INSERT … RETURNING *. Column order is made
-// deterministic for testability.
-func buildInsertSQL(req RowInsertReq) (string, []any, error) {
-	if req.Schema == "" || req.Table == "" {
-		return "", nil, errors.New("dbtool: schema and table are required")
-	}
-	if len(req.Values) == 0 {
-		return "", nil, errors.New("dbtool: insert requires at least one column value")
-	}
-	cols := sortedKeys(req.Values)
-	var sb strings.Builder
-	var args []any
-	sb.WriteString("INSERT INTO ")
-	sb.WriteString(pgx.Identifier{req.Schema, req.Table}.Sanitize())
-	sb.WriteString(" (")
-	for i, c := range cols {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(pgx.Identifier{c}.Sanitize())
-	}
-	sb.WriteString(") VALUES (")
-	for i, c := range cols {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		args = append(args, req.Values[c])
-		fmt.Fprintf(&sb, "$%d", len(args))
-	}
-	sb.WriteString(") RETURNING *")
-	return sb.String(), args, nil
-}
-
 func (d postgresDriver) InsertRow(ctx context.Context, h Handle, req RowInsertReq, timeout time.Duration) (*ResultSet, error) {
-	sqlText, args, err := buildInsertSQL(req)
+	sqlText, args, err := buildInsertSQL(req, pgDialect{})
 	if err != nil {
 		return nil, err
 	}
 	return d.execute(ctx, h, sqlText, args, false, 10, timeout)
 }
 
-// buildUpdateSQL renders UPDATE … WHERE <full pk>. The service validates
-// that req.PK covers the table's actual primary key before calling this.
-func buildUpdateSQL(req RowUpdateReq) (string, []any, error) {
-	if req.Schema == "" || req.Table == "" {
-		return "", nil, errors.New("dbtool: schema and table are required")
-	}
-	if len(req.Values) == 0 {
-		return "", nil, errors.New("dbtool: update requires at least one column value")
-	}
-	if len(req.PK) == 0 {
-		return "", nil, errors.New("dbtool: update requires the row's primary key")
-	}
-	var sb strings.Builder
-	var args []any
-	sb.WriteString("UPDATE ")
-	sb.WriteString(pgx.Identifier{req.Schema, req.Table}.Sanitize())
-	sb.WriteString(" SET ")
-	for i, c := range sortedKeys(req.Values) {
-		if i > 0 {
-			sb.WriteString(", ")
-		}
-		args = append(args, req.Values[c])
-		sb.WriteString(pgx.Identifier{c}.Sanitize())
-		fmt.Fprintf(&sb, " = $%d", len(args))
-	}
-	sb.WriteString(" WHERE ")
-	writePKWhere(&sb, &args, req.PK)
-	return sb.String(), args, nil
-}
-
 func (d postgresDriver) UpdateRow(ctx context.Context, h Handle, req RowUpdateReq, timeout time.Duration) (int64, error) {
-	sqlText, args, err := buildUpdateSQL(req)
+	sqlText, args, err := buildUpdateSQL(req, pgDialect{})
 	if err != nil {
 		return 0, err
 	}
@@ -487,7 +363,7 @@ func (d postgresDriver) DeleteRows(ctx context.Context, h Handle, req RowDeleteR
 		sb.WriteString("DELETE FROM ")
 		sb.WriteString(pgx.Identifier{req.Schema, req.Table}.Sanitize())
 		sb.WriteString(" WHERE ")
-		writePKWhere(&sb, &args, pk)
+		writePKWhere(&sb, &args, pk, pgDialect{})
 		tag, err := tx.Exec(ctx, sb.String(), args...)
 		if err != nil {
 			return 0, fmt.Errorf("dbtool: delete row: %w", err)
@@ -502,28 +378,6 @@ func (d postgresDriver) DeleteRows(ctx context.Context, h Handle, req RowDeleteR
 
 func (d postgresDriver) Query(ctx context.Context, h Handle, req QueryReq, class StatementClass, maxRows int, timeout time.Duration) (*ResultSet, error) {
 	return d.execute(ctx, h, req.SQL, nil, class == ClassRead, maxRows, timeout)
-}
-
-// writePKWhere appends "pk1 = $n AND pk2 = $m" (NULL-safe via IS NOT
-// DISTINCT FROM) for the pk map, in deterministic column order.
-func writePKWhere(sb *strings.Builder, args *[]any, pk map[string]any) {
-	for i, c := range sortedKeys(pk) {
-		if i > 0 {
-			sb.WriteString(" AND ")
-		}
-		*args = append(*args, pk[c])
-		sb.WriteString(pgx.Identifier{c}.Sanitize())
-		fmt.Fprintf(sb, " IS NOT DISTINCT FROM $%d", len(*args))
-	}
-}
-
-func sortedKeys(m map[string]any) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 func setLocalTimeout(ctx context.Context, tx pgx.Tx, timeout time.Duration) error {

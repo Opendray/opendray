@@ -1691,6 +1691,7 @@ class _TranslationsWebDatabaseEs extends TranslationsWebDatabaseEn {
 	@override late final _TranslationsWebDatabaseGridEs grid = _TranslationsWebDatabaseGridEs._(_root);
 	@override late final _TranslationsWebDatabaseConsoleEs console = _TranslationsWebDatabaseConsoleEs._(_root);
 	@override late final _TranslationsWebDatabasePanelEs panel = _TranslationsWebDatabasePanelEs._(_root);
+	@override late final _TranslationsWebDatabaseWorkbenchEs workbench = _TranslationsWebDatabaseWorkbenchEs._(_root);
 }
 
 // Path: more.identity
@@ -3478,7 +3479,6 @@ class _TranslationsWebProjectTabsEs extends TranslationsWebProjectTabsEn {
 	@override String get archived => 'Archivadas';
 	@override String get overview => 'Resumen';
 	@override String get hygiene => 'Higiene';
-	@override String get database => 'Base de datos';
 }
 
 // Path: web.project.docLabel
@@ -5915,10 +5915,14 @@ class _TranslationsWebDatabaseDialogEs extends TranslationsWebDatabaseDialogEn {
 	@override String get test => 'Probar';
 	@override String get save => 'Guardar';
 	@override String get testFailed => 'La prueba de conexión falló';
-	@override String testOk({required Object version, required Object ms}) => 'Conectado — PostgreSQL ${version} (${ms} ms)';
+	@override String testOk({required Object version, required Object ms}) => 'Conectado — ${version} (${ms} ms)';
 	@override String get savedCreate => 'Conexión añadida';
 	@override String get savedEdit => 'Conexión actualizada';
-	@override String get missingFields => 'Nombre, host, base de datos y usuario son obligatorios';
+	@override String get missingFields => 'El nombre y la base de datos son obligatorios (más host y usuario para motores de servidor)';
+	@override String get driver => 'Motor de base de datos';
+	@override late final _TranslationsWebDatabaseDialogDriversEs drivers = _TranslationsWebDatabaseDialogDriversEs._(_root);
+	@override String get filePath => 'Archivo de base de datos';
+	@override String get filePathHint => 'Ruta a un archivo SQLite, dentro del directorio del proyecto.';
 }
 
 // Path: web.database.results
@@ -6010,6 +6014,17 @@ class _TranslationsWebDatabasePanelEs extends TranslationsWebDatabasePanelEn {
 	@override String get deleted => 'Conexión eliminada';
 	@override String get confirmDelete => '¿Eliminar esta conexión?';
 	@override String get console => 'Consola SQL';
+	@override String get openWorkbench => 'Abrir banco de trabajo';
+}
+
+// Path: web.database.workbench
+class _TranslationsWebDatabaseWorkbenchEs extends TranslationsWebDatabaseWorkbenchEn {
+	_TranslationsWebDatabaseWorkbenchEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Banco de trabajo de BD';
 }
 
 // Path: more.items.integrations
@@ -6394,6 +6409,9 @@ class _TranslationsSessionsInspectorFilesEs extends TranslationsSessionsInspecto
 	@override String readFailedGeneric({required Object error}) => 'Falló la lectura: ${error}';
 	@override String get parent => 'Superior';
 	@override String get backToCwd => 'Volver al cwd de la session';
+	@override String get upload => 'Subir archivos';
+	@override String uploaded({required Object count}) => 'Subidos ${count} archivo(s)';
+	@override String uploadFailed({required Object name, required Object message}) => '${name}: error al subir — ${message}';
 }
 
 // Path: sessions.inspector.git
@@ -7056,6 +7074,7 @@ class _TranslationsWebSessionsInspectorTabsEs extends TranslationsWebSessionsIns
 	@override String get history => 'Historial';
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
+	@override String get database => 'BD';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -9036,6 +9055,19 @@ class _TranslationsWebCortexSettingsInjectionEs extends TranslationsWebCortexSet
 	@override String get note => 'En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice.';
 }
 
+// Path: web.database.dialog.drivers
+class _TranslationsWebDatabaseDialogDriversEs extends TranslationsWebDatabaseDialogDriversEn {
+	_TranslationsWebDatabaseDialogDriversEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get postgres => 'PostgreSQL';
+	@override String get mysql => 'MySQL';
+	@override String get mariadb => 'MariaDB';
+	@override String get sqlite => 'SQLite';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9049,6 +9081,7 @@ class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInsp
 	@override String get history => 'Historial';
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
+	@override String get database => 'BD';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9306,6 +9339,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.tabs.history' => 'Historial',
 			'web.sessions.inspector.tabs.vault' => 'Bóveda',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
+			'web.sessions.inspector.tabs.database' => 'BD',
 			'web.sessions.inspector.vaultPanel.open' => 'Abrir Bóveda',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Docs del proyecto',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Docs del proyecto escritos por el agente en la bóveda. Revincula la carpeta si las notas de este proyecto viven en otro sitio.',
@@ -9580,7 +9614,6 @@ extension on TranslationsEs {
 			'web.project.tabs.archived' => 'Archivadas',
 			'web.project.tabs.overview' => 'Resumen',
 			'web.project.tabs.hygiene' => 'Higiene',
-			'web.project.tabs.database' => 'Base de datos',
 			'web.project.docLabel.goal' => 'Objetivo',
 			'web.project.docLabel.plan' => 'Plan',
 			'web.project.docLabel.current_objective' => 'Objetivo actual',
@@ -11504,10 +11537,17 @@ extension on TranslationsEs {
 			'web.database.dialog.test' => 'Probar',
 			'web.database.dialog.save' => 'Guardar',
 			'web.database.dialog.testFailed' => 'La prueba de conexión falló',
-			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Conectado — PostgreSQL ${version} (${ms} ms)',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Conectado — ${version} (${ms} ms)',
 			'web.database.dialog.savedCreate' => 'Conexión añadida',
 			'web.database.dialog.savedEdit' => 'Conexión actualizada',
-			'web.database.dialog.missingFields' => 'Nombre, host, base de datos y usuario son obligatorios',
+			'web.database.dialog.missingFields' => 'El nombre y la base de datos son obligatorios (más host y usuario para motores de servidor)',
+			'web.database.dialog.driver' => 'Motor de base de datos',
+			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
+			'web.database.dialog.drivers.mysql' => 'MySQL',
+			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			'web.database.dialog.drivers.sqlite' => 'SQLite',
+			'web.database.dialog.filePath' => 'Archivo de base de datos',
+			'web.database.dialog.filePathHint' => 'Ruta a un archivo SQLite, dentro del directorio del proyecto.',
 			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} — ${rows} fila(s) afectada(s)',
 			'web.database.tree.loading' => 'Cargando esquemas…',
 			'web.database.tree.noSchemas' => 'No hay esquemas visibles para este usuario',
@@ -11545,6 +11585,8 @@ extension on TranslationsEs {
 			'web.database.panel.deleted' => 'Conexión eliminada',
 			'web.database.panel.confirmDelete' => '¿Eliminar esta conexión?',
 			'web.database.panel.console' => 'Consola SQL',
+			'web.database.panel.openWorkbench' => 'Abrir banco de trabajo',
+			'web.database.workbench.title' => 'Banco de trabajo de BD',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -11677,6 +11719,8 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.confirmBody' => 'Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Cambiar',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancelar',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Cambiado a ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Cambio fallido: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.',
@@ -11686,8 +11730,6 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Falló el selector de imágenes: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Subiendo imagen…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Imagen adjuntada: ${path}',
 			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => 'Falló la subida (${status}): ${message}',
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => 'Falló la subida: ${error}',
@@ -11739,6 +11781,7 @@ extension on TranslationsEs {
 			'sessions.inspector.shell.tabs.history' => 'Historial',
 			'sessions.inspector.shell.tabs.vault' => 'Bóveda',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
+			'sessions.inspector.shell.tabs.database' => 'BD',
 			'sessions.inspector.cortex.title' => 'Espacio Cortex',
 			'sessions.inspector.cortex.blurb' => 'Objetivo, plan, diario, bandeja y limpieza de memoria de este proyecto — el Cortex mantenido por IA.',
 			'sessions.inspector.cortex.open' => 'Abrir espacio Cortex',
@@ -11758,6 +11801,9 @@ extension on TranslationsEs {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => 'Falló la lectura: ${error}',
 			'sessions.inspector.files.parent' => 'Superior',
 			'sessions.inspector.files.backToCwd' => 'Volver al cwd de la session',
+			'sessions.inspector.files.upload' => 'Subir archivos',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => 'Subidos ${count} archivo(s)',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name}: error al subir — ${message}',
 			'sessions.inspector.git.insertAtRef' => 'Insertar como @referencia',
 			'sessions.inspector.git.insertPath' => 'Insertar ruta',
 			'sessions.inspector.git.showDiff' => 'Mostrar diff',
@@ -12187,6 +12233,8 @@ extension on TranslationsEs {
 			'project.browseFolder' => 'Explorar carpeta…',
 			'project.resetTooltip' => 'Restablecer la memoria del proyecto',
 			'project.append' => 'Añadir',
+			_ => null,
+		} ?? switch (path) {
 			'project.appendDialogTitle' => 'Añadir entrada de diario',
 			'project.titleFieldLabel' => 'Título (opcional)',
 			'project.contentFieldLabel' => 'Contenido (markdown)',
@@ -12200,8 +12248,6 @@ extension on TranslationsEs {
 			'project.resetDoneSnack' => ({required Object parts}) => 'Restablecido: ${parts}',
 			'project.resetFailed' => ({required Object error}) => 'Error al restablecer: ${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} guardado',
-			_ => null,
-		} ?? switch (path) {
 			'project.docSaveFailed' => ({required Object error}) => 'Error al guardar: ${error}',
 			'project.docHintTemplate' => ({required Object kind}) => 'Escribe el ${kind} como markdown…',
 			'project.deleteEntryTooltip' => 'Eliminar entrada',
@@ -12701,6 +12747,8 @@ extension on TranslationsEs {
 			'notesPage.deleteTitle' => '¿Eliminar nota?',
 			'notesPage.deletedSnack' => ({required Object path}) => 'Eliminado ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => 'Error al crear: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Error al crear: ${error}',
@@ -12714,8 +12762,6 @@ extension on TranslationsEs {
 			'notesPage.emptyFolder' => ({required Object path}) => 'La carpeta "${path}" está vacía.',
 			'notesPage.validatePath' => 'La ruta es obligatoria',
 			'notesPage.validatePathDots' => 'La ruta no puede contener ".."',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.pathHelper' => 'Añade .md automáticamente si falta.',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => 'Guardando…',

@@ -1691,6 +1691,7 @@ class _TranslationsWebDatabaseZh extends TranslationsWebDatabaseEn {
 	@override late final _TranslationsWebDatabaseGridZh grid = _TranslationsWebDatabaseGridZh._(_root);
 	@override late final _TranslationsWebDatabaseConsoleZh console = _TranslationsWebDatabaseConsoleZh._(_root);
 	@override late final _TranslationsWebDatabasePanelZh panel = _TranslationsWebDatabasePanelZh._(_root);
+	@override late final _TranslationsWebDatabaseWorkbenchZh workbench = _TranslationsWebDatabaseWorkbenchZh._(_root);
 }
 
 // Path: more.identity
@@ -3478,7 +3479,6 @@ class _TranslationsWebProjectTabsZh extends TranslationsWebProjectTabsEn {
 	@override String get archived => '已归档';
 	@override String get overview => '概览';
 	@override String get hygiene => '记忆卫生';
-	@override String get database => '数据库';
 }
 
 // Path: web.project.docLabel
@@ -5915,10 +5915,14 @@ class _TranslationsWebDatabaseDialogZh extends TranslationsWebDatabaseDialogEn {
 	@override String get test => '测试';
 	@override String get save => '保存';
 	@override String get testFailed => '连接测试失败';
-	@override String testOk({required Object version, required Object ms}) => '已连接 —— PostgreSQL ${version}(${ms} 毫秒)';
+	@override String testOk({required Object version, required Object ms}) => '已连接 — ${version}（${ms} ms）';
 	@override String get savedCreate => '连接已添加';
 	@override String get savedEdit => '连接已更新';
-	@override String get missingFields => '名称、主机、数据库和用户名为必填项';
+	@override String get missingFields => '需要填写名称和数据库（服务器引擎还需主机和用户名）';
+	@override String get driver => '数据库类型';
+	@override late final _TranslationsWebDatabaseDialogDriversZh drivers = _TranslationsWebDatabaseDialogDriversZh._(_root);
+	@override String get filePath => '数据库文件';
+	@override String get filePathHint => '项目目录内的 SQLite 文件路径。';
 }
 
 // Path: web.database.results
@@ -6010,6 +6014,17 @@ class _TranslationsWebDatabasePanelZh extends TranslationsWebDatabasePanelEn {
 	@override String get deleted => '连接已删除';
 	@override String get confirmDelete => '删除此连接?';
 	@override String get console => 'SQL 控制台';
+	@override String get openWorkbench => '展开工作台';
+}
+
+// Path: web.database.workbench
+class _TranslationsWebDatabaseWorkbenchZh extends TranslationsWebDatabaseWorkbenchEn {
+	_TranslationsWebDatabaseWorkbenchZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '数据库工作台';
 }
 
 // Path: more.items.integrations
@@ -6394,6 +6409,9 @@ class _TranslationsSessionsInspectorFilesZh extends TranslationsSessionsInspecto
 	@override String readFailedGeneric({required Object error}) => '读取失败：${error}';
 	@override String get parent => '上级';
 	@override String get backToCwd => '返回会话目录';
+	@override String get upload => '上传文件';
+	@override String uploaded({required Object count}) => '已上传 ${count} 个文件';
+	@override String uploadFailed({required Object name, required Object message}) => '${name} 上传失败:${message}';
 }
 
 // Path: sessions.inspector.git
@@ -7056,6 +7074,7 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get history => '历史';
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
+	@override String get database => '数据库';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -9036,6 +9055,19 @@ class _TranslationsWebCortexSettingsInjectionZh extends TranslationsWebCortexSet
 	@override String get note => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。';
 }
 
+// Path: web.database.dialog.drivers
+class _TranslationsWebDatabaseDialogDriversZh extends TranslationsWebDatabaseDialogDriversEn {
+	_TranslationsWebDatabaseDialogDriversZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get postgres => 'PostgreSQL';
+	@override String get mysql => 'MySQL';
+	@override String get mariadb => 'MariaDB';
+	@override String get sqlite => 'SQLite';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9049,6 +9081,7 @@ class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInsp
 	@override String get history => '历史';
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
+	@override String get database => '数据库';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9306,6 +9339,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.history' => '历史',
 			'web.sessions.inspector.tabs.vault' => '文档库',
 			'web.sessions.inspector.tabs.cortex' => '心智中枢',
+			'web.sessions.inspector.tabs.database' => '数据库',
 			'web.sessions.inspector.vaultPanel.open' => '打开文档库',
 			'web.sessions.inspector.vaultPanel.projectDocs' => '项目文档',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => '文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。',
@@ -9580,7 +9614,6 @@ extension on TranslationsZh {
 			'web.project.tabs.archived' => '已归档',
 			'web.project.tabs.overview' => '概览',
 			'web.project.tabs.hygiene' => '记忆卫生',
-			'web.project.tabs.database' => '数据库',
 			'web.project.docLabel.goal' => '目标',
 			'web.project.docLabel.plan' => '计划',
 			'web.project.docLabel.current_objective' => '当前目标',
@@ -11504,10 +11537,17 @@ extension on TranslationsZh {
 			'web.database.dialog.test' => '测试',
 			'web.database.dialog.save' => '保存',
 			'web.database.dialog.testFailed' => '连接测试失败',
-			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => '已连接 —— PostgreSQL ${version}(${ms} 毫秒)',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => '已连接 — ${version}（${ms} ms）',
 			'web.database.dialog.savedCreate' => '连接已添加',
 			'web.database.dialog.savedEdit' => '连接已更新',
-			'web.database.dialog.missingFields' => '名称、主机、数据库和用户名为必填项',
+			'web.database.dialog.missingFields' => '需要填写名称和数据库（服务器引擎还需主机和用户名）',
+			'web.database.dialog.driver' => '数据库类型',
+			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
+			'web.database.dialog.drivers.mysql' => 'MySQL',
+			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			'web.database.dialog.drivers.sqlite' => 'SQLite',
+			'web.database.dialog.filePath' => '数据库文件',
+			'web.database.dialog.filePathHint' => '项目目录内的 SQLite 文件路径。',
 			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} —— 影响 ${rows} 行',
 			'web.database.tree.loading' => '正在加载 schema…',
 			'web.database.tree.noSchemas' => '该用户无可见 schema',
@@ -11545,6 +11585,8 @@ extension on TranslationsZh {
 			'web.database.panel.deleted' => '连接已删除',
 			'web.database.panel.confirmDelete' => '删除此连接?',
 			'web.database.panel.console' => 'SQL 控制台',
+			'web.database.panel.openWorkbench' => '展开工作台',
+			'web.database.workbench.title' => '数据库工作台',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -11677,6 +11719,8 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.confirmBody' => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。',
 			'sessions.detail.accountSwitcher.confirmAction' => '切换',
 			'sessions.detail.accountSwitcher.cancel' => '取消',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => '切换失败：${error}',
 			'sessions.detail.accountSwitcher.noneHint' => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。',
@@ -11686,8 +11730,6 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.noneHintAgy' => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
 			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
 			'sessions.terminal.snackbar.uploadFailed' => ({required Object status, required Object message}) => '上传失败（${status}）：${message}',
 			'sessions.terminal.snackbar.uploadFailedGeneric' => ({required Object error}) => '上传失败：${error}',
@@ -11739,6 +11781,7 @@ extension on TranslationsZh {
 			'sessions.inspector.shell.tabs.history' => '历史',
 			'sessions.inspector.shell.tabs.vault' => '文档库',
 			'sessions.inspector.shell.tabs.cortex' => '心智中枢',
+			'sessions.inspector.shell.tabs.database' => '数据库',
 			'sessions.inspector.cortex.title' => '心智中枢工作区',
 			'sessions.inspector.cortex.blurb' => '本项目的目标、计划、日志、收件箱与记忆整理 —— 由 AI 维护的心智中枢。',
 			'sessions.inspector.cortex.open' => '打开心智中枢工作区',
@@ -11758,6 +11801,9 @@ extension on TranslationsZh {
 			'sessions.inspector.files.readFailedGeneric' => ({required Object error}) => '读取失败：${error}',
 			'sessions.inspector.files.parent' => '上级',
 			'sessions.inspector.files.backToCwd' => '返回会话目录',
+			'sessions.inspector.files.upload' => '上传文件',
+			'sessions.inspector.files.uploaded' => ({required Object count}) => '已上传 ${count} 个文件',
+			'sessions.inspector.files.uploadFailed' => ({required Object name, required Object message}) => '${name} 上传失败:${message}',
 			'sessions.inspector.git.insertAtRef' => '作为 @引用 插入',
 			'sessions.inspector.git.insertPath' => '插入路径',
 			'sessions.inspector.git.showDiff' => '查看 diff',
@@ -12187,6 +12233,8 @@ extension on TranslationsZh {
 			'project.browseFolder' => '浏览文件夹…',
 			'project.resetTooltip' => '重置项目记忆',
 			'project.append' => '追加',
+			_ => null,
+		} ?? switch (path) {
 			'project.appendDialogTitle' => '追加日志条目',
 			'project.titleFieldLabel' => '标题（可选）',
 			'project.contentFieldLabel' => '内容（Markdown）',
@@ -12200,8 +12248,6 @@ extension on TranslationsZh {
 			'project.resetDoneSnack' => ({required Object parts}) => '已重置：${parts}',
 			'project.resetFailed' => ({required Object error}) => '重置失败：${error}',
 			'project.docSavedSnack' => ({required Object kind}) => '${kind} 已保存',
-			_ => null,
-		} ?? switch (path) {
 			'project.docSaveFailed' => ({required Object error}) => '保存失败：${error}',
 			'project.docHintTemplate' => ({required Object kind}) => '以 Markdown 编写 ${kind}…',
 			'project.deleteEntryTooltip' => '删除条目',
@@ -12701,6 +12747,8 @@ extension on TranslationsZh {
 			'notesPage.deleteTitle' => '删除笔记？',
 			'notesPage.deletedSnack' => ({required Object path}) => '已删除 ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
@@ -12714,8 +12762,6 @@ extension on TranslationsZh {
 			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
 			'notesPage.validatePath' => '必须填写路径',
 			'notesPage.validatePathDots' => '路径不能包含「..」',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown…',
 			'notesPage.editor.saving' => '保存中…',
