@@ -187,6 +187,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # ── Rebuild opendray.dev directly. The sibling notify-site-on-release
+      #    workflow listens on `release: published`, but that event never
+      #    fires here: GitHub suppresses workflow-triggering events for
+      #    releases created with the automatic GITHUB_TOKEN (loop
+      #    prevention), and goreleaser publishes as github-actions[bot].
+      #    So the site went stale for every goreleaser release. Dispatch
+      #    from inside the release job instead. Skipped for prerelease
+      #    ('-') tags — mirrors publish-npm — and no-ops if the PAT is unset.
+      - name: Rebuild opendray.dev
+        if: success() && !contains(env.TAG, '-')
+        env:
+          PAT: ${{ secrets.ODSITE_DISPATCH_PAT }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "ODSITE_DISPATCH_PAT not set — skipping site rebuild."
+            exit 0
+          fi
+          curl -sSf -X POST \
+            -H "Authorization: token $PAT" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/Opendray/opendray.dev/dispatches" \
+            -d "{\"event_type\":\"opendray-release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+          echo "Dispatched opendray-release for $TAG"
+
   publish-npm:
     name: Publish to npm
     needs: release
