@@ -10,6 +10,21 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- **Database tool — MySQL, MariaDB and SQLite.** The Database tool now
+  connects to MySQL and MariaDB (host/port/username like PostgreSQL; a
+  MySQL "schema" is a database) and SQLite in addition to PostgreSQL. The
+  connection form (web and mobile) gains an engine picker with per-engine
+  default ports. **SQLite is a file-path connection**: the path is fenced
+  to the connection's project `cwd` (a path escaping it via `../` or a
+  symlink is rejected) and extension loading is disabled. Reads run behind
+  the same read-only fence on every engine (SQLite via a dedicated
+  read-only connection pool). All engines are pure-Go drivers
+  (`go-sql-driver/mysql`, `modernc.org/sqlite`), so the binary still
+  cross-compiles without cgo. Migration `0075` widens the driver
+  constraint; `0076` reseeds the kb_integrations page.
+
 ## [v2.11.1] — 2026-07-09
 
 ### Added

@@ -5915,10 +5915,14 @@ class _TranslationsWebDatabaseDialogZh extends TranslationsWebDatabaseDialogEn {
 	@override String get test => '测试';
 	@override String get save => '保存';
 	@override String get testFailed => '连接测试失败';
-	@override String testOk({required Object version, required Object ms}) => '已连接 —— PostgreSQL ${version}(${ms} 毫秒)';
+	@override String testOk({required Object version, required Object ms}) => '已连接 — ${version}（${ms} ms）';
 	@override String get savedCreate => '连接已添加';
 	@override String get savedEdit => '连接已更新';
-	@override String get missingFields => '名称、主机、数据库和用户名为必填项';
+	@override String get missingFields => '需要填写名称和数据库（服务器引擎还需主机和用户名）';
+	@override String get driver => '数据库类型';
+	@override late final _TranslationsWebDatabaseDialogDriversZh drivers = _TranslationsWebDatabaseDialogDriversZh._(_root);
+	@override String get filePath => '数据库文件';
+	@override String get filePathHint => '项目目录内的 SQLite 文件路径。';
 }
 
 // Path: web.database.results
@@ -9051,6 +9055,19 @@ class _TranslationsWebCortexSettingsInjectionZh extends TranslationsWebCortexSet
 	@override String get note => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。';
 }
 
+// Path: web.database.dialog.drivers
+class _TranslationsWebDatabaseDialogDriversZh extends TranslationsWebDatabaseDialogDriversEn {
+	_TranslationsWebDatabaseDialogDriversZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get postgres => 'PostgreSQL';
+	@override String get mysql => 'MySQL';
+	@override String get mariadb => 'MariaDB';
+	@override String get sqlite => 'SQLite';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -11520,10 +11537,17 @@ extension on TranslationsZh {
 			'web.database.dialog.test' => '测试',
 			'web.database.dialog.save' => '保存',
 			'web.database.dialog.testFailed' => '连接测试失败',
-			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => '已连接 —— PostgreSQL ${version}(${ms} 毫秒)',
+			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => '已连接 — ${version}（${ms} ms）',
 			'web.database.dialog.savedCreate' => '连接已添加',
 			'web.database.dialog.savedEdit' => '连接已更新',
-			'web.database.dialog.missingFields' => '名称、主机、数据库和用户名为必填项',
+			'web.database.dialog.missingFields' => '需要填写名称和数据库（服务器引擎还需主机和用户名）',
+			'web.database.dialog.driver' => '数据库类型',
+			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
+			'web.database.dialog.drivers.mysql' => 'MySQL',
+			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			'web.database.dialog.drivers.sqlite' => 'SQLite',
+			'web.database.dialog.filePath' => '数据库文件',
+			'web.database.dialog.filePathHint' => '项目目录内的 SQLite 文件路径。',
 			'web.database.results.noColumns' => ({required Object command, required Object rows}) => '${command} —— 影响 ${rows} 行',
 			'web.database.tree.loading' => '正在加载 schema…',
 			'web.database.tree.noSchemas' => '该用户无可见 schema',
@@ -11695,6 +11719,8 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.confirmBody' => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。',
 			'sessions.detail.accountSwitcher.confirmAction' => '切换',
 			'sessions.detail.accountSwitcher.cancel' => '取消',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => '切换失败：${error}',
 			'sessions.detail.accountSwitcher.noneHint' => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。',
@@ -11702,8 +11728,6 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.sheetTitleAgy' => '切换 Antigravity 账号',
 			'sessions.detail.accountSwitcher.confirmBodyAgy' => '这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。',
 			'sessions.detail.accountSwitcher.noneHintAgy' => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
 			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
@@ -12209,6 +12233,8 @@ extension on TranslationsZh {
 			'project.browseFolder' => '浏览文件夹…',
 			'project.resetTooltip' => '重置项目记忆',
 			'project.append' => '追加',
+			_ => null,
+		} ?? switch (path) {
 			'project.appendDialogTitle' => '追加日志条目',
 			'project.titleFieldLabel' => '标题（可选）',
 			'project.contentFieldLabel' => '内容（Markdown）',
@@ -12216,8 +12242,6 @@ extension on TranslationsZh {
 			'project.approveFailed' => ({required Object error}) => '批准失败：${error}',
 			'project.rejectFailed' => ({required Object error}) => '拒绝失败：${error}',
 			'project.resetConfirmTitle' => '重置项目记忆？',
-			_ => null,
-		} ?? switch (path) {
 			'project.alsoDeleteScanner' => '同时删除扫描器文档',
 			'project.alsoDeletePgvector' => '同时删除 pgvector 记忆',
 			'project.deleteForever' => '永久删除',
@@ -12723,6 +12747,8 @@ extension on TranslationsZh {
 			'notesPage.deleteTitle' => '删除笔记？',
 			'notesPage.deletedSnack' => ({required Object path}) => '已删除 ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
@@ -12730,8 +12756,6 @@ extension on TranslationsZh {
 			'notesPage.pathHint' => 'personal/scratch.md',
 			'notesPage.create' => '创建',
 			'notesPage.popupDelete' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
 			'notesPage.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的笔记。',
 			'notesPage.emptyVault' => '仓库为空。点击 + 创建第一条笔记。',

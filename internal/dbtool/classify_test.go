@@ -19,6 +19,8 @@ func TestClassify(t *testing.T) {
 		{"values", "VALUES (1), (2)", ClassRead, nil},
 		{"table", "TABLE users", ClassRead, nil},
 		{"show", "SHOW search_path", ClassRead, nil},
+		{"describe", "DESCRIBE users", ClassRead, nil},
+		{"desc", "DESC users", ClassRead, nil},
 
 		{"line comment then select", "-- hi\nSELECT 1", ClassRead, nil},
 		{"block comment then select", "/* multi\nline */ SELECT 1", ClassRead, nil},
@@ -37,6 +39,7 @@ func TestClassify(t *testing.T) {
 		{"with delete tail", "WITH x AS (SELECT 1) DELETE FROM t", ClassWrite, nil},
 		{"with update in string literal", "WITH x AS (SELECT * FROM audit WHERE action = 'update') SELECT * FROM x", ClassRead, nil},
 		{"with quoted identifier named update", `WITH x AS (SELECT "update" FROM t) SELECT * FROM x`, ClassRead, nil},
+		{"with backtick identifier named update", "WITH x AS (SELECT `update` FROM t) SELECT * FROM x", ClassRead, nil},
 		{"with dollar-quoted insert text", "WITH x AS (SELECT $tag$INSERT INTO$tag$) SELECT * FROM x", ClassRead, nil},
 
 		{"explain select", "EXPLAIN SELECT 1", ClassRead, nil},

@@ -3032,10 +3032,19 @@
         "test": "Test",
         "save": "Save",
         "testFailed": "Connection test failed",
-        "testOk": "Connected — PostgreSQL {version} ({ms} ms)",
+        "testOk": "Connected — {version} ({ms} ms)",
         "savedCreate": "Connection added",
         "savedEdit": "Connection updated",
-        "missingFields": "Name, host, database and username are required"
+        "missingFields": "Name and database are required (plus host and username for server engines)",
+        "driver": "Database engine",
+        "drivers": {
+          "postgres": "PostgreSQL",
+          "mysql": "MySQL",
+          "mariadb": "MariaDB",
+          "sqlite": "SQLite"
+        },
+        "filePath": "Database file",
+        "filePathHint": "Path to a SQLite file, inside the project directory."
       },
       "results": {
         "noColumns": "{command} — {rows} row(s) affected"

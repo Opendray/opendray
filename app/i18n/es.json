@@ -3032,10 +3032,19 @@
         "test": "Probar",
         "save": "Guardar",
         "testFailed": "La prueba de conexión falló",
-        "testOk": "Conectado — PostgreSQL {version} ({ms} ms)",
+        "testOk": "Conectado — {version} ({ms} ms)",
         "savedCreate": "Conexión añadida",
         "savedEdit": "Conexión actualizada",
-        "missingFields": "Nombre, host, base de datos y usuario son obligatorios"
+        "missingFields": "El nombre y la base de datos son obligatorios (más host y usuario para motores de servidor)",
+        "driver": "Motor de base de datos",
+        "drivers": {
+          "postgres": "PostgreSQL",
+          "mysql": "MySQL",
+          "mariadb": "MariaDB",
+          "sqlite": "SQLite"
+        },
+        "filePath": "Archivo de base de datos",
+        "filePathHint": "Ruta a un archivo SQLite, dentro del directorio del proyecto."
       },
       "results": {
         "noColumns": "{command} — {rows} fila(s) afectada(s)"

@@ -264,12 +264,14 @@ class DbConnectionInput {
     required this.dbName,
     required this.username,
     required this.password,
+    this.driver = 'postgres',
     this.sslMode = 'prefer',
     this.readOnly = false,
   });
 
   final String cwd;
   final String name;
+  final String driver;
   final String host;
   final int port;
   final String dbName;
@@ -281,7 +283,7 @@ class DbConnectionInput {
   Map<String, dynamic> toJson() => {
     'cwd': cwd,
     'name': name,
-    'driver': 'postgres',
+    'driver': driver,
     'host': host,
     'port': port,
     'db_name': dbName,

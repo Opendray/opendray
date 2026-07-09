@@ -31,10 +31,12 @@ var ErrTxnControl = errors.New("dbtool: transaction control statements are not a
 
 // readLeaders are first keywords that make a statement a read on their own.
 var readLeaders = map[string]bool{
-	"SELECT": true,
-	"VALUES": true,
-	"TABLE":  true,
-	"SHOW":   true,
+	"SELECT":   true,
+	"VALUES":   true,
+	"TABLE":    true,
+	"SHOW":     true,
+	"DESCRIBE": true, // MySQL: describe a table (read-only introspection)
+	"DESC":     true,
 }
 
 // txnKeywords are rejected outright.
@@ -218,6 +220,23 @@ func tokenize(sql string) []string {
 			for i < n {
 				if src[i] == '"' {
 					if i+1 < n && src[i+1] == '"' {
+						i += 2
+						continue
+					}
+					i++
+					break
+				}
+				i++
+			}
+			tokens = append(tokens, `"ident"`)
+		case c == '`':
+			// MySQL/SQLite backtick identifier (doubled backtick escapes an
+			// inner one). Emitted as a placeholder so a backticked word like
+			// `update` never looks like a keyword to the classifier.
+			i++
+			for i < n {
+				if src[i] == '`' {
+					if i+1 < n && src[i+1] == '`' {
 						i += 2
 						continue
 					}
