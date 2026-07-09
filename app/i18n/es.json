@@ -42,7 +42,23 @@
     "knowledge": "Conocimiento",
     "vault": "Bóveda",
     "cortex": "Cortex",
-    "updateAvailable": "Actualización disponible"
+    "updateAvailable": "Actualización disponible",
+    "resources": "Recursos",
+    "docs": "Docs y setup",
+    "community": "Comunidad",
+    "sponsor": "Patrocinar",
+    "updates": {
+      "title": "Actualizaciones",
+      "whatsNew": "Novedades en {version}",
+      "loading": "Cargando notas de la versión…",
+      "loadFailed": "No se pudieron cargar las notas ({error}).",
+      "noHighlights": "No hay highlights cortos para esta versión. Abre el changelog completo.",
+      "openFull": "Abrir changelog completo",
+      "markRead": "Marcar como leído",
+      "unread": "Notas de versión sin leer",
+      "badgeCount": "Actualizaciones · {count}",
+      "sourceChangelog": "Highlights desde CHANGELOG.md (el cuerpo del release era un stub)."
+    }
   },
   "web": {
     "brand": "opendray",

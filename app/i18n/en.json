@@ -42,7 +42,23 @@
     "knowledge": "Knowledge",
     "vault": "Vault",
     "cortex": "Cortex",
-    "updateAvailable": "Update available"
+    "updateAvailable": "Update available",
+    "resources": "Resources",
+    "docs": "Docs & Setup",
+    "community": "Community",
+    "sponsor": "Sponsor",
+    "updates": {
+      "title": "Updates",
+      "whatsNew": "What's new in {version}",
+      "loading": "Loading release notes…",
+      "loadFailed": "Couldn't load release notes ({error}).",
+      "noHighlights": "No short highlights for this release. Open the full changelog for details.",
+      "openFull": "Open full changelog",
+      "markRead": "Mark read",
+      "unread": "Unread release notes",
+      "badgeCount": "Updates · {count}",
+      "sourceChangelog": "Highlights from CHANGELOG.md (release body was a stub)."
+    }
   },
   "web": {
     "brand": "opendray",
