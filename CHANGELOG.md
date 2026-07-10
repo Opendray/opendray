@@ -10,6 +10,24 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.11.3] — 2026-07-09
+
+### Added
+
+- **Session terminal: staged image attachments.** Uploading an image to a
+  session (attach button, clipboard paste, or drag-and-drop) now stages it
+  as a dismissable chip in a tray at the bottom of the terminal instead of
+  typing the server path straight into the running CLI. **Esc** (or the
+  chip's ✕) cancels it — an empty tray still passes Esc through to the CLI —
+  and an **Insert** button commits the path(s) when you're ready. Fixes the
+  long-standing "the uploaded path can't be dismissed" surprise. Web for
+  now; mobile parity to follow. (#436)
+- **Sidebar Resources block + Updates drawer.** The web admin's left nav
+  gains a Resources section under Settings: an **Updates** drawer that shows
+  "what's new" from GitHub Releases (falling back to CHANGELOG.md) with an
+  unread badge and "mark read", plus **Docs**, **Community**, and
+  **Sponsor** links. (#433)
+
 ## [v2.11.2] — 2026-07-09
 
 ### Added

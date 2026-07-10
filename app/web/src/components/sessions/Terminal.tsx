@@ -18,6 +18,7 @@ import { useTheme } from '@/stores/theme'
 import { BinaryWS, wsURL } from '@/lib/ws'
 import { resizeSession, uploadSessionFile } from '@/lib/sessions'
 import { terminalBufferText } from './terminal-text'
+import { AttachmentTray, type AttachmentItem } from './AttachmentTray'
 
 interface TerminalProps {
   sessionId: string
@@ -94,6 +95,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   const themeApplied = useTheme((s) => s.applied())
   const { t } = useTranslation()
   const [dragActive, setDragActive] = useState(false)
+  const [pendingAttachments, setPendingAttachments] = useState<AttachmentItem[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
 
   const sendInput = useCallback((data: string) => {
@@ -124,11 +126,8 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       toast.loading(t('web.sessions.terminal.uploadingToast'), { id: toastId })
       try {
         const res = await uploadSessionFile(sessionId, file)
-        sendInput(res.path)
-        toast.success(t('web.sessions.terminal.uploadedToast'), {
-          id: toastId,
-          description: res.path,
-        })
+        setPendingAttachments((a) => [...a, { path: res.path, name: file.name }])
+        toast.dismiss(toastId)
       } catch (err) {
         toast.error(t('web.sessions.terminal.uploadFailedToast'), {
           id: toastId,
@@ -136,8 +135,20 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         })
       }
     },
-    [sessionId, sendInput, t],
+    [sessionId, t],
   )
+
+  const insertAttachments = useCallback(() => {
+    if (pendingAttachments.length === 0) return
+    sendInput(pendingAttachments.map((a) => a.path).join(' ') + ' ')
+    setPendingAttachments([])
+  }, [pendingAttachments, sendInput])
+
+  const removeAttachment = useCallback((index: number) => {
+    setPendingAttachments((a) => a.filter((_, i) => i !== index))
+  }, [])
+
+  const clearAttachments = useCallback(() => setPendingAttachments([]), [])
 
   const getBufferText = useCallback(() => terminalBufferText(xtermRef.current), [])
 
@@ -436,6 +447,25 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     fitRef.current?.fit()
   }, [themeApplied])
 
+  // While attachments are staged, Esc clears them instead of reaching the
+  // CLI. Capture-phase window listener wins before xterm's own key handling.
+  useEffect(() => {
+    if (pendingAttachments.length === 0) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      // Only swallow Esc when focus is inside the terminal pane. Otherwise an
+      // open dialog (Radix closes on a document bubble-phase Esc) would be
+      // robbed of its Escape and the staged tray cleared unexpectedly.
+      const root = rootRef.current
+      if (root && !root.contains(e.target as Node)) return
+      e.preventDefault()
+      e.stopPropagation()
+      setPendingAttachments([])
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [pendingAttachments.length])
+
   return (
     <div ref={rootRef} className="h-full w-full bg-background relative overflow-hidden">
       {/* `contain: layout` + `overflow-hidden` isolate xterm's inner
@@ -460,6 +490,12 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
           </div>
         </div>
       )}
+      <AttachmentTray
+        items={pendingAttachments}
+        onRemove={removeAttachment}
+        onInsert={insertAttachments}
+        onClear={clearAttachments}
+      />
     </div>
   )
 })
