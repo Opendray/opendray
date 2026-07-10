@@ -136,6 +136,11 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
 	@override String get updateAvailable => '有可用更新';
+	@override String get resources => '资源';
+	@override String get docs => '文档与安装';
+	@override String get community => '社区';
+	@override String get sponsor => '赞助';
+	@override late final _TranslationsNavUpdatesZh updates = _TranslationsNavUpdatesZh._(_root);
 }
 
 // Path: web
@@ -1044,6 +1049,25 @@ class _TranslationsCortexSettingsZh extends TranslationsCortexSettingsEn {
 	@override String get defaultBadge => '默认';
 }
 
+// Path: nav.updates
+class _TranslationsNavUpdatesZh extends TranslationsNavUpdatesEn {
+	_TranslationsNavUpdatesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '更新';
+	@override String whatsNew({required Object version}) => '${version} 新内容';
+	@override String get loading => '正在加载更新说明…';
+	@override String loadFailed({required Object error}) => '无法加载更新说明（${error}）。';
+	@override String get noHighlights => '此版本没有简短亮点。请打开完整更新日志查看详情。';
+	@override String get openFull => '打开完整更新日志';
+	@override String get markRead => '标为已读';
+	@override String get unread => '未读更新说明';
+	@override String badgeCount({required Object count}) => '更新 · ${count}';
+	@override String get sourceChangelog => '亮点来自 CHANGELOG.md（GitHub Release 正文为占位）。';
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarZh extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1861,6 +1885,7 @@ class _TranslationsSessionsTerminalZh extends TranslationsSessionsTerminalEn {
 	@override late final _TranslationsSessionsTerminalSnackbarZh snackbar = _TranslationsSessionsTerminalSnackbarZh._(_root);
 	@override late final _TranslationsSessionsTerminalImageSourceZh imageSource = _TranslationsSessionsTerminalImageSourceZh._(_root);
 	@override late final _TranslationsSessionsTerminalKeyboardZh keyboard = _TranslationsSessionsTerminalKeyboardZh._(_root);
+	@override late final _TranslationsSessionsTerminalAttachmentsZh attachments = _TranslationsSessionsTerminalAttachmentsZh._(_root);
 	@override late final _TranslationsSessionsTerminalConnectionZh connection = _TranslationsSessionsTerminalConnectionZh._(_root);
 	@override late final _TranslationsSessionsTerminalSelectCopyZh selectCopy = _TranslationsSessionsTerminalSelectCopyZh._(_root);
 }
@@ -3174,10 +3199,12 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 
 	// Translations
 	@override String get uploadingToast => '正在上传图片…';
-	@override String get uploadedToast => '图片已附加';
 	@override String get uploadFailedToast => '上传失败';
 	@override String get uploadInvalidTypeToast => '仅支持图片文件';
 	@override String get dropToAttach => '释放以附加图片';
+	@override String get attachInsert => '插入';
+	@override String get attachClear => '全部清除';
+	@override String attachRemove({required Object name}) => '移除 ${name}';
 	@override String get copiedToast => '已复制到剪贴板';
 	@override String get copyFailedToast => '无法复制到剪贴板';
 	@override String get selectCopyTitle => '选择并复制';
@@ -6290,6 +6317,18 @@ class _TranslationsSessionsTerminalKeyboardZh extends TranslationsSessionsTermin
 	@override String get selectText => '选择文本';
 }
 
+// Path: sessions.terminal.attachments
+class _TranslationsSessionsTerminalAttachmentsZh extends TranslationsSessionsTerminalAttachmentsEn {
+	_TranslationsSessionsTerminalAttachmentsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get insert => '插入';
+	@override String get clear => '全部清除';
+	@override String remove({required Object name}) => '移除 ${name}';
+}
+
 // Path: sessions.terminal.connection
 class _TranslationsSessionsTerminalConnectionZh extends TranslationsSessionsTerminalConnectionEn {
 	_TranslationsSessionsTerminalConnectionZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9190,6 +9229,20 @@ extension on TranslationsZh {
 			'nav.vault' => '文档库',
 			'nav.cortex' => '心智中枢',
 			'nav.updateAvailable' => '有可用更新',
+			'nav.resources' => '资源',
+			'nav.docs' => '文档与安装',
+			'nav.community' => '社区',
+			'nav.sponsor' => '赞助',
+			'nav.updates.title' => '更新',
+			'nav.updates.whatsNew' => ({required Object version}) => '${version} 新内容',
+			'nav.updates.loading' => '正在加载更新说明…',
+			'nav.updates.loadFailed' => ({required Object error}) => '无法加载更新说明（${error}）。',
+			'nav.updates.noHighlights' => '此版本没有简短亮点。请打开完整更新日志查看详情。',
+			'nav.updates.openFull' => '打开完整更新日志',
+			'nav.updates.markRead' => '标为已读',
+			'nav.updates.unread' => '未读更新说明',
+			'nav.updates.badgeCount' => ({required Object count}) => '更新 · ${count}',
+			'nav.updates.sourceChangelog' => '亮点来自 CHANGELOG.md（GitHub Release 正文为占位）。',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -9266,10 +9319,12 @@ extension on TranslationsZh {
 			'web.sessions.header.transcript' => '完整记录',
 			'web.sessions.header.transcriptTooltip' => '打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）',
 			'web.sessions.terminal.uploadingToast' => '正在上传图片…',
-			'web.sessions.terminal.uploadedToast' => '图片已附加',
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
 			'web.sessions.terminal.uploadInvalidTypeToast' => '仅支持图片文件',
 			'web.sessions.terminal.dropToAttach' => '释放以附加图片',
+			'web.sessions.terminal.attachInsert' => '插入',
+			'web.sessions.terminal.attachClear' => '全部清除',
+			'web.sessions.terminal.attachRemove' => ({required Object name}) => '移除 ${name}',
 			'web.sessions.terminal.copiedToast' => '已复制到剪贴板',
 			'web.sessions.terminal.copyFailedToast' => '无法复制到剪贴板',
 			'web.sessions.terminal.selectCopyTitle' => '选择并复制',
@@ -9647,6 +9702,8 @@ extension on TranslationsZh {
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => '批准将完全替换当前${label}。',
 			'web.project.inbox.warningSuffix' => '请检查下方 diff；这不是合并。',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.inbox.current' => '当前',
 			'web.project.inbox.proposed' => '提议',
 			'web.project.inbox.emptyBody' => '(空)',
@@ -9663,8 +9720,6 @@ extension on TranslationsZh {
 			'web.project.archived.restoredToast' => '已恢复',
 			'web.project.archived.restoreFailedToast' => '恢复失败',
 			'web.project.reset.button' => '重置',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => '重置项目记忆?',
 			'web.project.reset.dialogDescription' => '删除该 cwd 下存储的所有项目上下文。不可撤销。',
 			'web.project.reset.alwaysDeleted' => '始终删除：目标、计划、提案、日志、清理决策。',
@@ -10161,6 +10216,8 @@ extension on TranslationsZh {
 			'web.channels.dialog.editTitle' => '编辑频道',
 			'web.channels.dialog.createTitle' => '注册频道',
 			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.descriptionDefault' => '配置消息集成。',
 			'web.channels.dialog.kindLabel' => '类型',
 			'web.channels.dialog.kindImmutable' => '（不可更改 — 如需更换类型请删除后重建）',
@@ -10177,8 +10234,6 @@ extension on TranslationsZh {
 			'web.channels.dialog.nameRequired' => 'name 不能为空',
 			'web.channels.dialog.tokenRequired' => 'token 不能为空',
 			'web.channels.dialog.topicIdsNumeric' => ({required Object value}) => 'Topic ID 必须是数字（收到 ${value}）',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.dialog.fieldRequired' => ({required Object label}) => '${label} 不能为空',
 			'web.channels.dialog.cooldownInvalid' => 'Cooldown 必须是非负整数秒',
 			'web.channels.dialog.snippetCapInvalid' => 'Snippet cap 必须是非负数字',
@@ -10675,6 +10730,8 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.deleteTooltip' => '删除',
 			'web.backups.newSchedule.title' => '新建备份计划',
 			'web.backups.newSchedule.targetLabel' => '目标',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.newSchedule.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'web.backups.newSchedule.everyHoursLabel' => '每隔（小时）',
 			'web.backups.newSchedule.keepLastNLabel' => '保留最近 N 个',
@@ -10691,8 +10748,6 @@ extension on TranslationsZh {
 			'web.backups.targetsTab.newTarget' => '新建目标',
 			'web.backups.targetsTab.listFailedToast' => '加载目标列表失败',
 			'web.backups.targetsTab.deleteConfirm' => ({required Object id}) => '删除目标 ${id}? 引用它的计划会阻止删除。',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetsTab.deletedToast' => '目标已删除',
 			'web.backups.targetsTab.deleteFailedToast' => '删除失败',
 			'web.backups.targetsTab.connectionOkToast' => '连接成功',
@@ -11189,6 +11244,8 @@ extension on TranslationsZh {
 			'web.memoryAmbient.profiles.addButton' => '添加 profile',
 			'web.memoryAmbient.profiles.intro' => 'spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。',
 			'web.memoryAmbient.profiles.empty' => '尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.profiles.row.globalDefault' => '全局默认',
 			'web.memoryAmbient.profiles.row.delete' => '删除',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => '删除该 injection profile?',
@@ -11205,8 +11262,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.cost.intro' => '按 provider 聚合自 <1>memory_summarizer_calls</1>。本地 provider（Ollama、LM Studio、Integration）按 \$0 计价 — 硬件成本由运维承担。',
 			'web.memoryAmbient.cost.empty' => '暂无已启用的 provider — 没有成本数据。',
 			'web.memoryAmbient.cost.columns.provider' => 'Provider',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.cost.columns.calls' => '调用',
 			'web.memoryAmbient.cost.columns.inTokens' => '输入 token',
 			'web.memoryAmbient.cost.columns.outTokens' => '输出 token',
@@ -11703,6 +11758,8 @@ extension on TranslationsZh {
 			'sessions.detail.refreshMetadata' => '刷新元数据',
 			'sessions.detail.inspector' => '检查器（文件 / Git / 任务 / 历史 / 笔记）',
 			'sessions.detail.projectMemory' => '项目记忆（目标 / 计划 / 日志 / 收件箱）',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.actions' => '操作',
 			'sessions.detail.started' => ({required Object when}) => '${when} 启动',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束',
@@ -11719,8 +11776,6 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.confirmBody' => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。',
 			'sessions.detail.accountSwitcher.confirmAction' => '切换',
 			'sessions.detail.accountSwitcher.cancel' => '取消',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => '切换失败：${error}',
 			'sessions.detail.accountSwitcher.noneHint' => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。',
@@ -11739,6 +11794,9 @@ extension on TranslationsZh {
 			'sessions.terminal.keyboard.attachImage' => '附加图片',
 			'sessions.terminal.keyboard.enter' => '回车',
 			'sessions.terminal.keyboard.selectText' => '选择文本',
+			'sessions.terminal.attachments.insert' => '插入',
+			'sessions.terminal.attachments.clear' => '全部清除',
+			'sessions.terminal.attachments.remove' => ({required Object name}) => '移除 ${name}',
 			'sessions.terminal.connection.connecting' => '连接中…',
 			'sessions.terminal.connection.connected' => '已连接',
 			'sessions.terminal.connection.reconnecting' => '重连中…',
@@ -12214,6 +12272,8 @@ extension on TranslationsZh {
 			'project.conflicts.deleteLoading' => '加载中…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
 			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			_ => null,
+		} ?? switch (path) {
 			'project.conflicts.openPlanEditor' => '打开计划编辑器',
 			'project.conflicts.openGoalEditor' => '打开目标编辑器',
 			'project.conflicts.severity.low' => '低',
@@ -12233,8 +12293,6 @@ extension on TranslationsZh {
 			'project.browseFolder' => '浏览文件夹…',
 			'project.resetTooltip' => '重置项目记忆',
 			'project.append' => '追加',
-			_ => null,
-		} ?? switch (path) {
 			'project.appendDialogTitle' => '追加日志条目',
 			'project.titleFieldLabel' => '标题（可选）',
 			'project.contentFieldLabel' => '内容（Markdown）',
@@ -12728,6 +12786,8 @@ extension on TranslationsZh {
 			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
 			'customTasks.fieldDescription' => '描述（可选）',
 			'customTasks.fieldScope' => '范围',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
 			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
 			'customTasks.fieldProjectCwd' => '项目 cwd',
@@ -12747,8 +12807,6 @@ extension on TranslationsZh {
 			'notesPage.deleteTitle' => '删除笔记？',
 			'notesPage.deletedSnack' => ({required Object path}) => '已删除 ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',

@@ -136,6 +136,11 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
 	@override String get updateAvailable => 'Actualización disponible';
+	@override String get resources => 'Recursos';
+	@override String get docs => 'Docs y setup';
+	@override String get community => 'Comunidad';
+	@override String get sponsor => 'Patrocinar';
+	@override late final _TranslationsNavUpdatesEs updates = _TranslationsNavUpdatesEs._(_root);
 }
 
 // Path: web
@@ -1044,6 +1049,25 @@ class _TranslationsCortexSettingsEs extends TranslationsCortexSettingsEn {
 	@override String get defaultBadge => 'predeterminado';
 }
 
+// Path: nav.updates
+class _TranslationsNavUpdatesEs extends TranslationsNavUpdatesEn {
+	_TranslationsNavUpdatesEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Actualizaciones';
+	@override String whatsNew({required Object version}) => 'Novedades en ${version}';
+	@override String get loading => 'Cargando notas de la versión…';
+	@override String loadFailed({required Object error}) => 'No se pudieron cargar las notas (${error}).';
+	@override String get noHighlights => 'No hay highlights cortos para esta versión. Abre el changelog completo.';
+	@override String get openFull => 'Abrir changelog completo';
+	@override String get markRead => 'Marcar como leído';
+	@override String get unread => 'Notas de versión sin leer';
+	@override String badgeCount({required Object count}) => 'Actualizaciones · ${count}';
+	@override String get sourceChangelog => 'Highlights desde CHANGELOG.md (el cuerpo del release era un stub).';
+}
+
 // Path: web.topbar
 class _TranslationsWebTopbarEs extends TranslationsWebTopbarEn {
 	_TranslationsWebTopbarEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -1861,6 +1885,7 @@ class _TranslationsSessionsTerminalEs extends TranslationsSessionsTerminalEn {
 	@override late final _TranslationsSessionsTerminalSnackbarEs snackbar = _TranslationsSessionsTerminalSnackbarEs._(_root);
 	@override late final _TranslationsSessionsTerminalImageSourceEs imageSource = _TranslationsSessionsTerminalImageSourceEs._(_root);
 	@override late final _TranslationsSessionsTerminalKeyboardEs keyboard = _TranslationsSessionsTerminalKeyboardEs._(_root);
+	@override late final _TranslationsSessionsTerminalAttachmentsEs attachments = _TranslationsSessionsTerminalAttachmentsEs._(_root);
 	@override late final _TranslationsSessionsTerminalConnectionEs connection = _TranslationsSessionsTerminalConnectionEs._(_root);
 	@override late final _TranslationsSessionsTerminalSelectCopyEs selectCopy = _TranslationsSessionsTerminalSelectCopyEs._(_root);
 }
@@ -3174,10 +3199,12 @@ class _TranslationsWebSessionsTerminalEs extends TranslationsWebSessionsTerminal
 
 	// Translations
 	@override String get uploadingToast => 'Subiendo imagen…';
-	@override String get uploadedToast => 'Imagen adjuntada';
 	@override String get uploadFailedToast => 'Error al subir';
 	@override String get uploadInvalidTypeToast => 'Solo se pueden adjuntar archivos de imagen';
 	@override String get dropToAttach => 'Suelta la imagen para adjuntarla';
+	@override String get attachInsert => 'Insertar';
+	@override String get attachClear => 'Quitar todo';
+	@override String attachRemove({required Object name}) => 'Quitar ${name}';
 	@override String get copiedToast => 'Copiado al portapapeles';
 	@override String get copyFailedToast => 'No se pudo copiar al portapapeles';
 	@override String get selectCopyTitle => 'Seleccionar y copiar';
@@ -6290,6 +6317,18 @@ class _TranslationsSessionsTerminalKeyboardEs extends TranslationsSessionsTermin
 	@override String get selectText => 'Seleccionar texto';
 }
 
+// Path: sessions.terminal.attachments
+class _TranslationsSessionsTerminalAttachmentsEs extends TranslationsSessionsTerminalAttachmentsEn {
+	_TranslationsSessionsTerminalAttachmentsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get insert => 'Insertar';
+	@override String get clear => 'Quitar todo';
+	@override String remove({required Object name}) => 'Quitar ${name}';
+}
+
 // Path: sessions.terminal.connection
 class _TranslationsSessionsTerminalConnectionEs extends TranslationsSessionsTerminalConnectionEn {
 	_TranslationsSessionsTerminalConnectionEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9190,6 +9229,20 @@ extension on TranslationsEs {
 			'nav.vault' => 'Bóveda',
 			'nav.cortex' => 'Cortex',
 			'nav.updateAvailable' => 'Actualización disponible',
+			'nav.resources' => 'Recursos',
+			'nav.docs' => 'Docs y setup',
+			'nav.community' => 'Comunidad',
+			'nav.sponsor' => 'Patrocinar',
+			'nav.updates.title' => 'Actualizaciones',
+			'nav.updates.whatsNew' => ({required Object version}) => 'Novedades en ${version}',
+			'nav.updates.loading' => 'Cargando notas de la versión…',
+			'nav.updates.loadFailed' => ({required Object error}) => 'No se pudieron cargar las notas (${error}).',
+			'nav.updates.noHighlights' => 'No hay highlights cortos para esta versión. Abre el changelog completo.',
+			'nav.updates.openFull' => 'Abrir changelog completo',
+			'nav.updates.markRead' => 'Marcar como leído',
+			'nav.updates.unread' => 'Notas de versión sin leer',
+			'nav.updates.badgeCount' => ({required Object count}) => 'Actualizaciones · ${count}',
+			'nav.updates.sourceChangelog' => 'Highlights desde CHANGELOG.md (el cuerpo del release era un stub).',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Cargando…',
 			'web.topbar.expandSidebar' => 'Expandir barra lateral',
@@ -9266,10 +9319,12 @@ extension on TranslationsEs {
 			'web.sessions.header.transcript' => 'Transcripción',
 			'web.sessions.header.transcriptTooltip' => 'Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)',
 			'web.sessions.terminal.uploadingToast' => 'Subiendo imagen…',
-			'web.sessions.terminal.uploadedToast' => 'Imagen adjuntada',
 			'web.sessions.terminal.uploadFailedToast' => 'Error al subir',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Solo se pueden adjuntar archivos de imagen',
 			'web.sessions.terminal.dropToAttach' => 'Suelta la imagen para adjuntarla',
+			'web.sessions.terminal.attachInsert' => 'Insertar',
+			'web.sessions.terminal.attachClear' => 'Quitar todo',
+			'web.sessions.terminal.attachRemove' => ({required Object name}) => 'Quitar ${name}',
 			'web.sessions.terminal.copiedToast' => 'Copiado al portapapeles',
 			'web.sessions.terminal.copyFailedToast' => 'No se pudo copiar al portapapeles',
 			'web.sessions.terminal.selectCopyTitle' => 'Seleccionar y copiar',
@@ -9647,6 +9702,8 @@ extension on TranslationsEs {
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.inbox.current' => 'Actual',
 			'web.project.inbox.proposed' => 'Propuesto',
 			'web.project.inbox.emptyBody' => '(vacío)',
@@ -9663,8 +9720,6 @@ extension on TranslationsEs {
 			'web.project.archived.restoredToast' => 'Restaurado',
 			'web.project.archived.restoreFailedToast' => 'Error al restaurar',
 			'web.project.reset.button' => 'Restablecer',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => '¿Restablecer la memoria del proyecto?',
 			'web.project.reset.dialogDescription' => 'Elimina todo el contexto de proyecto almacenado para este cwd. Esto no se puede deshacer.',
 			'web.project.reset.alwaysDeleted' => 'Siempre se elimina: objetivo, plan, propuestas, diario, decisiones de limpieza.',
@@ -10161,6 +10216,8 @@ extension on TranslationsEs {
 			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.descriptionDefault' => 'Configura la integración de mensajería.',
 			'web.channels.dialog.kindLabel' => 'Tipo',
 			'web.channels.dialog.kindImmutable' => '(inmutable, elimina y vuelve a crear para cambiar el tipo)',
@@ -10177,8 +10234,6 @@ extension on TranslationsEs {
 			'web.channels.dialog.nameRequired' => 'el nombre es obligatorio',
 			'web.channels.dialog.tokenRequired' => 'el token es obligatorio',
 			'web.channels.dialog.topicIdsNumeric' => ({required Object value}) => 'Los ID de tema deben ser numéricos (se recibió ${value})',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.dialog.fieldRequired' => ({required Object label}) => '${label} es obligatorio',
 			'web.channels.dialog.cooldownInvalid' => 'El cooldown debe ser un número de segundos no negativo',
 			'web.channels.dialog.snippetCapInvalid' => 'El límite del fragmento debe ser un número no negativo',
@@ -10675,6 +10730,8 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			'web.backups.newSchedule.targetLabel' => 'Destinos',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Cada (horas)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Conservar las últimas N',
@@ -10691,8 +10748,6 @@ extension on TranslationsEs {
 			'web.backups.targetsTab.newTarget' => 'Nuevo destino',
 			'web.backups.targetsTab.listFailedToast' => 'No se pudieron listar los destinos',
 			'web.backups.targetsTab.deleteConfirm' => ({required Object id}) => '¿Eliminar el destino ${id}? Las programaciones que lo referencien bloquearán la eliminación.',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetsTab.deletedToast' => 'Destino eliminado',
 			'web.backups.targetsTab.deleteFailedToast' => 'Error al eliminar',
 			'web.backups.targetsTab.connectionOkToast' => 'Conexión correcta',
@@ -11189,6 +11244,8 @@ extension on TranslationsEs {
 			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.profiles.row.globalDefault' => 'predeterminado global',
 			'web.memoryAmbient.profiles.row.delete' => 'Eliminar',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => '¿Eliminar este perfil de inyección?',
@@ -11205,8 +11262,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.cost.intro' => 'Resumen por proveedor agregado a partir de <1>memory_summarizer_calls</1>. Los proveedores locales (Ollama, LM Studio, Integración) tienen precio de \$0: el operador asume el coste del hardware.',
 			'web.memoryAmbient.cost.empty' => 'No hay proveedores habilitados: no hay datos de coste.',
 			'web.memoryAmbient.cost.columns.provider' => 'Proveedor',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.cost.columns.calls' => 'Llamadas',
 			'web.memoryAmbient.cost.columns.inTokens' => 'Tokens de entrada',
 			'web.memoryAmbient.cost.columns.outTokens' => 'Tokens de salida',
@@ -11703,6 +11758,8 @@ extension on TranslationsEs {
 			'sessions.detail.refreshMetadata' => 'Actualizar metadatos',
 			'sessions.detail.inspector' => 'Inspector (Archivos / Git / Tareas / Historial / Notas)',
 			'sessions.detail.projectMemory' => 'Memoria del proyecto (objetivo / plan / diario / bandeja de entrada)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.actions' => 'Acciones',
 			'sessions.detail.started' => ({required Object when}) => 'iniciada ${when}',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'iniciada ${started}  ·  finalizada ${ended}',
@@ -11719,8 +11776,6 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.confirmBody' => 'Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Cambiar',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancelar',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Cambiado a ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Cambio fallido: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.',
@@ -11739,6 +11794,9 @@ extension on TranslationsEs {
 			'sessions.terminal.keyboard.attachImage' => 'Adjuntar imagen',
 			'sessions.terminal.keyboard.enter' => 'Intro',
 			'sessions.terminal.keyboard.selectText' => 'Seleccionar texto',
+			'sessions.terminal.attachments.insert' => 'Insertar',
+			'sessions.terminal.attachments.clear' => 'Quitar todo',
+			'sessions.terminal.attachments.remove' => ({required Object name}) => 'Quitar ${name}',
 			'sessions.terminal.connection.connecting' => 'Conectando…',
 			'sessions.terminal.connection.connected' => 'Conectado',
 			'sessions.terminal.connection.reconnecting' => 'Reconectando…',
@@ -12214,6 +12272,8 @@ extension on TranslationsEs {
 			'project.conflicts.deleteLoading' => 'Cargando el texto del hecho…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Eliminar ${side}',
 			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
+			_ => null,
+		} ?? switch (path) {
 			'project.conflicts.openPlanEditor' => 'Abrir el editor del plan',
 			'project.conflicts.openGoalEditor' => 'Abrir el editor del objetivo',
 			'project.conflicts.severity.low' => 'baja',
@@ -12233,8 +12293,6 @@ extension on TranslationsEs {
 			'project.browseFolder' => 'Explorar carpeta…',
 			'project.resetTooltip' => 'Restablecer la memoria del proyecto',
 			'project.append' => 'Añadir',
-			_ => null,
-		} ?? switch (path) {
 			'project.appendDialogTitle' => 'Añadir entrada de diario',
 			'project.titleFieldLabel' => 'Título (opcional)',
 			'project.contentFieldLabel' => 'Contenido (markdown)',
@@ -12728,6 +12786,8 @@ extension on TranslationsEs {
 			'customTasks.commandHelper' => 'El texto que se inserta en la session al elegirlo. Puede ser un comando de CLI o un slash command de Claude.',
 			'customTasks.fieldDescription' => 'Descripción (opcional)',
 			'customTasks.fieldScope' => 'Ámbito',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.globalScopeHint' => 'Visible desde cualquier session, sin importar el cwd.',
 			'customTasks.projectScopeHint' => 'Visible solo cuando el cwd de una session coincide con la ruta de abajo.',
 			'customTasks.fieldProjectCwd' => 'cwd del proyecto',
@@ -12747,8 +12807,6 @@ extension on TranslationsEs {
 			'notesPage.deleteTitle' => '¿Eliminar nota?',
 			'notesPage.deletedSnack' => ({required Object path}) => 'Eliminado ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => 'Error al crear: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Error al crear: ${error}',

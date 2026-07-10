@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import 'package:opendray/core/api/releases_api.dart';
 import 'package:opendray/core/api/version_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
@@ -14,11 +15,13 @@ import 'package:opendray/features/mcp/mcp_screen.dart';
 import 'package:opendray/features/memory_archived/archived_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
 import 'package:opendray/features/more/about_screen.dart';
+import 'package:opendray/features/more/updates_sheet.dart';
 import 'package:opendray/features/notes/notes_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/providers/providers_screen.dart';
 import 'package:opendray/features/settings/settings_screen.dart';
 import 'package:opendray/features/skills/skills_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // "More" tab — overflow menu for everything that doesn't earn its
 // own bottom-nav slot. Three sections: identity card, navigation
@@ -30,14 +33,29 @@ import 'package:opendray/features/skills/skills_screen.dart';
 // in — Integrations first (highest signal: every operator wants
 // "who's calling me right now"), then Channels, Providers, Backups,
 // About.
+// External Resources links — mirror app/web/src/components/SidebarNav.tsx.
+const _docsUrl = 'https://opendray.dev/docs/';
+const _communityUrl = 'https://t.me/opendraycommunity';
+const _sponsorUrl = 'https://opendray.dev/sponsors/';
+
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
-    final updateAvailable =
-        ref.watch(versionInfoProvider).asData?.value.updateAvailable ?? false;
+    final version = ref.watch(versionInfoProvider).asData?.value;
+    final updateAvailable = version?.updateAvailable ?? false;
+    // Updates "unread" badge — mirror the web sidebar: prefer the fetched
+    // GitHub release version, fall back to the gateway's `latest` so a
+    // failed notes fetch still badges when a binary update is waiting.
+    final release = ref.watch(latestReleaseProvider).asData?.value;
+    final lastRead = ref.watch(lastReadReleaseProvider);
+    final latestForUnread =
+        release?.version ?? normalizeReleaseVersion(version?.latest);
+    final notesUnread = isReleaseUnread(latestForUnread, lastRead);
+    final showUpdatesBadge = notesUnread || updateAvailable;
+    final highlightCount = release?.highlights.length ?? 0;
     if (auth is! AuthLoggedIn) {
       return const Scaffold(body: SizedBox.shrink());
     }
@@ -145,6 +163,41 @@ class MoreScreen extends ConsumerWidget {
             subtitle: t.more.items.about.subtitle,
             onTap: () => _push(context, const AboutScreen()),
           ),
+          const SizedBox(height: 8),
+          _SectionHeader(label: t.nav.resources),
+          _MenuTile(
+            icon: Icons.auto_awesome_outlined,
+            title: t.nav.updates.title,
+            badge: showUpdatesBadge,
+            // Accent-primary when only release notes are unread; the
+            // system error red is reserved for a waiting binary update
+            // (matches web's accent-vs-primary dot).
+            badgeColor: updateAvailable
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.primary,
+            trailingText: (notesUnread && highlightCount > 0)
+                ? '· $highlightCount'
+                : null,
+            onTap: () => showUpdatesSheet(context),
+          ),
+          _MenuTile(
+            icon: Icons.menu_book_outlined,
+            title: t.nav.docs,
+            external: true,
+            onTap: () => _openUrl(_docsUrl),
+          ),
+          _MenuTile(
+            icon: Icons.forum_outlined,
+            title: t.nav.community,
+            external: true,
+            onTap: () => _openUrl(_communityUrl),
+          ),
+          _MenuTile(
+            icon: Icons.favorite_outline,
+            title: t.nav.sponsor,
+            external: true,
+            onTap: () => _openUrl(_sponsorUrl),
+          ),
           const Divider(height: 32),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -170,6 +223,16 @@ class MoreScreen extends ConsumerWidget {
 
   void _push(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on Object {
+      // Best-effort convenience link.
+    }
   }
 }
 
@@ -236,39 +299,67 @@ class _MenuTile extends StatelessWidget {
   const _MenuTile({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.onTap,
+    this.subtitle,
     this.badge = false,
+    this.badgeColor,
+    this.trailingText,
+    this.external = false,
   });
 
   final IconData icon;
   final String title;
-  final String subtitle;
+  // Optional secondary line; Resources links render title-only.
+  final String? subtitle;
   final VoidCallback onTap;
-  // When true, shows an "update available" dot before the chevron.
+  // When true, shows a status dot before the trailing icon.
   final bool badge;
+  // Dot colour; defaults to the error colour (waiting binary update).
+  final Color? badgeColor;
+  // Small muted count chip (e.g. "· 3") shown before the trailing icon.
+  final String? trailingText;
+  // External links show an open-in-new glyph instead of a chevron.
+  final bool external;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = this.subtitle;
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      leading: Icon(icon, color: theme.colorScheme.primary),
       title: Text(title),
-      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+      subtitle: subtitle == null
+          ? null
+          : Text(subtitle, style: theme.textTheme.bodySmall),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (trailingText != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                trailingText!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
           if (badge)
             Container(
               width: 8,
               height: 8,
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.error,
+                color: badgeColor ?? theme.colorScheme.error,
                 shape: BoxShape.circle,
               ),
             ),
-          const Icon(Icons.chevron_right),
+          Icon(external ? Icons.open_in_new : Icons.chevron_right,
+              size: external ? 18 : null,
+              color: external
+                  ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
+                  : null),
         ],
       ),
     );
