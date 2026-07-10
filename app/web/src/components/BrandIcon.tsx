@@ -114,6 +114,18 @@ const INLINE: Record<string, IconData> = {
 		path:
 			'M3 4h18a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 4l5 4-5 4v-2.5l2-1.5-2-1.5V8z',
 	},
+
+	// Grok (xAI) — the real mark renders from the curated SVG
+	// (public/icons/grok.svg); this entry only supplies the brand
+	// hex so the avatar disc tints correctly. The path is a
+	// simplified rendering of the mark and is never drawn for
+	// curated keys.
+	grok: {
+		title: 'Grok',
+		hex: '0A0A0A',
+		path:
+			'M4 15l8-6-8-6v3.5l4.5 3-4.5 3zm6 0l8-6-8-6v3.5l4.5 3-4.5 3z',
+	},
 }
 
 export type BrandIconKey = keyof typeof SIMPLE | keyof typeof INLINE
@@ -138,6 +150,7 @@ const CURATED = new Set([
 	'opencode',
 	'openai',
 	'shell',
+	'grok',
 	'slack',
 	'dingtalk',
 	'feishu',
@@ -152,6 +165,7 @@ const CURATED_MONOCHROME_DARK_INVERT = new Set([
 	'opencode',
 	'openai',
 	'shell',
+	'grok',
 	'dingtalk',
 	'feishu',
 ])

@@ -20,6 +20,7 @@ const palette: Record<string, Omit<ProviderVisual, 'letter'>> = {
   claude: { bg: 'bg-orange-600', fg: 'text-white', name: 'Claude Code' },
   codex: { bg: 'bg-emerald-600', fg: 'text-white', name: 'Codex' },
   shell: { bg: 'bg-slate-600', fg: 'text-white', name: 'Shell' },
+  grok: { bg: 'bg-neutral-900', fg: 'text-white', name: 'Grok' },
 }
 
 const fallback: Omit<ProviderVisual, 'letter'> = {
