@@ -597,3 +597,55 @@ func TestParseMCPServers_Missing(t *testing.T) {
 		t.Error("expected nil for missing key")
 	}
 }
+
+// Regression: antigravity's first-run/migration leaves an EMPTY
+// ~/.gemini/config/mcp_config.json. opendray must treat an empty file as
+// "no config yet", not a JSON parse error, or every agy spawn fails with
+// "unexpected end of JSON input". (Reported from the iPad spawn dialog.)
+func TestSyncAgyGlobalMCP_EmptyConfigFileTolerated(t *testing.T) {
+	home := t.TempDir()
+	dir := filepath.Join(home, ".gemini", "config")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cfgPath := filepath.Join(dir, "mcp_config.json")
+	if err := os.WriteFile(cfgPath, []byte{}, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	desired := map[string]map[string]any{"vault": {"command": "vault-mcp"}}
+	if err := syncAgyGlobalMCP(home, desired); err != nil {
+		t.Fatalf("empty mcp_config.json should be tolerated, got: %v", err)
+	}
+	data, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("written config not valid JSON: %v", err)
+	}
+	servers, _ := got["mcpServers"].(map[string]any)
+	if _, ok := servers["vault"]; !ok {
+		t.Fatalf("expected injected 'vault' server, got: %v", got)
+	}
+}
+
+// Same empty-file tolerance for the gemini-workspace settings.json surface.
+func TestSyncGeminiWorkspaceMCP_EmptySettingsTolerated(t *testing.T) {
+	cwd := t.TempDir()
+	dir := filepath.Join(cwd, ".gemini")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	settingsPath := filepath.Join(dir, "settings.json")
+	if err := os.WriteFile(settingsPath, []byte("  \n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	desired := map[string]map[string]any{"vault": {"command": "vault-mcp"}}
+	if err := syncGeminiWorkspaceMCP(cwd, desired); err != nil {
+		t.Fatalf("empty settings.json should be tolerated, got: %v", err)
+	}
+	if _, err := os.ReadFile(settingsPath); err != nil {
+		t.Fatal(err)
+	}
+}
