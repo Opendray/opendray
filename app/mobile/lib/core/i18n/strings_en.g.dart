@@ -215,6 +215,20 @@ class TranslationsNavEn {
 
 	/// en: 'Update available'
 	String get updateAvailable => 'Update available';
+
+	/// en: 'Resources'
+	String get resources => 'Resources';
+
+	/// en: 'Docs & Setup'
+	String get docs => 'Docs & Setup';
+
+	/// en: 'Community'
+	String get community => 'Community';
+
+	/// en: 'Sponsor'
+	String get sponsor => 'Sponsor';
+
+	late final TranslationsNavUpdatesEn updates = TranslationsNavUpdatesEn.internal(_root);
 }
 
 // Path: web
@@ -2253,6 +2267,45 @@ class TranslationsCortexSettingsEn {
 	String get defaultBadge => 'default';
 }
 
+// Path: nav.updates
+class TranslationsNavUpdatesEn {
+	TranslationsNavUpdatesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Updates'
+	String get title => 'Updates';
+
+	/// en: 'What's new in {version}'
+	String whatsNew({required Object version}) => 'What\'s new in ${version}';
+
+	/// en: 'Loading release notes…'
+	String get loading => 'Loading release notes…';
+
+	/// en: 'Couldn't load release notes ({error}).'
+	String loadFailed({required Object error}) => 'Couldn\'t load release notes (${error}).';
+
+	/// en: 'No short highlights for this release. Open the full changelog for details.'
+	String get noHighlights => 'No short highlights for this release. Open the full changelog for details.';
+
+	/// en: 'Open full changelog'
+	String get openFull => 'Open full changelog';
+
+	/// en: 'Mark read'
+	String get markRead => 'Mark read';
+
+	/// en: 'Unread release notes'
+	String get unread => 'Unread release notes';
+
+	/// en: 'Updates · {count}'
+	String badgeCount({required Object count}) => 'Updates · ${count}';
+
+	/// en: 'Highlights from CHANGELOG.md (release body was a stub).'
+	String get sourceChangelog => 'Highlights from CHANGELOG.md (release body was a stub).';
+}
+
 // Path: web.topbar
 class TranslationsWebTopbarEn {
 	TranslationsWebTopbarEn.internal(this._root);
@@ -3672,6 +3725,7 @@ class TranslationsSessionsTerminalEn {
 	late final TranslationsSessionsTerminalSnackbarEn snackbar = TranslationsSessionsTerminalSnackbarEn.internal(_root);
 	late final TranslationsSessionsTerminalImageSourceEn imageSource = TranslationsSessionsTerminalImageSourceEn.internal(_root);
 	late final TranslationsSessionsTerminalKeyboardEn keyboard = TranslationsSessionsTerminalKeyboardEn.internal(_root);
+	late final TranslationsSessionsTerminalAttachmentsEn attachments = TranslationsSessionsTerminalAttachmentsEn.internal(_root);
 	late final TranslationsSessionsTerminalConnectionEn connection = TranslationsSessionsTerminalConnectionEn.internal(_root);
 	late final TranslationsSessionsTerminalSelectCopyEn selectCopy = TranslationsSessionsTerminalSelectCopyEn.internal(_root);
 }
@@ -6215,9 +6269,6 @@ class TranslationsWebSessionsTerminalEn {
 	/// en: 'Uploading image…'
 	String get uploadingToast => 'Uploading image…';
 
-	/// en: 'Image attached'
-	String get uploadedToast => 'Image attached';
-
 	/// en: 'Upload failed'
 	String get uploadFailedToast => 'Upload failed';
 
@@ -6226,6 +6277,15 @@ class TranslationsWebSessionsTerminalEn {
 
 	/// en: 'Drop image to attach'
 	String get dropToAttach => 'Drop image to attach';
+
+	/// en: 'Insert'
+	String get attachInsert => 'Insert';
+
+	/// en: 'Clear all'
+	String get attachClear => 'Clear all';
+
+	/// en: 'Remove {name}'
+	String attachRemove({required Object name}) => 'Remove ${name}';
 
 	/// en: 'Copied to clipboard'
 	String get copiedToast => 'Copied to clipboard';
@@ -12235,6 +12295,24 @@ class TranslationsSessionsTerminalKeyboardEn {
 	String get selectText => 'Select text';
 }
 
+// Path: sessions.terminal.attachments
+class TranslationsSessionsTerminalAttachmentsEn {
+	TranslationsSessionsTerminalAttachmentsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Insert'
+	String get insert => 'Insert';
+
+	/// en: 'Clear all'
+	String get clear => 'Clear all';
+
+	/// en: 'Remove {name}'
+	String remove({required Object name}) => 'Remove ${name}';
+}
+
 // Path: sessions.terminal.connection
 class TranslationsSessionsTerminalConnectionEn {
 	TranslationsSessionsTerminalConnectionEn.internal(this._root);
@@ -17250,6 +17328,20 @@ extension on Translations {
 			'nav.vault' => 'Vault',
 			'nav.cortex' => 'Cortex',
 			'nav.updateAvailable' => 'Update available',
+			'nav.resources' => 'Resources',
+			'nav.docs' => 'Docs & Setup',
+			'nav.community' => 'Community',
+			'nav.sponsor' => 'Sponsor',
+			'nav.updates.title' => 'Updates',
+			'nav.updates.whatsNew' => ({required Object version}) => 'What\'s new in ${version}',
+			'nav.updates.loading' => 'Loading release notes…',
+			'nav.updates.loadFailed' => ({required Object error}) => 'Couldn\'t load release notes (${error}).',
+			'nav.updates.noHighlights' => 'No short highlights for this release. Open the full changelog for details.',
+			'nav.updates.openFull' => 'Open full changelog',
+			'nav.updates.markRead' => 'Mark read',
+			'nav.updates.unread' => 'Unread release notes',
+			'nav.updates.badgeCount' => ({required Object count}) => 'Updates · ${count}',
+			'nav.updates.sourceChangelog' => 'Highlights from CHANGELOG.md (release body was a stub).',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Loading…',
 			'web.topbar.expandSidebar' => 'Expand sidebar',
@@ -17326,10 +17418,12 @@ extension on Translations {
 			'web.sessions.header.transcript' => 'Transcript',
 			'web.sessions.header.transcriptTooltip' => 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)',
 			'web.sessions.terminal.uploadingToast' => 'Uploading image…',
-			'web.sessions.terminal.uploadedToast' => 'Image attached',
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Only image files can be attached',
 			'web.sessions.terminal.dropToAttach' => 'Drop image to attach',
+			'web.sessions.terminal.attachInsert' => 'Insert',
+			'web.sessions.terminal.attachClear' => 'Clear all',
+			'web.sessions.terminal.attachRemove' => ({required Object name}) => 'Remove ${name}',
 			'web.sessions.terminal.copiedToast' => 'Copied to clipboard',
 			'web.sessions.terminal.copyFailedToast' => 'Couldn\'t copy to clipboard',
 			'web.sessions.terminal.selectCopyTitle' => 'Select & copy',
@@ -17707,6 +17801,8 @@ extension on Translations {
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Approve will REPLACE the current ${label} entirely.',
 			'web.project.inbox.warningSuffix' => 'Review the diff below; this isn\'t a merge.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.inbox.current' => 'Current',
 			'web.project.inbox.proposed' => 'Proposed',
 			'web.project.inbox.emptyBody' => '(empty)',
@@ -17723,8 +17819,6 @@ extension on Translations {
 			'web.project.archived.restoredToast' => 'Restored',
 			'web.project.archived.restoreFailedToast' => 'Restore failed',
 			'web.project.reset.button' => 'Reset',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.reset.dialogTitle' => 'Reset project memory?',
 			'web.project.reset.dialogDescription' => 'Deletes all stored project context for this cwd. This cannot be undone.',
 			'web.project.reset.alwaysDeleted' => 'Always deleted: goal, plan, proposals, journal, cleanup decisions.',
@@ -18221,6 +18315,8 @@ extension on Translations {
 			'web.channels.dialog.editTitle' => 'Edit channel',
 			'web.channels.dialog.createTitle' => 'Register channel',
 			'web.channels.dialog.descriptionBridge' => 'External adapter (Python/Node/...) connects via WebSocket and presents this token.',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.descriptionDefault' => 'Configure messaging integration.',
 			'web.channels.dialog.kindLabel' => 'Kind',
 			'web.channels.dialog.kindImmutable' => '(immutable — delete and recreate to change kind)',
@@ -18237,8 +18333,6 @@ extension on Translations {
 			'web.channels.dialog.nameRequired' => 'name is required',
 			'web.channels.dialog.tokenRequired' => 'token is required',
 			'web.channels.dialog.topicIdsNumeric' => ({required Object value}) => 'Topic IDs must be numeric (got ${value})',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.dialog.fieldRequired' => ({required Object label}) => '${label} is required',
 			'web.channels.dialog.cooldownInvalid' => 'Cooldown must be a non-negative number of seconds',
 			'web.channels.dialog.snippetCapInvalid' => 'Snippet cap must be a non-negative number',
@@ -18735,6 +18829,8 @@ extension on Translations {
 			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
 			'web.backups.newSchedule.title' => 'New backup schedule',
 			'web.backups.newSchedule.targetLabel' => 'Targets',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.newSchedule.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Every (hours)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Keep last N',
@@ -18751,8 +18847,6 @@ extension on Translations {
 			'web.backups.targetsTab.newTarget' => 'New target',
 			'web.backups.targetsTab.listFailedToast' => 'Failed to list targets',
 			'web.backups.targetsTab.deleteConfirm' => ({required Object id}) => 'Delete target ${id}? Schedules referencing it will block the delete.',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.targetsTab.deletedToast' => 'Target deleted',
 			'web.backups.targetsTab.deleteFailedToast' => 'Delete failed',
 			'web.backups.targetsTab.connectionOkToast' => 'Connection OK',
@@ -19249,6 +19343,8 @@ extension on Translations {
 			'web.memoryAmbient.profiles.addButton' => 'Add profile',
 			'web.memoryAmbient.profiles.intro' => 'At spawn time opendray prepends a markdown banner of recent project memories to the agent\'s system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.',
 			'web.memoryAmbient.profiles.empty' => 'No injection profile. Memories are not auto-injected at spawn — model still uses memory_search.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.profiles.row.globalDefault' => 'global default',
 			'web.memoryAmbient.profiles.row.delete' => 'Delete',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => 'Delete this injection profile?',
@@ -19265,8 +19361,6 @@ extension on Translations {
 			'web.memoryAmbient.cost.intro' => 'Per-provider summary aggregated from <1>memory_summarizer_calls</1>. Local providers (Ollama, LM Studio, Integration) are priced as \$0 — operator owns hardware cost.',
 			'web.memoryAmbient.cost.empty' => 'No enabled providers — no cost data.',
 			'web.memoryAmbient.cost.columns.provider' => 'Provider',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.cost.columns.calls' => 'Calls',
 			'web.memoryAmbient.cost.columns.inTokens' => 'In tokens',
 			'web.memoryAmbient.cost.columns.outTokens' => 'Out tokens',
@@ -19763,6 +19857,8 @@ extension on Translations {
 			'sessions.detail.refreshMetadata' => 'Refresh metadata',
 			'sessions.detail.inspector' => 'Inspector (Files / Git / Tasks / History / Notes)',
 			'sessions.detail.projectMemory' => 'Project memory (goal / plan / journal / inbox)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.actions' => 'Actions',
 			'sessions.detail.started' => ({required Object when}) => 'started ${when}',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'started ${started}  ·  ended ${ended}',
@@ -19779,8 +19875,6 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Switch',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancel',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Switch failed: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No Claude accounts configured. Add them in More → Providers → Claude.',
@@ -19799,6 +19893,9 @@ extension on Translations {
 			'sessions.terminal.keyboard.attachImage' => 'Attach image',
 			'sessions.terminal.keyboard.enter' => 'Enter',
 			'sessions.terminal.keyboard.selectText' => 'Select text',
+			'sessions.terminal.attachments.insert' => 'Insert',
+			'sessions.terminal.attachments.clear' => 'Clear all',
+			'sessions.terminal.attachments.remove' => ({required Object name}) => 'Remove ${name}',
 			'sessions.terminal.connection.connecting' => 'Connecting…',
 			'sessions.terminal.connection.connected' => 'Connected',
 			'sessions.terminal.connection.reconnecting' => 'Reconnecting…',
@@ -20274,6 +20371,8 @@ extension on Translations {
 			'project.conflicts.deleteLoading' => 'Loading fact text…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Delete ${side}',
 			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			_ => null,
+		} ?? switch (path) {
 			'project.conflicts.openPlanEditor' => 'Open plan editor',
 			'project.conflicts.openGoalEditor' => 'Open goal editor',
 			'project.conflicts.severity.low' => 'low',
@@ -20293,8 +20392,6 @@ extension on Translations {
 			'project.browseFolder' => 'Browse folder…',
 			'project.resetTooltip' => 'Reset project memory',
 			'project.append' => 'Append',
-			_ => null,
-		} ?? switch (path) {
 			'project.appendDialogTitle' => 'Append journal entry',
 			'project.titleFieldLabel' => 'Title (optional)',
 			'project.contentFieldLabel' => 'Content (markdown)',
@@ -20788,6 +20885,8 @@ extension on Translations {
 			'customTasks.commandHelper' => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
 			'customTasks.fieldDescription' => 'Description (optional)',
 			'customTasks.fieldScope' => 'Scope',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.globalScopeHint' => 'Visible from every session, regardless of cwd.',
 			'customTasks.projectScopeHint' => 'Visible only when a session\'s cwd matches the path below.',
 			'customTasks.fieldProjectCwd' => 'Project cwd',
@@ -20807,8 +20906,6 @@ extension on Translations {
 			'notesPage.deleteTitle' => 'Delete note?',
 			'notesPage.deletedSnack' => ({required Object path}) => 'Deleted ${path}',
 			'notesPage.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'notesPage.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',

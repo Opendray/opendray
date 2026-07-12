@@ -12,6 +12,7 @@ const MAP: Record<string, string> = {
 	codex: 'openai', // Codex CLI is OpenAI-branded
 	antigravity: 'antigravity',
 	opencode: 'opencode',
+	grok: 'grok',
 	shell: 'shell',
 }
 
