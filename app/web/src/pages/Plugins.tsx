@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
   Plus,
   Trash2,
@@ -1443,12 +1444,31 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
 function CustomTasksSection() {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false }) as { newTaskCwd?: string }
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['custom-tasks-all'],
     queryFn: () => listCustomTasks({ all: true }),
   })
   const [editing, setEditing] = useState<CustomTask | null>(null)
-  const [creating, setCreating] = useState(false)
+  // Arriving from a project's "+ Add custom task" carries the project
+  // cwd on ?newTaskCwd — seed the create dialog open + pre-scoped from
+  // it (lazy initialisers so we capture the param before the effect
+  // below strips it from the URL).
+  const [creating, setCreating] = useState(() => Boolean(search.newTaskCwd))
+  // cwd to pre-scope a new task to; undefined = global.
+  const [createCwd, setCreateCwd] = useState<string | undefined>(
+    () => search.newTaskCwd,
+  )
+
+  // Strip ?newTaskCwd once consumed so a refresh or back-nav doesn't
+  // reopen the dialog. Side-effect only (no setState) — the open state
+  // was already captured by the initialisers above.
+  useEffect(() => {
+    if (search.newTaskCwd) {
+      navigate({ to: '/plugins', search: {}, replace: true })
+    }
+  }, [search.newTaskCwd, navigate])
 
   const remove = useMutation({
     mutationFn: deleteCustomTask,
@@ -1473,7 +1493,10 @@ function CustomTasksSection() {
         <Button
           variant="accent"
           size="sm"
-          onClick={() => setCreating(true)}
+          onClick={() => {
+            setCreateCwd(undefined)
+            setCreating(true)
+          }}
           className="gap-1"
         >
           <Plus className="size-3.5" />
@@ -1575,6 +1598,7 @@ function CustomTasksSection() {
         open={creating}
         onOpenChange={setCreating}
         mode="create"
+        initialCwd={createCwd}
       />
       <CustomTaskDialog
         open={editing != null}
@@ -1597,22 +1621,25 @@ interface CustomTaskDialogProps {
   onOpenChange: (v: boolean) => void
   mode: 'create' | 'edit'
   task?: CustomTask
+  // Pre-fills the cwd field for a new task so operators creating a
+  // task from within a project don't have to retype its path.
+  initialCwd?: string
 }
 
-function CustomTaskDialog({ open, onOpenChange, mode, task }: CustomTaskDialogProps) {
+function CustomTaskDialog({ open, onOpenChange, mode, task, initialCwd }: CustomTaskDialogProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [name, setName] = useState(task?.name ?? '')
   const [command, setCommand] = useState(task?.command ?? '')
   const [description, setDescription] = useState(task?.description ?? '')
-  const [cwd, setCwd] = useState(task?.cwd ?? '')
+  const [cwd, setCwd] = useState(task?.cwd ?? initialCwd ?? '')
 
   useEffect(() => {
     setName(task?.name ?? '')
     setCommand(task?.command ?? '')
     setDescription(task?.description ?? '')
-    setCwd(task?.cwd ?? '')
-  }, [task?.id])
+    setCwd(task?.cwd ?? initialCwd ?? '')
+  }, [task?.id, initialCwd])
 
   const create = useMutation({
     mutationFn: () =>

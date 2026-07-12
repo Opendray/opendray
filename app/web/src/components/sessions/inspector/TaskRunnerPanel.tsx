@@ -521,6 +521,7 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
         </div>
         <Link
           to="/plugins"
+          search={{ newTaskCwd: session.cwd }}
           className="text-[11px] text-state-running hover:underline self-center"
         >
           Add a custom task →
@@ -606,6 +607,7 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
       <div className="pt-1">
         <Link
           to="/plugins"
+          search={{ newTaskCwd: session.cwd }}
           className="text-[11px] text-muted-foreground/70 hover:text-foreground hover:underline"
         >
           + Add custom task

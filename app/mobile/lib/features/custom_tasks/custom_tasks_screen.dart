@@ -21,6 +21,22 @@ import 'package:opendray/core/i18n/strings.g.dart' as i18n;
 class CustomTasksScreen extends ConsumerStatefulWidget {
   const CustomTasksScreen({super.key});
 
+  /// Opens the task editor directly in create mode, pre-scoped to
+  /// [initialCwd] (project scope). Used from the session inspector's
+  /// Tasks tab so operators don't have to retype the project path when
+  /// creating a task for the project they're already in. Returns true
+  /// if a task was saved.
+  static Future<bool?> pushCreate(
+    BuildContext context, {
+    String? initialCwd,
+  }) {
+    return Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => _CustomTaskEditorScreen(initialCwd: initialCwd),
+      ),
+    );
+  }
+
   @override
   ConsumerState<CustomTasksScreen> createState() =>
       _CustomTasksScreenState();
@@ -253,8 +269,11 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
 enum _Scope { global, project }
 
 class _CustomTaskEditorScreen extends ConsumerStatefulWidget {
-  const _CustomTaskEditorScreen({this.existing});
+  const _CustomTaskEditorScreen({this.existing, this.initialCwd});
   final CustomTask? existing;
+  // When set (and not editing), the editor opens pre-scoped to this
+  // project cwd — scope defaults to project and the path is filled in.
+  final String? initialCwd;
 
   @override
   ConsumerState<_CustomTaskEditorScreen> createState() =>
@@ -283,6 +302,11 @@ class _CustomTaskEditorScreenState
       _descriptionCtrl.text = ex.description;
       _cwdCtrl.text = ex.cwd;
       _scope = ex.cwd.isEmpty ? _Scope.global : _Scope.project;
+    } else if (widget.initialCwd != null && widget.initialCwd!.isNotEmpty) {
+      // Creating from within a project: pre-scope to it so the operator
+      // doesn't have to switch to project scope and retype the path.
+      _cwdCtrl.text = widget.initialCwd!;
+      _scope = _Scope.project;
     }
   }
 

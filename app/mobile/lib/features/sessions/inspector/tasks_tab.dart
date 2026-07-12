@@ -10,6 +10,7 @@ import 'package:opendray/core/api/fs_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
@@ -269,6 +270,25 @@ class _TasksTabState extends ConsumerState<TasksTab>
     }
   }
 
+  // Create a custom task pre-scoped to this project's cwd, then reload
+  // so it shows up under the Custom group without a manual refresh.
+  Future<void> _addCustomTask() async {
+    final saved = await CustomTasksScreen.pushCreate(
+      context,
+      initialCwd: widget.cwd,
+    );
+    if ((saved ?? false) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.customTasks.snackCreated),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    }
+  }
+
   List<_TaskGroup> _applyFilter(List<_TaskGroup> groups) {
     final q = _filter.trim().toLowerCase();
     if (q.isEmpty) return groups;
@@ -405,13 +425,13 @@ class _TasksTabState extends ConsumerState<TasksTab>
     super.build(context);
     return Column(
       children: [
-        _Header(cwd: widget.cwd, onRefresh: _load),
+        _Header(cwd: widget.cwd, onRefresh: _load, onAdd: _addCustomTask),
         const Divider(height: 1),
         Expanded(
           child: _state.when(
             data: (groups) {
               if (groups.isEmpty) {
-                return _EmptyView(cwd: widget.cwd);
+                return _EmptyView(cwd: widget.cwd, onAdd: _addCustomTask);
               }
               final total =
                   groups.fold<int>(0, (n, g) => n + g.tasks.length);
@@ -488,9 +508,14 @@ class _TasksTabState extends ConsumerState<TasksTab>
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.cwd, required this.onRefresh});
+  const _Header({
+    required this.cwd,
+    required this.onRefresh,
+    required this.onAdd,
+  });
   final String cwd;
   final VoidCallback onRefresh;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -506,6 +531,11 @@ class _Header extends StatelessWidget {
                   ),
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: t.sessions.inspector.tasks.addCustomTask,
+            onPressed: onAdd,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -618,8 +648,9 @@ class _GroupCard extends StatelessWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.cwd});
+  const _EmptyView({required this.cwd, required this.onAdd});
   final String cwd;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -641,6 +672,12 @@ class _EmptyView extends StatelessWidget {
               t.sessions.inspector.tasks.emptyHint,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(t.sessions.inspector.tasks.addCustomTask),
             ),
           ],
         ),
