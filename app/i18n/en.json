@@ -3137,7 +3137,7 @@
         "cwd": "Project path (optional)",
         "cwdHint": "Binds the discussion to a project for memory recall.",
         "seats": "Seats",
-        "seatsHint": "At least two seats. Only providers with a headless path can join.",
+        "seatsHint": "At least two seats (one per vendor). Set a model where the CLI needs one — e.g. codex on a plain ChatGPT plan only allows certain models.",
         "create": "Create",
         "created": "Round table created"
       },

@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import {
   createRoundTable,
+  SEAT_MODEL_PLACEHOLDER,
   SEAT_PROVIDERS,
   SEAT_VENDOR,
   type RoundTable,
@@ -36,11 +37,16 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
   const [topic, setTopic] = useState('')
   const [cwd, setCwd] = useState('')
   const [seats, setSeats] = useState<SeatProvider[]>(DEFAULT_SEATS)
+  // Optional per-seat model override (blank = the CLI's own default).
+  const [models, setModels] = useState<Partial<Record<SeatProvider, string>>>(
+    {},
+  )
 
   const reset = () => {
     setTopic('')
     setCwd('')
     setSeats(DEFAULT_SEATS)
+    setModels({})
   }
 
   const toggleSeat = (p: SeatProvider) =>
@@ -53,7 +59,10 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
       createRoundTable({
         topic: topic.trim(),
         cwd: cwd.trim() || undefined,
-        seats: seats.map((provider) => ({ provider })),
+        seats: seats.map((provider) => ({
+          provider,
+          model: models[provider]?.trim() || undefined,
+        })),
       }),
     onSuccess: (rt) => {
       qc.invalidateQueries({ queryKey: ['round-tables'] })
@@ -106,28 +115,40 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
 
           <div className="flex flex-col gap-1.5">
             <Label>{t('web.roundTable.dialog.seats')}</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-1.5">
               {SEAT_PROVIDERS.map((p) => {
                 const on = seats.includes(p)
                 return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => toggleSeat(p)}
-                    className={cn(
-                      'flex flex-col items-start rounded-md border px-3 py-1.5 text-left transition-colors',
-                      on
-                        ? 'border-accent/40 bg-accent/10 text-foreground'
-                        : 'border-border bg-card text-muted-foreground hover:text-foreground',
+                  <div key={p} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleSeat(p)}
+                      className={cn(
+                        'flex w-36 shrink-0 flex-col items-start rounded-md border px-3 py-1.5 text-left transition-colors',
+                        on
+                          ? 'border-accent/40 bg-accent/10 text-foreground'
+                          : 'border-border bg-card text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      <span className="text-[13px] font-medium capitalize">
+                        {p}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {SEAT_VENDOR[p]}
+                      </span>
+                    </button>
+                    {on && (
+                      <Input
+                        value={models[p] ?? ''}
+                        onChange={(e) =>
+                          setModels((cur) => ({ ...cur, [p]: e.target.value }))
+                        }
+                        placeholder={SEAT_MODEL_PLACEHOLDER[p]}
+                        className="h-8 flex-1 text-xs"
+                        aria-label={`${p} model`}
+                      />
                     )}
-                  >
-                    <span className="text-[13px] font-medium capitalize">
-                      {p}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {SEAT_VENDOR[p]}
-                    </span>
-                  </button>
+                  </div>
                 )
               })}
             </div>

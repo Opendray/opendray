@@ -3137,7 +3137,7 @@
         "cwd": "Ruta del proyecto (opcional)",
         "cwdHint": "Vincula la discusión a un proyecto para recuperar memoria.",
         "seats": "Asientos",
-        "seatsHint": "Al menos dos asientos. Solo pueden unirse proveedores con modo headless.",
+        "seatsHint": "Al menos dos asientos (uno por proveedor). Indica un modelo cuando el CLI lo requiera — p. ej. codex en un plan ChatGPT básico solo permite ciertos modelos.",
         "create": "Crear",
         "created": "Mesa redonda creada"
       },

@@ -3137,7 +3137,7 @@
         "cwd": "项目路径(可选)",
         "cwdHint": "把讨论绑定到项目以检索记忆。",
         "seats": "座位",
-        "seatsHint": "至少两个座位。仅支持 headless 的 provider 可加入。",
+        "seatsHint": "至少两个座位(每厂商一个)。CLI 需要时填模型——如 codex 在普通 ChatGPT 订阅下只允许特定模型。",
         "create": "创建",
         "created": "圆桌已创建"
       },

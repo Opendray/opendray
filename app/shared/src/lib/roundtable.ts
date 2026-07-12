@@ -22,6 +22,15 @@ export const SEAT_VENDOR: Record<SeatProvider, string> = {
   antigravity: 'Google Gemini',
 }
 
+// Per-seat model hint. Blank = the CLI's own default. codex on a plain
+// ChatGPT plan rejects most models — set a supported one (e.g. gpt-5.4-mini)
+// or the seat fails with "model not supported".
+export const SEAT_MODEL_PLACEHOLDER: Record<SeatProvider, string> = {
+  claude: 'default (blank = CLI default)',
+  codex: 'e.g. gpt-5.4-mini',
+  antigravity: 'default (blank = CLI default)',
+}
+
 export type RoundTableStatus =
   | 'draft'
   | 'running'
