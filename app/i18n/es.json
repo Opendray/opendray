@@ -3456,7 +3456,8 @@
         "filterHint": "Filtrar tareas…",
         "noMatch": "Ninguna tarea coincide con \"{query}\"",
         "emptyTitle": "No hay tareas en esta carpeta",
-        "emptyHint": "Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell"
+        "emptyHint": "Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell",
+        "addCustomTask": "Añadir tarea personalizada"
       },
       "notes": {
         "insertedAt": "Insertado: @{path}",

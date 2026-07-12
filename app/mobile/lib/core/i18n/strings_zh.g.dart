@@ -6486,6 +6486,7 @@ class _TranslationsSessionsInspectorTasksZh extends TranslationsSessionsInspecto
 	@override String noMatch({required Object query}) => '没有匹配“${query}”的任务';
 	@override String get emptyTitle => '此目录没有任务';
 	@override String get emptyHint => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本';
+	@override String get addCustomTask => '添加自定义任务';
 }
 
 // Path: sessions.inspector.notes
@@ -11879,6 +11880,7 @@ extension on TranslationsZh {
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => '没有匹配“${query}”的任务',
 			'sessions.inspector.tasks.emptyTitle' => '此目录没有任务',
 			'sessions.inspector.tasks.emptyHint' => '正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本',
+			'sessions.inspector.tasks.addCustomTask' => '添加自定义任务',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => '已插入：@${path}',
 			'sessions.inspector.notes.myNotes' => '我的笔记',
 			'sessions.inspector.notes.projectDocs' => '项目文档',
@@ -12271,9 +12273,9 @@ extension on TranslationsZh {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）',
 			'project.conflicts.deleteLoading' => '加载中…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
-			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
 			_ => null,
 		} ?? switch (path) {
+			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
 			'project.conflicts.openPlanEditor' => '打开计划编辑器',
 			'project.conflicts.openGoalEditor' => '打开目标编辑器',
 			'project.conflicts.severity.low' => '低',
@@ -12785,9 +12787,9 @@ extension on TranslationsZh {
 			'customTasks.fieldCommand' => '命令',
 			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
 			'customTasks.fieldDescription' => '描述（可选）',
-			'customTasks.fieldScope' => '范围',
 			_ => null,
 		} ?? switch (path) {
+			'customTasks.fieldScope' => '范围',
 			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
 			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
 			'customTasks.fieldProjectCwd' => '项目 cwd',
