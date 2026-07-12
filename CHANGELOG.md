@@ -10,6 +10,26 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.11.4] — 2026-07-12
+
+### Added
+
+- **Mobile: Resources section + Updates "what's new" sheet.** The mobile
+  app gains the sidebar Resources block and the Updates/"what's new" sheet,
+  reaching parity with the web admin (#433). (#439)
+
+### Fixed
+
+- **Antigravity spawns no longer fail on an empty MCP config.** antigravity's
+  first-run migration writes an empty `~/.gemini/config/mcp_config.json`;
+  opendray's MCP-injection prep parsed it unconditionally and errored with
+  *"provider prepare: parse …/mcp_config.json … unexpected end of JSON
+  input"*, blocking every Antigravity session spawn. An empty (or
+  whitespace-only) file is now treated as "no config yet" rather than a parse
+  error, on both the `mcp_config.json` and gemini `settings.json` surfaces. (#440)
+- **Grok provider icon.** Grok is now registered in the web provider
+  icon/visual lookup tables so its brand mark renders. (#434)
+
 ## [v2.11.3] — 2026-07-09
 
 ### Added
