@@ -58,7 +58,8 @@
       "unread": "Unread release notes",
       "badgeCount": "Updates · {count}",
       "sourceChangelog": "Highlights from CHANGELOG.md (release body was a stub)."
-    }
+    },
+    "roundTable": "Round Table"
   },
   "web": {
     "brand": "opendray",
@@ -3116,6 +3117,64 @@
       },
       "workbench": {
         "title": "Database workbench"
+      }
+    },
+    "roundTable": {
+      "title": "Round Table",
+      "experimental": "Experimental",
+      "subtitle": "Cross-vendor multi-agent discussion — a deterministic chair drives heterogeneous model seats through propose → critique → synthesize and produces a plan for you to approve.",
+      "new": "New round table",
+      "loading": "Loading…",
+      "empty": "No round tables yet.",
+      "selectHint": "Select a round table to view the discussion.",
+      "chair": "chair",
+      "confidence": "conf {value}",
+      "dialog": {
+        "title": "New round table",
+        "description": "Pick the model seats and the topic. Each seat is a different vendor's model — the diversity is the point.",
+        "topic": "Topic",
+        "topicPlaceholder": "What should the round table discuss?",
+        "cwd": "Project path (optional)",
+        "cwdHint": "Binds the discussion to a project for memory recall.",
+        "seats": "Seats",
+        "seatsHint": "At least two seats. Only providers with a headless path can join.",
+        "create": "Create",
+        "created": "Round table created"
+      },
+      "detail": {
+        "loading": "Loading discussion…",
+        "loadFailed": "Failed to load this round table.",
+        "start": "Start",
+        "close": "Close",
+        "started": "Discussion started",
+        "running": "The seats are discussing… this can take a few minutes."
+      },
+      "status": {
+        "draft": "Draft",
+        "running": "Running",
+        "awaiting_verdict": "Awaiting verdict",
+        "failed": "Failed",
+        "closed": "Closed"
+      },
+      "verdict": {
+        "title": "Verdict",
+        "recommendedBy": "Recommended: {provider}",
+        "tasks": "Task breakdown",
+        "tradeoffs": "Tradeoffs",
+        "openQuestions": "Open questions",
+        "alternatives": "Alternatives",
+        "ranking": "Ranking",
+        "scoreLine": "{blockers} blockers · {concerns} concerns · conf {confidence}"
+      },
+      "beat": {
+        "propose": "Propose",
+        "critique": "Critique",
+        "synthesize": "Synthesize"
+      },
+      "thread": {
+        "title": "Discussion",
+        "empty": "No turns yet.",
+        "noCritiques": "No critiques raised."
       }
     }
   },

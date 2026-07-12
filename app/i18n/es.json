@@ -58,7 +58,8 @@
       "unread": "Notas de versión sin leer",
       "badgeCount": "Actualizaciones · {count}",
       "sourceChangelog": "Highlights desde CHANGELOG.md (el cuerpo del release era un stub)."
-    }
+    },
+    "roundTable": "Mesa redonda"
   },
   "web": {
     "brand": "opendray",
@@ -3116,6 +3117,64 @@
       },
       "workbench": {
         "title": "Banco de trabajo de BD"
+      }
+    },
+    "roundTable": {
+      "title": "Mesa redonda",
+      "experimental": "Experimental",
+      "subtitle": "Discusión multiagente entre proveedores: un moderador determinista guía asientos de modelos heterogéneos por proponer → criticar → sintetizar y produce un plan para tu aprobación.",
+      "new": "Nueva mesa redonda",
+      "loading": "Cargando…",
+      "empty": "Aún no hay mesas redondas.",
+      "selectHint": "Selecciona una mesa redonda para ver la discusión.",
+      "chair": "moderador",
+      "confidence": "conf {value}",
+      "dialog": {
+        "title": "Nueva mesa redonda",
+        "description": "Elige los asientos de modelos y el tema. Cada asiento es el modelo de un proveedor distinto: la diversidad es el objetivo.",
+        "topic": "Tema",
+        "topicPlaceholder": "¿Qué debe discutir la mesa redonda?",
+        "cwd": "Ruta del proyecto (opcional)",
+        "cwdHint": "Vincula la discusión a un proyecto para recuperar memoria.",
+        "seats": "Asientos",
+        "seatsHint": "Al menos dos asientos. Solo pueden unirse proveedores con modo headless.",
+        "create": "Crear",
+        "created": "Mesa redonda creada"
+      },
+      "detail": {
+        "loading": "Cargando discusión…",
+        "loadFailed": "No se pudo cargar esta mesa redonda.",
+        "start": "Iniciar",
+        "close": "Cerrar",
+        "started": "Discusión iniciada",
+        "running": "Los asientos están discutiendo… esto puede tardar unos minutos."
+      },
+      "status": {
+        "draft": "Borrador",
+        "running": "En curso",
+        "awaiting_verdict": "Esperando veredicto",
+        "failed": "Fallida",
+        "closed": "Cerrada"
+      },
+      "verdict": {
+        "title": "Veredicto",
+        "recommendedBy": "Recomendado: {provider}",
+        "tasks": "Desglose de tareas",
+        "tradeoffs": "Compensaciones",
+        "openQuestions": "Preguntas abiertas",
+        "alternatives": "Alternativas",
+        "ranking": "Clasificación",
+        "scoreLine": "{blockers} bloqueos · {concerns} inquietudes · conf {confidence}"
+      },
+      "beat": {
+        "propose": "Proponer",
+        "critique": "Criticar",
+        "synthesize": "Sintetizar"
+      },
+      "thread": {
+        "title": "Discusión",
+        "empty": "Aún no hay turnos.",
+        "noCritiques": "Sin críticas."
       }
     }
   },

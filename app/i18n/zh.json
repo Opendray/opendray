@@ -58,7 +58,8 @@
       "unread": "未读更新说明",
       "badgeCount": "更新 · {count}",
       "sourceChangelog": "亮点来自 CHANGELOG.md（GitHub Release 正文为占位）。"
-    }
+    },
+    "roundTable": "圆桌"
   },
   "web": {
     "brand": "opendray",
@@ -3116,6 +3117,64 @@
       },
       "workbench": {
         "title": "数据库工作台"
+      }
+    },
+    "roundTable": {
+      "title": "圆桌",
+      "experimental": "实验性",
+      "subtitle": "跨厂商多智能体讨论——确定性主席驱动异构模型座位经过 提案 → 互评 → 综合,产出方案交你拍板。",
+      "new": "新建圆桌",
+      "loading": "加载中…",
+      "empty": "还没有圆桌。",
+      "selectHint": "选择一个圆桌查看讨论。",
+      "chair": "主席",
+      "confidence": "置信度 {value}",
+      "dialog": {
+        "title": "新建圆桌",
+        "description": "选择模型座位和议题。每个座位是不同厂商的模型——多样性正是关键。",
+        "topic": "议题",
+        "topicPlaceholder": "让圆桌讨论什么?",
+        "cwd": "项目路径(可选)",
+        "cwdHint": "把讨论绑定到项目以检索记忆。",
+        "seats": "座位",
+        "seatsHint": "至少两个座位。仅支持 headless 的 provider 可加入。",
+        "create": "创建",
+        "created": "圆桌已创建"
+      },
+      "detail": {
+        "loading": "加载讨论…",
+        "loadFailed": "加载圆桌失败。",
+        "start": "开始",
+        "close": "关闭",
+        "started": "讨论已开始",
+        "running": "座位们正在讨论……可能需要几分钟。"
+      },
+      "status": {
+        "draft": "草稿",
+        "running": "进行中",
+        "awaiting_verdict": "待拍板",
+        "failed": "失败",
+        "closed": "已关闭"
+      },
+      "verdict": {
+        "title": "方案",
+        "recommendedBy": "推荐:{provider}",
+        "tasks": "任务拆解",
+        "tradeoffs": "取舍",
+        "openQuestions": "待决问题",
+        "alternatives": "备选方案",
+        "ranking": "排名",
+        "scoreLine": "{blockers} 阻断 · {concerns} 顾虑 · 置信度 {confidence}"
+      },
+      "beat": {
+        "propose": "提案",
+        "critique": "互评",
+        "synthesize": "综合"
+      },
+      "thread": {
+        "title": "讨论",
+        "empty": "还没有发言。",
+        "noCritiques": "未提出批评。"
       }
     }
   },
