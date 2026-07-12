@@ -219,14 +219,6 @@ const pluginsRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/plugins',
   component: PluginsPage,
-  // When the "+ Add custom task" link fires from a project's Task
-  // Runner, the originating project cwd rides in on ?newTaskCwd so the
-  // create dialog can open pre-scoped to that project. Kept optional so
-  // the many other `<Link to="/plugins">` callers need no search prop.
-  validateSearch: (search): { newTaskCwd?: string } =>
-    typeof search.newTaskCwd === 'string'
-      ? { newTaskCwd: search.newTaskCwd }
-      : {},
 })
 
 const settingsRoute = createRoute({

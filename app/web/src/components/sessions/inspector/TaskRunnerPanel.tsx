@@ -13,7 +13,6 @@ import {
   Coffee,
   Terminal,
 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { useQueryClient } from '@tanstack/react-query'
@@ -25,6 +24,7 @@ import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
 import { Input } from '@/components/ui/input'
+import { CustomTaskDialog } from '@/components/tasks/CustomTaskDialog'
 import { useSessionTabs } from '@/stores/sessionTabs'
 
 interface TaskRunnerPanelProps {
@@ -272,6 +272,9 @@ function iconFor(source: string): typeof FileCode {
 
 export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
   const [filter, setFilter] = useState('')
+  // Create a custom task inline, pre-scoped to this session's project,
+  // instead of bouncing to the Plugins page to type the cwd by hand.
+  const [creatingTask, setCreatingTask] = useState(false)
 
   const dirEntries = useCwdEntries(session.cwd)
   const presentSet = useMemo(() => {
@@ -519,13 +522,19 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
             <code>pyproject.toml</code> in the cwd, or define one below.
           </div>
         </div>
-        <Link
-          to="/plugins"
-          search={{ newTaskCwd: session.cwd }}
+        <button
+          type="button"
+          onClick={() => setCreatingTask(true)}
           className="text-[11px] text-state-running hover:underline self-center"
         >
           Add a custom task →
-        </Link>
+        </button>
+        <CustomTaskDialog
+          open={creatingTask}
+          onOpenChange={setCreatingTask}
+          mode="create"
+          initialCwd={session.cwd}
+        />
       </div>
     )
   }
@@ -605,14 +614,21 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
       })}
 
       <div className="pt-1">
-        <Link
-          to="/plugins"
-          search={{ newTaskCwd: session.cwd }}
+        <button
+          type="button"
+          onClick={() => setCreatingTask(true)}
           className="text-[11px] text-muted-foreground/70 hover:text-foreground hover:underline"
         >
           + Add custom task
-        </Link>
+        </button>
       </div>
+
+      <CustomTaskDialog
+        open={creatingTask}
+        onOpenChange={setCreatingTask}
+        mode="create"
+        initialCwd={session.cwd}
+      />
     </div>
   )
 }

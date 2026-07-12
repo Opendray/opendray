@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
   Plus,
   Trash2,
@@ -38,7 +37,6 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import {
   listGitHosts,
   createGitHost,
@@ -49,11 +47,10 @@ import {
 } from '@/lib/githost'
 import {
   listCustomTasks,
-  createCustomTask,
-  updateCustomTask,
   deleteCustomTask,
   type CustomTask,
 } from '@/lib/customTasks'
+import { CustomTaskDialog } from '@/components/tasks/CustomTaskDialog'
 import {
   listSkills,
   getSkill,
@@ -1444,31 +1441,12 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
 function CustomTasksSection() {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const navigate = useNavigate()
-  const search = useSearch({ strict: false }) as { newTaskCwd?: string }
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['custom-tasks-all'],
     queryFn: () => listCustomTasks({ all: true }),
   })
   const [editing, setEditing] = useState<CustomTask | null>(null)
-  // Arriving from a project's "+ Add custom task" carries the project
-  // cwd on ?newTaskCwd — seed the create dialog open + pre-scoped from
-  // it (lazy initialisers so we capture the param before the effect
-  // below strips it from the URL).
-  const [creating, setCreating] = useState(() => Boolean(search.newTaskCwd))
-  // cwd to pre-scope a new task to; undefined = global.
-  const [createCwd, setCreateCwd] = useState<string | undefined>(
-    () => search.newTaskCwd,
-  )
-
-  // Strip ?newTaskCwd once consumed so a refresh or back-nav doesn't
-  // reopen the dialog. Side-effect only (no setState) — the open state
-  // was already captured by the initialisers above.
-  useEffect(() => {
-    if (search.newTaskCwd) {
-      navigate({ to: '/plugins', search: {}, replace: true })
-    }
-  }, [search.newTaskCwd, navigate])
+  const [creating, setCreating] = useState(false)
 
   const remove = useMutation({
     mutationFn: deleteCustomTask,
@@ -1493,10 +1471,7 @@ function CustomTasksSection() {
         <Button
           variant="accent"
           size="sm"
-          onClick={() => {
-            setCreateCwd(undefined)
-            setCreating(true)
-          }}
+          onClick={() => setCreating(true)}
           className="gap-1"
         >
           <Plus className="size-3.5" />
@@ -1598,7 +1573,6 @@ function CustomTasksSection() {
         open={creating}
         onOpenChange={setCreating}
         mode="create"
-        initialCwd={createCwd}
       />
       <CustomTaskDialog
         open={editing != null}
@@ -1614,159 +1588,6 @@ function trimPath(p: string): string {
   const parts = p.split('/').filter(Boolean)
   if (parts.length <= 2) return p
   return '…/' + parts.slice(-2).join('/')
-}
-
-interface CustomTaskDialogProps {
-  open: boolean
-  onOpenChange: (v: boolean) => void
-  mode: 'create' | 'edit'
-  task?: CustomTask
-  // Pre-fills the cwd field for a new task so operators creating a
-  // task from within a project don't have to retype its path.
-  initialCwd?: string
-}
-
-function CustomTaskDialog({ open, onOpenChange, mode, task, initialCwd }: CustomTaskDialogProps) {
-  const { t } = useTranslation()
-  const qc = useQueryClient()
-  const [name, setName] = useState(task?.name ?? '')
-  const [command, setCommand] = useState(task?.command ?? '')
-  const [description, setDescription] = useState(task?.description ?? '')
-  const [cwd, setCwd] = useState(task?.cwd ?? initialCwd ?? '')
-
-  useEffect(() => {
-    setName(task?.name ?? '')
-    setCommand(task?.command ?? '')
-    setDescription(task?.description ?? '')
-    setCwd(task?.cwd ?? initialCwd ?? '')
-  }, [task?.id, initialCwd])
-
-  const create = useMutation({
-    mutationFn: () =>
-      createCustomTask({ name, command, description, cwd: cwd || undefined }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['custom-tasks-all'] })
-      qc.invalidateQueries({ queryKey: ['custom-tasks'] })
-      toast.success(t('web.plugins.customTasks.dialog.addedToast'))
-      onOpenChange(false)
-    },
-    onError: (err: Error) =>
-      toast.error(t('web.plugins.customTasks.dialog.addFailedToast'), {
-        description: err.message,
-      }),
-  })
-
-  const update = useMutation({
-    mutationFn: () =>
-      updateCustomTask(task!.id, { name, command, description, cwd }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['custom-tasks-all'] })
-      qc.invalidateQueries({ queryKey: ['custom-tasks'] })
-      toast.success(t('web.plugins.customTasks.dialog.updatedToast'))
-      onOpenChange(false)
-    },
-    onError: (err: Error) =>
-      toast.error(t('web.plugins.customTasks.dialog.updateFailedToast'), {
-        description: err.message,
-      }),
-  })
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    if (mode === 'create') create.mutate()
-    else update.mutate()
-  }
-
-  const busy = create.isPending || update.isPending
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {mode === 'create'
-              ? t('web.plugins.customTasks.dialog.addTitle')
-              : t('web.plugins.customTasks.dialog.editTitle', { name: task?.name })}
-          </DialogTitle>
-          <DialogDescription>
-            {t('web.plugins.customTasks.dialog.description')}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-3 mt-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="task-name">
-              {t('web.plugins.customTasks.dialog.nameLabel')}
-            </Label>
-            <Input
-              id="task-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('web.plugins.customTasks.dialog.namePlaceholder')}
-              required
-              autoFocus
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="task-cmd">
-              {t('web.plugins.customTasks.dialog.commandLabel')}
-            </Label>
-            <Textarea
-              id="task-cmd"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              placeholder={t('web.plugins.customTasks.dialog.commandPlaceholder')}
-              rows={2}
-              required
-              className="font-mono text-[12px]"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="task-desc">
-              {t('web.plugins.customTasks.dialog.descLabel')}
-            </Label>
-            <Input
-              id="task-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('web.plugins.customTasks.dialog.descPlaceholder')}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="task-cwd">
-              {t('web.plugins.customTasks.dialog.cwdLabel')}
-            </Label>
-            <Input
-              id="task-cwd"
-              value={cwd}
-              onChange={(e) => setCwd(e.target.value)}
-              placeholder={t('web.plugins.customTasks.dialog.cwdPlaceholder')}
-              className="font-mono text-[12px]"
-            />
-            <p className="text-[10.5px] text-muted-foreground/80">
-              {t('web.plugins.customTasks.dialog.cwdHint')}
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              disabled={busy}
-            >
-              {t('web.plugins.common.cancel')}
-            </Button>
-            <Button type="submit" variant="accent" size="sm" disabled={busy}>
-              {busy && <Loader2 className="size-3.5 animate-spin" />}
-              {mode === 'create'
-                ? t('web.plugins.common.add')
-                : t('web.plugins.common.save')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
 }
 
 function GitHostsSection() {
