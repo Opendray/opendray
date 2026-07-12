@@ -247,9 +247,14 @@ func syncAgyGlobalMCP(home string, desired map[string]map[string]any) error {
 	configPath := filepath.Join(dir, "mcp_config.json")
 	config := map[string]any{}
 	if data, err := os.ReadFile(configPath); err == nil {
-		if err := json.Unmarshal(data, &config); err != nil {
-			// Never risk rewriting a user-authored file we can't parse.
-			return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", configPath, err)
+		// An empty file (agy's first-run/migration writes one) is not a
+		// parse error — treat it as "no config yet" and let injection
+		// proceed. Only genuinely malformed content is refused.
+		if len(bytes.TrimSpace(data)) > 0 {
+			if err := json.Unmarshal(data, &config); err != nil {
+				// Never risk rewriting a user-authored file we can't parse.
+				return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", configPath, err)
+			}
 		}
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("read agy mcp_config: %w", err)
@@ -352,9 +357,12 @@ func syncGeminiWorkspaceMCP(cwd string, desired map[string]map[string]any) error
 	settingsPath := filepath.Join(dir, "settings.json")
 	settings := map[string]any{}
 	if data, err := os.ReadFile(settingsPath); err == nil {
-		if err := json.Unmarshal(data, &settings); err != nil {
-			// Never risk rewriting a user-authored file we can't parse.
-			return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", settingsPath, err)
+		// An empty settings.json is "no config yet", not a parse error.
+		if len(bytes.TrimSpace(data)) > 0 {
+			if err := json.Unmarshal(data, &settings); err != nil {
+				// Never risk rewriting a user-authored file we can't parse.
+				return fmt.Errorf("parse %s (fix or remove it to enable MCP injection): %w", settingsPath, err)
+			}
 		}
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("read agy settings: %w", err)
