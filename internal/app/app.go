@@ -62,6 +62,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
 	"github.com/opendray/opendray-v2/internal/prwatcher"
+	"github.com/opendray/opendray-v2/internal/roundtable"
 	searchapi "github.com/opendray/opendray-v2/internal/search"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
@@ -1176,6 +1177,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// field would dodge the handler's nil check (typed nil).
 		cortexHandlers.WithQuarantine(memorySvc)
 	}
+	// ─── ROUND TABLE (experimental) ─────────────────────────────
+	// Cross-vendor multi-agent discussion: a deterministic chair drives
+	// claude/codex/antigravity seats through propose→critique→synthesize
+	// and produces a structured Verdict. Self-contained; roll back via
+	// internal/roundtable/ROLLBACK.md (drop tables + delete this block).
+	roundTableStore := roundtable.NewStore(st.Pool())
+	roundTableSvc := roundtable.NewService(roundTableStore, memoryWorkerRegistry, bus, log)
+	if memquerySvc != nil {
+		roundTableSvc.WithContextSource(&curationContextAdapter{mq: memquerySvc})
+	}
+	roundTableHandlers := roundtable.NewHandlers(roundTableStore, roundTableSvc, log)
+	// ─── END ROUND TABLE ────────────────────────────────────────
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -1367,6 +1380,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 					dbtoolHandlers.Mount(r)
 				}
 				cortexHandlers.Mount(r)
+				roundTableHandlers.Mount(r) // ROUND TABLE (experimental)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
