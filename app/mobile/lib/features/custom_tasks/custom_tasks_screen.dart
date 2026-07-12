@@ -37,6 +37,18 @@ class CustomTasksScreen extends ConsumerStatefulWidget {
     );
   }
 
+  /// Opens the task editor in edit mode for [task]. Used from the
+  /// session inspector's Tasks tab so operators can change a command or
+  /// scope without a trip to the global Custom Tasks screen. Returns
+  /// true if the task was saved.
+  static Future<bool?> pushEdit(BuildContext context, CustomTask task) {
+    return Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => _CustomTaskEditorScreen(existing: task),
+      ),
+    );
+  }
+
   @override
   ConsumerState<CustomTasksScreen> createState() =>
       _CustomTasksScreenState();

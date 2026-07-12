@@ -143,6 +143,7 @@ class _TasksTabState extends ConsumerState<TasksTab>
                   name: t.name,
                   runCommand: t.command,
                   detail: t.description.isEmpty ? null : t.description,
+                  custom: t,
                 ),
             ],
           ));
@@ -313,7 +314,7 @@ class _TasksTabState extends ConsumerState<TasksTab>
   }
 
   Future<void> _onTaskTap(_Task task) async {
-    final confirmed = await showModalBottomSheet<bool>(
+    final action = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
@@ -356,15 +357,119 @@ class _TasksTabState extends ConsumerState<TasksTab>
               leading: const Icon(Icons.play_arrow),
               title: Text(t.sessions.inspector.tasks.runCommand),
               subtitle: Text(t.sessions.inspector.tasks.runCommandSubtitle),
-              onTap: () => Navigator.of(sheetCtx).pop(true),
+              onTap: () => Navigator.of(sheetCtx).pop('run'),
             ),
+            // Custom tasks can be edited/deleted in place; discovered
+            // manifest/script tasks are read-only.
+            if (task.custom != null) ...[
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(t.customTasks.popupEdit),
+                onTap: () => Navigator.of(sheetCtx).pop('edit'),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.delete_outline,
+                  color: Theme.of(sheetCtx).colorScheme.error,
+                ),
+                title: Text(t.customTasks.popupDelete),
+                onTap: () => Navigator.of(sheetCtx).pop('delete'),
+              ),
+            ],
             const SizedBox(height: 4),
           ],
         ),
       ),
     );
-    if (confirmed != true || !mounted) return;
-    await _runInNewShell(task);
+    if (action == null || !mounted) return;
+    switch (action) {
+      case 'run':
+        await _runInNewShell(task);
+      case 'edit':
+        await _editCustomTask(task.custom!);
+      case 'delete':
+        await _deleteCustomTask(task.custom!);
+    }
+  }
+
+  // Edit a custom task in place, then reload so the change shows without
+  // a manual refresh.
+  Future<void> _editCustomTask(CustomTask task) async {
+    final saved = await CustomTasksScreen.pushEdit(context, task);
+    if ((saved ?? false) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.customTasks.snackUpdated),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    }
+  }
+
+  // Delete a custom task after a confirm, then reload.
+  Future<void> _deleteCustomTask(CustomTask task) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.customTasks.deleteTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              task.name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              t.customTasks.deleteBody,
+              style: Theme.of(ctx).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(t.common.delete),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(customTasksApiProvider).delete(task.id);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.customTasks.deletedSnack(name: task.name)),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.customTasks.deleteFailedApi(error: e.message))),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(t.customTasks.deleteFailedGeneric(error: e.toString())),
+        ),
+      );
+    }
   }
 
   // Run a task the way the web Task Runner does: spawn a fresh shell
@@ -748,7 +853,12 @@ enum _TaskSource {
 }
 
 class _Task {
-  const _Task({required this.name, required this.runCommand, this.detail});
+  const _Task({
+    required this.name,
+    required this.runCommand,
+    this.detail,
+    this.custom,
+  });
   // The task's identifier as it appears in the source file.
   final String name;
   // The command we'll paste into the terminal to run it.
@@ -756,6 +866,10 @@ class _Task {
   // Optional human-readable detail (the underlying script body, a
   // Taskfile `desc:`, a custom task's description, etc.).
   final String? detail;
+  // The backing custom task, set only for user-defined tasks. Manifest/
+  // script tasks are read-only and leave this null — that's what gates
+  // the inline edit/delete actions in the tap sheet.
+  final CustomTask? custom;
 }
 
 class _TaskGroup {
