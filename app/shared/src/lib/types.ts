@@ -39,6 +39,10 @@ export interface CreateSessionRequest {
   args?: string[]
   claude_account_id?: string
   parent_session_id?: string
+  /** Operator's applied theme. The gateway advertises it to the CLI via
+      COLORFGBG so a TUI can pick a matching light/dark palette. Stamped
+      automatically by createSession(); callers rarely set it. */
+  theme?: 'light' | 'dark'
 }
 
 // ── Claude accounts (OAuth-token-on-disk model, mirrors v1) ─
