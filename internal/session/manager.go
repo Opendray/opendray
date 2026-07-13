@@ -574,6 +574,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		Model:                req.Model,
 		Cwd:                  req.Cwd,
 		Args:                 req.Args,
+		Theme:                req.Theme,
 		State:                StateRunning,
 		ClaudeAccountID:      req.ClaudeAccountID,
 		AntigravityAccountID: req.AntigravityAccountID,
@@ -773,7 +774,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = sess.Cwd
-	cmd.Env = mergeEnv(ensureColorTerm(os.Environ()), extraEnv)
+	cmd.Env = mergeEnv(ensureThemeEnv(ensureColorTerm(os.Environ()), sess.Theme), extraEnv)
 
 	ptmx, err := pty.Start(cmd)
 	if err != nil {
@@ -921,6 +922,37 @@ func ensureColorTerm(env []string) []string {
 		env = append(env, "COLORTERM=truecolor")
 	}
 	return env
+}
+
+// ensureThemeEnv advertises the client terminal's background brightness so
+// a TUI can pick a matching light/dark palette.
+//
+// TUIs auto-detect this two ways: the OSC 11 background query (xterm.js
+// answers that for us already) and the COLORFGBG environment variable.
+// opendray only ever set TERM/COLORTERM, so a CLI that reads the env —
+// grok's `theme = "auto"`, vim, tmux, … — had no way to know the operator
+// was in light mode and fell back to dark. This closes that gap for every
+// provider, not just one.
+//
+// theme is the operator's applied opendray theme ("light"/"dark"); anything
+// else (including empty, e.g. an older client or an API caller that didn't
+// send one) sets nothing and leaves the CLI to its own default. An explicit
+// COLORFGBG already in the environment always wins.
+func ensureThemeEnv(env []string, theme string) []string {
+	if theme != "light" && theme != "dark" {
+		return env
+	}
+	for _, kv := range env {
+		if strings.HasPrefix(kv, "COLORFGBG=") {
+			return env
+		}
+	}
+	// COLORFGBG is "<fg>;<bg>" as colour indices. Readers key off the
+	// trailing background field: 0 reads as a dark background, 15 as light.
+	if theme == "light" {
+		return append(env, "COLORFGBG=0;15")
+	}
+	return append(env, "COLORFGBG=15;0")
 }
 
 func mergeEnv(base []string, overrides map[string]string) []string {

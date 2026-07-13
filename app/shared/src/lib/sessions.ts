@@ -1,4 +1,5 @@
 import { api } from './api'
+import { useTheme } from '@/stores/theme'
 import type { CreateSessionRequest, Session } from './types'
 
 export async function listSessions(): Promise<Session[]> {
@@ -15,7 +16,12 @@ export async function createSession(
 ): Promise<Session> {
   return api<Session>('/api/v1/sessions', {
     method: 'POST',
-    body: req,
+    // Stamp the operator's applied theme so the gateway can advertise the
+    // terminal's background to the CLI (COLORFGBG), letting a TUI pick a
+    // matching light/dark palette instead of always defaulting to dark.
+    // Done here rather than at each call site so every spawn path gets it.
+    // An explicit theme on the request still wins.
+    body: { theme: useTheme.getState().applied(), ...req },
   })
 }
 

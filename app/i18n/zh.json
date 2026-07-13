@@ -1139,6 +1139,7 @@
           "mcp": "mcp"
         },
         "notInstalled": "未安装",
+        "brokenCli": "已安装但无法运行",
         "updateAvailable": "有可用更新 → {version}",
         "upToDate": "已是最新",
         "update": "更新到 {version}",
@@ -3456,7 +3457,8 @@
         "filterHint": "筛选任务…",
         "noMatch": "没有匹配“{query}”的任务",
         "emptyTitle": "此目录没有任务",
-        "emptyHint": "正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本"
+        "emptyHint": "正在查找 package.json、Makefile、Taskfile、justfile、Cargo.toml、go.mod、pyproject.toml 或 shell 脚本",
+        "addCustomTask": "添加自定义任务"
       },
       "notes": {
         "insertedAt": "已插入：@{path}",

@@ -286,10 +286,40 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     const onTouchEnd = () => {
       touchActive = false
     }
+    // Alternate-scroll — what a real terminal does, and what opendray was
+    // missing. In the alternate screen there is no xterm scrollback to
+    // scroll; and when the app has NOT grabbed the mouse it never receives
+    // the wheel either. So the wheel silently did nothing and the
+    // conversation could not be scrolled at all (grok: its TUI ignores the
+    // mouse but honours PageUp/arrows). xterm/iTerm translate wheel notches
+    // into cursor Up/Down keys in exactly this situation — do the same, so
+    // any alt-screen TUI that honours arrows scrolls with the wheel.
+    //
+    // Apps that DO grab the mouse (Claude Code / Codex / Antigravity) are
+    // untouched: they already receive the wheel as SGR events, and the guard
+    // below leaves those alone. The normal (non-alt) buffer is untouched too
+    // — xterm's own scrollback already handles it.
+    const WHEEL_LINES = 3
+    const onWheel = (e: WheelEvent) => {
+      if (term.buffer.active.type !== 'alternate') return
+      if (term.modes.mouseTrackingMode !== 'none') return
+      if (e.deltaY === 0) return
+      e.preventDefault()
+      const seq = (e.deltaY < 0 ? '\x1b[A' : '\x1b[B').repeat(WHEEL_LINES)
+      const enc = new TextEncoder().encode(seq)
+      ws.send(
+        enc.buffer.slice(
+          enc.byteOffset,
+          enc.byteOffset + enc.byteLength,
+        ) as ArrayBuffer,
+      )
+    }
+
     touchHost?.addEventListener('touchstart', onTouchStart, { passive: true })
     touchHost?.addEventListener('touchmove', onTouchMove, { passive: false })
     touchHost?.addEventListener('touchend', onTouchEnd, { passive: true })
     touchHost?.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    touchHost?.addEventListener('wheel', onWheel, { passive: false })
 
     // Coalesce resize bursts into one fit per animation frame. Calling
     // fit() synchronously inside the ResizeObserver callback mutates
@@ -344,6 +374,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       touchHost?.removeEventListener('touchmove', onTouchMove)
       touchHost?.removeEventListener('touchend', onTouchEnd)
       touchHost?.removeEventListener('touchcancel', onTouchEnd)
+      touchHost?.removeEventListener('wheel', onWheel)
       ro.disconnect()
       vv?.removeEventListener('resize', scheduleFit)
       vv?.removeEventListener('scroll', scheduleFit)

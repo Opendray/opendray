@@ -62,13 +62,17 @@ type Session struct {
 	// Model pins the model this session spawns against, applied at
 	// spawn via the provider's model flag. Empty falls back to the
 	// provider config default. See CreateRequest.Model.
-	Model           string   `json:"model,omitempty"`
-	Cwd             string   `json:"cwd"`
-	Args            []string `json:"args"`
-	State           State    `json:"state"`
-	PID             int      `json:"pid,omitempty"`
-	ClaudeAccountID string   `json:"claude_account_id,omitempty"`
-	ClaudeSessionID string   `json:"claude_session_id,omitempty"`
+	Model string   `json:"model,omitempty"`
+	Cwd   string   `json:"cwd"`
+	Args  []string `json:"args"`
+	// Theme is the operator's applied opendray theme ("light"/"dark") at
+	// spawn time. Advertised to the CLI via COLORFGBG so a TUI can pick a
+	// matching palette. Empty = unknown; the CLI keeps its own default.
+	Theme           string `json:"theme,omitempty"`
+	State           State  `json:"state"`
+	PID             int    `json:"pid,omitempty"`
+	ClaudeAccountID string `json:"claude_account_id,omitempty"`
+	ClaudeSessionID string `json:"claude_session_id,omitempty"`
 	// AntigravityAccountID is the agyacct account this session is pinned
 	// to (provider "antigravity"). Empty means the CLI's default HOME
 	// (~/.gemini). Mirrors ClaudeAccountID for the agy provider, whose
@@ -118,6 +122,10 @@ type CreateRequest struct {
 	ParentSessionID      string   `json:"parent_session_id,omitempty"`
 	Cwd                  string   `json:"cwd"`
 	Args                 []string `json:"args"`
+	// Theme is the client's applied theme ("light"/"dark"). Optional: an
+	// older client or an API caller may omit it, in which case opendray
+	// advertises nothing and the CLI keeps its own default.
+	Theme string `json:"theme,omitempty"`
 
 	// origin/integrationID are unexported on purpose: they are derived
 	// from the authenticated principal by the HTTP handler (SetOrigin)
@@ -139,6 +147,9 @@ func (r CreateRequest) Validate() error {
 	}
 	if r.Cwd == "" {
 		return errors.New("cwd is required")
+	}
+	if r.Theme != "" && r.Theme != "light" && r.Theme != "dark" {
+		return errors.New(`theme must be "light" or "dark"`)
 	}
 	return nil
 }

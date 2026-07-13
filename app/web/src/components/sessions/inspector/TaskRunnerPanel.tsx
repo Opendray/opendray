@@ -12,19 +12,25 @@ import {
   Box,
   Coffee,
   Terminal,
+  Pencil,
+  Trash2,
 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { useQueryClient } from '@tanstack/react-query'
 
 import { listDir, readFile } from '@/lib/fs'
-import { listCustomTasks } from '@/lib/customTasks'
+import {
+  listCustomTasks,
+  deleteCustomTask,
+  type CustomTask,
+} from '@/lib/customTasks'
 import { createSession } from '@/lib/sessions'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
 import { Input } from '@/components/ui/input'
+import { CustomTaskDialog } from '@/components/tasks/CustomTaskDialog'
 import { useSessionTabs } from '@/stores/sessionTabs'
 
 interface TaskRunnerPanelProps {
@@ -37,6 +43,12 @@ interface DiscoveredTask {
   /** Origin manifest, e.g. "package.json" / "Custom" */
   source: string
   description?: string
+  /**
+   * The backing custom task, present only for user-defined tasks (the
+   * "Custom" group). Manifest/script tasks are read-only and leave this
+   * undefined — that's what gates the inline edit/delete affordances.
+   */
+  custom?: CustomTask
 }
 
 interface TaskGroup {
@@ -272,6 +284,12 @@ function iconFor(source: string): typeof FileCode {
 
 export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
   const [filter, setFilter] = useState('')
+  // Create a custom task inline, pre-scoped to this session's project,
+  // instead of bouncing to the Plugins page to type the cwd by hand.
+  const [creatingTask, setCreatingTask] = useState(false)
+  // Edit a custom task inline (same reason — no trip to the Plugins page
+  // just to change a command). null = dialog closed.
+  const [editingTask, setEditingTask] = useState<CustomTask | null>(null)
 
   const dirEntries = useCwdEntries(session.cwd)
   const presentSet = useMemo(() => {
@@ -429,6 +447,7 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
       command: t.command,
       source: t.cwd ? 'Custom · scoped' : 'Custom · global',
       description: t.description || undefined,
+      custom: t,
     }))
     return [{ source: 'Custom', icon: sourceIcon['Custom'], tasks: mapped }]
   }, [customQ.data])
@@ -497,6 +516,17 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
       toast.error('Run failed', { description: err.message }),
   })
 
+  const remove = useMutation({
+    mutationFn: deleteCustomTask,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['custom-tasks', session.cwd] })
+      qc.invalidateQueries({ queryKey: ['custom-tasks-all'] })
+      toast.success('Task removed')
+    },
+    onError: (err: Error) =>
+      toast.error('Delete failed', { description: err.message }),
+  })
+
   const isLoading = dirEntries.isLoading || (presentSet.size > 0 && manifests.isLoading)
   if (isLoading) {
     return (
@@ -519,12 +549,19 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
             <code>pyproject.toml</code> in the cwd, or define one below.
           </div>
         </div>
-        <Link
-          to="/plugins"
+        <button
+          type="button"
+          onClick={() => setCreatingTask(true)}
           className="text-[11px] text-state-running hover:underline self-center"
         >
           Add a custom task →
-        </Link>
+        </button>
+        <CustomTaskDialog
+          open={creatingTask}
+          onOpenChange={setCreatingTask}
+          mode="create"
+          initialCwd={session.cwd}
+        />
       </div>
     )
   }
@@ -570,33 +607,64 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
             </div>
             <div className="flex flex-col">
               {g.tasks.map((t) => (
-                <button
+                <div
                   key={`${g.source}/${t.name}`}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => runner_.mutate(t)}
                   className={cn(
-                    'group flex items-start gap-2 px-2 py-1.5 rounded-md text-left',
+                    'group flex items-stretch rounded-md',
                     'hover:bg-card border border-transparent hover:border-border/60',
-                    'disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-transparent',
                   )}
-                  title={t.description || t.command}
                 >
-                  <Play className="size-3 mt-0.5 text-muted-foreground/60 shrink-0 group-hover:text-foreground" />
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="text-[12px] font-medium truncate">
-                      {t.name}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground/70 font-mono truncate">
-                      $ {t.command}
-                    </span>
-                    {t.description && (
-                      <span className="text-[10px] text-muted-foreground/60 truncate italic">
-                        {t.description}
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => runner_.mutate(t)}
+                    className="flex items-start gap-2 px-2 py-1.5 text-left flex-1 min-w-0 disabled:opacity-50"
+                    title={t.description || t.command}
+                  >
+                    <Play className="size-3 mt-0.5 text-muted-foreground/60 shrink-0 group-hover:text-foreground" />
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[12px] font-medium truncate">
+                        {t.name}
                       </span>
-                    )}
-                  </div>
-                </button>
+                      <span className="text-[10px] text-muted-foreground/70 font-mono truncate">
+                        $ {t.command}
+                      </span>
+                      {t.description && (
+                        <span className="text-[10px] text-muted-foreground/60 truncate italic">
+                          {t.description}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  {/* Custom tasks get inline edit/delete; discovered
+                      manifest/script tasks are read-only. */}
+                  {t.custom && (
+                    <div className="flex items-center gap-0.5 pr-1 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => setEditingTask(t.custom!)}
+                        className="p-1 rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted"
+                        title="Edit task"
+                      >
+                        <Pencil className="size-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const task = t.custom!
+                          if (
+                            confirm(`Delete custom task "${task.name}"?`)
+                          )
+                            remove.mutate(task.id)
+                        }}
+                        className="p-1 rounded text-muted-foreground/70 hover:text-destructive hover:bg-muted"
+                        title="Delete task"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </section>
@@ -604,13 +672,27 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
       })}
 
       <div className="pt-1">
-        <Link
-          to="/plugins"
+        <button
+          type="button"
+          onClick={() => setCreatingTask(true)}
           className="text-[11px] text-muted-foreground/70 hover:text-foreground hover:underline"
         >
           + Add custom task
-        </Link>
+        </button>
       </div>
+
+      <CustomTaskDialog
+        open={creatingTask}
+        onOpenChange={setCreatingTask}
+        mode="create"
+        initialCwd={session.cwd}
+      />
+      <CustomTaskDialog
+        open={editingTask != null}
+        onOpenChange={(v) => !v && setEditingTask(null)}
+        mode="edit"
+        task={editingTask ?? undefined}
+      />
     </div>
   )
 }

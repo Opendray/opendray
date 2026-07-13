@@ -34,3 +34,38 @@ func TestEnsureColorTerm(t *testing.T) {
 		}
 	})
 }
+
+// A TUI picks a light or dark palette by asking the terminal. Two routes
+// exist: the OSC 11 background query (xterm.js answers that already) and
+// the COLORFGBG environment variable. opendray never set COLORFGBG, so a
+// CLI that only reads the env (grok's `theme = "auto"`, vim, tmux, …) had
+// no way to know the operator was in light mode and defaulted to dark.
+func TestEnsureThemeEnv(t *testing.T) {
+	base := []string{"PATH=/bin"}
+
+	// COLORFGBG is "<fg>;<bg>" as colour indices; readers key off the
+	// trailing background field (0 = dark, 15 = light).
+	dark := ensureThemeEnv(base, "dark")
+	if !slices.Contains(dark, "COLORFGBG=15;0") {
+		t.Fatalf("dark theme should advertise a dark background, got %v", dark)
+	}
+
+	light := ensureThemeEnv(base, "light")
+	if !slices.Contains(light, "COLORFGBG=0;15") {
+		t.Fatalf("light theme should advertise a light background, got %v", light)
+	}
+
+	// Unknown/empty theme: say nothing, leave the CLI to its own default.
+	for _, theme := range []string{"", "solarized"} {
+		got := ensureThemeEnv(base, theme)
+		if len(got) != len(base) {
+			t.Fatalf("theme %q should not set COLORFGBG, got %v", theme, got)
+		}
+	}
+
+	// An explicit COLORFGBG already in the environment wins.
+	pinned := ensureThemeEnv([]string{"COLORFGBG=7;0"}, "light")
+	if slices.Contains(pinned, "COLORFGBG=0;15") {
+		t.Fatalf("an explicit COLORFGBG must not be overridden, got %v", pinned)
+	}
+}

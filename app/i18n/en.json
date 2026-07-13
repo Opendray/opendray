@@ -1139,6 +1139,7 @@
           "mcp": "mcp"
         },
         "notInstalled": "not installed",
+        "brokenCli": "Installed but not runnable",
         "updateAvailable": "update available → {version}",
         "upToDate": "up to date",
         "update": "Update to {version}",
@@ -3456,7 +3457,8 @@
         "filterHint": "Filter tasks…",
         "noMatch": "No tasks match \"{query}\"",
         "emptyTitle": "No tasks in this folder",
-        "emptyHint": "Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts"
+        "emptyHint": "Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts",
+        "addCustomTask": "Add custom task"
       },
       "notes": {
         "insertedAt": "Inserted: @{path}",
