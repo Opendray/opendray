@@ -12589,6 +12589,9 @@ class TranslationsSessionsInspectorTasksEn {
 
 	/// en: 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts'
 	String get emptyHint => 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts';
+
+	/// en: 'Add custom task'
+	String get addCustomTask => 'Add custom task';
 }
 
 // Path: sessions.inspector.notes
@@ -19978,6 +19981,7 @@ extension on Translations {
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'No tasks match "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No tasks in this folder',
 			'sessions.inspector.tasks.emptyHint' => 'Looking for package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml, or shell scripts',
+			'sessions.inspector.tasks.addCustomTask' => 'Add custom task',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Inserted: @${path}',
 			'sessions.inspector.notes.myNotes' => 'My notes',
 			'sessions.inspector.notes.projectDocs' => 'Project docs',
@@ -20370,9 +20374,9 @@ extension on Translations {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
 			'project.conflicts.deleteLoading' => 'Loading fact text…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Delete ${side}',
-			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
 			_ => null,
 		} ?? switch (path) {
+			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
 			'project.conflicts.openPlanEditor' => 'Open plan editor',
 			'project.conflicts.openGoalEditor' => 'Open goal editor',
 			'project.conflicts.severity.low' => 'low',
@@ -20884,9 +20888,9 @@ extension on Translations {
 			'customTasks.fieldCommand' => 'Command',
 			'customTasks.commandHelper' => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
 			'customTasks.fieldDescription' => 'Description (optional)',
-			'customTasks.fieldScope' => 'Scope',
 			_ => null,
 		} ?? switch (path) {
+			'customTasks.fieldScope' => 'Scope',
 			'customTasks.globalScopeHint' => 'Visible from every session, regardless of cwd.',
 			'customTasks.projectScopeHint' => 'Visible only when a session\'s cwd matches the path below.',
 			'customTasks.fieldProjectCwd' => 'Project cwd',

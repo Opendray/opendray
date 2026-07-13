@@ -6486,6 +6486,7 @@ class _TranslationsSessionsInspectorTasksEs extends TranslationsSessionsInspecto
 	@override String noMatch({required Object query}) => 'Ninguna tarea coincide con "${query}"';
 	@override String get emptyTitle => 'No hay tareas en esta carpeta';
 	@override String get emptyHint => 'Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell';
+	@override String get addCustomTask => 'Añadir tarea personalizada';
 }
 
 // Path: sessions.inspector.notes
@@ -11879,6 +11880,7 @@ extension on TranslationsEs {
 			'sessions.inspector.tasks.noMatch' => ({required Object query}) => 'Ninguna tarea coincide con "${query}"',
 			'sessions.inspector.tasks.emptyTitle' => 'No hay tareas en esta carpeta',
 			'sessions.inspector.tasks.emptyHint' => 'Buscando package.json, Makefile, Taskfile, justfile, Cargo.toml, go.mod, pyproject.toml o scripts de shell',
+			'sessions.inspector.tasks.addCustomTask' => 'Añadir tarea personalizada',
 			'sessions.inspector.notes.insertedAt' => ({required Object path}) => 'Insertado: @${path}',
 			'sessions.inspector.notes.myNotes' => 'Mis notas',
 			'sessions.inspector.notes.projectDocs' => 'Documentos del proyecto',
@@ -12271,9 +12273,9 @@ extension on TranslationsEs {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'project.conflicts.deleteLoading' => 'Cargando el texto del hecho…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Eliminar ${side}',
-			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
 			_ => null,
 		} ?? switch (path) {
+			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
 			'project.conflicts.openPlanEditor' => 'Abrir el editor del plan',
 			'project.conflicts.openGoalEditor' => 'Abrir el editor del objetivo',
 			'project.conflicts.severity.low' => 'baja',
@@ -12785,9 +12787,9 @@ extension on TranslationsEs {
 			'customTasks.fieldCommand' => 'Comando',
 			'customTasks.commandHelper' => 'El texto que se inserta en la session al elegirlo. Puede ser un comando de CLI o un slash command de Claude.',
 			'customTasks.fieldDescription' => 'Descripción (opcional)',
-			'customTasks.fieldScope' => 'Ámbito',
 			_ => null,
 		} ?? switch (path) {
+			'customTasks.fieldScope' => 'Ámbito',
 			'customTasks.globalScopeHint' => 'Visible desde cualquier session, sin importar el cwd.',
 			'customTasks.projectScopeHint' => 'Visible solo cuando el cwd de una session coincide con la ruta de abajo.',
 			'customTasks.fieldProjectCwd' => 'cwd del proyecto',
