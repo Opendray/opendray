@@ -28,11 +28,11 @@ type RuntimeInfo struct {
 	// "Missing optional dependency @openai/codex-linux-x64" on every launch).
 	// Surfaced so the operator sees "installed but broken" instead of a
 	// blank version that reads as fine.
-	VersionError string `json:"versionError,omitempty"`
-	Path         string `json:"path,omitempty"`
-	LatestVersion    string `json:"latestVersion,omitempty"`
-	UpdateAvailable  bool   `json:"updateAvailable"`
-	CheckedAt        string `json:"checkedAt,omitempty"` // RFC3339; when LatestVersion was fetched
+	VersionError    string `json:"versionError,omitempty"`
+	Path            string `json:"path,omitempty"`
+	LatestVersion   string `json:"latestVersion,omitempty"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+	CheckedAt       string `json:"checkedAt,omitempty"` // RFC3339; when LatestVersion was fetched
 	// ActiveSessions is the number of non-terminal sessions currently
 	// using this provider's CLI. Populated by the handler from the
 	// session manager (0 when the counter isn't wired). Surfaced so the
