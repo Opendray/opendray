@@ -10,6 +10,20 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.11.6] — 2026-07-13
+
+### Fixed
+
+- **The download icon is reachable again in a deep or long file tree.** The
+  session inspector's Files tree renders inside a scroll area whose inner
+  wrapper sizes to its content, so long filenames and deep nesting pushed
+  rows wider than the panel: names were hard-cut with no ellipsis, and the
+  hover-download icon — anchored to each row's right edge — sat beyond the
+  visible edge, so hovering a file appeared to do nothing. The tree is now
+  constrained to the panel width, so names truncate with an ellipsis and the
+  download icon sits at the visible right edge. The Database tab is
+  unaffected (its grid scrolls in its own containers). (#443)
+
 ## [v2.11.5] — 2026-07-13
 
 ### Added
