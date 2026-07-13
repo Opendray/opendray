@@ -22,7 +22,14 @@ import (
 type RuntimeInfo struct {
 	Installed        bool   `json:"installed"`
 	InstalledVersion string `json:"installedVersion,omitempty"`
-	Path             string `json:"path,omitempty"`
+	// VersionError is set when the executable is on PATH but `--version`
+	// failed — i.e. installed, but not runnable. A broken npm install whose
+	// platform binary never landed looks exactly like this (codex threw
+	// "Missing optional dependency @openai/codex-linux-x64" on every launch).
+	// Surfaced so the operator sees "installed but broken" instead of a
+	// blank version that reads as fine.
+	VersionError string `json:"versionError,omitempty"`
+	Path         string `json:"path,omitempty"`
 	LatestVersion    string `json:"latestVersion,omitempty"`
 	UpdateAvailable  bool   `json:"updateAvailable"`
 	CheckedAt        string `json:"checkedAt,omitempty"` // RFC3339; when LatestVersion was fetched
@@ -113,6 +120,10 @@ func (p *Prober) Installed(ctx context.Context, m Manifest) RuntimeInfo {
 		info.Path = path
 		if v, err := p.runVer(ctx, m.Executable); err == nil {
 			info.InstalledVersion = v
+		} else {
+			// On PATH but won't run. Record why, so the UI can say
+			// "broken" rather than showing an empty version.
+			info.VersionError = err.Error()
 		}
 	}
 
@@ -188,7 +199,17 @@ func (p *Prober) Update(ctx context.Context, m Manifest) (UpdateResult, error) {
 		return UpdateResult{Package: m.NpmPackage, BeforeVersion: before}, ErrUpdatePrefixReadonly
 	}
 
-	out, err := p.npmInstall(ctx, m.NpmPackage)
+	// Detach the install from the caller's cancellation. `ctx` here is the
+	// HTTP request's: when the client disconnects (browser closed, navigated
+	// away, proxy timeout) it is cancelled, and exec.CommandContext would
+	// then SIGKILL npm *mid-install*. A half-killed `npm install -g` leaves
+	// a partial global tree behind — a stale `.<pkg>-XXXXXX` temp dir — after
+	// which EVERY later install fails with ENOTEMPTY, permanently wedging
+	// updates for that CLI (this is exactly how a codex update stayed broken
+	// for a week). npmInstall still applies its own timeout.
+	installCtx := context.WithoutCancel(ctx)
+
+	out, err := p.npmInstall(installCtx, m.NpmPackage)
 
 	// The install may have changed what's on disk even on partial
 	// failure, so always drop the cached install state.
@@ -200,7 +221,9 @@ func (p *Prober) Update(ctx context.Context, m Manifest) (UpdateResult, error) {
 	if err != nil {
 		return res, fmt.Errorf("npm install -g %s: %w", m.NpmPackage, err)
 	}
-	res.AfterVersion = p.Installed(ctx, m).InstalledVersion
+	// Re-probe on the detached ctx too, so we still report a real
+	// AfterVersion when the client has already gone away.
+	res.AfterVersion = p.Installed(installCtx, m).InstalledVersion
 	res.Changed = res.AfterVersion != before
 	return res, nil
 }
@@ -255,6 +278,27 @@ func semverLess(a, b string) bool {
 
 // ── default probes (shell out) ───────────────────────────────────────
 
+// versionErrDetail picks the actionable line out of a failed `--version`
+// run. Broken CLIs commonly dump a stack trace whose first line is a file
+// path; the line that matters is the one starting with "Error". Falls back
+// to the first non-empty line.
+func versionErrDetail(stderr string) string {
+	var first string
+	for _, ln := range strings.Split(stderr, "\n") {
+		ln = strings.TrimSpace(ln)
+		if ln == "" {
+			continue
+		}
+		if strings.HasPrefix(ln, "Error") {
+			return ln
+		}
+		if first == "" {
+			first = ln
+		}
+	}
+	return first
+}
+
 func defaultCliVersion(ctx context.Context, bin string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
@@ -262,6 +306,16 @@ func defaultCliVersion(ctx context.Context, bin string) (string, error) {
 	cmd.Env = append(os.Environ(), "NO_COLOR=1")
 	out, err := cmd.Output()
 	if err != nil {
+		// cmd.Output() captures stderr into ExitError.Stderr. A CLI that is
+		// installed but broken prints the actionable reason there (codex:
+		// "Error: Missing optional dependency @openai/codex-linux-x64").
+		// Carry it up instead of a bare "exit status 1".
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			if detail := versionErrDetail(string(ee.Stderr)); detail != "" {
+				return "", fmt.Errorf("%w: %s", err, detail)
+			}
+		}
 		return "", err
 	}
 	sc := bufio.NewScanner(strings.NewReader(string(out)))

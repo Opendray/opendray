@@ -184,6 +184,11 @@ export interface ProviderManifest {
 export interface ProviderRuntime {
   installed: boolean
   installedVersion?: string
+  // Set when the binary is on PATH but `--version` failed — installed, but
+  // not runnable (e.g. a broken npm install missing its platform binary).
+  // When set, never fall back to the manifest version: that would render a
+  // broken CLI as healthy.
+  versionError?: string
   path?: string
   latestVersion?: string
   updateAvailable: boolean

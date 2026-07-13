@@ -23,6 +23,7 @@ import {
   checkProviderUpdate,
   updateProvider,
 } from '@/lib/catalog'
+import type { APIError } from '@/lib/api'
 import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -218,10 +219,22 @@ function ProviderDetail({
       qc.invalidateQueries({ queryKey: ['providers'] })
       qc.invalidateQueries({ queryKey: ['provider-update', m.id] })
     },
-    onError: (e: Error) =>
+    onError: (e: Error) => {
+      // The 502 body carries npm's own output (result.output) — that's where
+      // the actionable line lives ("npm error ENOTEMPTY: directory not empty
+      // …"). e.message alone is just "npm install -g <pkg>: exit status 217",
+      // which tells the operator nothing about what to do.
+      const body = (e as APIError).body as
+        | { result?: { output?: string } }
+        | undefined
+      const npmErr = body?.result?.output
+        ?.split('\n')
+        .map((l) => l.trim())
+        .find((l) => l.toLowerCase().includes('error') && l.length > 12)
       toast.error(t('web.providers.detail.updateFailedToast'), {
-        description: e.message,
-      }),
+        description: npmErr ? `${e.message} — ${npmErr}` : e.message,
+      })
+    },
   })
   const caps: { key: keyof typeof m.capabilities; labelKey: string }[] = [
     { key: 'supportsResume', labelKey: 'web.providers.detail.caps.resume' },
@@ -253,6 +266,19 @@ function ProviderDetail({
                 className="font-mono normal-case text-muted-foreground"
               >
                 {t('web.providers.detail.notInstalled')}
+              </Badge>
+            ) : rt?.versionError ? (
+              // On PATH but won't run — e.g. a broken npm install whose
+              // platform binary never landed. Deliberately NOT falling back
+              // to the manifest version here: that renders a CLI that can't
+              // even launch as perfectly healthy. Hover for the CLI's own
+              // reason.
+              <Badge
+                variant="danger"
+                className="font-mono normal-case"
+                title={rt.versionError}
+              >
+                {t('web.providers.detail.brokenCli')}
               </Badge>
             ) : (
               <Badge variant="outline" className="font-mono normal-case">
