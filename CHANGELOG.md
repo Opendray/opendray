@@ -10,6 +10,48 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.11.5] — 2026-07-13
+
+### Added
+
+- **TUIs follow the opendray theme.** A terminal UI picks a light/dark
+  palette by asking the terminal — via the OSC 11 background query (which
+  xterm.js already answered) or the `COLORFGBG` environment variable, which
+  opendray never set. So a CLI that reads the environment (Grok's
+  `theme = "auto"`, vim, tmux, …) had no way to know the operator was in
+  light mode and always defaulted to dark. opendray now stamps the client's
+  applied theme on session create and advertises it at spawn via
+  `COLORFGBG`. Optional and backward-compatible: no theme advertises
+  nothing and the CLI keeps its own default, and an explicit `COLORFGBG`
+  already in the environment still wins. (#446)
+- **The mouse wheel scrolls full-screen TUIs.** In the alternate screen
+  there is no xterm scrollback, and a CLI that hasn't grabbed the mouse
+  never receives wheel events either — so the wheel silently did nothing
+  and a Grok conversation couldn't be scrolled at all. opendray now does
+  what a real terminal does (alternate-scroll): wheel notches become cursor
+  Up/Down keys when the app is in the alternate screen and hasn't grabbed
+  the mouse. CLIs that do grab the mouse (Claude Code, Codex, Antigravity)
+  are unaffected — they already receive the wheel as SGR events. (#446)
+- **Custom tasks are pre-scoped to the current project.** (#442)
+
+### Fixed
+
+- **A disconnected browser no longer wedges CLI updates.** Provider updates
+  ran `npm install -g` on the HTTP *request* context, so a client
+  disconnect (browser closed, proxy timeout) cancelled it and SIGKILLed npm
+  mid-install. A half-killed npm leaves a partial global tree behind — a
+  stale `.<pkg>-XXXXXX` temp dir — after which *every* later install fails
+  with `ENOTEMPTY`, permanently wedging updates for that CLI (a codex update
+  stayed broken for a week this way, and left a CLI whose platform binary
+  never landed, so its sessions failed too). The install is now detached
+  from the caller's cancellation. (#445)
+- **A broken CLI is now visible instead of looking healthy.** When a
+  provider's binary is on `PATH` but won't run, opendray used to fall back
+  to showing the manifest version — rendering a CLI that can't even launch
+  as perfectly fine. It now reports "Installed but not runnable" with the
+  CLI's own error, and a failed update surfaces npm's actual message
+  (`ENOTEMPTY: …`) rather than a bare `exit status 217`. (#445)
+
 ## [v2.11.4] — 2026-07-12
 
 ### Added
