@@ -235,8 +235,7 @@
           "history": "History",
           "vault": "Vault",
           "cortex": "Cortex",
-          "database": "Database",
-          "checkpoints": "Checkpoints"
+          "database": "Database"
         },
         "vaultPanel": {
           "open": "Open Vault",
@@ -274,32 +273,6 @@
           "plan": "Plan",
           "latestJournal": "Latest journal",
           "empty": "No Cortex memory captured yet for this project. Spawn a session or set a goal to populate."
-        },
-        "checkpoints": {
-          "loading": "Loading…",
-          "blurb": "Snapshot this session's uncommitted diff, untracked files and input history — restore it later.",
-          "capture": "Capture",
-          "captured": "Checkpoint captured",
-          "capturedGit": "diff {diff}B · {files} untracked files",
-          "capturedNonGit": "Metadata only (not a git repo)",
-          "empty": "No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.",
-          "trigger": {
-            "manual": "Manual",
-            "interrupted": "Interrupted"
-          },
-          "truncated": "Truncated",
-          "truncatedHint": "A size/count cap clipped this capture; it is partial.",
-          "nonGit": "Not a git repository",
-          "hideDiff": "Hide diff",
-          "viewDiff": "View diff",
-          "restore": "Restore",
-          "restoreWarn": "Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.",
-          "restoreConfirm": "Confirm restore",
-          "restored": "Checkpoint restored",
-          "restoredDetail": "diff applied: {diff} · {files} files restored · {skipped} skipped",
-          "deleteConfirm": "Delete this checkpoint?",
-          "clean": "clean — no changes captured",
-          "capturedClean": "Working tree was clean — no changes to back up"
         }
       },
       "ended": {
@@ -3432,8 +3405,7 @@
           "history": "History",
           "vault": "Vault",
           "cortex": "Cortex",
-          "database": "Database",
-          "checkpoints": "Checkpoints"
+          "database": "Database"
         }
       },
       "cortex": {
@@ -3527,29 +3499,6 @@
         "noProjectMapping2": "(no project mapping)",
         "clearOverride": "Clear override",
         "save": "Save"
-      },
-      "checkpoints": {
-        "blurb": "Snapshot this session's uncommitted diff, untracked files and input history.",
-        "capture": "Capture",
-        "capturedGit": "diff {diff}B · {files} untracked files",
-        "capturedNonGit": "Metadata only (not a git repo)",
-        "empty": "No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.",
-        "triggerManual": "Manual",
-        "triggerInterrupted": "Interrupted",
-        "truncatedHint": "A size/count cap clipped this capture; it is partial.",
-        "nonGit": "Not a git repository",
-        "viewDiff": "View diff",
-        "hideDiff": "Hide diff",
-        "restore": "Restore",
-        "restoreTitle": "Restore checkpoint?",
-        "restoreWarn": "Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.",
-        "restoreConfirm": "Restore",
-        "restored": "Restored · {files} files, {skipped} skipped",
-        "delete": "Delete",
-        "deleteTitle": "Delete checkpoint?",
-        "deleteConfirm": "This removes the checkpoint and its stored payload.",
-        "clean": "clean — no changes",
-        "capturedClean": "Working tree was clean — nothing to back up"
       }
     },
     "spawnSheet": {

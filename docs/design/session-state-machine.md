@@ -1,20 +1,26 @@
 # Session State Machine Hardening
 
-Status: **Priority ② — context checkpoint capture + restore landed (SSOT wired; concurrency-safe resume; interrupt cause persisted)**
+Status: **Phase 2 — SSOT wired; concurrency-safe resume + interrupt cause persisted**
 Owner: opendray gateway
 Last updated: 2026-07-14
 
 This is the load-bearing first step of the "harden the foundation before
-orchestration" plan. Context-level backup/restore, the audit/cost panel,
-and any future multi-model orchestration all depend on a **trustworthy**
-session state, so the state machine is hardened first.
+orchestration" plan, and — after evaluation — the part that was kept.
 
-Priority order for the whole plan (orchestration is explicitly deferred):
+Priority order as originally discussed, with outcomes:
 
-1. **Session state-machine hardening** ← this document
-2. Context-level backup / restore (cwd snapshot + uncommitted diff + input history)
-3. Audit panel (cost / quota stats + multimodal Artifacts tracking)
-4. _(parked)_ Multi-model orchestration (fan-out one task to N models, merge)
+1. **Session state-machine hardening** ← this document. **DONE & kept.**
+2. ~~Context-level backup / restore (cwd snapshot + uncommitted diff + input
+   history)~~ — **built then removed.** For a commit-everything-via-PR git
+   workflow the working tree is almost always clean, so a checkpoint had
+   nothing to snapshot; and the important "context survives a restart"
+   property is already delivered here by auto-resume (`--resume`), not by a
+   file checkpoint. Reverted (see 0079 drop migration).
+3. ~~Audit panel (cost / quota stats + multimodal Artifacts tracking)~~ —
+   **dropped.** Sessions don't drop except on a deliberate restart (already
+   covered), and subscription cloud agents have no per-call cost to meter;
+   the scoped API-call audit already exists (web Activity page).
+4. _(parked)_ Multi-model orchestration (fan-out one task to N models, merge).
 
 ---
 
@@ -214,11 +220,9 @@ likely to corrupt state under failure:
   compressed on resume to cut token cost; that is in tension with the
   "full-context replay" goal. Reconcile the two — likely full **terminal**
   replay (ring buffer) but pruned **model-context** replay.
-- **Checkpoint definition** for `crashed` rollback: what exactly is a
-  checkpoint, when is it taken, where stored.
-- **Backup scope** (Phase 2): cwd key-file snapshot + uncommitted diff +
-  input history — depends on this state machine being solid first.
-- **Audit multimodal / Artifacts diff tracking**: Phase 3 vs. later.
+- ~~**Backup scope / checkpoint format**~~ and ~~**audit / Artifacts
+  tracking**~~ — resolved: both were evaluated and are out of scope for this
+  deployment (see the outcomes in the priority list above).
 
 ---
 
@@ -242,19 +246,9 @@ a time without a big-bang rewrite:
    (`gateway_shutdown` / `gateway_crash`) for audit (migration 0077).
    Replaces the old plan item "reconcile PID-liveness probing → adopt",
    which §2 showed is infeasible for PTY-backed children.
-5. ✅ **Done (priority ②, PR #452)** — context checkpoint **capture**:
-   git-aware (`git diff HEAD` + untracked-not-ignored files + input history),
-   `.gitignore`-respecting, bounded caps, filesystem + DB-metadata split
-   (migration 0078), captured on graceful shutdown and via a manual API.
-   Lives in `internal/checkpoint`.
-6. ✅ **Done (priority ②)** — checkpoint **restore** (strict, dry-run-first):
-   `applyCheckpoint` re-applies a checkpoint onto its cwd only when HEAD
-   matches and there are no uncommitted tracked changes, `git apply --check`
-   passes, and untracked files are restored without overwriting
-   (`POST /checkpoints/{cid}/restore`, 409 on any guard). Plus retention
-   (`RetainPerSession`) reaping old checkpoints after each capture.
-7. ⬜ **Next** — the audit/cost panel that surfaces `interrupt_reason` +
-   checkpoints, and the web/mobile UI. Orchestration remains parked.
+5. ⬜ **Out of scope** — context backup/checkpoint and the audit/cost panel
+   were both evaluated and removed/dropped (see the priority list at the top).
+   Orchestration remains parked.
 
-Each step is guarded by the matrix + reservation + capture/restore tests, so
-behaviour cannot silently drift.
+Each step is guarded by the matrix + reservation tests, so behaviour cannot
+silently drift.

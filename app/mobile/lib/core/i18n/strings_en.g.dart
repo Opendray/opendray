@@ -3815,7 +3815,6 @@ class TranslationsSessionsInspectorEn {
 	late final TranslationsSessionsInspectorGitEn git = TranslationsSessionsInspectorGitEn.internal(_root);
 	late final TranslationsSessionsInspectorTasksEn tasks = TranslationsSessionsInspectorTasksEn.internal(_root);
 	late final TranslationsSessionsInspectorNotesEn notes = TranslationsSessionsInspectorNotesEn.internal(_root);
-	late final TranslationsSessionsInspectorCheckpointsEn checkpoints = TranslationsSessionsInspectorCheckpointsEn.internal(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -6503,7 +6502,6 @@ class TranslationsWebSessionsInspectorEn {
 	late final TranslationsWebSessionsInspectorTabsEn tabs = TranslationsWebSessionsInspectorTabsEn.internal(_root);
 	late final TranslationsWebSessionsInspectorVaultPanelEn vaultPanel = TranslationsWebSessionsInspectorVaultPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCortexPanelEn cortexPanel = TranslationsWebSessionsInspectorCortexPanelEn.internal(_root);
-	late final TranslationsWebSessionsInspectorCheckpointsEn checkpoints = TranslationsWebSessionsInspectorCheckpointsEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -8143,9 +8141,6 @@ class TranslationsWebProvidersDetailEn {
 
 	/// en: 'not installed'
 	String get notInstalled => 'not installed';
-
-	/// en: 'Installed but not runnable'
-	String get brokenCli => 'Installed but not runnable';
 
 	/// en: 'update available → {version}'
 	String updateAvailable({required Object version}) => 'update available → ${version}';
@@ -12722,78 +12717,6 @@ class TranslationsSessionsInspectorNotesEn {
 	String get save => 'Save';
 }
 
-// Path: sessions.inspector.checkpoints
-class TranslationsSessionsInspectorCheckpointsEn {
-	TranslationsSessionsInspectorCheckpointsEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Snapshot this session's uncommitted diff, untracked files and input history.'
-	String get blurb => 'Snapshot this session\'s uncommitted diff, untracked files and input history.';
-
-	/// en: 'Capture'
-	String get capture => 'Capture';
-
-	/// en: 'diff {diff}B · {files} untracked files'
-	String capturedGit({required Object diff, required Object files}) => 'diff ${diff}B · ${files} untracked files';
-
-	/// en: 'Metadata only (not a git repo)'
-	String get capturedNonGit => 'Metadata only (not a git repo)';
-
-	/// en: 'No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.'
-	String get empty => 'No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.';
-
-	/// en: 'Manual'
-	String get triggerManual => 'Manual';
-
-	/// en: 'Interrupted'
-	String get triggerInterrupted => 'Interrupted';
-
-	/// en: 'A size/count cap clipped this capture; it is partial.'
-	String get truncatedHint => 'A size/count cap clipped this capture; it is partial.';
-
-	/// en: 'Not a git repository'
-	String get nonGit => 'Not a git repository';
-
-	/// en: 'View diff'
-	String get viewDiff => 'View diff';
-
-	/// en: 'Hide diff'
-	String get hideDiff => 'Hide diff';
-
-	/// en: 'Restore'
-	String get restore => 'Restore';
-
-	/// en: 'Restore checkpoint?'
-	String get restoreTitle => 'Restore checkpoint?';
-
-	/// en: 'Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.'
-	String get restoreWarn => 'Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.';
-
-	/// en: 'Restore'
-	String get restoreConfirm => 'Restore';
-
-	/// en: 'Restored · {files} files, {skipped} skipped'
-	String restored({required Object files, required Object skipped}) => 'Restored · ${files} files, ${skipped} skipped';
-
-	/// en: 'Delete'
-	String get delete => 'Delete';
-
-	/// en: 'Delete checkpoint?'
-	String get deleteTitle => 'Delete checkpoint?';
-
-	/// en: 'This removes the checkpoint and its stored payload.'
-	String get deleteConfirm => 'This removes the checkpoint and its stored payload.';
-
-	/// en: 'clean — no changes'
-	String get clean => 'clean — no changes';
-
-	/// en: 'Working tree was clean — nothing to back up'
-	String get capturedClean => 'Working tree was clean — nothing to back up';
-}
-
 // Path: sessions.spawnSheet.bypass
 class TranslationsSessionsSpawnSheetBypassEn {
 	TranslationsSessionsSpawnSheetBypassEn.internal(this._root);
@@ -13851,9 +13774,6 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Database'
 	String get database => 'Database';
-
-	/// en: 'Checkpoints'
-	String get checkpoints => 'Checkpoints';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -13971,77 +13891,6 @@ class TranslationsWebSessionsInspectorCortexPanelEn {
 
 	/// en: 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.'
 	String get empty => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.';
-}
-
-// Path: web.sessions.inspector.checkpoints
-class TranslationsWebSessionsInspectorCheckpointsEn {
-	TranslationsWebSessionsInspectorCheckpointsEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Loading…'
-	String get loading => 'Loading…';
-
-	/// en: 'Snapshot this session's uncommitted diff, untracked files and input history — restore it later.'
-	String get blurb => 'Snapshot this session\'s uncommitted diff, untracked files and input history — restore it later.';
-
-	/// en: 'Capture'
-	String get capture => 'Capture';
-
-	/// en: 'Checkpoint captured'
-	String get captured => 'Checkpoint captured';
-
-	/// en: 'diff {diff}B · {files} untracked files'
-	String capturedGit({required Object diff, required Object files}) => 'diff ${diff}B · ${files} untracked files';
-
-	/// en: 'Metadata only (not a git repo)'
-	String get capturedNonGit => 'Metadata only (not a git repo)';
-
-	/// en: 'No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.'
-	String get empty => 'No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.';
-
-	late final TranslationsWebSessionsInspectorCheckpointsTriggerEn trigger = TranslationsWebSessionsInspectorCheckpointsTriggerEn.internal(_root);
-
-	/// en: 'Truncated'
-	String get truncated => 'Truncated';
-
-	/// en: 'A size/count cap clipped this capture; it is partial.'
-	String get truncatedHint => 'A size/count cap clipped this capture; it is partial.';
-
-	/// en: 'Not a git repository'
-	String get nonGit => 'Not a git repository';
-
-	/// en: 'Hide diff'
-	String get hideDiff => 'Hide diff';
-
-	/// en: 'View diff'
-	String get viewDiff => 'View diff';
-
-	/// en: 'Restore'
-	String get restore => 'Restore';
-
-	/// en: 'Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.'
-	String get restoreWarn => 'Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.';
-
-	/// en: 'Confirm restore'
-	String get restoreConfirm => 'Confirm restore';
-
-	/// en: 'Checkpoint restored'
-	String get restored => 'Checkpoint restored';
-
-	/// en: 'diff applied: {diff} · {files} files restored · {skipped} skipped'
-	String restoredDetail({required Object diff, required Object files, required Object skipped}) => 'diff applied: ${diff} · ${files} files restored · ${skipped} skipped';
-
-	/// en: 'Delete this checkpoint?'
-	String get deleteConfirm => 'Delete this checkpoint?';
-
-	/// en: 'clean — no changes captured'
-	String get clean => 'clean — no changes captured';
-
-	/// en: 'Working tree was clean — no changes to back up'
-	String get capturedClean => 'Working tree was clean — no changes to back up';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -17350,24 +17199,6 @@ class TranslationsSessionsInspectorShellTabsEn {
 
 	/// en: 'Database'
 	String get database => 'Database';
-
-	/// en: 'Checkpoints'
-	String get checkpoints => 'Checkpoints';
-}
-
-// Path: web.sessions.inspector.checkpoints.trigger
-class TranslationsWebSessionsInspectorCheckpointsTriggerEn {
-	TranslationsWebSessionsInspectorCheckpointsTriggerEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Manual'
-	String get manual => 'Manual';
-
-	/// en: 'Interrupted'
-	String get interrupted => 'Interrupted';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -17666,7 +17497,6 @@ extension on Translations {
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
 			'web.sessions.inspector.tabs.database' => 'Database',
-			'web.sessions.inspector.tabs.checkpoints' => 'Checkpoints',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
@@ -17700,28 +17530,6 @@ extension on Translations {
 			'web.sessions.inspector.cortexPanel.plan' => 'Plan',
 			'web.sessions.inspector.cortexPanel.latestJournal' => 'Latest journal',
 			'web.sessions.inspector.cortexPanel.empty' => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.',
-			'web.sessions.inspector.checkpoints.loading' => 'Loading…',
-			'web.sessions.inspector.checkpoints.blurb' => 'Snapshot this session\'s uncommitted diff, untracked files and input history — restore it later.',
-			'web.sessions.inspector.checkpoints.capture' => 'Capture',
-			'web.sessions.inspector.checkpoints.captured' => 'Checkpoint captured',
-			'web.sessions.inspector.checkpoints.capturedGit' => ({required Object diff, required Object files}) => 'diff ${diff}B · ${files} untracked files',
-			'web.sessions.inspector.checkpoints.capturedNonGit' => 'Metadata only (not a git repo)',
-			'web.sessions.inspector.checkpoints.empty' => 'No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.',
-			'web.sessions.inspector.checkpoints.trigger.manual' => 'Manual',
-			'web.sessions.inspector.checkpoints.trigger.interrupted' => 'Interrupted',
-			'web.sessions.inspector.checkpoints.truncated' => 'Truncated',
-			'web.sessions.inspector.checkpoints.truncatedHint' => 'A size/count cap clipped this capture; it is partial.',
-			'web.sessions.inspector.checkpoints.nonGit' => 'Not a git repository',
-			'web.sessions.inspector.checkpoints.hideDiff' => 'Hide diff',
-			'web.sessions.inspector.checkpoints.viewDiff' => 'View diff',
-			'web.sessions.inspector.checkpoints.restore' => 'Restore',
-			'web.sessions.inspector.checkpoints.restoreWarn' => 'Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.',
-			'web.sessions.inspector.checkpoints.restoreConfirm' => 'Confirm restore',
-			'web.sessions.inspector.checkpoints.restored' => 'Checkpoint restored',
-			'web.sessions.inspector.checkpoints.restoredDetail' => ({required Object diff, required Object files, required Object skipped}) => 'diff applied: ${diff} · ${files} files restored · ${skipped} skipped',
-			'web.sessions.inspector.checkpoints.deleteConfirm' => 'Delete this checkpoint?',
-			'web.sessions.inspector.checkpoints.clean' => 'clean — no changes captured',
-			'web.sessions.inspector.checkpoints.capturedClean' => 'Working tree was clean — no changes to back up',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -17973,8 +17781,6 @@ extension on Translations {
 			'web.project.editor.save' => 'Save',
 			'web.project.editor.saveFailedToast' => 'Save failed',
 			'web.project.editor.savedToast' => ({required Object label}) => '${label} saved',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.editor.goalPlaceholder' => 'What are we building? One paragraph. Read by every agent on spawn.',
 			'web.project.editor.planPlaceholder' => 'Active plan — what we are doing right now and what is next. Updated as work progresses.',
 			'web.project.editor.sectionPlaceholder' => 'Write this section in markdown…',
@@ -17998,6 +17804,8 @@ extension on Translations {
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Approve will REPLACE the current ${label} entirely.',
 			'web.project.inbox.warningSuffix' => 'Review the diff below; this isn\'t a merge.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.inbox.current' => 'Current',
 			'web.project.inbox.proposed' => 'Proposed',
 			'web.project.inbox.emptyBody' => '(empty)',
@@ -18403,7 +18211,6 @@ extension on Translations {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'not installed',
-			'web.providers.detail.brokenCli' => 'Installed but not runnable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'update available → ${version}',
 			'web.providers.detail.upToDate' => 'up to date',
 			'web.providers.detail.update' => ({required Object version}) => 'Update to ${version}',
@@ -18487,8 +18294,6 @@ extension on Translations {
 			'web.channels.card.channelIdLabel' => 'channel_id:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => 'Copy webhook URL',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.card.webhookCopiedToast' => 'Webhook URL copied',
 			'web.channels.card.setup' => 'Setup',
 			'web.channels.card.setupTooltip' => 'Show adapter connection details + sample code',
@@ -18513,6 +18318,8 @@ extension on Translations {
 			'web.channels.dialog.editTitle' => 'Edit channel',
 			'web.channels.dialog.createTitle' => 'Register channel',
 			'web.channels.dialog.descriptionBridge' => 'External adapter (Python/Node/...) connects via WebSocket and presents this token.',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.dialog.descriptionDefault' => 'Configure messaging integration.',
 			'web.channels.dialog.kindLabel' => 'Kind',
 			'web.channels.dialog.kindImmutable' => '(immutable — delete and recreate to change kind)',
@@ -19001,8 +18808,6 @@ extension on Translations {
 			'web.backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8 chars)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'a strong passphrase you will not lose',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.recoveryKit.mismatch' => 'Passphrases don\'t match',
 			'web.backups.recoveryKit.generating' => 'Generating…',
 			'web.backups.recoveryKit.download' => 'Download kit',
@@ -19027,6 +18832,8 @@ extension on Translations {
 			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
 			'web.backups.newSchedule.title' => 'New backup schedule',
 			'web.backups.newSchedule.targetLabel' => 'Targets',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.newSchedule.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Every (hours)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Keep last N',
@@ -19515,8 +19322,6 @@ extension on Translations {
 			'web.memoryAmbient.rules.row.runNowFailedToast' => 'Run-now failed',
 			'web.memoryAmbient.rules.row.deleteConfirm' => ({required Object name}) => 'Delete rule "${name}"?',
 			'web.memoryAmbient.rules.row.deletedToast' => 'Rule deleted',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.rules.row.deleteFailedToast' => 'Delete failed',
 			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => 'every ${n} messages',
 			'web.memoryAmbient.rules.row.summary.onIdle' => ({required Object seconds}) => 'idle ≥ ${seconds}s',
@@ -19541,6 +19346,8 @@ extension on Translations {
 			'web.memoryAmbient.profiles.addButton' => 'Add profile',
 			'web.memoryAmbient.profiles.intro' => 'At spawn time opendray prepends a markdown banner of recent project memories to the agent\'s system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.',
 			'web.memoryAmbient.profiles.empty' => 'No injection profile. Memories are not auto-injected at spawn — model still uses memory_search.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.profiles.row.globalDefault' => 'global default',
 			'web.memoryAmbient.profiles.row.delete' => 'Delete',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => 'Delete this injection profile?',
@@ -20029,8 +19836,6 @@ extension on Translations {
 			'memoryAmbient.strategyTopKRelevant' => 'Top-K relevant',
 			'memoryAmbient.strategyOnKeyword' => 'On keyword',
 			'memoryAmbient.strategyManualOnly' => 'Manual only',
-			_ => null,
-		} ?? switch (path) {
 			'memoryAmbient.strategyHybrid' => 'Hybrid summary',
 			'memoryAmbient.strategyUnknown' => 'Unknown',
 			'sessions.title' => 'Sessions',
@@ -20055,6 +19860,8 @@ extension on Translations {
 			'sessions.detail.refreshMetadata' => 'Refresh metadata',
 			'sessions.detail.inspector' => 'Inspector (Files / Git / Tasks / History / Notes)',
 			'sessions.detail.projectMemory' => 'Project memory (goal / plan / journal / inbox)',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.detail.actions' => 'Actions',
 			'sessions.detail.started' => ({required Object when}) => 'started ${when}',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'started ${started}  ·  ended ${ended}',
@@ -20135,7 +19942,6 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.vault' => 'Vault',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
 			'sessions.inspector.shell.tabs.database' => 'Database',
-			'sessions.inspector.shell.tabs.checkpoints' => 'Checkpoints',
 			'sessions.inspector.cortex.title' => 'Cortex workspace',
 			'sessions.inspector.cortex.blurb' => 'Goal, plan, journal, inbox and memory hygiene for this project — the AI-maintained Cortex.',
 			'sessions.inspector.cortex.open' => 'Open Cortex workspace',
@@ -20214,27 +20020,6 @@ extension on Translations {
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
-			'sessions.inspector.checkpoints.blurb' => 'Snapshot this session\'s uncommitted diff, untracked files and input history.',
-			'sessions.inspector.checkpoints.capture' => 'Capture',
-			'sessions.inspector.checkpoints.capturedGit' => ({required Object diff, required Object files}) => 'diff ${diff}B · ${files} untracked files',
-			'sessions.inspector.checkpoints.capturedNonGit' => 'Metadata only (not a git repo)',
-			'sessions.inspector.checkpoints.empty' => 'No checkpoints yet. Capture one now, or it happens automatically when the gateway shuts down.',
-			'sessions.inspector.checkpoints.triggerManual' => 'Manual',
-			'sessions.inspector.checkpoints.triggerInterrupted' => 'Interrupted',
-			'sessions.inspector.checkpoints.truncatedHint' => 'A size/count cap clipped this capture; it is partial.',
-			'sessions.inspector.checkpoints.nonGit' => 'Not a git repository',
-			'sessions.inspector.checkpoints.viewDiff' => 'View diff',
-			'sessions.inspector.checkpoints.hideDiff' => 'Hide diff',
-			'sessions.inspector.checkpoints.restore' => 'Restore',
-			'sessions.inspector.checkpoints.restoreTitle' => 'Restore checkpoint?',
-			'sessions.inspector.checkpoints.restoreWarn' => 'Re-applies this snapshot onto the working directory. Runs only if HEAD matches and there are no uncommitted tracked changes; untracked files are never overwritten.',
-			'sessions.inspector.checkpoints.restoreConfirm' => 'Restore',
-			'sessions.inspector.checkpoints.restored' => ({required Object files, required Object skipped}) => 'Restored · ${files} files, ${skipped} skipped',
-			'sessions.inspector.checkpoints.delete' => 'Delete',
-			'sessions.inspector.checkpoints.deleteTitle' => 'Delete checkpoint?',
-			'sessions.inspector.checkpoints.deleteConfirm' => 'This removes the checkpoint and its stored payload.',
-			'sessions.inspector.checkpoints.clean' => 'clean — no changes',
-			'sessions.inspector.checkpoints.capturedClean' => 'Working tree was clean — nothing to back up',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -20543,8 +20328,6 @@ extension on Translations {
 			'memoryArchived.countBadge' => ({required Object count}) => '${count} archived',
 			'memoryArchived.restore' => 'Restore',
 			'memoryArchived.restoreAll' => 'Restore all',
-			_ => null,
-		} ?? switch (path) {
 			'memoryArchived.deleteAll' => 'Delete all',
 			'memoryArchived.restoreAllConfirm' => ({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?',
 			'memoryArchived.deleteAllConfirm' => ({required Object count, required Object project}) => 'Permanently delete all ${count} archived memories in ${project}? This skips the 30-day grace window and cannot be undone.',
@@ -20591,6 +20374,8 @@ extension on Translations {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
 			'project.conflicts.deleteLoading' => 'Loading fact text…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Delete ${side}',
+			_ => null,
+		} ?? switch (path) {
 			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
 			'project.conflicts.openPlanEditor' => 'Open plan editor',
 			'project.conflicts.openGoalEditor' => 'Open goal editor',
@@ -21057,8 +20842,6 @@ extension on Translations {
 			'skills.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'skills.resetTitle' => 'Reset to built-in?',
 			'skills.deleteTitle' => 'Delete skill?',
-			_ => null,
-		} ?? switch (path) {
 			'skills.resetBody' => ({required Object id}) => 'Removes the vault override for ${id}. Sessions will fall back to the built-in body.',
 			'skills.resetButton' => 'Reset',
 			'skills.resetSnack' => ({required Object id}) => 'Reset ${id} to built-in.',
@@ -21105,6 +20888,8 @@ extension on Translations {
 			'customTasks.fieldCommand' => 'Command',
 			'customTasks.commandHelper' => 'The text inserted into the session when picked. Can be a CLI command or a Claude slash command.',
 			'customTasks.fieldDescription' => 'Description (optional)',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.fieldScope' => 'Scope',
 			'customTasks.globalScopeHint' => 'Visible from every session, regardless of cwd.',
 			'customTasks.projectScopeHint' => 'Visible only when a session\'s cwd matches the path below.',

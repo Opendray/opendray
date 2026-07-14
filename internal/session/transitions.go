@@ -180,9 +180,8 @@ const (
 	// as an orphan. Recovery: reconcile probes the OS for the recorded PID
 	// and adopts it if still alive, rather than blindly respawning.
 	InterruptOrphaned InterruptReason = "orphaned"
-	// InterruptCrashed — the process is gone. Recovery: treat as failed and
-	// roll back to the last checkpoint (or respawn with --resume where the
-	// provider supports it).
+	// InterruptCrashed — the process is gone. Recovery: respawn with
+	// --resume where the provider supports it (the auto-resume path).
 	InterruptCrashed InterruptReason = "crashed"
 )
 
@@ -219,8 +218,8 @@ const (
 	// RecoveryAdoptPID — verify the recorded PID and adopt the live orphan
 	// instead of respawning (InterruptOrphaned).
 	RecoveryAdoptPID RecoveryStrategy = "adopt_pid"
-	// RecoveryRollback — the process is gone; fail and restore the last
-	// checkpoint / respawn with resume (InterruptCrashed).
+	// RecoveryRollback — the process is gone; respawn with --resume
+	// (InterruptCrashed).
 	RecoveryRollback RecoveryStrategy = "rollback"
 )
 

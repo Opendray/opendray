@@ -4,7 +4,6 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/database/database_tab.dart';
-import 'package:opendray/features/sessions/inspector/checkpoints_tab.dart';
 import 'package:opendray/features/sessions/inspector/cortex_tab.dart';
 import 'package:opendray/features/sessions/inspector/files_tab.dart';
 import 'package:opendray/features/sessions/inspector/git_tab.dart';
@@ -44,7 +43,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastSegment = p.basename(session.cwd);
     return DefaultTabController(
-      length: 8,
+      length: 7,
       child: Scaffold(
         appBar: AppBar(
           title: Column(
@@ -94,10 +93,6 @@ class _Body extends StatelessWidget {
                 icon: const Icon(Icons.storage_outlined),
                 text: t.sessions.inspector.shell.tabs.database,
               ),
-              Tab(
-                icon: const Icon(Icons.archive_outlined),
-                text: t.sessions.inspector.shell.tabs.checkpoints,
-              ),
             ],
           ),
         ),
@@ -110,7 +105,6 @@ class _Body extends StatelessWidget {
             NotesTab(sessionId: session.id, cwd: session.cwd),
             CortexTab(cwd: session.cwd),
             DatabaseTab(cwd: session.cwd),
-            CheckpointsTab(sessionId: session.id),
           ],
         ),
       ),
