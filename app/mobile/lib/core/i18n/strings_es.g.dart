@@ -6565,6 +6565,8 @@ class _TranslationsSessionsInspectorCheckpointsEs extends TranslationsSessionsIn
 	@override String get delete => 'Eliminar';
 	@override String get deleteTitle => '¿Eliminar punto de control?';
 	@override String get deleteConfirm => 'Esto elimina el punto de control y su contenido almacenado.';
+	@override String get clean => 'limpio — sin cambios';
+	@override String get capturedClean => 'El árbol de trabajo estaba limpio — nada que respaldar';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7226,6 +7228,8 @@ class _TranslationsWebSessionsInspectorCheckpointsEs extends TranslationsWebSess
 	@override String get restored => 'Punto de control restaurado';
 	@override String restoredDetail({required Object diff, required Object files, required Object skipped}) => 'diff aplicado: ${diff} · ${files} archivos restaurados · ${skipped} omitidos';
 	@override String get deleteConfirm => '¿Eliminar este punto de control?';
+	@override String get clean => 'limpio — sin cambios capturados';
+	@override String get capturedClean => 'El árbol de trabajo estaba limpio — no hay cambios que respaldar';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9522,6 +9526,8 @@ extension on TranslationsEs {
 			'web.sessions.inspector.checkpoints.restored' => 'Punto de control restaurado',
 			'web.sessions.inspector.checkpoints.restoredDetail' => ({required Object diff, required Object files, required Object skipped}) => 'diff aplicado: ${diff} · ${files} archivos restaurados · ${skipped} omitidos',
 			'web.sessions.inspector.checkpoints.deleteConfirm' => '¿Eliminar este punto de control?',
+			'web.sessions.inspector.checkpoints.clean' => 'limpio — sin cambios capturados',
+			'web.sessions.inspector.checkpoints.capturedClean' => 'El árbol de trabajo estaba limpio — no hay cambios que respaldar',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -9773,10 +9779,10 @@ extension on TranslationsEs {
 			'web.project.editor.save' => 'Guardar',
 			'web.project.editor.saveFailedToast' => 'Error al guardar',
 			'web.project.editor.savedToast' => ({required Object label}) => '${label} guardado',
-			'web.project.editor.goalPlaceholder' => '¿Qué estamos construyendo? Un párrafo. Lo lee cada agente al iniciarse.',
-			'web.project.editor.planPlaceholder' => 'Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.editor.goalPlaceholder' => '¿Qué estamos construyendo? Un párrafo. Lo lee cada agente al iniciarse.',
+			'web.project.editor.planPlaceholder' => 'Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo.',
 			'web.project.editor.sectionPlaceholder' => 'Escribe esta sección en markdown…',
 			'web.project.readonly.tech_stack.label' => 'Stack tecnológico y estructura',
 			'web.project.readonly.tech_stack.empty' => 'Ejecuta una session de Claude en este proyecto. El escáner se actualiza en cada inicio.',
@@ -10287,10 +10293,10 @@ extension on TranslationsEs {
 			'web.channels.card.channelIdLabel' => 'channel_id:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => 'Copiar la URL del webhook',
-			'web.channels.card.webhookCopiedToast' => 'URL del webhook copiada',
-			'web.channels.card.setup' => 'Configuración',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.card.webhookCopiedToast' => 'URL del webhook copiada',
+			'web.channels.card.setup' => 'Configuración',
 			'web.channels.card.setupTooltip' => 'Mostrar los detalles de conexión del adaptador y código de ejemplo',
 			'web.channels.card.test' => 'Probar',
 			'web.channels.card.testNotRunningTooltip' => 'El canal debe estar en ejecución',
@@ -10801,10 +10807,10 @@ extension on TranslationsEs {
 			'web.backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8 caracteres)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'una frase fuerte que no perderás',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
-			'web.backups.recoveryKit.mismatch' => 'Las frases no coinciden',
-			'web.backups.recoveryKit.generating' => 'Generando…',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.recoveryKit.mismatch' => 'Las frases no coinciden',
+			'web.backups.recoveryKit.generating' => 'Generando…',
 			'web.backups.recoveryKit.download' => 'Descargar kit',
 			'web.backups.recoveryKit.downloadedToast' => 'Kit de recuperación descargado: guárdalo de forma segura',
 			'web.backups.recoveryKit.failedToast' => 'No se pudo generar el kit de recuperación',
@@ -11315,10 +11321,10 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.row.runNowFailedToast' => 'La ejecución inmediata falló',
 			'web.memoryAmbient.rules.row.deleteConfirm' => ({required Object name}) => '¿Eliminar la regla "${name}"?',
 			'web.memoryAmbient.rules.row.deletedToast' => 'Regla eliminada',
-			'web.memoryAmbient.rules.row.deleteFailedToast' => 'La eliminación falló',
-			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => 'cada ${n} mensajes',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.row.deleteFailedToast' => 'La eliminación falló',
+			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => 'cada ${n} mensajes',
 			'web.memoryAmbient.rules.row.summary.onIdle' => ({required Object seconds}) => 'inactivo ≥ ${seconds}s',
 			'web.memoryAmbient.rules.row.summary.kChars' => ({required Object k}) => '≥ ${k} caracteres',
 			'web.memoryAmbient.rules.row.summary.manual' => 'solo manual',
@@ -11829,10 +11835,10 @@ extension on TranslationsEs {
 			'memoryAmbient.strategyTopKRelevant' => 'Top-K relevantes',
 			'memoryAmbient.strategyOnKeyword' => 'Por palabra clave',
 			'memoryAmbient.strategyManualOnly' => 'Solo manual',
-			'memoryAmbient.strategyHybrid' => 'Resumen híbrido',
-			'memoryAmbient.strategyUnknown' => 'Desconocido',
 			_ => null,
 		} ?? switch (path) {
+			'memoryAmbient.strategyHybrid' => 'Resumen híbrido',
+			'memoryAmbient.strategyUnknown' => 'Desconocido',
 			'sessions.title' => 'Sesiones',
 			'sessions.refresh' => 'Actualizar',
 			'sessions.actions' => 'Acciones',
@@ -12033,6 +12039,8 @@ extension on TranslationsEs {
 			'sessions.inspector.checkpoints.delete' => 'Eliminar',
 			'sessions.inspector.checkpoints.deleteTitle' => '¿Eliminar punto de control?',
 			'sessions.inspector.checkpoints.deleteConfirm' => 'Esto elimina el punto de control y su contenido almacenado.',
+			'sessions.inspector.checkpoints.clean' => 'limpio — sin cambios',
+			'sessions.inspector.checkpoints.capturedClean' => 'El árbol de trabajo estaba limpio — nada que respaldar',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12341,12 +12349,12 @@ extension on TranslationsEs {
 			'memoryArchived.countBadge' => ({required Object count}) => '${count} archivadas',
 			'memoryArchived.restore' => 'Restaurar',
 			'memoryArchived.restoreAll' => 'Restaurar todo',
+			_ => null,
+		} ?? switch (path) {
 			'memoryArchived.deleteAll' => 'Eliminar todo',
 			'memoryArchived.restoreAllConfirm' => ({required Object count, required Object project}) => '¿Restaurar las ${count} memorias archivadas de ${project}?',
 			'memoryArchived.deleteAllConfirm' => ({required Object count, required Object project}) => '¿Eliminar permanentemente las ${count} memorias archivadas de ${project}? Omite la ventana de gracia de 30 días y no se puede deshacer.',
 			'memoryArchived.deletePermanently' => 'Eliminar',
-			_ => null,
-		} ?? switch (path) {
 			'memoryArchived.deleteConfirm' => '¿Eliminar permanentemente esta memoria ahora? Omite la ventana de gracia de 30 días y no se puede deshacer.',
 			'memoryArchived.restoredToast' => 'Restaurada',
 			'memoryArchived.restoredAllToast' => ({required Object count}) => '${count} memorias restauradas',
@@ -12855,12 +12863,12 @@ extension on TranslationsEs {
 			'skills.saveFailedGeneric' => ({required Object error}) => 'Error al guardar: ${error}',
 			'skills.resetTitle' => '¿Restablecer al integrado?',
 			'skills.deleteTitle' => '¿Eliminar skill?',
+			_ => null,
+		} ?? switch (path) {
 			'skills.resetBody' => ({required Object id}) => 'Elimina el override del vault para ${id}. Las sesiones recurrirán al cuerpo integrado.',
 			'skills.resetButton' => 'Restablecer',
 			'skills.resetSnack' => ({required Object id}) => '${id} restablecido al integrado.',
 			'skills.deletedSnack' => ({required Object id}) => '${id} eliminado.',
-			_ => null,
-		} ?? switch (path) {
 			'skills.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'skills.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'skills.deleteBody' => ({required Object id}) => 'Elimina ${id} del vault. Las sesiones que lo referencian fallarán hasta que se restaure.',

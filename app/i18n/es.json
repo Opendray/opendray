@@ -297,7 +297,9 @@
           "restoreConfirm": "Confirmar restauración",
           "restored": "Punto de control restaurado",
           "restoredDetail": "diff aplicado: {diff} · {files} archivos restaurados · {skipped} omitidos",
-          "deleteConfirm": "¿Eliminar este punto de control?"
+          "deleteConfirm": "¿Eliminar este punto de control?",
+          "clean": "limpio — sin cambios capturados",
+          "capturedClean": "El árbol de trabajo estaba limpio — no hay cambios que respaldar"
         }
       },
       "ended": {
@@ -3545,7 +3547,9 @@
         "restored": "Restaurado · {files} archivos, {skipped} omitidos",
         "delete": "Eliminar",
         "deleteTitle": "¿Eliminar punto de control?",
-        "deleteConfirm": "Esto elimina el punto de control y su contenido almacenado."
+        "deleteConfirm": "Esto elimina el punto de control y su contenido almacenado.",
+        "clean": "limpio — sin cambios",
+        "capturedClean": "El árbol de trabajo estaba limpio — nada que respaldar"
       }
     },
     "spawnSheet": {

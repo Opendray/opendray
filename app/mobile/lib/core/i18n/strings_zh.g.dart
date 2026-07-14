@@ -6565,6 +6565,8 @@ class _TranslationsSessionsInspectorCheckpointsZh extends TranslationsSessionsIn
 	@override String get delete => '删除';
 	@override String get deleteTitle => '删除检查点?';
 	@override String get deleteConfirm => '将移除该检查点及其存储的内容。';
+	@override String get clean => '干净 · 无改动';
+	@override String get capturedClean => '工作树干净 —— 没有可备份的改动';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7226,6 +7228,8 @@ class _TranslationsWebSessionsInspectorCheckpointsZh extends TranslationsWebSess
 	@override String get restored => '检查点已恢复';
 	@override String restoredDetail({required Object diff, required Object files, required Object skipped}) => 'diff 应用:${diff} · 恢复 ${files} 个文件 · 跳过 ${skipped} 个';
 	@override String get deleteConfirm => '删除此检查点?';
+	@override String get clean => '干净 · 无改动可捕获';
+	@override String get capturedClean => '工作树干净 —— 没有可备份的改动';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9522,6 +9526,8 @@ extension on TranslationsZh {
 			'web.sessions.inspector.checkpoints.restored' => '检查点已恢复',
 			'web.sessions.inspector.checkpoints.restoredDetail' => ({required Object diff, required Object files, required Object skipped}) => 'diff 应用:${diff} · 恢复 ${files} 个文件 · 跳过 ${skipped} 个',
 			'web.sessions.inspector.checkpoints.deleteConfirm' => '删除此检查点?',
+			'web.sessions.inspector.checkpoints.clean' => '干净 · 无改动可捕获',
+			'web.sessions.inspector.checkpoints.capturedClean' => '工作树干净 —— 没有可备份的改动',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -9773,10 +9779,10 @@ extension on TranslationsZh {
 			'web.project.editor.save' => '保存',
 			'web.project.editor.saveFailedToast' => '保存失败',
 			'web.project.editor.savedToast' => ({required Object label}) => '${label}已保存',
-			'web.project.editor.goalPlaceholder' => '我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。',
-			'web.project.editor.planPlaceholder' => '当前计划 — 现在在做什么、下一步是什么。随进度更新。',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.editor.goalPlaceholder' => '我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。',
+			'web.project.editor.planPlaceholder' => '当前计划 — 现在在做什么、下一步是什么。随进度更新。',
 			'web.project.editor.sectionPlaceholder' => '以 markdown 撰写本章节…',
 			'web.project.readonly.tech_stack.label' => '技术栈与结构',
 			'web.project.readonly.tech_stack.empty' => '在该项目运行一次 Claude 会话 — scanner 会在每次 spawn 时刷新。',
@@ -10287,10 +10293,10 @@ extension on TranslationsZh {
 			'web.channels.card.channelIdLabel' => 'channel_id:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => '复制 webhook URL',
-			'web.channels.card.webhookCopiedToast' => '已复制 webhook URL',
-			'web.channels.card.setup' => '配置',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.card.webhookCopiedToast' => '已复制 webhook URL',
+			'web.channels.card.setup' => '配置',
 			'web.channels.card.setupTooltip' => '查看适配器连接信息和示例代码',
 			'web.channels.card.test' => '测试',
 			'web.channels.card.testNotRunningTooltip' => '频道必须处于运行状态',
@@ -10801,10 +10807,10 @@ extension on TranslationsZh {
 			'web.backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'web.backups.recoveryKit.passphrasePlaceholder' => '一个你不会丢失的强口令',
 			'web.backups.recoveryKit.confirmLabel' => '确认恢复口令',
-			'web.backups.recoveryKit.mismatch' => '两次口令不一致',
-			'web.backups.recoveryKit.generating' => '生成中…',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.recoveryKit.mismatch' => '两次口令不一致',
+			'web.backups.recoveryKit.generating' => '生成中…',
 			'web.backups.recoveryKit.download' => '下载工具包',
 			'web.backups.recoveryKit.downloadedToast' => '恢复工具包已下载 —— 请妥善保存',
 			'web.backups.recoveryKit.failedToast' => '无法生成恢复工具包',
@@ -11315,10 +11321,10 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.row.runNowFailedToast' => '立即运行失败',
 			'web.memoryAmbient.rules.row.deleteConfirm' => ({required Object name}) => '删除规则 "${name}"?',
 			'web.memoryAmbient.rules.row.deletedToast' => '规则已删除',
-			'web.memoryAmbient.rules.row.deleteFailedToast' => '删除失败',
-			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => '每 ${n} 条消息',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.row.deleteFailedToast' => '删除失败',
+			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => '每 ${n} 条消息',
 			'web.memoryAmbient.rules.row.summary.onIdle' => ({required Object seconds}) => 'idle ≥ ${seconds}s',
 			'web.memoryAmbient.rules.row.summary.kChars' => ({required Object k}) => '≥ ${k} 字符',
 			'web.memoryAmbient.rules.row.summary.manual' => '仅手动',
@@ -11829,10 +11835,10 @@ extension on TranslationsZh {
 			'memoryAmbient.strategyTopKRelevant' => '相关 Top-K',
 			'memoryAmbient.strategyOnKeyword' => '关键词触发',
 			'memoryAmbient.strategyManualOnly' => '仅手动',
-			'memoryAmbient.strategyHybrid' => '混合摘要',
-			'memoryAmbient.strategyUnknown' => '未知',
 			_ => null,
 		} ?? switch (path) {
+			'memoryAmbient.strategyHybrid' => '混合摘要',
+			'memoryAmbient.strategyUnknown' => '未知',
 			'sessions.title' => '会话',
 			'sessions.refresh' => '刷新',
 			'sessions.actions' => '操作',
@@ -12033,6 +12039,8 @@ extension on TranslationsZh {
 			'sessions.inspector.checkpoints.delete' => '删除',
 			'sessions.inspector.checkpoints.deleteTitle' => '删除检查点?',
 			'sessions.inspector.checkpoints.deleteConfirm' => '将移除该检查点及其存储的内容。',
+			'sessions.inspector.checkpoints.clean' => '干净 · 无改动',
+			'sessions.inspector.checkpoints.capturedClean' => '工作树干净 —— 没有可备份的改动',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12341,12 +12349,12 @@ extension on TranslationsZh {
 			'memoryArchived.countBadge' => ({required Object count}) => '${count} 条已归档',
 			'memoryArchived.restore' => '恢复',
 			'memoryArchived.restoreAll' => '全部恢复',
+			_ => null,
+		} ?? switch (path) {
 			'memoryArchived.deleteAll' => '全部删除',
 			'memoryArchived.restoreAllConfirm' => ({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？',
 			'memoryArchived.deleteAllConfirm' => ({required Object project, required Object count}) => '永久删除 ${project} 的全部 ${count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。',
 			'memoryArchived.deletePermanently' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'memoryArchived.deleteConfirm' => '立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。',
 			'memoryArchived.restoredToast' => '已恢复',
 			'memoryArchived.restoredAllToast' => ({required Object count}) => '已恢复 ${count} 条记忆',
@@ -12855,12 +12863,12 @@ extension on TranslationsZh {
 			'skills.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'skills.resetTitle' => '重置为内置？',
 			'skills.deleteTitle' => '删除技能？',
+			_ => null,
+		} ?? switch (path) {
 			'skills.resetBody' => ({required Object id}) => '移除 ${id} 的库覆盖。会话将回退到内置正文。',
 			'skills.resetButton' => '重置',
 			'skills.resetSnack' => ({required Object id}) => '已将 ${id} 重置为内置。',
 			'skills.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
-			_ => null,
-		} ?? switch (path) {
 			'skills.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
 			'skills.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'skills.deleteBody' => ({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。',

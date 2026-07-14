@@ -51,16 +51,19 @@ class _CheckpointsTabState extends ConsumerState<CheckpointsTab>
     setState(() => _capturing = true);
     try {
       final cp = await ref.read(checkpointsApiProvider).capture(widget.sessionId);
+      final clean = cp.isGit && cp.diffBytes == 0 && cp.untrackedFiles == 0;
       messenger.showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
           content: Text(
-            cp.isGit
-                ? t.sessions.inspector.checkpoints.capturedGit(
-                    diff: cp.diffBytes,
-                    files: cp.untrackedFiles,
-                  )
-                : t.sessions.inspector.checkpoints.capturedNonGit,
+            !cp.isGit
+                ? t.sessions.inspector.checkpoints.capturedNonGit
+                : clean
+                    ? t.sessions.inspector.checkpoints.capturedClean
+                    : t.sessions.inspector.checkpoints.capturedGit(
+                        diff: cp.diffBytes,
+                        files: cp.untrackedFiles,
+                      ),
           ),
         ),
       );
@@ -294,14 +297,41 @@ class _CheckpointCardState extends State<_CheckpointCard> {
               ],
             ),
             const SizedBox(height: 6),
-            Text(
-              cp.isGit
-                  ? '${cp.gitHead != null ? cp.gitHead!.substring(0, cp.gitHead!.length < 8 ? cp.gitHead!.length : 8) : '—'}   Δ ${cp.diffBytes}B   +${cp.untrackedFiles}f   ⌨ ${cp.inputBytes}B'
-                  : '${t.sessions.inspector.checkpoints.nonGit}   ⌨ ${cp.inputBytes}B',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
-                color: muted,
-              ),
+            Builder(
+              builder: (_) {
+                final head = cp.gitHead != null
+                    ? cp.gitHead!.substring(
+                        0, cp.gitHead!.length < 8 ? cp.gitHead!.length : 8)
+                    : '—';
+                // A git checkpoint with no diff and no untracked files
+                // captured nothing restorable — the tree was clean. Say so
+                // explicitly so an empty diff doesn't read as broken.
+                final clean =
+                    cp.isGit && cp.diffBytes == 0 && cp.untrackedFiles == 0;
+                if (clean) {
+                  return Row(
+                    children: [
+                      Icon(Icons.check_circle_outline,
+                          size: 14, color: Colors.green.shade600),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '$head · ${t.sessions.inspector.checkpoints.clean}   ⌨ ${cp.inputBytes}B',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              fontFamily: 'monospace', color: muted),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Text(
+                  cp.isGit
+                      ? '$head   Δ ${cp.diffBytes}B   +${cp.untrackedFiles}f   ⌨ ${cp.inputBytes}B'
+                      : '${t.sessions.inspector.checkpoints.nonGit}   ⌨ ${cp.inputBytes}B',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(fontFamily: 'monospace', color: muted),
+                );
+              },
             ),
             if (cp.note != null) ...[
               const SizedBox(height: 4),

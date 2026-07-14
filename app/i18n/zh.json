@@ -297,7 +297,9 @@
           "restoreConfirm": "确认恢复",
           "restored": "检查点已恢复",
           "restoredDetail": "diff 应用:{diff} · 恢复 {files} 个文件 · 跳过 {skipped} 个",
-          "deleteConfirm": "删除此检查点?"
+          "deleteConfirm": "删除此检查点?",
+          "clean": "干净 · 无改动可捕获",
+          "capturedClean": "工作树干净 —— 没有可备份的改动"
         }
       },
       "ended": {
@@ -3545,7 +3547,9 @@
         "restored": "已恢复 · {files} 个文件,跳过 {skipped} 个",
         "delete": "删除",
         "deleteTitle": "删除检查点?",
-        "deleteConfirm": "将移除该检查点及其存储的内容。"
+        "deleteConfirm": "将移除该检查点及其存储的内容。",
+        "clean": "干净 · 无改动",
+        "capturedClean": "工作树干净 —— 没有可备份的改动"
       }
     },
     "spawnSheet": {
