@@ -33,7 +33,8 @@ type Service struct {
 	store    *Store
 	registry *worker.Registry
 	bus      *eventbus.Hub
-	context  ContextSource // optional
+	context  ContextSource   // optional
+	sessions SessionLauncher // optional — Handoff 503s without it
 	log      *slog.Logger
 }
 

@@ -3164,7 +3164,19 @@
         "active": "Activa",
         "closed": "Cerrada"
       },
-      "untitled": "Chat nuevo"
+      "untitled": "Chat nuevo",
+      "handoff": {
+        "button": "Ejecutar",
+        "title": "Entregar a una sesión",
+        "description": "Los miembros del chat solo discuten (solo lectura). Esto lanza una sesión real con acceso completo a archivos para implementar lo acordado — con el último resumen, o toda la discusión si no has resumido.",
+        "executor": "Ejecutor",
+        "executorHint": "Qué miembro hace el trabajo real (una sesión completa con acceso a archivos).",
+        "project": "Proyecto",
+        "projectPlaceholder": "/ruta/al/proyecto",
+        "projectHint": "Dónde ocurren los cambios. Obligatorio.",
+        "run": "Ejecutar",
+        "started": "Sesión iniciada — te llevamos allí"
+      }
     }
   },
   "more": {

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Loader2, Send, Sparkles, Trash2, Users } from 'lucide-react'
+import { Loader2, Rocket, Send, Sparkles, Trash2, Users } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { HandoffDialog } from './HandoffDialog'
 import {
   closeRoundTable,
   deleteRoundTable,
@@ -33,7 +35,9 @@ export function RoundTableDetail({
 }) {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const [draft, setDraft] = useState('')
+  const [handoffOpen, setHandoffOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const query = useQuery({
@@ -147,6 +151,16 @@ export function RoundTableDetail({
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
+          <Button
+            variant="accent"
+            size="sm"
+            disabled={messages.length === 0}
+            onClick={() => setHandoffOpen(true)}
+            title={t('web.roundTable.handoff.title')}
+          >
+            <Rocket className="size-3.5" />
+            {t('web.roundTable.handoff.button')}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -264,6 +278,17 @@ export function RoundTableDetail({
           </div>
         </div>
       )}
+
+      <HandoffDialog
+        rt={rt}
+        open={handoffOpen}
+        onClose={() => setHandoffOpen(false)}
+        onDone={(sessionId) => {
+          setHandoffOpen(false)
+          qc.invalidateQueries({ queryKey: ['round-table', id] })
+          navigate({ to: '/sessions', search: { open: sessionId } })
+        }}
+      />
     </div>
   )
 }

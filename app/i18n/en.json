@@ -3164,7 +3164,19 @@
         "active": "Active",
         "closed": "Closed"
       },
-      "untitled": "New chat"
+      "untitled": "New chat",
+      "handoff": {
+        "button": "Execute",
+        "title": "Hand off to a session",
+        "description": "The chat members only discuss (read-only). This spawns a real agent session with full file access to implement what was agreed — seeded with the latest summary, or the whole discussion if you have not summarized.",
+        "executor": "Executor",
+        "executorHint": "Which member does the actual work (a full session with file access).",
+        "project": "Project",
+        "projectPlaceholder": "/path/to/project",
+        "projectHint": "Where the changes happen. Required.",
+        "run": "Execute",
+        "started": "Session started — taking you there"
+      }
     }
   },
   "more": {

@@ -151,6 +151,25 @@ export async function summarizeRoundTable(
   })
 }
 
+// POST handoff — spawn a real agent session (full tool access) to implement
+// the discussion. Returns the new session id. The round-table members only
+// chat (read-only); this is the bridge to actual code changes.
+export interface HandoffInput {
+  provider: string
+  cwd?: string
+  model?: string
+  account_id?: string
+}
+export async function handoffRoundTable(
+  id: string,
+  input: HandoffInput,
+): Promise<{ session_id: string }> {
+  return api<{ session_id: string }>(`/api/v1/round-tables/${id}/handoff`, {
+    method: 'POST',
+    body: input,
+  })
+}
+
 // POST close — keeps the thread but stops new messages.
 export async function closeRoundTable(id: string): Promise<void> {
   await api<void>(`/api/v1/round-tables/${id}/close`, { method: 'POST' })

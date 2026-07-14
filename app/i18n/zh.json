@@ -3164,7 +3164,19 @@
         "active": "进行中",
         "closed": "已关闭"
       },
-      "untitled": "新群聊"
+      "untitled": "新群聊",
+      "handoff": {
+        "button": "交给开发",
+        "title": "交给开发会话",
+        "description": "群成员只讨论(只读)。这会开一个有完整文件权限的真会话去执行讨论结果——用最近的总结当种子,没总结就用整段讨论。",
+        "executor": "执行者",
+        "executorHint": "由哪个成员实际动手(带文件权限的真会话)。",
+        "project": "项目",
+        "projectPlaceholder": "/项目/路径",
+        "projectHint": "在哪个项目里改。必填。",
+        "run": "开始执行",
+        "started": "会话已启动——正在跳转"
+      }
     }
   },
   "more": {

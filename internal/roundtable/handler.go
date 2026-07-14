@@ -46,6 +46,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/{id}", h.get)
 		r.Post("/{id}/messages", h.postMessage)
 		r.Post("/{id}/summarize", h.summarize)
+		r.Post("/{id}/handoff", h.handoff)
 		r.Post("/{id}/close", h.close)
 		r.Delete("/{id}", h.remove)
 	})
@@ -170,6 +171,38 @@ func (h *Handlers) summarize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
+}
+
+// handoff spawns a real agent session to implement the discussion. Returns
+// the new session id so the UI can navigate to it.
+func (h *Handlers) handoff(w http.ResponseWriter, r *http.Request) {
+	if !h.ready(w) {
+		return
+	}
+	var body struct {
+		Cwd       string `json:"cwd"`
+		Provider  string `json:"provider"`
+		Model     string `json:"model"`
+		AccountID string `json:"account_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	sid, err := h.svc.Handoff(r.Context(), chi.URLParam(r, "id"), body.Cwd, body.Provider, body.Model, body.AccountID)
+	if errors.Is(err, ErrNotFound) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+	if errors.Is(err, ErrHandoffUnavailable) {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"session_id": sid})
 }
 
 func (h *Handlers) close(w http.ResponseWriter, r *http.Request) {

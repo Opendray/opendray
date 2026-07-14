@@ -1183,7 +1183,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// and produces a structured Verdict. Self-contained; roll back via
 	// internal/roundtable/ROLLBACK.md (drop tables + delete this block).
 	roundTableStore := roundtable.NewStore(st.Pool())
-	roundTableSvc := roundtable.NewService(roundTableStore, memoryWorkerRegistry, bus, log)
+	roundTableSvc := roundtable.NewService(roundTableStore, memoryWorkerRegistry, bus, log).
+		WithSessionLauncher(&roundTableSessionLauncher{mgr: sessionMgr})
 	if memquerySvc != nil {
 		roundTableSvc.WithContextSource(&curationContextAdapter{mq: memquerySvc})
 	}
@@ -2471,6 +2472,42 @@ func (l *curationSessionLauncher) Launch(ctx context.Context, spec cortex.Launch
 	// Seed the prompt once the CLI has had a moment to draw its input
 	// box. Detached goroutine: the conversation row already links the
 	// session; a failed seed leaves a usable (just unprimed) session.
+	go func(sid, prompt string) {
+		time.Sleep(4 * time.Second)
+		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := l.mgr.Input(bg, sid, []byte(prompt)); err != nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+	}(sess.ID, spec.SeedPrompt)
+	return sess.ID, nil
+}
+
+// roundTableSessionLauncher implements roundtable.SessionLauncher over the
+// session manager: spawn the operator-chosen agent in cwd with full tool
+// access, then type the discussion seed once the CLI has booted. This is the
+// bridge from a read-only round-table discussion to real code changes.
+type roundTableSessionLauncher struct {
+	mgr *session.Manager
+}
+
+func (l *roundTableSessionLauncher) Launch(ctx context.Context, spec roundtable.LaunchSpec) (string, error) {
+	providerID := spec.ProviderID
+	if providerID == "" {
+		providerID = "claude"
+	}
+	sess, err := l.mgr.Create(ctx, session.CreateRequest{
+		Name:            spec.Name,
+		ProviderID:      providerID,
+		Model:           spec.Model,
+		ClaudeAccountID: spec.AccountID,
+		Cwd:             spec.Cwd,
+	})
+	if err != nil {
+		return "", err
+	}
 	go func(sid, prompt string) {
 		time.Sleep(4 * time.Second)
 		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
