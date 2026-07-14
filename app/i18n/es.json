@@ -3135,12 +3135,15 @@
         "cwd": "Ruta del proyecto (opcional)",
         "cwdHint": "Vincula el chat a un proyecto para recuperar memoria.",
         "seats": "Miembros",
-        "seatsHint": "Uno por proveedor. Indica un modelo cuando el CLI lo requiera — p. ej. codex en un plan ChatGPT básico solo permite ciertos modelos.",
+        "seatsHint": "Uno por proveedor. Elige el modelo de cada miembro en el desplegable.",
         "create": "Crear",
         "created": "Mesa redonda creada",
         "project": "Proyecto (opcional)",
-        "projectNone": "Ninguno",
-        "start": "Iniciar chat"
+        "start": "Iniciar chat",
+        "browse": "Explorar",
+        "cwdPlaceholder": "/ruta/al/proyecto (opcional)",
+        "modelPlaceholder": "Modelo",
+        "modelLoading": "Cargando…"
       },
       "detail": {
         "loading": "Cargando chat…",

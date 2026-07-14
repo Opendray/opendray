@@ -3135,12 +3135,15 @@
         "cwd": "Project path (optional)",
         "cwdHint": "Binds the chat to a project for memory recall.",
         "seats": "Members",
-        "seatsHint": "One per vendor. Set a model where the CLI needs one — e.g. codex on a plain ChatGPT plan only allows certain models.",
+        "seatsHint": "One per vendor. Pick each member's model from the dropdown.",
         "create": "Create",
         "created": "Round table created",
         "project": "Project (optional)",
-        "projectNone": "None",
-        "start": "Start chat"
+        "start": "Start chat",
+        "browse": "Browse",
+        "cwdPlaceholder": "/path/to/project (optional)",
+        "modelPlaceholder": "Model",
+        "modelLoading": "Loading…"
       },
       "detail": {
         "loading": "Loading chat…",

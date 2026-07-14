@@ -32,6 +32,15 @@ export const SEAT_MODEL_PLACEHOLDER: Record<SeatProvider, string> = {
   antigravity: 'default (blank = CLI default)',
 }
 
+// Sensible default model per seat, pre-filled (editable) so the operator
+// doesn't hand-type an exact model string (a one-char typo like
+// "gpt-5.4-min" fails the whole seat). codex's own config default (gpt-5.4)
+// is rejected on a plain ChatGPT plan, so we default it to the model that
+// works there; claude/antigravity default to the CLI's own choice.
+export const SEAT_MODEL_DEFAULT: Partial<Record<SeatProvider, string>> = {
+  codex: 'gpt-5.4-mini',
+}
+
 export type RoundTableStatus = 'active' | 'closed'
 
 export type MessageRole = 'operator' | 'seat' | 'system'
@@ -73,6 +82,25 @@ export interface CreateRoundTableInput {
   topic?: string
   cwd?: string
   seats: Seat[]
+}
+
+// One selectable model for a seat provider (value passed to --model,
+// "" = CLI default).
+export interface SeatModelOption {
+  value: string
+  label: string
+}
+
+// GET the selectable models per provider — antigravity is enumerated live
+// from the CLI; claude/codex are curated. Drives the seat model dropdown so
+// nobody hand-types a model string.
+export async function listSeatModels(): Promise<
+  Record<string, SeatModelOption[]>
+> {
+  const res = await api<{ models: Record<string, SeatModelOption[]> }>(
+    '/api/v1/round-tables/models',
+  )
+  return res.models ?? {}
 }
 
 // GET list — unwraps the { round_tables } envelope, defaults to [].

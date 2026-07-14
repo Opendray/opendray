@@ -40,6 +40,9 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/round-tables", func(r chi.Router) {
 		r.Post("/", h.create)
 		r.Get("/", h.list)
+		// Literal /models must be registered before /{id} so chi routes it
+		// to the model catalog, not the get-by-id handler.
+		r.Get("/models", h.models)
 		r.Get("/{id}", h.get)
 		r.Post("/{id}/messages", h.postMessage)
 		r.Post("/{id}/summarize", h.summarize)
@@ -74,6 +77,14 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, rt)
+}
+
+// models returns the selectable model options per seat provider, so the
+// create dialog can offer a dropdown instead of a hand-typed model string.
+func (h *Handlers) models(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"models": ProviderModelOptions(r.Context()),
+	})
 }
 
 func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {

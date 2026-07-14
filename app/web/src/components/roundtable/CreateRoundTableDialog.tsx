@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { FolderOpen } from 'lucide-react'
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -14,11 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
 import { cn } from '@/lib/utils'
-import { listProjects } from '@/lib/projectDocs'
 import {
   createRoundTable,
-  SEAT_MODEL_PLACEHOLDER,
+  listSeatModels,
+  SEAT_MODEL_DEFAULT,
   SEAT_PROVIDERS,
   SEAT_VENDOR,
   type RoundTable,
@@ -34,30 +36,34 @@ interface Props {
 // Start with every vendor at the table by default.
 const DEFAULT_SEATS: SeatProvider[] = ['claude', 'codex', 'antigravity']
 
-// Sentinel for "no project" in the Select (empty string isn't a valid value).
-const NO_PROJECT = '__none__'
+// Radix Select forbids an empty-string item value, so "" (CLI default) is
+// represented by this sentinel in the dropdown and mapped back to "".
+const DEFAULT_MODEL = '__default__'
 
 export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [seats, setSeats] = useState<SeatProvider[]>(DEFAULT_SEATS)
+  // Per-seat model selection ("" = CLI default). Pre-seeded with sensible
+  // defaults (e.g. codex → gpt-5.4-mini) so nothing has to be typed.
   const [models, setModels] = useState<Partial<Record<SeatProvider, string>>>(
-    {},
+    () => ({ ...SEAT_MODEL_DEFAULT }),
   )
-  const [cwd, setCwd] = useState<string>(NO_PROJECT)
+  const [cwd, setCwd] = useState('')
+  const [browserOpen, setBrowserOpen] = useState(false)
 
-  // Known projects for the optional binding dropdown (memory recall).
-  const projects = useQuery({
-    queryKey: ['known-projects'],
-    queryFn: () => listProjects(),
-    staleTime: 30_000,
+  // Selectable models per provider (antigravity enumerated live from the CLI).
+  const modelsQuery = useQuery({
+    queryKey: ['round-table-models'],
+    queryFn: listSeatModels,
+    staleTime: 60_000,
     enabled: open,
   })
 
   const reset = () => {
     setSeats(DEFAULT_SEATS)
-    setModels({})
-    setCwd(NO_PROJECT)
+    setModels({ ...SEAT_MODEL_DEFAULT })
+    setCwd('')
   }
 
   const toggleSeat = (p: SeatProvider) =>
@@ -69,7 +75,7 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
     mutationFn: () =>
       createRoundTable({
         // No topic — the chat names itself from the first message.
-        cwd: cwd === NO_PROJECT ? undefined : cwd,
+        cwd: cwd.trim() || undefined,
         seats: seats.map((provider) => ({
           provider,
           model: models[provider]?.trim() || undefined,
@@ -104,6 +110,8 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
             <div className="flex flex-col gap-1.5">
               {SEAT_PROVIDERS.map((p) => {
                 const on = seats.includes(p)
+                const options = modelsQuery.data?.[p] ?? []
+                const current = models[p] ?? ''
                 return (
                   <div key={p} className="flex items-center gap-2">
                     <button
@@ -124,15 +132,36 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
                       </span>
                     </button>
                     {on && (
-                      <Input
-                        value={models[p] ?? ''}
-                        onChange={(e) =>
-                          setModels((cur) => ({ ...cur, [p]: e.target.value }))
+                      <Select
+                        value={current === '' ? DEFAULT_MODEL : current}
+                        onValueChange={(v) =>
+                          setModels((cur) => ({
+                            ...cur,
+                            [p]: v === DEFAULT_MODEL ? '' : v,
+                          }))
                         }
-                        placeholder={SEAT_MODEL_PLACEHOLDER[p]}
-                        className="h-8 flex-1 text-xs"
-                        aria-label={`${p} model`}
-                      />
+                      >
+                        <SelectTrigger className="h-8 flex-1 text-xs">
+                          <SelectValue
+                            placeholder={t('web.roundTable.dialog.modelPlaceholder')}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {options.length === 0 && (
+                            <SelectItem value={DEFAULT_MODEL}>
+                              {t('web.roundTable.dialog.modelLoading')}
+                            </SelectItem>
+                          )}
+                          {options.map((m) => (
+                            <SelectItem
+                              key={m.value || DEFAULT_MODEL}
+                              value={m.value || DEFAULT_MODEL}
+                            >
+                              {m.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
                 )
@@ -144,22 +173,26 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>{t('web.roundTable.dialog.project')}</Label>
-            <Select value={cwd} onValueChange={setCwd}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_PROJECT}>
-                  {t('web.roundTable.dialog.projectNone')}
-                </SelectItem>
-                {(projects.data ?? []).map((p) => (
-                  <SelectItem key={p.cwd} value={p.cwd}>
-                    {p.cwd}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="rt-cwd">{t('web.roundTable.dialog.project')}</Label>
+            <div className="flex gap-1.5">
+              <Input
+                id="rt-cwd"
+                value={cwd}
+                onChange={(e) => setCwd(e.target.value)}
+                placeholder={t('web.roundTable.dialog.cwdPlaceholder')}
+                className="flex-1 font-mono text-xs"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setBrowserOpen(true)}
+                className="shrink-0 gap-1"
+              >
+                <FolderOpen className="size-3.5" />
+                {t('web.roundTable.dialog.browse')}
+              </Button>
+            </div>
             <span className="text-[11px] text-muted-foreground">
               {t('web.roundTable.dialog.cwdHint')}
             </span>
@@ -178,6 +211,13 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
             {t('web.roundTable.dialog.start')}
           </Button>
         </div>
+
+        <FileBrowserDialog
+          open={browserOpen}
+          onOpenChange={setBrowserOpen}
+          initialPath={cwd.trim() || undefined}
+          onSelect={(p) => setCwd(p)}
+        />
       </DialogContent>
     </Dialog>
   )
