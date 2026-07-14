@@ -35,6 +35,7 @@ import (
 	_ "github.com/opendray/opendray-v2/internal/channel/telegram" // register kind=telegram
 	_ "github.com/opendray/opendray-v2/internal/channel/wechat"   // register kind=wechat (wxpusher push)
 	_ "github.com/opendray/opendray-v2/internal/channel/wecom"    // register kind=wecom
+	"github.com/opendray/opendray-v2/internal/checkpoint"
 	"github.com/opendray/opendray-v2/internal/cliacct"
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/cortex"
@@ -513,6 +514,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// the sessions it creates (create AND reactivate).
 		session.WithIntegrationSpawnProfiles(&integrationDefaultsLookup{svc: intgrSvc}),
 	)
+	// Context-level checkpoints (priority ②): snapshot each live session's
+	// cwd diff + untracked files + input history on graceful shutdown (and
+	// on demand). The service takes its session source after the manager is
+	// built (SetSessions), breaking the construction cycle where the manager
+	// needs it as a recorder while it needs the manager for manual captures.
+	checkpointSvc := checkpoint.NewService(st.Pool(), nil, expandPath("~/.opendray/checkpoints"), log)
+	sessionOpts = append(sessionOpts, session.WithCheckpointRecorder(checkpointSvc))
 	sessionMgr := session.NewManager(
 		st.Pool(),
 		bus,
@@ -520,6 +528,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		log,
 		sessionOpts...,
 	)
+	checkpointSvc.SetSessions(sessionMgr)
+	checkpointHandlers := checkpoint.NewHandlers(checkpointSvc, log)
 	// Best-effort reconcile of leftover rows from a prior gateway
 	// process — their PTYs are gone, so flip them to 'ended' so the
 	// web UI can stop the WS reconnect loop and show EndedSessionView.
@@ -1290,6 +1300,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				proxyHandlers.Mount(r)
 				fsHandlers.Mount(r)
 				gitHandlers.Mount(r)
+				checkpointHandlers.Mount(r)
 				gitHandlers.MountWrite(r)
 				gitHostHandlers.Mount(r)
 				customTaskHandlers.Mount(r)

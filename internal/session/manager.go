@@ -23,9 +23,13 @@ import (
 const (
 	// DefaultRingSize is the per-session stdout ring buffer capacity.
 	DefaultRingSize = 1 << 20 // 1 MiB
-	fanoutBuffer    = 64
-	pumpBufSize     = 4096
-	terminateGrace  = 3 * time.Second
+	// inputRingSize is the per-session stdin (operator input) ring
+	// capacity kept for context checkpoints. Small: it's an input-history
+	// tail for recovery context, not a full transcript.
+	inputRingSize  = 64 << 10 // 64 KiB
+	fanoutBuffer   = 64
+	pumpBufSize    = 4096
+	terminateGrace = 3 * time.Second
 
 	// defaultIdleThreshold is deliberately generous: "idle" is only a
 	// soft notification/label — the session process keeps running and
@@ -136,6 +140,22 @@ func WithAutoFailoverEnabled(enabled bool) ManagerOption {
 	return func(m *Manager) { m.autoFailoverEnabled = enabled }
 }
 
+// CheckpointRecorder captures a session's context (cwd snapshot +
+// uncommitted diff + input history) when the gateway is about to interrupt
+// it. Wired as a small interface so session doesn't import the checkpoint
+// package. Nil disables checkpointing. CaptureInterrupt must be
+// self-contained (own timeout) and never block indefinitely — it runs
+// during shutdown.
+type CheckpointRecorder interface {
+	CaptureInterrupt(sessionID, cwd string, input []byte)
+}
+
+// WithCheckpointRecorder injects the context-checkpoint recorder invoked on
+// graceful shutdown (before processes are terminated). Defaults to nil.
+func WithCheckpointRecorder(r CheckpointRecorder) ManagerOption {
+	return func(m *Manager) { m.checkpoints = r }
+}
+
 // WithIntegrationSpawnProfiles wires the resolver the manager uses to
 // look up the provider-agnostic spawn profile (MCP servers + system
 // prompt + auto-approve) an integration declares, and apply it to every
@@ -195,6 +215,7 @@ type Manager struct {
 	antigravityAccounts AntigravityAccountResolver // optional; nil disables antigravity conversation resume/carry
 	autoFailoverEnabled bool                       // when true + claudeAccounts != nil, rate-limit scanner is hot
 	spawnProfiles       IntegrationSpawnProfiles   // optional; nil disables integration spawn-profile injection
+	checkpoints         CheckpointRecorder         // optional; nil disables context checkpoints on interrupt
 
 	idleThreshold time.Duration
 	idleInterval  time.Duration
@@ -268,6 +289,10 @@ type runningSession struct {
 	cmd  *exec.Cmd
 	pty  *os.File
 	ring *RingBuffer
+	// inputRing keeps a bounded tail of the operator input sent to the
+	// PTY, so a context checkpoint can record the recent input history.
+	// Output history lives in `ring`; this is the stdin side.
+	inputRing *RingBuffer
 	// vt is a virtual-terminal emulator fed in lockstep with `ring`.
 	// ring keeps the byte-stream history for client replay; vt keeps
 	// the *current screen* (post-redraw) for snapshots used by
@@ -825,6 +850,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		cmd:          cmd,
 		pty:          ptmx,
 		ring:         NewRing(DefaultRingSize),
+		inputRing:    NewRing(inputRingSize),
 		vt:           vt10x.New(vt10x.WithSize(defaultVTCols, defaultVTRows)),
 		tempDir:      tempDir,
 		subs:         make(map[chan []byte]struct{}),
@@ -867,6 +893,25 @@ func (m *Manager) lookup(id string) *runningSession {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.sessions[id]
+}
+
+// CheckpointContext returns a live session's working directory and its
+// operator input-history tail, for the checkpoint service's manual-capture
+// path. ok is false when the session isn't tracked in memory (only live
+// sessions can be checkpointed — a terminal row has no runtime context).
+// Implements checkpoint.SessionInfo without importing the checkpoint pkg.
+func (m *Manager) CheckpointContext(id string) (cwd string, input []byte, ok bool) {
+	rs := m.lookup(id)
+	if rs == nil {
+		return "", nil, false
+	}
+	rs.sessMu.RLock()
+	cwd = rs.sess.Cwd
+	rs.sessMu.RUnlock()
+	if rs.inputRing != nil {
+		input = rs.inputRing.Snapshot()
+	}
+	return cwd, input, true
 }
 
 // snapshot returns the in-memory Session view for id, or the zero Session
@@ -1405,6 +1450,11 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	if _, err := rs.pty.Write(data); err != nil {
 		return fmt.Errorf("pty write: %w", err)
 	}
+	// Record the input tail for context checkpoints. Best-effort; the ring
+	// is independently locked so this never blocks the PTY write path.
+	if rs.inputRing != nil {
+		_, _ = rs.inputRing.Write(data)
+	}
 	if rs.markActive(time.Now()) {
 		m.flipBackToRunning(rs)
 	}
@@ -1519,6 +1569,48 @@ func (m *Manager) History(ctx context.Context, id string, limit int) (HistoryRes
 
 // Shutdown signals SIGTERM to all live sessions, waits up to 5s, then
 // SIGKILL stragglers. Idempotent.
+// checkpointShutdownBudget bounds the total time the interrupt-checkpoint
+// pass may take during shutdown before we proceed to terminate processes.
+// Each capture also has its own internal timeout; this caps the aggregate.
+const checkpointShutdownBudget = 10 * time.Second
+
+// checkpointLiveOnShutdown snapshots the context of every live session
+// concurrently (bounded), waiting at most checkpointShutdownBudget before
+// returning so shutdown stays responsive. Best-effort: capture errors are
+// logged inside the recorder, never surfaced here.
+func (m *Manager) checkpointLiveOnShutdown(rss []*runningSession) {
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, autoResumeConcurrency)
+	for _, rs := range rss {
+		rs.sessMu.RLock()
+		terminal := rs.sess.State.IsTerminal()
+		id := rs.sess.ID
+		cwd := rs.sess.Cwd
+		rs.sessMu.RUnlock()
+		if terminal {
+			continue
+		}
+		var input []byte
+		if rs.inputRing != nil {
+			input = rs.inputRing.Snapshot()
+		}
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(id, cwd string, input []byte) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			m.checkpoints.CaptureInterrupt(id, cwd, input)
+		}(id, cwd, input)
+	}
+	done := make(chan struct{})
+	go func() { wg.Wait(); close(done) }()
+	select {
+	case <-done:
+	case <-time.After(checkpointShutdownBudget):
+		m.log.Warn("shutdown checkpoint capture exceeded budget; proceeding to terminate")
+	}
+}
+
 func (m *Manager) Shutdown(ctx context.Context) error {
 	m.mu.Lock()
 	if m.closed {
@@ -1531,6 +1623,13 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 		rss = append(rss, rs)
 	}
 	m.mu.Unlock()
+
+	// Capture context checkpoints for the live sessions BEFORE terminating
+	// them, while each cwd is still in its working state. Bounded so a
+	// wedged repo can't stall shutdown indefinitely.
+	if m.checkpoints != nil {
+		m.checkpointLiveOnShutdown(rss)
+	}
 
 	for _, rs := range rss {
 		rs.sessMu.RLock()
