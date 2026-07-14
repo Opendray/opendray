@@ -3430,7 +3430,8 @@
           "history": "Historial",
           "vault": "Bóveda",
           "cortex": "Cortex",
-          "database": "BD"
+          "database": "BD",
+          "checkpoints": "Puntos de control"
         }
       },
       "cortex": {
@@ -3524,6 +3525,27 @@
         "noProjectMapping2": "(sin asignación de proyecto)",
         "clearOverride": "Borrar anulación",
         "save": "Guardar"
+      },
+      "checkpoints": {
+        "blurb": "Captura el diff sin confirmar, los archivos sin seguimiento y el historial de entrada de esta sesión.",
+        "capture": "Capturar",
+        "capturedGit": "diff {diff}B · {files} archivos sin seguimiento",
+        "capturedNonGit": "Solo metadatos (no es un repo git)",
+        "empty": "Aún no hay puntos de control. Captura uno ahora, o se crea automáticamente al apagar el gateway.",
+        "triggerManual": "Manual",
+        "triggerInterrupted": "Interrumpido",
+        "truncatedHint": "Un límite de tamaño/cantidad recortó esta captura; es parcial.",
+        "nonGit": "No es un repositorio git",
+        "viewDiff": "Ver diff",
+        "hideDiff": "Ocultar diff",
+        "restore": "Restaurar",
+        "restoreTitle": "¿Restaurar punto de control?",
+        "restoreWarn": "Reaplica esta captura sobre el directorio de trabajo. Solo se ejecuta si HEAD coincide y no hay cambios rastreados sin confirmar; los archivos sin seguimiento nunca se sobrescriben.",
+        "restoreConfirm": "Restaurar",
+        "restored": "Restaurado · {files} archivos, {skipped} omitidos",
+        "delete": "Eliminar",
+        "deleteTitle": "¿Eliminar punto de control?",
+        "deleteConfirm": "Esto elimina el punto de control y su contenido almacenado."
       }
     },
     "spawnSheet": {

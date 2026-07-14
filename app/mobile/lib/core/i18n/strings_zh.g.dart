@@ -1941,6 +1941,7 @@ class _TranslationsSessionsInspectorZh extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitZh git = _TranslationsSessionsInspectorGitZh._(_root);
 	@override late final _TranslationsSessionsInspectorTasksZh tasks = _TranslationsSessionsInspectorTasksZh._(_root);
 	@override late final _TranslationsSessionsInspectorNotesZh notes = _TranslationsSessionsInspectorNotesZh._(_root);
+	@override late final _TranslationsSessionsInspectorCheckpointsZh checkpoints = _TranslationsSessionsInspectorCheckpointsZh._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -3297,6 +3298,7 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorTabsZh tabs = _TranslationsWebSessionsInspectorTabsZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorVaultPanelZh vaultPanel = _TranslationsWebSessionsInspectorVaultPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelZh cortexPanel = _TranslationsWebSessionsInspectorCortexPanelZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorCheckpointsZh checkpoints = _TranslationsWebSessionsInspectorCheckpointsZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -4167,6 +4169,7 @@ class _TranslationsWebProvidersDetailZh extends TranslationsWebProvidersDetailEn
 	@override String get toggleFailedToast => '切换失败';
 	@override late final _TranslationsWebProvidersDetailCapsZh caps = _TranslationsWebProvidersDetailCapsZh._(_root);
 	@override String get notInstalled => '未安装';
+	@override String get brokenCli => '已安装但无法运行';
 	@override String updateAvailable({required Object version}) => '有可用更新 → ${version}';
 	@override String get upToDate => '已是最新';
 	@override String update({required Object version}) => '更新到 ${version}';
@@ -6536,6 +6539,34 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get save => '保存';
 }
 
+// Path: sessions.inspector.checkpoints
+class _TranslationsSessionsInspectorCheckpointsZh extends TranslationsSessionsInspectorCheckpointsEn {
+	_TranslationsSessionsInspectorCheckpointsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get blurb => '快照本会话的未提交 diff、未跟踪文件与输入历史。';
+	@override String get capture => '捕获';
+	@override String capturedGit({required Object diff, required Object files}) => 'diff ${diff}B · ${files} 个未跟踪文件';
+	@override String get capturedNonGit => '仅元数据(非 git 仓库)';
+	@override String get empty => '还没有检查点。可以现在捕获一个,或在网关关闭时自动生成。';
+	@override String get triggerManual => '手动';
+	@override String get triggerInterrupted => '中断';
+	@override String get truncatedHint => '大小/数量上限裁剪了本次捕获,内容不完整。';
+	@override String get nonGit => '非 git 仓库';
+	@override String get viewDiff => '查看 diff';
+	@override String get hideDiff => '隐藏 diff';
+	@override String get restore => '恢复';
+	@override String get restoreTitle => '恢复检查点?';
+	@override String get restoreWarn => '将此快照重新应用到工作目录。仅当 HEAD 一致且无未提交的已跟踪改动时执行;未跟踪文件绝不覆盖。';
+	@override String get restoreConfirm => '恢复';
+	@override String restored({required Object files, required Object skipped}) => '已恢复 · ${files} 个文件,跳过 ${skipped} 个';
+	@override String get delete => '删除';
+	@override String get deleteTitle => '删除检查点?';
+	@override String get deleteConfirm => '将移除该检查点及其存储的内容。';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7115,6 +7146,7 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
 	@override String get database => '数据库';
+	@override String get checkpoints => '检查点';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -7166,6 +7198,34 @@ class _TranslationsWebSessionsInspectorCortexPanelZh extends TranslationsWebSess
 	@override String get plan => '计划';
 	@override String get latestJournal => '最新日志';
 	@override String get empty => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。';
+}
+
+// Path: web.sessions.inspector.checkpoints
+class _TranslationsWebSessionsInspectorCheckpointsZh extends TranslationsWebSessionsInspectorCheckpointsEn {
+	_TranslationsWebSessionsInspectorCheckpointsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => '加载中…';
+	@override String get blurb => '快照本会话的未提交 diff、未跟踪文件与输入历史——之后可恢复。';
+	@override String get capture => '捕获';
+	@override String get captured => '检查点已捕获';
+	@override String capturedGit({required Object diff, required Object files}) => 'diff ${diff}B · ${files} 个未跟踪文件';
+	@override String get capturedNonGit => '仅元数据(非 git 仓库)';
+	@override String get empty => '还没有检查点。可以现在捕获一个,或在网关关闭时自动生成。';
+	@override late final _TranslationsWebSessionsInspectorCheckpointsTriggerZh trigger = _TranslationsWebSessionsInspectorCheckpointsTriggerZh._(_root);
+	@override String get truncated => '已截断';
+	@override String get truncatedHint => '大小/数量上限裁剪了本次捕获,内容不完整。';
+	@override String get nonGit => '非 git 仓库';
+	@override String get hideDiff => '隐藏 diff';
+	@override String get viewDiff => '查看 diff';
+	@override String get restore => '恢复';
+	@override String get restoreWarn => '将此快照重新应用到工作目录。仅当 HEAD 一致且无未提交的已跟踪改动时执行;未跟踪文件绝不覆盖。';
+	@override String get restoreConfirm => '确认恢复';
+	@override String get restored => '检查点已恢复';
+	@override String restoredDetail({required Object diff, required Object files, required Object skipped}) => 'diff 应用:${diff} · 恢复 ${files} 个文件 · 跳过 ${skipped} 个';
+	@override String get deleteConfirm => '删除此检查点?';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9122,6 +9182,18 @@ class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInsp
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
 	@override String get database => '数据库';
+	@override String get checkpoints => '检查点';
+}
+
+// Path: web.sessions.inspector.checkpoints.trigger
+class _TranslationsWebSessionsInspectorCheckpointsTriggerZh extends TranslationsWebSessionsInspectorCheckpointsTriggerEn {
+	_TranslationsWebSessionsInspectorCheckpointsTriggerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get manual => '手动';
+	@override String get interrupted => '中断';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9396,6 +9468,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.vault' => '文档库',
 			'web.sessions.inspector.tabs.cortex' => '心智中枢',
 			'web.sessions.inspector.tabs.database' => '数据库',
+			'web.sessions.inspector.tabs.checkpoints' => '检查点',
 			'web.sessions.inspector.vaultPanel.open' => '打开文档库',
 			'web.sessions.inspector.vaultPanel.projectDocs' => '项目文档',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => '文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。',
@@ -9429,6 +9502,26 @@ extension on TranslationsZh {
 			'web.sessions.inspector.cortexPanel.plan' => '计划',
 			'web.sessions.inspector.cortexPanel.latestJournal' => '最新日志',
 			'web.sessions.inspector.cortexPanel.empty' => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。',
+			'web.sessions.inspector.checkpoints.loading' => '加载中…',
+			'web.sessions.inspector.checkpoints.blurb' => '快照本会话的未提交 diff、未跟踪文件与输入历史——之后可恢复。',
+			'web.sessions.inspector.checkpoints.capture' => '捕获',
+			'web.sessions.inspector.checkpoints.captured' => '检查点已捕获',
+			'web.sessions.inspector.checkpoints.capturedGit' => ({required Object diff, required Object files}) => 'diff ${diff}B · ${files} 个未跟踪文件',
+			'web.sessions.inspector.checkpoints.capturedNonGit' => '仅元数据(非 git 仓库)',
+			'web.sessions.inspector.checkpoints.empty' => '还没有检查点。可以现在捕获一个,或在网关关闭时自动生成。',
+			'web.sessions.inspector.checkpoints.trigger.manual' => '手动',
+			'web.sessions.inspector.checkpoints.trigger.interrupted' => '中断',
+			'web.sessions.inspector.checkpoints.truncated' => '已截断',
+			'web.sessions.inspector.checkpoints.truncatedHint' => '大小/数量上限裁剪了本次捕获,内容不完整。',
+			'web.sessions.inspector.checkpoints.nonGit' => '非 git 仓库',
+			'web.sessions.inspector.checkpoints.hideDiff' => '隐藏 diff',
+			'web.sessions.inspector.checkpoints.viewDiff' => '查看 diff',
+			'web.sessions.inspector.checkpoints.restore' => '恢复',
+			'web.sessions.inspector.checkpoints.restoreWarn' => '将此快照重新应用到工作目录。仅当 HEAD 一致且无未提交的已跟踪改动时执行;未跟踪文件绝不覆盖。',
+			'web.sessions.inspector.checkpoints.restoreConfirm' => '确认恢复',
+			'web.sessions.inspector.checkpoints.restored' => '检查点已恢复',
+			'web.sessions.inspector.checkpoints.restoredDetail' => ({required Object diff, required Object files, required Object skipped}) => 'diff 应用:${diff} · 恢复 ${files} 个文件 · 跳过 ${skipped} 个',
+			'web.sessions.inspector.checkpoints.deleteConfirm' => '删除此检查点?',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -9682,6 +9775,8 @@ extension on TranslationsZh {
 			'web.project.editor.savedToast' => ({required Object label}) => '${label}已保存',
 			'web.project.editor.goalPlaceholder' => '我们在做什么？一段文字。每个 agent 在 spawn 时都会读取。',
 			'web.project.editor.planPlaceholder' => '当前计划 — 现在在做什么、下一步是什么。随进度更新。',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.editor.sectionPlaceholder' => '以 markdown 撰写本章节…',
 			'web.project.readonly.tech_stack.label' => '技术栈与结构',
 			'web.project.readonly.tech_stack.empty' => '在该项目运行一次 Claude 会话 — scanner 会在每次 spawn 时刷新。',
@@ -9703,8 +9798,6 @@ extension on TranslationsZh {
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => '批准将完全替换当前${label}。',
 			'web.project.inbox.warningSuffix' => '请检查下方 diff；这不是合并。',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.current' => '当前',
 			'web.project.inbox.proposed' => '提议',
 			'web.project.inbox.emptyBody' => '(空)',
@@ -10110,6 +10203,7 @@ extension on TranslationsZh {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
+			'web.providers.detail.brokenCli' => '已安装但无法运行',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => '有可用更新 → ${version}',
 			'web.providers.detail.upToDate' => '已是最新',
 			'web.providers.detail.update' => ({required Object version}) => '更新到 ${version}',
@@ -10195,6 +10289,8 @@ extension on TranslationsZh {
 			'web.channels.card.copyWebhookTooltip' => '复制 webhook URL',
 			'web.channels.card.webhookCopiedToast' => '已复制 webhook URL',
 			'web.channels.card.setup' => '配置',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.card.setupTooltip' => '查看适配器连接信息和示例代码',
 			'web.channels.card.test' => '测试',
 			'web.channels.card.testNotRunningTooltip' => '频道必须处于运行状态',
@@ -10217,8 +10313,6 @@ extension on TranslationsZh {
 			'web.channels.dialog.editTitle' => '编辑频道',
 			'web.channels.dialog.createTitle' => '注册频道',
 			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.dialog.descriptionDefault' => '配置消息集成。',
 			'web.channels.dialog.kindLabel' => '类型',
 			'web.channels.dialog.kindImmutable' => '（不可更改 — 如需更换类型请删除后重建）',
@@ -10709,6 +10803,8 @@ extension on TranslationsZh {
 			'web.backups.recoveryKit.confirmLabel' => '确认恢复口令',
 			'web.backups.recoveryKit.mismatch' => '两次口令不一致',
 			'web.backups.recoveryKit.generating' => '生成中…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.recoveryKit.download' => '下载工具包',
 			'web.backups.recoveryKit.downloadedToast' => '恢复工具包已下载 —— 请妥善保存',
 			'web.backups.recoveryKit.failedToast' => '无法生成恢复工具包',
@@ -10731,8 +10827,6 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.deleteTooltip' => '删除',
 			'web.backups.newSchedule.title' => '新建备份计划',
 			'web.backups.newSchedule.targetLabel' => '目标',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.newSchedule.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'web.backups.newSchedule.everyHoursLabel' => '每隔（小时）',
 			'web.backups.newSchedule.keepLastNLabel' => '保留最近 N 个',
@@ -11223,6 +11317,8 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.row.deletedToast' => '规则已删除',
 			'web.memoryAmbient.rules.row.deleteFailedToast' => '删除失败',
 			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => '每 ${n} 条消息',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.rules.row.summary.onIdle' => ({required Object seconds}) => 'idle ≥ ${seconds}s',
 			'web.memoryAmbient.rules.row.summary.kChars' => ({required Object k}) => '≥ ${k} 字符',
 			'web.memoryAmbient.rules.row.summary.manual' => '仅手动',
@@ -11245,8 +11341,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.profiles.addButton' => '添加 profile',
 			'web.memoryAmbient.profiles.intro' => 'spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。',
 			'web.memoryAmbient.profiles.empty' => '尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.profiles.row.globalDefault' => '全局默认',
 			'web.memoryAmbient.profiles.row.delete' => '删除',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => '删除该 injection profile?',
@@ -11737,6 +11831,8 @@ extension on TranslationsZh {
 			'memoryAmbient.strategyManualOnly' => '仅手动',
 			'memoryAmbient.strategyHybrid' => '混合摘要',
 			'memoryAmbient.strategyUnknown' => '未知',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.title' => '会话',
 			'sessions.refresh' => '刷新',
 			'sessions.actions' => '操作',
@@ -11759,8 +11855,6 @@ extension on TranslationsZh {
 			'sessions.detail.refreshMetadata' => '刷新元数据',
 			'sessions.detail.inspector' => '检查器（文件 / Git / 任务 / 历史 / 笔记）',
 			'sessions.detail.projectMemory' => '项目记忆（目标 / 计划 / 日志 / 收件箱）',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.actions' => '操作',
 			'sessions.detail.started' => ({required Object when}) => '${when} 启动',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束',
@@ -11841,6 +11935,7 @@ extension on TranslationsZh {
 			'sessions.inspector.shell.tabs.vault' => '文档库',
 			'sessions.inspector.shell.tabs.cortex' => '心智中枢',
 			'sessions.inspector.shell.tabs.database' => '数据库',
+			'sessions.inspector.shell.tabs.checkpoints' => '检查点',
 			'sessions.inspector.cortex.title' => '心智中枢工作区',
 			'sessions.inspector.cortex.blurb' => '本项目的目标、计划、日志、收件箱与记忆整理 —— 由 AI 维护的心智中枢。',
 			'sessions.inspector.cortex.open' => '打开心智中枢工作区',
@@ -11919,6 +12014,25 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
+			'sessions.inspector.checkpoints.blurb' => '快照本会话的未提交 diff、未跟踪文件与输入历史。',
+			'sessions.inspector.checkpoints.capture' => '捕获',
+			'sessions.inspector.checkpoints.capturedGit' => ({required Object diff, required Object files}) => 'diff ${diff}B · ${files} 个未跟踪文件',
+			'sessions.inspector.checkpoints.capturedNonGit' => '仅元数据(非 git 仓库)',
+			'sessions.inspector.checkpoints.empty' => '还没有检查点。可以现在捕获一个,或在网关关闭时自动生成。',
+			'sessions.inspector.checkpoints.triggerManual' => '手动',
+			'sessions.inspector.checkpoints.triggerInterrupted' => '中断',
+			'sessions.inspector.checkpoints.truncatedHint' => '大小/数量上限裁剪了本次捕获,内容不完整。',
+			'sessions.inspector.checkpoints.nonGit' => '非 git 仓库',
+			'sessions.inspector.checkpoints.viewDiff' => '查看 diff',
+			'sessions.inspector.checkpoints.hideDiff' => '隐藏 diff',
+			'sessions.inspector.checkpoints.restore' => '恢复',
+			'sessions.inspector.checkpoints.restoreTitle' => '恢复检查点?',
+			'sessions.inspector.checkpoints.restoreWarn' => '将此快照重新应用到工作目录。仅当 HEAD 一致且无未提交的已跟踪改动时执行;未跟踪文件绝不覆盖。',
+			'sessions.inspector.checkpoints.restoreConfirm' => '恢复',
+			'sessions.inspector.checkpoints.restored' => ({required Object files, required Object skipped}) => '已恢复 · ${files} 个文件,跳过 ${skipped} 个',
+			'sessions.inspector.checkpoints.delete' => '删除',
+			'sessions.inspector.checkpoints.deleteTitle' => '删除检查点?',
+			'sessions.inspector.checkpoints.deleteConfirm' => '将移除该检查点及其存储的内容。',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12231,6 +12345,8 @@ extension on TranslationsZh {
 			'memoryArchived.restoreAllConfirm' => ({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？',
 			'memoryArchived.deleteAllConfirm' => ({required Object project, required Object count}) => '永久删除 ${project} 的全部 ${count} 条归档记忆？将跳过 30 天宽限期，且不可撤销。',
 			'memoryArchived.deletePermanently' => '删除',
+			_ => null,
+		} ?? switch (path) {
 			'memoryArchived.deleteConfirm' => '立即永久删除这条记忆？将跳过 30 天宽限期，且不可撤销。',
 			'memoryArchived.restoredToast' => '已恢复',
 			'memoryArchived.restoredAllToast' => ({required Object count}) => '已恢复 ${count} 条记忆',
@@ -12273,8 +12389,6 @@ extension on TranslationsZh {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）',
 			'project.conflicts.deleteLoading' => '加载中…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
-			_ => null,
-		} ?? switch (path) {
 			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
 			'project.conflicts.openPlanEditor' => '打开计划编辑器',
 			'project.conflicts.openGoalEditor' => '打开目标编辑器',
@@ -12745,6 +12859,8 @@ extension on TranslationsZh {
 			'skills.resetButton' => '重置',
 			'skills.resetSnack' => ({required Object id}) => '已将 ${id} 重置为内置。',
 			'skills.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
+			_ => null,
+		} ?? switch (path) {
 			'skills.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
 			'skills.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'skills.deleteBody' => ({required Object id}) => '从库中移除 ${id}。引用它的会话在恢复前会失败。',
@@ -12787,8 +12903,6 @@ extension on TranslationsZh {
 			'customTasks.fieldCommand' => '命令',
 			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
 			'customTasks.fieldDescription' => '描述（可选）',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.fieldScope' => '范围',
 			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
 			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
