@@ -85,7 +85,7 @@ export function RoundTablePanel() {
       {/* Detail column */}
       <div className="min-w-0 flex-1 overflow-y-auto">
         {selected ? (
-          <RoundTableDetail id={selected} />
+          <RoundTableDetail id={selected} onDeleted={() => setSelected(null)} />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             {t('web.roundTable.selectHint')}

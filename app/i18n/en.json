@@ -3156,7 +3156,9 @@
         "replying": "members are replying…",
         "mentionHint": "Mention:",
         "composerPlaceholder": "Message the group…  (@claude, @all — ⌘/Ctrl+Enter to send)",
-        "send": "Send"
+        "send": "Send",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this chat and all its messages? This cannot be undone."
       },
       "status": {
         "active": "Active",

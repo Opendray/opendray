@@ -47,6 +47,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/{id}/messages", h.postMessage)
 		r.Post("/{id}/summarize", h.summarize)
 		r.Post("/{id}/close", h.close)
+		r.Delete("/{id}", h.remove)
 	})
 }
 
@@ -176,6 +177,21 @@ func (h *Handlers) close(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.store.SetStatus(r.Context(), chi.URLParam(r, "id"), StatusClosed); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handlers) remove(w http.ResponseWriter, r *http.Request) {
+	if !h.ready(w) {
+		return
+	}
+	if err := h.store.Delete(r.Context(), chi.URLParam(r, "id")); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 			return

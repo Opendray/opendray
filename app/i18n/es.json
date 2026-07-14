@@ -3156,7 +3156,9 @@
         "replying": "los miembros están respondiendo…",
         "mentionHint": "Mencionar:",
         "composerPlaceholder": "Mensaje al grupo…  (@claude, @all — ⌘/Ctrl+Enter para enviar)",
-        "send": "Enviar"
+        "send": "Enviar",
+        "delete": "Eliminar",
+        "deleteConfirm": "¿Eliminar este chat y todos sus mensajes? No se puede deshacer."
       },
       "status": {
         "active": "Activa",

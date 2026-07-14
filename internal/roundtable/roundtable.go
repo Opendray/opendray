@@ -259,6 +259,35 @@ func (s *Store) SetTopic(ctx context.Context, id, topic string) error {
 	return nil
 }
 
+// Delete permanently removes a chat and its messages (round_table_messages
+// cascade via the FK). Unlike close (which keeps the thread), this is
+// irreversible.
+func (s *Store) Delete(ctx context.Context, id string) error {
+	tag, err := s.pool.Exec(ctx, `DELETE FROM round_tables WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("roundtable: delete: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// SetResultingSession records the PTY session a chat was handed off to for
+// execution (Phase 2 — turning the discussion into real code changes).
+func (s *Store) SetResultingSession(ctx context.Context, id, sessionID string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE round_tables SET resulting_session_id = $1, updated_at = NOW() WHERE id = $2`,
+		sessionID, id)
+	if err != nil {
+		return fmt.Errorf("roundtable: set resulting session: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // SetStatus updates the chat status (active | closed).
 func (s *Store) SetStatus(ctx context.Context, id, status string) error {
 	if status != StatusActive && status != StatusClosed {

@@ -151,7 +151,12 @@ export async function summarizeRoundTable(
   })
 }
 
-// POST close.
+// POST close — keeps the thread but stops new messages.
 export async function closeRoundTable(id: string): Promise<void> {
   await api<void>(`/api/v1/round-tables/${id}/close`, { method: 'POST' })
+}
+
+// DELETE — permanently removes the chat and its messages.
+export async function deleteRoundTable(id: string): Promise<void> {
+  await api<void>(`/api/v1/round-tables/${id}`, { method: 'DELETE' })
 }

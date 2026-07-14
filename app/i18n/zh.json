@@ -3156,7 +3156,9 @@
         "replying": "成员正在回复…",
         "mentionHint": "点名:",
         "composerPlaceholder": "给群里发消息…(@claude、@all — ⌘/Ctrl+Enter 发送)",
-        "send": "发送"
+        "send": "发送",
+        "delete": "删除",
+        "deleteConfirm": "删除这个群聊及其所有消息?此操作不可撤销。"
       },
       "status": {
         "active": "进行中",

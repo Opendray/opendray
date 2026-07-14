@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Loader2, Send, Sparkles, Users } from 'lucide-react'
+import { Loader2, Send, Sparkles, Trash2, Users } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
   closeRoundTable,
+  deleteRoundTable,
   getRoundTable,
   postMessage,
   summarizeRoundTable,
@@ -23,7 +24,13 @@ const SEAT_BUBBLE: Record<string, string> = {
   antigravity: 'border-sky-500/30 bg-sky-500/10',
 }
 
-export function RoundTableDetail({ id }: { id: string }) {
+export function RoundTableDetail({
+  id,
+  onDeleted,
+}: {
+  id: string
+  onDeleted?: () => void
+}) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [draft, setDraft] = useState('')
@@ -69,6 +76,15 @@ export function RoundTableDetail({ id }: { id: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['round-table', id] })
       qc.invalidateQueries({ queryKey: ['round-tables'] })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const remove = useMutation({
+    mutationFn: () => deleteRoundTable(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['round-tables'] })
+      onDeleted?.()
     },
     onError: (e: Error) => toast.error(e.message),
   })
@@ -150,6 +166,19 @@ export function RoundTableDetail({ id }: { id: string }) {
               {t('web.roundTable.detail.close')}
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={remove.isPending}
+            onClick={() => {
+              if (window.confirm(t('web.roundTable.detail.deleteConfirm'))) {
+                remove.mutate()
+              }
+            }}
+            title={t('web.roundTable.detail.delete')}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
         </div>
       </div>
 
