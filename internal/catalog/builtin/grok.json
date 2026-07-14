@@ -9,7 +9,7 @@
   "version": "1.0.0",
   "kind": "cli",
   "executable": "grok",
-  "npmPackage": "",
+  "npmPackage": "@xai-official/grok",
   "modelFlag": "--model",
   "knownModels": [
     "grok-build",
@@ -28,8 +28,8 @@
       "label_zh": "认证",
       "type": "note",
       "group": "auth",
-      "description": "Grok signs in with your xAI account. Install the CLI on the gateway host with `curl -fsSL https://x.ai/cli/install.sh | bash`, then run `grok login` once as the opendray user (or set GROK_DEPLOYMENT_KEY). Credentials are written to ~/.grok/auth.json, which the daemon reads at spawn time. No API key is set here.",
-      "description_zh": "Grok 使用你的 xAI 账号登录。在网关主机上用 `curl -fsSL https://x.ai/cli/install.sh | bash` 安装 CLI，然后以 opendray 用户身份运行一次 `grok login`（或设置 GROK_DEPLOYMENT_KEY）。凭据写入 ~/.grok/auth.json，守护进程在启动会话时读取。此处无需填写 API 密钥。"
+      "description": "Grok signs in with your xAI account. Install the CLI on the gateway host with `npm install -g @xai-official/grok` (preferred — lets opendray check for and apply updates from the Providers page), then run `grok login` once as the opendray user (or set GROK_DEPLOYMENT_KEY). The x.ai installer script (`curl -fsSL https://x.ai/cli/install.sh | bash`) also works; opendray will migrate it to npm on the first update. Credentials are written to ~/.grok/auth.json, which the daemon reads at spawn time. No API key is set here.",
+      "description_zh": "Grok 使用你的 xAI 账号登录。在网关主机上用 `npm install -g @xai-official/grok` 安装 CLI（推荐 —— 这样 opendray 才能在「提供方」页面检查并应用更新），然后以 opendray 用户身份运行一次 `grok login`（或设置 GROK_DEPLOYMENT_KEY）。也可使用 x.ai 安装脚本（`curl -fsSL https://x.ai/cli/install.sh | bash`）；opendray 会在首次更新时将其迁移到 npm。凭据写入 ~/.grok/auth.json，守护进程在启动会话时读取。此处无需填写 API 密钥。"
     },
     {
       "key": "bypassPermissions",

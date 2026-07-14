@@ -10,6 +10,26 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Grok now reports and applies CLI updates from the Providers page.** The
+  `grok` manifest carried an empty `npmPackage`, and the whole update path is
+  npm-gated: `CheckUpdate` returned early (no latest version, no
+  "update available" flag) and `Update` hard-errored with "not updatable via
+  npm". Grok is published as `@xai-official/grok` (maintainer
+  `xai-security@x.ai`), so the manifest now names it.
+- **A provider CLI installed outside npm can now be updated in place.** Grok's
+  documented installer (`curl -fsSL https://x.ai/cli/install.sh | bash`) drops
+  a symlink into the npm bin dir that npm does not own, and npm refuses to
+  clobber it — `EEXIST: file already exists`. Simply naming the package would
+  therefore have shipped a dashboard that advertises an update behind a button
+  that always fails. `Update` now preflights the bin path: an unmanaged
+  **symlink** is cleared so npm can take ownership (and the update output tells
+  the operator exactly which link was replaced), while a regular **file** is
+  never deleted — it is reported instead, mirroring the existing
+  `ErrUpdatePrefixReadonly` preflight. Grok's install note now recommends
+  `npm install -g @xai-official/grok`.
+
 ## [v2.11.6] — 2026-07-13
 
 ### Fixed
