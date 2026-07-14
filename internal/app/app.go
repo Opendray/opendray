@@ -2521,6 +2521,30 @@ func (l *roundTableSessionLauncher) Launch(ctx context.Context, spec roundtable.
 	return sess.ID, nil
 }
 
+// Alive reports whether a prior handoff session still exists and hasn't
+// terminated — so a second handoff can continue in it.
+func (l *roundTableSessionLauncher) Alive(ctx context.Context, sessionID string) bool {
+	sess, err := l.mgr.Get(ctx, sessionID)
+	if err != nil {
+		return false
+	}
+	return !sess.State.IsTerminal()
+}
+
+// Deliver types a follow-up prompt into an existing (already booted) session.
+func (l *roundTableSessionLauncher) Deliver(_ context.Context, sessionID, prompt string) error {
+	go func(sid, p string) {
+		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := l.mgr.Input(bg, sid, []byte(p)); err != nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+	}(sessionID, prompt)
+	return nil
+}
+
 // capturePolicyAdapter implements capture.PolicyResolver against the
 // integration registry. Unknown integrations resolve to "" so the
 // runner applies its quarantine default.

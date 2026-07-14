@@ -3175,7 +3175,12 @@
         "projectPlaceholder": "/ruta/al/proyecto",
         "projectHint": "Dónde ocurren los cambios. Obligatorio.",
         "run": "Ejecutar",
-        "started": "Sesión iniciada — te llevamos allí"
+        "started": "Sesión iniciada — te llevamos allí",
+        "continueLabel": "Continuar en la sesión existente",
+        "continueHint": "Se reutiliza la sesión de entrega anterior como seguimiento. Si ha terminado, se crea una nueva.",
+        "claudeAccount": "Cuenta de Claude",
+        "accountDefault": "Predeterminada",
+        "runContinue": "Continuar"
       }
     }
   },

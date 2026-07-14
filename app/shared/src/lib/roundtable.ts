@@ -159,6 +159,9 @@ export interface HandoffInput {
   cwd?: string
   model?: string
   account_id?: string
+  // Force a brand-new session even if a prior handoff session is still alive
+  // (default: continue in the existing one when possible).
+  force_new?: boolean
 }
 export async function handoffRoundTable(
   id: string,

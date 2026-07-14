@@ -20,11 +20,16 @@ type LaunchSpec struct {
 	AccountID  string
 }
 
-// SessionLauncher spawns a full agent session seeded with a prompt.
-// Implemented in the app over session.Manager — roundtable never imports
-// internal/session.
+// SessionLauncher spawns / drives full agent sessions. Implemented in the app
+// over session.Manager — roundtable never imports internal/session.
 type SessionLauncher interface {
+	// Launch spawns a NEW session and seeds it with the prompt.
 	Launch(ctx context.Context, spec LaunchSpec) (sessionID string, err error)
+	// Alive reports whether a previously-spawned session still exists and is
+	// not in a terminal state.
+	Alive(ctx context.Context, sessionID string) bool
+	// Deliver types a prompt into an existing (alive) session as a follow-up.
+	Deliver(ctx context.Context, sessionID, prompt string) error
 }
 
 // WithSessionLauncher enables the execution handoff. Nil → Handoff 503s.
@@ -42,9 +47,15 @@ var ErrHandoffUnavailable = errors.New("roundtable: handoff not configured")
 // "议" to "做". Returns the new session id (link to it in the sessions view).
 //
 // The seed is the latest summary if one exists, else the whole transcript.
-// The executor provider is operator-chosen; when it matches a seated member
-// its model/account are inherited unless overridden.
-func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, accountID string) (string, error) {
+//
+// If the table already handed off to a session that is STILL ALIVE and the
+// caller didn't force a new one, the new plan is delivered into that same
+// session as a follow-up (it already has the context + working tree + cwd) —
+// rather than spawning a second session. Otherwise a NEW session is spawned
+// with the operator-chosen executor (any available provider — it need not be
+// a discussion member; when it does match a seat its model/account are
+// inherited unless overridden).
+func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, accountID string, forceNew bool) (string, error) {
 	if s.sessions == nil {
 		return "", ErrHandoffUnavailable
 	}
@@ -52,6 +63,26 @@ func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, account
 	if err != nil {
 		return "", err
 	}
+
+	// Continue in the prior execution session when it's still alive.
+	if !forceNew && strings.TrimSpace(rt.ResultingSessionID) != "" &&
+		s.sessions.Alive(ctx, rt.ResultingSessionID) {
+		seed, err := s.buildHandoffSeed(ctx, rt, true)
+		if err != nil {
+			return "", err
+		}
+		if err := s.sessions.Deliver(ctx, rt.ResultingSessionID, seed); err != nil {
+			return "", fmt.Errorf("roundtable: deliver to session: %w", err)
+		}
+		_, _ = s.store.AppendMessage(ctx, Message{
+			RoundTableID: id, Role: RoleSystem,
+			Content: fmt.Sprintf("Continued in the existing session %s.", rt.ResultingSessionID),
+		})
+		s.announce(id)
+		return rt.ResultingSessionID, nil
+	}
+
+	// New session — needs a project path and an executor.
 	cwd = strings.TrimSpace(cwd)
 	if cwd == "" {
 		cwd = strings.TrimSpace(rt.Cwd)
@@ -77,7 +108,7 @@ func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, account
 		}
 	}
 
-	seed, err := s.buildHandoffSeed(ctx, rt)
+	seed, err := s.buildHandoffSeed(ctx, rt, false)
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +131,9 @@ func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, account
 
 // buildHandoffSeed prefers the most recent summary (concise, decisive);
 // falls back to the full transcript when the operator never summarized.
-func (s *Service) buildHandoffSeed(ctx context.Context, rt RoundTable) (string, error) {
+// continuing=true frames it as a follow-up for a session already working on
+// this table (it has the earlier context), rather than a fresh takeover.
+func (s *Service) buildHandoffSeed(ctx context.Context, rt RoundTable, continuing bool) (string, error) {
 	msgs, err := s.store.Messages(ctx, rt.ID, 500)
 	if err != nil {
 		return "", fmt.Errorf("load messages: %w", err)
@@ -115,8 +148,13 @@ func (s *Service) buildHandoffSeed(ctx context.Context, rt RoundTable) (string, 
 	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "You are taking over from a multi-model group chat about %q to IMPLEMENT what was agreed.\n\n",
-		firstNonEmpty(rt.Topic, "the discussion"))
+	if continuing {
+		fmt.Fprintf(&b, "The group chat about %q continued. Here is the latest agreed plan — pick up from your current work and apply it.\n\n",
+			firstNonEmpty(rt.Topic, "the discussion"))
+	} else {
+		fmt.Fprintf(&b, "You are taking over from a multi-model group chat about %q to IMPLEMENT what was agreed.\n\n",
+			firstNonEmpty(rt.Topic, "the discussion"))
+	}
 	if summary != "" {
 		b.WriteString("Here is the agreed plan (a summary of the discussion):\n\n")
 		b.WriteString(summary)

@@ -3175,7 +3175,12 @@
         "projectPlaceholder": "/项目/路径",
         "projectHint": "在哪个项目里改。必填。",
         "run": "开始执行",
-        "started": "会话已启动——正在跳转"
+        "started": "会话已启动——正在跳转",
+        "continueLabel": "继续用现有会话",
+        "continueHint": "把新方案作为后续发给上次的执行会话;如果它已结束,则自动新开一个。",
+        "claudeAccount": "Claude 账号",
+        "accountDefault": "默认",
+        "runContinue": "继续执行"
       }
     }
   },

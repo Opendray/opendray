@@ -3175,7 +3175,12 @@
         "projectPlaceholder": "/path/to/project",
         "projectHint": "Where the changes happen. Required.",
         "run": "Execute",
-        "started": "Session started — taking you there"
+        "started": "Session started — taking you there",
+        "continueLabel": "Continue in the existing session",
+        "continueHint": "The previous handoff session is reused as a follow-up. Falls back to a new session if it has ended.",
+        "claudeAccount": "Claude account",
+        "accountDefault": "Default",
+        "runContinue": "Continue"
       }
     }
   },

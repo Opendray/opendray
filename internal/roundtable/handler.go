@@ -184,12 +184,13 @@ func (h *Handlers) handoff(w http.ResponseWriter, r *http.Request) {
 		Provider  string `json:"provider"`
 		Model     string `json:"model"`
 		AccountID string `json:"account_id"`
+		ForceNew  bool   `json:"force_new"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	sid, err := h.svc.Handoff(r.Context(), chi.URLParam(r, "id"), body.Cwd, body.Provider, body.Model, body.AccountID)
+	sid, err := h.svc.Handoff(r.Context(), chi.URLParam(r, "id"), body.Cwd, body.Provider, body.Model, body.AccountID, body.ForceNew)
 	if errors.Is(err, ErrNotFound) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 		return
