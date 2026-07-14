@@ -1,0 +1,19 @@
+-- 0077_session_interrupt_reason — record WHY a session became interrupted,
+-- for audit/observability (Phase 2 of the session state-machine hardening).
+--
+-- The 'interrupted' state conflated two observable causes; this splits them
+-- so an operator / audit panel can tell a planned restart apart from a hard
+-- crash:
+--   'gateway_shutdown' — graceful daemon exit (self-update / restart);
+--                        recorded by waitExit when the gateway is closing.
+--   'gateway_crash'    — the daemon died hard, so the row was still live at
+--                        the next startup and reconciliation flipped it.
+--
+-- Nullable and additive: only interrupted rows carry a value; every other
+-- state (and every pre-existing interrupted row) stays NULL. A resume clears
+-- it back to NULL. No backfill — historical rows have no observable cause.
+--
+-- NOTE: this is the interruption *cause* (why it dropped), distinct from the
+-- runtime recovery *reason* (disconnected/orphaned/crashed) in
+-- internal/session/transitions.go, which classifies what to do next.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS interrupt_reason TEXT;

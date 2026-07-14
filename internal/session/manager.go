@@ -208,6 +208,14 @@ type Manager struct {
 	mu       sync.RWMutex
 	closed   bool
 	sessions map[string]*runningSession
+	// starting holds the ids with a (re)spawn currently in flight,
+	// guarded by mu. It closes the check-then-spawn TOCTOU in Start: the
+	// in-memory state guard is released before spawn (which re-locks mu to
+	// insert into sessions), so without this reservation two concurrent
+	// resumes of the same terminal row would both pass the guard and spawn
+	// duplicate processes against the same cwd. Reserve under mu before
+	// spawning; release when spawn completes.
+	starting map[string]struct{}
 	wg       sync.WaitGroup
 
 	// stopRequested tracks session ids the user has explicitly asked
@@ -418,6 +426,7 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 		store:         newStore(pool),
 		providers:     providers,
 		sessions:      make(map[string]*runningSession),
+		starting:      make(map[string]struct{}),
 		idleThreshold: defaultIdleThreshold,
 		idleInterval:  defaultIdleInterval,
 		turnThreshold: defaultTurnThreshold,
@@ -615,15 +624,16 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 	}
 	m.mu.RUnlock()
 
-	if rs := m.lookup(id); rs != nil {
-		rs.sessMu.RLock()
-		state := rs.sess.State
-		out := rs.sess
-		rs.sessMu.RUnlock()
-		if !state.IsTerminal() {
-			return out, fmt.Errorf("session %s is %s: %w", id, state, ErrAlreadyRunning)
-		}
+	// Atomically reject a resume of a live/already-resuming session and
+	// reserve the id for this spawn, so two concurrent Starts can't both
+	// spawn a duplicate process against the same cwd (the check-then-spawn
+	// TOCTOU the bare matrix guard can't close on its own).
+	release, blockedState, ok := m.tryReserveStart(id)
+	if !ok {
+		out, _ := m.snapshot(id)
+		return out, fmt.Errorf("session %s is %s: %w", id, blockedState, ErrAlreadyRunning)
 	}
+	defer release()
 
 	sess, err := m.store.Get(ctx, id)
 	if err != nil {
@@ -857,6 +867,53 @@ func (m *Manager) lookup(id string) *runningSession {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.sessions[id]
+}
+
+// snapshot returns the in-memory Session view for id, or the zero Session
+// and false when no live session is tracked. Used to build the error
+// payload when a resume is rejected.
+func (m *Manager) snapshot(id string) (Session, bool) {
+	rs := m.lookup(id)
+	if rs == nil {
+		return Session{}, false
+	}
+	rs.sessMu.RLock()
+	defer rs.sessMu.RUnlock()
+	return rs.sess, true
+}
+
+// tryReserveStart atomically decides whether a (re)spawn of id may proceed
+// and, if so, reserves the id so a concurrent Start cannot also spawn. It
+// returns ok=false — with blockedState describing why — when the session
+// is already live (EventStart illegal from its state) or another spawn is
+// already in flight. On ok=true the caller MUST call release exactly once
+// (defer) after the spawn attempt completes, success or failure.
+//
+// This is the concurrency-safe form of the ErrAlreadyRunning guard: it
+// holds mu across both the state check and the reservation, closing the
+// window between "guard passed" and "sessions[id] inserted" during which
+// two resumes could otherwise both proceed and race the same cwd.
+func (m *Manager) tryReserveStart(id string) (release func(), blockedState State, ok bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if rs := m.sessions[id]; rs != nil {
+		rs.sessMu.RLock()
+		state := rs.sess.State
+		rs.sessMu.RUnlock()
+		if !CanTransition(state, EventStart) {
+			return nil, state, false
+		}
+	}
+	if _, inFlight := m.starting[id]; inFlight {
+		// A spawn is mid-flight; report it as pending (spawn in flight).
+		return nil, StatePending, false
+	}
+	m.starting[id] = struct{}{}
+	return func() {
+		m.mu.Lock()
+		delete(m.starting, id)
+		m.mu.Unlock()
+	}, "", true
 }
 
 // RecentScreen returns the current visible screen of the session's

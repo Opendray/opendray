@@ -1,0 +1,11 @@
+-- 0079_drop_session_checkpoints — remove the context-checkpoint feature.
+--
+-- The session_checkpoints table (added by the now-reverted 0078) is dropped:
+-- context checkpoints were a git-workflow safety net whose value didn't hold
+-- for a commit-everything-via-PR workflow (git already snapshots the work),
+-- and the important "context survives a restart" property is delivered by the
+-- state-machine auto-resume (--resume), not by this table. The Go/web/mobile
+-- code was reverted; this drops the orphaned table on databases that already
+-- applied 0078. IF EXISTS so a fresh database (which never created it) is a
+-- clean no-op.
+DROP TABLE IF EXISTS session_checkpoints;

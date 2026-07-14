@@ -24,6 +24,7 @@ const sessionSelect = `
            COALESCE(antigravity_account_id, ''),
            COALESCE(parent_session_id, ''),
            COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
+           COALESCE(interrupt_reason, ''),
            started_at, ended_at, exit_code
     FROM sessions`
 
@@ -96,13 +97,31 @@ func (s *sessionStore) MarkTerminal(ctx context.Context, id string, state State,
 	return nil
 }
 
+// MarkInterrupted records a graceful-shutdown interruption for a live
+// session: state='interrupted' plus the audit cause (gateway_shutdown). Like
+// MarkTerminal it is idempotent against a row the user already stopped/ended.
+// The crash path (row still 'running' at next startup) is handled separately
+// by MarkRunningAsInterrupted, which stamps gateway_crash.
+func (s *sessionStore) MarkInterrupted(ctx context.Context, id string, exitCode int, cause InterruptCause) error {
+	_, err := s.pool.Exec(ctx, `
+        UPDATE sessions
+        SET state='interrupted', ended_at=NOW(), exit_code=$1, interrupt_reason=$2
+        WHERE id=$3 AND state NOT IN ('stopped', 'ended')`,
+		exitCode, string(cause), id)
+	if err != nil {
+		return fmt.Errorf("mark interrupted: %w", err)
+	}
+	return nil
+}
+
 // Reactivate transitions a terminal row back into running with a fresh
-// PID and started_at. Used by Manager.Start.
+// PID and started_at, clearing the prior run's exit/interrupt bookkeeping.
+// Used by Manager.Start.
 func (s *sessionStore) Reactivate(ctx context.Context, id string, pid int) error {
 	_, err := s.pool.Exec(ctx, `
         UPDATE sessions
         SET state='running', pid=$1, started_at=NOW(),
-            ended_at=NULL, exit_code=NULL
+            ended_at=NULL, exit_code=NULL, interrupt_reason=NULL
         WHERE id=$2`, pid, id)
 	if err != nil {
 		return fmt.Errorf("reactivate session: %w", err)
@@ -152,7 +171,8 @@ func (s *sessionStore) MarkAllRunningAsEnded(ctx context.Context) (int64, error)
 func (s *sessionStore) MarkRunningAsInterrupted(ctx context.Context) ([]string, error) {
 	rows, err := s.pool.Query(ctx, `
         UPDATE sessions
-        SET state='interrupted', ended_at=NOW(), exit_code=-1
+        SET state='interrupted', ended_at=NOW(), exit_code=-1,
+            interrupt_reason='gateway_crash'
         WHERE state IN ('pending', 'running', 'idle')
         RETURNING id`)
 	if err != nil {
@@ -245,17 +265,18 @@ type rowScanner interface {
 
 func scanSession(row rowScanner) (Session, error) {
 	var (
-		s         Session
-		argsJSON  []byte
-		endedAt   sql.NullTime
-		exitCode  sql.NullInt32
-		stateStr  string
-		originStr string
+		s          Session
+		argsJSON   []byte
+		endedAt    sql.NullTime
+		exitCode   sql.NullInt32
+		stateStr   string
+		originStr  string
+		interruptR string
 	)
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
 		&s.AntigravityAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
-		&s.StartedAt, &endedAt, &exitCode)
+		&interruptR, &s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound
 	}
@@ -264,6 +285,7 @@ func scanSession(row rowScanner) (Session, error) {
 	}
 	s.State = State(stateStr)
 	s.Origin = Origin(originStr)
+	s.InterruptReason = InterruptCause(interruptR)
 	_ = json.Unmarshal(argsJSON, &s.Args)
 	if endedAt.Valid {
 		t := endedAt.Time
