@@ -56,8 +56,8 @@ func scanInputNoise(data []byte, start int) (int, bool) {
 		if i >= len(data) {
 			return start, false
 		}
-		switch {
-		case data[i] == '<':
+		switch data[i] {
+		case '<':
 			// SGR mouse: ESC [ < digits;digits;digits (M|m).
 			j := i + 1
 			for j < len(data) && ((data[j] >= '0' && data[j] <= '9') || data[j] == ';') {
@@ -67,14 +67,14 @@ func scanInputNoise(data []byte, start int) (int, bool) {
 				return j + 1, true
 			}
 			return start, false
-		case data[i] == 'M':
+		case 'M':
 			// X10/UTF-8 mouse: ESC [ M followed by exactly 3 bytes. Only
 			// strip when all 3 are present; a truncated tail is left intact.
 			if i+3 < len(data) {
 				return i + 4, true
 			}
 			return start, false
-		case data[i] == 'I' || data[i] == 'O':
+		case 'I', 'O':
 			// Focus-in / focus-out. Distinct from arrow keys, which are
 			// ESC [ A..D and fall through untouched.
 			return i + 1, true
