@@ -18,6 +18,11 @@ type LaunchSpec struct {
 	ProviderID string
 	Model      string
 	AccountID  string
+	// Args are extra CLI flags for the spawned session — e.g. the
+	// provider's bypass/autonomy flag (--dangerously-skip-permissions,
+	// --dangerously-bypass-approvals-and-sandbox) when the operator opts
+	// into skip-permissions / YOLO mode, mirroring normal session creation.
+	Args []string
 }
 
 // SessionLauncher spawns / drives full agent sessions. Implemented in the app
@@ -55,7 +60,7 @@ var ErrHandoffUnavailable = errors.New("roundtable: handoff not configured")
 // with the operator-chosen executor (any available provider — it need not be
 // a discussion member; when it does match a seat its model/account are
 // inherited unless overridden).
-func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, accountID string, forceNew bool) (string, error) {
+func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, accountID string, forceNew bool, args []string) (string, error) {
 	if s.sessions == nil {
 		return "", ErrHandoffUnavailable
 	}
@@ -116,6 +121,7 @@ func (s *Service) Handoff(ctx context.Context, id, cwd, provider, model, account
 	sid, err := s.sessions.Launch(ctx, LaunchSpec{
 		Cwd: cwd, Name: name, SeedPrompt: seed,
 		ProviderID: provider, Model: model, AccountID: accountID,
+		Args: args,
 	})
 	if err != nil {
 		return "", fmt.Errorf("roundtable: launch session: %w", err)

@@ -15,6 +15,16 @@ import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { cn } from '@/lib/utils'
 import { handoffRoundTable, type RoundTable } from '@/lib/roundtable'
 
+// Per-provider bypass / autonomy flag — mirrors SpawnDialog so the handoff
+// session can start in skip-permissions / YOLO mode just like a normal
+// hand-created session.
+const BYPASS_FLAGS: Record<string, string[]> = {
+  claude: ['--dangerously-skip-permissions'],
+  codex: ['--dangerously-bypass-approvals-and-sandbox'],
+  antigravity: ['--dangerously-skip-permissions'],
+  opencode: ['--dangerously-skip-permissions'],
+}
+
 interface Props {
   rt: RoundTable
   open: boolean
@@ -39,6 +49,7 @@ export function HandoffDialog({ rt, open, onClose, onDone }: Props) {
   const [providerId, setProviderId] = useState('')
   const [accountId, setAccountId] = useState('')
   const [cwd, setCwd] = useState(rt.cwd ?? '')
+  const [bypassEnabled, setBypassEnabled] = useState(false)
   const [browserOpen, setBrowserOpen] = useState(false)
 
   useEffect(() => {
@@ -61,9 +72,14 @@ export function HandoffDialog({ rt, open, onClose, onDone }: Props) {
   })
   const accounts = (claudeAccounts ?? []).filter((a) => a.enabled)
 
+  // Each provider's bypass flag differs, so reset the toggle when it changes.
   useEffect(() => {
     setAccountId('')
+    setBypassEnabled(false)
   }, [providerId])
+
+  const bypassFlags =
+    !continueExisting && bypassEnabled ? BYPASS_FLAGS[providerId] : undefined
 
   const run = useMutation({
     mutationFn: () =>
@@ -72,6 +88,7 @@ export function HandoffDialog({ rt, open, onClose, onDone }: Props) {
         cwd: cwd.trim(),
         account_id: isClaude && accountId ? accountId : undefined,
         force_new: !continueExisting,
+        args: bypassFlags,
       }),
     onSuccess: ({ session_id }) => {
       toast.success(t('web.roundTable.handoff.started'))
@@ -217,6 +234,25 @@ export function HandoffDialog({ rt, open, onClose, onDone }: Props) {
                   {t('web.roundTable.handoff.projectHint')}
                 </span>
               </div>
+
+              {BYPASS_FLAGS[providerId] && (
+                <label className="flex items-start gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-[12px] cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={bypassEnabled}
+                    onChange={(e) => setBypassEnabled(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span className="flex-1">
+                    <span className="font-medium">
+                      {t('web.roundTable.handoff.bypassLabel')}
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                      {t('web.roundTable.handoff.bypassHint')}
+                    </span>
+                  </span>
+                </label>
+              )}
             </>
           )}
         </div>

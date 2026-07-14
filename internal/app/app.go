@@ -2504,6 +2504,7 @@ func (l *roundTableSessionLauncher) Launch(ctx context.Context, spec roundtable.
 		Model:           spec.Model,
 		ClaudeAccountID: spec.AccountID,
 		Cwd:             spec.Cwd,
+		Args:            spec.Args,
 	})
 	if err != nil {
 		return "", err

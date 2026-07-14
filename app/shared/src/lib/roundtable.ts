@@ -162,6 +162,10 @@ export interface HandoffInput {
   // Force a brand-new session even if a prior handoff session is still alive
   // (default: continue in the existing one when possible).
   force_new?: boolean
+  // Extra CLI flags for the spawned session — e.g. the provider's bypass /
+  // skip-permissions flag when the operator opts into YOLO mode (mirrors
+  // normal session creation).
+  args?: string[]
 }
 export async function handoffRoundTable(
   id: string,

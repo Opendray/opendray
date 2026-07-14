@@ -3180,7 +3180,9 @@
         "continueHint": "The previous handoff session is reused as a follow-up. Falls back to a new session if it has ended.",
         "claudeAccount": "Claude account",
         "accountDefault": "Default",
-        "runContinue": "Continue"
+        "runContinue": "Continue",
+        "bypassLabel": "Skip permissions (YOLO)",
+        "bypassHint": "Start the executor with its bypass flag so it does not prompt for approvals — same as the toggle when creating a session."
       }
     }
   },

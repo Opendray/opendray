@@ -3180,7 +3180,9 @@
         "continueHint": "把新方案作为后续发给上次的执行会话;如果它已结束,则自动新开一个。",
         "claudeAccount": "Claude 账号",
         "accountDefault": "默认",
-        "runContinue": "继续执行"
+        "runContinue": "继续执行",
+        "bypassLabel": "跳过权限确认(YOLO)",
+        "bypassHint": "用执行方的 bypass 参数启动会话,不再逐个确认操作 —— 与创建 session 时的开关一致。"
       }
     }
   },

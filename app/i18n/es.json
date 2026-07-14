@@ -3180,7 +3180,9 @@
         "continueHint": "Se reutiliza la sesión de entrega anterior como seguimiento. Si ha terminado, se crea una nueva.",
         "claudeAccount": "Cuenta de Claude",
         "accountDefault": "Predeterminada",
-        "runContinue": "Continuar"
+        "runContinue": "Continuar",
+        "bypassLabel": "Omitir permisos (YOLO)",
+        "bypassHint": "Inicia el ejecutor con su parámetro de omisión para que no pida aprobaciones — igual que el interruptor al crear una sesión."
       }
     }
   },
