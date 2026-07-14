@@ -63,6 +63,22 @@ func classifyExitState(stopRequested, closing bool) State {
 	return state
 }
 
+// InterruptCause records WHY a session became interrupted, persisted in
+// sessions.interrupt_reason for audit. It is the interruption *cause*
+// (observable at the interruption point), distinct from the runtime
+// recovery *reason* in transitions.go (InterruptReason:
+// disconnected/orphaned/crashed) which classifies what to do next.
+type InterruptCause string
+
+const (
+	// CauseGatewayShutdown — the gateway exited gracefully (self-update /
+	// restart); recorded by waitExit when isClosing is true.
+	CauseGatewayShutdown InterruptCause = "gateway_shutdown"
+	// CauseGatewayCrash — the gateway died hard, so the row was still live
+	// at the next startup and reconciliation flipped it to interrupted.
+	CauseGatewayCrash InterruptCause = "gateway_crash"
+)
+
 // Session is the public view of a PTY-backed CLI session. Runtime
 // resources (PTY fd, ring buffer, subscribers) live on the Manager's
 // internal struct, not here.
@@ -101,10 +117,14 @@ type Session struct {
 	Origin Origin `json:"origin,omitempty"`
 	// IntegrationID is set when Origin == OriginIntegration: the id
 	// of the integration whose API key created the session.
-	IntegrationID string     `json:"integration_id,omitempty"`
-	StartedAt     time.Time  `json:"started_at"`
-	EndedAt       *time.Time `json:"ended_at,omitempty"`
-	ExitCode      *int       `json:"exit_code,omitempty"`
+	IntegrationID string `json:"integration_id,omitempty"`
+	// InterruptReason is the audit cause set only when State == interrupted
+	// (see InterruptCause); empty otherwise. Persisted in
+	// sessions.interrupt_reason, cleared on resume.
+	InterruptReason InterruptCause `json:"interrupt_reason,omitempty"`
+	StartedAt       time.Time      `json:"started_at"`
+	EndedAt         *time.Time     `json:"ended_at,omitempty"`
+	ExitCode        *int           `json:"exit_code,omitempty"`
 }
 
 // Origin identifies the kind of principal that created a session.

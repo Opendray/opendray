@@ -222,14 +222,26 @@ func (m *Manager) waitExit(rs *runningSession) {
 
 		dbCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := m.store.MarkTerminal(dbCtx, rs.sess.ID, state, exitCode); err != nil {
-			m.log.Error("mark session terminal", "session", rs.sess.ID, "err", err)
+		// An interruption here is always the graceful path (the gateway is
+		// closing); a hard crash never runs waitExit and is instead flipped
+		// with cause gateway_crash by MarkRunningAsInterrupted at next boot.
+		var markErr error
+		if state == StateInterrupted {
+			markErr = m.store.MarkInterrupted(dbCtx, rs.sess.ID, exitCode, CauseGatewayShutdown)
+		} else {
+			markErr = m.store.MarkTerminal(dbCtx, rs.sess.ID, state, exitCode)
+		}
+		if markErr != nil {
+			m.log.Error("mark session terminal", "session", rs.sess.ID, "err", markErr)
 		}
 
 		now := time.Now().UTC()
 		ec := exitCode
 		rs.sessMu.Lock()
 		rs.sess.State = state
+		if state == StateInterrupted {
+			rs.sess.InterruptReason = CauseGatewayShutdown
+		}
 		rs.sess.EndedAt = &now
 		rs.sess.ExitCode = &ec
 		rs.sessMu.Unlock()

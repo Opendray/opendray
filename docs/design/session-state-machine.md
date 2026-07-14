@@ -1,6 +1,6 @@
 # Session State Machine Hardening
 
-Status: **Phase 1 — design frozen, SSOT landed (guard not yet wired)**
+Status: **Phase 2 — SSOT wired; concurrency-safe resume + interrupt cause persisted**
 Owner: opendray gateway
 Last updated: 2026-07-14
 
@@ -45,34 +45,72 @@ flight) is distinct: it is terminatable but **not** startable — a second
 
 ---
 
-## 2. `interrupted` sub-states (frozen)
+## 2. `interrupted` sub-states (frozen) — and the architectural reality
 
-The single `interrupted` state conflated three genuinely different
-situations that need different recovery. Naming per antigravity, endorsed
-by all three reviewers. Modelled as `InterruptReason` refining
-`StateInterrupted` — **not** as new persisted enum values (so no migration
-is required to freeze the taxonomy; persisting the reason is a later,
-additive column).
+The single `interrupted` state conflated three situations that were
+*expected* to need different recovery. Naming per antigravity, endorsed by
+all three reviewers. Modelled as `InterruptReason` refining
+`StateInterrupted` — **not** as new persisted enum values.
 
-| Reason         | Observed reality | Recovery strategy |
+| Reason         | Observed reality | Intended recovery |
 |----------------|------------------|-------------------|
-| `disconnected` | WS transport dropped, **process healthy** | `wait_reattach`: silently buffer incremental output, wait for re-attach. **Do NOT respawn** — that abandons a live, working process. |
-| `orphaned`     | Gateway restarted, CLI left as an **orphan (still alive)** | `adopt_pid`: reconcile probes the OS for the recorded PID and **adopts** it if alive, rather than blindly respawning. |
-| `crashed`      | Process is **gone** | `rollback`: treat as failed, roll back to the last checkpoint (or respawn with `--resume` where the provider supports it). |
-
-### Classification is truth, not guess
+| `disconnected` | WS transport dropped, **process healthy** | `wait_reattach`: buffer output, wait for re-attach. Do NOT respawn. |
+| `orphaned`     | Gateway restarted, CLI left as an **orphan (still alive)** | `adopt_pid`: probe the recorded PID and adopt it if alive. |
+| `crashed`      | Process is **gone** | `rollback`: fail, roll back / respawn with `--resume`. |
 
 ```
 ClassifyInterrupt(procAlive, gatewayRestarted):
-    !procAlive               -> crashed      (a dead process is always crashed)
-    procAlive && gwRestarted -> orphaned     (adoptable)
-    procAlive && !gwRestarted-> disconnected (transport only)
+    !procAlive               -> crashed
+    procAlive && gwRestarted -> orphaned
+    procAlive && !gwRestarted-> disconnected
 ```
 
-**Reconcile = truth-check, not guess.** The DB row records *intent*; the
-OS process table / WS liveness / event stream are *reality*. Reconcile
-must observe the facts and write the truth back — never infer state from
-the stale DB value alone.
+### ⚠️ What the code investigation actually showed (2026-07-14)
+
+Two of these three collapse once you look at the real process model
+(`spawn` uses `pty.Start`, so the gateway holds the PTY **master fd**):
+
+- **`disconnected` is already correct with no state change.** A WS client
+  drop only calls `unsub()` (`handler.go`) → removes the subscriber channel
+  (`manager.go`). It does **not** touch the process: the session stays
+  `running`, the ring buffer keeps filling, and re-attach replays it. There
+  is nothing to persist or recover — the design's `wait_reattach` *is* the
+  current behaviour. `disconnected` is therefore a runtime transport state,
+  never a persisted one.
+
+- **`orphaned` / `adopt_pid` is infeasible for PTY-backed children.** When
+  the gateway dies, the kernel destroys the PTY pair as its master fd
+  closes; the orphan gets EIO/SIGHUP and is I/O-dead even if momentarily
+  alive, and a new gateway **cannot re-acquire the master fd**. Blindly
+  killing the recorded PID is also unsafe (PID reuse). So a gateway restart
+  collapses to a single achievable outcome: **process gone → respawn with
+  `--resume`** — which is what reconciliation already does.
+
+**Consequence:** at *startup* reconcile the only recovery-relevant class is
+effectively `crashed`. The genuinely useful, achievable hardening is
+therefore (a) making resume **concurrency-safe** so two resumes can't race
+the same cwd, and (b) recording the interruption **cause** for audit — not
+building an un-attachable "adopt" path.
+
+### Persisted cause vs. runtime recovery reason
+
+`InterruptReason` above (disconnected/orphaned/crashed) is the *runtime
+recovery* view. Persisted separately is the *audit cause* — why the row
+became interrupted, observable at the interruption point
+(`InterruptCause`, column `sessions.interrupt_reason`, migration 0077):
+
+| Cause              | Set by | Meaning |
+|--------------------|--------|---------|
+| `gateway_shutdown` | `waitExit` when `isClosing` (`pump.go`) | Graceful daemon exit (self-update / restart). |
+| `gateway_crash`    | `MarkRunningAsInterrupted` at next startup (`store.go`) | Daemon died hard; row was still live at boot. |
+
+Nullable and additive; cleared to NULL on resume (`Reactivate`). No
+backfill — historical rows have no observable cause.
+
+**Reconcile = truth-check, not guess** still holds: the DB row is intent;
+the OS process table / WS liveness are reality. The cause column records the
+reality we *can* observe; we do not guess an "orphan is adoptable" story the
+architecture cannot deliver.
 
 ---
 
@@ -141,10 +179,11 @@ Rules:
 - **Incremental replay** from the existing ring buffer (`ringbuf.go`);
   the open question is how much tail to replay vs. a full snapshot (see §6).
 
-For `orphaned`, the chain first runs an **adopt** probe: verify the
-recorded PID (and that it is our child / matches the expected argv) before
-deciding adopt-vs-respawn. For `crashed`, skip straight to rollback +
-resume.
+Note (per §2): `disconnected` already behaves exactly like this today —
+the process is never touched on a WS drop and re-attach replays the ring.
+The `orphaned` "adopt probe" is **not pursued** (PTY master fd dies with the
+gateway; see §2). For a gateway restart the chain is simply: interrupted
+(`gateway_shutdown` or `gateway_crash`) → concurrency-safe `start` → replay.
 
 ---
 
@@ -165,11 +204,12 @@ likely to corrupt state under failure:
 
 ---
 
-## 6. Open questions (carry into Phase 2)
+## 6. Open questions
 
-- **Persisting the interrupt reason**: an additive nullable
-  `interrupt_reason` column vs. keeping it purely runtime. Needed before
-  the audit panel can show *why* a session dropped.
+- ~~**Persisting the interrupt reason**~~ — **DONE** (migration 0077,
+  `InterruptCause` = `gateway_shutdown` / `gateway_crash`). See §2.
+- ~~**Concurrency-safe resume**~~ — **DONE** (`Manager.tryReserveStart`
+  reservation closes the check-then-spawn TOCTOU; see §7).
 - **Replay fidelity vs. cost**: antigravity wants context pruned /
   compressed on resume to cut token cost; that is in tension with the
   "full-context replay" goal. Reconcile the two — likely full **terminal**
@@ -182,23 +222,29 @@ likely to corrupt state under failure:
 
 ---
 
-## 7. Adoption plan (incremental, non-destructive)
+## 7. Adoption plan (incremental, non-destructive) — status
 
-`transitions.go` is a **pure SSOT** with no side effects; nothing in the
-running gateway calls it yet. It is landed first, fully tested, so the
-lifecycle mutation points can be migrated onto it one at a time without a
-big-bang rewrite:
+`transitions.go` is a **pure SSOT** with no side effects. It was landed
+first, fully tested, so the lifecycle mutation points migrate onto it one at
+a time without a big-bang rewrite:
 
-1. Route `Manager.Start`'s "already running" guard through
-   `CanTransition(state, EventStart)`.
-2. Route `waitExit`'s terminal classification through
-   `TerminationEvent` + `Next` (keeping `classifyExitState` as a thin
-   shim, already pinned equal by `TestTerminationEventPrecedence`).
-3. Add reconcile PID-liveness probing → `ClassifyInterrupt` →
-   `RecoveryStrategy` (this is where `orphaned`/`disconnected`/`crashed`
-   start driving behaviour).
-4. Only then: persist `interrupt_reason`, then build backup/checkpoint on
-   top.
+1. ✅ **Done (PR #450)** — `Manager.Start`'s "already running" guard routes
+   through `CanTransition(state, EventStart)`, pinned equal to
+   `!IsTerminal()` by `TestStartLegalIffTerminal`.
+2. ✅ **Done (PR #450)** — `waitExit`'s terminal classification goes through
+   `TerminationEvent` + `Next` (`classifyExitState` kept as a thin shim,
+   pinned equal by `TestTerminationEventPrecedence`).
+3. ✅ **Done (Phase 2)** — **concurrency-safe resume**:
+   `Manager.tryReserveStart` reserves the id under `mu` across the state
+   check *and* the spawn, closing the TOCTOU where two resumes could both
+   pass the guard and race the same cwd (`TestTryReserveStart*`).
+4. ✅ **Done (Phase 2)** — persist the interruption **cause**
+   (`gateway_shutdown` / `gateway_crash`) for audit (migration 0077).
+   Replaces the old plan item "reconcile PID-liveness probing → adopt",
+   which §2 showed is infeasible for PTY-backed children.
+5. ⬜ **Next** — backup / checkpoint format (cwd snapshot + uncommitted diff
+   + input history), then the audit/cost panel that surfaces
+   `interrupt_reason`. Orchestration remains parked.
 
-Each step is guarded by the existing matrix tests, so behaviour cannot
+Each step is guarded by the matrix + reservation tests, so behaviour cannot
 silently drift.
