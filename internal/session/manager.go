@@ -1450,10 +1450,15 @@ func (m *Manager) Input(_ context.Context, id string, data []byte) error {
 	if _, err := rs.pty.Write(data); err != nil {
 		return fmt.Errorf("pty write: %w", err)
 	}
-	// Record the input tail for context checkpoints. Best-effort; the ring
-	// is independently locked so this never blocks the PTY write path.
+	// Record the input tail for context checkpoints. The PTY got the full
+	// bytes above (a TUI needs mouse/focus events); the history ring gets a
+	// noise-filtered copy so it reads as real operator input, not a stream
+	// of mouse-motion reports. Best-effort; the ring is independently locked
+	// so this never blocks the PTY write path.
 	if rs.inputRing != nil {
-		_, _ = rs.inputRing.Write(data)
+		if filtered := stripInputHistoryNoise(data); len(filtered) > 0 {
+			_, _ = rs.inputRing.Write(filtered)
+		}
 	}
 	if rs.markActive(time.Now()) {
 		m.flipBackToRunning(rs)
