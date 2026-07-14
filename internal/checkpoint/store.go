@@ -62,6 +62,37 @@ func (s *store) listForSession(ctx context.Context, sessionID string) ([]Checkpo
 	return out, rows.Err()
 }
 
+// pruneForSession deletes all but the newest `keep` checkpoints of a
+// session and returns the storage paths of the removed rows so the caller
+// can reap them from disk. keep <= 0 is treated as "no retention" (no-op).
+func (s *store) pruneForSession(ctx context.Context, sessionID string, keep int) ([]string, error) {
+	if keep <= 0 {
+		return nil, nil
+	}
+	rows, err := s.pool.Query(ctx, `
+        DELETE FROM session_checkpoints
+        WHERE id IN (
+            SELECT id FROM session_checkpoints
+            WHERE session_id=$1
+            ORDER BY created_at DESC
+            OFFSET $2
+        )
+        RETURNING storage_path`, sessionID, keep)
+	if err != nil {
+		return nil, fmt.Errorf("checkpoint: prune: %w", err)
+	}
+	defer rows.Close()
+	var paths []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err != nil {
+			return nil, fmt.Errorf("checkpoint: scan prune path: %w", err)
+		}
+		paths = append(paths, p)
+	}
+	return paths, rows.Err()
+}
+
 // delete removes the metadata row and returns its storage_path so the
 // caller can reap the on-disk payload.
 func (s *store) delete(ctx context.Context, id string) (string, error) {

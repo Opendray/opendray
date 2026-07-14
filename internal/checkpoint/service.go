@@ -86,7 +86,29 @@ func (s *Service) Capture(ctx context.Context, sessionID, cwd string, trigger Tr
 		"session_id", sessionID, "checkpoint_id", cp.ID, "trigger", trigger,
 		"is_git", cp.IsGit, "diff_bytes", cp.DiffBytes,
 		"untracked_files", cp.UntrackedFiles, "truncated", cp.Truncated)
+	s.pruneForSession(ctx, sessionID)
 	return cp, nil
+}
+
+// RetainPerSession bounds how many checkpoints a session keeps; older ones
+// are reaped (metadata + on-disk payload) after each capture.
+const RetainPerSession = 10
+
+// pruneForSession enforces RetainPerSession, best-effort: a prune failure is
+// logged, never surfaced to the capture caller (the checkpoint succeeded).
+func (s *Service) pruneForSession(ctx context.Context, sessionID string) {
+	paths, err := s.store.pruneForSession(ctx, sessionID, RetainPerSession)
+	if err != nil {
+		s.log.Warn("checkpoint prune failed", "session_id", sessionID, "err", err)
+		return
+	}
+	for _, p := range paths {
+		if p != "" {
+			if err := os.RemoveAll(p); err != nil {
+				s.log.Warn("checkpoint prune reap failed", "path", p, "err", err)
+			}
+		}
+	}
 }
 
 // CaptureManual captures via the SessionInfo lookup (the manual API path).

@@ -1,6 +1,6 @@
 # Session State Machine Hardening
 
-Status: **Phase 2 — SSOT wired; concurrency-safe resume + interrupt cause persisted**
+Status: **Priority ② — context checkpoint capture + restore landed (SSOT wired; concurrency-safe resume; interrupt cause persisted)**
 Owner: opendray gateway
 Last updated: 2026-07-14
 
@@ -242,9 +242,19 @@ a time without a big-bang rewrite:
    (`gateway_shutdown` / `gateway_crash`) for audit (migration 0077).
    Replaces the old plan item "reconcile PID-liveness probing → adopt",
    which §2 showed is infeasible for PTY-backed children.
-5. ⬜ **Next** — backup / checkpoint format (cwd snapshot + uncommitted diff
-   + input history), then the audit/cost panel that surfaces
-   `interrupt_reason`. Orchestration remains parked.
+5. ✅ **Done (priority ②, PR #452)** — context checkpoint **capture**:
+   git-aware (`git diff HEAD` + untracked-not-ignored files + input history),
+   `.gitignore`-respecting, bounded caps, filesystem + DB-metadata split
+   (migration 0078), captured on graceful shutdown and via a manual API.
+   Lives in `internal/checkpoint`.
+6. ✅ **Done (priority ②)** — checkpoint **restore** (strict, dry-run-first):
+   `applyCheckpoint` re-applies a checkpoint onto its cwd only when HEAD
+   matches and there are no uncommitted tracked changes, `git apply --check`
+   passes, and untracked files are restored without overwriting
+   (`POST /checkpoints/{cid}/restore`, 409 on any guard). Plus retention
+   (`RetainPerSession`) reaping old checkpoints after each capture.
+7. ⬜ **Next** — the audit/cost panel that surfaces `interrupt_reason` +
+   checkpoints, and the web/mobile UI. Orchestration remains parked.
 
-Each step is guarded by the matrix + reservation tests, so behaviour cannot
-silently drift.
+Each step is guarded by the matrix + reservation + capture/restore tests, so
+behaviour cannot silently drift.

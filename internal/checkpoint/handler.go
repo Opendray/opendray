@@ -33,6 +33,7 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Route("/checkpoints/{cid}", func(r chi.Router) {
 		r.Get("/", h.get)
 		r.Get("/diff", h.diff)
+		r.Post("/restore", h.restore)
 		r.Delete("/", h.delete)
 	})
 }
@@ -104,6 +105,29 @@ func (h *Handlers) diff(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(data)
+}
+
+// restore re-applies a checkpoint onto its cwd under the strict guards in
+// Service.Restore. A guard failure is a 409 Conflict (the operator must
+// resolve the working-tree state first), a bad/absent checkpoint is 404.
+func (h *Handlers) restore(w http.ResponseWriter, r *http.Request) {
+	res, err := h.svc.Restore(r.Context(), chi.URLParam(r, "cid"))
+	switch {
+	case errors.Is(err, ErrNotFound):
+		writeError(w, http.StatusNotFound, err)
+		return
+	case errors.Is(err, ErrNotGitCheckpoint),
+		errors.Is(err, ErrNotWorkTree),
+		errors.Is(err, ErrHeadMismatch),
+		errors.Is(err, ErrDirtyWorktree),
+		errors.Is(err, ErrApplyCheckFailed):
+		writeError(w, http.StatusConflict, err)
+		return
+	case err != nil:
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
