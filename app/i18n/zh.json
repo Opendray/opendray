@@ -3430,7 +3430,8 @@
           "history": "历史",
           "vault": "文档库",
           "cortex": "心智中枢",
-          "database": "数据库"
+          "database": "数据库",
+          "checkpoints": "检查点"
         }
       },
       "cortex": {
@@ -3524,6 +3525,27 @@
         "noProjectMapping2": "（无项目映射）",
         "clearOverride": "清除覆盖",
         "save": "保存"
+      },
+      "checkpoints": {
+        "blurb": "快照本会话的未提交 diff、未跟踪文件与输入历史。",
+        "capture": "捕获",
+        "capturedGit": "diff {diff}B · {files} 个未跟踪文件",
+        "capturedNonGit": "仅元数据(非 git 仓库)",
+        "empty": "还没有检查点。可以现在捕获一个,或在网关关闭时自动生成。",
+        "triggerManual": "手动",
+        "triggerInterrupted": "中断",
+        "truncatedHint": "大小/数量上限裁剪了本次捕获,内容不完整。",
+        "nonGit": "非 git 仓库",
+        "viewDiff": "查看 diff",
+        "hideDiff": "隐藏 diff",
+        "restore": "恢复",
+        "restoreTitle": "恢复检查点?",
+        "restoreWarn": "将此快照重新应用到工作目录。仅当 HEAD 一致且无未提交的已跟踪改动时执行;未跟踪文件绝不覆盖。",
+        "restoreConfirm": "恢复",
+        "restored": "已恢复 · {files} 个文件,跳过 {skipped} 个",
+        "delete": "删除",
+        "deleteTitle": "删除检查点?",
+        "deleteConfirm": "将移除该检查点及其存储的内容。"
       }
     },
     "spawnSheet": {

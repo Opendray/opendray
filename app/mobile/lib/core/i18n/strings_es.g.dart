@@ -1941,6 +1941,7 @@ class _TranslationsSessionsInspectorEs extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitEs git = _TranslationsSessionsInspectorGitEs._(_root);
 	@override late final _TranslationsSessionsInspectorTasksEs tasks = _TranslationsSessionsInspectorTasksEs._(_root);
 	@override late final _TranslationsSessionsInspectorNotesEs notes = _TranslationsSessionsInspectorNotesEs._(_root);
+	@override late final _TranslationsSessionsInspectorCheckpointsEs checkpoints = _TranslationsSessionsInspectorCheckpointsEs._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -3297,6 +3298,7 @@ class _TranslationsWebSessionsInspectorEs extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorTabsEs tabs = _TranslationsWebSessionsInspectorTabsEs._(_root);
 	@override late final _TranslationsWebSessionsInspectorVaultPanelEs vaultPanel = _TranslationsWebSessionsInspectorVaultPanelEs._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelEs cortexPanel = _TranslationsWebSessionsInspectorCortexPanelEs._(_root);
+	@override late final _TranslationsWebSessionsInspectorCheckpointsEs checkpoints = _TranslationsWebSessionsInspectorCheckpointsEs._(_root);
 }
 
 // Path: web.sessions.ended
@@ -4167,6 +4169,7 @@ class _TranslationsWebProvidersDetailEs extends TranslationsWebProvidersDetailEn
 	@override String get toggleFailedToast => 'Error al alternar';
 	@override late final _TranslationsWebProvidersDetailCapsEs caps = _TranslationsWebProvidersDetailCapsEs._(_root);
 	@override String get notInstalled => 'no instalado';
+	@override String get brokenCli => 'Instalado pero no ejecutable';
 	@override String updateAvailable({required Object version}) => 'actualización disponible → ${version}';
 	@override String get upToDate => 'actualizado';
 	@override String update({required Object version}) => 'Actualizar a ${version}';
@@ -6536,6 +6539,34 @@ class _TranslationsSessionsInspectorNotesEs extends TranslationsSessionsInspecto
 	@override String get save => 'Guardar';
 }
 
+// Path: sessions.inspector.checkpoints
+class _TranslationsSessionsInspectorCheckpointsEs extends TranslationsSessionsInspectorCheckpointsEn {
+	_TranslationsSessionsInspectorCheckpointsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get blurb => 'Captura el diff sin confirmar, los archivos sin seguimiento y el historial de entrada de esta sesión.';
+	@override String get capture => 'Capturar';
+	@override String capturedGit({required Object diff, required Object files}) => 'diff ${diff}B · ${files} archivos sin seguimiento';
+	@override String get capturedNonGit => 'Solo metadatos (no es un repo git)';
+	@override String get empty => 'Aún no hay puntos de control. Captura uno ahora, o se crea automáticamente al apagar el gateway.';
+	@override String get triggerManual => 'Manual';
+	@override String get triggerInterrupted => 'Interrumpido';
+	@override String get truncatedHint => 'Un límite de tamaño/cantidad recortó esta captura; es parcial.';
+	@override String get nonGit => 'No es un repositorio git';
+	@override String get viewDiff => 'Ver diff';
+	@override String get hideDiff => 'Ocultar diff';
+	@override String get restore => 'Restaurar';
+	@override String get restoreTitle => '¿Restaurar punto de control?';
+	@override String get restoreWarn => 'Reaplica esta captura sobre el directorio de trabajo. Solo se ejecuta si HEAD coincide y no hay cambios rastreados sin confirmar; los archivos sin seguimiento nunca se sobrescriben.';
+	@override String get restoreConfirm => 'Restaurar';
+	@override String restored({required Object files, required Object skipped}) => 'Restaurado · ${files} archivos, ${skipped} omitidos';
+	@override String get delete => 'Eliminar';
+	@override String get deleteTitle => '¿Eliminar punto de control?';
+	@override String get deleteConfirm => 'Esto elimina el punto de control y su contenido almacenado.';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7115,6 +7146,7 @@ class _TranslationsWebSessionsInspectorTabsEs extends TranslationsWebSessionsIns
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
 	@override String get database => 'BD';
+	@override String get checkpoints => 'Puntos de control';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -7166,6 +7198,34 @@ class _TranslationsWebSessionsInspectorCortexPanelEs extends TranslationsWebSess
 	@override String get plan => 'Plan';
 	@override String get latestJournal => 'Último diario';
 	@override String get empty => 'Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla.';
+}
+
+// Path: web.sessions.inspector.checkpoints
+class _TranslationsWebSessionsInspectorCheckpointsEs extends TranslationsWebSessionsInspectorCheckpointsEn {
+	_TranslationsWebSessionsInspectorCheckpointsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => 'Cargando…';
+	@override String get blurb => 'Captura el diff sin confirmar, los archivos sin seguimiento y el historial de entrada de esta sesión — restáuralo después.';
+	@override String get capture => 'Capturar';
+	@override String get captured => 'Punto de control capturado';
+	@override String capturedGit({required Object diff, required Object files}) => 'diff ${diff}B · ${files} archivos sin seguimiento';
+	@override String get capturedNonGit => 'Solo metadatos (no es un repo git)';
+	@override String get empty => 'Aún no hay puntos de control. Captura uno ahora, o se crea automáticamente al apagar el gateway.';
+	@override late final _TranslationsWebSessionsInspectorCheckpointsTriggerEs trigger = _TranslationsWebSessionsInspectorCheckpointsTriggerEs._(_root);
+	@override String get truncated => 'Truncado';
+	@override String get truncatedHint => 'Un límite de tamaño/cantidad recortó esta captura; es parcial.';
+	@override String get nonGit => 'No es un repositorio git';
+	@override String get hideDiff => 'Ocultar diff';
+	@override String get viewDiff => 'Ver diff';
+	@override String get restore => 'Restaurar';
+	@override String get restoreWarn => 'Reaplica esta captura sobre el directorio de trabajo. Solo se ejecuta si HEAD coincide y no hay cambios rastreados sin confirmar; los archivos sin seguimiento nunca se sobrescriben.';
+	@override String get restoreConfirm => 'Confirmar restauración';
+	@override String get restored => 'Punto de control restaurado';
+	@override String restoredDetail({required Object diff, required Object files, required Object skipped}) => 'diff aplicado: ${diff} · ${files} archivos restaurados · ${skipped} omitidos';
+	@override String get deleteConfirm => '¿Eliminar este punto de control?';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9122,6 +9182,18 @@ class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInsp
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
 	@override String get database => 'BD';
+	@override String get checkpoints => 'Puntos de control';
+}
+
+// Path: web.sessions.inspector.checkpoints.trigger
+class _TranslationsWebSessionsInspectorCheckpointsTriggerEs extends TranslationsWebSessionsInspectorCheckpointsTriggerEn {
+	_TranslationsWebSessionsInspectorCheckpointsTriggerEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get manual => 'Manual';
+	@override String get interrupted => 'Interrumpido';
 }
 
 // Path: web.notes.vaultSync.conflict.kinds
@@ -9396,6 +9468,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.tabs.vault' => 'Bóveda',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
 			'web.sessions.inspector.tabs.database' => 'BD',
+			'web.sessions.inspector.tabs.checkpoints' => 'Puntos de control',
 			'web.sessions.inspector.vaultPanel.open' => 'Abrir Bóveda',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Docs del proyecto',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Docs del proyecto escritos por el agente en la bóveda. Revincula la carpeta si las notas de este proyecto viven en otro sitio.',
@@ -9429,6 +9502,26 @@ extension on TranslationsEs {
 			'web.sessions.inspector.cortexPanel.plan' => 'Plan',
 			'web.sessions.inspector.cortexPanel.latestJournal' => 'Último diario',
 			'web.sessions.inspector.cortexPanel.empty' => 'Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla.',
+			'web.sessions.inspector.checkpoints.loading' => 'Cargando…',
+			'web.sessions.inspector.checkpoints.blurb' => 'Captura el diff sin confirmar, los archivos sin seguimiento y el historial de entrada de esta sesión — restáuralo después.',
+			'web.sessions.inspector.checkpoints.capture' => 'Capturar',
+			'web.sessions.inspector.checkpoints.captured' => 'Punto de control capturado',
+			'web.sessions.inspector.checkpoints.capturedGit' => ({required Object diff, required Object files}) => 'diff ${diff}B · ${files} archivos sin seguimiento',
+			'web.sessions.inspector.checkpoints.capturedNonGit' => 'Solo metadatos (no es un repo git)',
+			'web.sessions.inspector.checkpoints.empty' => 'Aún no hay puntos de control. Captura uno ahora, o se crea automáticamente al apagar el gateway.',
+			'web.sessions.inspector.checkpoints.trigger.manual' => 'Manual',
+			'web.sessions.inspector.checkpoints.trigger.interrupted' => 'Interrumpido',
+			'web.sessions.inspector.checkpoints.truncated' => 'Truncado',
+			'web.sessions.inspector.checkpoints.truncatedHint' => 'Un límite de tamaño/cantidad recortó esta captura; es parcial.',
+			'web.sessions.inspector.checkpoints.nonGit' => 'No es un repositorio git',
+			'web.sessions.inspector.checkpoints.hideDiff' => 'Ocultar diff',
+			'web.sessions.inspector.checkpoints.viewDiff' => 'Ver diff',
+			'web.sessions.inspector.checkpoints.restore' => 'Restaurar',
+			'web.sessions.inspector.checkpoints.restoreWarn' => 'Reaplica esta captura sobre el directorio de trabajo. Solo se ejecuta si HEAD coincide y no hay cambios rastreados sin confirmar; los archivos sin seguimiento nunca se sobrescriben.',
+			'web.sessions.inspector.checkpoints.restoreConfirm' => 'Confirmar restauración',
+			'web.sessions.inspector.checkpoints.restored' => 'Punto de control restaurado',
+			'web.sessions.inspector.checkpoints.restoredDetail' => ({required Object diff, required Object files, required Object skipped}) => 'diff aplicado: ${diff} · ${files} archivos restaurados · ${skipped} omitidos',
+			'web.sessions.inspector.checkpoints.deleteConfirm' => '¿Eliminar este punto de control?',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -9682,6 +9775,8 @@ extension on TranslationsEs {
 			'web.project.editor.savedToast' => ({required Object label}) => '${label} guardado',
 			'web.project.editor.goalPlaceholder' => '¿Qué estamos construyendo? Un párrafo. Lo lee cada agente al iniciarse.',
 			'web.project.editor.planPlaceholder' => 'Plan activo: qué estamos haciendo ahora mismo y qué viene después. Se actualiza a medida que avanza el trabajo.',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.editor.sectionPlaceholder' => 'Escribe esta sección en markdown…',
 			'web.project.readonly.tech_stack.label' => 'Stack tecnológico y estructura',
 			'web.project.readonly.tech_stack.empty' => 'Ejecuta una session de Claude en este proyecto. El escáner se actualiza en cada inicio.',
@@ -9703,8 +9798,6 @@ extension on TranslationsEs {
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.current' => 'Actual',
 			'web.project.inbox.proposed' => 'Propuesto',
 			'web.project.inbox.emptyBody' => '(vacío)',
@@ -10110,6 +10203,7 @@ extension on TranslationsEs {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'no instalado',
+			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'actualización disponible → ${version}',
 			'web.providers.detail.upToDate' => 'actualizado',
 			'web.providers.detail.update' => ({required Object version}) => 'Actualizar a ${version}',
@@ -10195,6 +10289,8 @@ extension on TranslationsEs {
 			'web.channels.card.copyWebhookTooltip' => 'Copiar la URL del webhook',
 			'web.channels.card.webhookCopiedToast' => 'URL del webhook copiada',
 			'web.channels.card.setup' => 'Configuración',
+			_ => null,
+		} ?? switch (path) {
 			'web.channels.card.setupTooltip' => 'Mostrar los detalles de conexión del adaptador y código de ejemplo',
 			'web.channels.card.test' => 'Probar',
 			'web.channels.card.testNotRunningTooltip' => 'El canal debe estar en ejecución',
@@ -10217,8 +10313,6 @@ extension on TranslationsEs {
 			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.dialog.descriptionDefault' => 'Configura la integración de mensajería.',
 			'web.channels.dialog.kindLabel' => 'Tipo',
 			'web.channels.dialog.kindImmutable' => '(inmutable, elimina y vuelve a crear para cambiar el tipo)',
@@ -10709,6 +10803,8 @@ extension on TranslationsEs {
 			'web.backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
 			'web.backups.recoveryKit.mismatch' => 'Las frases no coinciden',
 			'web.backups.recoveryKit.generating' => 'Generando…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.recoveryKit.download' => 'Descargar kit',
 			'web.backups.recoveryKit.downloadedToast' => 'Kit de recuperación descargado: guárdalo de forma segura',
 			'web.backups.recoveryKit.failedToast' => 'No se pudo generar el kit de recuperación',
@@ -10731,8 +10827,6 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			'web.backups.newSchedule.targetLabel' => 'Destinos',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Cada (horas)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Conservar las últimas N',
@@ -11223,6 +11317,8 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.row.deletedToast' => 'Regla eliminada',
 			'web.memoryAmbient.rules.row.deleteFailedToast' => 'La eliminación falló',
 			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => 'cada ${n} mensajes',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.rules.row.summary.onIdle' => ({required Object seconds}) => 'inactivo ≥ ${seconds}s',
 			'web.memoryAmbient.rules.row.summary.kChars' => ({required Object k}) => '≥ ${k} caracteres',
 			'web.memoryAmbient.rules.row.summary.manual' => 'solo manual',
@@ -11245,8 +11341,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.profiles.row.globalDefault' => 'predeterminado global',
 			'web.memoryAmbient.profiles.row.delete' => 'Eliminar',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => '¿Eliminar este perfil de inyección?',
@@ -11737,6 +11831,8 @@ extension on TranslationsEs {
 			'memoryAmbient.strategyManualOnly' => 'Solo manual',
 			'memoryAmbient.strategyHybrid' => 'Resumen híbrido',
 			'memoryAmbient.strategyUnknown' => 'Desconocido',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.title' => 'Sesiones',
 			'sessions.refresh' => 'Actualizar',
 			'sessions.actions' => 'Acciones',
@@ -11759,8 +11855,6 @@ extension on TranslationsEs {
 			'sessions.detail.refreshMetadata' => 'Actualizar metadatos',
 			'sessions.detail.inspector' => 'Inspector (Archivos / Git / Tareas / Historial / Notas)',
 			'sessions.detail.projectMemory' => 'Memoria del proyecto (objetivo / plan / diario / bandeja de entrada)',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.actions' => 'Acciones',
 			'sessions.detail.started' => ({required Object when}) => 'iniciada ${when}',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'iniciada ${started}  ·  finalizada ${ended}',
@@ -11841,6 +11935,7 @@ extension on TranslationsEs {
 			'sessions.inspector.shell.tabs.vault' => 'Bóveda',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
 			'sessions.inspector.shell.tabs.database' => 'BD',
+			'sessions.inspector.shell.tabs.checkpoints' => 'Puntos de control',
 			'sessions.inspector.cortex.title' => 'Espacio Cortex',
 			'sessions.inspector.cortex.blurb' => 'Objetivo, plan, diario, bandeja y limpieza de memoria de este proyecto — el Cortex mantenido por IA.',
 			'sessions.inspector.cortex.open' => 'Abrir espacio Cortex',
@@ -11919,6 +12014,25 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
+			'sessions.inspector.checkpoints.blurb' => 'Captura el diff sin confirmar, los archivos sin seguimiento y el historial de entrada de esta sesión.',
+			'sessions.inspector.checkpoints.capture' => 'Capturar',
+			'sessions.inspector.checkpoints.capturedGit' => ({required Object diff, required Object files}) => 'diff ${diff}B · ${files} archivos sin seguimiento',
+			'sessions.inspector.checkpoints.capturedNonGit' => 'Solo metadatos (no es un repo git)',
+			'sessions.inspector.checkpoints.empty' => 'Aún no hay puntos de control. Captura uno ahora, o se crea automáticamente al apagar el gateway.',
+			'sessions.inspector.checkpoints.triggerManual' => 'Manual',
+			'sessions.inspector.checkpoints.triggerInterrupted' => 'Interrumpido',
+			'sessions.inspector.checkpoints.truncatedHint' => 'Un límite de tamaño/cantidad recortó esta captura; es parcial.',
+			'sessions.inspector.checkpoints.nonGit' => 'No es un repositorio git',
+			'sessions.inspector.checkpoints.viewDiff' => 'Ver diff',
+			'sessions.inspector.checkpoints.hideDiff' => 'Ocultar diff',
+			'sessions.inspector.checkpoints.restore' => 'Restaurar',
+			'sessions.inspector.checkpoints.restoreTitle' => '¿Restaurar punto de control?',
+			'sessions.inspector.checkpoints.restoreWarn' => 'Reaplica esta captura sobre el directorio de trabajo. Solo se ejecuta si HEAD coincide y no hay cambios rastreados sin confirmar; los archivos sin seguimiento nunca se sobrescriben.',
+			'sessions.inspector.checkpoints.restoreConfirm' => 'Restaurar',
+			'sessions.inspector.checkpoints.restored' => ({required Object files, required Object skipped}) => 'Restaurado · ${files} archivos, ${skipped} omitidos',
+			'sessions.inspector.checkpoints.delete' => 'Eliminar',
+			'sessions.inspector.checkpoints.deleteTitle' => '¿Eliminar punto de control?',
+			'sessions.inspector.checkpoints.deleteConfirm' => 'Esto elimina el punto de control y su contenido almacenado.',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12231,6 +12345,8 @@ extension on TranslationsEs {
 			'memoryArchived.restoreAllConfirm' => ({required Object count, required Object project}) => '¿Restaurar las ${count} memorias archivadas de ${project}?',
 			'memoryArchived.deleteAllConfirm' => ({required Object count, required Object project}) => '¿Eliminar permanentemente las ${count} memorias archivadas de ${project}? Omite la ventana de gracia de 30 días y no se puede deshacer.',
 			'memoryArchived.deletePermanently' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'memoryArchived.deleteConfirm' => '¿Eliminar permanentemente esta memoria ahora? Omite la ventana de gracia de 30 días y no se puede deshacer.',
 			'memoryArchived.restoredToast' => 'Restaurada',
 			'memoryArchived.restoredAllToast' => ({required Object count}) => '${count} memorias restauradas',
@@ -12273,8 +12389,6 @@ extension on TranslationsEs {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'project.conflicts.deleteLoading' => 'Cargando el texto del hecho…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Eliminar ${side}',
-			_ => null,
-		} ?? switch (path) {
 			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
 			'project.conflicts.openPlanEditor' => 'Abrir el editor del plan',
 			'project.conflicts.openGoalEditor' => 'Abrir el editor del objetivo',
@@ -12745,6 +12859,8 @@ extension on TranslationsEs {
 			'skills.resetButton' => 'Restablecer',
 			'skills.resetSnack' => ({required Object id}) => '${id} restablecido al integrado.',
 			'skills.deletedSnack' => ({required Object id}) => '${id} eliminado.',
+			_ => null,
+		} ?? switch (path) {
 			'skills.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'skills.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'skills.deleteBody' => ({required Object id}) => 'Elimina ${id} del vault. Las sesiones que lo referencian fallarán hasta que se restaure.',
@@ -12787,8 +12903,6 @@ extension on TranslationsEs {
 			'customTasks.fieldCommand' => 'Comando',
 			'customTasks.commandHelper' => 'El texto que se inserta en la session al elegirlo. Puede ser un comando de CLI o un slash command de Claude.',
 			'customTasks.fieldDescription' => 'Descripción (opcional)',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.fieldScope' => 'Ámbito',
 			'customTasks.globalScopeHint' => 'Visible desde cualquier session, sin importar el cwd.',
 			'customTasks.projectScopeHint' => 'Visible solo cuando el cwd de una session coincide con la ruta de abajo.',
