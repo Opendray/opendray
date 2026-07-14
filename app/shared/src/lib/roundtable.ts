@@ -1,7 +1,8 @@
-// Round Table API client (experimental) — cross-vendor multi-agent
-// discussion. A deterministic chair drives claude/codex/antigravity seats
-// through propose → critique → synthesize and produces a structured
-// Verdict. Wraps the /api/v1/round-tables/* endpoints via api<T>().
+// Round Table API client (experimental) — a cross-vendor AI GROUP CHAT.
+// Members are the seated providers (claude/codex/antigravity) plus the
+// operator. The operator @mentions the members who should reply; each
+// mentioned member reads the whole thread and answers in character.
+// Wraps the /api/v1/round-tables/* endpoints via api<T>().
 import { api } from './api'
 
 // Seat providers with a headless worker path (must match the backend's
@@ -31,36 +32,15 @@ export const SEAT_MODEL_PLACEHOLDER: Record<SeatProvider, string> = {
   antigravity: 'default (blank = CLI default)',
 }
 
-export type RoundTableStatus =
-  | 'draft'
-  | 'running'
-  | 'awaiting_verdict'
-  | 'failed'
-  | 'closed'
+export type RoundTableStatus = 'active' | 'closed'
 
-export type Beat = 'propose' | 'critique' | 'synthesize'
+export type MessageRole = 'operator' | 'seat' | 'system'
+export type MessageKind = 'message' | 'summary'
 
 export interface Seat {
   provider: SeatProvider
   model?: string
   account_id?: string
-}
-
-export interface SeatScore {
-  provider: string
-  blockers: number
-  concerns: number
-  confidence: number
-}
-
-export interface Verdict {
-  recommended: string
-  recommended_by: string
-  alternatives: string[] | null
-  tradeoffs: string[] | null
-  open_questions: string[] | null
-  task_breakdown: string[] | null
-  ranking: SeatScore[] | null
 }
 
 export interface RoundTable {
@@ -69,24 +49,22 @@ export interface RoundTable {
   cwd?: string
   seats: Seat[]
   status: RoundTableStatus
-  verdict?: Verdict | null
   resulting_session_id?: string
-  error?: string
   origin: string
   integration_id?: string
   created_at: string
   updated_at: string
 }
 
-export interface Turn {
+export interface Message {
   id: string
   round_table_id: string
-  beat: Beat
+  role: MessageRole
   seat_provider?: string
   seat_model?: string
-  role: 'seat' | 'chair' | 'system'
+  kind: MessageKind
   content: string
-  structured?: unknown
+  mentions?: string[]
   created_at: string
 }
 
@@ -105,16 +83,16 @@ export async function listRoundTables(cwd?: string): Promise<RoundTable[]> {
   return res.round_tables ?? []
 }
 
-// GET one — returns the table plus its full discussion thread.
+// GET one — the table plus its full chat thread.
 export async function getRoundTable(
   id: string,
-): Promise<{ round_table: RoundTable; turns: Turn[] }> {
-  return api<{ round_table: RoundTable; turns: Turn[] }>(
+): Promise<{ round_table: RoundTable; messages: Message[] }> {
+  return api<{ round_table: RoundTable; messages: Message[] }>(
     `/api/v1/round-tables/${id}`,
   )
 }
 
-// POST create — opens a draft table.
+// POST create — opens an active group chat.
 export async function createRoundTable(
   input: CreateRoundTableInput,
 ): Promise<RoundTable> {
@@ -124,9 +102,24 @@ export async function createRoundTable(
   })
 }
 
-// POST start — kicks off the discussion (runs async; poll GET while running).
-export async function startRoundTable(id: string): Promise<RoundTable> {
-  return api<RoundTable>(`/api/v1/round-tables/${id}/start`, { method: 'POST' })
+// POST a message. @mentioned members (@claude/@codex/@antigravity/@all)
+// reply asynchronously — poll GET while replies land.
+export async function postMessage(id: string, content: string): Promise<Message> {
+  return api<Message>(`/api/v1/round-tables/${id}/messages`, {
+    method: 'POST',
+    body: { content },
+  })
+}
+
+// POST summarize — a member condenses the chat into a plan (async).
+export async function summarizeRoundTable(
+  id: string,
+  provider?: string,
+): Promise<void> {
+  await api<void>(`/api/v1/round-tables/${id}/summarize`, {
+    method: 'POST',
+    body: { provider: provider ?? '' },
+  })
 }
 
 // POST close.

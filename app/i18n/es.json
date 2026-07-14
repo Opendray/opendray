@@ -3122,59 +3122,41 @@
     "roundTable": {
       "title": "Mesa redonda",
       "experimental": "Experimental",
-      "subtitle": "Discusión multiagente entre proveedores: un moderador determinista guía asientos de modelos heterogéneos por proponer → criticar → sintetizar y produce un plan para tu aprobación.",
+      "subtitle": "Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.",
       "new": "Nueva mesa redonda",
       "loading": "Cargando…",
       "empty": "Aún no hay mesas redondas.",
-      "selectHint": "Selecciona una mesa redonda para ver la discusión.",
-      "chair": "moderador",
-      "confidence": "conf {value}",
+      "selectHint": "Selecciona una mesa redonda para abrir el chat.",
+      "you": "Tú",
+      "summary": "Resumen",
       "dialog": {
         "title": "Nueva mesa redonda",
-        "description": "Elige los asientos de modelos y el tema. Cada asiento es el modelo de un proveedor distinto: la diversidad es el objetivo.",
+        "description": "Elige los miembros (un modelo por proveedor) y un tema. En el chat, menciona con @ a quién quieres que responda.",
         "topic": "Tema",
-        "topicPlaceholder": "¿Qué debe discutir la mesa redonda?",
+        "topicPlaceholder": "¿De qué debe hablar el grupo?",
         "cwd": "Ruta del proyecto (opcional)",
-        "cwdHint": "Vincula la discusión a un proyecto para recuperar memoria.",
-        "seats": "Asientos",
-        "seatsHint": "Al menos dos asientos (uno por proveedor). Indica un modelo cuando el CLI lo requiera — p. ej. codex en un plan ChatGPT básico solo permite ciertos modelos.",
+        "cwdHint": "Vincula el chat a un proyecto para recuperar memoria.",
+        "seats": "Miembros",
+        "seatsHint": "Uno por proveedor. Indica un modelo cuando el CLI lo requiera — p. ej. codex en un plan ChatGPT básico solo permite ciertos modelos.",
         "create": "Crear",
         "created": "Mesa redonda creada"
       },
       "detail": {
-        "loading": "Cargando discusión…",
-        "loadFailed": "No se pudo cargar esta mesa redonda.",
-        "start": "Iniciar",
+        "loading": "Cargando chat…",
+        "loadFailed": "No se pudo cargar este chat.",
         "close": "Cerrar",
-        "started": "Discusión iniciada",
-        "running": "Los asientos están discutiendo… esto puede tardar unos minutos."
+        "summarize": "Resumir",
+        "summarizing": "Resumiendo…",
+        "emptyThread": "Aún no hay mensajes.",
+        "emptyHint": "Escribe algo y menciona con @ a un miembro para que responda.",
+        "replying": "los miembros están respondiendo…",
+        "mentionHint": "Mencionar:",
+        "composerPlaceholder": "Mensaje al grupo…  (@claude, @all — ⌘/Ctrl+Enter para enviar)",
+        "send": "Enviar"
       },
       "status": {
-        "draft": "Borrador",
-        "running": "En curso",
-        "awaiting_verdict": "Esperando veredicto",
-        "failed": "Fallida",
+        "active": "Activa",
         "closed": "Cerrada"
-      },
-      "verdict": {
-        "title": "Veredicto",
-        "recommendedBy": "Recomendado: {provider}",
-        "tasks": "Desglose de tareas",
-        "tradeoffs": "Compensaciones",
-        "openQuestions": "Preguntas abiertas",
-        "alternatives": "Alternativas",
-        "ranking": "Clasificación",
-        "scoreLine": "{blockers} bloqueos · {concerns} inquietudes · conf {confidence}"
-      },
-      "beat": {
-        "propose": "Proponer",
-        "critique": "Criticar",
-        "synthesize": "Sintetizar"
-      },
-      "thread": {
-        "title": "Discusión",
-        "empty": "Aún no hay turnos.",
-        "noCritiques": "Sin críticas."
       }
     }
   },

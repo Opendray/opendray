@@ -9,16 +9,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Handlers exposes the Round Table REST surface. Self-contained — mounts
-// its own /round-tables group so the feature can be removed by deleting
-// this package + one wiring block (see ROLLBACK.md).
+// Handlers exposes the Round Table REST surface — a cross-vendor AI group
+// chat. Self-contained: mounts its own /round-tables group so the feature
+// can be removed by deleting this package + one wiring block (ROLLBACK.md).
 //
 // Routes (under the gateway's /api/v1 dual-auth group):
 //
-//	POST /round-tables                  body: {topic, cwd?, seats:[{provider,model?,account_id?}]}
+//	POST /round-tables                  {topic, cwd?, seats:[{provider,model?,account_id?}]}
 //	GET  /round-tables?cwd=             → {round_tables}
-//	GET  /round-tables/{id}             → {round_table, turns}
-//	POST /round-tables/{id}/start       → 202 (discussion runs async; watch eventbus "roundtable.updated")
+//	GET  /round-tables/{id}             → {round_table, messages}
+//	POST /round-tables/{id}/messages    {content} → operator Message (202; @mentioned members reply async)
+//	POST /round-tables/{id}/summarize   {provider?} → 202 (a member condenses the chat; lands async)
 //	POST /round-tables/{id}/close       → 204
 type Handlers struct {
 	store *Store
@@ -40,7 +41,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/", h.create)
 		r.Get("/", h.list)
 		r.Get("/{id}", h.get)
-		r.Post("/{id}/start", h.start)
+		r.Post("/{id}/messages", h.postMessage)
+		r.Post("/{id}/summarize", h.summarize)
 		r.Post("/{id}/close", h.close)
 	})
 }
@@ -104,23 +106,50 @@ func (h *Handlers) get(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	turns, err := h.store.Turns(r.Context(), id, 0)
+	msgs, err := h.store.Messages(r.Context(), id, 0)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	if turns == nil {
-		turns = []Turn{}
+	if msgs == nil {
+		msgs = []Message{}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"round_table": rt, "turns": turns})
+	writeJSON(w, http.StatusOK, map[string]any{"round_table": rt, "messages": msgs})
 }
 
-func (h *Handlers) start(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) postMessage(w http.ResponseWriter, r *http.Request) {
 	if !h.ready(w) {
 		return
 	}
-	id := chi.URLParam(r, "id")
-	if err := h.svc.Start(r.Context(), id); err != nil {
+	var body struct {
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	msg, err := h.svc.PostMessage(r.Context(), chi.URLParam(r, "id"), body.Content)
+	if errors.Is(err, ErrNotFound) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusAccepted, msg)
+}
+
+func (h *Handlers) summarize(w http.ResponseWriter, r *http.Request) {
+	if !h.ready(w) {
+		return
+	}
+	var body struct {
+		Provider string `json:"provider"`
+	}
+	// Body is optional — default to the first seat.
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	if err := h.svc.Summarize(r.Context(), chi.URLParam(r, "id"), body.Provider); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 			return
@@ -128,20 +157,14 @@ func (h *Handlers) start(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	rt, err := h.store.Get(r.Context(), id)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusAccepted, rt)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *Handlers) close(w http.ResponseWriter, r *http.Request) {
 	if !h.ready(w) {
 		return
 	}
-	id := chi.URLParam(r, "id")
-	if err := h.store.SetStatus(r.Context(), id, StatusClosed, ""); err != nil {
+	if err := h.store.SetStatus(r.Context(), chi.URLParam(r, "id"), StatusClosed); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 			return

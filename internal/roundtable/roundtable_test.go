@@ -1,6 +1,9 @@
 package roundtable
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestNormalizeSeats(t *testing.T) {
 	tests := []struct {
@@ -10,18 +13,18 @@ func TestNormalizeSeats(t *testing.T) {
 		check   func(t *testing.T, got []Seat)
 	}{
 		{
-			name:    "too few seats",
-			seats:   []Seat{{Provider: "claude"}},
+			name:    "no seats",
+			seats:   nil,
 			wantErr: true,
 		},
 		{
 			name:    "unsupported provider",
-			seats:   []Seat{{Provider: "claude"}, {Provider: "gemini"}},
+			seats:   []Seat{{Provider: "gemini"}},
 			wantErr: true,
 		},
 		{
 			name:    "opencode has no headless path",
-			seats:   []Seat{{Provider: "claude"}, {Provider: "opencode"}},
+			seats:   []Seat{{Provider: "opencode"}},
 			wantErr: true,
 		},
 		{
@@ -30,7 +33,16 @@ func TestNormalizeSeats(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:  "valid three-vendor table",
+			name:  "single seat is allowed",
+			seats: []Seat{{Provider: "claude"}},
+			check: func(t *testing.T, got []Seat) {
+				if len(got) != 1 {
+					t.Fatalf("want 1 seat, got %d", len(got))
+				}
+			},
+		},
+		{
+			name:  "three-vendor table",
 			seats: []Seat{{Provider: "claude"}, {Provider: "codex"}, {Provider: "antigravity"}},
 			check: func(t *testing.T, got []Seat) {
 				if len(got) != 3 {
@@ -73,48 +85,66 @@ func TestNormalizeSeats(t *testing.T) {
 }
 
 func TestValidSeatProvider(t *testing.T) {
-	valid := []string{"claude", "codex", "antigravity"}
-	for _, p := range valid {
+	for _, p := range []string{"claude", "codex", "antigravity"} {
 		if !validSeatProvider(p) {
 			t.Errorf("%q should be valid", p)
 		}
 	}
-	invalid := []string{"", "gemini", "opencode", "grok", "shell"}
-	for _, p := range invalid {
+	for _, p := range []string{"", "gemini", "opencode", "grok", "shell"} {
 		if validSeatProvider(p) {
 			t.Errorf("%q should be invalid (no headless worker path)", p)
 		}
 	}
 }
 
-func TestParseJSON(t *testing.T) {
+func TestParseMentions(t *testing.T) {
+	seats := []Seat{{Provider: "claude"}, {Provider: "codex"}, {Provider: "antigravity"}}
 	tests := []struct {
 		name    string
-		raw     string
-		wantErr bool
-		want    string
+		content string
+		want    []string
 	}{
-		{name: "clean", raw: `{"summary":"ok"}`, want: "ok"},
-		{name: "fenced", raw: "```json\n{\"summary\":\"ok\"}\n```", want: "ok"},
-		{name: "preamble", raw: `Here is my proposal: {"summary":"ok"} hope it helps`, want: "ok"},
-		{name: "garbage", raw: `not json at all`, wantErr: true},
+		{name: "no mention", content: "just thinking out loud", want: nil},
+		{name: "single", content: "@codex what do you think?", want: []string{"codex"}},
+		{
+			name:    "multiple in seat order regardless of text order",
+			content: "@antigravity and @claude please weigh in",
+			want:    []string{"claude", "antigravity"},
+		},
+		{
+			name:    "all expands to every seat",
+			content: "@all go",
+			want:    []string{"claude", "codex", "antigravity"},
+		},
+		{
+			name:    "case insensitive",
+			content: "@CoDeX ?",
+			want:    []string{"codex"},
+		},
+		{
+			name:    "unknown mention ignored",
+			content: "@gemini @claude",
+			want:    []string{"claude"},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			var p proposal
-			err := parseJSON(tc.raw, &p)
-			if tc.wantErr {
-				if err == nil {
-					t.Fatalf("want error, got nil")
-				}
+			got := parseMentions(tc.content, seats)
+			if len(got) == 0 && len(tc.want) == 0 {
 				return
 			}
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if p.Summary != tc.want {
-				t.Errorf("summary = %q, want %q", p.Summary, tc.want)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("parseMentions(%q) = %v, want %v", tc.content, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestParseMentions_OnlySeatedProvidersAddressed(t *testing.T) {
+	// @codex is not seated → not returned even though it's a valid provider.
+	seats := []Seat{{Provider: "claude"}}
+	got := parseMentions("@codex @claude", seats)
+	if !reflect.DeepEqual(got, []string{"claude"}) {
+		t.Errorf("only seated members should be addressable; got %v", got)
 	}
 }

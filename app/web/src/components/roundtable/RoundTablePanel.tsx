@@ -10,14 +10,8 @@ import { listRoundTables, type RoundTableStatus } from '@/lib/roundtable'
 import { CreateRoundTableDialog } from './CreateRoundTableDialog'
 import { RoundTableDetail } from './RoundTableDetail'
 
-const STATUS_VARIANT: Record<
-  RoundTableStatus,
-  'muted' | 'accent' | 'success' | 'danger' | 'outline'
-> = {
-  draft: 'muted',
-  running: 'accent',
-  awaiting_verdict: 'success',
-  failed: 'danger',
+const STATUS_VARIANT: Record<RoundTableStatus, 'success' | 'outline'> = {
+  active: 'success',
   closed: 'outline',
 }
 
@@ -29,9 +23,9 @@ export function RoundTablePanel() {
   const list = useQuery({
     queryKey: ['round-tables'],
     queryFn: () => listRoundTables(),
-    // Keep statuses fresh while a discussion runs somewhere in the list.
+    // Keep statuses fresh while any chat is active.
     refetchInterval: (q) =>
-      (q.state.data ?? []).some((rt) => rt.status === 'running') ? 4000 : false,
+      (q.state.data ?? []).some((rt) => rt.status === 'active') ? 5000 : false,
   })
 
   const tables = list.data ?? []

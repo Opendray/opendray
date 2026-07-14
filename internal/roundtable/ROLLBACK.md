@@ -12,7 +12,7 @@ here, NOT in `internal/store/migrations/`).
   `internal/app/app.go` (grep `ROUND TABLE (experimental)`), all on branch
   `feat/round-table`.
 - **Schema**: migration `0077_round_tables.sql` → tables `round_tables` and
-  `round_table_turns`. Touches no existing table, enum, or CHECK constraint.
+  `round_table_messages`. Touches no existing table, enum, or CHECK constraint.
 - **No new `memory_workers` row / TaskKind**: seat calls reuse
   `worker.TaskCuration` purely as the metrics label via `RunWith`, so no
   existing enum or CHECK was widened.
@@ -22,7 +22,7 @@ here, NOT in `internal/store/migrations/`).
 1. **Drop the tables** — run against each live DB (`opendray_v2`):
 
    ```sql
-   DROP TABLE IF EXISTS round_table_turns;
+   DROP TABLE IF EXISTS round_table_messages;
    DROP TABLE IF EXISTS round_tables;
    ```
 
