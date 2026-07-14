@@ -175,11 +175,10 @@ func newID(prefix string) string {
 	return prefix + base64.RawURLEncoding.EncodeToString(b[:])
 }
 
-// Create opens an active group chat.
+// Create opens an active group chat. topic is optional — when empty it is
+// auto-derived from the first message (see chat.PostMessage), so the operator
+// can just start chatting instead of naming the chat upfront.
 func (s *Store) Create(ctx context.Context, topic, cwd string, seats []Seat, origin, integrationID string) (RoundTable, error) {
-	if strings.TrimSpace(topic) == "" {
-		return RoundTable{}, errors.New("roundtable: topic is required")
-	}
 	norm, err := normalizeSeats(seats)
 	if err != nil {
 		return RoundTable{}, err
@@ -243,6 +242,21 @@ func (s *Store) List(ctx context.Context, cwd string, limit int) ([]RoundTable, 
 		out = append(out, rt)
 	}
 	return out, rows.Err()
+}
+
+// SetTopic sets the chat's title (used to auto-name a chat from its first
+// message when no topic was given upfront).
+func (s *Store) SetTopic(ctx context.Context, id, topic string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE round_tables SET topic = $1, updated_at = NOW() WHERE id = $2`,
+		strings.TrimSpace(topic), id)
+	if err != nil {
+		return fmt.Errorf("roundtable: set topic: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // SetStatus updates the chat status (active | closed).

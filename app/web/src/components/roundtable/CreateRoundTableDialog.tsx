@@ -1,18 +1,21 @@
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { listProjects } from '@/lib/projectDocs'
 import {
   createRoundTable,
   SEAT_MODEL_PLACEHOLDER,
@@ -28,25 +31,33 @@ interface Props {
   onCreated: (rt: RoundTable) => void
 }
 
-// A round table needs at least two seats to be a discussion.
+// Start with every vendor at the table by default.
 const DEFAULT_SEATS: SeatProvider[] = ['claude', 'codex', 'antigravity']
+
+// Sentinel for "no project" in the Select (empty string isn't a valid value).
+const NO_PROJECT = '__none__'
 
 export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const [topic, setTopic] = useState('')
-  const [cwd, setCwd] = useState('')
   const [seats, setSeats] = useState<SeatProvider[]>(DEFAULT_SEATS)
-  // Optional per-seat model override (blank = the CLI's own default).
   const [models, setModels] = useState<Partial<Record<SeatProvider, string>>>(
     {},
   )
+  const [cwd, setCwd] = useState<string>(NO_PROJECT)
+
+  // Known projects for the optional binding dropdown (memory recall).
+  const projects = useQuery({
+    queryKey: ['known-projects'],
+    queryFn: () => listProjects(),
+    staleTime: 30_000,
+    enabled: open,
+  })
 
   const reset = () => {
-    setTopic('')
-    setCwd('')
     setSeats(DEFAULT_SEATS)
     setModels({})
+    setCwd(NO_PROJECT)
   }
 
   const toggleSeat = (p: SeatProvider) =>
@@ -57,8 +68,8 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
   const create = useMutation({
     mutationFn: () =>
       createRoundTable({
-        topic: topic.trim(),
-        cwd: cwd.trim() || undefined,
+        // No topic — the chat names itself from the first message.
+        cwd: cwd === NO_PROJECT ? undefined : cwd,
         seats: seats.map((provider) => ({
           provider,
           model: models[provider]?.trim() || undefined,
@@ -66,14 +77,13 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
       }),
     onSuccess: (rt) => {
       qc.invalidateQueries({ queryKey: ['round-tables'] })
-      toast.success(t('web.roundTable.dialog.created'))
       reset()
       onCreated(rt)
     },
     onError: (e: Error) => toast.error(e.message),
   })
 
-  const canSubmit = topic.trim().length > 0 && seats.length >= 2
+  const canSubmit = seats.length >= 1
 
   return (
     <Dialog
@@ -89,30 +99,6 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
         </p>
 
         <div className="flex flex-col gap-4 mt-2">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="rt-topic">{t('web.roundTable.dialog.topic')}</Label>
-            <Textarea
-              id="rt-topic"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              rows={3}
-              placeholder={t('web.roundTable.dialog.topicPlaceholder')}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="rt-cwd">{t('web.roundTable.dialog.cwd')}</Label>
-            <Input
-              id="rt-cwd"
-              value={cwd}
-              onChange={(e) => setCwd(e.target.value)}
-              placeholder="/path/to/project"
-            />
-            <span className="text-[11px] text-muted-foreground">
-              {t('web.roundTable.dialog.cwdHint')}
-            </span>
-          </div>
-
           <div className="flex flex-col gap-1.5">
             <Label>{t('web.roundTable.dialog.seats')}</Label>
             <div className="flex flex-col gap-1.5">
@@ -156,6 +142,28 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
               {t('web.roundTable.dialog.seatsHint')}
             </span>
           </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label>{t('web.roundTable.dialog.project')}</Label>
+            <Select value={cwd} onValueChange={setCwd}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_PROJECT}>
+                  {t('web.roundTable.dialog.projectNone')}
+                </SelectItem>
+                {(projects.data ?? []).map((p) => (
+                  <SelectItem key={p.cwd} value={p.cwd}>
+                    {p.cwd}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-[11px] text-muted-foreground">
+              {t('web.roundTable.dialog.cwdHint')}
+            </span>
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
@@ -167,7 +175,7 @@ export function CreateRoundTableDialog({ open, onClose, onCreated }: Props) {
             disabled={!canSubmit || create.isPending}
             onClick={() => create.mutate()}
           >
-            {t('web.roundTable.dialog.create')}
+            {t('web.roundTable.dialog.start')}
           </Button>
         </div>
       </DialogContent>

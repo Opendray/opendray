@@ -110,7 +110,9 @@ export function RoundTableDetail({ id }: { id: string }) {
       <div className="flex items-start justify-between gap-4 pb-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="truncate text-sm font-medium">{rt.topic}</h2>
+            <h2 className="truncate text-sm font-medium">
+              {rt.topic || t('web.roundTable.untitled')}
+            </h2>
             <Badge variant={closed ? 'outline' : 'success'}>
               {t(`web.roundTable.status.${rt.status}`)}
             </Badge>

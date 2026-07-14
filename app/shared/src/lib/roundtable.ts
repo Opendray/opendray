@@ -69,7 +69,8 @@ export interface Message {
 }
 
 export interface CreateRoundTableInput {
-  topic: string
+  // Optional — when omitted the chat auto-names itself from the first message.
+  topic?: string
   cwd?: string
   seats: Seat[]
 }

@@ -2,6 +2,7 @@ package roundtable
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -137,6 +138,29 @@ func TestParseMentions(t *testing.T) {
 				t.Errorf("parseMentions(%q) = %v, want %v", tc.content, got, tc.want)
 			}
 		})
+	}
+}
+
+func TestDeriveTitle(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "@all let's discuss the game idea", want: "let's discuss the game idea"},
+		{in: "just a plain message", want: "just a plain message"},
+		{in: "first line\nsecond line", want: "first line"},
+		{in: "@claude", want: "@claude"}, // all-mention line falls back to raw
+		{in: "   ", want: ""},
+	}
+	for _, tc := range tests {
+		if got := deriveTitle(tc.in); got != tc.want {
+			t.Errorf("deriveTitle(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+	// Long input is truncated with an ellipsis.
+	long := deriveTitle(strings.Repeat("x", 200))
+	if r := []rune(long); len(r) != 81 || r[80] != '…' {
+		t.Errorf("long title should truncate to 80 runes + ellipsis, got len %d", len([]rune(long)))
 	}
 }
 

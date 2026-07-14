@@ -78,6 +78,13 @@ func (s *Service) PostMessage(ctx context.Context, id, content string) (Message,
 	if err != nil {
 		return Message{}, err
 	}
+	// Auto-name the chat from its first message so the operator never has to
+	// title it upfront.
+	if strings.TrimSpace(rt.Topic) == "" {
+		if title := deriveTitle(content); title != "" {
+			_ = s.store.SetTopic(ctx, id, title)
+		}
+	}
 	s.announce(id)
 	if len(mentions) > 0 {
 		// Detached: agent-mode replies take minutes and must not hold the
@@ -264,6 +271,33 @@ func (s *Service) buildTranscript(ctx context.Context, rt RoundTable, selfProvid
 		}
 	}
 	return b.String(), nil
+}
+
+// deriveTitle makes a short chat title from its first message: the first
+// non-empty line, with @mentions stripped, truncated to ~80 runes.
+func deriveTitle(content string) string {
+	line := content
+	if i := strings.IndexByte(line, '\n'); i >= 0 {
+		line = line[:i]
+	}
+	// Drop leading @mention tokens so the title reads as the actual ask.
+	fields := strings.Fields(line)
+	kept := fields[:0]
+	for _, f := range fields {
+		if strings.HasPrefix(f, "@") {
+			continue
+		}
+		kept = append(kept, f)
+	}
+	line = strings.TrimSpace(strings.Join(kept, " "))
+	if line == "" {
+		line = strings.TrimSpace(content)
+	}
+	r := []rune(line)
+	if len(r) > 80 {
+		return string(r[:80]) + "…"
+	}
+	return line
 }
 
 func speakerLabel(m Message, selfProvider string) string {

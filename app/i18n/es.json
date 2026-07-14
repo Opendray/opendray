@@ -3131,15 +3131,16 @@
       "summary": "Resumen",
       "dialog": {
         "title": "Nueva mesa redonda",
-        "description": "Elige los miembros (un modelo por proveedor) y un tema. En el chat, menciona con @ a quién quieres que responda.",
-        "topic": "Tema",
-        "topicPlaceholder": "¿De qué debe hablar el grupo?",
+        "description": "Elige los miembros (un modelo por proveedor). Sin tema — empieza a chatear; el chat se nombra con tu primer mensaje.",
         "cwd": "Ruta del proyecto (opcional)",
         "cwdHint": "Vincula el chat a un proyecto para recuperar memoria.",
         "seats": "Miembros",
         "seatsHint": "Uno por proveedor. Indica un modelo cuando el CLI lo requiera — p. ej. codex en un plan ChatGPT básico solo permite ciertos modelos.",
         "create": "Crear",
-        "created": "Mesa redonda creada"
+        "created": "Mesa redonda creada",
+        "project": "Proyecto (opcional)",
+        "projectNone": "Ninguno",
+        "start": "Iniciar chat"
       },
       "detail": {
         "loading": "Cargando chat…",
@@ -3157,7 +3158,8 @@
       "status": {
         "active": "Activa",
         "closed": "Cerrada"
-      }
+      },
+      "untitled": "Chat nuevo"
     }
   },
   "more": {

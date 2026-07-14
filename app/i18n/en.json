@@ -3131,15 +3131,16 @@
       "summary": "Summary",
       "dialog": {
         "title": "New round table",
-        "description": "Pick the members (one model per vendor) and a topic. In the chat you @mention the members you want to reply.",
-        "topic": "Topic",
-        "topicPlaceholder": "What should the group chat about?",
+        "description": "Pick the members (one model per vendor). No topic needed — just start chatting; the chat names itself from your first message.",
         "cwd": "Project path (optional)",
         "cwdHint": "Binds the chat to a project for memory recall.",
         "seats": "Members",
         "seatsHint": "One per vendor. Set a model where the CLI needs one — e.g. codex on a plain ChatGPT plan only allows certain models.",
         "create": "Create",
-        "created": "Round table created"
+        "created": "Round table created",
+        "project": "Project (optional)",
+        "projectNone": "None",
+        "start": "Start chat"
       },
       "detail": {
         "loading": "Loading chat…",
@@ -3157,7 +3158,8 @@
       "status": {
         "active": "Active",
         "closed": "Closed"
-      }
+      },
+      "untitled": "New chat"
     }
   },
   "more": {

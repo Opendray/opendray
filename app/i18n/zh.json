@@ -3131,15 +3131,16 @@
       "summary": "总结",
       "dialog": {
         "title": "新建圆桌",
-        "description": "选择成员(每厂商一个模型)和议题。在群聊里 @ 点名你想让谁回复。",
-        "topic": "议题",
-        "topicPlaceholder": "让群里聊什么?",
+        "description": "选择成员(每厂商一个模型)。不用填主题——直接开聊,群聊会用你的第一条消息自动命名。",
         "cwd": "项目路径(可选)",
         "cwdHint": "把群聊绑定到项目以检索记忆。",
         "seats": "成员",
         "seatsHint": "每厂商一个。CLI 需要时填模型——如 codex 在普通 ChatGPT 订阅下只允许特定模型。",
         "create": "创建",
-        "created": "圆桌已创建"
+        "created": "圆桌已创建",
+        "project": "项目(可选)",
+        "projectNone": "无",
+        "start": "开始聊天"
       },
       "detail": {
         "loading": "加载群聊…",
@@ -3157,7 +3158,8 @@
       "status": {
         "active": "进行中",
         "closed": "已关闭"
-      }
+      },
+      "untitled": "新群聊"
     }
   },
   "more": {
