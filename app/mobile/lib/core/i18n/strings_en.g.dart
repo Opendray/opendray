@@ -12786,6 +12786,12 @@ class TranslationsSessionsInspectorCheckpointsEn {
 
 	/// en: 'This removes the checkpoint and its stored payload.'
 	String get deleteConfirm => 'This removes the checkpoint and its stored payload.';
+
+	/// en: 'clean — no changes'
+	String get clean => 'clean — no changes';
+
+	/// en: 'Working tree was clean — nothing to back up'
+	String get capturedClean => 'Working tree was clean — nothing to back up';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -14030,6 +14036,12 @@ class TranslationsWebSessionsInspectorCheckpointsEn {
 
 	/// en: 'Delete this checkpoint?'
 	String get deleteConfirm => 'Delete this checkpoint?';
+
+	/// en: 'clean — no changes captured'
+	String get clean => 'clean — no changes captured';
+
+	/// en: 'Working tree was clean — no changes to back up'
+	String get capturedClean => 'Working tree was clean — no changes to back up';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -17708,6 +17720,8 @@ extension on Translations {
 			'web.sessions.inspector.checkpoints.restored' => 'Checkpoint restored',
 			'web.sessions.inspector.checkpoints.restoredDetail' => ({required Object diff, required Object files, required Object skipped}) => 'diff applied: ${diff} · ${files} files restored · ${skipped} skipped',
 			'web.sessions.inspector.checkpoints.deleteConfirm' => 'Delete this checkpoint?',
+			'web.sessions.inspector.checkpoints.clean' => 'clean — no changes captured',
+			'web.sessions.inspector.checkpoints.capturedClean' => 'Working tree was clean — no changes to back up',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -17959,10 +17973,10 @@ extension on Translations {
 			'web.project.editor.save' => 'Save',
 			'web.project.editor.saveFailedToast' => 'Save failed',
 			'web.project.editor.savedToast' => ({required Object label}) => '${label} saved',
-			'web.project.editor.goalPlaceholder' => 'What are we building? One paragraph. Read by every agent on spawn.',
-			'web.project.editor.planPlaceholder' => 'Active plan — what we are doing right now and what is next. Updated as work progresses.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.editor.goalPlaceholder' => 'What are we building? One paragraph. Read by every agent on spawn.',
+			'web.project.editor.planPlaceholder' => 'Active plan — what we are doing right now and what is next. Updated as work progresses.',
 			'web.project.editor.sectionPlaceholder' => 'Write this section in markdown…',
 			'web.project.readonly.tech_stack.label' => 'Tech stack & structure',
 			'web.project.readonly.tech_stack.empty' => 'Run a Claude session in this project — scanner refreshes on every spawn.',
@@ -18473,10 +18487,10 @@ extension on Translations {
 			'web.channels.card.channelIdLabel' => 'channel_id:',
 			'web.channels.card.webhookLabel' => 'webhook:',
 			'web.channels.card.copyWebhookTooltip' => 'Copy webhook URL',
-			'web.channels.card.webhookCopiedToast' => 'Webhook URL copied',
-			'web.channels.card.setup' => 'Setup',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.card.webhookCopiedToast' => 'Webhook URL copied',
+			'web.channels.card.setup' => 'Setup',
 			'web.channels.card.setupTooltip' => 'Show adapter connection details + sample code',
 			'web.channels.card.test' => 'Test',
 			'web.channels.card.testNotRunningTooltip' => 'Channel must be running',
@@ -18987,10 +19001,10 @@ extension on Translations {
 			'web.backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8 chars)',
 			'web.backups.recoveryKit.passphrasePlaceholder' => 'a strong passphrase you will not lose',
 			'web.backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
-			'web.backups.recoveryKit.mismatch' => 'Passphrases don\'t match',
-			'web.backups.recoveryKit.generating' => 'Generating…',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.recoveryKit.mismatch' => 'Passphrases don\'t match',
+			'web.backups.recoveryKit.generating' => 'Generating…',
 			'web.backups.recoveryKit.download' => 'Download kit',
 			'web.backups.recoveryKit.downloadedToast' => 'Recovery Kit downloaded — store it safely',
 			'web.backups.recoveryKit.failedToast' => 'Could not generate Recovery Kit',
@@ -19501,10 +19515,10 @@ extension on Translations {
 			'web.memoryAmbient.rules.row.runNowFailedToast' => 'Run-now failed',
 			'web.memoryAmbient.rules.row.deleteConfirm' => ({required Object name}) => 'Delete rule "${name}"?',
 			'web.memoryAmbient.rules.row.deletedToast' => 'Rule deleted',
-			'web.memoryAmbient.rules.row.deleteFailedToast' => 'Delete failed',
-			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => 'every ${n} messages',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.row.deleteFailedToast' => 'Delete failed',
+			'web.memoryAmbient.rules.row.summary.afterMessages' => ({required Object n}) => 'every ${n} messages',
 			'web.memoryAmbient.rules.row.summary.onIdle' => ({required Object seconds}) => 'idle ≥ ${seconds}s',
 			'web.memoryAmbient.rules.row.summary.kChars' => ({required Object k}) => '≥ ${k} chars',
 			'web.memoryAmbient.rules.row.summary.manual' => 'manual only',
@@ -20015,10 +20029,10 @@ extension on Translations {
 			'memoryAmbient.strategyTopKRelevant' => 'Top-K relevant',
 			'memoryAmbient.strategyOnKeyword' => 'On keyword',
 			'memoryAmbient.strategyManualOnly' => 'Manual only',
-			'memoryAmbient.strategyHybrid' => 'Hybrid summary',
-			'memoryAmbient.strategyUnknown' => 'Unknown',
 			_ => null,
 		} ?? switch (path) {
+			'memoryAmbient.strategyHybrid' => 'Hybrid summary',
+			'memoryAmbient.strategyUnknown' => 'Unknown',
 			'sessions.title' => 'Sessions',
 			'sessions.refresh' => 'Refresh',
 			'sessions.actions' => 'Actions',
@@ -20219,6 +20233,8 @@ extension on Translations {
 			'sessions.inspector.checkpoints.delete' => 'Delete',
 			'sessions.inspector.checkpoints.deleteTitle' => 'Delete checkpoint?',
 			'sessions.inspector.checkpoints.deleteConfirm' => 'This removes the checkpoint and its stored payload.',
+			'sessions.inspector.checkpoints.clean' => 'clean — no changes',
+			'sessions.inspector.checkpoints.capturedClean' => 'Working tree was clean — nothing to back up',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -20527,12 +20543,12 @@ extension on Translations {
 			'memoryArchived.countBadge' => ({required Object count}) => '${count} archived',
 			'memoryArchived.restore' => 'Restore',
 			'memoryArchived.restoreAll' => 'Restore all',
+			_ => null,
+		} ?? switch (path) {
 			'memoryArchived.deleteAll' => 'Delete all',
 			'memoryArchived.restoreAllConfirm' => ({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?',
 			'memoryArchived.deleteAllConfirm' => ({required Object count, required Object project}) => 'Permanently delete all ${count} archived memories in ${project}? This skips the 30-day grace window and cannot be undone.',
 			'memoryArchived.deletePermanently' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'memoryArchived.deleteConfirm' => 'Permanently delete this memory now? This skips the 30-day grace window and cannot be undone.',
 			'memoryArchived.restoredToast' => 'Restored',
 			'memoryArchived.restoredAllToast' => ({required Object count}) => 'Restored ${count} memories',
@@ -21041,12 +21057,12 @@ extension on Translations {
 			'skills.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'skills.resetTitle' => 'Reset to built-in?',
 			'skills.deleteTitle' => 'Delete skill?',
+			_ => null,
+		} ?? switch (path) {
 			'skills.resetBody' => ({required Object id}) => 'Removes the vault override for ${id}. Sessions will fall back to the built-in body.',
 			'skills.resetButton' => 'Reset',
 			'skills.resetSnack' => ({required Object id}) => 'Reset ${id} to built-in.',
 			'skills.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
-			_ => null,
-		} ?? switch (path) {
 			'skills.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
 			'skills.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'skills.deleteBody' => ({required Object id}) => 'Removes ${id} from the vault. Sessions that reference it will fail until restored.',

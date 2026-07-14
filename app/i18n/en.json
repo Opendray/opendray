@@ -297,7 +297,9 @@
           "restoreConfirm": "Confirm restore",
           "restored": "Checkpoint restored",
           "restoredDetail": "diff applied: {diff} · {files} files restored · {skipped} skipped",
-          "deleteConfirm": "Delete this checkpoint?"
+          "deleteConfirm": "Delete this checkpoint?",
+          "clean": "clean — no changes captured",
+          "capturedClean": "Working tree was clean — no changes to back up"
         }
       },
       "ended": {
@@ -3545,7 +3547,9 @@
         "restored": "Restored · {files} files, {skipped} skipped",
         "delete": "Delete",
         "deleteTitle": "Delete checkpoint?",
-        "deleteConfirm": "This removes the checkpoint and its stored payload."
+        "deleteConfirm": "This removes the checkpoint and its stored payload.",
+        "clean": "clean — no changes",
+        "capturedClean": "Working tree was clean — nothing to back up"
       }
     },
     "spawnSheet": {

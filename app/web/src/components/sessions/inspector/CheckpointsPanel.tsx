@@ -8,6 +8,7 @@ import {
   GitCompare,
   AlertTriangle,
   FileWarning,
+  CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
@@ -49,13 +50,17 @@ export function CheckpointsPanel({ session }: CheckpointsPanelProps) {
     mutationFn: () => captureCheckpoint(sessionId),
     onSuccess: (cp) => {
       qc.invalidateQueries({ queryKey: key })
+      const clean =
+        cp.is_git && cp.diff_bytes === 0 && cp.untracked_files === 0
       toast.success(t('web.sessions.inspector.checkpoints.captured'), {
-        description: cp.is_git
-          ? t('web.sessions.inspector.checkpoints.capturedGit', {
-              diff: cp.diff_bytes,
-              files: cp.untracked_files,
-            })
-          : t('web.sessions.inspector.checkpoints.capturedNonGit'),
+        description: !cp.is_git
+          ? t('web.sessions.inspector.checkpoints.capturedNonGit')
+          : clean
+            ? t('web.sessions.inspector.checkpoints.capturedClean')
+            : t('web.sessions.inspector.checkpoints.capturedGit', {
+                diff: cp.diff_bytes,
+                files: cp.untracked_files,
+              }),
       })
     },
     onError: (e: Error) => toast.error(e.message),
@@ -148,6 +153,11 @@ function CheckpointCard({
   })
 
   const when = new Date(cp.created_at).toLocaleString()
+  // A git checkpoint with no tracked diff and no untracked files captured
+  // nothing restorable — the working tree was clean. Surfaced explicitly so
+  // an empty diff doesn't read as "the feature didn't work".
+  const isClean =
+    cp.is_git && cp.diff_bytes === 0 && cp.untracked_files === 0
 
   return (
     <li className="rounded-md border border-border bg-card/30 px-2.5 py-2 flex flex-col gap-1.5">
@@ -176,13 +186,21 @@ function CheckpointCard({
         )}
       </div>
 
-      <div className="text-[11px] text-muted-foreground/85 font-mono flex flex-wrap gap-x-3 gap-y-0.5">
+      <div className="text-[11px] text-muted-foreground/85 font-mono flex flex-wrap items-center gap-x-3 gap-y-0.5">
         {cp.is_git ? (
-          <>
-            <span>{cp.git_head ? cp.git_head.slice(0, 8) : '—'}</span>
-            <span>Δ {cp.diff_bytes}B</span>
-            <span>+{cp.untracked_files}f</span>
-          </>
+          isClean ? (
+            <span className="flex items-center gap-1 text-muted-foreground/60">
+              {cp.git_head ? cp.git_head.slice(0, 8) : '—'}
+              <CheckCircle2 className="size-3 text-state-running/70" />
+              {t('web.sessions.inspector.checkpoints.clean')}
+            </span>
+          ) : (
+            <>
+              <span>{cp.git_head ? cp.git_head.slice(0, 8) : '—'}</span>
+              <span>Δ {cp.diff_bytes}B</span>
+              <span>+{cp.untracked_files}f</span>
+            </>
+          )
         ) : (
           <span className="text-muted-foreground/60">
             {t('web.sessions.inspector.checkpoints.nonGit')}
