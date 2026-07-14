@@ -620,7 +620,11 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 		state := rs.sess.State
 		out := rs.sess
 		rs.sessMu.RUnlock()
-		if !state.IsTerminal() {
+		// Guard via the transition matrix: EventStart is illegal from any
+		// live state (pending/running/idle), which is the SSOT form of
+		// ErrAlreadyRunning and stops two resumes racing the same cwd.
+		// Legal iff the row is terminal (see TestStartLegalIffTerminal).
+		if !CanTransition(state, EventStart) {
 			return out, fmt.Errorf("session %s is %s: %w", id, state, ErrAlreadyRunning)
 		}
 	}

@@ -41,15 +41,26 @@ func (s State) IsTerminal() bool {
 // whose process just exited. Precedence: an explicit user stop wins;
 // otherwise a gateway shutdown makes it 'interrupted' (so startup
 // reconciliation resumes it); a spontaneous exit is a normal 'ended'.
+//
+// This now delegates to the transition matrix (Next) via TerminationEvent
+// so the precedence lives in exactly one place; TestTerminationEventPrecedence
+// pins the two in lock-step. A thin shim is kept for the existing call site.
 func classifyExitState(stopRequested, closing bool) State {
-	switch {
-	case stopRequested:
-		return StateStopped
-	case closing:
-		return StateInterrupted
-	default:
-		return StateEnded
+	// A running session always has a legal terminal transition, so the
+	// error is unreachable; fall back to the prior explicit precedence
+	// defensively rather than propagate it into the exit path.
+	state, err := Next(StateRunning, TerminationEvent(stopRequested, closing))
+	if err != nil {
+		switch {
+		case stopRequested:
+			return StateStopped
+		case closing:
+			return StateInterrupted
+		default:
+			return StateEnded
+		}
 	}
+	return state
 }
 
 // Session is the public view of a PTY-backed CLI session. Runtime
