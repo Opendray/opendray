@@ -235,7 +235,8 @@
           "history": "Historial",
           "vault": "Bóveda",
           "cortex": "Cortex",
-          "database": "BD"
+          "database": "BD",
+          "checkpoints": "Puntos de control"
         },
         "vaultPanel": {
           "open": "Abrir Bóveda",
@@ -273,6 +274,30 @@
           "plan": "Plan",
           "latestJournal": "Último diario",
           "empty": "Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla."
+        },
+        "checkpoints": {
+          "loading": "Cargando…",
+          "blurb": "Captura el diff sin confirmar, los archivos sin seguimiento y el historial de entrada de esta sesión — restáuralo después.",
+          "capture": "Capturar",
+          "captured": "Punto de control capturado",
+          "capturedGit": "diff {diff}B · {files} archivos sin seguimiento",
+          "capturedNonGit": "Solo metadatos (no es un repo git)",
+          "empty": "Aún no hay puntos de control. Captura uno ahora, o se crea automáticamente al apagar el gateway.",
+          "trigger": {
+            "manual": "Manual",
+            "interrupted": "Interrumpido"
+          },
+          "truncated": "Truncado",
+          "truncatedHint": "Un límite de tamaño/cantidad recortó esta captura; es parcial.",
+          "nonGit": "No es un repositorio git",
+          "hideDiff": "Ocultar diff",
+          "viewDiff": "Ver diff",
+          "restore": "Restaurar",
+          "restoreWarn": "Reaplica esta captura sobre el directorio de trabajo. Solo se ejecuta si HEAD coincide y no hay cambios rastreados sin confirmar; los archivos sin seguimiento nunca se sobrescriben.",
+          "restoreConfirm": "Confirmar restauración",
+          "restored": "Punto de control restaurado",
+          "restoredDetail": "diff aplicado: {diff} · {files} archivos restaurados · {skipped} omitidos",
+          "deleteConfirm": "¿Eliminar este punto de control?"
         }
       },
       "ended": {

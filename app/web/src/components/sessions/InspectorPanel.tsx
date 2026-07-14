@@ -8,6 +8,7 @@ import {
   Search,
   Play,
   History as HistoryIcon,
+  Archive,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -28,6 +29,7 @@ import { CortexPanel } from './inspector/CortexPanel'
 import { VaultPanel } from './inspector/VaultPanel'
 import { SearchPanel } from './inspector/SearchPanel'
 import { TaskRunnerPanel } from './inspector/TaskRunnerPanel'
+import { CheckpointsPanel } from './inspector/CheckpointsPanel'
 import { DatabasePanel } from '@/components/database/DatabasePanel'
 
 interface InspectorPanelProps {
@@ -170,6 +172,13 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               <Database className="size-3" />
               {t('web.sessions.inspector.tabs.database')}
             </TabsTrigger>
+            <TabsTrigger
+              value="checkpoints"
+              className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
+            >
+              <Archive className="size-3" />
+              {t('web.sessions.inspector.tabs.checkpoints')}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -204,6 +213,9 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           </TabsContent>
           <TabsContent value="database" className="m-0 p-3">
             <DatabasePanel cwd={session.cwd} />
+          </TabsContent>
+          <TabsContent value="checkpoints" className="m-0 p-3">
+            <CheckpointsPanel session={session} />
           </TabsContent>
         </ScrollArea>
       </Tabs>
