@@ -1,35 +1,48 @@
 // Round Table API client (experimental) — a cross-vendor AI GROUP CHAT.
-// Members are the seated providers (claude/codex/antigravity) plus the
-// operator. The operator @mentions the members who should reply; each
+// Members are the seated providers (claude/codex/antigravity/grok/opencode)
+// plus the operator. The operator @mentions the members who should reply; each
 // mentioned member reads the whole thread and answers in character.
 // Wraps the /api/v1/round-tables/* endpoints via api<T>().
 import { api } from './api'
 
 // Seat providers with a headless worker path (must match the backend's
-// worker.AgentWorker.buildCommand switch). gemini/opencode/grok have no
-// headless path yet, so they cannot take a seat.
-export type SeatProvider = 'claude' | 'codex' | 'antigravity'
+// worker.AgentWorker.buildCommand switch). A standalone gemini seat has no
+// headless path yet, so it cannot take a seat.
+export type SeatProvider =
+  | 'claude'
+  | 'codex'
+  | 'antigravity'
+  | 'grok'
+  | 'opencode'
 
 export const SEAT_PROVIDERS: readonly SeatProvider[] = [
   'claude',
   'codex',
   'antigravity',
+  'grok',
+  'opencode',
 ]
 
 // Vendor family behind each seat — the diversity is the whole point.
+// opencode is provider-agnostic, so it names the CLI itself.
 export const SEAT_VENDOR: Record<SeatProvider, string> = {
   claude: 'Anthropic',
   codex: 'OpenAI',
   antigravity: 'Google Gemini',
+  grok: 'xAI Grok',
+  opencode: 'OpenCode',
 }
 
 // Per-seat model hint. Blank = the CLI's own default. codex on a plain
 // ChatGPT plan rejects most models — set a supported one (e.g. gpt-5.4-mini)
-// or the seat fails with "model not supported".
+// or the seat fails with "model not supported". opencode takes provider/model
+// form (e.g. anthropic/claude-sonnet-4-6).
 export const SEAT_MODEL_PLACEHOLDER: Record<SeatProvider, string> = {
   claude: 'default (blank = CLI default)',
   codex: 'e.g. gpt-5.4-mini',
   antigravity: 'default (blank = CLI default)',
+  grok: 'default (blank = CLI default)',
+  opencode: 'e.g. anthropic/claude-sonnet-4-6',
 }
 
 // Sensible default model per seat, pre-filled (editable) so the operator
@@ -41,6 +54,15 @@ export const SEAT_MODEL_DEFAULT: Partial<Record<SeatProvider, string>> = {
   codex: 'gpt-5.4-mini',
 }
 
+// Seat providers that support opendray multi-account selection (a per-seat
+// account pin honoured by the backend worker). claude binds via config dir +
+// OAuth token; antigravity via a dedicated HOME. codex / grok / opencode use a
+// single host login, so no per-seat account choice. Mirrors the backend's
+// roundtable.providerHasAccounts.
+export const SEAT_SUPPORTS_ACCOUNT: ReadonlySet<SeatProvider> = new Set<SeatProvider>(
+  ['claude', 'antigravity'],
+)
+
 export type RoundTableStatus = 'active' | 'closed'
 
 export type MessageRole = 'operator' | 'seat' | 'system'
@@ -50,6 +72,23 @@ export interface Seat {
   provider: SeatProvider
   model?: string
   account_id?: string
+  // Optional per-seat role / system instruction layered on top of the
+  // vendor's own voice (e.g. "you are the security reviewer").
+  persona?: string
+}
+
+export type PlanStepStatus = 'pending' | 'running' | 'done'
+
+// One step of the role-based execution plan: a task assigned to the member
+// whose strength fits it. Run one at a time — each spawns a real session in the
+// shared project cwd so specialists collaborate through the working tree.
+export interface PlanStep {
+  assignee: string
+  model?: string
+  account_id?: string
+  task: string
+  status: PlanStepStatus
+  session_id?: string
 }
 
 export interface RoundTable {
@@ -57,6 +96,11 @@ export interface RoundTable {
   topic: string
   cwd?: string
   seats: Seat[]
+  // Table-level directive shared by all members (current topic + roles /
+  // relationships). Editable live; injected into every reply's prompt.
+  framing?: string
+  // Role-based execution plan (ordered steps). Empty until drafted.
+  plan?: PlanStep[]
   status: RoundTableStatus
   resulting_session_id?: string
   origin: string
@@ -82,6 +126,17 @@ export interface CreateRoundTableInput {
   topic?: string
   cwd?: string
   seats: Seat[]
+  framing?: string
+}
+
+// Live edits to a round table: reassign roles (seats) and/or re-frame the
+// discussion. Only the fields present are changed.
+export interface UpdateRoundTableInput {
+  seats?: Seat[]
+  framing?: string
+  // Bind (or rebind) the shared project working dir after creation, so a plan
+  // drafted on a table with no project can be run.
+  cwd?: string
 }
 
 // One selectable model for a seat provider (value passed to --model,
@@ -91,9 +146,9 @@ export interface SeatModelOption {
   label: string
 }
 
-// GET the selectable models per provider — antigravity is enumerated live
-// from the CLI; claude/codex are curated. Drives the seat model dropdown so
-// nobody hand-types a model string.
+// GET the selectable models per provider — antigravity/opencode are enumerated
+// live from their CLIs; claude/codex/grok are curated. Drives the seat model
+// dropdown so nobody hand-types a model string.
 export async function listSeatModels(): Promise<
   Record<string, SeatModelOption[]>
 > {
@@ -101,6 +156,17 @@ export async function listSeatModels(): Promise<
     '/api/v1/round-tables/models',
   )
   return res.models ?? {}
+}
+
+// PATCH — reassign roles / re-frame a live table.
+export async function updateRoundTable(
+  id: string,
+  input: UpdateRoundTableInput,
+): Promise<RoundTable> {
+  return api<RoundTable>(`/api/v1/round-tables/${id}`, {
+    method: 'PATCH',
+    body: input,
+  })
 }
 
 // GET list — unwraps the { round_tables } envelope, defaults to [].
@@ -131,13 +197,54 @@ export async function createRoundTable(
   })
 }
 
-// POST a message. @mentioned members (@claude/@codex/@antigravity/@all)
-// reply asynchronously — poll GET while replies land.
+// POST a message. @mentioned members (@claude/@codex/@antigravity/@grok/
+// @opencode/@all) reply asynchronously — poll GET while replies land.
 export async function postMessage(id: string, content: string): Promise<Message> {
   return api<Message>(`/api/v1/round-tables/${id}/messages`, {
     method: 'POST',
     body: { content },
   })
+}
+
+// POST plan/draft — a member drafts a role-assigned execution plan (async).
+export async function draftPlan(id: string, provider?: string): Promise<void> {
+  await api<void>(`/api/v1/round-tables/${id}/plan/draft`, {
+    method: 'POST',
+    body: { provider: provider ?? '' },
+  })
+}
+
+// PUT plan — replace the plan (operator edits the drafted steps).
+export async function setPlan(
+  id: string,
+  steps: PlanStep[],
+): Promise<RoundTable> {
+  return api<RoundTable>(`/api/v1/round-tables/${id}/plan`, {
+    method: 'PUT',
+    body: { steps },
+  })
+}
+
+// POST plan/run — launch a real session to carry out one step; returns its id.
+export async function runPlanStep(
+  id: string,
+  index: number,
+  opts?: { cwd?: string; account_id?: string; args?: string[] },
+): Promise<{ session_id: string }> {
+  return api<{ session_id: string }>(`/api/v1/round-tables/${id}/plan/run`, {
+    method: 'POST',
+    body: {
+      index,
+      cwd: opts?.cwd,
+      account_id: opts?.account_id,
+      args: opts?.args,
+    },
+  })
+}
+
+// POST continue — resume a paused auto-discussion for another burst (async).
+export async function continueRoundTable(id: string): Promise<void> {
+  await api<void>(`/api/v1/round-tables/${id}/continue`, { method: 'POST' })
 }
 
 // POST summarize — a member condenses the chat into a plan (async).
@@ -180,6 +287,11 @@ export async function handoffRoundTable(
 // POST close — keeps the thread but stops new messages.
 export async function closeRoundTable(id: string): Promise<void> {
   await api<void>(`/api/v1/round-tables/${id}/close`, { method: 'POST' })
+}
+
+// POST reopen — flips a closed chat back to active so it can resume.
+export async function reopenRoundTable(id: string): Promise<void> {
+  await api<void>(`/api/v1/round-tables/${id}/reopen`, { method: 'POST' })
 }
 
 // DELETE — permanently removes the chat and its messages.

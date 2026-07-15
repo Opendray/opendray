@@ -3,14 +3,29 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Loader2, Rocket, Send, Sparkles, Trash2, Users } from 'lucide-react'
+import {
+  ListChecks,
+  Loader2,
+  Play,
+  Rocket,
+  RotateCcw,
+  Send,
+  Sparkles,
+  Trash2,
+  UserCog,
+  Users,
+} from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { HandoffDialog } from './HandoffDialog'
+import { RolesDialog } from './RolesDialog'
+import { PlanDialog } from './PlanDialog'
 import {
   closeRoundTable,
+  reopenRoundTable,
+  continueRoundTable,
   deleteRoundTable,
   getRoundTable,
   postMessage,
@@ -24,6 +39,8 @@ const SEAT_BUBBLE: Record<string, string> = {
   claude: 'border-orange-500/30 bg-orange-500/10',
   codex: 'border-emerald-500/30 bg-emerald-500/10',
   antigravity: 'border-sky-500/30 bg-sky-500/10',
+  grok: 'border-violet-500/30 bg-violet-500/10',
+  opencode: 'border-amber-500/30 bg-amber-500/10',
 }
 
 export function RoundTableDetail({
@@ -38,6 +55,8 @@ export function RoundTableDetail({
   const navigate = useNavigate()
   const [draft, setDraft] = useState('')
   const [handoffOpen, setHandoffOpen] = useState(false)
+  const [rolesOpen, setRolesOpen] = useState(false)
+  const [planOpen, setPlanOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const query = useQuery({
@@ -75,8 +94,26 @@ export function RoundTableDetail({
     onError: (e: Error) => toast.error(e.message),
   })
 
+  const continueDiscussion = useMutation({
+    mutationFn: () => continueRoundTable(id),
+    onSuccess: () => {
+      toast.success(t('web.roundTable.detail.continued'))
+      qc.invalidateQueries({ queryKey: ['round-table', id] })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
   const close = useMutation({
     mutationFn: () => closeRoundTable(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['round-table', id] })
+      qc.invalidateQueries({ queryKey: ['round-tables'] })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const reopen = useMutation({
+    mutationFn: () => reopenRoundTable(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['round-table', id] })
       qc.invalidateQueries({ queryKey: ['round-tables'] })
@@ -116,6 +153,13 @@ export function RoundTableDetail({
   // @mentions haven't all answered yet.
   const awaiting = computeAwaiting(messages)
 
+  // Auto-discussion settled on a system note (the round-cap pause, or a member
+  // failure)? The burst has stopped and the ball is back with the operator —
+  // offer a Continue button to let the debate run another round. The backend
+  // resumes the pending speakers when known, else re-engages everyone.
+  const last = messages[messages.length - 1]
+  const paused = !closed && !awaiting && last?.role === 'system'
+
   const insertMention = (token: string) =>
     setDraft((d) => (d ? `${d.trimEnd()} @${token} ` : `@${token} `))
 
@@ -151,6 +195,28 @@ export function RoundTableDetail({
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
+          {!closed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRolesOpen(true)}
+              title={t('web.roundTable.detail.rolesTitle')}
+            >
+              <UserCog className="size-3.5" />
+              {t('web.roundTable.detail.roles')}
+            </Button>
+          )}
+          {!closed && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPlanOpen(true)}
+              title={t('web.roundTable.plan.title')}
+            >
+              <ListChecks className="size-3.5" />
+              {t('web.roundTable.plan.button')}
+            </Button>
+          )}
           <Button
             variant="accent"
             size="sm"
@@ -170,14 +236,28 @@ export function RoundTableDetail({
             <Sparkles className="size-3.5" />
             {t('web.roundTable.detail.summarize')}
           </Button>
-          {!closed && (
+          {!closed ? (
             <Button
               variant="ghost"
               size="sm"
               disabled={close.isPending}
-              onClick={() => close.mutate()}
+              onClick={() => {
+                if (window.confirm(t('web.roundTable.detail.closeConfirm'))) {
+                  close.mutate()
+                }
+              }}
             >
               {t('web.roundTable.detail.close')}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={reopen.isPending}
+              onClick={() => reopen.mutate()}
+            >
+              <RotateCcw className="size-3.5" />
+              {t('web.roundTable.detail.reopen')}
             </Button>
           )}
           <Button
@@ -221,6 +301,26 @@ export function RoundTableDetail({
           </div>
         )}
       </div>
+
+      {/* Continue a paused auto-discussion */}
+      {paused && (
+        <div className="pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-1.5"
+            disabled={continueDiscussion.isPending}
+            onClick={() => continueDiscussion.mutate()}
+          >
+            {continueDiscussion.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Play className="size-3.5" />
+            )}
+            {t('web.roundTable.detail.continueDiscussion')}
+          </Button>
+        </div>
+      )}
 
       {/* Composer */}
       {!closed && (
@@ -278,6 +378,14 @@ export function RoundTableDetail({
           </div>
         </div>
       )}
+
+      <RolesDialog
+        rt={rt}
+        open={rolesOpen}
+        onClose={() => setRolesOpen(false)}
+      />
+
+      <PlanDialog rt={rt} open={planOpen} onClose={() => setPlanOpen(false)} />
 
       <HandoffDialog
         rt={rt}
