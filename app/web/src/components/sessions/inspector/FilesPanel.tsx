@@ -401,11 +401,12 @@ function FsNode({
 }
 
 // DownloadIconButton overlays a small Download icon on the right edge
-// of a tree row. Visible-on-hover (or always on touch via the row's
-// group-hover and active fallbacks) so the tree stays scannable when
-// the operator isn't reaching for a file. Anchored absolutely so the
-// row's text isn't truncated to make space — the button sits over the
-// row's right padding.
+// of a tree row. On pointer devices it is hover-revealed so the tree
+// stays scannable; on touch devices (which can't hover — and where
+// Tailwind gates group-hover behind @media (hover: hover), so it never
+// fires) it is shown unconditionally, otherwise the icon is unreachable
+// on iPad/phones. Anchored absolutely so the row's text isn't truncated
+// to make space — the button sits over the row's right padding.
 function DownloadIconButton({
   ariaLabel,
   onActivate,
@@ -430,6 +431,9 @@ function DownloadIconButton({
         'size-5 flex items-center justify-center rounded-sm',
         'text-muted-foreground/70 hover:text-foreground hover:bg-border',
         'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+        // Touch devices can't hover, so the hover-reveal above never
+        // triggers — pin the icon visible wherever hover is unavailable.
+        '[@media(hover:none)]:opacity-100',
         'transition-opacity',
       )}
     >
