@@ -10,6 +10,24 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.12.0] — 2026-07-16
+
+### Added
+
+- **Round Table — a cross-vendor AI group chat (experimental).** Seat several
+  providers (Claude / Codex / Antigravity / Grok / OpenCode) plus the operator
+  in one shared thread; @mention who should reply (or `@all`) and each member
+  answers in character after reading the whole conversation, so heterogeneous
+  foundation-model families react to each other in seat order. Summarize the
+  discussion on demand, or turn it into a **role-assigned execution plan** —
+  each step runs as a real session in a shared project (bind the project after
+  the fact if you started without one). **Hand the whole thread off** to a
+  working session to do the actual code changes. A chat can be **closed and
+  reopened** (close keeps the thread, just stops new messages). Available on
+  both the web admin and the mobile app — where Round Table gets its own
+  bottom-nav tab, per-agent bubble colours, and labelled action menus.
+  Fully self-contained and rollback-able (`internal/roundtable/ROLLBACK.md`).
+
 ### Fixed
 
 - **The Files-tree download icon is now reachable on touch devices (iPad,
