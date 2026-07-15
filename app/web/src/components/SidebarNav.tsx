@@ -12,6 +12,7 @@ import {
   BookText,
   Brain,
   Archive,
+  Users,
   Sparkles,
   BookOpen,
   Send,
@@ -62,6 +63,8 @@ const groups: NavItem[][] = [
     // entry; the three rungs are layered inside (they are one loop,
     // not three silos).
     { to: '/cortex', icon: Brain, labelKey: 'nav.cortex', shortcut: 'g x' },
+    // Round Table (experimental) — cross-vendor multi-agent discussion.
+    { to: '/round-tables', icon: Users, labelKey: 'nav.roundTable', shortcut: 'g r' },
     { to: '/activity', icon: Activity, labelKey: 'nav.activity', shortcut: 'g a' },
   ],
   [

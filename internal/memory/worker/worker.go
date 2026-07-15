@@ -170,8 +170,8 @@ type Config struct {
 	Task         TaskKind   `json:"task"`
 	Kind         WorkerKind `json:"kind"`
 	SummarizerID string     `json:"summarizer_id"` // when Kind==WorkerSummarizer; "" → registry default
-	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: "claude" | "antigravity"
-	AccountID    string     `json:"account_id"`    // when ProviderID=="claude"; "" → catalog's default account
+	ProviderID   string     `json:"provider_id"`   // when Kind==WorkerAgent: claude|codex|antigravity|grok|opencode
+	AccountID    string     `json:"account_id"`    // multi-account pin (claude|antigravity); "" → CLI's default account
 	// Model pins the agent CLI's model (`claude --model …` /
 	// `agy --model …`) so cheap chores run on cheap models
 	// (e.g. haiku) and only the judgement-heavy touchpoints pay for

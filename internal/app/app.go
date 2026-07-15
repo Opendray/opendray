@@ -62,6 +62,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
 	"github.com/opendray/opendray-v2/internal/prwatcher"
+	"github.com/opendray/opendray-v2/internal/roundtable"
 	searchapi "github.com/opendray/opendray-v2/internal/search"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/settings"
@@ -857,7 +858,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// memory touchpoints (gatekeeper, cleaner, gitactivity,
 	// transcript) read their config row from memory_workers.
 	memoryWorkerRegistry := memworker.NewRegistry(
-		st.Pool(), summarizerRegistry, cliacctSvc, log)
+		st.Pool(), summarizerRegistry, cliacctSvc, agyacctSvc, log)
 	memoryWorkerHandlers := memworker.NewHandlers(memoryWorkerRegistry, log)
 
 	// M-PA — memory health dashboard. Aggregates "is the memory
@@ -1176,6 +1177,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// field would dodge the handler's nil check (typed nil).
 		cortexHandlers.WithQuarantine(memorySvc)
 	}
+	// ─── ROUND TABLE (experimental) ─────────────────────────────
+	// Cross-vendor multi-agent discussion: a deterministic chair drives
+	// claude/codex/antigravity seats through propose→critique→synthesize
+	// and produces a structured Verdict. Self-contained; roll back via
+	// internal/roundtable/ROLLBACK.md (drop tables + delete this block).
+	roundTableStore := roundtable.NewStore(st.Pool())
+	roundTableSvc := roundtable.NewService(roundTableStore, memoryWorkerRegistry, bus, log).
+		WithSessionLauncher(&roundTableSessionLauncher{mgr: sessionMgr})
+	if memquerySvc != nil {
+		roundTableSvc.WithContextSource(&curationContextAdapter{mq: memquerySvc})
+	}
+	roundTableHandlers := roundtable.NewHandlers(roundTableStore, roundTableSvc, log)
+	// ─── END ROUND TABLE ────────────────────────────────────────
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -1367,6 +1381,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 					dbtoolHandlers.Mount(r)
 				}
 				cortexHandlers.Mount(r)
+				roundTableHandlers.Mount(r) // ROUND TABLE (experimental)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
@@ -2468,6 +2483,67 @@ func (l *curationSessionLauncher) Launch(ctx context.Context, spec cortex.Launch
 		_ = l.mgr.Input(bg, sid, []byte{'\r'})
 	}(sess.ID, spec.SeedPrompt)
 	return sess.ID, nil
+}
+
+// roundTableSessionLauncher implements roundtable.SessionLauncher over the
+// session manager: spawn the operator-chosen agent in cwd with full tool
+// access, then type the discussion seed once the CLI has booted. This is the
+// bridge from a read-only round-table discussion to real code changes.
+type roundTableSessionLauncher struct {
+	mgr *session.Manager
+}
+
+func (l *roundTableSessionLauncher) Launch(ctx context.Context, spec roundtable.LaunchSpec) (string, error) {
+	providerID := spec.ProviderID
+	if providerID == "" {
+		providerID = "claude"
+	}
+	sess, err := l.mgr.Create(ctx, session.CreateRequest{
+		Name:            spec.Name,
+		ProviderID:      providerID,
+		Model:           spec.Model,
+		ClaudeAccountID: spec.AccountID,
+		Cwd:             spec.Cwd,
+		Args:            spec.Args,
+	})
+	if err != nil {
+		return "", err
+	}
+	go func(sid, prompt string) {
+		time.Sleep(4 * time.Second)
+		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := l.mgr.Input(bg, sid, []byte(prompt)); err != nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+	}(sess.ID, spec.SeedPrompt)
+	return sess.ID, nil
+}
+
+// Alive reports whether a prior handoff session still exists and hasn't
+// terminated — so a second handoff can continue in it.
+func (l *roundTableSessionLauncher) Alive(ctx context.Context, sessionID string) bool {
+	sess, err := l.mgr.Get(ctx, sessionID)
+	if err != nil {
+		return false
+	}
+	return !sess.State.IsTerminal()
+}
+
+// Deliver types a follow-up prompt into an existing (already booted) session.
+func (l *roundTableSessionLauncher) Deliver(_ context.Context, sessionID, prompt string) error {
+	go func(sid, p string) {
+		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := l.mgr.Input(bg, sid, []byte(p)); err != nil {
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+	}(sessionID, prompt)
+	return nil
 }
 
 // capturePolicyAdapter implements capture.PolicyResolver against the

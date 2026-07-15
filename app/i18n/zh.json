@@ -58,7 +58,8 @@
       "unread": "未读更新说明",
       "badgeCount": "更新 · {count}",
       "sourceChangelog": "亮点来自 CHANGELOG.md（GitHub Release 正文为占位）。"
-    }
+    },
+    "roundTable": "圆桌"
   },
   "web": {
     "brand": "opendray",
@@ -3118,6 +3119,124 @@
       "workbench": {
         "title": "数据库工作台"
       }
+    },
+    "roundTable": {
+      "title": "圆桌",
+      "experimental": "实验性",
+      "subtitle": "跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。",
+      "new": "新建圆桌",
+      "loading": "加载中…",
+      "empty": "还没有圆桌。",
+      "selectHint": "选择一个圆桌打开群聊。",
+      "you": "你",
+      "summary": "总结",
+      "dialog": {
+        "title": "新建圆桌",
+        "description": "选择成员(每厂商一个模型)。不用填主题——直接开聊,群聊会用你的第一条消息自动命名。",
+        "cwd": "项目路径(可选)",
+        "cwdHint": "把群聊绑定到项目以检索记忆。",
+        "seats": "成员",
+        "seatsHint": "每厂商一个。从下拉里选每个成员的模型。",
+        "create": "创建",
+        "created": "圆桌已创建",
+        "project": "项目(可选)",
+        "start": "开始聊天",
+        "browse": "浏览",
+        "cwdPlaceholder": "/项目/路径(可选)",
+        "modelPlaceholder": "模型",
+        "modelLoading": "加载中…",
+        "accountPlaceholder": "账号",
+        "accountDefault": "默认账号",
+        "accountNoToken": "无凭据",
+        "personaPlaceholder": "角色 / 人设(可选)—— 决定该成员以什么立场发言",
+        "personaPresets": {
+          "label": "或选一个角色:",
+          "security": "安全审查员",
+          "performance": "性能优化派",
+          "ux": "用户体验倡导者",
+          "skeptic": "唱反调者 — 专找漏洞",
+          "pragmatist": "务实派 — 先上线"
+        },
+        "framing": "框架(可选)",
+        "framingPlaceholder": "当前议题 + 成员关系 —— 如「议题:认证重构。claude 主导架构,codex 只挑安全漏洞。」"
+      },
+      "detail": {
+        "loading": "加载群聊…",
+        "loadFailed": "加载群聊失败。",
+        "close": "关闭",
+        "closeConfirm": "关闭该群聊?会保留记录但停止新消息,之后可重新开启。",
+        "reopen": "重新开启",
+        "summarize": "总结",
+        "summarizing": "总结中…",
+        "emptyThread": "还没有消息。",
+        "emptyHint": "发条消息并 @ 点名某个成员,它就会回复。",
+        "replying": "成员正在回复…",
+        "mentionHint": "点名:",
+        "composerPlaceholder": "给群里发消息…(@claude、@all — ⌘/Ctrl+Enter 发送)",
+        "send": "发送",
+        "delete": "删除",
+        "deleteConfirm": "删除这个群聊及其所有消息?此操作不可撤销。",
+        "roles": "角色",
+        "rolesTitle": "角色与框架",
+        "rolesFraming": "讨论框架(所有成员共享)",
+        "rolesSave": "保存",
+        "rolesSaved": "角色已更新",
+        "rolesHint": "议题演进时重新分配角色 —— 下一轮回复生效。",
+        "continueDiscussion": "继续讨论",
+        "continued": "继续讨论中…"
+      },
+      "status": {
+        "active": "进行中",
+        "closed": "已关闭"
+      },
+      "untitled": "新群聊",
+      "handoff": {
+        "button": "交给开发",
+        "title": "交给开发会话",
+        "description": "群成员只讨论(只读)。这会开一个有完整文件权限的真会话去执行讨论结果——用最近的总结当种子,没总结就用整段讨论。",
+        "executor": "执行者",
+        "executorHint": "由哪个成员实际动手(带文件权限的真会话)。",
+        "project": "项目",
+        "projectPlaceholder": "/项目/路径",
+        "projectHint": "在哪个项目里改。必填。",
+        "run": "开始执行",
+        "started": "会话已启动——正在跳转",
+        "continueLabel": "继续用现有会话",
+        "continueHint": "把新方案作为后续发给上次的执行会话;如果它已结束,则自动新开一个。",
+        "claudeAccount": "Claude 账号",
+        "accountDefault": "默认",
+        "runContinue": "继续执行",
+        "bypassLabel": "跳过权限确认(YOLO)",
+        "bypassHint": "用执行方的 bypass 参数启动会话,不再逐个确认操作 —— 与创建 session 时的开关一致。"
+      },
+      "plan": {
+        "button": "分工",
+        "title": "分工计划",
+        "hint": "把工作拆成按角色指派的步骤,再按顺序运行 —— 每步作为项目里的真实会话执行。",
+        "draft": "根据讨论起草",
+        "drafting": "正在起草计划…",
+        "empty": "还没有计划。根据讨论起草一个,或手动添加步骤。",
+        "addStep": "添加步骤",
+        "assignee": "负责人",
+        "taskPlaceholder": "该成员要做什么",
+        "save": "保存计划",
+        "saved": "计划已保存",
+        "run": "运行",
+        "rerun": "重跑",
+        "running": "运行中",
+        "done": "完成",
+        "pending": "待运行",
+        "openSession": "打开会话",
+        "needProject": "运行步骤前需绑定项目(cwd)。",
+        "bindProject": "绑定",
+        "projectBound": "项目已绑定",
+        "runTitle": "运行此步",
+        "runStep": "运行",
+        "account": "账号",
+        "accountDefault": "默认",
+        "bypass": "跳过权限 (YOLO)",
+        "bypassHint": "用 bypass 标志启动会话,不再逐个请求批准。"
+      }
     }
   },
   "more": {
@@ -3205,6 +3324,10 @@
       "vault": {
         "title": "文档库",
         "subtitle": "自由 markdown 笔记(Obsidian 同步)"
+      },
+      "roundTable": {
+        "title": "圆桌",
+        "subtitle": "跨厂商 AI 群聊"
       }
     },
     "signOut": "退出登录"

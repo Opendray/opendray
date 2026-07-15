@@ -58,7 +58,8 @@
       "unread": "Notas de versión sin leer",
       "badgeCount": "Actualizaciones · {count}",
       "sourceChangelog": "Highlights desde CHANGELOG.md (el cuerpo del release era un stub)."
-    }
+    },
+    "roundTable": "Mesa redonda"
   },
   "web": {
     "brand": "opendray",
@@ -3118,6 +3119,124 @@
       "workbench": {
         "title": "Banco de trabajo de BD"
       }
+    },
+    "roundTable": {
+      "title": "Mesa redonda",
+      "experimental": "Experimental",
+      "subtitle": "Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.",
+      "new": "Nueva mesa redonda",
+      "loading": "Cargando…",
+      "empty": "Aún no hay mesas redondas.",
+      "selectHint": "Selecciona una mesa redonda para abrir el chat.",
+      "you": "Tú",
+      "summary": "Resumen",
+      "dialog": {
+        "title": "Nueva mesa redonda",
+        "description": "Elige los miembros (un modelo por proveedor). Sin tema — empieza a chatear; el chat se nombra con tu primer mensaje.",
+        "cwd": "Ruta del proyecto (opcional)",
+        "cwdHint": "Vincula el chat a un proyecto para recuperar memoria.",
+        "seats": "Miembros",
+        "seatsHint": "Uno por proveedor. Elige el modelo de cada miembro en el desplegable.",
+        "create": "Crear",
+        "created": "Mesa redonda creada",
+        "project": "Proyecto (opcional)",
+        "start": "Iniciar chat",
+        "browse": "Explorar",
+        "cwdPlaceholder": "/ruta/al/proyecto (opcional)",
+        "modelPlaceholder": "Modelo",
+        "modelLoading": "Cargando…",
+        "accountPlaceholder": "Cuenta",
+        "accountDefault": "Cuenta predeterminada",
+        "accountNoToken": "sin token",
+        "personaPlaceholder": "Rol / persona (opcional) — define cómo argumenta este miembro",
+        "personaPresets": {
+          "label": "O elige un rol:",
+          "security": "Revisor de seguridad",
+          "performance": "Halcón de rendimiento",
+          "ux": "Defensor de UX",
+          "skeptic": "Escéptico — busca fallos",
+          "pragmatist": "Pragmático — a producción"
+        },
+        "framing": "Marco (opcional)",
+        "framingPlaceholder": "Tema actual + relación entre miembros — p. ej. \"Tema: rediseño de auth. claude lidera arquitectura, codex solo busca fallos de seguridad.\""
+      },
+      "detail": {
+        "loading": "Cargando chat…",
+        "loadFailed": "No se pudo cargar este chat.",
+        "close": "Cerrar",
+        "closeConfirm": "¿Cerrar este chat? Conserva el hilo pero detiene los mensajes nuevos. Puedes reabrirlo después.",
+        "reopen": "Reabrir",
+        "summarize": "Resumir",
+        "summarizing": "Resumiendo…",
+        "emptyThread": "Aún no hay mensajes.",
+        "emptyHint": "Escribe algo y menciona con @ a un miembro para que responda.",
+        "replying": "los miembros están respondiendo…",
+        "mentionHint": "Mencionar:",
+        "composerPlaceholder": "Mensaje al grupo…  (@claude, @all — ⌘/Ctrl+Enter para enviar)",
+        "send": "Enviar",
+        "delete": "Eliminar",
+        "deleteConfirm": "¿Eliminar este chat y todos sus mensajes? No se puede deshacer.",
+        "roles": "Roles",
+        "rolesTitle": "Roles y marco",
+        "rolesFraming": "Marco de la discusión (compartido por todos)",
+        "rolesSave": "Guardar",
+        "rolesSaved": "Roles actualizados",
+        "rolesHint": "Reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.",
+        "continueDiscussion": "Continuar",
+        "continued": "Continuando la discusión…"
+      },
+      "status": {
+        "active": "Activa",
+        "closed": "Cerrada"
+      },
+      "untitled": "Chat nuevo",
+      "handoff": {
+        "button": "Ejecutar",
+        "title": "Entregar a una sesión",
+        "description": "Los miembros del chat solo discuten (solo lectura). Esto lanza una sesión real con acceso completo a archivos para implementar lo acordado — con el último resumen, o toda la discusión si no has resumido.",
+        "executor": "Ejecutor",
+        "executorHint": "Qué miembro hace el trabajo real (una sesión completa con acceso a archivos).",
+        "project": "Proyecto",
+        "projectPlaceholder": "/ruta/al/proyecto",
+        "projectHint": "Dónde ocurren los cambios. Obligatorio.",
+        "run": "Ejecutar",
+        "started": "Sesión iniciada — te llevamos allí",
+        "continueLabel": "Continuar en la sesión existente",
+        "continueHint": "Se reutiliza la sesión de entrega anterior como seguimiento. Si ha terminado, se crea una nueva.",
+        "claudeAccount": "Cuenta de Claude",
+        "accountDefault": "Predeterminada",
+        "runContinue": "Continuar",
+        "bypassLabel": "Omitir permisos (YOLO)",
+        "bypassHint": "Inicia el ejecutor con su parámetro de omisión para que no pida aprobaciones — igual que el interruptor al crear una sesión."
+      },
+      "plan": {
+        "button": "Plan",
+        "title": "Plan de trabajo",
+        "hint": "Divide el trabajo en pasos asignados por rol y ejecútalos en orden — cada uno corre como una sesión real en el proyecto.",
+        "draft": "Redactar desde la discusión",
+        "drafting": "Redactando un plan…",
+        "empty": "Aún no hay plan. Redacta uno desde la discusión o añade pasos.",
+        "addStep": "Añadir paso",
+        "assignee": "Responsable",
+        "taskPlaceholder": "Qué debe hacer este miembro",
+        "save": "Guardar plan",
+        "saved": "Plan guardado",
+        "run": "Ejecutar",
+        "rerun": "Re-ejecutar",
+        "running": "En curso",
+        "done": "Hecho",
+        "pending": "Pendiente",
+        "openSession": "Abrir sesión",
+        "needProject": "Vincula un proyecto (cwd) para ejecutar pasos.",
+        "bindProject": "Vincular",
+        "projectBound": "Proyecto vinculado",
+        "runTitle": "Ejecutar paso",
+        "runStep": "Ejecutar",
+        "account": "Cuenta",
+        "accountDefault": "Predeterminada",
+        "bypass": "Omitir permisos (YOLO)",
+        "bypassHint": "Inicia la sesión con su indicador de bypass para no pedir aprobaciones."
+      }
     }
   },
   "more": {
@@ -3205,6 +3324,10 @@
       "vault": {
         "title": "Bóveda",
         "subtitle": "Notas markdown libres (sincronización Obsidian)"
+      },
+      "roundTable": {
+        "title": "Mesa redonda",
+        "subtitle": "Chat grupal de IA multiproveedor"
       }
     },
     "signOut": "Cerrar sesión"

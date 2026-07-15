@@ -58,7 +58,8 @@
       "unread": "Unread release notes",
       "badgeCount": "Updates · {count}",
       "sourceChangelog": "Highlights from CHANGELOG.md (release body was a stub)."
-    }
+    },
+    "roundTable": "Round Table"
   },
   "web": {
     "brand": "opendray",
@@ -3118,6 +3119,124 @@
       "workbench": {
         "title": "Database workbench"
       }
+    },
+    "roundTable": {
+      "title": "Round Table",
+      "experimental": "Experimental",
+      "subtitle": "A cross-vendor AI group chat. @mention claude, codex or antigravity and they reply in the thread — like a Telegram group, with a different vendor's model behind each member.",
+      "new": "New round table",
+      "loading": "Loading…",
+      "empty": "No round tables yet.",
+      "selectHint": "Select a round table to open the chat.",
+      "you": "You",
+      "summary": "Summary",
+      "dialog": {
+        "title": "New round table",
+        "description": "Pick the members (one model per vendor). No topic needed — just start chatting; the chat names itself from your first message.",
+        "cwd": "Project path (optional)",
+        "cwdHint": "Binds the chat to a project for memory recall.",
+        "seats": "Members",
+        "seatsHint": "One per vendor. Pick each member's model from the dropdown.",
+        "create": "Create",
+        "created": "Round table created",
+        "project": "Project (optional)",
+        "start": "Start chat",
+        "browse": "Browse",
+        "cwdPlaceholder": "/path/to/project (optional)",
+        "modelPlaceholder": "Model",
+        "modelLoading": "Loading…",
+        "accountPlaceholder": "Account",
+        "accountDefault": "Default account",
+        "accountNoToken": "no token",
+        "personaPlaceholder": "Role / persona (optional) — shapes how this member argues",
+        "personaPresets": {
+          "label": "Or pick a role:",
+          "security": "Security reviewer",
+          "performance": "Performance hawk",
+          "ux": "UX advocate",
+          "skeptic": "Skeptic — find the flaws",
+          "pragmatist": "Pragmatist — ship it"
+        },
+        "framing": "Framing (optional)",
+        "framingPlaceholder": "Current topic + how members relate — e.g. \"Topic: auth redesign. claude leads architecture, codex only hunts security holes.\""
+      },
+      "detail": {
+        "loading": "Loading chat…",
+        "loadFailed": "Failed to load this chat.",
+        "close": "Close",
+        "closeConfirm": "Close this chat? It keeps the thread but stops new messages. You can reopen it later.",
+        "reopen": "Reopen",
+        "summarize": "Summarize",
+        "summarizing": "Summarizing…",
+        "emptyThread": "No messages yet.",
+        "emptyHint": "Say something and @mention a member to get a reply.",
+        "replying": "members are replying…",
+        "mentionHint": "Mention:",
+        "composerPlaceholder": "Message the group…  (@claude, @all — ⌘/Ctrl+Enter to send)",
+        "send": "Send",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this chat and all its messages? This cannot be undone.",
+        "roles": "Roles",
+        "rolesTitle": "Roles & framing",
+        "rolesFraming": "Discussion framing (shared by all members)",
+        "rolesSave": "Save",
+        "rolesSaved": "Roles updated",
+        "rolesHint": "Reassign roles as the topic evolves — takes effect on the next reply.",
+        "continueDiscussion": "Continue",
+        "continued": "Continuing the discussion…"
+      },
+      "status": {
+        "active": "Active",
+        "closed": "Closed"
+      },
+      "untitled": "New chat",
+      "handoff": {
+        "button": "Execute",
+        "title": "Hand off to a session",
+        "description": "The chat members only discuss (read-only). This spawns a real agent session with full file access to implement what was agreed — seeded with the latest summary, or the whole discussion if you have not summarized.",
+        "executor": "Executor",
+        "executorHint": "Which member does the actual work (a full session with file access).",
+        "project": "Project",
+        "projectPlaceholder": "/path/to/project",
+        "projectHint": "Where the changes happen. Required.",
+        "run": "Execute",
+        "started": "Session started — taking you there",
+        "continueLabel": "Continue in the existing session",
+        "continueHint": "The previous handoff session is reused as a follow-up. Falls back to a new session if it has ended.",
+        "claudeAccount": "Claude account",
+        "accountDefault": "Default",
+        "runContinue": "Continue",
+        "bypassLabel": "Skip permissions (YOLO)",
+        "bypassHint": "Start the executor with its bypass flag so it does not prompt for approvals — same as the toggle when creating a session."
+      },
+      "plan": {
+        "button": "Plan",
+        "title": "Work plan",
+        "hint": "Break the work into role-assigned steps, then run them in order — each runs as a real session in the project.",
+        "draft": "Draft from discussion",
+        "drafting": "Drafting a plan…",
+        "empty": "No plan yet. Draft one from the discussion, or add steps.",
+        "addStep": "Add step",
+        "assignee": "Assignee",
+        "taskPlaceholder": "What this member should do",
+        "save": "Save plan",
+        "saved": "Plan saved",
+        "run": "Run",
+        "rerun": "Re-run",
+        "running": "Running",
+        "done": "Done",
+        "pending": "Pending",
+        "openSession": "Open session",
+        "needProject": "Bind a project (cwd) to run steps.",
+        "bindProject": "Bind",
+        "projectBound": "Project bound",
+        "runTitle": "Run step",
+        "runStep": "Run",
+        "account": "Account",
+        "accountDefault": "Default",
+        "bypass": "Skip permissions (YOLO)",
+        "bypassHint": "Start the session with its bypass flag so it does not prompt for approvals."
+      }
     }
   },
   "more": {
@@ -3205,6 +3324,10 @@
       "vault": {
         "title": "Vault",
         "subtitle": "Freeform markdown notes (Obsidian-sync)"
+      },
+      "roundTable": {
+        "title": "Round Table",
+        "subtitle": "Cross-vendor AI group chat"
       }
     },
     "signOut": "Sign out"

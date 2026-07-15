@@ -20,6 +20,7 @@ import { QuarantinePage } from '@/pages/Quarantine'
 import { ArchivedPage } from '@/pages/Archived'
 import { BackupsPage } from '@/pages/Backups'
 import { ExportPage } from '@/pages/Export'
+import { RoundTablePage } from '@/pages/RoundTable'
 import { VaultPage } from '@/pages/Notes'
 import { KnowledgePage } from '@/pages/Knowledge'
 import { PluginsPage } from '@/pages/Plugins'
@@ -242,6 +243,13 @@ const exportRoute = createRoute({
   component: ExportPage,
 })
 
+// Round Table (experimental) — cross-vendor multi-agent discussion.
+const roundTableRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/round-tables',
+  component: RoundTablePage,
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
@@ -270,6 +278,7 @@ const routeTree = rootRoute.addChildren([
     settingsRoute,
     backupsRoute,
     exportRoute,
+    roundTableRoute,
   ]),
 ])
 

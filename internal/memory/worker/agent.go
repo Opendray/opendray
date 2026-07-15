@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,9 +44,10 @@ import (
 //     context (CLAUDE.md, .opendray banner) from polluting the
 //     worker's prompt.
 type AgentWorker struct {
-	cfg      Config
-	accounts AccountReader
-	log      *slog.Logger
+	cfg         Config
+	accounts    AccountReader
+	agyAccounts AgyAccountReader
+	log         *slog.Logger
 }
 
 // AccountReader is the subset of cliacct.Service the AgentWorker
@@ -55,16 +57,25 @@ type AccountReader interface {
 	ResolveSpawnCreds(ctx context.Context, id string) (configDir, token string, err error)
 }
 
+// AgyAccountReader is the subset of agyacct.Service the AgentWorker needs to
+// bind an antigravity headless call to a specific account. agy keys its whole
+// credential state off $HOME, so an account resolves to a dedicated HOME dir
+// (mirrors catalog/adapter.go's interactive spawn path).
+type AgyAccountReader interface {
+	ResolveSpawnHome(ctx context.Context, id string) (home string, err error)
+}
+
 // NewAgentWorker constructs a worker that will spawn the agent CLI
-// named by cfg.ProviderID. cfg.AccountID is consulted for
-// Claude multi-account auth; empty means "use the default account"
-// (whatever Claude resolves on its own with the host's
-// ~/.claude/.claude.json — usually the only authed account).
-func NewAgentWorker(accounts AccountReader, cfg Config, log *slog.Logger) *AgentWorker {
+// named by cfg.ProviderID. cfg.AccountID is consulted for multi-account
+// auth: Claude accounts resolve to a config dir + OAuth token, antigravity
+// accounts to a dedicated HOME. Empty means "use the default account"
+// (whatever the CLI resolves on its own from the host config). accounts /
+// agyAccounts may be nil, in which case account pinning is skipped.
+func NewAgentWorker(accounts AccountReader, agyAccounts AgyAccountReader, cfg Config, log *slog.Logger) *AgentWorker {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &AgentWorker{cfg: cfg, accounts: accounts, log: log.With(
+	return &AgentWorker{cfg: cfg, accounts: accounts, agyAccounts: agyAccounts, log: log.With(
 		"component", "memory.worker.agent",
 		"provider", cfg.ProviderID,
 		"task", string(cfg.Task))}
@@ -74,7 +85,7 @@ func (w *AgentWorker) Kind() WorkerKind { return WorkerAgent }
 
 func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	switch w.cfg.ProviderID {
-	case "claude", "codex", "antigravity":
+	case "claude", "codex", "antigravity", "grok", "opencode":
 	default:
 		return Response{}, ErrAgentUnsupported
 	}
@@ -133,18 +144,24 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 	// JSON-schema instruction) is folded into stdin ahead of the
 	// user input.
 	input := req.UserInput
-	// codex and antigravity (agy) have no system-prompt CLI flag, so the
-	// system block (+ JSON-schema instruction) is folded into stdin ahead
-	// of the user input.
-	if w.cfg.ProviderID == "codex" || w.cfg.ProviderID == "antigravity" {
-		sys := req.SystemPrompt
-		if req.ResponseFormatJSONSchema != "" {
-			sys = sys + "\n\nReturn a single JSON object conforming to this schema:\n```json\n" +
-				req.ResponseFormatJSONSchema + "\n```\nOutput nothing else."
-		}
-		if sys != "" {
-			input = sys + "\n\n---\n\n" + input
-		}
+	switch w.cfg.ProviderID {
+	case "codex":
+		// codex exec has no system-prompt flag, so the system block
+		// (+ JSON-schema instruction) is folded into stdin ahead of the
+		// user input.
+		//
+		// codex's stdin reader rejects the whole prompt if it contains any
+		// invalid UTF-8 ("input is not valid UTF-8 (invalid byte at offset
+		// N)"). Scrub any stray invalid sequences (e.g. a multi-byte char
+		// severed by an upstream byte-slice truncation) rather than fail the
+		// call. arg-based CLIs (agy/grok/opencode) don't hit this path.
+		input = strings.ToValidUTF8(combinedPrompt(req), "�")
+	case "antigravity", "grok", "opencode":
+		// These CLIs take the prompt as a command-line ARG, not from stdin
+		// (agy via --print, grok via -p, opencode as `run`'s positional
+		// message — see buildCommand). Feeding stdin too is ignored, so
+		// send nothing.
+		input = ""
 	}
 	go func() {
 		defer stdin.Close()
@@ -254,18 +271,81 @@ func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]st
 		args = append(args, "-")
 		return args, nil, nil
 	case "antigravity":
-		// agy --print reads the prompt from stdin and prints the
-		// response to stdout (verified). No system-prompt flag — the
-		// system block is folded into stdin by Run (see above).
-		// --dangerously-skip-permissions keeps a worker non-interactive
-		// (no tool-permission prompts that would hang the pipe).
-		args := []string{"--print", "--dangerously-skip-permissions"}
+		// agy takes the prompt as the VALUE of --print, NOT from stdin.
+		// The old stdin approach made agy read its own
+		// `--dangerously-skip-permissions` flag as the prompt (it echoed a
+		// guide about that flag and never answered the real question) — a
+		// bug that broke every antigravity headless call. Pass the folded
+		// system+user block as the --print value; keep
+		// --dangerously-skip-permissions FIRST so it isn't swallowed as the
+		// prompt. No system-prompt flag on agy, so the system block (+ the
+		// JSON-schema instruction) is folded into the prompt value.
+		args := []string{"--dangerously-skip-permissions", "--print", combinedPrompt(req)}
+		if w.cfg.Model != "" {
+			args = append(args, "--model", w.cfg.Model)
+		}
+		// Multi-account: agy keys its entire credential state off $HOME, so
+		// binding to an account = pointing HOME at the account's dedicated dir
+		// (mirrors catalog/adapter.go's interactive spawn). Empty AccountID or
+		// no reader → the host-global agy login is used.
+		var env []string
+		if w.cfg.AccountID != "" && w.agyAccounts != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			home, err := w.agyAccounts.ResolveSpawnHome(ctx, w.cfg.AccountID)
+			if err != nil {
+				return nil, nil, fmt.Errorf("agent worker: read antigravity account %s: %w",
+					w.cfg.AccountID, err)
+			}
+			if home != "" {
+				env = append(env, "HOME="+home)
+			}
+		}
+		return args, env, nil
+	case "grok":
+		// grok's headless flag is `-p <PROMPT>` (the analog of claude -p /
+		// codex exec), with the prompt as a direct string arg — NOT stdin.
+		// No system-prompt flag, so the system block (+ any JSON-schema
+		// instruction) is folded into the prompt value via combinedPrompt.
+		// --output-format plain keeps stdout to the final answer (json /
+		// streaming-json would wrap it in event envelopes we'd have to
+		// parse). We do NOT pass --always-approve: a discussion reply must
+		// never write, and headless auto-denies tool approvals anyway.
+		args := []string{"-p", combinedPrompt(req), "--output-format", "plain"}
+		if w.cfg.Model != "" {
+			args = append(args, "-m", w.cfg.Model)
+		}
+		return args, nil, nil
+	case "opencode":
+		// `opencode run <message>` is the non-interactive path: the prompt is
+		// a positional arg (folded system+user, since opencode has no
+		// system-prompt flag), and cmd.Dir is the isolated scratch dir. Model
+		// is provider/model form (e.g. anthropic/claude-sonnet-4-6). We do NOT
+		// pass --dangerously-skip-permissions: a worker reply must never write,
+		// and without it opencode auto-denies tool approvals in headless mode.
+		args := []string{"run", combinedPrompt(req)}
 		if w.cfg.Model != "" {
 			args = append(args, "--model", w.cfg.Model)
 		}
 		return args, nil, nil
 	}
 	return nil, nil, ErrAgentUnsupported
+}
+
+// combinedPrompt folds the system block (+ optional JSON-schema
+// instruction) ahead of the user input, for CLIs with no system-prompt
+// flag: codex reads it from stdin, antigravity takes it as the --print
+// value.
+func combinedPrompt(req Request) string {
+	sys := req.SystemPrompt
+	if req.ResponseFormatJSONSchema != "" {
+		sys = sys + "\n\nReturn a single JSON object conforming to this schema:\n```json\n" +
+			req.ResponseFormatJSONSchema + "\n```\nOutput nothing else."
+	}
+	if sys != "" {
+		return sys + "\n\n---\n\n" + req.UserInput
+	}
+	return req.UserInput
 }
 
 // agentBinary maps a worker provider id to its executable. Identity for
