@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -146,5 +147,61 @@ func TestProber_UpdateReadonlyPrefix(t *testing.T) {
 	}
 	if installed {
 		t.Error("npm install must NOT run when the prefix is read-only")
+	}
+}
+
+// Regression: the update handler passes the HTTP request's context down to
+// `npm install -g`. If the client disconnects mid-install (browser closed,
+// proxy timeout), cancelling that ctx SIGKILLs npm — which leaves a partial
+// global tree (a stale `.<pkg>-XXXXXX` temp dir) that makes EVERY later
+// install fail with ENOTEMPTY. That is exactly how a codex update wedged
+// itself for a week. The install must be detached from the caller's
+// cancellation.
+func TestProber_UpdateDetachesInstallFromCallerCancellation(t *testing.T) {
+	p := NewProber()
+	p.lookPath = func(string) (string, error) { return "/usr/bin/codex", nil }
+	p.runVer = func(context.Context, string) (string, error) { return "0.1.0", nil }
+	p.npmRoot = func(context.Context) (string, error) { return "", nil }
+
+	var installCtxErr error
+	p.npmInstall = func(ctx context.Context, _ string) (string, error) {
+		installCtxErr = ctx.Err()
+		return "ok", nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // client already gone
+
+	m := Manifest{ID: "codex", Executable: "codex", NpmPackage: "@openai/codex"}
+	if _, err := p.Update(ctx, m); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if installCtxErr != nil {
+		t.Fatalf("install ctx was cancelled by the caller (%v) — npm would be SIGKILLed mid-install", installCtxErr)
+	}
+}
+
+// Regression: a CLI can be on PATH but not runnable — a broken npm install
+// missing its platform binary (codex threw "Missing optional dependency
+// @openai/codex-linux-x64"). Installed() must surface that instead of
+// silently reporting a blank version, which reads as "fine" in the UI.
+func TestProber_InstalledSurfacesBrokenCLI(t *testing.T) {
+	p := NewProber()
+	p.lookPath = func(string) (string, error) { return "/usr/bin/codex", nil }
+	p.runVer = func(context.Context, string) (string, error) {
+		return "", errors.New("exit status 1: Error: Missing optional dependency @openai/codex-linux-x64")
+	}
+	info := p.Installed(context.Background(), Manifest{ID: "codex", Executable: "codex"})
+	if !info.Installed {
+		t.Fatal("expected Installed=true (the binary is on PATH)")
+	}
+	if info.InstalledVersion != "" {
+		t.Fatalf("expected empty version for a broken CLI, got %q", info.InstalledVersion)
+	}
+	if info.VersionError == "" {
+		t.Fatal("expected VersionError to surface the broken CLI, got empty")
+	}
+	if !strings.Contains(info.VersionError, "Missing optional dependency") {
+		t.Fatalf("VersionError should carry the CLI's own message, got %q", info.VersionError)
 	}
 }

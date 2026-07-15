@@ -208,6 +208,11 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 	if strings.TrimSpace(srv.Name) == "" {
 		srv.Name = id
 	}
+	if other, taken := h.loader.NameTaken(srv.Name, id); taken {
+		writeError(w, http.StatusConflict, fmt.Errorf(
+			"display name %q is already used by MCP server %q; names must be unique or sessions break", srv.Name, other))
+		return
+	}
 	if err := prepareServerForWrite(&srv); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
@@ -258,6 +263,11 @@ func (h *Handlers) update(w http.ResponseWriter, r *http.Request) {
 	srv.ID = id
 	if strings.TrimSpace(srv.Name) == "" {
 		srv.Name = id
+	}
+	if other, taken := h.loader.NameTaken(srv.Name, id); taken {
+		writeError(w, http.StatusConflict, fmt.Errorf(
+			"display name %q is already used by MCP server %q; names must be unique or sessions break", srv.Name, other))
+		return
 	}
 	if err := prepareServerForWrite(&srv); err != nil {
 		writeError(w, http.StatusBadRequest, err)

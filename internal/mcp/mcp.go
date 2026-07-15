@@ -121,6 +121,29 @@ func (l *Loader) ListEnabled() ([]Server, error) {
 	return out, nil
 }
 
+// NameTaken reports whether some OTHER server already uses display name
+// `name`, returning that server's id. Every provider renderer keys its
+// config on the display name, so two servers sharing one collide — Codex
+// emits a duplicate TOML table and won't start, Claude silently drops one.
+// Create/update guards call this to reject the collision at write time.
+// Comparison is trimmed but case-sensitive (names are exact TOML/JSON keys).
+func (l *Loader) NameTaken(name, selfID string) (string, bool) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", false
+	}
+	all, err := l.List()
+	if err != nil {
+		return "", false
+	}
+	for _, s := range all {
+		if s.ID != selfID && strings.TrimSpace(s.Name) == name {
+			return s.ID, true
+		}
+	}
+	return "", false
+}
+
 // Get returns one server by id. Returns os.ErrNotExist when the
 // directory doesn't exist so callers can disambiguate 404s.
 func (l *Loader) Get(id string) (Server, error) {

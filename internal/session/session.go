@@ -41,16 +41,43 @@ func (s State) IsTerminal() bool {
 // whose process just exited. Precedence: an explicit user stop wins;
 // otherwise a gateway shutdown makes it 'interrupted' (so startup
 // reconciliation resumes it); a spontaneous exit is a normal 'ended'.
+//
+// This now delegates to the transition matrix (Next) via TerminationEvent
+// so the precedence lives in exactly one place; TestTerminationEventPrecedence
+// pins the two in lock-step. A thin shim is kept for the existing call site.
 func classifyExitState(stopRequested, closing bool) State {
-	switch {
-	case stopRequested:
-		return StateStopped
-	case closing:
-		return StateInterrupted
-	default:
-		return StateEnded
+	// A running session always has a legal terminal transition, so the
+	// error is unreachable; fall back to the prior explicit precedence
+	// defensively rather than propagate it into the exit path.
+	state, err := Next(StateRunning, TerminationEvent(stopRequested, closing))
+	if err != nil {
+		switch {
+		case stopRequested:
+			return StateStopped
+		case closing:
+			return StateInterrupted
+		default:
+			return StateEnded
+		}
 	}
+	return state
 }
+
+// InterruptCause records WHY a session became interrupted, persisted in
+// sessions.interrupt_reason for audit. It is the interruption *cause*
+// (observable at the interruption point), distinct from the runtime
+// recovery *reason* in transitions.go (InterruptReason:
+// disconnected/orphaned/crashed) which classifies what to do next.
+type InterruptCause string
+
+const (
+	// CauseGatewayShutdown — the gateway exited gracefully (self-update /
+	// restart); recorded by waitExit when isClosing is true.
+	CauseGatewayShutdown InterruptCause = "gateway_shutdown"
+	// CauseGatewayCrash — the gateway died hard, so the row was still live
+	// at the next startup and reconciliation flipped it to interrupted.
+	CauseGatewayCrash InterruptCause = "gateway_crash"
+)
 
 // Session is the public view of a PTY-backed CLI session. Runtime
 // resources (PTY fd, ring buffer, subscribers) live on the Manager's
@@ -62,13 +89,17 @@ type Session struct {
 	// Model pins the model this session spawns against, applied at
 	// spawn via the provider's model flag. Empty falls back to the
 	// provider config default. See CreateRequest.Model.
-	Model           string   `json:"model,omitempty"`
-	Cwd             string   `json:"cwd"`
-	Args            []string `json:"args"`
-	State           State    `json:"state"`
-	PID             int      `json:"pid,omitempty"`
-	ClaudeAccountID string   `json:"claude_account_id,omitempty"`
-	ClaudeSessionID string   `json:"claude_session_id,omitempty"`
+	Model string   `json:"model,omitempty"`
+	Cwd   string   `json:"cwd"`
+	Args  []string `json:"args"`
+	// Theme is the operator's applied opendray theme ("light"/"dark") at
+	// spawn time. Advertised to the CLI via COLORFGBG so a TUI can pick a
+	// matching palette. Empty = unknown; the CLI keeps its own default.
+	Theme           string `json:"theme,omitempty"`
+	State           State  `json:"state"`
+	PID             int    `json:"pid,omitempty"`
+	ClaudeAccountID string `json:"claude_account_id,omitempty"`
+	ClaudeSessionID string `json:"claude_session_id,omitempty"`
 	// AntigravityAccountID is the agyacct account this session is pinned
 	// to (provider "antigravity"). Empty means the CLI's default HOME
 	// (~/.gemini). Mirrors ClaudeAccountID for the agy provider, whose
@@ -86,10 +117,14 @@ type Session struct {
 	Origin Origin `json:"origin,omitempty"`
 	// IntegrationID is set when Origin == OriginIntegration: the id
 	// of the integration whose API key created the session.
-	IntegrationID string     `json:"integration_id,omitempty"`
-	StartedAt     time.Time  `json:"started_at"`
-	EndedAt       *time.Time `json:"ended_at,omitempty"`
-	ExitCode      *int       `json:"exit_code,omitempty"`
+	IntegrationID string `json:"integration_id,omitempty"`
+	// InterruptReason is the audit cause set only when State == interrupted
+	// (see InterruptCause); empty otherwise. Persisted in
+	// sessions.interrupt_reason, cleared on resume.
+	InterruptReason InterruptCause `json:"interrupt_reason,omitempty"`
+	StartedAt       time.Time      `json:"started_at"`
+	EndedAt         *time.Time     `json:"ended_at,omitempty"`
+	ExitCode        *int           `json:"exit_code,omitempty"`
 }
 
 // Origin identifies the kind of principal that created a session.
@@ -118,6 +153,10 @@ type CreateRequest struct {
 	ParentSessionID      string   `json:"parent_session_id,omitempty"`
 	Cwd                  string   `json:"cwd"`
 	Args                 []string `json:"args"`
+	// Theme is the client's applied theme ("light"/"dark"). Optional: an
+	// older client or an API caller may omit it, in which case opendray
+	// advertises nothing and the CLI keeps its own default.
+	Theme string `json:"theme,omitempty"`
 
 	// origin/integrationID are unexported on purpose: they are derived
 	// from the authenticated principal by the HTTP handler (SetOrigin)
@@ -139,6 +178,9 @@ func (r CreateRequest) Validate() error {
 	}
 	if r.Cwd == "" {
 		return errors.New("cwd is required")
+	}
+	if r.Theme != "" && r.Theme != "light" && r.Theme != "dark" {
+		return errors.New(`theme must be "light" or "dark"`)
 	}
 	return nil
 }

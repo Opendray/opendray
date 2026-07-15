@@ -1140,6 +1140,7 @@
           "mcp": "mcp"
         },
         "notInstalled": "not installed",
+        "brokenCli": "Installed but not runnable",
         "updateAvailable": "update available → {version}",
         "upToDate": "up to date",
         "update": "Update to {version}",

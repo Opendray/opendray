@@ -173,7 +173,14 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           </TabsList>
         </div>
 
-        <ScrollArea className="flex-1 min-h-0">
+        {/* Radix ScrollArea wraps content in an inner display:table div that
+            sizes to content width — so a long/deep Files tree overflows the
+            panel horizontally instead of truncating, which pushes the
+            hover-download icon (anchored to each row's right edge) off-screen.
+            Force that wrapper to block so children stay within the panel width
+            and `truncate` engages. Safe for the Database tab (its grid scrolls
+            in its own overflow-auto containers, not this viewport). */}
+        <ScrollArea className="flex-1 min-h-0 [&_[data-radix-scroll-area-viewport]>div]:!block">
           <TabsContent value="files" className="m-0 p-3">
             <FilesPanel cwd={session.cwd} />
           </TabsContent>

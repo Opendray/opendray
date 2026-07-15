@@ -39,6 +39,10 @@ export interface CreateSessionRequest {
   args?: string[]
   claude_account_id?: string
   parent_session_id?: string
+  /** Operator's applied theme. The gateway advertises it to the CLI via
+      COLORFGBG so a TUI can pick a matching light/dark palette. Stamped
+      automatically by createSession(); callers rarely set it. */
+  theme?: 'light' | 'dark'
 }
 
 // ── Claude accounts (OAuth-token-on-disk model, mirrors v1) ─
@@ -184,6 +188,11 @@ export interface ProviderManifest {
 export interface ProviderRuntime {
   installed: boolean
   installedVersion?: string
+  // Set when the binary is on PATH but `--version` failed — installed, but
+  // not runnable (e.g. a broken npm install missing its platform binary).
+  // When set, never fall back to the manifest version: that would render a
+  // broken CLI as healthy.
+  versionError?: string
   path?: string
   latestVersion?: string
   updateAvailable: boolean

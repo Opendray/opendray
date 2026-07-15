@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,10 +23,17 @@ import (
 type RuntimeInfo struct {
 	Installed        bool   `json:"installed"`
 	InstalledVersion string `json:"installedVersion,omitempty"`
-	Path             string `json:"path,omitempty"`
-	LatestVersion    string `json:"latestVersion,omitempty"`
-	UpdateAvailable  bool   `json:"updateAvailable"`
-	CheckedAt        string `json:"checkedAt,omitempty"` // RFC3339; when LatestVersion was fetched
+	// VersionError is set when the executable is on PATH but `--version`
+	// failed — i.e. installed, but not runnable. A broken npm install whose
+	// platform binary never landed looks exactly like this (codex threw
+	// "Missing optional dependency @openai/codex-linux-x64" on every launch).
+	// Surfaced so the operator sees "installed but broken" instead of a
+	// blank version that reads as fine.
+	VersionError    string `json:"versionError,omitempty"`
+	Path            string `json:"path,omitempty"`
+	LatestVersion   string `json:"latestVersion,omitempty"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+	CheckedAt       string `json:"checkedAt,omitempty"` // RFC3339; when LatestVersion was fetched
 	// ActiveSessions is the number of non-terminal sessions currently
 	// using this provider's CLI. Populated by the handler from the
 	// session manager (0 when the counter isn't wired). Surfaced so the
@@ -113,6 +121,10 @@ func (p *Prober) Installed(ctx context.Context, m Manifest) RuntimeInfo {
 		info.Path = path
 		if v, err := p.runVer(ctx, m.Executable); err == nil {
 			info.InstalledVersion = v
+		} else {
+			// On PATH but won't run. Record why, so the UI can say
+			// "broken" rather than showing an empty version.
+			info.VersionError = err.Error()
 		}
 	}
 
@@ -182,13 +194,48 @@ func (p *Prober) Update(ctx context.Context, m Manifest) (UpdateResult, error) {
 
 	before := p.Installed(ctx, m).InstalledVersion
 
-	// Preflight: if the npm global dir isn't writable by this (unprivileged)
-	// process, an install would just EACCES — report it cleanly instead.
-	if dir, derr := p.npmRoot(ctx); derr == nil && dir != "" && !dirWritable(dir) {
-		return UpdateResult{Package: m.NpmPackage, BeforeVersion: before}, ErrUpdatePrefixReadonly
+	var migrated string
+	if dir, derr := p.npmRoot(ctx); derr == nil && dir != "" {
+		// Preflight: if the npm global dir isn't writable by this (unprivileged)
+		// process, an install would just EACCES — report it cleanly instead.
+		if !dirWritable(dir) {
+			return UpdateResult{Package: m.NpmPackage, BeforeVersion: before}, ErrUpdatePrefixReadonly
+		}
+
+		// Preflight: a CLI installed by a vendor script rather than npm (grok's
+		// `curl -fsSL https://x.ai/cli/install.sh | bash`) leaves a symlink in
+		// the npm bin dir that npm does not own. npm refuses to clobber it —
+		// `EEXIST: file already exists` — so the install dies and the operator
+		// is left on the old binary with an Update button that never works.
+		// Clear the link so npm can take ownership; the CLI becomes npm-managed
+		// like every other provider. Only ever a symlink: a regular file there
+		// was put by a human or another package manager, and we refuse rather
+		// than delete it.
+		if link, isFile := unmanagedBinLink(dir, m.Executable); link != "" {
+			if isFile {
+				return UpdateResult{Package: m.NpmPackage, BeforeVersion: before}, fmt.Errorf(
+					"%s exists and was not installed by npm; remove it to let opendray manage %s updates",
+					link, m.ID)
+			}
+			if rmErr := os.Remove(link); rmErr != nil {
+				return UpdateResult{Package: m.NpmPackage, BeforeVersion: before}, fmt.Errorf(
+					"clearing non-npm %s link at %s: %w", m.ID, link, rmErr)
+			}
+			migrated = link
+		}
 	}
 
-	out, err := p.npmInstall(ctx, m.NpmPackage)
+	// Detach the install from the caller's cancellation. `ctx` here is the
+	// HTTP request's: when the client disconnects (browser closed, navigated
+	// away, proxy timeout) it is cancelled, and exec.CommandContext would
+	// then SIGKILL npm *mid-install*. A half-killed `npm install -g` leaves
+	// a partial global tree behind — a stale `.<pkg>-XXXXXX` temp dir — after
+	// which EVERY later install fails with ENOTEMPTY, permanently wedging
+	// updates for that CLI (this is exactly how a codex update stayed broken
+	// for a week). npmInstall still applies its own timeout.
+	installCtx := context.WithoutCancel(ctx)
+
+	out, err := p.npmInstall(installCtx, m.NpmPackage)
 
 	// The install may have changed what's on disk even on partial
 	// failure, so always drop the cached install state.
@@ -197,10 +244,18 @@ func (p *Prober) Update(ctx context.Context, m Manifest) (UpdateResult, error) {
 	p.mu.Unlock()
 
 	res := UpdateResult{Package: m.NpmPackage, BeforeVersion: before, Output: tailLines(out, 40)}
+	if migrated != "" {
+		// Say what we replaced: the operator installed this CLI by hand, and
+		// silently repointing their binary would be a surprise.
+		res.Output = fmt.Sprintf("replaced non-npm %s at %s (now managed by npm)\n%s",
+			m.Executable, migrated, res.Output)
+	}
 	if err != nil {
 		return res, fmt.Errorf("npm install -g %s: %w", m.NpmPackage, err)
 	}
-	res.AfterVersion = p.Installed(ctx, m).InstalledVersion
+	// Re-probe on the detached ctx too, so we still report a real
+	// AfterVersion when the client has already gone away.
+	res.AfterVersion = p.Installed(installCtx, m).InstalledVersion
 	res.Changed = res.AfterVersion != before
 	return res, nil
 }
@@ -255,6 +310,27 @@ func semverLess(a, b string) bool {
 
 // ── default probes (shell out) ───────────────────────────────────────
 
+// versionErrDetail picks the actionable line out of a failed `--version`
+// run. Broken CLIs commonly dump a stack trace whose first line is a file
+// path; the line that matters is the one starting with "Error". Falls back
+// to the first non-empty line.
+func versionErrDetail(stderr string) string {
+	var first string
+	for _, ln := range strings.Split(stderr, "\n") {
+		ln = strings.TrimSpace(ln)
+		if ln == "" {
+			continue
+		}
+		if strings.HasPrefix(ln, "Error") {
+			return ln
+		}
+		if first == "" {
+			first = ln
+		}
+	}
+	return first
+}
+
 func defaultCliVersion(ctx context.Context, bin string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
@@ -262,6 +338,16 @@ func defaultCliVersion(ctx context.Context, bin string) (string, error) {
 	cmd.Env = append(os.Environ(), "NO_COLOR=1")
 	out, err := cmd.Output()
 	if err != nil {
+		// cmd.Output() captures stderr into ExitError.Stderr. A CLI that is
+		// installed but broken prints the actionable reason there (codex:
+		// "Error: Missing optional dependency @openai/codex-linux-x64").
+		// Carry it up instead of a bare "exit status 1".
+		var ee *exec.ExitError
+		if errors.As(err, &ee) {
+			if detail := versionErrDetail(string(ee.Stderr)); detail != "" {
+				return "", fmt.Errorf("%w: %s", err, detail)
+			}
+		}
 		return "", err
 	}
 	sc := bufio.NewScanner(strings.NewReader(string(out)))
@@ -297,6 +383,43 @@ func defaultNpmRoot(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// unmanagedBinLink reports the npm-prefix bin entry for exe when that entry
+// exists but npm does not own it, so `npm install -g` would fail with EEXIST.
+//
+// npmRoot is `npm root -g` (<prefix>/lib/node_modules); the executables live
+// in <prefix>/bin. An entry is npm-owned when it resolves back inside
+// npmRoot — that is what npm's own bin shim looks like. Anything else was put
+// there by a vendor installer (grok's x.ai script points at ~/.grok/downloads).
+//
+// Returns ("", false) when the path is clear or already npm's. isFile is true
+// for a regular file, which the caller must refuse to delete rather than
+// silently replace someone's binary. A dangling symlink is reported as
+// replaceable — it is already broken.
+func unmanagedBinLink(npmRoot, exe string) (path string, isFile bool) {
+	if npmRoot == "" || exe == "" {
+		return "", false
+	}
+	// <prefix>/lib/node_modules -> <prefix> -> <prefix>/bin
+	binDir := filepath.Join(filepath.Dir(filepath.Dir(npmRoot)), "bin")
+	p := filepath.Join(binDir, exe)
+
+	fi, err := os.Lstat(p)
+	if err != nil {
+		return "", false // nothing there: npm installs cleanly
+	}
+	if fi.Mode()&os.ModeSymlink == 0 {
+		return p, true // a real file — report, never remove
+	}
+	dest, err := filepath.EvalSymlinks(p)
+	if err != nil {
+		return p, false // dangling — safe to replace
+	}
+	if dest == npmRoot || strings.HasPrefix(dest, npmRoot+string(os.PathSeparator)) {
+		return "", false // npm's own shim
+	}
+	return p, false // vendor installer's link
 }
 
 // dirWritable reports whether dir exists and the current process can

@@ -1140,6 +1140,7 @@
           "mcp": "mcp"
         },
         "notInstalled": "未安装",
+        "brokenCli": "已安装但无法运行",
         "updateAvailable": "有可用更新 → {version}",
         "upToDate": "已是最新",
         "update": "更新到 {version}",
