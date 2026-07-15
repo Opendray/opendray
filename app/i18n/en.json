@@ -3143,12 +3143,28 @@
         "browse": "Browse",
         "cwdPlaceholder": "/path/to/project (optional)",
         "modelPlaceholder": "Model",
-        "modelLoading": "Loading…"
+        "modelLoading": "Loading…",
+        "accountPlaceholder": "Account",
+        "accountDefault": "Default account",
+        "accountNoToken": "no token",
+        "personaPlaceholder": "Role / persona (optional) — shapes how this member argues",
+        "personaPresets": {
+          "label": "Or pick a role:",
+          "security": "Security reviewer",
+          "performance": "Performance hawk",
+          "ux": "UX advocate",
+          "skeptic": "Skeptic — find the flaws",
+          "pragmatist": "Pragmatist — ship it"
+        },
+        "framing": "Framing (optional)",
+        "framingPlaceholder": "Current topic + how members relate — e.g. \"Topic: auth redesign. claude leads architecture, codex only hunts security holes.\""
       },
       "detail": {
         "loading": "Loading chat…",
         "loadFailed": "Failed to load this chat.",
         "close": "Close",
+        "closeConfirm": "Close this chat? It keeps the thread but stops new messages. You can reopen it later.",
+        "reopen": "Reopen",
         "summarize": "Summarize",
         "summarizing": "Summarizing…",
         "emptyThread": "No messages yet.",
@@ -3158,7 +3174,15 @@
         "composerPlaceholder": "Message the group…  (@claude, @all — ⌘/Ctrl+Enter to send)",
         "send": "Send",
         "delete": "Delete",
-        "deleteConfirm": "Delete this chat and all its messages? This cannot be undone."
+        "deleteConfirm": "Delete this chat and all its messages? This cannot be undone.",
+        "roles": "Roles",
+        "rolesTitle": "Roles & framing",
+        "rolesFraming": "Discussion framing (shared by all members)",
+        "rolesSave": "Save",
+        "rolesSaved": "Roles updated",
+        "rolesHint": "Reassign roles as the topic evolves — takes effect on the next reply.",
+        "continueDiscussion": "Continue",
+        "continued": "Continuing the discussion…"
       },
       "status": {
         "active": "Active",
@@ -3183,6 +3207,34 @@
         "runContinue": "Continue",
         "bypassLabel": "Skip permissions (YOLO)",
         "bypassHint": "Start the executor with its bypass flag so it does not prompt for approvals — same as the toggle when creating a session."
+      },
+      "plan": {
+        "button": "Plan",
+        "title": "Work plan",
+        "hint": "Break the work into role-assigned steps, then run them in order — each runs as a real session in the project.",
+        "draft": "Draft from discussion",
+        "drafting": "Drafting a plan…",
+        "empty": "No plan yet. Draft one from the discussion, or add steps.",
+        "addStep": "Add step",
+        "assignee": "Assignee",
+        "taskPlaceholder": "What this member should do",
+        "save": "Save plan",
+        "saved": "Plan saved",
+        "run": "Run",
+        "rerun": "Re-run",
+        "running": "Running",
+        "done": "Done",
+        "pending": "Pending",
+        "openSession": "Open session",
+        "needProject": "Bind a project (cwd) to run steps.",
+        "bindProject": "Bind",
+        "projectBound": "Project bound",
+        "runTitle": "Run step",
+        "runStep": "Run",
+        "account": "Account",
+        "accountDefault": "Default",
+        "bypass": "Skip permissions (YOLO)",
+        "bypassHint": "Start the session with its bypass flag so it does not prompt for approvals."
       }
     }
   },
@@ -3271,6 +3323,10 @@
       "vault": {
         "title": "Vault",
         "subtitle": "Freeform markdown notes (Obsidian-sync)"
+      },
+      "roundTable": {
+        "title": "Round Table",
+        "subtitle": "Cross-vendor AI group chat"
       }
     },
     "signOut": "Sign out"

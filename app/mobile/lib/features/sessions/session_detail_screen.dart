@@ -63,95 +63,16 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           loading: () => Text(t.sessions.detail.fallbackTitle),
           error: (_, __) => Text(t.sessions.detail.fallbackTitle),
         ),
+        // Phone bars are narrow and a row of unlabeled icons is easy to
+        // mis-tap — collapse every action into ONE labelled overflow menu so
+        // each item shows its name. The lifecycle actions (stop / restart /
+        // delete) keep their richer SessionActionSheet, opened from the menu.
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: t.sessions.detail.refreshMetadata,
-            onPressed: () =>
-                ref.invalidate(sessionByIdProvider(widget.sessionId)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.dashboard_customize_outlined),
-            tooltip: t.sessions.detail.inspector,
-            onPressed: () =>
-                context.push('/session/${widget.sessionId}/inspector'),
-          ),
-          // Project memory shortcut — open the goal / plan / journal
-          // / inbox view pre-filtered to this session's cwd. Saves
-          // operators from going More → Project → picking the cwd by
-          // hand.
-          async.maybeWhen(
-            data: (s) => IconButton(
-              icon: const Icon(Icons.flag_outlined),
-              tooltip: t.sessions.detail.projectMemory,
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ProjectScreen(initialCwd: s.cwd),
-                  ),
-                );
-              },
-            ),
-            orElse: SizedBox.shrink,
-          ),
-          // Account switcher — Claude and Antigravity live sessions only.
-          // Rebinds the running session to a different account (mirrors
-          // the web header AccountSwitcher). Hidden for other providers
-          // (no account concept) and terminated sessions (nothing to
-          // rebind — /resume first).
-          async.maybeWhen(
-            data: (s) {
-              final isClaude = s.providerId == 'claude';
-              final isAgy = s.providerId == 'antigravity';
-              if (!(isClaude || isAgy) || !s.isLive) {
-                return const SizedBox.shrink();
-              }
-              return IconButton(
-                icon: const Icon(Icons.manage_accounts_outlined),
-                tooltip: isAgy
-                    ? t.sessions.detail.accountSwitcher.tooltipAgy
-                    : t.sessions.detail.accountSwitcher.tooltip,
-                onPressed: () async {
-                  final switched = await AccountSwitchSheet.show(
-                    context,
-                    session: s,
-                  );
-                  if (!switched || !context.mounted) return;
-                  ref
-                    ..invalidate(sessionByIdProvider(widget.sessionId))
-                    ..invalidate(sessionsListProvider)
-                    ..invalidate(
-                      isAgy
-                          ? antigravityAccountsListProvider
-                          : claudeAccountsListProvider,
-                    );
-                },
-              );
-            },
-            orElse: SizedBox.shrink,
-          ),
-          async.maybeWhen(
-            data: (s) => IconButton(
-              icon: const Icon(Icons.tune),
-              tooltip: t.sessions.detail.actions,
-              onPressed: () async {
-                final result = await SessionActionSheet.show(
-                  context,
-                  session: s,
-                );
-                if (result == null) return;
-                if (!context.mounted) return;
-                if (result == SessionActionResult.deleted) {
-                  ref.invalidate(sessionsListProvider);
-                  context.pop();
-                  return;
-                }
-                ref
-                  ..invalidate(sessionByIdProvider(widget.sessionId))
-                  ..invalidate(sessionsListProvider);
-              },
-            ),
-            orElse: SizedBox.shrink,
+          PopupMenuButton<String>(
+            tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+            icon: const Icon(Icons.more_vert),
+            onSelected: (v) => _onMenu(v, async.valueOrNull),
+            itemBuilder: (_) => _menuItems(async.valueOrNull),
           ),
         ],
       ),
@@ -175,6 +96,99 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
         ),
       ),
     );
+  }
+
+  // Overflow-menu items. Session-dependent entries (project memory, account
+  // switch, lifecycle actions) only appear once the session has loaded; the
+  // account switcher is Claude/Antigravity-live only (nothing to rebind
+  // otherwise), mirroring the web header.
+  List<PopupMenuEntry<String>> _menuItems(SessionSummary? s) {
+    final canAccount = s != null &&
+        (s.providerId == 'claude' || s.providerId == 'antigravity') &&
+        s.isLive;
+    return [
+      _menuItem('refresh', Icons.refresh, t.sessions.detail.refreshMetadata),
+      _menuItem('inspector', Icons.dashboard_customize_outlined,
+          t.sessions.detail.inspector),
+      if (s != null)
+        _menuItem(
+            'project', Icons.flag_outlined, t.sessions.detail.projectMemory),
+      if (canAccount)
+        _menuItem(
+          'account',
+          Icons.manage_accounts_outlined,
+          s.providerId == 'antigravity'
+              ? t.sessions.detail.accountSwitcher.tooltipAgy
+              : t.sessions.detail.accountSwitcher.tooltip,
+        ),
+      if (s != null) ...[
+        const PopupMenuDivider(),
+        _menuItem('actions', Icons.tune, t.sessions.detail.actions),
+      ],
+    ];
+  }
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 12),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
+  void _onMenu(String value, SessionSummary? s) {
+    switch (value) {
+      case 'refresh':
+        ref.invalidate(sessionByIdProvider(widget.sessionId));
+      case 'inspector':
+        context.push('/session/${widget.sessionId}/inspector');
+      case 'project':
+        if (s != null) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => ProjectScreen(initialCwd: s.cwd),
+            ),
+          );
+        }
+      case 'account':
+        if (s != null) _switchAccount(s);
+      case 'actions':
+        if (s != null) _openActions(s);
+    }
+  }
+
+  // Rebind the running session to a different account (mirrors the web header
+  // AccountSwitcher).
+  Future<void> _switchAccount(SessionSummary s) async {
+    final isAgy = s.providerId == 'antigravity';
+    final switched = await AccountSwitchSheet.show(context, session: s);
+    if (!switched || !mounted) return;
+    ref
+      ..invalidate(sessionByIdProvider(widget.sessionId))
+      ..invalidate(sessionsListProvider)
+      ..invalidate(
+        isAgy ? antigravityAccountsListProvider : claudeAccountsListProvider,
+      );
+  }
+
+  // Lifecycle actions (stop / restart / delete) keep their richer sheet, which
+  // carries per-action descriptions and a delete confirmation.
+  Future<void> _openActions(SessionSummary s) async {
+    final result = await SessionActionSheet.show(context, session: s);
+    if (result == null || !mounted) return;
+    if (result == SessionActionResult.deleted) {
+      ref.invalidate(sessionsListProvider);
+      context.pop();
+      return;
+    }
+    ref
+      ..invalidate(sessionByIdProvider(widget.sessionId))
+      ..invalidate(sessionsListProvider);
   }
 }
 

@@ -3143,12 +3143,28 @@
         "browse": "浏览",
         "cwdPlaceholder": "/项目/路径(可选)",
         "modelPlaceholder": "模型",
-        "modelLoading": "加载中…"
+        "modelLoading": "加载中…",
+        "accountPlaceholder": "账号",
+        "accountDefault": "默认账号",
+        "accountNoToken": "无凭据",
+        "personaPlaceholder": "角色 / 人设(可选)—— 决定该成员以什么立场发言",
+        "personaPresets": {
+          "label": "或选一个角色:",
+          "security": "安全审查员",
+          "performance": "性能优化派",
+          "ux": "用户体验倡导者",
+          "skeptic": "唱反调者 — 专找漏洞",
+          "pragmatist": "务实派 — 先上线"
+        },
+        "framing": "框架(可选)",
+        "framingPlaceholder": "当前议题 + 成员关系 —— 如「议题:认证重构。claude 主导架构,codex 只挑安全漏洞。」"
       },
       "detail": {
         "loading": "加载群聊…",
         "loadFailed": "加载群聊失败。",
         "close": "关闭",
+        "closeConfirm": "关闭该群聊?会保留记录但停止新消息,之后可重新开启。",
+        "reopen": "重新开启",
         "summarize": "总结",
         "summarizing": "总结中…",
         "emptyThread": "还没有消息。",
@@ -3158,7 +3174,15 @@
         "composerPlaceholder": "给群里发消息…(@claude、@all — ⌘/Ctrl+Enter 发送)",
         "send": "发送",
         "delete": "删除",
-        "deleteConfirm": "删除这个群聊及其所有消息?此操作不可撤销。"
+        "deleteConfirm": "删除这个群聊及其所有消息?此操作不可撤销。",
+        "roles": "角色",
+        "rolesTitle": "角色与框架",
+        "rolesFraming": "讨论框架(所有成员共享)",
+        "rolesSave": "保存",
+        "rolesSaved": "角色已更新",
+        "rolesHint": "议题演进时重新分配角色 —— 下一轮回复生效。",
+        "continueDiscussion": "继续讨论",
+        "continued": "继续讨论中…"
       },
       "status": {
         "active": "进行中",
@@ -3183,6 +3207,34 @@
         "runContinue": "继续执行",
         "bypassLabel": "跳过权限确认(YOLO)",
         "bypassHint": "用执行方的 bypass 参数启动会话,不再逐个确认操作 —— 与创建 session 时的开关一致。"
+      },
+      "plan": {
+        "button": "分工",
+        "title": "分工计划",
+        "hint": "把工作拆成按角色指派的步骤,再按顺序运行 —— 每步作为项目里的真实会话执行。",
+        "draft": "根据讨论起草",
+        "drafting": "正在起草计划…",
+        "empty": "还没有计划。根据讨论起草一个,或手动添加步骤。",
+        "addStep": "添加步骤",
+        "assignee": "负责人",
+        "taskPlaceholder": "该成员要做什么",
+        "save": "保存计划",
+        "saved": "计划已保存",
+        "run": "运行",
+        "rerun": "重跑",
+        "running": "运行中",
+        "done": "完成",
+        "pending": "待运行",
+        "openSession": "打开会话",
+        "needProject": "运行步骤前需绑定项目(cwd)。",
+        "bindProject": "绑定",
+        "projectBound": "项目已绑定",
+        "runTitle": "运行此步",
+        "runStep": "运行",
+        "account": "账号",
+        "accountDefault": "默认",
+        "bypass": "跳过权限 (YOLO)",
+        "bypassHint": "用 bypass 标志启动会话,不再逐个请求批准。"
       }
     }
   },
@@ -3271,6 +3323,10 @@
       "vault": {
         "title": "文档库",
         "subtitle": "自由 markdown 笔记(Obsidian 同步)"
+      },
+      "roundTable": {
+        "title": "圆桌",
+        "subtitle": "跨厂商 AI 群聊"
       }
     },
     "signOut": "退出登录"

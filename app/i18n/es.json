@@ -3143,12 +3143,28 @@
         "browse": "Explorar",
         "cwdPlaceholder": "/ruta/al/proyecto (opcional)",
         "modelPlaceholder": "Modelo",
-        "modelLoading": "Cargando…"
+        "modelLoading": "Cargando…",
+        "accountPlaceholder": "Cuenta",
+        "accountDefault": "Cuenta predeterminada",
+        "accountNoToken": "sin token",
+        "personaPlaceholder": "Rol / persona (opcional) — define cómo argumenta este miembro",
+        "personaPresets": {
+          "label": "O elige un rol:",
+          "security": "Revisor de seguridad",
+          "performance": "Halcón de rendimiento",
+          "ux": "Defensor de UX",
+          "skeptic": "Escéptico — busca fallos",
+          "pragmatist": "Pragmático — a producción"
+        },
+        "framing": "Marco (opcional)",
+        "framingPlaceholder": "Tema actual + relación entre miembros — p. ej. \"Tema: rediseño de auth. claude lidera arquitectura, codex solo busca fallos de seguridad.\""
       },
       "detail": {
         "loading": "Cargando chat…",
         "loadFailed": "No se pudo cargar este chat.",
         "close": "Cerrar",
+        "closeConfirm": "¿Cerrar este chat? Conserva el hilo pero detiene los mensajes nuevos. Puedes reabrirlo después.",
+        "reopen": "Reabrir",
         "summarize": "Resumir",
         "summarizing": "Resumiendo…",
         "emptyThread": "Aún no hay mensajes.",
@@ -3158,7 +3174,15 @@
         "composerPlaceholder": "Mensaje al grupo…  (@claude, @all — ⌘/Ctrl+Enter para enviar)",
         "send": "Enviar",
         "delete": "Eliminar",
-        "deleteConfirm": "¿Eliminar este chat y todos sus mensajes? No se puede deshacer."
+        "deleteConfirm": "¿Eliminar este chat y todos sus mensajes? No se puede deshacer.",
+        "roles": "Roles",
+        "rolesTitle": "Roles y marco",
+        "rolesFraming": "Marco de la discusión (compartido por todos)",
+        "rolesSave": "Guardar",
+        "rolesSaved": "Roles actualizados",
+        "rolesHint": "Reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.",
+        "continueDiscussion": "Continuar",
+        "continued": "Continuando la discusión…"
       },
       "status": {
         "active": "Activa",
@@ -3183,6 +3207,34 @@
         "runContinue": "Continuar",
         "bypassLabel": "Omitir permisos (YOLO)",
         "bypassHint": "Inicia el ejecutor con su parámetro de omisión para que no pida aprobaciones — igual que el interruptor al crear una sesión."
+      },
+      "plan": {
+        "button": "Plan",
+        "title": "Plan de trabajo",
+        "hint": "Divide el trabajo en pasos asignados por rol y ejecútalos en orden — cada uno corre como una sesión real en el proyecto.",
+        "draft": "Redactar desde la discusión",
+        "drafting": "Redactando un plan…",
+        "empty": "Aún no hay plan. Redacta uno desde la discusión o añade pasos.",
+        "addStep": "Añadir paso",
+        "assignee": "Responsable",
+        "taskPlaceholder": "Qué debe hacer este miembro",
+        "save": "Guardar plan",
+        "saved": "Plan guardado",
+        "run": "Ejecutar",
+        "rerun": "Re-ejecutar",
+        "running": "En curso",
+        "done": "Hecho",
+        "pending": "Pendiente",
+        "openSession": "Abrir sesión",
+        "needProject": "Vincula un proyecto (cwd) para ejecutar pasos.",
+        "bindProject": "Vincular",
+        "projectBound": "Proyecto vinculado",
+        "runTitle": "Ejecutar paso",
+        "runStep": "Ejecutar",
+        "account": "Cuenta",
+        "accountDefault": "Predeterminada",
+        "bypass": "Omitir permisos (YOLO)",
+        "bypassHint": "Inicia la sesión con su indicador de bypass para no pedir aprobaciones."
       }
     }
   },
@@ -3271,6 +3323,10 @@
       "vault": {
         "title": "Bóveda",
         "subtitle": "Notas markdown libres (sincronización Obsidian)"
+      },
+      "roundTable": {
+        "title": "Mesa redonda",
+        "subtitle": "Chat grupal de IA multiproveedor"
       }
     },
     "signOut": "Cerrar sesión"
