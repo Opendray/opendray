@@ -2,13 +2,14 @@ package mcp
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func TestLoadOneNormalizesRemoteCommandURL(t *testing.T) {
