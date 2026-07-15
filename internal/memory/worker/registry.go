@@ -27,18 +27,20 @@ type Registry struct {
 	store         *store
 	summarizerReg *summarizer.Registry
 	accounts      AccountReader
+	agyAccounts   AgyAccountReader
 	log           *slog.Logger
 }
 
 // NewRegistry wires the resolver. summarizerReg is required (so
-// the summarizer worker can pick providers); accounts is optional
-// (only needed for Claude multi-account agent worker — when nil,
-// agent workers fall back to whatever Claude's host config
-// resolves on its own).
+// the summarizer worker can pick providers); accounts / agyAccounts are
+// optional (only needed for multi-account agent workers — Claude via
+// accounts, antigravity via agyAccounts. When nil, agent workers fall back
+// to whatever the CLI's host config resolves on its own).
 func NewRegistry(
 	pool *pgxpool.Pool,
 	summarizerReg *summarizer.Registry,
 	accounts AccountReader,
+	agyAccounts AgyAccountReader,
 	log *slog.Logger,
 ) *Registry {
 	if log == nil {
@@ -48,6 +50,7 @@ func NewRegistry(
 		store:         newStore(pool),
 		summarizerReg: summarizerReg,
 		accounts:      accounts,
+		agyAccounts:   agyAccounts,
 		log:           log.With("component", "memory.worker.registry"),
 	}
 }
@@ -76,7 +79,7 @@ func (r *Registry) buildWorker(cfg Config) (Worker, error) {
 		}
 		return NewSummarizerWorker(r.summarizerReg, cfg), nil
 	case WorkerAgent:
-		return NewAgentWorker(r.accounts, cfg, r.log), nil
+		return NewAgentWorker(r.accounts, r.agyAccounts, cfg, r.log), nil
 	default:
 		return nil, fmt.Errorf("memory worker: unknown kind %q", cfg.Kind)
 	}

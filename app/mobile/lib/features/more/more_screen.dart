@@ -6,6 +6,7 @@ import 'package:opendray/core/api/releases_api.dart';
 import 'package:opendray/core/api/version_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/activity/activity_screen.dart';
 import 'package:opendray/features/backups/backups_screen.dart';
 import 'package:opendray/features/channels/channels_screen.dart';
 import 'package:opendray/features/custom_tasks/custom_tasks_screen.dart';
@@ -65,9 +66,16 @@ class MoreScreen extends ConsumerWidget {
         children: [
           _IdentityCard(auth: auth),
           const SizedBox(height: 8),
-          // Activity + Integrations are top-level bottom-nav tabs now; the
-          // gateway section keeps the lower-frequency destinations.
+          // Round Table + Integrations are top-level bottom-nav tabs now;
+          // Activity (per-call integration audit) lives here in the gateway
+          // section alongside the lower-frequency destinations.
           _SectionHeader(label: t.more.sections.gateway),
+          _MenuTile(
+            icon: Icons.timeline_outlined,
+            title: t.more.items.activity.title,
+            subtitle: t.more.items.activity.subtitle,
+            onTap: () => _push(context, const ActivityScreen()),
+          ),
           _MenuTile(
             icon: Icons.notifications_outlined,
             title: t.more.items.channels.title,

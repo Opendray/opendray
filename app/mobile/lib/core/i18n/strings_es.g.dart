@@ -141,6 +141,7 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	@override String get community => 'Comunidad';
 	@override String get sponsor => 'Patrocinar';
 	@override late final _TranslationsNavUpdatesEs updates = _TranslationsNavUpdatesEs._(_root);
+	@override String get roundTable => 'Mesa redonda';
 }
 
 // Path: web
@@ -180,6 +181,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebKnowledgeEs knowledge = _TranslationsWebKnowledgeEs._(_root);
 	@override late final _TranslationsWebCortexEs cortex = _TranslationsWebCortexEs._(_root);
 	@override late final _TranslationsWebDatabaseEs database = _TranslationsWebDatabaseEs._(_root);
+	@override late final _TranslationsWebRoundTableEs roundTable = _TranslationsWebRoundTableEs._(_root);
 }
 
 // Path: more
@@ -1718,6 +1720,30 @@ class _TranslationsWebDatabaseEs extends TranslationsWebDatabaseEn {
 	@override late final _TranslationsWebDatabaseWorkbenchEs workbench = _TranslationsWebDatabaseWorkbenchEs._(_root);
 }
 
+// Path: web.roundTable
+class _TranslationsWebRoundTableEs extends TranslationsWebRoundTableEn {
+	_TranslationsWebRoundTableEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Mesa redonda';
+	@override String get experimental => 'Experimental';
+	@override String get subtitle => 'Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.';
+	@override String get kNew => 'Nueva mesa redonda';
+	@override String get loading => 'Cargando…';
+	@override String get empty => 'Aún no hay mesas redondas.';
+	@override String get selectHint => 'Selecciona una mesa redonda para abrir el chat.';
+	@override String get you => 'Tú';
+	@override String get summary => 'Resumen';
+	@override late final _TranslationsWebRoundTableDialogEs dialog = _TranslationsWebRoundTableDialogEs._(_root);
+	@override late final _TranslationsWebRoundTableDetailEs detail = _TranslationsWebRoundTableDetailEs._(_root);
+	@override late final _TranslationsWebRoundTableStatusEs status = _TranslationsWebRoundTableStatusEs._(_root);
+	@override String get untitled => 'Chat nuevo';
+	@override late final _TranslationsWebRoundTableHandoffEs handoff = _TranslationsWebRoundTableHandoffEs._(_root);
+	@override late final _TranslationsWebRoundTablePlanEs plan = _TranslationsWebRoundTablePlanEs._(_root);
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityEs extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -1768,6 +1794,7 @@ class _TranslationsMoreItemsEs extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSettingsEs settings = _TranslationsMoreItemsSettingsEs._(_root);
 	@override late final _TranslationsMoreItemsAboutEs about = _TranslationsMoreItemsAboutEs._(_root);
 	@override late final _TranslationsMoreItemsVaultEs vault = _TranslationsMoreItemsVaultEs._(_root);
+	@override late final _TranslationsMoreItemsRoundTableEs roundTable = _TranslationsMoreItemsRoundTableEs._(_root);
 }
 
 // Path: activity.filter
@@ -6054,6 +6081,140 @@ class _TranslationsWebDatabaseWorkbenchEs extends TranslationsWebDatabaseWorkben
 	@override String get title => 'Banco de trabajo de BD';
 }
 
+// Path: web.roundTable.dialog
+class _TranslationsWebRoundTableDialogEs extends TranslationsWebRoundTableDialogEn {
+	_TranslationsWebRoundTableDialogEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Nueva mesa redonda';
+	@override String get description => 'Elige los miembros (un modelo por proveedor). Sin tema — empieza a chatear; el chat se nombra con tu primer mensaje.';
+	@override String get cwd => 'Ruta del proyecto (opcional)';
+	@override String get cwdHint => 'Vincula el chat a un proyecto para recuperar memoria.';
+	@override String get seats => 'Miembros';
+	@override String get seatsHint => 'Uno por proveedor. Elige el modelo de cada miembro en el desplegable.';
+	@override String get create => 'Crear';
+	@override String get created => 'Mesa redonda creada';
+	@override String get project => 'Proyecto (opcional)';
+	@override String get start => 'Iniciar chat';
+	@override String get browse => 'Explorar';
+	@override String get cwdPlaceholder => '/ruta/al/proyecto (opcional)';
+	@override String get modelPlaceholder => 'Modelo';
+	@override String get modelLoading => 'Cargando…';
+	@override String get accountPlaceholder => 'Cuenta';
+	@override String get accountDefault => 'Cuenta predeterminada';
+	@override String get accountNoToken => 'sin token';
+	@override String get personaPlaceholder => 'Rol / persona (opcional) — define cómo argumenta este miembro';
+	@override late final _TranslationsWebRoundTableDialogPersonaPresetsEs personaPresets = _TranslationsWebRoundTableDialogPersonaPresetsEs._(_root);
+	@override String get framing => 'Marco (opcional)';
+	@override String get framingPlaceholder => 'Tema actual + relación entre miembros — p. ej. "Tema: rediseño de auth. claude lidera arquitectura, codex solo busca fallos de seguridad."';
+}
+
+// Path: web.roundTable.detail
+class _TranslationsWebRoundTableDetailEs extends TranslationsWebRoundTableDetailEn {
+	_TranslationsWebRoundTableDetailEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => 'Cargando chat…';
+	@override String get loadFailed => 'No se pudo cargar este chat.';
+	@override String get close => 'Cerrar';
+	@override String get closeConfirm => '¿Cerrar este chat? Conserva el hilo pero detiene los mensajes nuevos. Puedes reabrirlo después.';
+	@override String get reopen => 'Reabrir';
+	@override String get summarize => 'Resumir';
+	@override String get summarizing => 'Resumiendo…';
+	@override String get emptyThread => 'Aún no hay mensajes.';
+	@override String get emptyHint => 'Escribe algo y menciona con @ a un miembro para que responda.';
+	@override String get replying => 'los miembros están respondiendo…';
+	@override String get mentionHint => 'Mencionar:';
+	@override String get composerPlaceholder => 'Mensaje al grupo…  (@claude, @all — ⌘/Ctrl+Enter para enviar)';
+	@override String get send => 'Enviar';
+	@override String get delete => 'Eliminar';
+	@override String get deleteConfirm => '¿Eliminar este chat y todos sus mensajes? No se puede deshacer.';
+	@override String get roles => 'Roles';
+	@override String get rolesTitle => 'Roles y marco';
+	@override String get rolesFraming => 'Marco de la discusión (compartido por todos)';
+	@override String get rolesSave => 'Guardar';
+	@override String get rolesSaved => 'Roles actualizados';
+	@override String get rolesHint => 'Reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.';
+	@override String get continueDiscussion => 'Continuar';
+	@override String get continued => 'Continuando la discusión…';
+}
+
+// Path: web.roundTable.status
+class _TranslationsWebRoundTableStatusEs extends TranslationsWebRoundTableStatusEn {
+	_TranslationsWebRoundTableStatusEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get active => 'Activa';
+	@override String get closed => 'Cerrada';
+}
+
+// Path: web.roundTable.handoff
+class _TranslationsWebRoundTableHandoffEs extends TranslationsWebRoundTableHandoffEn {
+	_TranslationsWebRoundTableHandoffEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => 'Ejecutar';
+	@override String get title => 'Entregar a una sesión';
+	@override String get description => 'Los miembros del chat solo discuten (solo lectura). Esto lanza una sesión real con acceso completo a archivos para implementar lo acordado — con el último resumen, o toda la discusión si no has resumido.';
+	@override String get executor => 'Ejecutor';
+	@override String get executorHint => 'Qué miembro hace el trabajo real (una sesión completa con acceso a archivos).';
+	@override String get project => 'Proyecto';
+	@override String get projectPlaceholder => '/ruta/al/proyecto';
+	@override String get projectHint => 'Dónde ocurren los cambios. Obligatorio.';
+	@override String get run => 'Ejecutar';
+	@override String get started => 'Sesión iniciada — te llevamos allí';
+	@override String get continueLabel => 'Continuar en la sesión existente';
+	@override String get continueHint => 'Se reutiliza la sesión de entrega anterior como seguimiento. Si ha terminado, se crea una nueva.';
+	@override String get claudeAccount => 'Cuenta de Claude';
+	@override String get accountDefault => 'Predeterminada';
+	@override String get runContinue => 'Continuar';
+	@override String get bypassLabel => 'Omitir permisos (YOLO)';
+	@override String get bypassHint => 'Inicia el ejecutor con su parámetro de omisión para que no pida aprobaciones — igual que el interruptor al crear una sesión.';
+}
+
+// Path: web.roundTable.plan
+class _TranslationsWebRoundTablePlanEs extends TranslationsWebRoundTablePlanEn {
+	_TranslationsWebRoundTablePlanEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => 'Plan';
+	@override String get title => 'Plan de trabajo';
+	@override String get hint => 'Divide el trabajo en pasos asignados por rol y ejecútalos en orden — cada uno corre como una sesión real en el proyecto.';
+	@override String get draft => 'Redactar desde la discusión';
+	@override String get drafting => 'Redactando un plan…';
+	@override String get empty => 'Aún no hay plan. Redacta uno desde la discusión o añade pasos.';
+	@override String get addStep => 'Añadir paso';
+	@override String get assignee => 'Responsable';
+	@override String get taskPlaceholder => 'Qué debe hacer este miembro';
+	@override String get save => 'Guardar plan';
+	@override String get saved => 'Plan guardado';
+	@override String get run => 'Ejecutar';
+	@override String get rerun => 'Re-ejecutar';
+	@override String get running => 'En curso';
+	@override String get done => 'Hecho';
+	@override String get pending => 'Pendiente';
+	@override String get openSession => 'Abrir sesión';
+	@override String get needProject => 'Vincula un proyecto (cwd) para ejecutar pasos.';
+	@override String get bindProject => 'Vincular';
+	@override String get projectBound => 'Proyecto vinculado';
+	@override String get runTitle => 'Ejecutar paso';
+	@override String get runStep => 'Ejecutar';
+	@override String get account => 'Cuenta';
+	@override String get accountDefault => 'Predeterminada';
+	@override String get bypass => 'Omitir permisos (YOLO)';
+	@override String get bypassHint => 'Inicia la sesión con su indicador de bypass para no pedir aprobaciones.';
+}
+
 // Path: more.items.integrations
 class _TranslationsMoreItemsIntegrationsEs extends TranslationsMoreItemsIntegrationsEn {
 	_TranslationsMoreItemsIntegrationsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -6250,6 +6411,17 @@ class _TranslationsMoreItemsVaultEs extends TranslationsMoreItemsVaultEn {
 	// Translations
 	@override String get title => 'Bóveda';
 	@override String get subtitle => 'Notas markdown libres (sincronización Obsidian)';
+}
+
+// Path: more.items.roundTable
+class _TranslationsMoreItemsRoundTableEs extends TranslationsMoreItemsRoundTableEn {
+	_TranslationsMoreItemsRoundTableEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Mesa redonda';
+	@override String get subtitle => 'Chat grupal de IA multiproveedor';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -9108,6 +9280,21 @@ class _TranslationsWebDatabaseDialogDriversEs extends TranslationsWebDatabaseDia
 	@override String get sqlite => 'SQLite';
 }
 
+// Path: web.roundTable.dialog.personaPresets
+class _TranslationsWebRoundTableDialogPersonaPresetsEs extends TranslationsWebRoundTableDialogPersonaPresetsEn {
+	_TranslationsWebRoundTableDialogPersonaPresetsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'O elige un rol:';
+	@override String get security => 'Revisor de seguridad';
+	@override String get performance => 'Halcón de rendimiento';
+	@override String get ux => 'Defensor de UX';
+	@override String get skeptic => 'Escéptico — busca fallos';
+	@override String get pragmatist => 'Pragmático — a producción';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9244,6 +9431,7 @@ extension on TranslationsEs {
 			'nav.updates.unread' => 'Notas de versión sin leer',
 			'nav.updates.badgeCount' => ({required Object count}) => 'Actualizaciones · ${count}',
 			'nav.updates.sourceChangelog' => 'Highlights desde CHANGELOG.md (el cuerpo del release era un stub).',
+			'nav.roundTable' => 'Mesa redonda',
 			'web.brand' => 'opendray',
 			'web.loading' => 'Cargando…',
 			'web.topbar.expandSidebar' => 'Expandir barra lateral',
@@ -9702,9 +9890,9 @@ extension on TranslationsEs {
 			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
-			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
 			'web.project.inbox.current' => 'Actual',
 			'web.project.inbox.proposed' => 'Propuesto',
 			'web.project.inbox.emptyBody' => '(vacío)',
@@ -10216,9 +10404,9 @@ extension on TranslationsEs {
 			'web.channels.toasts.unmuted' => 'Canal reactivado',
 			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
-			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
 			'web.channels.dialog.descriptionDefault' => 'Configura la integración de mensajería.',
 			'web.channels.dialog.kindLabel' => 'Tipo',
 			'web.channels.dialog.kindImmutable' => '(inmutable, elimina y vuelve a crear para cambiar el tipo)',
@@ -10730,9 +10918,9 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
-			'web.backups.newSchedule.targetLabel' => 'Destinos',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.newSchedule.targetLabel' => 'Destinos',
 			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Cada (horas)',
 			'web.backups.newSchedule.keepLastNLabel' => 'Conservar las últimas N',
@@ -11244,9 +11432,9 @@ extension on TranslationsEs {
 			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
 			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
-			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
 			'web.memoryAmbient.profiles.row.globalDefault' => 'predeterminado global',
 			'web.memoryAmbient.profiles.row.delete' => 'Eliminar',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => '¿Eliminar este perfil de inyección?',
@@ -11643,6 +11831,110 @@ extension on TranslationsEs {
 			'web.database.panel.console' => 'Consola SQL',
 			'web.database.panel.openWorkbench' => 'Abrir banco de trabajo',
 			'web.database.workbench.title' => 'Banco de trabajo de BD',
+			'web.roundTable.title' => 'Mesa redonda',
+			'web.roundTable.experimental' => 'Experimental',
+			'web.roundTable.subtitle' => 'Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.',
+			'web.roundTable.kNew' => 'Nueva mesa redonda',
+			'web.roundTable.loading' => 'Cargando…',
+			'web.roundTable.empty' => 'Aún no hay mesas redondas.',
+			'web.roundTable.selectHint' => 'Selecciona una mesa redonda para abrir el chat.',
+			'web.roundTable.you' => 'Tú',
+			'web.roundTable.summary' => 'Resumen',
+			'web.roundTable.dialog.title' => 'Nueva mesa redonda',
+			'web.roundTable.dialog.description' => 'Elige los miembros (un modelo por proveedor). Sin tema — empieza a chatear; el chat se nombra con tu primer mensaje.',
+			'web.roundTable.dialog.cwd' => 'Ruta del proyecto (opcional)',
+			'web.roundTable.dialog.cwdHint' => 'Vincula el chat a un proyecto para recuperar memoria.',
+			'web.roundTable.dialog.seats' => 'Miembros',
+			'web.roundTable.dialog.seatsHint' => 'Uno por proveedor. Elige el modelo de cada miembro en el desplegable.',
+			'web.roundTable.dialog.create' => 'Crear',
+			'web.roundTable.dialog.created' => 'Mesa redonda creada',
+			'web.roundTable.dialog.project' => 'Proyecto (opcional)',
+			'web.roundTable.dialog.start' => 'Iniciar chat',
+			'web.roundTable.dialog.browse' => 'Explorar',
+			'web.roundTable.dialog.cwdPlaceholder' => '/ruta/al/proyecto (opcional)',
+			'web.roundTable.dialog.modelPlaceholder' => 'Modelo',
+			'web.roundTable.dialog.modelLoading' => 'Cargando…',
+			'web.roundTable.dialog.accountPlaceholder' => 'Cuenta',
+			'web.roundTable.dialog.accountDefault' => 'Cuenta predeterminada',
+			'web.roundTable.dialog.accountNoToken' => 'sin token',
+			'web.roundTable.dialog.personaPlaceholder' => 'Rol / persona (opcional) — define cómo argumenta este miembro',
+			'web.roundTable.dialog.personaPresets.label' => 'O elige un rol:',
+			'web.roundTable.dialog.personaPresets.security' => 'Revisor de seguridad',
+			'web.roundTable.dialog.personaPresets.performance' => 'Halcón de rendimiento',
+			'web.roundTable.dialog.personaPresets.ux' => 'Defensor de UX',
+			'web.roundTable.dialog.personaPresets.skeptic' => 'Escéptico — busca fallos',
+			'web.roundTable.dialog.personaPresets.pragmatist' => 'Pragmático — a producción',
+			'web.roundTable.dialog.framing' => 'Marco (opcional)',
+			'web.roundTable.dialog.framingPlaceholder' => 'Tema actual + relación entre miembros — p. ej. "Tema: rediseño de auth. claude lidera arquitectura, codex solo busca fallos de seguridad."',
+			'web.roundTable.detail.loading' => 'Cargando chat…',
+			'web.roundTable.detail.loadFailed' => 'No se pudo cargar este chat.',
+			'web.roundTable.detail.close' => 'Cerrar',
+			'web.roundTable.detail.closeConfirm' => '¿Cerrar este chat? Conserva el hilo pero detiene los mensajes nuevos. Puedes reabrirlo después.',
+			'web.roundTable.detail.reopen' => 'Reabrir',
+			'web.roundTable.detail.summarize' => 'Resumir',
+			'web.roundTable.detail.summarizing' => 'Resumiendo…',
+			'web.roundTable.detail.emptyThread' => 'Aún no hay mensajes.',
+			'web.roundTable.detail.emptyHint' => 'Escribe algo y menciona con @ a un miembro para que responda.',
+			'web.roundTable.detail.replying' => 'los miembros están respondiendo…',
+			'web.roundTable.detail.mentionHint' => 'Mencionar:',
+			'web.roundTable.detail.composerPlaceholder' => 'Mensaje al grupo…  (@claude, @all — ⌘/Ctrl+Enter para enviar)',
+			'web.roundTable.detail.send' => 'Enviar',
+			'web.roundTable.detail.delete' => 'Eliminar',
+			'web.roundTable.detail.deleteConfirm' => '¿Eliminar este chat y todos sus mensajes? No se puede deshacer.',
+			'web.roundTable.detail.roles' => 'Roles',
+			'web.roundTable.detail.rolesTitle' => 'Roles y marco',
+			'web.roundTable.detail.rolesFraming' => 'Marco de la discusión (compartido por todos)',
+			'web.roundTable.detail.rolesSave' => 'Guardar',
+			'web.roundTable.detail.rolesSaved' => 'Roles actualizados',
+			'web.roundTable.detail.rolesHint' => 'Reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.',
+			'web.roundTable.detail.continueDiscussion' => 'Continuar',
+			'web.roundTable.detail.continued' => 'Continuando la discusión…',
+			'web.roundTable.status.active' => 'Activa',
+			'web.roundTable.status.closed' => 'Cerrada',
+			'web.roundTable.untitled' => 'Chat nuevo',
+			'web.roundTable.handoff.button' => 'Ejecutar',
+			'web.roundTable.handoff.title' => 'Entregar a una sesión',
+			'web.roundTable.handoff.description' => 'Los miembros del chat solo discuten (solo lectura). Esto lanza una sesión real con acceso completo a archivos para implementar lo acordado — con el último resumen, o toda la discusión si no has resumido.',
+			'web.roundTable.handoff.executor' => 'Ejecutor',
+			'web.roundTable.handoff.executorHint' => 'Qué miembro hace el trabajo real (una sesión completa con acceso a archivos).',
+			'web.roundTable.handoff.project' => 'Proyecto',
+			'web.roundTable.handoff.projectPlaceholder' => '/ruta/al/proyecto',
+			'web.roundTable.handoff.projectHint' => 'Dónde ocurren los cambios. Obligatorio.',
+			'web.roundTable.handoff.run' => 'Ejecutar',
+			'web.roundTable.handoff.started' => 'Sesión iniciada — te llevamos allí',
+			'web.roundTable.handoff.continueLabel' => 'Continuar en la sesión existente',
+			'web.roundTable.handoff.continueHint' => 'Se reutiliza la sesión de entrega anterior como seguimiento. Si ha terminado, se crea una nueva.',
+			'web.roundTable.handoff.claudeAccount' => 'Cuenta de Claude',
+			'web.roundTable.handoff.accountDefault' => 'Predeterminada',
+			'web.roundTable.handoff.runContinue' => 'Continuar',
+			'web.roundTable.handoff.bypassLabel' => 'Omitir permisos (YOLO)',
+			'web.roundTable.handoff.bypassHint' => 'Inicia el ejecutor con su parámetro de omisión para que no pida aprobaciones — igual que el interruptor al crear una sesión.',
+			'web.roundTable.plan.button' => 'Plan',
+			'web.roundTable.plan.title' => 'Plan de trabajo',
+			'web.roundTable.plan.hint' => 'Divide el trabajo en pasos asignados por rol y ejecútalos en orden — cada uno corre como una sesión real en el proyecto.',
+			'web.roundTable.plan.draft' => 'Redactar desde la discusión',
+			'web.roundTable.plan.drafting' => 'Redactando un plan…',
+			'web.roundTable.plan.empty' => 'Aún no hay plan. Redacta uno desde la discusión o añade pasos.',
+			'web.roundTable.plan.addStep' => 'Añadir paso',
+			'web.roundTable.plan.assignee' => 'Responsable',
+			'web.roundTable.plan.taskPlaceholder' => 'Qué debe hacer este miembro',
+			'web.roundTable.plan.save' => 'Guardar plan',
+			'web.roundTable.plan.saved' => 'Plan guardado',
+			'web.roundTable.plan.run' => 'Ejecutar',
+			'web.roundTable.plan.rerun' => 'Re-ejecutar',
+			'web.roundTable.plan.running' => 'En curso',
+			'web.roundTable.plan.done' => 'Hecho',
+			'web.roundTable.plan.pending' => 'Pendiente',
+			'web.roundTable.plan.openSession' => 'Abrir sesión',
+			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
+			'web.roundTable.plan.bindProject' => 'Vincular',
+			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
+			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
+			'web.roundTable.plan.runStep' => 'Ejecutar',
+			'web.roundTable.plan.account' => 'Cuenta',
+			'web.roundTable.plan.accountDefault' => 'Predeterminada',
+			'web.roundTable.plan.bypass' => 'Omitir permisos (YOLO)',
+			'web.roundTable.plan.bypassHint' => 'Inicia la sesión con su indicador de bypass para no pedir aprobaciones.',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -11654,6 +11946,8 @@ extension on TranslationsEs {
 			'more.items.integrations.title' => 'Integraciones',
 			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
 			'more.items.activity.title' => 'Actividad',
+			_ => null,
+		} ?? switch (path) {
 			'more.items.activity.subtitle' => 'Auditoría de llamadas API de integraciones',
 			'more.items.memoryAmbient.title' => 'Captura e inyección',
 			'more.items.memoryAmbient.subtitle' => 'Reglas de captura + perfiles de inyección',
@@ -11687,6 +11981,8 @@ extension on TranslationsEs {
 			'more.items.about.subtitle' => 'Versión de compilación e información del servidor',
 			'more.items.vault.title' => 'Bóveda',
 			'more.items.vault.subtitle' => 'Notas markdown libres (sincronización Obsidian)',
+			'more.items.roundTable.title' => 'Mesa redonda',
+			'more.items.roundTable.subtitle' => 'Chat grupal de IA multiproveedor',
 			'more.signOut' => 'Cerrar sesión',
 			'activity.title' => 'Actividad',
 			'activity.empty' => 'Aún no hay llamadas de integración registradas.',
@@ -11759,8 +12055,6 @@ extension on TranslationsEs {
 			'sessions.detail.refreshMetadata' => 'Actualizar metadatos',
 			'sessions.detail.inspector' => 'Inspector (Archivos / Git / Tareas / Historial / Notas)',
 			'sessions.detail.projectMemory' => 'Memoria del proyecto (objetivo / plan / diario / bandeja de entrada)',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.actions' => 'Acciones',
 			'sessions.detail.started' => ({required Object when}) => 'iniciada ${when}',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'iniciada ${started}  ·  finalizada ${ended}',
@@ -12166,6 +12460,8 @@ extension on TranslationsEs {
 			'integrations.defaultAgent.providerNone' => 'Sin predeterminado',
 			'integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
 			'integrations.defaultAgent.modelHint' => 'Predeterminado del proveedor (p. ej. opus)',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
 			'integrations.defaultAgent.accountNone' => 'Sin predeterminado',
 			'integrations.defaultAgent.accountTokenMissing' => '(falta el token)',
@@ -12273,8 +12569,6 @@ extension on TranslationsEs {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'project.conflicts.deleteLoading' => 'Cargando el texto del hecho…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Eliminar ${side}',
-			_ => null,
-		} ?? switch (path) {
 			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
 			'project.conflicts.openPlanEditor' => 'Abrir el editor del plan',
 			'project.conflicts.openGoalEditor' => 'Abrir el editor del objetivo',
@@ -12680,6 +12974,8 @@ extension on TranslationsEs {
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'ID(s) de usuario de Telegram del propietario',
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (separados por comas para más de uno)',
 			'channels.kinds.telegram.ownerUserIdsHint' => 'Solo estos IDs numéricos de usuario de Telegram pueden controlar sessions, ejecutar comandos o pulsar botones; el resto se ignora. Déjalo en blanco para permitir a cualquiera (no recomendado para chat bidireccional). Obtén el tuyo enviando un DM a @userinfobot.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.telegram.chatEnabledLabel' => 'Chat bidireccional (enrutar mensajes a la session)',
 			'channels.kinds.telegram.chatEnabledHint' => 'Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.',
 			'channels.kinds.telegram.chatTypingLabel' => 'Mostrar “escribiendo…” mientras el agente trabaja',
@@ -12787,8 +13083,6 @@ extension on TranslationsEs {
 			'customTasks.fieldCommand' => 'Comando',
 			'customTasks.commandHelper' => 'El texto que se inserta en la session al elegirlo. Puede ser un comando de CLI o un slash command de Claude.',
 			'customTasks.fieldDescription' => 'Descripción (opcional)',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.fieldScope' => 'Ámbito',
 			'customTasks.globalScopeHint' => 'Visible desde cualquier session, sin importar el cwd.',
 			'customTasks.projectScopeHint' => 'Visible solo cuando el cwd de una session coincide con la ruta de abajo.',
@@ -13194,6 +13488,8 @@ extension on TranslationsEs {
 			'cortexSettings.tabProviders' => 'Proveedores',
 			'cortexSettings.providersHint' => 'Endpoints LLM a los que enrutan los workers de resumen/agente.',
 			'cortexSettings.providersEmpty' => 'Sin proveedores configurados.',
+			_ => null,
+		} ?? switch (path) {
 			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',
 			'cortexSettings.providersLoadFailed' => 'Error al cargar proveedores',
 			'cortexSettings.defaultBadge' => 'predeterminado',

@@ -141,6 +141,7 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	@override String get community => '社区';
 	@override String get sponsor => '赞助';
 	@override late final _TranslationsNavUpdatesZh updates = _TranslationsNavUpdatesZh._(_root);
+	@override String get roundTable => '圆桌';
 }
 
 // Path: web
@@ -180,6 +181,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebKnowledgeZh knowledge = _TranslationsWebKnowledgeZh._(_root);
 	@override late final _TranslationsWebCortexZh cortex = _TranslationsWebCortexZh._(_root);
 	@override late final _TranslationsWebDatabaseZh database = _TranslationsWebDatabaseZh._(_root);
+	@override late final _TranslationsWebRoundTableZh roundTable = _TranslationsWebRoundTableZh._(_root);
 }
 
 // Path: more
@@ -1718,6 +1720,30 @@ class _TranslationsWebDatabaseZh extends TranslationsWebDatabaseEn {
 	@override late final _TranslationsWebDatabaseWorkbenchZh workbench = _TranslationsWebDatabaseWorkbenchZh._(_root);
 }
 
+// Path: web.roundTable
+class _TranslationsWebRoundTableZh extends TranslationsWebRoundTableEn {
+	_TranslationsWebRoundTableZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '圆桌';
+	@override String get experimental => '实验性';
+	@override String get subtitle => '跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。';
+	@override String get kNew => '新建圆桌';
+	@override String get loading => '加载中…';
+	@override String get empty => '还没有圆桌。';
+	@override String get selectHint => '选择一个圆桌打开群聊。';
+	@override String get you => '你';
+	@override String get summary => '总结';
+	@override late final _TranslationsWebRoundTableDialogZh dialog = _TranslationsWebRoundTableDialogZh._(_root);
+	@override late final _TranslationsWebRoundTableDetailZh detail = _TranslationsWebRoundTableDetailZh._(_root);
+	@override late final _TranslationsWebRoundTableStatusZh status = _TranslationsWebRoundTableStatusZh._(_root);
+	@override String get untitled => '新群聊';
+	@override late final _TranslationsWebRoundTableHandoffZh handoff = _TranslationsWebRoundTableHandoffZh._(_root);
+	@override late final _TranslationsWebRoundTablePlanZh plan = _TranslationsWebRoundTablePlanZh._(_root);
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityZh extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -1768,6 +1794,7 @@ class _TranslationsMoreItemsZh extends TranslationsMoreItemsEn {
 	@override late final _TranslationsMoreItemsSettingsZh settings = _TranslationsMoreItemsSettingsZh._(_root);
 	@override late final _TranslationsMoreItemsAboutZh about = _TranslationsMoreItemsAboutZh._(_root);
 	@override late final _TranslationsMoreItemsVaultZh vault = _TranslationsMoreItemsVaultZh._(_root);
+	@override late final _TranslationsMoreItemsRoundTableZh roundTable = _TranslationsMoreItemsRoundTableZh._(_root);
 }
 
 // Path: activity.filter
@@ -6054,6 +6081,140 @@ class _TranslationsWebDatabaseWorkbenchZh extends TranslationsWebDatabaseWorkben
 	@override String get title => '数据库工作台';
 }
 
+// Path: web.roundTable.dialog
+class _TranslationsWebRoundTableDialogZh extends TranslationsWebRoundTableDialogEn {
+	_TranslationsWebRoundTableDialogZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '新建圆桌';
+	@override String get description => '选择成员(每厂商一个模型)。不用填主题——直接开聊,群聊会用你的第一条消息自动命名。';
+	@override String get cwd => '项目路径(可选)';
+	@override String get cwdHint => '把群聊绑定到项目以检索记忆。';
+	@override String get seats => '成员';
+	@override String get seatsHint => '每厂商一个。从下拉里选每个成员的模型。';
+	@override String get create => '创建';
+	@override String get created => '圆桌已创建';
+	@override String get project => '项目(可选)';
+	@override String get start => '开始聊天';
+	@override String get browse => '浏览';
+	@override String get cwdPlaceholder => '/项目/路径(可选)';
+	@override String get modelPlaceholder => '模型';
+	@override String get modelLoading => '加载中…';
+	@override String get accountPlaceholder => '账号';
+	@override String get accountDefault => '默认账号';
+	@override String get accountNoToken => '无凭据';
+	@override String get personaPlaceholder => '角色 / 人设(可选)—— 决定该成员以什么立场发言';
+	@override late final _TranslationsWebRoundTableDialogPersonaPresetsZh personaPresets = _TranslationsWebRoundTableDialogPersonaPresetsZh._(_root);
+	@override String get framing => '框架(可选)';
+	@override String get framingPlaceholder => '当前议题 + 成员关系 —— 如「议题:认证重构。claude 主导架构,codex 只挑安全漏洞。」';
+}
+
+// Path: web.roundTable.detail
+class _TranslationsWebRoundTableDetailZh extends TranslationsWebRoundTableDetailEn {
+	_TranslationsWebRoundTableDetailZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get loading => '加载群聊…';
+	@override String get loadFailed => '加载群聊失败。';
+	@override String get close => '关闭';
+	@override String get closeConfirm => '关闭该群聊?会保留记录但停止新消息,之后可重新开启。';
+	@override String get reopen => '重新开启';
+	@override String get summarize => '总结';
+	@override String get summarizing => '总结中…';
+	@override String get emptyThread => '还没有消息。';
+	@override String get emptyHint => '发条消息并 @ 点名某个成员,它就会回复。';
+	@override String get replying => '成员正在回复…';
+	@override String get mentionHint => '点名:';
+	@override String get composerPlaceholder => '给群里发消息…(@claude、@all — ⌘/Ctrl+Enter 发送)';
+	@override String get send => '发送';
+	@override String get delete => '删除';
+	@override String get deleteConfirm => '删除这个群聊及其所有消息?此操作不可撤销。';
+	@override String get roles => '角色';
+	@override String get rolesTitle => '角色与框架';
+	@override String get rolesFraming => '讨论框架(所有成员共享)';
+	@override String get rolesSave => '保存';
+	@override String get rolesSaved => '角色已更新';
+	@override String get rolesHint => '议题演进时重新分配角色 —— 下一轮回复生效。';
+	@override String get continueDiscussion => '继续讨论';
+	@override String get continued => '继续讨论中…';
+}
+
+// Path: web.roundTable.status
+class _TranslationsWebRoundTableStatusZh extends TranslationsWebRoundTableStatusEn {
+	_TranslationsWebRoundTableStatusZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get active => '进行中';
+	@override String get closed => '已关闭';
+}
+
+// Path: web.roundTable.handoff
+class _TranslationsWebRoundTableHandoffZh extends TranslationsWebRoundTableHandoffEn {
+	_TranslationsWebRoundTableHandoffZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '交给开发';
+	@override String get title => '交给开发会话';
+	@override String get description => '群成员只讨论(只读)。这会开一个有完整文件权限的真会话去执行讨论结果——用最近的总结当种子,没总结就用整段讨论。';
+	@override String get executor => '执行者';
+	@override String get executorHint => '由哪个成员实际动手(带文件权限的真会话)。';
+	@override String get project => '项目';
+	@override String get projectPlaceholder => '/项目/路径';
+	@override String get projectHint => '在哪个项目里改。必填。';
+	@override String get run => '开始执行';
+	@override String get started => '会话已启动——正在跳转';
+	@override String get continueLabel => '继续用现有会话';
+	@override String get continueHint => '把新方案作为后续发给上次的执行会话;如果它已结束,则自动新开一个。';
+	@override String get claudeAccount => 'Claude 账号';
+	@override String get accountDefault => '默认';
+	@override String get runContinue => '继续执行';
+	@override String get bypassLabel => '跳过权限确认(YOLO)';
+	@override String get bypassHint => '用执行方的 bypass 参数启动会话,不再逐个确认操作 —— 与创建 session 时的开关一致。';
+}
+
+// Path: web.roundTable.plan
+class _TranslationsWebRoundTablePlanZh extends TranslationsWebRoundTablePlanEn {
+	_TranslationsWebRoundTablePlanZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '分工';
+	@override String get title => '分工计划';
+	@override String get hint => '把工作拆成按角色指派的步骤,再按顺序运行 —— 每步作为项目里的真实会话执行。';
+	@override String get draft => '根据讨论起草';
+	@override String get drafting => '正在起草计划…';
+	@override String get empty => '还没有计划。根据讨论起草一个,或手动添加步骤。';
+	@override String get addStep => '添加步骤';
+	@override String get assignee => '负责人';
+	@override String get taskPlaceholder => '该成员要做什么';
+	@override String get save => '保存计划';
+	@override String get saved => '计划已保存';
+	@override String get run => '运行';
+	@override String get rerun => '重跑';
+	@override String get running => '运行中';
+	@override String get done => '完成';
+	@override String get pending => '待运行';
+	@override String get openSession => '打开会话';
+	@override String get needProject => '运行步骤前需绑定项目(cwd)。';
+	@override String get bindProject => '绑定';
+	@override String get projectBound => '项目已绑定';
+	@override String get runTitle => '运行此步';
+	@override String get runStep => '运行';
+	@override String get account => '账号';
+	@override String get accountDefault => '默认';
+	@override String get bypass => '跳过权限 (YOLO)';
+	@override String get bypassHint => '用 bypass 标志启动会话,不再逐个请求批准。';
+}
+
 // Path: more.items.integrations
 class _TranslationsMoreItemsIntegrationsZh extends TranslationsMoreItemsIntegrationsEn {
 	_TranslationsMoreItemsIntegrationsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -6250,6 +6411,17 @@ class _TranslationsMoreItemsVaultZh extends TranslationsMoreItemsVaultEn {
 	// Translations
 	@override String get title => '文档库';
 	@override String get subtitle => '自由 markdown 笔记(Obsidian 同步)';
+}
+
+// Path: more.items.roundTable
+class _TranslationsMoreItemsRoundTableZh extends TranslationsMoreItemsRoundTableEn {
+	_TranslationsMoreItemsRoundTableZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '圆桌';
+	@override String get subtitle => '跨厂商 AI 群聊';
 }
 
 // Path: sessions.detail.accountSwitcher
@@ -9108,6 +9280,21 @@ class _TranslationsWebDatabaseDialogDriversZh extends TranslationsWebDatabaseDia
 	@override String get sqlite => 'SQLite';
 }
 
+// Path: web.roundTable.dialog.personaPresets
+class _TranslationsWebRoundTableDialogPersonaPresetsZh extends TranslationsWebRoundTableDialogPersonaPresetsEn {
+	_TranslationsWebRoundTableDialogPersonaPresetsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '或选一个角色:';
+	@override String get security => '安全审查员';
+	@override String get performance => '性能优化派';
+	@override String get ux => '用户体验倡导者';
+	@override String get skeptic => '唱反调者 — 专找漏洞';
+	@override String get pragmatist => '务实派 — 先上线';
+}
+
 // Path: sessions.inspector.shell.tabs
 class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInspectorShellTabsEn {
 	_TranslationsSessionsInspectorShellTabsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9244,6 +9431,7 @@ extension on TranslationsZh {
 			'nav.updates.unread' => '未读更新说明',
 			'nav.updates.badgeCount' => ({required Object count}) => '更新 · ${count}',
 			'nav.updates.sourceChangelog' => '亮点来自 CHANGELOG.md（GitHub Release 正文为占位）。',
+			'nav.roundTable' => '圆桌',
 			'web.brand' => 'opendray',
 			'web.loading' => '加载中…',
 			'web.topbar.expandSidebar' => '展开侧边栏',
@@ -9702,9 +9890,9 @@ extension on TranslationsZh {
 			'web.project.inbox.rejectFailedToast' => '驳回失败',
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => '批准将完全替换当前${label}。',
-			'web.project.inbox.warningSuffix' => '请检查下方 diff；这不是合并。',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.warningSuffix' => '请检查下方 diff；这不是合并。',
 			'web.project.inbox.current' => '当前',
 			'web.project.inbox.proposed' => '提议',
 			'web.project.inbox.emptyBody' => '(空)',
@@ -10216,9 +10404,9 @@ extension on TranslationsZh {
 			'web.channels.toasts.unmuted' => '频道已取消静音',
 			'web.channels.dialog.editTitle' => '编辑频道',
 			'web.channels.dialog.createTitle' => '注册频道',
-			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
 			'web.channels.dialog.descriptionDefault' => '配置消息集成。',
 			'web.channels.dialog.kindLabel' => '类型',
 			'web.channels.dialog.kindImmutable' => '（不可更改 — 如需更换类型请删除后重建）',
@@ -10730,9 +10918,9 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} 个备份',
 			'web.backups.schedulesTab.deleteTooltip' => '删除',
 			'web.backups.newSchedule.title' => '新建备份计划',
-			'web.backups.newSchedule.targetLabel' => '目标',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.newSchedule.targetLabel' => '目标',
 			'web.backups.newSchedule.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'web.backups.newSchedule.everyHoursLabel' => '每隔（小时）',
 			'web.backups.newSchedule.keepLastNLabel' => '保留最近 N 个',
@@ -11244,9 +11432,9 @@ extension on TranslationsZh {
 			'web.memoryAmbient.profiles.title' => 'Injection Profiles',
 			'web.memoryAmbient.profiles.addButton' => '添加 profile',
 			'web.memoryAmbient.profiles.intro' => 'spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。',
-			'web.memoryAmbient.profiles.empty' => '尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.empty' => '尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。',
 			'web.memoryAmbient.profiles.row.globalDefault' => '全局默认',
 			'web.memoryAmbient.profiles.row.delete' => '删除',
 			'web.memoryAmbient.profiles.row.deleteConfirm' => '删除该 injection profile?',
@@ -11643,6 +11831,110 @@ extension on TranslationsZh {
 			'web.database.panel.console' => 'SQL 控制台',
 			'web.database.panel.openWorkbench' => '展开工作台',
 			'web.database.workbench.title' => '数据库工作台',
+			'web.roundTable.title' => '圆桌',
+			'web.roundTable.experimental' => '实验性',
+			'web.roundTable.subtitle' => '跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。',
+			'web.roundTable.kNew' => '新建圆桌',
+			'web.roundTable.loading' => '加载中…',
+			'web.roundTable.empty' => '还没有圆桌。',
+			'web.roundTable.selectHint' => '选择一个圆桌打开群聊。',
+			'web.roundTable.you' => '你',
+			'web.roundTable.summary' => '总结',
+			'web.roundTable.dialog.title' => '新建圆桌',
+			'web.roundTable.dialog.description' => '选择成员(每厂商一个模型)。不用填主题——直接开聊,群聊会用你的第一条消息自动命名。',
+			'web.roundTable.dialog.cwd' => '项目路径(可选)',
+			'web.roundTable.dialog.cwdHint' => '把群聊绑定到项目以检索记忆。',
+			'web.roundTable.dialog.seats' => '成员',
+			'web.roundTable.dialog.seatsHint' => '每厂商一个。从下拉里选每个成员的模型。',
+			'web.roundTable.dialog.create' => '创建',
+			'web.roundTable.dialog.created' => '圆桌已创建',
+			'web.roundTable.dialog.project' => '项目(可选)',
+			'web.roundTable.dialog.start' => '开始聊天',
+			'web.roundTable.dialog.browse' => '浏览',
+			'web.roundTable.dialog.cwdPlaceholder' => '/项目/路径(可选)',
+			'web.roundTable.dialog.modelPlaceholder' => '模型',
+			'web.roundTable.dialog.modelLoading' => '加载中…',
+			'web.roundTable.dialog.accountPlaceholder' => '账号',
+			'web.roundTable.dialog.accountDefault' => '默认账号',
+			'web.roundTable.dialog.accountNoToken' => '无凭据',
+			'web.roundTable.dialog.personaPlaceholder' => '角色 / 人设(可选)—— 决定该成员以什么立场发言',
+			'web.roundTable.dialog.personaPresets.label' => '或选一个角色:',
+			'web.roundTable.dialog.personaPresets.security' => '安全审查员',
+			'web.roundTable.dialog.personaPresets.performance' => '性能优化派',
+			'web.roundTable.dialog.personaPresets.ux' => '用户体验倡导者',
+			'web.roundTable.dialog.personaPresets.skeptic' => '唱反调者 — 专找漏洞',
+			'web.roundTable.dialog.personaPresets.pragmatist' => '务实派 — 先上线',
+			'web.roundTable.dialog.framing' => '框架(可选)',
+			'web.roundTable.dialog.framingPlaceholder' => '当前议题 + 成员关系 —— 如「议题:认证重构。claude 主导架构,codex 只挑安全漏洞。」',
+			'web.roundTable.detail.loading' => '加载群聊…',
+			'web.roundTable.detail.loadFailed' => '加载群聊失败。',
+			'web.roundTable.detail.close' => '关闭',
+			'web.roundTable.detail.closeConfirm' => '关闭该群聊?会保留记录但停止新消息,之后可重新开启。',
+			'web.roundTable.detail.reopen' => '重新开启',
+			'web.roundTable.detail.summarize' => '总结',
+			'web.roundTable.detail.summarizing' => '总结中…',
+			'web.roundTable.detail.emptyThread' => '还没有消息。',
+			'web.roundTable.detail.emptyHint' => '发条消息并 @ 点名某个成员,它就会回复。',
+			'web.roundTable.detail.replying' => '成员正在回复…',
+			'web.roundTable.detail.mentionHint' => '点名:',
+			'web.roundTable.detail.composerPlaceholder' => '给群里发消息…(@claude、@all — ⌘/Ctrl+Enter 发送)',
+			'web.roundTable.detail.send' => '发送',
+			'web.roundTable.detail.delete' => '删除',
+			'web.roundTable.detail.deleteConfirm' => '删除这个群聊及其所有消息?此操作不可撤销。',
+			'web.roundTable.detail.roles' => '角色',
+			'web.roundTable.detail.rolesTitle' => '角色与框架',
+			'web.roundTable.detail.rolesFraming' => '讨论框架(所有成员共享)',
+			'web.roundTable.detail.rolesSave' => '保存',
+			'web.roundTable.detail.rolesSaved' => '角色已更新',
+			'web.roundTable.detail.rolesHint' => '议题演进时重新分配角色 —— 下一轮回复生效。',
+			'web.roundTable.detail.continueDiscussion' => '继续讨论',
+			'web.roundTable.detail.continued' => '继续讨论中…',
+			'web.roundTable.status.active' => '进行中',
+			'web.roundTable.status.closed' => '已关闭',
+			'web.roundTable.untitled' => '新群聊',
+			'web.roundTable.handoff.button' => '交给开发',
+			'web.roundTable.handoff.title' => '交给开发会话',
+			'web.roundTable.handoff.description' => '群成员只讨论(只读)。这会开一个有完整文件权限的真会话去执行讨论结果——用最近的总结当种子,没总结就用整段讨论。',
+			'web.roundTable.handoff.executor' => '执行者',
+			'web.roundTable.handoff.executorHint' => '由哪个成员实际动手(带文件权限的真会话)。',
+			'web.roundTable.handoff.project' => '项目',
+			'web.roundTable.handoff.projectPlaceholder' => '/项目/路径',
+			'web.roundTable.handoff.projectHint' => '在哪个项目里改。必填。',
+			'web.roundTable.handoff.run' => '开始执行',
+			'web.roundTable.handoff.started' => '会话已启动——正在跳转',
+			'web.roundTable.handoff.continueLabel' => '继续用现有会话',
+			'web.roundTable.handoff.continueHint' => '把新方案作为后续发给上次的执行会话;如果它已结束,则自动新开一个。',
+			'web.roundTable.handoff.claudeAccount' => 'Claude 账号',
+			'web.roundTable.handoff.accountDefault' => '默认',
+			'web.roundTable.handoff.runContinue' => '继续执行',
+			'web.roundTable.handoff.bypassLabel' => '跳过权限确认(YOLO)',
+			'web.roundTable.handoff.bypassHint' => '用执行方的 bypass 参数启动会话,不再逐个确认操作 —— 与创建 session 时的开关一致。',
+			'web.roundTable.plan.button' => '分工',
+			'web.roundTable.plan.title' => '分工计划',
+			'web.roundTable.plan.hint' => '把工作拆成按角色指派的步骤,再按顺序运行 —— 每步作为项目里的真实会话执行。',
+			'web.roundTable.plan.draft' => '根据讨论起草',
+			'web.roundTable.plan.drafting' => '正在起草计划…',
+			'web.roundTable.plan.empty' => '还没有计划。根据讨论起草一个,或手动添加步骤。',
+			'web.roundTable.plan.addStep' => '添加步骤',
+			'web.roundTable.plan.assignee' => '负责人',
+			'web.roundTable.plan.taskPlaceholder' => '该成员要做什么',
+			'web.roundTable.plan.save' => '保存计划',
+			'web.roundTable.plan.saved' => '计划已保存',
+			'web.roundTable.plan.run' => '运行',
+			'web.roundTable.plan.rerun' => '重跑',
+			'web.roundTable.plan.running' => '运行中',
+			'web.roundTable.plan.done' => '完成',
+			'web.roundTable.plan.pending' => '待运行',
+			'web.roundTable.plan.openSession' => '打开会话',
+			'web.roundTable.plan.needProject' => '运行步骤前需绑定项目(cwd)。',
+			'web.roundTable.plan.bindProject' => '绑定',
+			'web.roundTable.plan.projectBound' => '项目已绑定',
+			'web.roundTable.plan.runTitle' => '运行此步',
+			'web.roundTable.plan.runStep' => '运行',
+			'web.roundTable.plan.account' => '账号',
+			'web.roundTable.plan.accountDefault' => '默认',
+			'web.roundTable.plan.bypass' => '跳过权限 (YOLO)',
+			'web.roundTable.plan.bypassHint' => '用 bypass 标志启动会话,不再逐个请求批准。',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -11654,6 +11946,8 @@ extension on TranslationsZh {
 			'more.items.integrations.title' => '集成',
 			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
 			'more.items.activity.title' => '活动',
+			_ => null,
+		} ?? switch (path) {
 			'more.items.activity.subtitle' => '集成 API 调用审计',
 			'more.items.memoryAmbient.title' => '捕获与注入',
 			'more.items.memoryAmbient.subtitle' => '记忆捕获规则 + 注入配置',
@@ -11687,6 +11981,8 @@ extension on TranslationsZh {
 			'more.items.about.subtitle' => '构建版本与服务器信息',
 			'more.items.vault.title' => '文档库',
 			'more.items.vault.subtitle' => '自由 markdown 笔记(Obsidian 同步)',
+			'more.items.roundTable.title' => '圆桌',
+			'more.items.roundTable.subtitle' => '跨厂商 AI 群聊',
 			'more.signOut' => '退出登录',
 			'activity.title' => '活动',
 			'activity.empty' => '暂无集成调用记录。',
@@ -11759,8 +12055,6 @@ extension on TranslationsZh {
 			'sessions.detail.refreshMetadata' => '刷新元数据',
 			'sessions.detail.inspector' => '检查器（文件 / Git / 任务 / 历史 / 笔记）',
 			'sessions.detail.projectMemory' => '项目记忆（目标 / 计划 / 日志 / 收件箱）',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.detail.actions' => '操作',
 			'sessions.detail.started' => ({required Object when}) => '${when} 启动',
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束',
@@ -12166,6 +12460,8 @@ extension on TranslationsZh {
 			'integrations.defaultAgent.providerNone' => '无默认',
 			'integrations.defaultAgent.modelLabel' => '默认模型',
 			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
 			'integrations.defaultAgent.accountNone' => '无默认',
 			'integrations.defaultAgent.accountTokenMissing' => '(缺少 token)',
@@ -12273,8 +12569,6 @@ extension on TranslationsZh {
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）',
 			'project.conflicts.deleteLoading' => '加载中…',
 			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
-			_ => null,
-		} ?? switch (path) {
 			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
 			'project.conflicts.openPlanEditor' => '打开计划编辑器',
 			'project.conflicts.openGoalEditor' => '打开目标编辑器',
@@ -12680,6 +12974,8 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Telegram 拥有者用户 ID',
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
 			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.telegram.chatEnabledLabel' => '双向聊天（将消息路由进会话）',
 			'channels.kinds.telegram.chatEnabledHint' => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。',
 			'channels.kinds.telegram.chatTypingLabel' => 'agent 工作时显示“正在输入…”',
@@ -12787,8 +13083,6 @@ extension on TranslationsZh {
 			'customTasks.fieldCommand' => '命令',
 			'customTasks.commandHelper' => '选择时插入到会话的文本。可以是 CLI 命令或 Claude 斜杠命令。',
 			'customTasks.fieldDescription' => '描述（可选）',
-			_ => null,
-		} ?? switch (path) {
 			'customTasks.fieldScope' => '范围',
 			'customTasks.globalScopeHint' => '从任何会话可见，不论 cwd。',
 			'customTasks.projectScopeHint' => '仅当会话的 cwd 匹配以下路径时可见。',
@@ -13194,6 +13488,8 @@ extension on TranslationsZh {
 			'cortexSettings.tabProviders' => 'Provider',
 			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
 			'cortexSettings.providersEmpty' => '未配置 provider。',
+			_ => null,
+		} ?? switch (path) {
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
 			'cortexSettings.providersLoadFailed' => '加载 provider 失败',
 			'cortexSettings.defaultBadge' => '默认',
