@@ -12,7 +12,9 @@ here, NOT in `internal/store/migrations/`).
   `internal/app/app.go` (grep `ROUND TABLE (experimental)`), all on branch
   `feat/round-table`.
 - **Schema**: migration `0077_round_tables.sql` → tables `round_tables` and
-  `round_table_messages`. Touches no existing table, enum, or CHECK constraint.
+  `round_table_messages`; `0080_round_table_framing.sql` → adds the `framing`
+  TEXT column; `0081_round_table_plan.sql` → adds the `plan` JSONB column (both
+  on `round_tables`). None touch any other table, enum, or CHECK constraint.
 - **No new `memory_workers` row / TaskKind**: seat calls reuse
   `worker.TaskCuration` purely as the metrics label via `RunWith`, so no
   existing enum or CHECK was widened.
@@ -31,7 +33,9 @@ here, NOT in `internal/store/migrations/`).
    re-create empty tables). If you also want the version record gone:
 
    ```sql
-   DELETE FROM schema_migrations WHERE version = '0077_round_tables';
+   DELETE FROM schema_migrations
+    WHERE version IN ('0077_round_tables', '0080_round_table_framing',
+                      '0081_round_table_plan');
    ```
    (Adjust the table/column name to this deployment's migration ledger.)
 

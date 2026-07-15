@@ -23,7 +23,12 @@ const (
 	replyMaxTokens   = 2048
 	summaryMaxTokens = 4096
 	callTimeout      = 5 * time.Minute
-	roundTimeout     = 12 * time.Minute
+	roundTimeout     = 20 * time.Minute
+	// maxAutoRounds caps how many EXTRA rounds the members may trigger among
+	// themselves (round 0 is the operator's @mentions). Prevents an infinite
+	// @-ping-pong and bounds cost: with N seats the worst case is
+	// (maxAutoRounds+1) × N headless calls per operator message.
+	maxAutoRounds = 2
 )
 
 // Service drives the group chat: it appends operator messages, invokes the
@@ -96,9 +101,12 @@ func (s *Service) PostMessage(ctx context.Context, id, content string) (Message,
 	return msg, nil
 }
 
-// runReplies invokes each mentioned member in order, appending its reply
-// before moving to the next so members can react to each other within the
-// round. A member that errors gets a system note; the round continues.
+// runReplies drives the discussion in rounds. Round 0 is the members the
+// operator @mentioned; each member's reply is appended before the next speaks,
+// so members react to each other within a round. When a reply @mentions OTHER
+// seated members, they form the next round — an autonomous debate — capped at
+// maxAutoRounds to bound cost and prevent an infinite @-ping-pong. A member
+// that errors gets a system note; the round continues.
 func (s *Service) runReplies(id string, providers []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), roundTimeout)
 	defer cancel()
@@ -113,36 +121,142 @@ func (s *Service) runReplies(id string, providers []string) {
 		seatByProvider[seat.Provider] = seat
 	}
 
-	for _, provider := range providers {
-		seat, ok := seatByProvider[provider]
-		if !ok {
-			continue
+	current := providers
+	for round := 0; len(current) > 0; round++ {
+		var next []string
+		for _, provider := range current {
+			seat, ok := seatByProvider[provider]
+			if !ok {
+				continue
+			}
+			system := chatSystemPrompt(rt, seat)
+			// Re-read the thread each turn so a member sees earlier replies
+			// (within this round and prior rounds).
+			rt, err = s.store.Get(ctx, id)
+			if err != nil {
+				s.log.Error("roundtable replies: reload failed", "id", id, "err", err)
+				return
+			}
+			user, err := s.buildTranscript(ctx, rt, seat.Provider)
+			if err != nil {
+				s.memberFailed(ctx, id, seat, err)
+				continue
+			}
+			resp, err := s.invokeSeat(ctx, seat, system, user, replyMaxTokens)
+			if err != nil {
+				s.memberFailed(ctx, id, seat, err)
+				continue
+			}
+			reply := strings.TrimSpace(resp)
+			if reply == "" {
+				s.memberFailed(ctx, id, seat, fmt.Errorf("empty reply"))
+				continue
+			}
+			// A member may @mention others to pull them into the debate; record
+			// those on the message (drives the UI) and queue them for the next
+			// round.
+			mentions := parseMentions(reply, rt.Seats)
+			if _, err := s.store.AppendMessage(ctx, Message{
+				RoundTableID: id, Role: RoleSeat, SeatProvider: seat.Provider,
+				SeatModel: seat.Model, Content: reply, Mentions: mentions,
+			}); err != nil {
+				s.log.Warn("roundtable: append reply failed", "id", id, "provider", provider, "err", err)
+				continue
+			}
+			s.announce(id)
+			next = nextRoundMentions(next, mentions, seat.Provider)
 		}
-		system := chatSystemPrompt(rt, seat.Provider)
-		user, err := s.buildTranscript(ctx, rt, seat.Provider)
-		if err != nil {
-			s.memberFailed(ctx, id, seat, err)
-			continue
+		if len(next) > 0 && round >= maxAutoRounds {
+			// Cap reached but members still want to talk. Post a paused note and
+			// stash the pending speakers in its Mentions so Continue can resume
+			// exactly where the debate left off (no @mention needed).
+			_, _ = s.store.AppendMessage(ctx, Message{
+				RoundTableID: id, Role: RoleSystem,
+				Content:  fmt.Sprintf("Auto-discussion paused at its %d-round limit. Continue to let them keep going.", maxAutoRounds),
+				Mentions: next,
+			})
+			s.announce(id)
+			return
 		}
-		resp, err := s.invokeSeat(ctx, seat, system, user, replyMaxTokens)
-		if err != nil {
-			s.memberFailed(ctx, id, seat, err)
-			continue
-		}
-		reply := strings.TrimSpace(resp)
-		if reply == "" {
-			s.memberFailed(ctx, id, seat, fmt.Errorf("empty reply"))
-			continue
-		}
-		if _, err := s.store.AppendMessage(ctx, Message{
-			RoundTableID: id, Role: RoleSeat, SeatProvider: seat.Provider,
-			SeatModel: seat.Model, Content: reply,
-		}); err != nil {
-			s.log.Warn("roundtable: append reply failed", "id", id, "provider", provider, "err", err)
-			continue
-		}
-		s.announce(id)
+		current = next
 	}
+}
+
+// Continue resumes a paused auto-discussion for another maxAutoRounds burst.
+// It seeds from the pending speakers stashed on the last paused system note;
+// if none are pending (the debate ended cleanly), it re-engages every seated
+// member for a fresh round. Runs in the background like PostMessage.
+func (s *Service) Continue(ctx context.Context, id string) error {
+	rt, err := s.store.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	if rt.Status == StatusClosed {
+		return fmt.Errorf("roundtable: chat is closed")
+	}
+	if len(rt.Seats) == 0 {
+		return fmt.Errorf("roundtable: no members to continue")
+	}
+	msgs, err := s.store.Messages(ctx, id, 200)
+	if err != nil {
+		return fmt.Errorf("roundtable: load messages: %w", err)
+	}
+	seeds := pendingSpeakers(msgs, rt.Seats)
+	if len(seeds) == 0 {
+		// Nothing pending — give everyone another turn.
+		seeds = make([]string, len(rt.Seats))
+		for i, seat := range rt.Seats {
+			seeds[i] = seat.Provider
+		}
+	}
+	go s.runReplies(id, seeds)
+	return nil
+}
+
+// pendingSpeakers returns the members a paused auto-discussion still owes a
+// turn: the Mentions stashed on the most recent paused system note, filtered to
+// members still seated. Empty when the last note isn't a paused one.
+func pendingSpeakers(msgs []Message, seats []Seat) []string {
+	seated := make(map[string]bool, len(seats))
+	for _, s := range seats {
+		seated[s.Provider] = true
+	}
+	for i := len(msgs) - 1; i >= 0; i-- {
+		m := msgs[i]
+		if m.Role != RoleSystem {
+			// A real turn happened after any paused note → nothing pending.
+			return nil
+		}
+		if len(m.Mentions) > 0 {
+			var out []string
+			for _, p := range m.Mentions {
+				if seated[p] {
+					out = append(out, p)
+				}
+			}
+			return out
+		}
+	}
+	return nil
+}
+
+// nextRoundMentions accumulates the seated members a reply addressed into the
+// next round's queue, excluding the speaker itself and any already queued (so
+// each member speaks at most once per round). Order is preserved for
+// deterministic sequencing.
+func nextRoundMentions(queue, mentions []string, self string) []string {
+	seen := make(map[string]bool, len(queue))
+	for _, q := range queue {
+		seen[q] = true
+	}
+	for _, m := range mentions {
+		if m == self || seen[m] {
+			continue
+		}
+		seen[m] = true
+		queue = append(queue, m)
+	}
+	return queue
 }
 
 // Summarize asks one member to condense the discussion so far into a plan,

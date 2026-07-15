@@ -24,9 +24,40 @@ func TestNormalizeSeats(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "opencode has no headless path",
-			seats:   []Seat{{Provider: "opencode"}},
-			wantErr: true,
+			name:  "opencode seat allowed",
+			seats: []Seat{{Provider: "opencode"}},
+			check: func(t *testing.T, got []Seat) {
+				if len(got) != 1 || got[0].Provider != "opencode" {
+					t.Fatalf("want 1 opencode seat, got %v", got)
+				}
+			},
+		},
+		{
+			name:  "grok seat allowed",
+			seats: []Seat{{Provider: "grok"}},
+			check: func(t *testing.T, got []Seat) {
+				if len(got) != 1 || got[0].Provider != "grok" {
+					t.Fatalf("want 1 grok seat, got %v", got)
+				}
+			},
+		},
+		{
+			name:  "persona trimmed and kept",
+			seats: []Seat{{Provider: "claude", Persona: "  you are the security reviewer  "}},
+			check: func(t *testing.T, got []Seat) {
+				if got[0].Persona != "you are the security reviewer" {
+					t.Errorf("persona should be trimmed + kept, got %q", got[0].Persona)
+				}
+			},
+		},
+		{
+			name:  "five-vendor table",
+			seats: []Seat{{Provider: "claude"}, {Provider: "codex"}, {Provider: "antigravity"}, {Provider: "grok"}, {Provider: "opencode"}},
+			check: func(t *testing.T, got []Seat) {
+				if len(got) != 5 {
+					t.Fatalf("want 5 seats, got %d", len(got))
+				}
+			},
 		},
 		{
 			name:    "duplicate vendor rejected",
@@ -52,15 +83,25 @@ func TestNormalizeSeats(t *testing.T) {
 			},
 		},
 		{
-			name:  "non-claude account cleared",
-			seats: []Seat{{Provider: "claude", AccountID: "acct1"}, {Provider: "codex", AccountID: "leak"}},
+			name: "account kept for claude + antigravity, cleared for others",
+			seats: []Seat{
+				{Provider: "claude", AccountID: "acct1"},
+				{Provider: "antigravity", AccountID: "agy1"},
+				{Provider: "codex", AccountID: "leak"},
+				{Provider: "grok", AccountID: "leak"},
+				{Provider: "opencode", AccountID: "leak"},
+			},
 			check: func(t *testing.T, got []Seat) {
+				want := map[string]string{
+					"claude":      "acct1",
+					"antigravity": "agy1",
+					"codex":       "",
+					"grok":        "",
+					"opencode":    "",
+				}
 				for _, s := range got {
-					if s.Provider == "codex" && s.AccountID != "" {
-						t.Errorf("codex account should be cleared, got %q", s.AccountID)
-					}
-					if s.Provider == "claude" && s.AccountID != "acct1" {
-						t.Errorf("claude account should be kept, got %q", s.AccountID)
+					if s.AccountID != want[s.Provider] {
+						t.Errorf("%s account = %q, want %q", s.Provider, s.AccountID, want[s.Provider])
 					}
 				}
 			},
@@ -86,12 +127,12 @@ func TestNormalizeSeats(t *testing.T) {
 }
 
 func TestValidSeatProvider(t *testing.T) {
-	for _, p := range []string{"claude", "codex", "antigravity"} {
+	for _, p := range []string{"claude", "codex", "antigravity", "grok", "opencode"} {
 		if !validSeatProvider(p) {
 			t.Errorf("%q should be valid", p)
 		}
 	}
-	for _, p := range []string{"", "gemini", "opencode", "grok", "shell"} {
+	for _, p := range []string{"", "gemini", "shell"} {
 		if validSeatProvider(p) {
 			t.Errorf("%q should be invalid (no headless worker path)", p)
 		}

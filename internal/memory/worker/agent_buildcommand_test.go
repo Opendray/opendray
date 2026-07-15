@@ -1,9 +1,17 @@
 package worker
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
+
+// fakeAgyAccounts is a stub AgyAccountReader that maps an account id to a HOME.
+type fakeAgyAccounts struct{ home string }
+
+func (f fakeAgyAccounts) ResolveSpawnHome(_ context.Context, _ string) (string, error) {
+	return f.home, nil
+}
 
 func argsContain(ss []string, want string) bool {
 	for _, s := range ss {
@@ -67,6 +75,33 @@ func TestBuildCommand_AntigravityFoldsSystemAndSchema(t *testing.T) {
 	}
 }
 
+func TestBuildCommand_AntigravityAccountSetsHome(t *testing.T) {
+	// With an account pinned + a reader, agy binds to the account's HOME.
+	w := &AgentWorker{
+		cfg:         Config{ProviderID: "antigravity", AccountID: "agy1"},
+		agyAccounts: fakeAgyAccounts{home: "/tmp/agy-home-1"},
+	}
+	_, env, err := w.buildCommand(Request{UserInput: "hi"}, "sid", t.TempDir())
+	if err != nil {
+		t.Fatalf("buildCommand: %v", err)
+	}
+	if !argsContain(env, "HOME=/tmp/agy-home-1") {
+		t.Errorf("antigravity account must bind HOME; got env %v", env)
+	}
+
+	// No account → no HOME override (host-global login).
+	w2 := &AgentWorker{cfg: Config{ProviderID: "antigravity"}}
+	_, env2, err := w2.buildCommand(Request{UserInput: "hi"}, "sid", t.TempDir())
+	if err != nil {
+		t.Fatalf("buildCommand: %v", err)
+	}
+	for _, e := range env2 {
+		if strings.HasPrefix(e, "HOME=") {
+			t.Errorf("no account → no HOME override; got %q", e)
+		}
+	}
+}
+
 func TestBuildCommand_ClaudeUsesPrint(t *testing.T) {
 	w := &AgentWorker{cfg: Config{ProviderID: "claude"}}
 	args, _, err := w.buildCommand(Request{UserInput: "x"}, "sid", t.TempDir())
@@ -92,9 +127,58 @@ func TestBuildCommand_CodexUsesExecNotPrint(t *testing.T) {
 	}
 }
 
-func TestBuildCommand_OpencodeUnsupported(t *testing.T) {
-	w := &AgentWorker{cfg: Config{ProviderID: "opencode"}}
-	if _, _, err := w.buildCommand(Request{UserInput: "x"}, "sid", t.TempDir()); err == nil {
-		t.Error("opencode has no headless worker path; buildCommand must return ErrAgentUnsupported")
+func TestBuildCommand_OpencodeUsesRun(t *testing.T) {
+	w := &AgentWorker{cfg: Config{ProviderID: "opencode", Model: "anthropic/claude-sonnet-4-6"}}
+	args, _, err := w.buildCommand(Request{SystemPrompt: "be terse", UserInput: "hello world"}, "sid", t.TempDir())
+	if err != nil {
+		t.Fatalf("buildCommand: %v", err)
+	}
+	if len(args) == 0 || args[0] != "run" {
+		t.Errorf("opencode must use the `run` subcommand first; got %v", args)
+	}
+	if argsContain(args, "--print") || argsContain(args, "--prompt") {
+		t.Errorf("opencode must NOT use --print/--prompt; got %v", args)
+	}
+	// The prompt is the positional message right after `run`, with the system
+	// block folded in.
+	if len(args) < 2 || !strings.Contains(args[1], "hello world") || !strings.Contains(args[1], "be terse") {
+		t.Errorf("opencode must carry the folded prompt as the `run` message; got %v", args)
+	}
+	if !argsContain(args, "--model") || !argsContain(args, "anthropic/claude-sonnet-4-6") {
+		t.Errorf("opencode must pass the pinned --model; got %v", args)
+	}
+}
+
+func TestBuildCommand_GrokUsesSinglePrompt(t *testing.T) {
+	w := &AgentWorker{cfg: Config{ProviderID: "grok", Model: "grok-build"}}
+	args, _, err := w.buildCommand(Request{
+		SystemPrompt:             "you are a judge",
+		UserInput:                "rate this",
+		ResponseFormatJSONSchema: `{"type":"object"}`,
+	}, "sid", t.TempDir())
+	if err != nil {
+		t.Fatalf("buildCommand: %v", err)
+	}
+	// grok's headless flag is `-p <PROMPT>` with the prompt as the flag value.
+	if !argsContain(args, "-p") {
+		t.Errorf("grok must use -p for headless mode; got %v", args)
+	}
+	var pValue string
+	for i, a := range args {
+		if a == "-p" && i+1 < len(args) {
+			pValue = args[i+1]
+		}
+	}
+	// No system-prompt flag on grok, so system + schema fold into the value.
+	for _, want := range []string{"you are a judge", "rate this", "JSON object"} {
+		if !strings.Contains(pValue, want) {
+			t.Errorf("grok -p value must fold %q; got %q", want, pValue)
+		}
+	}
+	if !argsContain(args, "--output-format") || !argsContain(args, "plain") {
+		t.Errorf("grok must request --output-format plain; got %v", args)
+	}
+	if !argsContain(args, "-m") || !argsContain(args, "grok-build") {
+		t.Errorf("grok must pass the pinned -m model; got %v", args)
 	}
 }

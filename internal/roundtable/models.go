@@ -19,10 +19,12 @@ type ModelOption struct {
 
 // ProviderModelOptions returns the selectable models per seat provider so the
 // UI can offer a dropdown instead of a hand-typed model string (a one-char
-// typo otherwise fails the whole seat). antigravity is enumerated LIVE from
-// `agy models`; claude and codex have no CLI model-list command, so they use
-// a curated set — claude's documented aliases, and for codex the model that
-// works on a plain ChatGPT plan (its own default, gpt-5.4, is rejected there).
+// typo otherwise fails the whole seat). antigravity and opencode are
+// enumerated LIVE from their CLIs (`agy models` / `opencode models`); claude,
+// codex and grok have no easily-parsed model list, so they use a curated set —
+// claude's documented aliases, codex the model that works on a plain ChatGPT
+// plan (its own default, gpt-5.4, is rejected there), and grok its two
+// documented build models.
 func ProviderModelOptions(ctx context.Context) map[string][]ModelOption {
 	return map[string][]ModelOption{
 		"claude": {
@@ -37,21 +39,43 @@ func ProviderModelOptions(ctx context.Context) map[string][]ModelOption {
 			{Value: "gpt-5.4-mini", Label: "gpt-5.4-mini"},
 		},
 		"antigravity": antigravityModels(ctx),
+		// grok's documented build models (manifest knownModels). Default = the
+		// CLI's own choice.
+		"grok": {
+			{Value: "", Label: "Default"},
+			{Value: "grok-build", Label: "grok-build"},
+			{Value: "grok-composer-2.5-fast", Label: "grok-composer-2.5-fast"},
+		},
+		"opencode": opencodeModels(ctx),
 	}
 }
 
 // antigravityModels lists the models `agy` actually offers. Falls back to a
 // bare Default option when the CLI is missing or errors.
 func antigravityModels(ctx context.Context) []ModelOption {
+	return cliModels(ctx, "agy", []string{"models"})
+}
+
+// opencodeModels lists the models `opencode models` offers (one provider/model
+// per line, same shape as `agy models`). opencode is provider-agnostic, so the
+// list reflects the operator's own opencode config/auth. Falls back to a bare
+// Default option when the CLI is missing or errors.
+func opencodeModels(ctx context.Context) []ModelOption {
+	return cliModels(ctx, "opencode", []string{"models"})
+}
+
+// cliModels runs a CLI's model-list subcommand and returns one option per
+// non-empty output line, prefixed with a bare Default. Any failure (missing
+// CLI, non-zero exit) collapses to just Default so the dropdown still renders.
+func cliModels(ctx context.Context, bin string, args []string) []ModelOption {
 	opts := []ModelOption{{Value: "", Label: "Default"}}
 
 	cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	bin := "agy"
 	if p, err := exec.LookPath(bin); err == nil {
 		bin = p
 	}
-	cmd := exec.CommandContext(cctx, bin, "models")
+	cmd := exec.CommandContext(cctx, bin, args...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {

@@ -858,7 +858,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// memory touchpoints (gatekeeper, cleaner, gitactivity,
 	// transcript) read their config row from memory_workers.
 	memoryWorkerRegistry := memworker.NewRegistry(
-		st.Pool(), summarizerRegistry, cliacctSvc, log)
+		st.Pool(), summarizerRegistry, cliacctSvc, agyacctSvc, log)
 	memoryWorkerHandlers := memworker.NewHandlers(memoryWorkerRegistry, log)
 
 	// M-PA — memory health dashboard. Aggregates "is the memory
