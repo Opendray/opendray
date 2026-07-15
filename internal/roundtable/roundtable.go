@@ -188,11 +188,11 @@ type RoundTable struct {
 	// member). Empty until drafted. Drives the stepped "do the work" flow.
 	Plan               []PlanStep `json:"plan,omitempty"`
 	Status             string     `json:"status"`
-	ResultingSessionID string    `json:"resulting_session_id,omitempty"`
-	Origin             string    `json:"origin"`
-	IntegrationID      string    `json:"integration_id,omitempty"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
+	ResultingSessionID string     `json:"resulting_session_id,omitempty"`
+	Origin             string     `json:"origin"`
+	IntegrationID      string     `json:"integration_id,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 // Message is one entry in the group-chat thread. seat_provider records which
