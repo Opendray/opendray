@@ -12,6 +12,15 @@ for the full rationale and what triggers a major bump.
 
 ### Fixed
 
+- **The Files-tree download icon is now reachable on touch devices (iPad,
+  phones).** The per-row download button was revealed only on hover
+  (`group-hover`) or keyboard focus. Tailwind v4 gates `group-hover` behind
+  `@media (hover: hover)`, so on a touch device — which can neither hover nor
+  focus a row — the icon stayed at `opacity-0` and was impossible to tap. It
+  now pins visible under `@media (hover: none)`, so touch users get a
+  permanently-shown download control while pointer users keep the clean
+  hover-reveal. (Follow-up to the v2.11.6 positioning fix, which addressed
+  *where* the icon sits but not *whether* it ever appears without a mouse.)
 - **Two MCP servers sharing a display name no longer brick Codex sessions.**
   Every provider renderer keys its generated config on a server's display
   name, not its unique id. Two enabled servers with the same name therefore
