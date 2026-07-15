@@ -649,3 +649,44 @@ func TestSyncGeminiWorkspaceMCP_EmptySettingsTolerated(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// Two servers sharing a display name collide on the config key every
+// renderer uses (Claude's map silently drops one; Codex emits a duplicate
+// TOML table that fails to parse and bricks the session before it prints
+// anything). renderMCP must reject the collision up front, for every
+// provider, so the operator sees a clear error instead of a dead session.
+func TestRenderMCP_DuplicateNameRejected(t *testing.T) {
+	servers := []MCPServer{
+		{Name: "Notion API", Command: "npx", Args: []string{"-y", "a"}},
+		{Name: "Notion API", Command: "npx", Args: []string{"-y", "b"}},
+	}
+	for _, provider := range []string{"claude", "codex", "opencode", "grok", "antigravity"} {
+		t.Run(provider, func(t *testing.T) {
+			_, _, err := renderMCP(provider, t.TempDir(), t.TempDir(), t.TempDir(), servers)
+			if err == nil {
+				t.Fatalf("%s: expected an error for duplicate server name, got nil", provider)
+			}
+			if !strings.Contains(err.Error(), "Notion API") {
+				t.Errorf("%s: error should name the colliding server; got %q", provider, err)
+			}
+		})
+	}
+}
+
+// A collision must never leave a half-written, unparseable config on disk:
+// Codex reads config.toml at startup, so a broken file is worse than none.
+func TestRenderMCP_DuplicateNameWritesNoCodexConfig(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("CODEX_HOME", home)
+	dir := t.TempDir()
+	servers := []MCPServer{
+		{Name: "dup", Command: "npx", Args: []string{"-y", "a"}},
+		{Name: "dup", Command: "npx", Args: []string{"-y", "b"}},
+	}
+	if _, _, err := renderMCP("codex", dir, "", "", servers); err == nil {
+		t.Fatal("expected duplicate-name error, got nil")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "codex-home", "config.toml")); err == nil {
+		t.Error("a broken config.toml must not be written on collision")
+	}
+}
