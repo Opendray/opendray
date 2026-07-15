@@ -12,6 +12,18 @@ for the full rationale and what triggers a major bump.
 
 ### Fixed
 
+- **Two MCP servers sharing a display name no longer brick Codex sessions.**
+  Every provider renderer keys its generated config on a server's display
+  name, not its unique id. Two enabled servers with the same name therefore
+  collided on that key: Codex emitted a duplicate `[mcp_servers."…"]` TOML
+  table and died with `duplicate key` at startup — before printing a byte, so
+  the session flipped straight to the read-only "[buffer unavailable]" view —
+  while Claude's map-based renderer silently dropped one of them. `renderMCP`
+  now rejects a duplicate name up front (for every provider, before any config
+  file is written), and the Plugins create/update endpoints return `409` when
+  a new or edited server would reuse a name already taken by a different id.
+  Grok's manifest gap and this collision are unrelated; a stray second Notion
+  entry sharing the name `Notion API` is what exposed it.
 - **Grok now reports and applies CLI updates from the Providers page.** The
   `grok` manifest carried an empty `npmPackage`, and the whole update path is
   npm-gated: `CheckUpdate` returned early (no latest version, no

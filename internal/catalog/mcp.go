@@ -72,6 +72,16 @@ func renderMCP(providerID, baseDir, cwd, home string, servers []MCPServer) ([]st
 	if len(servers) == 0 {
 		return nil, nil, nil
 	}
+	// Every renderer keys its per-provider config on the server's display
+	// name. Two servers sharing a name collide on that key: Claude's map
+	// silently drops one, Codex emits a duplicate TOML table that fails to
+	// parse and bricks the session before it can print a single byte. Reject
+	// the collision here, once, so the failure is a clear operator error
+	// rather than a provider-specific mystery — and before any renderer
+	// writes a half-formed config file to disk.
+	if dup, ok := duplicateServerName(servers); ok {
+		return nil, nil, fmt.Errorf("two MCP servers share the name %q; names must be unique", dup)
+	}
 	switch providerID {
 	case "claude":
 		return renderClaudeMCP(baseDir, servers)
@@ -707,6 +717,24 @@ func codexBaseConfigForScratch() string {
 		return ""
 	}
 	return string(data)
+}
+
+// duplicateServerName reports the first display name shared by two
+// renderable servers (those that would actually be emitted — i.e. carry a
+// command or URL). Servers dropped for being invalid can't collide, so
+// they're ignored.
+func duplicateServerName(servers []MCPServer) (string, bool) {
+	seen := make(map[string]bool, len(servers))
+	for _, s := range servers {
+		if s.Command == "" && s.URL == "" {
+			continue
+		}
+		if seen[s.Name] {
+			return s.Name, true
+		}
+		seen[s.Name] = true
+	}
+	return "", false
 }
 
 func codexServerBlock(s MCPServer) string {
