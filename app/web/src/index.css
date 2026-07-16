@@ -163,6 +163,32 @@
   overscroll-behavior: contain;
 }
 
+/* iPad/iOS input-cursor drift. xterm parks its opacity:0 helper
+   textarea off-screen (left:-9999em) at rest, but during IME
+   composition CompositionHelper.updateCompositionElements() moves the
+   textarea AND the composition preview onto the terminal cursor
+   (buffer.x/y × cell) — and never restores them when composition
+   ends (see xterm's own "Composition position got messed up
+   somewhere" TODO). On iOS this is visible and destructive: the
+   system caret and QuickType candidate bar anchor to that focused
+   textarea, so in a busy, constantly-redrawing TUI (antigravity/agy)
+   they chase the jumping terminal cursor around the screen and cover
+   the real echo — "the typing cursor drifts and I can't see what I
+   typed." Desktop never draws a system caret over an opacity:0 field,
+   so it only bites on iPad. Pin both elements back to xterm's
+   off-screen rest position on iOS; the system keyboard's own
+   candidate UI plus the CLI's echo show what was typed. Scoped via a
+   `.terminal-ios` class the Terminal only adds on iPhone/iPad. */
+.terminal-ios .xterm-helper-textarea {
+  left: -9999em !important;
+  top: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.terminal-ios .composition-view {
+  display: none !important;
+}
+
 /* highlight.js theme — a compact mapping that uses palette-friendly
    colors for both light and dark modes. The Inspector's file viewer
    wraps lines into our own gutter, so only inline class colors are
