@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/api/antigravity_accounts_api.dart';
+import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/roundtable_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/roundtable/seat_tile.dart';
 
-// Live role/framing editor — reassign each member's persona and the shared
-// framing directive on an active round table as the topic evolves. Mobile
-// parity with app/web RolesDialog; changes take effect on the next reply.
+// Live members + roles editor — add or remove members and reassign each seat's
+// model/account/persona plus the shared framing directive on an active round
+// table as the topic evolves. Mobile parity with app/web RolesDialog; the
+// backend re-reads seats each reply, so a member added here is @mentionable on
+// the next turn and a removed one stops replying (its past messages stay).
 class RolesSheet extends ConsumerStatefulWidget {
   const RolesSheet({required this.rt, super.key});
   final RoundTable rt;
@@ -34,40 +39,53 @@ class RolesSheet extends ConsumerStatefulWidget {
 class _RolesSheetState extends ConsumerState<RolesSheet> {
   late final TextEditingController _framing =
       TextEditingController(text: widget.rt.framing);
-  late final Map<String, TextEditingController> _personas = {
-    for (final s in widget.rt.seats)
-      s.provider: TextEditingController(text: s.persona),
+  // Editable seat state, seeded from the table's current seats.
+  late final Set<String> _seats = {
+    for (final s in widget.rt.seats) s.provider,
+  };
+  late final Map<String, String> _models = {
+    for (final s in widget.rt.seats) s.provider: s.model,
+  };
+  late final Map<String, String> _accounts = {
+    for (final s in widget.rt.seats) s.provider: s.accountId,
+  };
+  late final Map<String, String> _personas = {
+    for (final s in widget.rt.seats) s.provider: s.persona,
   };
   bool _saving = false;
 
   @override
   void dispose() {
     _framing.dispose();
-    for (final c in _personas.values) {
-      c.dispose();
-    }
     super.dispose();
   }
 
-  List<String> get _presets => [
-        t.web.roundTable.dialog.personaPresets.security,
-        t.web.roundTable.dialog.personaPresets.performance,
-        t.web.roundTable.dialog.personaPresets.ux,
-        t.web.roundTable.dialog.personaPresets.skeptic,
-        t.web.roundTable.dialog.personaPresets.pragmatist,
-      ];
+  bool get _canSave => _seats.isNotEmpty && !_saving;
+
+  void _toggle(String p) {
+    setState(() {
+      if (_seats.contains(p)) {
+        _seats.remove(p);
+      } else {
+        _seats.add(p);
+        // Pre-seed the default model (e.g. codex → gpt-5.4-mini) the first time.
+        _models.putIfAbsent(p, () => seatModelDefault[p] ?? '');
+      }
+    });
+  }
 
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final seats = widget.rt.seats
-          .map((s) => Seat(
-                provider: s.provider,
-                model: s.model,
-                accountId: s.accountId,
-                persona: _personas[s.provider]?.text.trim() ?? '',
-              ))
-          .toList();
+      final seats = _seats.map((p) {
+        return Seat(
+          provider: p,
+          model: (_models[p] ?? '').trim(),
+          accountId:
+              seatSupportsAccount.contains(p) ? (_accounts[p] ?? '').trim() : '',
+          persona: (_personas[p] ?? '').trim(),
+        );
+      }).toList();
       await ref.read(roundtableApiProvider).update(
             widget.rt.id,
             seats: seats,
@@ -86,6 +104,30 @@ class _RolesSheetState extends ConsumerState<RolesSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final modelsAsync = ref.watch(seatModelsProvider);
+    final claudeAccounts = ref.watch(claudeAccountsListProvider).asData?.value
+            .where((a) => a.enabled)
+            .toList() ??
+        const [];
+    final agyAccounts = ref.watch(antigravityAccountsListProvider).asData?.value
+            .where((a) => a.enabled)
+            .toList() ??
+        const [];
+
+    List<({String id, String label, bool usable})> accountsFor(String p) {
+      if (p == 'claude') {
+        return claudeAccounts
+            .map((a) => (id: a.id, label: a.displayName, usable: a.isUsable))
+            .toList();
+      }
+      if (p == 'antigravity') {
+        return agyAccounts
+            .map((a) => (id: a.id, label: a.displayName, usable: a.isUsable))
+            .toList();
+      }
+      return const [];
+    }
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Column(
@@ -132,38 +174,32 @@ class _RolesSheetState extends ConsumerState<RolesSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                for (final s in widget.rt.seats) ...[
-                  Text(s.provider,
-                      style: theme.textTheme.labelLarge
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _personas[s.provider],
-                    minLines: 1,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: t.web.roundTable.dialog.personaPlaceholder,
-                      isDense: true,
-                      border: const OutlineInputBorder(),
+                Text(t.web.roundTable.dialog.seats,
+                    style: theme.textTheme.labelLarge),
+                const SizedBox(height: 8),
+                for (final p in seatProviders)
+                  SeatTile(
+                    provider: p,
+                    on: _seats.contains(p),
+                    model: _models[p] ?? '',
+                    account: _accounts[p] ?? '',
+                    persona: _personas[p] ?? '',
+                    modelOptions: modelsAsync.asData?.value[p] ?? const [],
+                    accounts: accountsFor(p),
+                    onToggle: () => _toggle(p),
+                    onModel: (v) => setState(() => _models[p] = v),
+                    onAccount: (v) => setState(() => _accounts[p] = v),
+                    onPersona: (v) => _personas[p] = v,
+                  ),
+                if (_seats.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      t.web.roundTable.detail.membersMin,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.error),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      for (final p in _presets)
-                        ActionChip(
-                          visualDensity: VisualDensity.compact,
-                          label: Text(p, style: theme.textTheme.labelSmall),
-                          onPressed: () {
-                            _personas[s.provider]?.text = p;
-                          },
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
               ],
             ),
           ),
@@ -174,7 +210,7 @@ class _RolesSheetState extends ConsumerState<RolesSheet> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _saving ? null : _save,
+                  onPressed: _canSave ? _save : null,
                   child: _saving
                       ? const SizedBox(
                           height: 18,

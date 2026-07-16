@@ -6134,12 +6134,13 @@ class _TranslationsWebRoundTableDetailEs extends TranslationsWebRoundTableDetail
 	@override String get send => 'Enviar';
 	@override String get delete => 'Eliminar';
 	@override String get deleteConfirm => '¿Eliminar este chat y todos sus mensajes? No se puede deshacer.';
-	@override String get roles => 'Roles';
-	@override String get rolesTitle => 'Roles y marco';
+	@override String get roles => 'Miembros';
+	@override String get rolesTitle => 'Miembros y roles';
 	@override String get rolesFraming => 'Marco de la discusión (compartido por todos)';
 	@override String get rolesSave => 'Guardar';
 	@override String get rolesSaved => 'Roles actualizados';
-	@override String get rolesHint => 'Reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.';
+	@override String get rolesHint => 'Añade o quita miembros y reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.';
+	@override String get membersMin => 'Debe haber al menos un miembro.';
 	@override String get continueDiscussion => 'Continuar';
 	@override String get continued => 'Continuando la discusión…';
 }
@@ -11883,12 +11884,13 @@ extension on TranslationsEs {
 			'web.roundTable.detail.send' => 'Enviar',
 			'web.roundTable.detail.delete' => 'Eliminar',
 			'web.roundTable.detail.deleteConfirm' => '¿Eliminar este chat y todos sus mensajes? No se puede deshacer.',
-			'web.roundTable.detail.roles' => 'Roles',
-			'web.roundTable.detail.rolesTitle' => 'Roles y marco',
+			'web.roundTable.detail.roles' => 'Miembros',
+			'web.roundTable.detail.rolesTitle' => 'Miembros y roles',
 			'web.roundTable.detail.rolesFraming' => 'Marco de la discusión (compartido por todos)',
 			'web.roundTable.detail.rolesSave' => 'Guardar',
 			'web.roundTable.detail.rolesSaved' => 'Roles actualizados',
-			'web.roundTable.detail.rolesHint' => 'Reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.',
+			'web.roundTable.detail.rolesHint' => 'Añade o quita miembros y reasigna roles según evoluciona el tema — surte efecto en la próxima respuesta.',
+			'web.roundTable.detail.membersMin' => 'Debe haber al menos un miembro.',
 			'web.roundTable.detail.continueDiscussion' => 'Continuar',
 			'web.roundTable.detail.continued' => 'Continuando la discusión…',
 			'web.roundTable.status.active' => 'Activa',
@@ -11946,9 +11948,9 @@ extension on TranslationsEs {
 			'more.sections.memory' => 'Memoria',
 			'more.sections.system' => 'Sistema',
 			'more.items.integrations.title' => 'Integraciones',
-			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
 			_ => null,
 		} ?? switch (path) {
+			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
 			'more.items.activity.title' => 'Actividad',
 			'more.items.activity.subtitle' => 'Auditoría de llamadas API de integraciones',
 			'more.items.memoryAmbient.title' => 'Captura e inyección',
@@ -12460,9 +12462,9 @@ extension on TranslationsEs {
 			'integrations.defaultAgent.description' => 'Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece.',
 			'integrations.defaultAgent.providerLabel' => 'Proveedor predeterminado',
 			'integrations.defaultAgent.providerNone' => 'Sin predeterminado',
-			'integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
 			'integrations.defaultAgent.modelHint' => 'Predeterminado del proveedor (p. ej. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
 			'integrations.defaultAgent.accountNone' => 'Sin predeterminado',
@@ -12974,9 +12976,9 @@ extension on TranslationsEs {
 			'channels.kinds.telegram.chatIdLabel' => 'Chat ID por defecto',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (opcional, se usa cuando no hay ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'ID(s) de usuario de Telegram del propietario',
-			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (separados por comas para más de uno)',
 			_ => null,
 		} ?? switch (path) {
+			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (separados por comas para más de uno)',
 			'channels.kinds.telegram.ownerUserIdsHint' => 'Solo estos IDs numéricos de usuario de Telegram pueden controlar sessions, ejecutar comandos o pulsar botones; el resto se ignora. Déjalo en blanco para permitir a cualquiera (no recomendado para chat bidireccional). Obtén el tuyo enviando un DM a @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Chat bidireccional (enrutar mensajes a la session)',
 			'channels.kinds.telegram.chatEnabledHint' => 'Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.',
@@ -13488,9 +13490,9 @@ extension on TranslationsEs {
 			'cortexSettings.tabWorkers' => 'Workers',
 			'cortexSettings.tabCapture' => 'Captura e inyección',
 			'cortexSettings.tabProviders' => 'Proveedores',
-			'cortexSettings.providersHint' => 'Endpoints LLM a los que enrutan los workers de resumen/agente.',
 			_ => null,
 		} ?? switch (path) {
+			'cortexSettings.providersHint' => 'Endpoints LLM a los que enrutan los workers de resumen/agente.',
 			'cortexSettings.providersEmpty' => 'Sin proveedores configurados.',
 			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',
 			'cortexSettings.providersLoadFailed' => 'Error al cargar proveedores',
