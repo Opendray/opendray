@@ -5755,6 +5755,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get removePageHint => 'Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)';
 	@override String get pageRemovedToast => 'Página quitada';
 	@override late final _TranslationsWebKnowledgeKbNewPageEs newPage = _TranslationsWebKnowledgeKbNewPageEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbPageSettingsEs pageSettings = _TranslationsWebKnowledgeKbPageSettingsEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9146,6 +9147,21 @@ class _TranslationsWebKnowledgeKbNewPageEs extends TranslationsWebKnowledgeKbNew
 	@override String get createdToast => 'Página de conocimiento creada';
 }
 
+// Path: web.knowledge.kb.pageSettings
+class _TranslationsWebKnowledgeKbPageSettingsEs extends TranslationsWebKnowledgeKbPageSettingsEn {
+	_TranslationsWebKnowledgeKbPageSettingsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => 'Ajustes';
+	@override String get title => 'Ajustes de la página';
+	@override String get description => 'Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.';
+	@override String get hint => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página';
+	@override String get save => 'Guardar ajustes';
+	@override String get savedToast => 'Ajustes de la página actualizados';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementEs extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -11614,6 +11630,12 @@ extension on TranslationsEs {
 			'web.knowledge.kb.newPage.injectHint' => 'Apagado (recomendado): la página queda fuera del banner de arranque y los agentes la alcanzan bajo demanda vía búsqueda. Encendido: las fundacionales se inyectan como reglas vinculantes, las emergentes como referencia.',
 			'web.knowledge.kb.newPage.create' => 'Crear página',
 			'web.knowledge.kb.newPage.createdToast' => 'Página de conocimiento creada',
+			'web.knowledge.kb.pageSettings.button' => 'Ajustes',
+			'web.knowledge.kb.pageSettings.title' => 'Ajustes de la página',
+			'web.knowledge.kb.pageSettings.description' => 'Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.',
+			'web.knowledge.kb.pageSettings.hint' => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página',
+			'web.knowledge.kb.pageSettings.save' => 'Guardar ajustes',
+			'web.knowledge.kb.pageSettings.savedToast' => 'Ajustes de la página actualizados',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -11942,14 +11964,14 @@ extension on TranslationsEs {
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
+			_ => null,
+		} ?? switch (path) {
 			'more.identity.tokenExpires' => 'El token caduca',
 			'more.sections.gateway' => 'Gateway',
 			'more.sections.plugins' => 'Complementos',
 			'more.sections.memory' => 'Memoria',
 			'more.sections.system' => 'Sistema',
 			'more.items.integrations.title' => 'Integraciones',
-			_ => null,
-		} ?? switch (path) {
 			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
 			'more.items.activity.title' => 'Actividad',
 			'more.items.activity.subtitle' => 'Auditoría de llamadas API de integraciones',
@@ -12456,14 +12478,14 @@ extension on TranslationsEs {
 			'integrations.form.validateBaseUrl' => 'La URL base es obligatoria.',
 			'integrations.form.editFieldVersion' => 'Versión',
 			'integrations.form.apiKeyWarn' => 'No volverás a ver esta key.',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.copyCopied' => 'Copiado',
 			'integrations.form.copyCopy' => 'Copiar',
 			'integrations.defaultAgent.title' => 'Agente predeterminado',
 			'integrations.defaultAgent.description' => 'Se aplica a las sesiones que crea esta integración cuando la petición omite el campo. La petición siempre prevalece.',
 			'integrations.defaultAgent.providerLabel' => 'Proveedor predeterminado',
 			'integrations.defaultAgent.providerNone' => 'Sin predeterminado',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
 			'integrations.defaultAgent.modelHint' => 'Predeterminado del proveedor (p. ej. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
@@ -12970,14 +12992,14 @@ extension on TranslationsEs {
 			'channels.errorPrefix.update' => 'Error al actualizar',
 			'channels.errorPrefix.delete' => 'Error al eliminar',
 			'channels.failedToLoad' => 'Error al cargar los canales',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.telegram.description' => 'Bot mediante @BotFather. opendray hace long-polling de getUpdates y envía vía REST. Los botones y reply_to_message funcionan de forma nativa.',
 			'channels.kinds.telegram.botTokenLabel' => 'Token del bot',
 			'channels.kinds.telegram.botTokenHint' => 'De @BotFather. Se guarda en la configuración del canal; API solo para administradores.',
 			'channels.kinds.telegram.chatIdLabel' => 'Chat ID por defecto',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (opcional, se usa cuando no hay ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'ID(s) de usuario de Telegram del propietario',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (separados por comas para más de uno)',
 			'channels.kinds.telegram.ownerUserIdsHint' => 'Solo estos IDs numéricos de usuario de Telegram pueden controlar sessions, ejecutar comandos o pulsar botones; el resto se ignora. Déjalo en blanco para permitir a cualquiera (no recomendado para chat bidireccional). Obtén el tuyo enviando un DM a @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Chat bidireccional (enrutar mensajes a la session)',
@@ -13484,14 +13506,14 @@ extension on TranslationsEs {
 			'cortexHub.reject' => 'Rechazar',
 			'cortexHub.approvedToast' => 'Propuesta aprobada',
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
 			'cortexSettings.title' => 'Ajustes de Cortex',
 			'cortexSettings.tabWorkers' => 'Workers',
 			'cortexSettings.tabCapture' => 'Captura e inyección',
 			'cortexSettings.tabProviders' => 'Proveedores',
-			_ => null,
-		} ?? switch (path) {
 			'cortexSettings.providersHint' => 'Endpoints LLM a los que enrutan los workers de resumen/agente.',
 			'cortexSettings.providersEmpty' => 'Sin proveedores configurados.',
 			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',

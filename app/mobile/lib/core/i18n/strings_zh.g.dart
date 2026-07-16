@@ -5755,6 +5755,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get removePageHint => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）';
 	@override String get pageRemovedToast => '页面已移除';
 	@override late final _TranslationsWebKnowledgeKbNewPageZh newPage = _TranslationsWebKnowledgeKbNewPageZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbPageSettingsZh pageSettings = _TranslationsWebKnowledgeKbPageSettingsZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9146,6 +9147,21 @@ class _TranslationsWebKnowledgeKbNewPageZh extends TranslationsWebKnowledgeKbNew
 	@override String get createdToast => '知识页已创建';
 }
 
+// Path: web.knowledge.kb.pageSettings
+class _TranslationsWebKnowledgeKbPageSettingsZh extends TranslationsWebKnowledgeKbPageSettingsEn {
+	_TranslationsWebKnowledgeKbPageSettingsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '设置';
+	@override String get title => '页面设置';
+	@override String get description => '编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改，页面正文另行编辑。';
+	@override String get hint => '编辑此页面的标题、摘要、性质与注入开关';
+	@override String get save => '保存设置';
+	@override String get savedToast => '页面设置已更新';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementZh extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -11614,6 +11630,12 @@ extension on TranslationsZh {
 			'web.knowledge.kb.newPage.injectHint' => '关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。',
 			'web.knowledge.kb.newPage.create' => '创建页面',
 			'web.knowledge.kb.newPage.createdToast' => '知识页已创建',
+			'web.knowledge.kb.pageSettings.button' => '设置',
+			'web.knowledge.kb.pageSettings.title' => '页面设置',
+			'web.knowledge.kb.pageSettings.description' => '编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改，页面正文另行编辑。',
+			'web.knowledge.kb.pageSettings.hint' => '编辑此页面的标题、摘要、性质与注入开关',
+			'web.knowledge.kb.pageSettings.save' => '保存设置',
+			'web.knowledge.kb.pageSettings.savedToast' => '页面设置已更新',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -11942,14 +11964,14 @@ extension on TranslationsZh {
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
+			_ => null,
+		} ?? switch (path) {
 			'more.identity.tokenExpires' => '令牌到期',
 			'more.sections.gateway' => '网关',
 			'more.sections.plugins' => '插件',
 			'more.sections.memory' => '记忆',
 			'more.sections.system' => '系统',
 			'more.items.integrations.title' => '集成',
-			_ => null,
-		} ?? switch (path) {
 			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
 			'more.items.activity.title' => '活动',
 			'more.items.activity.subtitle' => '集成 API 调用审计',
@@ -12456,14 +12478,14 @@ extension on TranslationsZh {
 			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
 			'integrations.form.editFieldVersion' => '版本',
 			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.copyCopied' => '已复制',
 			'integrations.form.copyCopy' => '复制',
 			'integrations.defaultAgent.title' => '默认 agent',
 			'integrations.defaultAgent.description' => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先。',
 			'integrations.defaultAgent.providerLabel' => '默认 provider',
 			'integrations.defaultAgent.providerNone' => '无默认',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.defaultAgent.modelLabel' => '默认模型',
 			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
 			'integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
@@ -12970,14 +12992,14 @@ extension on TranslationsZh {
 			'channels.errorPrefix.update' => '更新失败',
 			'channels.errorPrefix.delete' => '删除失败',
 			'channels.failedToLoad' => '加载通道失败',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.telegram.description' => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。',
 			'channels.kinds.telegram.botTokenLabel' => '机器人 Token',
 			'channels.kinds.telegram.botTokenHint' => '从 @BotFather 获取。存储于通道配置；仅管理员 API 可见。',
 			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Telegram 拥有者用户 ID',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
 			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
 			'channels.kinds.telegram.chatEnabledLabel' => '双向聊天（将消息路由进会话）',
@@ -13484,14 +13506,14 @@ extension on TranslationsZh {
 			'cortexHub.reject' => '拒绝',
 			'cortexHub.approvedToast' => '提案已批准',
 			'cortexHub.rejectedToast' => '提案已拒绝',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => '加载失败：${error}',
 			'cortexSettings.title' => 'Cortex 设置',
 			'cortexSettings.tabWorkers' => '工作器',
 			'cortexSettings.tabCapture' => '捕获与注入',
 			'cortexSettings.tabProviders' => 'Provider',
-			_ => null,
-		} ?? switch (path) {
 			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
 			'cortexSettings.providersEmpty' => '未配置 provider。',
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
