@@ -46,6 +46,17 @@ export interface TerminalHandle {
   getBufferText: () => string
 }
 
+// iPhone/iPad detection. iPadOS 13+ reports itself as "MacIntel", so
+// disambiguate a real iPad (multi-point touchscreen) from a desktop
+// Mac (maxTouchPoints 0). A trackpad-equipped iPad still has the
+// touchscreen, so maxTouchPoints stays >1. Used only to opt the
+// terminal into the composition-drift CSS workaround below — never for
+// feature gating, so a false negative just leaves stock behaviour.
+const IS_IOS =
+  typeof navigator !== 'undefined' &&
+  (/iP(hone|ad|od)/.test(navigator.platform) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+
 function readVar(name: string): string {
   return getComputedStyle(document.documentElement)
     .getPropertyValue(name)
@@ -511,7 +522,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
           and reliable RO timing across Safari/Chrome. */}
       <div
         ref={containerRef}
-        className="h-full w-full p-3 overflow-hidden"
+        className={`h-full w-full p-3 overflow-hidden${IS_IOS ? ' terminal-ios' : ''}`}
         style={{ contain: 'layout paint' }}
       />
       {dragActive && (
