@@ -4194,6 +4194,7 @@ class _TranslationsWebProvidersDetailEs extends TranslationsWebProvidersDetailEn
 	@override String get toggleFailedToast => 'Error al alternar';
 	@override late final _TranslationsWebProvidersDetailCapsEs caps = _TranslationsWebProvidersDetailCapsEs._(_root);
 	@override String get notInstalled => 'no instalado';
+	@override String get brokenCli => 'Instalado pero no ejecutable';
 	@override String updateAvailable({required Object version}) => 'actualización disponible → ${version}';
 	@override String get upToDate => 'actualizado';
 	@override String update({required Object version}) => 'Actualizar a ${version}';
@@ -10298,6 +10299,7 @@ extension on TranslationsEs {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'no instalado',
+			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'actualización disponible → ${version}',
 			'web.providers.detail.upToDate' => 'actualizado',
 			'web.providers.detail.update' => ({required Object version}) => 'Actualizar a ${version}',
@@ -10403,9 +10405,9 @@ extension on TranslationsEs {
 			'web.channels.toasts.muted' => 'Canal silenciado',
 			'web.channels.toasts.unmuted' => 'Canal reactivado',
 			'web.channels.dialog.editTitle' => 'Editar canal',
-			'web.channels.dialog.createTitle' => 'Registrar canal',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
 			'web.channels.dialog.descriptionDefault' => 'Configura la integración de mensajería.',
 			'web.channels.dialog.kindLabel' => 'Tipo',
@@ -10917,9 +10919,9 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.columns.actions' => 'Acciones',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
-			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			'web.backups.newSchedule.targetLabel' => 'Destinos',
 			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Cada (horas)',
@@ -11431,9 +11433,9 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
 			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
-			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
 			'web.memoryAmbient.profiles.row.globalDefault' => 'predeterminado global',
 			'web.memoryAmbient.profiles.row.delete' => 'Eliminar',
@@ -11945,9 +11947,9 @@ extension on TranslationsEs {
 			'more.sections.system' => 'Sistema',
 			'more.items.integrations.title' => 'Integraciones',
 			'more.items.integrations.subtitle' => 'Llamadores de la API: actividad reciente y tasas de error',
-			'more.items.activity.title' => 'Actividad',
 			_ => null,
 		} ?? switch (path) {
+			'more.items.activity.title' => 'Actividad',
 			'more.items.activity.subtitle' => 'Auditoría de llamadas API de integraciones',
 			'more.items.memoryAmbient.title' => 'Captura e inyección',
 			'more.items.memoryAmbient.subtitle' => 'Reglas de captura + perfiles de inyección',
@@ -12459,9 +12461,9 @@ extension on TranslationsEs {
 			'integrations.defaultAgent.providerLabel' => 'Proveedor predeterminado',
 			'integrations.defaultAgent.providerNone' => 'Sin predeterminado',
 			'integrations.defaultAgent.modelLabel' => 'Modelo predeterminado',
-			'integrations.defaultAgent.modelHint' => 'Predeterminado del proveedor (p. ej. opus)',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.defaultAgent.modelHint' => 'Predeterminado del proveedor (p. ej. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Cuenta de Claude predeterminada',
 			'integrations.defaultAgent.accountNone' => 'Sin predeterminado',
 			'integrations.defaultAgent.accountTokenMissing' => '(falta el token)',
@@ -12973,9 +12975,9 @@ extension on TranslationsEs {
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (opcional, se usa cuando no hay ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'ID(s) de usuario de Telegram del propietario',
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (separados por comas para más de uno)',
-			'channels.kinds.telegram.ownerUserIdsHint' => 'Solo estos IDs numéricos de usuario de Telegram pueden controlar sessions, ejecutar comandos o pulsar botones; el resto se ignora. Déjalo en blanco para permitir a cualquiera (no recomendado para chat bidireccional). Obtén el tuyo enviando un DM a @userinfobot.',
 			_ => null,
 		} ?? switch (path) {
+			'channels.kinds.telegram.ownerUserIdsHint' => 'Solo estos IDs numéricos de usuario de Telegram pueden controlar sessions, ejecutar comandos o pulsar botones; el resto se ignora. Déjalo en blanco para permitir a cualquiera (no recomendado para chat bidireccional). Obtén el tuyo enviando un DM a @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Chat bidireccional (enrutar mensajes a la session)',
 			'channels.kinds.telegram.chatEnabledHint' => 'Cuando está activado, tus mensajes se escriben en la session seleccionada y el agente responde aquí. Desactívalo solo para notificaciones.',
 			'channels.kinds.telegram.chatTypingLabel' => 'Mostrar “escribiendo…” mientras el agente trabaja',
@@ -13487,9 +13489,9 @@ extension on TranslationsEs {
 			'cortexSettings.tabCapture' => 'Captura e inyección',
 			'cortexSettings.tabProviders' => 'Proveedores',
 			'cortexSettings.providersHint' => 'Endpoints LLM a los que enrutan los workers de resumen/agente.',
-			'cortexSettings.providersEmpty' => 'Sin proveedores configurados.',
 			_ => null,
 		} ?? switch (path) {
+			'cortexSettings.providersEmpty' => 'Sin proveedores configurados.',
 			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',
 			'cortexSettings.providersLoadFailed' => 'Error al cargar proveedores',
 			'cortexSettings.defaultBadge' => 'predeterminado',

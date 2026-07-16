@@ -38,6 +38,7 @@ class SessionTerminalView extends ConsumerStatefulWidget {
 class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
   late final Terminal _terminal;
   late final TerminalController _controller;
+  final List<_PendingAttachment> _pending = [];
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   Timer? _reconnectTimer;
@@ -355,17 +356,11 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
             localPath: file.path,
             filename: file.name,
           );
-      _terminal.paste(remotePath);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            t.sessions.terminal.snackbar.imageAttached(path: remotePath),
-          ),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      final attachmentName = file.name; // promoted non-null here (outside closure)
+      setState(() => _pending.add(
+            _PendingAttachment(path: remotePath, name: attachmentName),
+          ));
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -389,6 +384,17 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
       );
     }
   }
+
+  void _insertAttachments() {
+    if (_pending.isEmpty) return;
+    _terminal.paste('${_pending.map((a) => a.path).join(' ')} ');
+    setState(_pending.clear);
+  }
+
+  void _clearAttachments() => setState(_pending.clear);
+
+  void _removeAttachment(int index) =>
+      setState(() => _pending.removeAt(index));
 
   Future<ImageSource?> _pickImageSource() {
     return showModalBottomSheet<ImageSource>(
@@ -489,15 +495,90 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
             ],
           ),
         ),
+        _AttachmentTray(
+          items: _pending,
+          onRemove: _removeAttachment,
+          onInsert: _insertAttachments,
+          onClear: _clearAttachments,
+        ),
         _MobileKeyboardBar(
           onKey: _sendKey,
           onSelectText: _openSelectSheet,
           onPaste: _pasteFromClipboard,
           onAttachImage: _attachImage,
+          hasPendingAttachments: _pending.isNotEmpty,
+          onEscClearPending: _clearAttachments,
         ),
       ],
     );
   }
+}
+
+class _AttachmentTray extends StatelessWidget {
+  const _AttachmentTray({
+    required this.items,
+    required this.onRemove,
+    required this.onInsert,
+    required this.onClear,
+  });
+  final List<_PendingAttachment> items;
+  final void Function(int index) onRemove;
+  final VoidCallback onInsert;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      color: scheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (var i = 0; i < items.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Chip(
+                        avatar: const Icon(Icons.attach_file, size: 14),
+                        label: Text(
+                          items[i].name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        deleteIcon: const Icon(Icons.close, size: 14),
+                        deleteButtonTooltipMessage: t
+                            .sessions.terminal.attachments
+                            .remove(name: items[i].name),
+                        onDeleted: () => onRemove(i),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onClear,
+            child: Text(t.sessions.terminal.attachments.clear),
+          ),
+          const SizedBox(width: 4),
+          FilledButton(
+            onPressed: onInsert,
+            child: Text(t.sessions.terminal.attachments.insert),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingAttachment {
+  const _PendingAttachment({required this.path, required this.name});
+  final String path;
+  final String name;
 }
 
 class _ConnectionAccent extends StatelessWidget {
@@ -605,12 +686,16 @@ class _MobileKeyboardBar extends StatefulWidget {
     required this.onSelectText,
     required this.onPaste,
     required this.onAttachImage,
+    required this.hasPendingAttachments,
+    required this.onEscClearPending,
   });
 
   final void Function(String) onKey;
   final Future<void> Function() onSelectText;
   final Future<void> Function() onPaste;
   final Future<void> Function() onAttachImage;
+  final bool hasPendingAttachments;
+  final VoidCallback onEscClearPending;
 
   @override
   State<_MobileKeyboardBar> createState() => _MobileKeyboardBarState();
@@ -657,7 +742,11 @@ class _MobileKeyboardBarState extends State<_MobileKeyboardBar> {
               label: 'Esc',
               onTap: () {
                 _haptic();
-                _send('\x1b');
+                if (widget.hasPendingAttachments) {
+                  widget.onEscClearPending();
+                } else {
+                  _send('\x1b');
+                }
               },
             ),
             _Key(

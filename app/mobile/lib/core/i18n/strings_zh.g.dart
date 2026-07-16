@@ -4194,6 +4194,7 @@ class _TranslationsWebProvidersDetailZh extends TranslationsWebProvidersDetailEn
 	@override String get toggleFailedToast => '切换失败';
 	@override late final _TranslationsWebProvidersDetailCapsZh caps = _TranslationsWebProvidersDetailCapsZh._(_root);
 	@override String get notInstalled => '未安装';
+	@override String get brokenCli => '已安装但无法运行';
 	@override String updateAvailable({required Object version}) => '有可用更新 → ${version}';
 	@override String get upToDate => '已是最新';
 	@override String update({required Object version}) => '更新到 ${version}';
@@ -10298,6 +10299,7 @@ extension on TranslationsZh {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
+			'web.providers.detail.brokenCli' => '已安装但无法运行',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => '有可用更新 → ${version}',
 			'web.providers.detail.upToDate' => '已是最新',
 			'web.providers.detail.update' => ({required Object version}) => '更新到 ${version}',
@@ -10403,9 +10405,9 @@ extension on TranslationsZh {
 			'web.channels.toasts.muted' => '频道已静音',
 			'web.channels.toasts.unmuted' => '频道已取消静音',
 			'web.channels.dialog.editTitle' => '编辑频道',
-			'web.channels.dialog.createTitle' => '注册频道',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.createTitle' => '注册频道',
 			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
 			'web.channels.dialog.descriptionDefault' => '配置消息集成。',
 			'web.channels.dialog.kindLabel' => '类型',
@@ -10917,9 +10919,9 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.columns.actions' => '操作',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} 个备份',
 			'web.backups.schedulesTab.deleteTooltip' => '删除',
-			'web.backups.newSchedule.title' => '新建备份计划',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.newSchedule.title' => '新建备份计划',
 			'web.backups.newSchedule.targetLabel' => '目标',
 			'web.backups.newSchedule.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'web.backups.newSchedule.everyHoursLabel' => '每隔（小时）',
@@ -11431,9 +11433,9 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.profiles.title' => 'Injection Profiles',
 			'web.memoryAmbient.profiles.addButton' => '添加 profile',
-			'web.memoryAmbient.profiles.intro' => 'spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.intro' => 'spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。',
 			'web.memoryAmbient.profiles.empty' => '尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。',
 			'web.memoryAmbient.profiles.row.globalDefault' => '全局默认',
 			'web.memoryAmbient.profiles.row.delete' => '删除',
@@ -11945,9 +11947,9 @@ extension on TranslationsZh {
 			'more.sections.system' => '系统',
 			'more.items.integrations.title' => '集成',
 			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
-			'more.items.activity.title' => '活动',
 			_ => null,
 		} ?? switch (path) {
+			'more.items.activity.title' => '活动',
 			'more.items.activity.subtitle' => '集成 API 调用审计',
 			'more.items.memoryAmbient.title' => '捕获与注入',
 			'more.items.memoryAmbient.subtitle' => '记忆捕获规则 + 注入配置',
@@ -12459,9 +12461,9 @@ extension on TranslationsZh {
 			'integrations.defaultAgent.providerLabel' => '默认 provider',
 			'integrations.defaultAgent.providerNone' => '无默认',
 			'integrations.defaultAgent.modelLabel' => '默认模型',
-			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
 			'integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
 			'integrations.defaultAgent.accountNone' => '无默认',
 			'integrations.defaultAgent.accountTokenMissing' => '(缺少 token)',
@@ -12973,9 +12975,9 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Telegram 拥有者用户 ID',
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
-			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
 			_ => null,
 		} ?? switch (path) {
+			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
 			'channels.kinds.telegram.chatEnabledLabel' => '双向聊天（将消息路由进会话）',
 			'channels.kinds.telegram.chatEnabledHint' => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。',
 			'channels.kinds.telegram.chatTypingLabel' => 'agent 工作时显示“正在输入…”',
@@ -13487,9 +13489,9 @@ extension on TranslationsZh {
 			'cortexSettings.tabCapture' => '捕获与注入',
 			'cortexSettings.tabProviders' => 'Provider',
 			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
-			'cortexSettings.providersEmpty' => '未配置 provider。',
 			_ => null,
 		} ?? switch (path) {
+			'cortexSettings.providersEmpty' => '未配置 provider。',
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
 			'cortexSettings.providersLoadFailed' => '加载 provider 失败',
 			'cortexSettings.defaultBadge' => '默认',
