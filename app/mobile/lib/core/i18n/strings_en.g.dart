@@ -12080,11 +12080,11 @@ class TranslationsWebRoundTableDetailEn {
 	/// en: 'Delete this chat and all its messages? This cannot be undone.'
 	String get deleteConfirm => 'Delete this chat and all its messages? This cannot be undone.';
 
-	/// en: 'Roles'
-	String get roles => 'Roles';
+	/// en: 'Members'
+	String get roles => 'Members';
 
-	/// en: 'Roles & framing'
-	String get rolesTitle => 'Roles & framing';
+	/// en: 'Members & roles'
+	String get rolesTitle => 'Members & roles';
 
 	/// en: 'Discussion framing (shared by all members)'
 	String get rolesFraming => 'Discussion framing (shared by all members)';
@@ -12095,8 +12095,11 @@ class TranslationsWebRoundTableDetailEn {
 	/// en: 'Roles updated'
 	String get rolesSaved => 'Roles updated';
 
-	/// en: 'Reassign roles as the topic evolves — takes effect on the next reply.'
-	String get rolesHint => 'Reassign roles as the topic evolves — takes effect on the next reply.';
+	/// en: 'Add or remove members and reassign roles as the topic evolves — takes effect on the next reply.'
+	String get rolesHint => 'Add or remove members and reassign roles as the topic evolves — takes effect on the next reply.';
+
+	/// en: 'Keep at least one member.'
+	String get membersMin => 'Keep at least one member.';
 
 	/// en: 'Continue'
 	String get continueDiscussion => 'Continue';
@@ -20203,12 +20206,13 @@ extension on Translations {
 			'web.roundTable.detail.send' => 'Send',
 			'web.roundTable.detail.delete' => 'Delete',
 			'web.roundTable.detail.deleteConfirm' => 'Delete this chat and all its messages? This cannot be undone.',
-			'web.roundTable.detail.roles' => 'Roles',
-			'web.roundTable.detail.rolesTitle' => 'Roles & framing',
+			'web.roundTable.detail.roles' => 'Members',
+			'web.roundTable.detail.rolesTitle' => 'Members & roles',
 			'web.roundTable.detail.rolesFraming' => 'Discussion framing (shared by all members)',
 			'web.roundTable.detail.rolesSave' => 'Save',
 			'web.roundTable.detail.rolesSaved' => 'Roles updated',
-			'web.roundTable.detail.rolesHint' => 'Reassign roles as the topic evolves — takes effect on the next reply.',
+			'web.roundTable.detail.rolesHint' => 'Add or remove members and reassign roles as the topic evolves — takes effect on the next reply.',
+			'web.roundTable.detail.membersMin' => 'Keep at least one member.',
 			'web.roundTable.detail.continueDiscussion' => 'Continue',
 			'web.roundTable.detail.continued' => 'Continuing the discussion…',
 			'web.roundTable.status.active' => 'Active',
@@ -20266,9 +20270,9 @@ extension on Translations {
 			'more.sections.memory' => 'Memory',
 			'more.sections.system' => 'System',
 			'more.items.integrations.title' => 'Integrations',
-			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
 			_ => null,
 		} ?? switch (path) {
+			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
 			'more.items.activity.title' => 'Activity',
 			'more.items.activity.subtitle' => 'Integration API call audit',
 			'more.items.memoryAmbient.title' => 'Capture & injection',
@@ -20780,9 +20784,9 @@ extension on Translations {
 			'integrations.defaultAgent.description' => 'Applied to sessions this integration creates when its request omits the field. The request always wins.',
 			'integrations.defaultAgent.providerLabel' => 'Default provider',
 			'integrations.defaultAgent.providerNone' => 'No default',
-			'integrations.defaultAgent.modelLabel' => 'Default model',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.defaultAgent.modelLabel' => 'Default model',
 			'integrations.defaultAgent.modelHint' => 'Provider default (e.g. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Default Claude account',
 			'integrations.defaultAgent.accountNone' => 'No default',
@@ -21294,9 +21298,9 @@ extension on Translations {
 			'channels.kinds.telegram.chatIdLabel' => 'Default chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Owner Telegram user ID(s)',
-			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (comma-separated for more than one)',
 			_ => null,
 		} ?? switch (path) {
+			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (comma-separated for more than one)',
 			'channels.kinds.telegram.ownerUserIdsHint' => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Two-way chat (route messages into the session)',
 			'channels.kinds.telegram.chatEnabledHint' => 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.',
@@ -21808,9 +21812,9 @@ extension on Translations {
 			'cortexSettings.tabWorkers' => 'Workers',
 			'cortexSettings.tabCapture' => 'Capture & injection',
 			'cortexSettings.tabProviders' => 'Providers',
-			'cortexSettings.providersHint' => 'LLM endpoints that summarizer/agent workers route to.',
 			_ => null,
 		} ?? switch (path) {
+			'cortexSettings.providersHint' => 'LLM endpoints that summarizer/agent workers route to.',
 			'cortexSettings.providersEmpty' => 'No providers configured.',
 			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',
 			'cortexSettings.providersLoadFailed' => 'Failed to load providers',

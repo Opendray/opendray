@@ -6134,12 +6134,13 @@ class _TranslationsWebRoundTableDetailZh extends TranslationsWebRoundTableDetail
 	@override String get send => '发送';
 	@override String get delete => '删除';
 	@override String get deleteConfirm => '删除这个群聊及其所有消息?此操作不可撤销。';
-	@override String get roles => '角色';
-	@override String get rolesTitle => '角色与框架';
+	@override String get roles => '成员';
+	@override String get rolesTitle => '成员与角色';
 	@override String get rolesFraming => '讨论框架(所有成员共享)';
 	@override String get rolesSave => '保存';
 	@override String get rolesSaved => '角色已更新';
-	@override String get rolesHint => '议题演进时重新分配角色 —— 下一轮回复生效。';
+	@override String get rolesHint => '议题演进时可增删成员、重新分配角色 —— 下一轮回复生效。';
+	@override String get membersMin => '至少保留一名成员。';
 	@override String get continueDiscussion => '继续讨论';
 	@override String get continued => '继续讨论中…';
 }
@@ -11883,12 +11884,13 @@ extension on TranslationsZh {
 			'web.roundTable.detail.send' => '发送',
 			'web.roundTable.detail.delete' => '删除',
 			'web.roundTable.detail.deleteConfirm' => '删除这个群聊及其所有消息?此操作不可撤销。',
-			'web.roundTable.detail.roles' => '角色',
-			'web.roundTable.detail.rolesTitle' => '角色与框架',
+			'web.roundTable.detail.roles' => '成员',
+			'web.roundTable.detail.rolesTitle' => '成员与角色',
 			'web.roundTable.detail.rolesFraming' => '讨论框架(所有成员共享)',
 			'web.roundTable.detail.rolesSave' => '保存',
 			'web.roundTable.detail.rolesSaved' => '角色已更新',
-			'web.roundTable.detail.rolesHint' => '议题演进时重新分配角色 —— 下一轮回复生效。',
+			'web.roundTable.detail.rolesHint' => '议题演进时可增删成员、重新分配角色 —— 下一轮回复生效。',
+			'web.roundTable.detail.membersMin' => '至少保留一名成员。',
 			'web.roundTable.detail.continueDiscussion' => '继续讨论',
 			'web.roundTable.detail.continued' => '继续讨论中…',
 			'web.roundTable.status.active' => '进行中',
@@ -11946,9 +11948,9 @@ extension on TranslationsZh {
 			'more.sections.memory' => '记忆',
 			'more.sections.system' => '系统',
 			'more.items.integrations.title' => '集成',
-			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
 			_ => null,
 		} ?? switch (path) {
+			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
 			'more.items.activity.title' => '活动',
 			'more.items.activity.subtitle' => '集成 API 调用审计',
 			'more.items.memoryAmbient.title' => '捕获与注入',
@@ -12460,9 +12462,9 @@ extension on TranslationsZh {
 			'integrations.defaultAgent.description' => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先。',
 			'integrations.defaultAgent.providerLabel' => '默认 provider',
 			'integrations.defaultAgent.providerNone' => '无默认',
-			'integrations.defaultAgent.modelLabel' => '默认模型',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.defaultAgent.modelLabel' => '默认模型',
 			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
 			'integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
 			'integrations.defaultAgent.accountNone' => '无默认',
@@ -12974,9 +12976,9 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Telegram 拥有者用户 ID',
-			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
 			_ => null,
 		} ?? switch (path) {
+			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
 			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
 			'channels.kinds.telegram.chatEnabledLabel' => '双向聊天（将消息路由进会话）',
 			'channels.kinds.telegram.chatEnabledHint' => '开启后，你的消息会被输入选定会话，agent 在此回复。仅需通知时关闭。',
@@ -13488,9 +13490,9 @@ extension on TranslationsZh {
 			'cortexSettings.tabWorkers' => '工作器',
 			'cortexSettings.tabCapture' => '捕获与注入',
 			'cortexSettings.tabProviders' => 'Provider',
-			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
 			_ => null,
 		} ?? switch (path) {
+			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
 			'cortexSettings.providersEmpty' => '未配置 provider。',
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
 			'cortexSettings.providersLoadFailed' => '加载 provider 失败',

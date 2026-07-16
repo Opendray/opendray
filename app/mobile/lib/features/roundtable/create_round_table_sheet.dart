@@ -5,7 +5,7 @@ import 'package:opendray/core/api/antigravity_accounts_api.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/roundtable_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
-import 'package:opendray/core/widgets/brand_avatar.dart';
+import 'package:opendray/features/roundtable/seat_tile.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 
 // Create a Round Table — mobile parity with
@@ -158,7 +158,7 @@ class _CreateRoundTableSheetState extends ConsumerState<CreateRoundTableSheet> {
                     style: theme.textTheme.labelLarge),
                 const SizedBox(height: 8),
                 for (final p in seatProviders)
-                  _SeatTile(
+                  SeatTile(
                     provider: p,
                     on: _seats.contains(p),
                     model: _models[p] ?? '',
@@ -231,201 +231,6 @@ class _CreateRoundTableSheetState extends ConsumerState<CreateRoundTableSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Persona field + quick-fill role preset chips. The localized preset label is
-// the persona text sent to the model (models handle any language).
-class _PersonaField extends StatefulWidget {
-  const _PersonaField({required this.persona, required this.onPersona});
-  final String persona;
-  final ValueChanged<String> onPersona;
-
-  @override
-  State<_PersonaField> createState() => _PersonaFieldState();
-}
-
-class _PersonaFieldState extends State<_PersonaField> {
-  late final TextEditingController _ctrl =
-      TextEditingController(text: widget.persona);
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  void _apply(String value) {
-    _ctrl.text = value;
-    _ctrl.selection = TextSelection.collapsed(offset: value.length);
-    widget.onPersona(value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final presets = <String>[
-      t.web.roundTable.dialog.personaPresets.security,
-      t.web.roundTable.dialog.personaPresets.performance,
-      t.web.roundTable.dialog.personaPresets.ux,
-      t.web.roundTable.dialog.personaPresets.skeptic,
-      t.web.roundTable.dialog.personaPresets.pragmatist,
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _ctrl,
-          minLines: 1,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: t.web.roundTable.dialog.personaPlaceholder,
-            isDense: true,
-            border: const OutlineInputBorder(),
-          ),
-          onChanged: widget.onPersona,
-        ),
-        const SizedBox(height: 4),
-        Wrap(
-          spacing: 6,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(t.web.roundTable.dialog.personaPresets.label,
-                style: theme.textTheme.labelSmall),
-            for (final p in presets)
-              ActionChip(
-                visualDensity: VisualDensity.compact,
-                label: Text(p, style: theme.textTheme.labelSmall),
-                onPressed: () => _apply(p),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _SeatTile extends StatelessWidget {
-  const _SeatTile({
-    required this.provider,
-    required this.on,
-    required this.model,
-    required this.account,
-    required this.persona,
-    required this.modelOptions,
-    required this.accounts,
-    required this.onToggle,
-    required this.onModel,
-    required this.onAccount,
-    required this.onPersona,
-  });
-
-  final String provider;
-  final bool on;
-  final String model;
-  final String account;
-  final String persona;
-  final List<SeatModelOption> modelOptions;
-  final List<({String id, String label, bool usable})> accounts;
-  final VoidCallback onToggle;
-  final ValueChanged<String> onModel;
-  final ValueChanged<String> onAccount;
-  final ValueChanged<String> onPersona;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final showAccount = on && seatSupportsAccount.contains(provider) &&
-        accounts.isNotEmpty;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                BrandAvatar(providerId: provider, size: 28),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(provider,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          )),
-                      Text(seatVendor[provider] ?? provider,
-                          style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-                Switch(value: on, onChanged: (_) => onToggle()),
-              ],
-            ),
-            if (on) ...[
-              const SizedBox(height: 8),
-              // Model dropdown ("" = CLI default).
-              DropdownButtonFormField<String>(
-                initialValue: modelOptions.any((o) => o.value == model)
-                    ? model
-                    : (modelOptions.isNotEmpty ? modelOptions.first.value : ''),
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: t.web.roundTable.dialog.modelPlaceholder,
-                  isDense: true,
-                  border: const OutlineInputBorder(),
-                ),
-                items: [
-                  if (modelOptions.isEmpty)
-                    DropdownMenuItem(
-                      value: '',
-                      child: Text(t.web.roundTable.dialog.modelLoading),
-                    ),
-                  for (final o in modelOptions)
-                    DropdownMenuItem(value: o.value, child: Text(o.label)),
-                ],
-                onChanged: (v) => onModel(v ?? ''),
-              ),
-              if (showAccount) ...[
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue:
-                      accounts.any((a) => a.id == account) ? account : '',
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: t.web.roundTable.dialog.accountPlaceholder,
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: '',
-                      child: Text(t.web.roundTable.dialog.accountDefault),
-                    ),
-                    for (final a in accounts)
-                      DropdownMenuItem(
-                        value: a.id,
-                        enabled: a.usable,
-                        child: Text(
-                          a.usable
-                              ? a.label
-                              : '${a.label} (${t.web.roundTable.dialog.accountNoToken})',
-                        ),
-                      ),
-                  ],
-                  onChanged: (v) => onAccount(v ?? ''),
-                ),
-              ],
-              const SizedBox(height: 8),
-              _PersonaField(persona: persona, onPersona: onPersona),
-            ],
-          ],
-        ),
       ),
     );
   }
