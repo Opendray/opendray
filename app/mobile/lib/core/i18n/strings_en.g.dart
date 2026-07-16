@@ -8193,6 +8193,9 @@ class TranslationsWebProvidersDetailEn {
 	/// en: 'not installed'
 	String get notInstalled => 'not installed';
 
+	/// en: 'Installed but not runnable'
+	String get brokenCli => 'Installed but not runnable';
+
 	/// en: 'update available → {version}'
 	String updateAvailable({required Object version}) => 'update available → ${version}';
 
@@ -18616,6 +18619,7 @@ extension on Translations {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'not installed',
+			'web.providers.detail.brokenCli' => 'Installed but not runnable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'update available → ${version}',
 			'web.providers.detail.upToDate' => 'up to date',
 			'web.providers.detail.update' => ({required Object version}) => 'Update to ${version}',
@@ -18721,9 +18725,9 @@ extension on Translations {
 			'web.channels.toasts.muted' => 'Channel muted',
 			'web.channels.toasts.unmuted' => 'Channel unmuted',
 			'web.channels.dialog.editTitle' => 'Edit channel',
-			'web.channels.dialog.createTitle' => 'Register channel',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.createTitle' => 'Register channel',
 			'web.channels.dialog.descriptionBridge' => 'External adapter (Python/Node/...) connects via WebSocket and presents this token.',
 			'web.channels.dialog.descriptionDefault' => 'Configure messaging integration.',
 			'web.channels.dialog.kindLabel' => 'Kind',
@@ -19235,9 +19239,9 @@ extension on Translations {
 			'web.backups.schedulesTab.columns.actions' => 'Actions',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
 			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
-			'web.backups.newSchedule.title' => 'New backup schedule',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.newSchedule.title' => 'New backup schedule',
 			'web.backups.newSchedule.targetLabel' => 'Targets',
 			'web.backups.newSchedule.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'web.backups.newSchedule.everyHoursLabel' => 'Every (hours)',
@@ -19749,9 +19753,9 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
 			'web.memoryAmbient.profiles.title' => 'Injection profiles',
 			'web.memoryAmbient.profiles.addButton' => 'Add profile',
-			'web.memoryAmbient.profiles.intro' => 'At spawn time opendray prepends a markdown banner of recent project memories to the agent\'s system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.intro' => 'At spawn time opendray prepends a markdown banner of recent project memories to the agent\'s system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.',
 			'web.memoryAmbient.profiles.empty' => 'No injection profile. Memories are not auto-injected at spawn — model still uses memory_search.',
 			'web.memoryAmbient.profiles.row.globalDefault' => 'global default',
 			'web.memoryAmbient.profiles.row.delete' => 'Delete',
@@ -20263,9 +20267,9 @@ extension on Translations {
 			'more.sections.system' => 'System',
 			'more.items.integrations.title' => 'Integrations',
 			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
-			'more.items.activity.title' => 'Activity',
 			_ => null,
 		} ?? switch (path) {
+			'more.items.activity.title' => 'Activity',
 			'more.items.activity.subtitle' => 'Integration API call audit',
 			'more.items.memoryAmbient.title' => 'Capture & injection',
 			'more.items.memoryAmbient.subtitle' => 'Memory capture rules + injection profiles',
@@ -20777,9 +20781,9 @@ extension on Translations {
 			'integrations.defaultAgent.providerLabel' => 'Default provider',
 			'integrations.defaultAgent.providerNone' => 'No default',
 			'integrations.defaultAgent.modelLabel' => 'Default model',
-			'integrations.defaultAgent.modelHint' => 'Provider default (e.g. opus)',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.defaultAgent.modelHint' => 'Provider default (e.g. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Default Claude account',
 			'integrations.defaultAgent.accountNone' => 'No default',
 			'integrations.defaultAgent.accountTokenMissing' => '(token missing)',
@@ -21291,9 +21295,9 @@ extension on Translations {
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Owner Telegram user ID(s)',
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (comma-separated for more than one)',
-			'channels.kinds.telegram.ownerUserIdsHint' => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
 			_ => null,
 		} ?? switch (path) {
+			'channels.kinds.telegram.ownerUserIdsHint' => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Two-way chat (route messages into the session)',
 			'channels.kinds.telegram.chatEnabledHint' => 'When on, your messages are typed into the selected session and the agent replies here. Turn off for notifications only.',
 			'channels.kinds.telegram.chatTypingLabel' => 'Show “typing…” while the agent works',
@@ -21805,9 +21809,9 @@ extension on Translations {
 			'cortexSettings.tabCapture' => 'Capture & injection',
 			'cortexSettings.tabProviders' => 'Providers',
 			'cortexSettings.providersHint' => 'LLM endpoints that summarizer/agent workers route to.',
-			'cortexSettings.providersEmpty' => 'No providers configured.',
 			_ => null,
 		} ?? switch (path) {
+			'cortexSettings.providersEmpty' => 'No providers configured.',
 			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',
 			'cortexSettings.providersLoadFailed' => 'Failed to load providers',
 			'cortexSettings.defaultBadge' => 'default',
