@@ -814,6 +814,12 @@ class TranslationsMemoryWorkersEn {
 	/// en: 'Antigravity (agy --print)'
 	String get cliAntigravity => 'Antigravity (agy --print)';
 
+	/// en: 'Grok (grok)'
+	String get cliGrok => 'Grok (grok)';
+
+	/// en: 'OpenCode (opencode run)'
+	String get cliOpencode => 'OpenCode (opencode run)';
+
 	/// en: 'Model'
 	String get modelLabel => 'Model';
 
@@ -2759,6 +2765,12 @@ class TranslationsWebMemoryWorkersEn {
 
 	/// en: 'Antigravity (agy --print)'
 	String get cliAntigravity => 'Antigravity (agy --print)';
+
+	/// en: 'Grok (grok)'
+	String get cliGrok => 'Grok (grok)';
+
+	/// en: 'OpenCode (opencode run)'
+	String get cliOpencode => 'OpenCode (opencode run)';
 
 	/// en: '{label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.'
 	String infraGateOff({required Object label}) => '${label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.';
@@ -18196,6 +18208,8 @@ extension on Translations {
 			'web.memoryWorkers.modelBackToList' => 'List',
 			'web.memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
+			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.',
 			'web.memoryWorkers.infraGateOpen' => 'Enable it',
 			'web.memoryWorkers.providerModel' => 'model:',
@@ -18283,10 +18297,10 @@ extension on Translations {
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} updated',
 			'web.project.inbox.approveFailedToast' => 'Approve failed',
 			'web.project.inbox.rejectedToast' => 'Rejected',
-			'web.project.inbox.rejectFailedToast' => 'Reject failed',
-			'web.project.inbox.sessionPrefix' => 'ses',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.rejectFailedToast' => 'Reject failed',
+			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Approve will REPLACE the current ${label} entirely.',
 			'web.project.inbox.warningSuffix' => 'Review the diff below; this isn\'t a merge.',
 			'web.project.inbox.current' => 'Current',
@@ -18797,10 +18811,10 @@ extension on Translations {
 			'web.channels.toasts.deleted' => 'Channel deleted',
 			'web.channels.toasts.created' => 'Channel created',
 			'web.channels.toasts.updated' => 'Channel updated',
-			'web.channels.toasts.muted' => 'Channel muted',
-			'web.channels.toasts.unmuted' => 'Channel unmuted',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.toasts.muted' => 'Channel muted',
+			'web.channels.toasts.unmuted' => 'Channel unmuted',
 			'web.channels.dialog.editTitle' => 'Edit channel',
 			'web.channels.dialog.createTitle' => 'Register channel',
 			'web.channels.dialog.descriptionBridge' => 'External adapter (Python/Node/...) connects via WebSocket and presents this token.',
@@ -19311,10 +19325,10 @@ extension on Translations {
 			'web.backups.schedulesTab.columns.keep' => 'Keep',
 			'web.backups.schedulesTab.columns.nextRun' => 'Next run',
 			'web.backups.schedulesTab.columns.enabled' => 'Enabled',
-			'web.backups.schedulesTab.columns.actions' => 'Actions',
-			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.columns.actions' => 'Actions',
+			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
 			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
 			'web.backups.newSchedule.title' => 'New backup schedule',
 			'web.backups.newSchedule.targetLabel' => 'Targets',
@@ -19825,10 +19839,10 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.create' => 'Create',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'Name is required',
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Rule ${name} created',
-			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
-			'web.memoryAmbient.profiles.title' => 'Injection profiles',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
+			'web.memoryAmbient.profiles.title' => 'Injection profiles',
 			'web.memoryAmbient.profiles.addButton' => 'Add profile',
 			'web.memoryAmbient.profiles.intro' => 'At spawn time opendray prepends a markdown banner of recent project memories to the agent\'s system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.',
 			'web.memoryAmbient.profiles.empty' => 'No injection profile. Memories are not auto-injected at spawn — model still uses memory_search.',
@@ -20339,10 +20353,10 @@ extension on Translations {
 			'web.roundTable.plan.running' => 'Running',
 			'web.roundTable.plan.done' => 'Done',
 			'web.roundTable.plan.pending' => 'Pending',
-			'web.roundTable.plan.openSession' => 'Open session',
-			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.openSession' => 'Open session',
+			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
 			'web.roundTable.plan.bindProject' => 'Bind',
 			'web.roundTable.plan.projectBound' => 'Project bound',
 			'web.roundTable.plan.runTitle' => 'Run step',
@@ -20853,10 +20867,10 @@ extension on Translations {
 			'integrations.detailLoadFailed' => ({required Object error}) => 'Failed to load integration: ${error}',
 			'integrations.callsLoadFailed' => 'Failed to load calls',
 			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
-			'integrations.directionAll' => 'All',
-			'integrations.directionInbound' => 'Inbound',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.directionAll' => 'All',
+			'integrations.directionInbound' => 'Inbound',
 			'integrations.directionOutbound' => 'Outbound',
 			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
 			'integrations.form.fieldName' => 'Name',
@@ -20895,6 +20909,8 @@ extension on Translations {
 			'memoryWorkers.cliClaude' => 'Claude',
 			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'memoryWorkers.cliGrok' => 'Grok (grok)',
+			'memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'memoryWorkers.modelLabel' => 'Model',
 			'memoryWorkers.modelCliDefault' => 'CLI default (latest)',
 			'memoryWorkers.modelCustom' => 'Custom…',
@@ -21365,12 +21381,12 @@ extension on Translations {
 			'channels.badges.muted' => 'muted',
 			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
 			'channels.bridgeWebOnly' => 'Bridge channels stay web-only',
+			_ => null,
+		} ?? switch (path) {
 			'channels.bridgeEmptyAdd' => 'Add one from the web admin: Channels → New.',
 			'channels.deleteBody' => 'Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.',
 			'channels.snacks.testDispatched' => 'Test message dispatched.',
 			'channels.snacks.channelEnabled' => 'Channel enabled.',
-			_ => null,
-		} ?? switch (path) {
 			'channels.snacks.channelDisabled' => 'Channel disabled.',
 			'channels.snacks.channelMuted' => 'Channel muted.',
 			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
@@ -21879,12 +21895,12 @@ extension on Translations {
 			'cortexHub.memory' => 'Memory',
 			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
 			'cortexHub.notes' => 'Notes',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.notesDesc' => 'Each project’s official goal / plan / journal.',
 			'cortexHub.knowledge' => 'Knowledge',
 			'cortexHub.knowledgeDesc' => 'Cross-project, distilled expertise.',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} to review',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',

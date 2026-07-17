@@ -474,6 +474,14 @@ class _WorkerCardState extends ConsumerState<_WorkerCard> {
           value: 'antigravity',
           child: Text(t.memoryWorkers.cliAntigravity),
         ),
+        DropdownMenuItem(
+          value: 'grok',
+          child: Text(t.memoryWorkers.cliGrok),
+        ),
+        DropdownMenuItem(
+          value: 'opencode',
+          child: Text(t.memoryWorkers.cliOpencode),
+        ),
       ],
       onChanged: (v) => setState(() {
         _providerId = v ?? '';

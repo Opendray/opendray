@@ -809,6 +809,12 @@ function WorkerCard({
                     <SelectItem value="antigravity">
                       {t('web.memoryWorkers.cliAntigravity')}
                     </SelectItem>
+                    <SelectItem value="grok">
+                      {t('web.memoryWorkers.cliGrok')}
+                    </SelectItem>
+                    <SelectItem value="opencode">
+                      {t('web.memoryWorkers.cliOpencode')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

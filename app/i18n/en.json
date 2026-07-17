@@ -510,6 +510,8 @@
       "modelBackToList": "List",
       "cliCodex": "Codex (codex exec)",
       "cliAntigravity": "Antigravity (agy --print)",
+      "cliGrok": "Grok (grok)",
+      "cliOpencode": "OpenCode (opencode run)",
       "infraGateOff": "{label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.",
       "infraGateOpen": "Enable it",
       "providerModel": "model:"
@@ -3952,6 +3954,8 @@
     "cliClaude": "Claude",
     "cliCodex": "Codex (codex exec)",
     "cliAntigravity": "Antigravity (agy --print)",
+    "cliGrok": "Grok (grok)",
+    "cliOpencode": "OpenCode (opencode run)",
     "modelLabel": "Model",
     "modelCliDefault": "CLI default (latest)",
     "modelCustom": "Custom…",
