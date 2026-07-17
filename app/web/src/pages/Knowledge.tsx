@@ -172,51 +172,71 @@ function NavSection({
   )
 }
 
-// NewPageDialog creates a kb_* knowledge page (a blueprint section
-// under the global cwd). Fine-grained pages keep each knowledge domain
-// individually indexable instead of growing the four classics forever.
-function NewPageDialog({
+// PageSettingsDialog creates OR edits a kb_* knowledge page's config (a
+// blueprint section under the global cwd): its title, one-line description,
+// nature (foundational/emergent) and inject flag. Fine-grained pages keep each
+// knowledge domain individually indexable instead of growing the four classics
+// forever. In edit mode the slug is the primary key and stays fixed; the doc
+// BODY is edited separately (the markdown editor), this only touches the
+// config the backend upsert (putBlueprintSection) already supports.
+function PageSettingsDialog({
   open,
   onOpenChange,
-  onCreated,
+  onSaved,
+  section,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
-  onCreated: (slug: string) => void
+  onSaved: (slug: string) => void
+  // Present = edit that section's settings; absent = create a new page.
+  section?: BlueprintSection
 }) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const [slug, setSlug] = useState('')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [nature, setNature] = useState<'foundational' | 'emergent'>('emergent')
-  const [inject, setInject] = useState(false)
+  const editing = !!section
+  // Lazy initial values from the section (edit) or blank (create). This
+  // component is mounted fresh each time it opens (see the callers), so the
+  // initializers run once per open and always start from the right state —
+  // no re-seeding effect, and unsaved edits don't linger to the next open.
+  const [slug, setSlug] = useState(() => section?.slug.replace(/^kb_/, '') ?? '')
+  const [title, setTitle] = useState(() => section?.title ?? '')
+  const [description, setDescription] = useState(() => section?.description ?? '')
+  const [nature, setNature] = useState<'foundational' | 'emergent'>(() =>
+    section?.nature === 'foundational' ? 'foundational' : 'emergent',
+  )
+  const [inject, setInject] = useState(() => section?.inject ?? false)
 
-  const fullSlug = 'kb_' + slug.trim()
-  const valid = /^kb_[a-z0-9][a-z0-9_]{0,44}$/.test(fullSlug) && title.trim() !== ''
+  const fullSlug = editing ? section.slug : 'kb_' + slug.trim()
+  const valid =
+    /^kb_[a-z0-9][a-z0-9_]{0,44}$/.test(fullSlug) && title.trim() !== ''
 
-  const create = useMutation({
+  const save = useMutation({
     mutationFn: () =>
       putBlueprintSection({
+        // Preserve everything the config editor doesn't expose (position,
+        // maintainer_mode, write_policy, prompt_hint, pinned) so an edit
+        // never silently resets them; new pages get sensible defaults.
         cwd: GLOBAL_CWD,
         slug: fullSlug,
         title: title.trim(),
         description: description.trim(),
-        position: 99,
-        maintainer_mode: 'ai',
-        prompt_hint: '',
-        pinned: false,
+        position: section?.position ?? 99,
+        maintainer_mode: section?.maintainer_mode ?? 'ai',
+        write_policy: section?.write_policy,
+        prompt_hint: section?.prompt_hint ?? '',
+        pinned: section?.pinned ?? false,
         inject,
         nature,
       }),
     onSuccess: (sec) => {
-      toast.success(t('web.knowledge.kb.newPage.createdToast'))
+      toast.success(
+        editing
+          ? t('web.knowledge.kb.pageSettings.savedToast')
+          : t('web.knowledge.kb.newPage.createdToast'),
+      )
       qc.invalidateQueries({ queryKey: ['kb-blueprint'] })
       onOpenChange(false)
-      setSlug('')
-      setTitle('')
-      setDescription('')
-      onCreated(sec.slug)
+      onSaved(sec.slug)
     },
     onError: (e: Error) =>
       toast.error(t('web.knowledge.actionFailed'), { description: e.message }),
@@ -226,9 +246,15 @@ function NewPageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('web.knowledge.kb.newPage.title')}</DialogTitle>
+          <DialogTitle>
+            {editing
+              ? t('web.knowledge.kb.pageSettings.title')
+              : t('web.knowledge.kb.newPage.title')}
+          </DialogTitle>
           <DialogDescription>
-            {t('web.knowledge.kb.newPage.description')}
+            {editing
+              ? t('web.knowledge.kb.pageSettings.description')
+              : t('web.knowledge.kb.newPage.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -239,6 +265,8 @@ function NewPageDialog({
               onChange={(e) => setSlug(e.target.value)}
               placeholder={t('web.knowledge.kb.newPage.slugPlaceholder')}
               className="h-8 font-mono text-sm"
+              // The slug is the page's primary key — fixed once created.
+              disabled={editing}
             />
           </div>
           <Input
@@ -287,9 +315,11 @@ function NewPageDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('web.knowledge.kb.cancel')}
           </Button>
-          <Button disabled={!valid || create.isPending} onClick={() => create.mutate()}>
-            {create.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-            {t('web.knowledge.kb.newPage.create')}
+          <Button disabled={!valid || save.isPending} onClick={() => save.mutate()}>
+            {save.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+            {editing
+              ? t('web.knowledge.kb.pageSettings.save')
+              : t('web.knowledge.kb.newPage.create')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -306,6 +336,7 @@ function KnowledgeBaseView() {
   const [showProposal, setShowProposal] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [newPageOpen, setNewPageOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // The knowledge blueprint: the page set is data, not a constant.
   const blueprint = useQuery({
@@ -506,6 +537,21 @@ function KnowledgeBaseView() {
                 {t('web.knowledge.kb.discuss')}
               </button>
             )}
+            {/* Settings is offered on every page except the classic four,
+                whose titles are i18n-driven and natures are fixed by design.
+                Seeded pages like Integrations (pinned but non-classic) are
+                configurable — e.g. flipping inject to make the guide a
+                standing guardrail. Note this is a WIDER gate than Remove
+                (!pinned): a pinned page can be reconfigured but not deleted. */}
+            {!editing && selSection && !CLASSIC_KB_KINDS.has(selSection.slug) && (
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="border-border rounded-md border px-2.5 py-1 text-xs"
+                title={t('web.knowledge.kb.pageSettings.hint')}
+              >
+                {t('web.knowledge.kb.pageSettings.button')}
+              </button>
+            )}
             {!editing && selSection && !selSection.pinned && (
               <button
                 onClick={() => removePage.mutate()}
@@ -614,11 +660,23 @@ function KnowledgeBaseView() {
         </div>
       </div>
 
-      <NewPageDialog
-        open={newPageOpen}
-        onOpenChange={setNewPageOpen}
-        onCreated={(slug) => select(slug)}
-      />
+      {/* Mounted only while open so the dialog's lazy field initializers
+          re-seed on every open (new page = blank; edit = the section). */}
+      {newPageOpen && (
+        <PageSettingsDialog
+          open
+          onOpenChange={setNewPageOpen}
+          onSaved={(slug) => select(slug)}
+        />
+      )}
+      {settingsOpen && selSection && (
+        <PageSettingsDialog
+          open
+          onOpenChange={setSettingsOpen}
+          onSaved={(slug) => select(slug)}
+          section={selSection}
+        />
+      )}
     </div>
   )
 }

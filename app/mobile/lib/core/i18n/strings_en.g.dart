@@ -11280,6 +11280,7 @@ class TranslationsWebKnowledgeKbEn {
 	String get pageRemovedToast => 'Page removed';
 
 	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
+	late final TranslationsWebKnowledgeKbPageSettingsEn pageSettings = TranslationsWebKnowledgeKbPageSettingsEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -17327,6 +17328,33 @@ class TranslationsWebKnowledgeKbNewPageEn {
 	String get createdToast => 'Knowledge page created';
 }
 
+// Path: web.knowledge.kb.pageSettings
+class TranslationsWebKnowledgeKbPageSettingsEn {
+	TranslationsWebKnowledgeKbPageSettingsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Settings'
+	String get button => 'Settings';
+
+	/// en: 'Page settings'
+	String get title => 'Page settings';
+
+	/// en: 'Edit this page's title, summary, nature and injection. The slug is fixed and the page body is edited separately.'
+	String get description => 'Edit this page\'s title, summary, nature and injection. The slug is fixed and the page body is edited separately.';
+
+	/// en: 'Edit this page's title, summary, nature and inject flag'
+	String get hint => 'Edit this page\'s title, summary, nature and inject flag';
+
+	/// en: 'Save settings'
+	String get save => 'Save settings';
+
+	/// en: 'Page settings updated'
+	String get savedToast => 'Page settings updated';
+}
+
 // Path: web.knowledge.distill.retirement
 class TranslationsWebKnowledgeDistillRetirementEn {
 	TranslationsWebKnowledgeDistillRetirementEn.internal(this._root);
@@ -19936,6 +19964,12 @@ extension on Translations {
 			'web.knowledge.kb.newPage.injectHint' => 'Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.',
 			'web.knowledge.kb.newPage.create' => 'Create page',
 			'web.knowledge.kb.newPage.createdToast' => 'Knowledge page created',
+			'web.knowledge.kb.pageSettings.button' => 'Settings',
+			'web.knowledge.kb.pageSettings.title' => 'Page settings',
+			'web.knowledge.kb.pageSettings.description' => 'Edit this page\'s title, summary, nature and injection. The slug is fixed and the page body is edited separately.',
+			'web.knowledge.kb.pageSettings.hint' => 'Edit this page\'s title, summary, nature and inject flag',
+			'web.knowledge.kb.pageSettings.save' => 'Save settings',
+			'web.knowledge.kb.pageSettings.savedToast' => 'Page settings updated',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -20264,14 +20298,14 @@ extension on Translations {
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
+			_ => null,
+		} ?? switch (path) {
 			'more.identity.tokenExpires' => 'Token expires',
 			'more.sections.gateway' => 'Gateway',
 			'more.sections.plugins' => 'Plugins',
 			'more.sections.memory' => 'Memory',
 			'more.sections.system' => 'System',
 			'more.items.integrations.title' => 'Integrations',
-			_ => null,
-		} ?? switch (path) {
 			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
 			'more.items.activity.title' => 'Activity',
 			'more.items.activity.subtitle' => 'Integration API call audit',
@@ -20778,14 +20812,14 @@ extension on Translations {
 			'integrations.form.validateBaseUrl' => 'Base URL is required.',
 			'integrations.form.editFieldVersion' => 'Version',
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.copyCopied' => 'Copied',
 			'integrations.form.copyCopy' => 'Copy',
 			'integrations.defaultAgent.title' => 'Default agent',
 			'integrations.defaultAgent.description' => 'Applied to sessions this integration creates when its request omits the field. The request always wins.',
 			'integrations.defaultAgent.providerLabel' => 'Default provider',
 			'integrations.defaultAgent.providerNone' => 'No default',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.defaultAgent.modelLabel' => 'Default model',
 			'integrations.defaultAgent.modelHint' => 'Provider default (e.g. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Default Claude account',
@@ -21292,14 +21326,14 @@ extension on Translations {
 			'channels.errorPrefix.update' => 'Update failed',
 			'channels.errorPrefix.delete' => 'Delete failed',
 			'channels.failedToLoad' => 'Failed to load channels',
+			_ => null,
+		} ?? switch (path) {
 			'channels.kinds.telegram.description' => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.',
 			'channels.kinds.telegram.botTokenLabel' => 'Bot token',
 			'channels.kinds.telegram.botTokenHint' => 'From @BotFather. Stored in channel config; admin-only API.',
 			'channels.kinds.telegram.chatIdLabel' => 'Default chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Owner Telegram user ID(s)',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (comma-separated for more than one)',
 			'channels.kinds.telegram.ownerUserIdsHint' => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Two-way chat (route messages into the session)',
@@ -21806,14 +21840,14 @@ extension on Translations {
 			'cortexHub.reject' => 'Reject',
 			'cortexHub.approvedToast' => 'Proposal approved',
 			'cortexHub.rejectedToast' => 'Proposal rejected',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
 			'cortexSettings.title' => 'Cortex settings',
 			'cortexSettings.tabWorkers' => 'Workers',
 			'cortexSettings.tabCapture' => 'Capture & injection',
 			'cortexSettings.tabProviders' => 'Providers',
-			_ => null,
-		} ?? switch (path) {
 			'cortexSettings.providersHint' => 'LLM endpoints that summarizer/agent workers route to.',
 			'cortexSettings.providersEmpty' => 'No providers configured.',
 			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',

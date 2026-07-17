@@ -2835,6 +2835,14 @@
           "injectHint": "Apagado (recomendado): la página queda fuera del banner de arranque y los agentes la alcanzan bajo demanda vía búsqueda. Encendido: las fundacionales se inyectan como reglas vinculantes, las emergentes como referencia.",
           "create": "Crear página",
           "createdToast": "Página de conocimiento creada"
+        },
+        "pageSettings": {
+          "button": "Ajustes",
+          "title": "Ajustes de la página",
+          "description": "Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.",
+          "hint": "Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página",
+          "save": "Guardar ajustes",
+          "savedToast": "Ajustes de la página actualizados"
         }
       },
       "kinds": {

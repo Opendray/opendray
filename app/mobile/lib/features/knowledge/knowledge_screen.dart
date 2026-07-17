@@ -295,17 +295,30 @@ class _KbViewState extends ConsumerState<_KbView> {
   }
 
   // Create a new kb_* knowledge page (a global blueprint section), then
-  // select it. Mirrors the web NewPageDialog.
+  // select it. Mirrors the web PageSettingsDialog (create mode).
   Future<void> _newPage() async {
     final created = await showDialog<BlueprintSection>(
       context: context,
-      builder: (_) => const _NewKbPageDialog(),
+      builder: (_) => const _KbPageDialog(),
     );
     if (created == null || !mounted) return;
     await _loadSections();
     if (!mounted) return;
     setState(() => _kind = created.slug);
     await _load();
+  }
+
+  // Edit the selected custom page's config (title/description/nature/inject).
+  // Only offered for operator-added pages (the classic four aren't editable
+  // here). Mirrors the web PageSettingsDialog (edit mode).
+  Future<void> _editPageSettings(BlueprintSection section) async {
+    final saved = await showDialog<BlueprintSection>(
+      context: context,
+      builder: (_) => _KbPageDialog(section: section),
+    );
+    if (saved == null || !mounted) return;
+    await _loadSections();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -582,6 +595,19 @@ class _KbViewState extends ConsumerState<_KbView> {
                             onPressed: _regen,
                             child: Text(t.web.knowledge.kb.regenerate),
                           ),
+                          // Config editor for every non-classic page (_extra
+                          // already excludes the classic four). Seeded pages
+                          // like Integrations (pinned but non-classic) are
+                          // configurable too — wider than delete, which stays
+                          // pinned-gated. The classics keep i18n titles/fixed
+                          // natures, so they're not editable here.
+                          for (final s in _extra)
+                            if (s.slug == _kind)
+                              TextButton(
+                                onPressed: () => _editPageSettings(s),
+                                child: Text(
+                                    t.web.knowledge.kb.pageSettings.button),
+                              ),
                         ],
                       ],
                     ),
@@ -884,22 +910,32 @@ class _DetailSheet extends ConsumerWidget {
   }
 }
 
-// _NewKbPageDialog creates a kb_* knowledge page (a global blueprint
-// section). Mirrors the web NewPageDialog: slug (kb_ prefixed), title,
-// optional description, nature (foundational/emergent), inject toggle.
-class _NewKbPageDialog extends ConsumerStatefulWidget {
-  const _NewKbPageDialog();
+// _KbPageDialog creates OR edits a kb_* knowledge page's config (a global
+// blueprint section): slug (kb_ prefixed, fixed once created), title, optional
+// description, nature (foundational/emergent), inject toggle. Mirrors the web
+// PageSettingsDialog. Passing [section] switches it to edit mode; the page
+// body is edited separately. Returns the saved section on success.
+class _KbPageDialog extends ConsumerStatefulWidget {
+  const _KbPageDialog({this.section});
+  // Present = edit that section's settings; absent = create a new page.
+  final BlueprintSection? section;
 
   @override
-  ConsumerState<_NewKbPageDialog> createState() => _NewKbPageDialogState();
+  ConsumerState<_KbPageDialog> createState() => _KbPageDialogState();
 }
 
-class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
-  final _slug = TextEditingController();
-  final _title = TextEditingController();
-  final _desc = TextEditingController();
-  String _nature = 'emergent';
-  bool _inject = false;
+class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
+  late final BlueprintSection? _section = widget.section;
+  bool get _editing => _section != null;
+  late final _slug = TextEditingController(
+    text: _section?.slug.replaceFirst('kb_', '') ?? '',
+  );
+  late final _title = TextEditingController(text: _section?.title ?? '');
+  late final _desc = TextEditingController(text: _section?.description ?? '');
+  late String _nature = _section?.nature == 'foundational'
+      ? 'foundational'
+      : 'emergent';
+  late bool _inject = _section?.inject ?? false;
   bool _busy = false;
 
   static final _slugRe = RegExp(r'^kb_[a-z0-9][a-z0-9_]{0,44}$');
@@ -915,27 +951,35 @@ class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
   bool get _valid =>
       _slugRe.hasMatch('kb_${_slug.text.trim()}') && _title.text.trim().isNotEmpty;
 
-  Future<void> _create() async {
+  Future<void> _save() async {
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
       final sec = await ref.read(cortexApiProvider).putBlueprintSection(
             BlueprintSection(
               cwd: '__global__',
-              slug: 'kb_${_slug.text.trim()}',
+              // The slug is the page's primary key — fixed once created.
+              slug: _editing ? _section!.slug : 'kb_${_slug.text.trim()}',
               title: _title.text.trim(),
               description: _desc.text.trim(),
-              position: 99,
-              maintainerMode: 'ai',
-              promptHint: '',
-              pinned: false,
+              // Preserve fields the config editor doesn't expose so an edit
+              // never silently resets them; new pages get sensible defaults.
+              position: _section?.position ?? 99,
+              maintainerMode: _section?.maintainerMode ?? 'ai',
+              writePolicy: _section?.writePolicy ?? 'proposal',
+              promptHint: _section?.promptHint ?? '',
+              pinned: _section?.pinned ?? false,
               inject: _inject,
               nature: _nature,
             ),
           );
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text(t.web.knowledge.kb.newPage.createdToast)),
+        SnackBar(
+          content: Text(_editing
+              ? t.web.knowledge.kb.pageSettings.savedToast
+              : t.web.knowledge.kb.newPage.createdToast),
+        ),
       );
       Navigator.of(context).pop(sec);
     } on Object catch (e) {
@@ -951,13 +995,18 @@ class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(t.web.knowledge.kb.newPage.title),
+      title: Text(_editing
+          ? t.web.knowledge.kb.pageSettings.title
+          : t.web.knowledge.kb.newPage.title),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t.web.knowledge.kb.newPage.description,
+            Text(
+                _editing
+                    ? t.web.knowledge.kb.pageSettings.description
+                    : t.web.knowledge.kb.newPage.description,
                 style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 12),
             Row(
@@ -966,7 +1015,10 @@ class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
                 Expanded(
                   child: TextField(
                     controller: _slug,
-                    autofocus: true,
+                    autofocus: !_editing,
+                    // The slug is fixed once created.
+                    readOnly: _editing,
+                    enabled: !_editing,
                     decoration: InputDecoration(
                       hintText: t.web.knowledge.kb.newPage.slugPlaceholder,
                       isDense: true,
@@ -1028,8 +1080,10 @@ class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
           child: Text(t.web.knowledge.kb.cancel),
         ),
         FilledButton(
-          onPressed: (_valid && !_busy) ? _create : null,
-          child: Text(t.web.knowledge.kb.newPage.create),
+          onPressed: (_valid && !_busy) ? _save : null,
+          child: Text(_editing
+              ? t.web.knowledge.kb.pageSettings.save
+              : t.web.knowledge.kb.newPage.create),
         ),
       ],
     );
