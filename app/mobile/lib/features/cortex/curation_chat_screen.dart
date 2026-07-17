@@ -21,11 +21,14 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // summarizer/HTTP provider + a probed model.
 
 // Cloud-agent providers selectable for a discussion (mirrors the backend's
-// curation override set). '' = the global curation worker.
+// validConvProvider set + the worker's buildCommand switch). '' = the global
+// curation worker.
 const _curationProviders = <({String id, String label})>[
   (id: 'claude', label: 'Claude'),
   (id: 'codex', label: 'Codex'),
   (id: 'antigravity', label: 'Antigravity'),
+  (id: 'grok', label: 'Grok'),
+  (id: 'opencode', label: 'OpenCode'),
 ];
 
 class CurationChatScreen extends ConsumerStatefulWidget {
