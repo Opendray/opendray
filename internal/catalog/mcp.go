@@ -486,6 +486,16 @@ func renderGrokMCP(cwd string, servers []MCPServer) ([]string, map[string]string
 	if err := syncGrokWorkspaceMCP(cwd, entries); err != nil {
 		return nil, nil, err
 	}
+	// grok refuses to start repo-local (project-scoped) MCP servers in an
+	// UNTRUSTED folder — the memory/dbtool servers we just wrote to
+	// <cwd>/.grok/config.toml would be silently skipped otherwise (grok's own
+	// hint: "re-run with --trust"). opendray only spawns grok in the
+	// operator's own project dir, so mark it trusted: --trust persists the cwd
+	// to ~/.grok/trusted_folders.toml, the same gate that governs repo-local
+	// servers. Only when we actually injected servers.
+	if len(entries) > 0 {
+		return []string{"--trust"}, nil, nil
+	}
 	return nil, nil, nil
 }
 

@@ -426,8 +426,10 @@ func TestRenderGrokMCP_WritesProjectConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(args) != 0 || len(env) != 0 {
-		t.Errorf("args=%v env=%v, want none (grok reads <cwd>/.grok/config.toml)", args, env)
+	// grok reads <cwd>/.grok/config.toml, but repo-local MCP servers only
+	// start in a TRUSTED folder — so we pass --trust (and no env).
+	if len(args) != 1 || args[0] != "--trust" || len(env) != 0 {
+		t.Errorf("args=%v env=%v, want [--trust] and no env", args, env)
 	}
 	mcps, ok := readGrokConfig(t, cwd)["mcp_servers"].(map[string]any)
 	if !ok {
