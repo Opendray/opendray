@@ -119,6 +119,9 @@ class TranslationsCommonEn {
 
 	/// en: 'Clear'
 	String get clear => 'Clear';
+
+	/// en: 'More'
+	String get more => 'More';
 }
 
 // Path: auth
@@ -17777,6 +17780,7 @@ extension on Translations {
 			'common.enabled' => 'Enabled',
 			'common.refresh' => 'Refresh',
 			'common.clear' => 'Clear',
+			'common.more' => 'More',
 			'auth.signInTitle' => 'Sign in',
 			'auth.changeServer' => 'Change',
 			'auth.username' => 'Username',
@@ -18275,9 +18279,9 @@ extension on Translations {
 			'web.project.inbox.rejectedToast' => 'Rejected',
 			'web.project.inbox.rejectFailedToast' => 'Reject failed',
 			'web.project.inbox.sessionPrefix' => 'ses',
-			'web.project.inbox.warning' => ({required Object label}) => 'Approve will REPLACE the current ${label} entirely.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.warning' => ({required Object label}) => 'Approve will REPLACE the current ${label} entirely.',
 			'web.project.inbox.warningSuffix' => 'Review the diff below; this isn\'t a merge.',
 			'web.project.inbox.current' => 'Current',
 			'web.project.inbox.proposed' => 'Proposed',
@@ -18789,9 +18793,9 @@ extension on Translations {
 			'web.channels.toasts.updated' => 'Channel updated',
 			'web.channels.toasts.muted' => 'Channel muted',
 			'web.channels.toasts.unmuted' => 'Channel unmuted',
-			'web.channels.dialog.editTitle' => 'Edit channel',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.editTitle' => 'Edit channel',
 			'web.channels.dialog.createTitle' => 'Register channel',
 			'web.channels.dialog.descriptionBridge' => 'External adapter (Python/Node/...) connects via WebSocket and presents this token.',
 			'web.channels.dialog.descriptionDefault' => 'Configure messaging integration.',
@@ -19303,9 +19307,9 @@ extension on Translations {
 			'web.backups.schedulesTab.columns.enabled' => 'Enabled',
 			'web.backups.schedulesTab.columns.actions' => 'Actions',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
-			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
 			'web.backups.newSchedule.title' => 'New backup schedule',
 			'web.backups.newSchedule.targetLabel' => 'Targets',
 			'web.backups.newSchedule.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
@@ -19817,9 +19821,9 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Rule ${name} created',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
 			'web.memoryAmbient.profiles.title' => 'Injection profiles',
-			'web.memoryAmbient.profiles.addButton' => 'Add profile',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.addButton' => 'Add profile',
 			'web.memoryAmbient.profiles.intro' => 'At spawn time opendray prepends a markdown banner of recent project memories to the agent\'s system prompt — IF a profile is configured. Without a profile, the model still uses memory_search on demand.',
 			'web.memoryAmbient.profiles.empty' => 'No injection profile. Memories are not auto-injected at spawn — model still uses memory_search.',
 			'web.memoryAmbient.profiles.row.globalDefault' => 'global default',
@@ -20331,9 +20335,9 @@ extension on Translations {
 			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
 			'web.roundTable.plan.bindProject' => 'Bind',
 			'web.roundTable.plan.projectBound' => 'Project bound',
-			'web.roundTable.plan.runTitle' => 'Run step',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.runTitle' => 'Run step',
 			'web.roundTable.plan.runStep' => 'Run',
 			'web.roundTable.plan.account' => 'Account',
 			'web.roundTable.plan.accountDefault' => 'Default',
@@ -20845,9 +20849,9 @@ extension on Translations {
 			'integrations.directionInbound' => 'Inbound',
 			'integrations.directionOutbound' => 'Outbound',
 			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
-			'integrations.form.fieldName' => 'Name',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.form.fieldName' => 'Name',
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => 'Route prefix',
@@ -21359,9 +21363,9 @@ extension on Translations {
 			'channels.snacks.channelEnabled' => 'Channel enabled.',
 			'channels.snacks.channelDisabled' => 'Channel disabled.',
 			'channels.snacks.channelMuted' => 'Channel muted.',
-			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
 			_ => null,
 		} ?? switch (path) {
+			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
 			'channels.snacks.configUpdated' => 'Channel config updated.',
 			'channels.snacks.channelDeleted' => 'Channel deleted.',
 			'channels.errorPrefix.test' => 'Test failed',
@@ -21873,9 +21877,9 @@ extension on Translations {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} to review',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
-			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
 			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',
 			'cortexHub.preview' => 'Preview',

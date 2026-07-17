@@ -12,7 +12,8 @@
     "copy": "Copy",
     "enabled": "Enabled",
     "refresh": "Refresh",
-    "clear": "Clear"
+    "clear": "Clear",
+    "more": "More"
   },
   "auth": {
     "signInTitle": "Sign in",

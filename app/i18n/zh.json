@@ -12,7 +12,8 @@
     "copy": "复制",
     "enabled": "已启用",
     "refresh": "刷新",
-    "clear": "清除"
+    "clear": "清除",
+    "more": "更多"
   },
   "auth": {
     "signInTitle": "登录",

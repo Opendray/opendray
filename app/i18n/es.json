@@ -12,7 +12,8 @@
     "copy": "Copiar",
     "enabled": "Activado",
     "refresh": "Actualizar",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "more": "Más"
   },
   "auth": {
     "signInTitle": "Iniciar sesión",

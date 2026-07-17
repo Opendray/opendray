@@ -92,6 +92,7 @@ class _TranslationsCommonEs extends TranslationsCommonEn {
 	@override String get enabled => 'Activado';
 	@override String get refresh => 'Actualizar';
 	@override String get clear => 'Limpiar';
+	@override String get more => 'Más';
 }
 
 // Path: auth
@@ -9427,6 +9428,7 @@ extension on TranslationsEs {
 			'common.enabled' => 'Activado',
 			'common.refresh' => 'Actualizar',
 			'common.clear' => 'Limpiar',
+			'common.more' => 'Más',
 			'auth.signInTitle' => 'Iniciar sesión',
 			'auth.changeServer' => 'Cambiar',
 			'auth.username' => 'Usuario',
@@ -9925,9 +9927,9 @@ extension on TranslationsEs {
 			'web.project.inbox.rejectedToast' => 'Rechazado',
 			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
 			'web.project.inbox.sessionPrefix' => 'ses',
-			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
 			'web.project.inbox.current' => 'Actual',
 			'web.project.inbox.proposed' => 'Propuesto',
@@ -10439,9 +10441,9 @@ extension on TranslationsEs {
 			'web.channels.toasts.updated' => 'Canal actualizado',
 			'web.channels.toasts.muted' => 'Canal silenciado',
 			'web.channels.toasts.unmuted' => 'Canal reactivado',
-			'web.channels.dialog.editTitle' => 'Editar canal',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
 			'web.channels.dialog.descriptionDefault' => 'Configura la integración de mensajería.',
@@ -10953,9 +10955,9 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.columns.enabled' => 'Habilitada',
 			'web.backups.schedulesTab.columns.actions' => 'Acciones',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
-			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			'web.backups.newSchedule.targetLabel' => 'Destinos',
 			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
@@ -11467,9 +11469,9 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Regla ${name} creada',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
-			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
 			'web.memoryAmbient.profiles.row.globalDefault' => 'predeterminado global',
@@ -11981,9 +11983,9 @@ extension on TranslationsEs {
 			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
 			'web.roundTable.plan.bindProject' => 'Vincular',
 			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
-			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
 			'web.roundTable.plan.runStep' => 'Ejecutar',
 			'web.roundTable.plan.account' => 'Cuenta',
 			'web.roundTable.plan.accountDefault' => 'Predeterminada',
@@ -12495,9 +12497,9 @@ extension on TranslationsEs {
 			'integrations.directionInbound' => 'Entrantes',
 			'integrations.directionOutbound' => 'Salientes',
 			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
-			'integrations.form.fieldName' => 'Nombre',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.form.fieldName' => 'Nombre',
 			'integrations.form.fieldNameHint' => 'Mi Bot',
 			'integrations.form.fieldBaseUrl' => 'URL base',
 			'integrations.form.fieldRoutePrefix' => 'Prefijo de ruta',
@@ -13009,9 +13011,9 @@ extension on TranslationsEs {
 			'channels.snacks.channelEnabled' => 'Canal activado.',
 			'channels.snacks.channelDisabled' => 'Canal desactivado.',
 			'channels.snacks.channelMuted' => 'Canal silenciado.',
-			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
 			_ => null,
 		} ?? switch (path) {
+			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
 			'channels.snacks.configUpdated' => 'Configuración del canal actualizada.',
 			'channels.snacks.channelDeleted' => 'Canal eliminado.',
 			'channels.errorPrefix.test' => 'Error en la prueba',
@@ -13523,9 +13525,9 @@ extension on TranslationsEs {
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
-			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
 			'cortexHub.preview' => 'Vista previa',

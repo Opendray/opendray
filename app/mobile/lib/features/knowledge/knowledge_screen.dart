@@ -244,6 +244,10 @@ class _KindChip extends StatelessWidget {
   }
 }
 
+// Secondary per-page actions, collapsed into a ⋮ overflow menu so the KB
+// header stays compact on a phone screen (Edit is the visible primary).
+enum _KbAction { discuss, unlock, regenerate, settings }
+
 // _KbView — the curated Knowledge Base pages (the human-readable surface),
 // fused with the note system (projectdoc kb_* docs). Global pages + per-project
 // handbook; AI-drafted, human edit locks a page from AI overwrite.
@@ -324,6 +328,29 @@ class _KbViewState extends ConsumerState<_KbView> {
     if (saved == null || !mounted) return;
     await _loadSections();
     if (mounted) setState(() {});
+  }
+
+  // Dispatch a ⋮ overflow-menu action for the current page.
+  void _onKbAction(_KbAction action, ProjectDoc d, BlueprintSection? custom) {
+    switch (action) {
+      case _KbAction.discuss:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CurationChatScreen(
+              targetKind: 'kb_page',
+              targetCwd: _global,
+              targetSlug: _kind,
+              onRevision: _load,
+            ),
+          ),
+        );
+      case _KbAction.unlock:
+        _unlock(d);
+      case _KbAction.regenerate:
+        _regen();
+      case _KbAction.settings:
+        if (custom != null) _editPageSettings(custom);
+    }
   }
 
   // Pick the cloud agent + model (+ Claude account) for the KB Librarian,
@@ -517,40 +544,44 @@ class _KbViewState extends ConsumerState<_KbView> {
     final scheme = Theme.of(context).colorScheme;
     return Column(
       children: [
+        // Page navigation: a horizontal scroll of section chips (nav only),
+        // with the two global actions (new page / Librarian) as trailing
+        // icon buttons so their long labels don't crowd out the chips on a
+        // narrow screen.
         SizedBox(
-          height: 44,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                _sectionLabel(t.web.knowledge.kb.foundational),
-                for (final k in _foundational) _chip(k),
-                for (final s in _extra)
-                  if (s.nature == 'foundational') _chip(s.slug),
-                _sectionLabel(t.web.knowledge.kb.emergent),
-                for (final k in _emergent) _chip(k),
-                for (final s in _extra)
-                  if (s.nature != 'foundational') _chip(s.slug),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 4),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.add, size: 16),
-                    label: Text(t.web.knowledge.kb.newPage.button),
-                    onPressed: _newPage,
+          height: 48,
+          child: Row(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Row(
+                    children: [
+                      _sectionLabel(t.web.knowledge.kb.foundational),
+                      for (final k in _foundational) _chip(k),
+                      for (final s in _extra)
+                        if (s.nature == 'foundational') _chip(s.slug),
+                      _sectionLabel(t.web.knowledge.kb.emergent),
+                      for (final k in _emergent) _chip(k),
+                      for (final s in _extra)
+                        if (s.nature != 'foundational') _chip(s.slug),
+                    ],
                   ),
                 ),
-                // Cross-page KB admin — the Librarian agent session.
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 4),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.auto_awesome, size: 16),
-                    label: Text(t.web.knowledge.kb.librarian.button),
-                    onPressed: _launchLibrarian,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 22),
+                tooltip: t.web.knowledge.kb.newPage.button,
+                onPressed: _newPage,
+              ),
+              IconButton(
+                icon: const Icon(Icons.auto_awesome, size: 20),
+                tooltip: t.web.knowledge.kb.librarian.button,
+                onPressed: _launchLibrarian,
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
         ),
         Expanded(
@@ -566,57 +597,62 @@ class _KbViewState extends ConsumerState<_KbView> {
               final content = _stripSig(d.content);
               final locked = d.updatedBy == 'operator';
               final pending = _pending;
+              // The custom (non-classic) page for the current selection, if any
+              // — drives whether "Settings" is offered.
+              BlueprintSection? custom;
+              for (final s in _extra) {
+                if (s.slug == _kind) {
+                  custom = s;
+                  break;
+                }
+              }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Compact action bar: the page's nature + lock badges on the
+                  // left, then the primary Edit action + a ⋮ menu for the rest
+                  // (Discuss / Unlock / Regenerate / Settings). Keeps everything
+                  // on one line instead of a wrapping button pile.
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    padding: const EdgeInsets.fromLTRB(12, 4, 4, 0),
+                    child: Row(
                       children: [
-                        Chip(
-                          label: Text(
-                            _isFoundational
-                                ? t.web.knowledge.kb.bindingBadge
-                                : t.web.knowledge.kb.referenceBadge,
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                          backgroundColor: _isFoundational
-                              ? scheme.tertiaryContainer
-                              : scheme.secondaryContainer,
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        if (d.isPersisted)
-                          Chip(
-                            label: Text(
-                              locked
-                                  ? t.web.knowledge.kb.locked
-                                  : t.web.knowledge.kb.aiDrafted,
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        if (!_editing) ...[
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => CurationChatScreen(
-                                      targetKind: 'kb_page',
-                                      targetCwd: _global,
-                                      targetSlug: _kind,
-                                      onRevision: _load,
-                                    ),
-                                  ),
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Chip(
+                                label: Text(
+                                  _isFoundational
+                                      ? t.web.knowledge.kb.bindingBadge
+                                      : t.web.knowledge.kb.referenceBadge,
+                                  style: const TextStyle(fontSize: 10),
                                 ),
-                            child: Text(t.web.cortex.chat.show),
+                                backgroundColor: _isFoundational
+                                    ? scheme.tertiaryContainer
+                                    : scheme.secondaryContainer,
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              if (d.isPersisted)
+                                Chip(
+                                  label: Text(
+                                    locked
+                                        ? t.web.knowledge.kb.locked
+                                        : t.web.knowledge.kb.aiDrafted,
+                                    style: const TextStyle(fontSize: 10),
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                            ],
                           ),
+                        ),
+                        if (!_editing) ...[
                           TextButton(
                             onPressed: () {
                               _editCtrl.text = content;
@@ -624,28 +660,32 @@ class _KbViewState extends ConsumerState<_KbView> {
                             },
                             child: Text(t.web.knowledge.kb.edit),
                           ),
-                          if (locked)
-                            TextButton(
-                              onPressed: () => _unlock(d),
-                              child: Text(t.web.knowledge.kb.unlock),
-                            ),
-                          TextButton(
-                            onPressed: _regen,
-                            child: Text(t.web.knowledge.kb.regenerate),
-                          ),
-                          // Config editor for every non-classic page (_extra
-                          // already excludes the classic four). Seeded pages
-                          // like Integrations (pinned but non-classic) are
-                          // configurable too — wider than delete, which stays
-                          // pinned-gated. The classics keep i18n titles/fixed
-                          // natures, so they're not editable here.
-                          for (final s in _extra)
-                            if (s.slug == _kind)
-                              TextButton(
-                                onPressed: () => _editPageSettings(s),
-                                child: Text(
-                                    t.web.knowledge.kb.pageSettings.button),
+                          PopupMenuButton<_KbAction>(
+                            icon: const Icon(Icons.more_vert, size: 20),
+                            tooltip: t.common.more,
+                            onSelected: (a) => _onKbAction(a, d, custom),
+                            itemBuilder: (_) => [
+                              PopupMenuItem(
+                                value: _KbAction.discuss,
+                                child: Text(t.web.cortex.chat.show),
                               ),
+                              if (locked)
+                                PopupMenuItem(
+                                  value: _KbAction.unlock,
+                                  child: Text(t.web.knowledge.kb.unlock),
+                                ),
+                              PopupMenuItem(
+                                value: _KbAction.regenerate,
+                                child: Text(t.web.knowledge.kb.regenerate),
+                              ),
+                              if (custom != null)
+                                PopupMenuItem(
+                                  value: _KbAction.settings,
+                                  child:
+                                      Text(t.web.knowledge.kb.pageSettings.button),
+                                ),
+                            ],
+                          ),
                         ],
                       ],
                     ),
