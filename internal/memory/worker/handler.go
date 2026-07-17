@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+
+	"github.com/opendray/opendray-v2/internal/providers"
 )
 
 // Handlers exposes per-task worker config + metrics over HTTP.
@@ -43,59 +45,38 @@ func (h *Handlers) Mount(r chi.Router) {
 	})
 }
 
-// ModelOption is one selectable model for an agent CLI.
-type ModelOption struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-	// Recommended marks the safe defaults (stable aliases that track
-	// the latest version — immune to version-number drift).
-	Recommended bool `json:"recommended,omitempty"`
-}
-
-// agentModelCatalog lists the selectable models per agent CLI. The
-// claude entries lead with the STABLE ALIASES (haiku/sonnet/opus) —
-// the CLI resolves them to the current model version, so they never
-// break on a version bump; pinned full ids follow for operators who
-// need an exact snapshot. Discovered live for local HTTP providers
-// (the summarizer probe), curated here for agent CLIs which expose no
-// reliable list command.
-var agentModelCatalog = map[string][]ModelOption{
-	"claude": {
-		{ID: "haiku", Label: "Haiku — fastest/cheapest (alias, tracks latest)", Recommended: true},
-		{ID: "sonnet", Label: "Sonnet — balanced (alias, tracks latest)", Recommended: true},
-		{ID: "opus", Label: "Opus — deepest reasoning (alias, tracks latest)", Recommended: true},
-		{ID: "claude-haiku-4-5", Label: "claude-haiku-4-5 (pinned)"},
-		{ID: "claude-sonnet-4-6", Label: "claude-sonnet-4-6 (pinned)"},
-		{ID: "claude-opus-4-8", Label: "claude-opus-4-8 (pinned)"},
-	},
-	"codex": {
-		{ID: "gpt-5.1-codex-mini", Label: "gpt-5.1-codex-mini — cheapest", Recommended: true},
-		{ID: "gpt-5.1-codex", Label: "gpt-5.1-codex — balanced", Recommended: true},
-		{ID: "gpt-5.1", Label: "gpt-5.1 — general/deepest"},
-	},
-	// Antigravity (agy) — friendly model names exactly as `agy models`
-	// lists them (the CLI's --model takes these strings verbatim).
-	"antigravity": {
-		{ID: "Gemini 3.5 Flash (Medium)", Label: "Gemini 3.5 Flash (Medium) — balanced", Recommended: true},
-		{ID: "Gemini 3.5 Flash (Low)", Label: "Gemini 3.5 Flash (Low) — cheapest", Recommended: true},
-		{ID: "Gemini 3.1 Pro (High)", Label: "Gemini 3.1 Pro (High) — deepest"},
-		{ID: "Claude Sonnet 4.6 (Thinking)", Label: "Claude Sonnet 4.6 (Thinking)"},
-		{ID: "GPT-OSS 120B (Medium)", Label: "GPT-OSS 120B (Medium)"},
-	},
+// modelOption is the wire shape the Discuss-with-AI model dropdown expects
+// (id = the --model value). It maps from the shared providers.ModelOption.
+type modelOption struct {
+	ID          string `json:"id"`
+	Label       string `json:"label"`
+	Recommended bool   `json:"recommended,omitempty"`
 }
 
 // listModels returns the model options for ?provider_id=claude|codex|
-// antigravity. Local/HTTP providers don't use this — their model
-// list comes live from the endpoint itself (memory probe, /v1/models).
+// antigravity|grok|opencode. It reads the shared providers catalog (the same
+// one Round Table uses) so antigravity/opencode are enumerated live from their
+// CLIs and never drift. Local/HTTP providers don't use this — their model list
+// comes live from the endpoint itself (memory probe, /v1/models).
 func (h *Handlers) listModels(w http.ResponseWriter, r *http.Request) {
 	provider := r.URL.Query().Get("provider_id")
-	models, ok := agentModelCatalog[provider]
+	catalog := providers.AgentModelOptions(r.Context())
+	models, ok := catalog[provider]
 	if !ok {
 		writeError(w, http.StatusBadRequest,
-			errors.New("provider_id must be claude, codex, or antigravity"))
+			errors.New("provider_id must be one of claude, codex, antigravity, grok, opencode"))
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"models": models})
+	// The dropdown supplies its own "CLI default" option, so drop the
+	// catalog's empty-value Default to avoid a duplicate.
+	out := make([]modelOption, 0, len(models))
+	for _, m := range models {
+		if m.Value == "" {
+			continue
+		}
+		out = append(out, modelOption{ID: m.Value, Label: m.Label, Recommended: m.Recommended})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"models": out})
 }
 
 // list returns the config rows for all four tasks. Used by the
