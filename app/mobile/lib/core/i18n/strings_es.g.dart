@@ -3281,6 +3281,7 @@ class _TranslationsWebSessionsSpawnEs extends TranslationsWebSessionsSpawnEn {
 	@override String get bypassCodex => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassAntigravity => 'Omitir permisos / YOLO (--dangerously-skip-permissions)';
 	@override String get bypassOpencode => 'Omitir permisos (--dangerously-skip-permissions)';
+	@override String get bypassGrok => 'Saltar permisos / YOLO (--always-approve)';
 	@override String get bypassOnHint => 'Esta session se ejecutará con autonomía elevada.';
 	@override String get bypassOffHint => 'Desactivado. Las confirmaciones y los prompts se comportan con normalidad.';
 	@override String get errorPickProvider => 'Elige un proveedor.';
@@ -6730,6 +6731,7 @@ class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnS
 	@override String get labelCodex => 'Omitir aprobaciones y sandbox';
 	@override String get labelAntigravity => 'Omitir permisos / YOLO';
 	@override String get labelOpencode => 'Omitir permisos';
+	@override String get labelGrok => 'Saltar permisos / YOLO (--always-approve)';
 	@override String get subtitleOn => 'Esta session se ejecutará con autonomía elevada.';
 	@override String get subtitleOff => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.';
 }
@@ -9593,6 +9595,7 @@ extension on TranslationsEs {
 			'web.sessions.spawn.bypassCodex' => 'Omitir aprobaciones y sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassAntigravity' => 'Omitir permisos / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOpencode' => 'Omitir permisos (--dangerously-skip-permissions)',
+			'web.sessions.spawn.bypassGrok' => 'Saltar permisos / YOLO (--always-approve)',
 			'web.sessions.spawn.bypassOnHint' => 'Esta session se ejecutará con autonomía elevada.',
 			'web.sessions.spawn.bypassOffHint' => 'Desactivado. Las confirmaciones y los prompts se comportan con normalidad.',
 			'web.sessions.spawn.errorPickProvider' => 'Elige un proveedor.',
@@ -9932,9 +9935,9 @@ extension on TranslationsEs {
 			'web.project.inbox.emptyHint' => 'Los agentes presentan propuestas aquí mediante las herramientas MCP `project_goal_set` / `project_plan_set`.',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} actualizado',
 			'web.project.inbox.approveFailedToast' => 'Error al aprobar',
-			'web.project.inbox.rejectedToast' => 'Rechazado',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.rejectedToast' => 'Rechazado',
 			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
@@ -10446,9 +10449,9 @@ extension on TranslationsEs {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => '¿Eliminar el canal ${id}?',
 			'web.channels.toasts.deleted' => 'Canal eliminado',
 			'web.channels.toasts.created' => 'Canal creado',
-			'web.channels.toasts.updated' => 'Canal actualizado',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.toasts.updated' => 'Canal actualizado',
 			'web.channels.toasts.muted' => 'Canal silenciado',
 			'web.channels.toasts.unmuted' => 'Canal reactivado',
 			'web.channels.dialog.editTitle' => 'Editar canal',
@@ -10960,9 +10963,9 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.columns.interval' => 'Intervalo',
 			'web.backups.schedulesTab.columns.keep' => 'Conservar',
 			'web.backups.schedulesTab.columns.nextRun' => 'Próxima ejecución',
-			'web.backups.schedulesTab.columns.enabled' => 'Habilitada',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.columns.enabled' => 'Habilitada',
 			'web.backups.schedulesTab.columns.actions' => 'Acciones',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
@@ -11474,9 +11477,9 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.dedupHint' => 'Más alto = deduplicación más estricta. 0.85 es el punto óptimo recomendado.',
 			'web.memoryAmbient.rules.dialog.create' => 'Crear',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'El nombre es obligatorio',
-			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Regla ${name} creada',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Regla ${name} creada',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
 			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
@@ -11988,9 +11991,9 @@ extension on TranslationsEs {
 			'web.roundTable.plan.rerun' => 'Re-ejecutar',
 			'web.roundTable.plan.running' => 'En curso',
 			'web.roundTable.plan.done' => 'Hecho',
-			'web.roundTable.plan.pending' => 'Pendiente',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.pending' => 'Pendiente',
 			'web.roundTable.plan.openSession' => 'Abrir sesión',
 			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
 			'web.roundTable.plan.bindProject' => 'Vincular',
@@ -12297,6 +12300,7 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.bypass.labelCodex' => 'Omitir aprobaciones y sandbox',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Omitir permisos / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
+			'sessions.spawnSheet.bypass.labelGrok' => 'Saltar permisos / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
 			'sessions.spawnSheet.noProviders.title' => 'No hay proveedores configurados',
@@ -12501,10 +12505,10 @@ extension on TranslationsEs {
 			'integrations.kvCreated' => 'Creada',
 			'integrations.kvKeyRotated' => 'Key rotada',
 			'integrations.detailLoadFailed' => ({required Object error}) => 'Error al cargar la integración: ${error}',
-			'integrations.callsLoadFailed' => 'Error al cargar las llamadas',
-			'integrations.noMatchingCalls' => 'Aún no hay llamadas coincidentes en el registro.',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.callsLoadFailed' => 'Error al cargar las llamadas',
+			'integrations.noMatchingCalls' => 'Aún no hay llamadas coincidentes en el registro.',
 			'integrations.directionAll' => 'Todas',
 			'integrations.directionInbound' => 'Entrantes',
 			'integrations.directionOutbound' => 'Salientes',
@@ -13015,10 +13019,10 @@ extension on TranslationsEs {
 			'channels.badges.starting' => 'iniciando…',
 			'channels.badges.disabled' => 'desactivado',
 			'channels.badges.muted' => 'silenciado',
-			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
-			'channels.bridgeWebOnly' => 'Los canales bridge solo están disponibles en la web',
 			_ => null,
 		} ?? switch (path) {
+			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
+			'channels.bridgeWebOnly' => 'Los canales bridge solo están disponibles en la web',
 			'channels.bridgeEmptyAdd' => 'Añade uno desde el admin web: Canales → Nuevo.',
 			'channels.deleteBody' => 'Detiene el canal y elimina su configuración. Las notificaciones en curso dirigidas a él se descartarán de forma silenciosa.',
 			'channels.snacks.testDispatched' => 'Mensaje de prueba enviado.',
@@ -13529,10 +13533,10 @@ extension on TranslationsEs {
 			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.',
 			'cortexHub.settings' => 'Ajustes',
 			'cortexHub.memory' => 'Memoria',
-			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
-			'cortexHub.notes' => 'Notas',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
+			'cortexHub.notes' => 'Notas',
 			'cortexHub.notesDesc' => 'El objetivo / plan / diario oficial de cada proyecto.',
 			'cortexHub.knowledge' => 'Conocimiento',
 			'cortexHub.knowledgeDesc' => 'Experiencia destilada entre proyectos.',
