@@ -92,6 +92,7 @@ class _TranslationsCommonZh extends TranslationsCommonEn {
 	@override String get enabled => '已启用';
 	@override String get refresh => '刷新';
 	@override String get clear => '清除';
+	@override String get more => '更多';
 }
 
 // Path: auth
@@ -5751,6 +5752,8 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get discuss => '与 AI 讨论';
 	@override String get discussHint => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写';
 	@override String get onDemand => '按需';
+	@override String get searchHint => '搜索知识页';
+	@override String get searchEmpty => '没有匹配的知识页';
 	@override String get removePage => '移除页面';
 	@override String get removePageHint => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）';
 	@override String get pageRemovedToast => '页面已移除';
@@ -9427,6 +9430,7 @@ extension on TranslationsZh {
 			'common.enabled' => '已启用',
 			'common.refresh' => '刷新',
 			'common.clear' => '清除',
+			'common.more' => '更多',
 			'auth.signInTitle' => '登录',
 			'auth.changeServer' => '更换',
 			'auth.username' => '用户名',
@@ -9925,9 +9929,9 @@ extension on TranslationsZh {
 			'web.project.inbox.rejectedToast' => '已驳回',
 			'web.project.inbox.rejectFailedToast' => '驳回失败',
 			'web.project.inbox.sessionPrefix' => 'ses',
-			'web.project.inbox.warning' => ({required Object label}) => '批准将完全替换当前${label}。',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.warning' => ({required Object label}) => '批准将完全替换当前${label}。',
 			'web.project.inbox.warningSuffix' => '请检查下方 diff；这不是合并。',
 			'web.project.inbox.current' => '当前',
 			'web.project.inbox.proposed' => '提议',
@@ -10439,9 +10443,9 @@ extension on TranslationsZh {
 			'web.channels.toasts.updated' => '频道已更新',
 			'web.channels.toasts.muted' => '频道已静音',
 			'web.channels.toasts.unmuted' => '频道已取消静音',
-			'web.channels.dialog.editTitle' => '编辑频道',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.editTitle' => '编辑频道',
 			'web.channels.dialog.createTitle' => '注册频道',
 			'web.channels.dialog.descriptionBridge' => '外部适配器（Python/Node/...）通过 WebSocket 连接并出示此 token。',
 			'web.channels.dialog.descriptionDefault' => '配置消息集成。',
@@ -10953,9 +10957,9 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.columns.enabled' => '启用',
 			'web.backups.schedulesTab.columns.actions' => '操作',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} 个备份',
-			'web.backups.schedulesTab.deleteTooltip' => '删除',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.deleteTooltip' => '删除',
 			'web.backups.newSchedule.title' => '新建备份计划',
 			'web.backups.newSchedule.targetLabel' => '目标',
 			'web.backups.newSchedule.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
@@ -11467,9 +11471,9 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => '已创建规则 ${name}',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.profiles.title' => 'Injection Profiles',
-			'web.memoryAmbient.profiles.addButton' => '添加 profile',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.addButton' => '添加 profile',
 			'web.memoryAmbient.profiles.intro' => 'spawn 时，opendray 会把最近的项目记忆作为一段 markdown banner 拼接到 agent 的 system prompt — 前提是配置了 profile。没有 profile 时，模型仍可按需调用 memory_search。',
 			'web.memoryAmbient.profiles.empty' => '尚无 injection profile。spawn 时不会自动注入记忆 — 模型仍可使用 memory_search。',
 			'web.memoryAmbient.profiles.row.globalDefault' => '全局默认',
@@ -11635,6 +11639,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.discuss' => '与 AI 讨论',
 			'web.knowledge.kb.discussHint' => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写',
 			'web.knowledge.kb.onDemand' => '按需',
+			'web.knowledge.kb.searchHint' => '搜索知识页',
+			'web.knowledge.kb.searchEmpty' => '没有匹配的知识页',
 			'web.knowledge.kb.removePage' => '移除页面',
 			'web.knowledge.kb.removePageHint' => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）',
 			'web.knowledge.kb.pageRemovedToast' => '页面已移除',
@@ -11979,11 +11985,11 @@ extension on TranslationsZh {
 			'web.roundTable.plan.pending' => '待运行',
 			'web.roundTable.plan.openSession' => '打开会话',
 			'web.roundTable.plan.needProject' => '运行步骤前需绑定项目(cwd)。',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.bindProject' => '绑定',
 			'web.roundTable.plan.projectBound' => '项目已绑定',
 			'web.roundTable.plan.runTitle' => '运行此步',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => '运行',
 			'web.roundTable.plan.account' => '账号',
 			'web.roundTable.plan.accountDefault' => '默认',
@@ -12493,11 +12499,11 @@ extension on TranslationsZh {
 			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
 			'integrations.directionAll' => '全部',
 			'integrations.directionInbound' => '入站',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.directionOutbound' => '出站',
 			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
 			'integrations.form.fieldName' => '名称',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => '路由前缀',
@@ -13007,11 +13013,11 @@ extension on TranslationsZh {
 			'channels.deleteBody' => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。',
 			'channels.snacks.testDispatched' => '测试消息已发送。',
 			'channels.snacks.channelEnabled' => '通道已启用。',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.channelDisabled' => '通道已停用。',
 			'channels.snacks.channelMuted' => '通道已静音。',
 			'channels.snacks.channelUnmuted' => '通道已取消静音。',
-			_ => null,
-		} ?? switch (path) {
 			'channels.snacks.configUpdated' => '通道配置已更新。',
 			'channels.snacks.channelDeleted' => '通道已删除。',
 			'channels.errorPrefix.test' => '测试失败',
@@ -13521,11 +13527,11 @@ extension on TranslationsZh {
 			'cortexHub.knowledge' => '知识',
 			'cortexHub.knowledgeDesc' => '跨项目沉淀的专业知识。',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} 条待审',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.disabled' => '已禁用',
 			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
 			'cortexHub.kbLabel' => '知识库',
 			'cortexHub.preview' => '预览',

@@ -244,6 +244,10 @@ class _KindChip extends StatelessWidget {
   }
 }
 
+// Secondary per-page actions, collapsed into a ⋮ overflow menu so the KB
+// header stays compact on a phone screen (Edit is the visible primary).
+enum _KbAction { discuss, unlock, regenerate, settings }
+
 // _KbView — the curated Knowledge Base pages (the human-readable surface),
 // fused with the note system (projectdoc kb_* docs). Global pages + per-project
 // handbook; AI-drafted, human edit locks a page from AI overwrite.
@@ -254,53 +258,78 @@ class _KbView extends ConsumerStatefulWidget {
   ConsumerState<_KbView> createState() => _KbViewState();
 }
 
+// The KB tab is a scalable, searchable LIST of knowledge pages — it grows
+// gracefully as the operator/AI create more kb_* docs, unlike the old
+// horizontal chip strip that ran out of room. Tapping a page opens a
+// full-screen detail (_KbPageScreen). New page / Librarian live on a FAB.
 class _KbViewState extends ConsumerState<_KbView> {
   static const _global = '__global__';
-  static const _foundational = ['kb_infrastructure', 'kb_conventions'];
-  static const _emergent = ['kb_lessons', 'kb_reusable'];
-  String _kind = 'kb_infrastructure';
-  final _editCtrl = TextEditingController();
-  bool _editing = false;
-  bool _busy = false;
-  bool _showProposal = false;
-  AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
-  List<DocProposal> _proposals = const [];
-  // Custom kb_* pages beyond the four classics, pulled from the global
-  // blueprint so operator/AI-added pages show up + are selectable.
-  List<BlueprintSection> _extra = const [];
-
   static const _classic = {
     'kb_infrastructure',
     'kb_conventions',
     'kb_lessons',
     'kb_reusable',
   };
-
-  bool get _isFoundational =>
-      _foundational.contains(_kind) ||
-      _extra.any((s) => s.slug == _kind && s.nature == 'foundational');
+  AsyncValue<List<BlueprintSection>> _sections = const AsyncValue.loading();
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
-    _load();
     _loadSections();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSections() async {
     try {
       final secs = await ref.read(cortexApiProvider).listSections(_global);
-      if (!mounted) return;
-      setState(() => _extra =
-          secs.where((s) => !_classic.contains(s.slug)).toList()
-            ..sort((a, b) => a.position.compareTo(b.position)));
-    } on Object catch (_) {
-      // Non-fatal: the four classics still render without the extras.
+      final kb = secs.where((s) => s.slug.startsWith('kb_')).toList()
+        ..sort((a, b) => a.position.compareTo(b.position));
+      if (mounted) setState(() => _sections = AsyncValue.data(kb));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _sections = AsyncValue.error(e, st));
     }
   }
 
-  // Create a new kb_* knowledge page (a global blueprint section), then
-  // select it. Mirrors the web PageSettingsDialog (create mode).
+  // Localized display name: the classic four use i18n labels; custom pages
+  // use their stored title (slug minus kb_ as a last resort).
+  String _label(BlueprintSection s) {
+    switch (s.slug) {
+      case 'kb_conventions':
+        return t.web.knowledge.kb.kinds.kb_conventions;
+      case 'kb_lessons':
+        return t.web.knowledge.kb.kinds.kb_lessons;
+      case 'kb_reusable':
+        return t.web.knowledge.kb.kinds.kb_reusable;
+      case 'kb_infrastructure':
+        return t.web.knowledge.kb.kinds.kb_infrastructure;
+      default:
+        return s.title.isNotEmpty ? s.title : s.slug.replaceFirst('kb_', '');
+    }
+  }
+
+  Future<void> _openPage(BlueprintSection s) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _KbPageScreen(
+          slug: s.slug,
+          title: _label(s),
+          section: s,
+          editable: !_classic.contains(s.slug),
+          isFoundational: s.nature == 'foundational',
+        ),
+      ),
+    );
+    // The detail may have changed a body / config; refresh the list.
+    if (mounted) unawaited(_loadSections());
+  }
+
   Future<void> _newPage() async {
     final created = await showDialog<BlueprintSection>(
       context: context,
@@ -308,22 +337,7 @@ class _KbViewState extends ConsumerState<_KbView> {
     );
     if (created == null || !mounted) return;
     await _loadSections();
-    if (!mounted) return;
-    setState(() => _kind = created.slug);
-    await _load();
-  }
-
-  // Edit the selected custom page's config (title/description/nature/inject).
-  // Only offered for operator-added pages (the classic four aren't editable
-  // here). Mirrors the web PageSettingsDialog (edit mode).
-  Future<void> _editPageSettings(BlueprintSection section) async {
-    final saved = await showDialog<BlueprintSection>(
-      context: context,
-      builder: (_) => _KbPageDialog(section: section),
-    );
-    if (saved == null || !mounted) return;
-    await _loadSections();
-    if (mounted) setState(() {});
+    if (mounted) unawaited(_openPage(created));
   }
 
   // Pick the cloud agent + model (+ Claude account) for the KB Librarian,
@@ -350,6 +364,220 @@ class _KbViewState extends ConsumerState<_KbView> {
     }
   }
 
+  // FAB → a small sheet with the two global actions (kept off the list so it
+  // stays a clean, single-purpose browse surface).
+  void _openActions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: Text(t.web.knowledge.kb.newPage.button),
+              onTap: () {
+                Navigator.of(sheetCtx).pop();
+                _newPage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_awesome),
+              title: Text(t.web.knowledge.kb.librarian.button),
+              onTap: () {
+                Navigator.of(sheetCtx).pop();
+                _launchLibrarian();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openActions,
+        tooltip: t.common.more,
+        child: const Icon(Icons.add),
+      ),
+      body: Column(
+        children: [
+          // Search — the key affordance once there are many pages.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search, size: 20),
+                hintText: t.web.knowledge.kb.searchHint,
+                isDense: true,
+                border: const OutlineInputBorder(),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: _sections.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text('$e', textAlign: TextAlign.center),
+                ),
+              ),
+              data: (all) {
+                bool match(BlueprintSection s) =>
+                    _query.isEmpty ||
+                    _label(s).toLowerCase().contains(_query) ||
+                    s.description.toLowerCase().contains(_query);
+                final found = [
+                  for (final s in all)
+                    if (s.nature == 'foundational' && match(s)) s
+                ];
+                final emergent = [
+                  for (final s in all)
+                    if (s.nature != 'foundational' && match(s)) s
+                ];
+                if (found.isEmpty && emergent.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _query.isEmpty
+                          ? t.web.knowledge.empty
+                          : t.web.knowledge.kb.searchEmpty,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: _loadSections,
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 88),
+                    children: [
+                      if (found.isNotEmpty)
+                        _groupHeader(t.web.knowledge.kb.foundational),
+                      for (final s in found) _pageTile(s),
+                      if (emergent.isNotEmpty)
+                        _groupHeader(t.web.knowledge.kb.emergent),
+                      for (final s in emergent) _pageTile(s),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _groupHeader(String text) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        child: Text(
+          text.toUpperCase(),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                letterSpacing: 0.5,
+              ),
+        ),
+      );
+
+  Widget _pageTile(BlueprintSection s) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      child: ListTile(
+        title: Text(_label(s), style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: s.description.isNotEmpty
+            ? Text(s.description, maxLines: 2, overflow: TextOverflow.ellipsis)
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!s.inject)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  t.web.knowledge.kb.onDemand,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+          ],
+        ),
+        onTap: () => _openPage(s),
+      ),
+    );
+  }
+}
+
+// _KbPageScreen — the full-screen reader/editor for one knowledge page.
+// Splitting browse (the list) from read/edit (this screen) is what makes the
+// KB usable on a phone when there are many pages.
+class _KbPageScreen extends ConsumerStatefulWidget {
+  const _KbPageScreen({
+    required this.slug,
+    required this.title,
+    required this.section,
+    required this.editable,
+    required this.isFoundational,
+  });
+
+  final String slug;
+  final String title;
+  final BlueprintSection section;
+  // editable == the operator may change this page's config (non-classic).
+  final bool editable;
+  final bool isFoundational;
+
+  @override
+  ConsumerState<_KbPageScreen> createState() => _KbPageScreenState();
+}
+
+class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
+  static const _global = '__global__';
+  final _editCtrl = TextEditingController();
+  bool _editing = false;
+  bool _busy = false;
+  bool _showProposal = false;
+  AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
+  List<DocProposal> _proposals = const [];
+  late String _title = widget.title;
+  late BlueprintSection _section = widget.section;
+
+  String get _kind => widget.slug;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
   @override
   void dispose() {
     _editCtrl.dispose();
@@ -358,27 +586,6 @@ class _KbViewState extends ConsumerState<_KbView> {
 
   String _stripSig(String s) =>
       s.split('\n').where((l) => !l.contains('kb-sig:')).join('\n').trim();
-
-  String _kindLabel(String k) {
-    switch (k) {
-      case 'kb_conventions':
-        return t.web.knowledge.kb.kinds.kb_conventions;
-      case 'kb_lessons':
-        return t.web.knowledge.kb.kinds.kb_lessons;
-      case 'kb_reusable':
-        return t.web.knowledge.kb.kinds.kb_reusable;
-      case 'kb_infrastructure':
-        return t.web.knowledge.kb.kinds.kb_infrastructure;
-      default:
-        // Custom page → its blueprint title (slug minus kb_ as fallback).
-        for (final s in _extra) {
-          if (s.slug == k) {
-            return s.title.isNotEmpty ? s.title : k.replaceFirst('kb_', '');
-          }
-        }
-        return k.replaceFirst('kb_', '');
-    }
-  }
 
   Future<void> _load() async {
     setState(() {
@@ -406,11 +613,6 @@ class _KbViewState extends ConsumerState<_KbView> {
       if (p.kind == _kind) return p;
     }
     return null;
-  }
-
-  void _select(String kind) {
-    setState(() => _kind = kind);
-    _load();
   }
 
   Future<void> _save() async {
@@ -492,268 +694,225 @@ class _KbViewState extends ConsumerState<_KbView> {
     }
   }
 
-  Widget _sectionLabel(String text) => Padding(
-        padding: const EdgeInsets.only(right: 6, left: 2),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 10,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
+  Future<void> _editPageSettings() async {
+    final saved = await showDialog<BlueprintSection>(
+      context: context,
+      builder: (_) => _KbPageDialog(section: _section),
+    );
+    if (saved == null || !mounted) return;
+    setState(() {
+      _section = saved;
+      _title = saved.title.isNotEmpty ? saved.title : _title;
+    });
+  }
 
-  Widget _chip(String k) => Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: ChoiceChip(
-          label: Text(_kindLabel(k)),
-          selected: _kind == k,
-          onSelected: (_) => _select(k),
-        ),
-      );
+  void _onAction(_KbAction action, ProjectDoc d) {
+    switch (action) {
+      case _KbAction.discuss:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => CurationChatScreen(
+              targetKind: 'kb_page',
+              targetCwd: _global,
+              targetSlug: _kind,
+              onRevision: _load,
+            ),
+          ),
+        );
+      case _KbAction.unlock:
+        _unlock(d);
+      case _KbAction.regenerate:
+        _regen();
+      case _KbAction.settings:
+        _editPageSettings();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        SizedBox(
-          height: 44,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                _sectionLabel(t.web.knowledge.kb.foundational),
-                for (final k in _foundational) _chip(k),
-                for (final s in _extra)
-                  if (s.nature == 'foundational') _chip(s.slug),
-                _sectionLabel(t.web.knowledge.kb.emergent),
-                for (final k in _emergent) _chip(k),
-                for (final s in _extra)
-                  if (s.nature != 'foundational') _chip(s.slug),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 4),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.add, size: 16),
-                    label: Text(t.web.knowledge.kb.newPage.button),
-                    onPressed: _newPage,
-                  ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_title, overflow: TextOverflow.ellipsis),
+        actions: _doc.maybeWhen(
+          data: (d) {
+            final locked = d.updatedBy == 'operator';
+            if (_editing) {
+              return [
+                TextButton(
+                  onPressed: () => setState(() => _editing = false),
+                  child: Text(t.web.knowledge.kb.cancel),
                 ),
-                // Cross-page KB admin — the Librarian agent session.
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, top: 4),
-                  child: ActionChip(
-                    avatar: const Icon(Icons.auto_awesome, size: 16),
-                    label: Text(t.web.knowledge.kb.librarian.button),
-                    onPressed: _launchLibrarian,
-                  ),
+                FilledButton(
+                  onPressed: _busy ? null : _save,
+                  child: Text(t.web.knowledge.kb.save),
                 ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: _doc.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('$e', textAlign: TextAlign.center),
+                const SizedBox(width: 8),
+              ];
+            }
+            return [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: t.web.knowledge.kb.edit,
+                onPressed: () {
+                  _editCtrl.text = _stripSig(d.content);
+                  setState(() => _editing = true);
+                },
               ),
-            ),
-            data: (d) {
-              final content = _stripSig(d.content);
-              final locked = d.updatedBy == 'operator';
-              final pending = _pending;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Chip(
-                          label: Text(
-                            _isFoundational
-                                ? t.web.knowledge.kb.bindingBadge
-                                : t.web.knowledge.kb.referenceBadge,
-                            style: const TextStyle(fontSize: 10),
-                          ),
-                          backgroundColor: _isFoundational
-                              ? scheme.tertiaryContainer
-                              : scheme.secondaryContainer,
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        if (d.isPersisted)
-                          Chip(
-                            label: Text(
-                              locked
-                                  ? t.web.knowledge.kb.locked
-                                  : t.web.knowledge.kb.aiDrafted,
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        if (!_editing) ...[
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => CurationChatScreen(
-                                      targetKind: 'kb_page',
-                                      targetCwd: _global,
-                                      targetSlug: _kind,
-                                      onRevision: _load,
-                                    ),
-                                  ),
-                                ),
-                            child: Text(t.web.cortex.chat.show),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              _editCtrl.text = content;
-                              setState(() => _editing = true);
-                            },
-                            child: Text(t.web.knowledge.kb.edit),
-                          ),
-                          if (locked)
-                            TextButton(
-                              onPressed: () => _unlock(d),
-                              child: Text(t.web.knowledge.kb.unlock),
-                            ),
-                          TextButton(
-                            onPressed: _regen,
-                            child: Text(t.web.knowledge.kb.regenerate),
-                          ),
-                          // Config editor for every non-classic page (_extra
-                          // already excludes the classic four). Seeded pages
-                          // like Integrations (pinned but non-classic) are
-                          // configurable too — wider than delete, which stays
-                          // pinned-gated. The classics keep i18n titles/fixed
-                          // natures, so they're not editable here.
-                          for (final s in _extra)
-                            if (s.slug == _kind)
-                              TextButton(
-                                onPressed: () => _editPageSettings(s),
-                                child: Text(
-                                    t.web.knowledge.kb.pageSettings.button),
-                              ),
-                        ],
-                      ],
-                    ),
+              PopupMenuButton<_KbAction>(
+                tooltip: t.common.more,
+                onSelected: (a) => _onAction(a, d),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: _KbAction.discuss,
+                    child: Text(t.web.cortex.chat.show),
                   ),
-                  if (pending != null && !_editing)
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: scheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            t.web.knowledge.kb.proposal.text,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          Row(
-                            children: [
-                              TextButton(
-                                onPressed: () => setState(
-                                    () => _showProposal = !_showProposal),
-                                child: Text(_showProposal
-                                    ? t.web.knowledge.kb.proposal.hide
-                                    : t.web.knowledge.kb.proposal.preview),
-                              ),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: _busy ? null : () => _decide(false),
-                                child: Text(t.web.knowledge.kb.proposal.reject),
-                              ),
-                              FilledButton(
-                                onPressed: _busy ? null : () => _decide(true),
-                                child: Text(t.web.knowledge.kb.proposal.approve),
-                              ),
-                            ],
-                          ),
-                          if (_showProposal)
-                            Container(
-                              constraints: const BoxConstraints(maxHeight: 240),
-                              margin: const EdgeInsets.only(top: 6),
-                              child: SingleChildScrollView(
-                                child: SelectableText(
-                                  _stripSig(pending.proposedContent),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                  if (locked)
+                    PopupMenuItem(
+                      value: _KbAction.unlock,
+                      child: Text(t.web.knowledge.kb.unlock),
                     ),
-                  Expanded(
-                    child: _editing
-                        ? Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _editCtrl,
-                                    maxLines: null,
-                                    expands: true,
-                                    textAlignVertical: TextAlignVertical.top,
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 13,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      border: OutlineInputBorder(),
-                                      alignLabelWithHint: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    FilledButton(
-                                      onPressed: _busy ? null : _save,
-                                      child: Text(t.web.knowledge.kb.save),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    TextButton(
-                                      onPressed: () =>
-                                          setState(() => _editing = false),
-                                      child: Text(t.web.knowledge.kb.cancel),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )
-                        : SingleChildScrollView(
-                            padding: const EdgeInsets.all(12),
-                            child: SelectableText(
-                              content.isEmpty
-                                  ? t.web.knowledge.kb.empty
-                                  : content,
-                            ),
-                          ),
+                  PopupMenuItem(
+                    value: _KbAction.regenerate,
+                    child: Text(t.web.knowledge.kb.regenerate),
                   ),
+                  if (widget.editable)
+                    PopupMenuItem(
+                      value: _KbAction.settings,
+                      child: Text(t.web.knowledge.kb.pageSettings.button),
+                    ),
                 ],
-              );
-            },
+              ),
+            ];
+          },
+          orElse: () => const [],
+        ),
+      ),
+      body: _doc.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('$e', textAlign: TextAlign.center),
           ),
         ),
-      ],
+        data: (d) {
+          final content = _stripSig(d.content);
+          final locked = d.updatedBy == 'operator';
+          final pending = _pending;
+          if (_editing) {
+            return Padding(
+              padding: const EdgeInsets.all(12),
+              child: TextField(
+                controller: _editCtrl,
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+              ),
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Badges: nature + lock state.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    Chip(
+                      label: Text(
+                        widget.isFoundational
+                            ? t.web.knowledge.kb.bindingBadge
+                            : t.web.knowledge.kb.referenceBadge,
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      backgroundColor: widget.isFoundational
+                          ? scheme.tertiaryContainer
+                          : scheme.secondaryContainer,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    if (d.isPersisted)
+                      Chip(
+                        label: Text(
+                          locked
+                              ? t.web.knowledge.kb.locked
+                              : t.web.knowledge.kb.aiDrafted,
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                  ],
+                ),
+              ),
+              if (pending != null)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: scheme.tertiaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.web.knowledge.kb.proposal.text,
+                          style: const TextStyle(fontSize: 12)),
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: () => setState(
+                                () => _showProposal = !_showProposal),
+                            child: Text(_showProposal
+                                ? t.web.knowledge.kb.proposal.hide
+                                : t.web.knowledge.kb.proposal.preview),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: _busy ? null : () => _decide(false),
+                            child: Text(t.web.knowledge.kb.proposal.reject),
+                          ),
+                          FilledButton(
+                            onPressed: _busy ? null : () => _decide(true),
+                            child: Text(t.web.knowledge.kb.proposal.approve),
+                          ),
+                        ],
+                      ),
+                      if (_showProposal)
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 240),
+                          margin: const EdgeInsets.only(top: 6),
+                          child: SingleChildScrollView(
+                            child: SelectableText(
+                              _stripSig(pending.proposedContent),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  child: SelectableText(
+                    content.isEmpty ? t.web.knowledge.kb.empty : content,
+                    style: const TextStyle(fontSize: 14, height: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

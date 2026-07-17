@@ -12,7 +12,8 @@
     "copy": "Copy",
     "enabled": "Enabled",
     "refresh": "Refresh",
-    "clear": "Clear"
+    "clear": "Clear",
+    "more": "More"
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -2821,6 +2822,8 @@
         "discuss": "Discuss with AI",
         "discussHint": "Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites",
         "onDemand": "on-demand",
+        "searchHint": "Search knowledge pages",
+        "searchEmpty": "No pages match your search",
         "removePage": "Remove page",
         "removePageHint": "Remove this page from the knowledge base (its content is kept and resurrects if the slug is re-added)",
         "pageRemovedToast": "Page removed",

@@ -92,6 +92,7 @@ class _TranslationsCommonEs extends TranslationsCommonEn {
 	@override String get enabled => 'Activado';
 	@override String get refresh => 'Actualizar';
 	@override String get clear => 'Limpiar';
+	@override String get more => 'Más';
 }
 
 // Path: auth
@@ -5751,6 +5752,8 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get discuss => 'Hablar con la IA';
 	@override String get discussHint => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras';
 	@override String get onDemand => 'bajo demanda';
+	@override String get searchHint => 'Buscar páginas de conocimiento';
+	@override String get searchEmpty => 'Ninguna página coincide con tu búsqueda';
 	@override String get removePage => 'Quitar página';
 	@override String get removePageHint => 'Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)';
 	@override String get pageRemovedToast => 'Página quitada';
@@ -9427,6 +9430,7 @@ extension on TranslationsEs {
 			'common.enabled' => 'Activado',
 			'common.refresh' => 'Actualizar',
 			'common.clear' => 'Limpiar',
+			'common.more' => 'Más',
 			'auth.signInTitle' => 'Iniciar sesión',
 			'auth.changeServer' => 'Cambiar',
 			'auth.username' => 'Usuario',
@@ -9925,9 +9929,9 @@ extension on TranslationsEs {
 			'web.project.inbox.rejectedToast' => 'Rechazado',
 			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
 			'web.project.inbox.sessionPrefix' => 'ses',
-			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
 			'web.project.inbox.current' => 'Actual',
 			'web.project.inbox.proposed' => 'Propuesto',
@@ -10439,9 +10443,9 @@ extension on TranslationsEs {
 			'web.channels.toasts.updated' => 'Canal actualizado',
 			'web.channels.toasts.muted' => 'Canal silenciado',
 			'web.channels.toasts.unmuted' => 'Canal reactivado',
-			'web.channels.dialog.editTitle' => 'Editar canal',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
 			'web.channels.dialog.descriptionDefault' => 'Configura la integración de mensajería.',
@@ -10953,9 +10957,9 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.columns.enabled' => 'Habilitada',
 			'web.backups.schedulesTab.columns.actions' => 'Acciones',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
-			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			'web.backups.newSchedule.targetLabel' => 'Destinos',
 			'web.backups.newSchedule.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
@@ -11467,9 +11471,9 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Regla ${name} creada',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
-			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
 			'web.memoryAmbient.profiles.row.globalDefault' => 'predeterminado global',
@@ -11635,6 +11639,8 @@ extension on TranslationsEs {
 			'web.knowledge.kb.discuss' => 'Hablar con la IA',
 			'web.knowledge.kb.discussHint' => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras',
 			'web.knowledge.kb.onDemand' => 'bajo demanda',
+			'web.knowledge.kb.searchHint' => 'Buscar páginas de conocimiento',
+			'web.knowledge.kb.searchEmpty' => 'Ninguna página coincide con tu búsqueda',
 			'web.knowledge.kb.removePage' => 'Quitar página',
 			'web.knowledge.kb.removePageHint' => 'Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)',
 			'web.knowledge.kb.pageRemovedToast' => 'Página quitada',
@@ -11979,11 +11985,11 @@ extension on TranslationsEs {
 			'web.roundTable.plan.pending' => 'Pendiente',
 			'web.roundTable.plan.openSession' => 'Abrir sesión',
 			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.bindProject' => 'Vincular',
 			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
 			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => 'Ejecutar',
 			'web.roundTable.plan.account' => 'Cuenta',
 			'web.roundTable.plan.accountDefault' => 'Predeterminada',
@@ -12493,11 +12499,11 @@ extension on TranslationsEs {
 			'integrations.noMatchingCalls' => 'Aún no hay llamadas coincidentes en el registro.',
 			'integrations.directionAll' => 'Todas',
 			'integrations.directionInbound' => 'Entrantes',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.directionOutbound' => 'Salientes',
 			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
 			'integrations.form.fieldName' => 'Nombre',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'Mi Bot',
 			'integrations.form.fieldBaseUrl' => 'URL base',
 			'integrations.form.fieldRoutePrefix' => 'Prefijo de ruta',
@@ -13007,11 +13013,11 @@ extension on TranslationsEs {
 			'channels.deleteBody' => 'Detiene el canal y elimina su configuración. Las notificaciones en curso dirigidas a él se descartarán de forma silenciosa.',
 			'channels.snacks.testDispatched' => 'Mensaje de prueba enviado.',
 			'channels.snacks.channelEnabled' => 'Canal activado.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.channelDisabled' => 'Canal desactivado.',
 			'channels.snacks.channelMuted' => 'Canal silenciado.',
 			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
-			_ => null,
-		} ?? switch (path) {
 			'channels.snacks.configUpdated' => 'Configuración del canal actualizada.',
 			'channels.snacks.channelDeleted' => 'Canal eliminado.',
 			'channels.errorPrefix.test' => 'Error en la prueba',
@@ -13521,11 +13527,11 @@ extension on TranslationsEs {
 			'cortexHub.knowledge' => 'Conocimiento',
 			'cortexHub.knowledgeDesc' => 'Experiencia destilada entre proyectos.',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
 			'cortexHub.preview' => 'Vista previa',

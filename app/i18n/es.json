@@ -12,7 +12,8 @@
     "copy": "Copiar",
     "enabled": "Activado",
     "refresh": "Actualizar",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "more": "Más"
   },
   "auth": {
     "signInTitle": "Iniciar sesión",
@@ -2821,6 +2822,8 @@
         "discuss": "Hablar con la IA",
         "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras",
         "onDemand": "bajo demanda",
+        "searchHint": "Buscar páginas de conocimiento",
+        "searchEmpty": "Ninguna página coincide con tu búsqueda",
         "removePage": "Quitar página",
         "removePageHint": "Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)",
         "pageRemovedToast": "Página quitada",
