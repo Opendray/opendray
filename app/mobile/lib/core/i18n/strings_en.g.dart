@@ -6467,6 +6467,9 @@ class TranslationsWebSessionsSpawnEn {
 	/// en: 'Bypass permissions (--dangerously-skip-permissions)'
 	String get bypassOpencode => 'Bypass permissions (--dangerously-skip-permissions)';
 
+	/// en: 'Bypass permissions / YOLO (--always-approve)'
+	String get bypassGrok => 'Bypass permissions / YOLO (--always-approve)';
+
 	/// en: 'This session will run with elevated autonomy.'
 	String get bypassOnHint => 'This session will run with elevated autonomy.';
 
@@ -13143,6 +13146,9 @@ class TranslationsSessionsSpawnSheetBypassEn {
 	/// en: 'Bypass permissions'
 	String get labelOpencode => 'Bypass permissions';
 
+	/// en: 'Bypass permissions / YOLO (--always-approve)'
+	String get labelGrok => 'Bypass permissions / YOLO (--always-approve)';
+
 	/// en: 'This session will run with elevated autonomy.'
 	String get subtitleOn => 'This session will run with elevated autonomy.';
 
@@ -17957,6 +17963,7 @@ extension on Translations {
 			'web.sessions.spawn.bypassCodex' => 'Bypass approvals & sandbox (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassAntigravity' => 'Bypass permissions / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOpencode' => 'Bypass permissions (--dangerously-skip-permissions)',
+			'web.sessions.spawn.bypassGrok' => 'Bypass permissions / YOLO (--always-approve)',
 			'web.sessions.spawn.bypassOnHint' => 'This session will run with elevated autonomy.',
 			'web.sessions.spawn.bypassOffHint' => 'Off — confirmations and prompts behave normally.',
 			'web.sessions.spawn.errorPickProvider' => 'Pick a provider.',
@@ -18296,9 +18303,9 @@ extension on Translations {
 			'web.project.inbox.emptyHint' => 'Agents file proposals here via `project_goal_set` / `project_plan_set` MCP tools.',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} updated',
 			'web.project.inbox.approveFailedToast' => 'Approve failed',
-			'web.project.inbox.rejectedToast' => 'Rejected',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.rejectedToast' => 'Rejected',
 			'web.project.inbox.rejectFailedToast' => 'Reject failed',
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Approve will REPLACE the current ${label} entirely.',
@@ -18810,9 +18817,9 @@ extension on Translations {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => 'Delete channel ${id}?',
 			'web.channels.toasts.deleted' => 'Channel deleted',
 			'web.channels.toasts.created' => 'Channel created',
-			'web.channels.toasts.updated' => 'Channel updated',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.toasts.updated' => 'Channel updated',
 			'web.channels.toasts.muted' => 'Channel muted',
 			'web.channels.toasts.unmuted' => 'Channel unmuted',
 			'web.channels.dialog.editTitle' => 'Edit channel',
@@ -19324,9 +19331,9 @@ extension on Translations {
 			'web.backups.schedulesTab.columns.interval' => 'Interval',
 			'web.backups.schedulesTab.columns.keep' => 'Keep',
 			'web.backups.schedulesTab.columns.nextRun' => 'Next run',
-			'web.backups.schedulesTab.columns.enabled' => 'Enabled',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.columns.enabled' => 'Enabled',
 			'web.backups.schedulesTab.columns.actions' => 'Actions',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
 			'web.backups.schedulesTab.deleteTooltip' => 'Delete',
@@ -19838,9 +19845,9 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.dedupHint' => 'Higher = stricter de-duplication. 0.85 is the recommended sweet spot.',
 			'web.memoryAmbient.rules.dialog.create' => 'Create',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'Name is required',
-			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Rule ${name} created',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Rule ${name} created',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
 			'web.memoryAmbient.profiles.title' => 'Injection profiles',
 			'web.memoryAmbient.profiles.addButton' => 'Add profile',
@@ -20352,9 +20359,9 @@ extension on Translations {
 			'web.roundTable.plan.rerun' => 'Re-run',
 			'web.roundTable.plan.running' => 'Running',
 			'web.roundTable.plan.done' => 'Done',
-			'web.roundTable.plan.pending' => 'Pending',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.pending' => 'Pending',
 			'web.roundTable.plan.openSession' => 'Open session',
 			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
 			'web.roundTable.plan.bindProject' => 'Bind',
@@ -20661,6 +20668,7 @@ extension on Translations {
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Bypass permissions',
+			'sessions.spawnSheet.bypass.labelGrok' => 'Bypass permissions / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Off — confirmations and prompts behave normally.',
 			'sessions.spawnSheet.noProviders.title' => 'No providers configured',
@@ -20865,10 +20873,10 @@ extension on Translations {
 			'integrations.kvCreated' => 'Created',
 			'integrations.kvKeyRotated' => 'Key rotated',
 			'integrations.detailLoadFailed' => ({required Object error}) => 'Failed to load integration: ${error}',
-			'integrations.callsLoadFailed' => 'Failed to load calls',
-			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.callsLoadFailed' => 'Failed to load calls',
+			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
 			'integrations.directionAll' => 'All',
 			'integrations.directionInbound' => 'Inbound',
 			'integrations.directionOutbound' => 'Outbound',
@@ -21379,10 +21387,10 @@ extension on Translations {
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
 			'channels.badges.muted' => 'muted',
-			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
-			'channels.bridgeWebOnly' => 'Bridge channels stay web-only',
 			_ => null,
 		} ?? switch (path) {
+			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
+			'channels.bridgeWebOnly' => 'Bridge channels stay web-only',
 			'channels.bridgeEmptyAdd' => 'Add one from the web admin: Channels → New.',
 			'channels.deleteBody' => 'Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.',
 			'channels.snacks.testDispatched' => 'Test message dispatched.',
@@ -21893,10 +21901,10 @@ extension on Translations {
 			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
 			'cortexHub.settings' => 'Settings',
 			'cortexHub.memory' => 'Memory',
-			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
-			'cortexHub.notes' => 'Notes',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
+			'cortexHub.notes' => 'Notes',
 			'cortexHub.notesDesc' => 'Each project’s official goal / plan / journal.',
 			'cortexHub.knowledge' => 'Knowledge',
 			'cortexHub.knowledgeDesc' => 'Cross-project, distilled expertise.',

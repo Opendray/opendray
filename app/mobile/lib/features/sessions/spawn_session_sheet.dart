@@ -32,6 +32,8 @@ const Map<String, List<String>> _bypassFlagsByProvider = {
   'codex': ['--dangerously-bypass-approvals-and-sandbox'],
   'antigravity': ['--dangerously-skip-permissions'],
   'opencode': ['--dangerously-skip-permissions'],
+  // grok's documented auto-approve (manifest bypassPermissions → this flag).
+  'grok': ['--always-approve'],
 };
 
 // Per-provider label for the bypass toggle. Different CLIs name
@@ -43,6 +45,7 @@ String? _bypassLabelFor(String providerId) {
     'codex' => t.sessions.spawnSheet.bypass.labelCodex,
     'antigravity' => t.sessions.spawnSheet.bypass.labelAntigravity,
     'opencode' => t.sessions.spawnSheet.bypass.labelOpencode,
+    'grok' => t.sessions.spawnSheet.bypass.labelGrok,
     _ => null,
   };
 }

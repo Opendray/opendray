@@ -3281,6 +3281,7 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get bypassCodex => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)';
 	@override String get bypassAntigravity => '跳过权限 / YOLO (--dangerously-skip-permissions)';
 	@override String get bypassOpencode => '跳过权限检查 (--dangerously-skip-permissions)';
+	@override String get bypassGrok => '跳过权限 / YOLO（--always-approve）';
 	@override String get bypassOnHint => '本次会话将以更高的自主权运行。';
 	@override String get bypassOffHint => '关闭 — 确认与提示按正常流程处理。';
 	@override String get errorPickProvider => '请选择一个 Provider。';
@@ -6730,6 +6731,7 @@ class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnS
 	@override String get labelCodex => '跳过批准与沙盒';
 	@override String get labelAntigravity => '跳过权限 / YOLO';
 	@override String get labelOpencode => '跳过权限检查';
+	@override String get labelGrok => '跳过权限 / YOLO（--always-approve）';
 	@override String get subtitleOn => '此会话将以提升的自主权运行。';
 	@override String get subtitleOff => '关闭 — 确认和提示按正常方式处理。';
 }
@@ -9593,6 +9595,7 @@ extension on TranslationsZh {
 			'web.sessions.spawn.bypassCodex' => '跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)',
 			'web.sessions.spawn.bypassAntigravity' => '跳过权限 / YOLO (--dangerously-skip-permissions)',
 			'web.sessions.spawn.bypassOpencode' => '跳过权限检查 (--dangerously-skip-permissions)',
+			'web.sessions.spawn.bypassGrok' => '跳过权限 / YOLO（--always-approve）',
 			'web.sessions.spawn.bypassOnHint' => '本次会话将以更高的自主权运行。',
 			'web.sessions.spawn.bypassOffHint' => '关闭 — 确认与提示按正常流程处理。',
 			'web.sessions.spawn.errorPickProvider' => '请选择一个 Provider。',
@@ -9932,9 +9935,9 @@ extension on TranslationsZh {
 			'web.project.inbox.emptyHint' => 'Agent 通过 `project_goal_set` / `project_plan_set` MCP 工具在这里提交提案。',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label}已更新',
 			'web.project.inbox.approveFailedToast' => '批准失败',
-			'web.project.inbox.rejectedToast' => '已驳回',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.rejectedToast' => '已驳回',
 			'web.project.inbox.rejectFailedToast' => '驳回失败',
 			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => '批准将完全替换当前${label}。',
@@ -10446,9 +10449,9 @@ extension on TranslationsZh {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => '删除频道 ${id}?',
 			'web.channels.toasts.deleted' => '频道已删除',
 			'web.channels.toasts.created' => '频道已创建',
-			'web.channels.toasts.updated' => '频道已更新',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.toasts.updated' => '频道已更新',
 			'web.channels.toasts.muted' => '频道已静音',
 			'web.channels.toasts.unmuted' => '频道已取消静音',
 			'web.channels.dialog.editTitle' => '编辑频道',
@@ -10960,9 +10963,9 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.columns.interval' => '间隔',
 			'web.backups.schedulesTab.columns.keep' => '保留',
 			'web.backups.schedulesTab.columns.nextRun' => '下次运行',
-			'web.backups.schedulesTab.columns.enabled' => '启用',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.columns.enabled' => '启用',
 			'web.backups.schedulesTab.columns.actions' => '操作',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} 个备份',
 			'web.backups.schedulesTab.deleteTooltip' => '删除',
@@ -11474,9 +11477,9 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.dedupHint' => '越高 = 去重越严格。0.85 是推荐的平衡点。',
 			'web.memoryAmbient.rules.dialog.create' => '创建',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => '名称不能为空',
-			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => '已创建规则 ${name}',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => '已创建规则 ${name}',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.profiles.title' => 'Injection Profiles',
 			'web.memoryAmbient.profiles.addButton' => '添加 profile',
@@ -11988,9 +11991,9 @@ extension on TranslationsZh {
 			'web.roundTable.plan.rerun' => '重跑',
 			'web.roundTable.plan.running' => '运行中',
 			'web.roundTable.plan.done' => '完成',
-			'web.roundTable.plan.pending' => '待运行',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.pending' => '待运行',
 			'web.roundTable.plan.openSession' => '打开会话',
 			'web.roundTable.plan.needProject' => '运行步骤前需绑定项目(cwd)。',
 			'web.roundTable.plan.bindProject' => '绑定',
@@ -12297,6 +12300,7 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
+			'sessions.spawnSheet.bypass.labelGrok' => '跳过权限 / YOLO（--always-approve）',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
 			'sessions.spawnSheet.bypass.subtitleOff' => '关闭 — 确认和提示按正常方式处理。',
 			'sessions.spawnSheet.noProviders.title' => '未配置任何提供商',
@@ -12501,10 +12505,10 @@ extension on TranslationsZh {
 			'integrations.kvCreated' => '创建于',
 			'integrations.kvKeyRotated' => 'Key 轮换于',
 			'integrations.detailLoadFailed' => ({required Object error}) => '加载集成失败：${error}',
-			'integrations.callsLoadFailed' => '加载调用失败',
-			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.callsLoadFailed' => '加载调用失败',
+			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
 			'integrations.directionAll' => '全部',
 			'integrations.directionInbound' => '入站',
 			'integrations.directionOutbound' => '出站',
@@ -13015,10 +13019,10 @@ extension on TranslationsZh {
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
 			'channels.badges.muted' => '已静音',
-			'channels.capsLabel' => ({required Object list}) => '· 能力：${list}',
-			'channels.bridgeWebOnly' => 'Bridge 通道仅 Web 端',
 			_ => null,
 		} ?? switch (path) {
+			'channels.capsLabel' => ({required Object list}) => '· 能力：${list}',
+			'channels.bridgeWebOnly' => 'Bridge 通道仅 Web 端',
 			'channels.bridgeEmptyAdd' => '在 Web 管理端添加：通道 → 新建。',
 			'channels.deleteBody' => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。',
 			'channels.snacks.testDispatched' => '测试消息已发送。',
@@ -13529,10 +13533,10 @@ extension on TranslationsZh {
 			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
 			'cortexHub.settings' => '设置',
 			'cortexHub.memory' => '记忆',
-			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
-			'cortexHub.notes' => '笔记',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
+			'cortexHub.notes' => '笔记',
 			'cortexHub.notesDesc' => '每个项目的官方目标 / 计划 / 日志。',
 			'cortexHub.knowledge' => '知识',
 			'cortexHub.knowledgeDesc' => '跨项目沉淀的专业知识。',

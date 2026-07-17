@@ -198,6 +198,7 @@
         "bypassCodex": "跳过所有批准与沙盒 (--dangerously-bypass-approvals-and-sandbox)",
         "bypassAntigravity": "跳过权限 / YOLO (--dangerously-skip-permissions)",
         "bypassOpencode": "跳过权限检查 (--dangerously-skip-permissions)",
+        "bypassGrok": "跳过权限 / YOLO（--always-approve）",
         "bypassOnHint": "本次会话将以更高的自主权运行。",
         "bypassOffHint": "关闭 — 确认与提示按正常流程处理。",
         "errorPickProvider": "请选择一个 Provider。",
@@ -3670,6 +3671,7 @@
         "labelCodex": "跳过批准与沙盒",
         "labelAntigravity": "跳过权限 / YOLO",
         "labelOpencode": "跳过权限检查",
+        "labelGrok": "跳过权限 / YOLO（--always-approve）",
         "subtitleOn": "此会话将以提升的自主权运行。",
         "subtitleOff": "关闭 — 确认和提示按正常方式处理。"
       },

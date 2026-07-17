@@ -45,6 +45,9 @@ const BYPASS_FLAGS: Record<string, string[]> = {
   codex: ['--dangerously-bypass-approvals-and-sandbox'],
   antigravity: ['--dangerously-skip-permissions'],
   opencode: ['--dangerously-skip-permissions'],
+  // grok's documented auto-approve (its manifest maps bypassPermissions →
+  // --always-approve): approve every tool execution, no prompts.
+  grok: ['--always-approve'],
 }
 
 // i18n key suffix per provider for the bypass toggle label. Different
@@ -55,6 +58,7 @@ const BYPASS_LABEL_KEY: Record<string, string> = {
   codex: 'web.sessions.spawn.bypassCodex',
   antigravity: 'web.sessions.spawn.bypassAntigravity',
   opencode: 'web.sessions.spawn.bypassOpencode',
+  grok: 'web.sessions.spawn.bypassGrok',
 }
 
 export function SpawnDialog({
