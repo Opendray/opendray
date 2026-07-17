@@ -2836,6 +2836,14 @@
           "create": "创建页面",
           "createdToast": "知识页已创建"
         },
+        "pageSettings": {
+          "button": "设置",
+          "title": "页面设置",
+          "description": "编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改,页面正文另行编辑。",
+          "hint": "编辑此页面的标题、摘要、性质与注入开关",
+          "save": "保存设置",
+          "savedToast": "页面设置已更新"
+        },
         "librarian": {
           "button": "用 AI 管理知识库",
           "hint": "启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页",

@@ -5755,6 +5755,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get removePageHint => 'Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)';
 	@override String get pageRemovedToast => 'Página quitada';
 	@override late final _TranslationsWebKnowledgeKbNewPageEs newPage = _TranslationsWebKnowledgeKbNewPageEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbPageSettingsEs pageSettings = _TranslationsWebKnowledgeKbPageSettingsEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianEs librarian = _TranslationsWebKnowledgeKbLibrarianEs._(_root);
 }
 
@@ -9147,6 +9148,21 @@ class _TranslationsWebKnowledgeKbNewPageEs extends TranslationsWebKnowledgeKbNew
 	@override String get createdToast => 'Página de conocimiento creada';
 }
 
+// Path: web.knowledge.kb.pageSettings
+class _TranslationsWebKnowledgeKbPageSettingsEs extends TranslationsWebKnowledgeKbPageSettingsEn {
+	_TranslationsWebKnowledgeKbPageSettingsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => 'Ajustes';
+	@override String get title => 'Ajustes de la página';
+	@override String get description => 'Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.';
+	@override String get hint => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página';
+	@override String get save => 'Guardar ajustes';
+	@override String get savedToast => 'Ajustes de la página actualizados';
+}
+
 // Path: web.knowledge.kb.librarian
 class _TranslationsWebKnowledgeKbLibrarianEs extends TranslationsWebKnowledgeKbLibrarianEn {
 	_TranslationsWebKnowledgeKbLibrarianEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -11632,6 +11648,12 @@ extension on TranslationsEs {
 			'web.knowledge.kb.newPage.injectHint' => 'Apagado (recomendado): la página queda fuera del banner de arranque y los agentes la alcanzan bajo demanda vía búsqueda. Encendido: las fundacionales se inyectan como reglas vinculantes, las emergentes como referencia.',
 			'web.knowledge.kb.newPage.create' => 'Crear página',
 			'web.knowledge.kb.newPage.createdToast' => 'Página de conocimiento creada',
+			'web.knowledge.kb.pageSettings.button' => 'Ajustes',
+			'web.knowledge.kb.pageSettings.title' => 'Ajustes de la página',
+			'web.knowledge.kb.pageSettings.description' => 'Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.',
+			'web.knowledge.kb.pageSettings.hint' => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página',
+			'web.knowledge.kb.pageSettings.save' => 'Guardar ajustes',
+			'web.knowledge.kb.pageSettings.savedToast' => 'Ajustes de la página actualizados',
 			'web.knowledge.kb.librarian.button' => 'Gestionar KB con IA',
 			'web.knowledge.kb.librarian.hint' => 'Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento',
 			'web.knowledge.kb.librarian.launchedToast' => 'Sesión del bibliotecario de KB iniciada',
@@ -11960,14 +11982,14 @@ extension on TranslationsEs {
 			'web.roundTable.plan.bindProject' => 'Vincular',
 			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
 			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => 'Ejecutar',
 			'web.roundTable.plan.account' => 'Cuenta',
 			'web.roundTable.plan.accountDefault' => 'Predeterminada',
 			'web.roundTable.plan.bypass' => 'Omitir permisos (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Inicia la sesión con su indicador de bypass para no pedir aprobaciones.',
 			'more.title' => 'Más',
-			_ => null,
-		} ?? switch (path) {
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
 			'more.identity.tokenExpires' => 'El token caduca',
@@ -12474,14 +12496,14 @@ extension on TranslationsEs {
 			'integrations.directionOutbound' => 'Salientes',
 			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
 			'integrations.form.fieldName' => 'Nombre',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'Mi Bot',
 			'integrations.form.fieldBaseUrl' => 'URL base',
 			'integrations.form.fieldRoutePrefix' => 'Prefijo de ruta',
 			'integrations.form.routePrefixHelper' => 'Accesible como /api/v1/<prefix>/...',
 			'integrations.form.fieldVersion' => 'Versión (opcional)',
 			'integrations.form.validateBaseUrl' => 'La URL base es obligatoria.',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.editFieldVersion' => 'Versión',
 			'integrations.form.apiKeyWarn' => 'No volverás a ver esta key.',
 			'integrations.form.copyCopied' => 'Copiado',
@@ -12988,14 +13010,14 @@ extension on TranslationsEs {
 			'channels.snacks.channelDisabled' => 'Canal desactivado.',
 			'channels.snacks.channelMuted' => 'Canal silenciado.',
 			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.configUpdated' => 'Configuración del canal actualizada.',
 			'channels.snacks.channelDeleted' => 'Canal eliminado.',
 			'channels.errorPrefix.test' => 'Error en la prueba',
 			'channels.errorPrefix.toggle' => 'Error al alternar',
 			'channels.errorPrefix.muteToggle' => 'Error al alternar el silencio',
 			'channels.errorPrefix.update' => 'Error al actualizar',
-			_ => null,
-		} ?? switch (path) {
 			'channels.errorPrefix.delete' => 'Error al eliminar',
 			'channels.failedToLoad' => 'Error al cargar los canales',
 			'channels.kinds.telegram.description' => 'Bot mediante @BotFather. opendray hace long-polling de getUpdates y envía vía REST. Los botones y reply_to_message funcionan de forma nativa.',
@@ -13502,14 +13524,14 @@ extension on TranslationsEs {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
 			'cortexHub.preview' => 'Vista previa',
 			'cortexHub.hide' => 'Ocultar',
 			'cortexHub.approve' => 'Aprobar',
 			'cortexHub.reject' => 'Rechazar',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.approvedToast' => 'Propuesta aprobada',
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',

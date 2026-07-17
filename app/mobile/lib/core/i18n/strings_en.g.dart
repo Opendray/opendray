@@ -11280,6 +11280,7 @@ class TranslationsWebKnowledgeKbEn {
 	String get pageRemovedToast => 'Page removed';
 
 	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
+	late final TranslationsWebKnowledgeKbPageSettingsEn pageSettings = TranslationsWebKnowledgeKbPageSettingsEn.internal(_root);
 	late final TranslationsWebKnowledgeKbLibrarianEn librarian = TranslationsWebKnowledgeKbLibrarianEn.internal(_root);
 }
 
@@ -17328,6 +17329,33 @@ class TranslationsWebKnowledgeKbNewPageEn {
 	String get createdToast => 'Knowledge page created';
 }
 
+// Path: web.knowledge.kb.pageSettings
+class TranslationsWebKnowledgeKbPageSettingsEn {
+	TranslationsWebKnowledgeKbPageSettingsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Settings'
+	String get button => 'Settings';
+
+	/// en: 'Page settings'
+	String get title => 'Page settings';
+
+	/// en: 'Edit this page's title, summary, nature and injection. The slug is fixed and the page body is edited separately.'
+	String get description => 'Edit this page\'s title, summary, nature and injection. The slug is fixed and the page body is edited separately.';
+
+	/// en: 'Edit this page's title, summary, nature and inject flag'
+	String get hint => 'Edit this page\'s title, summary, nature and inject flag';
+
+	/// en: 'Save settings'
+	String get save => 'Save settings';
+
+	/// en: 'Page settings updated'
+	String get savedToast => 'Page settings updated';
+}
+
 // Path: web.knowledge.kb.librarian
 class TranslationsWebKnowledgeKbLibrarianEn {
 	TranslationsWebKnowledgeKbLibrarianEn.internal(this._root);
@@ -19970,6 +19998,12 @@ extension on Translations {
 			'web.knowledge.kb.newPage.injectHint' => 'Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.',
 			'web.knowledge.kb.newPage.create' => 'Create page',
 			'web.knowledge.kb.newPage.createdToast' => 'Knowledge page created',
+			'web.knowledge.kb.pageSettings.button' => 'Settings',
+			'web.knowledge.kb.pageSettings.title' => 'Page settings',
+			'web.knowledge.kb.pageSettings.description' => 'Edit this page\'s title, summary, nature and injection. The slug is fixed and the page body is edited separately.',
+			'web.knowledge.kb.pageSettings.hint' => 'Edit this page\'s title, summary, nature and inject flag',
+			'web.knowledge.kb.pageSettings.save' => 'Save settings',
+			'web.knowledge.kb.pageSettings.savedToast' => 'Page settings updated',
 			'web.knowledge.kb.librarian.button' => 'Manage KB with AI',
 			'web.knowledge.kb.librarian.hint' => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB Librarian session started',
@@ -20298,14 +20332,14 @@ extension on Translations {
 			'web.roundTable.plan.bindProject' => 'Bind',
 			'web.roundTable.plan.projectBound' => 'Project bound',
 			'web.roundTable.plan.runTitle' => 'Run step',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => 'Run',
 			'web.roundTable.plan.account' => 'Account',
 			'web.roundTable.plan.accountDefault' => 'Default',
 			'web.roundTable.plan.bypass' => 'Skip permissions (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Start the session with its bypass flag so it does not prompt for approvals.',
 			'more.title' => 'More',
-			_ => null,
-		} ?? switch (path) {
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
 			'more.identity.tokenExpires' => 'Token expires',
@@ -20812,14 +20846,14 @@ extension on Translations {
 			'integrations.directionOutbound' => 'Outbound',
 			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
 			'integrations.form.fieldName' => 'Name',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => 'Route prefix',
 			'integrations.form.routePrefixHelper' => 'Reachable as /api/v1/<prefix>/...',
 			'integrations.form.fieldVersion' => 'Version (optional)',
 			'integrations.form.validateBaseUrl' => 'Base URL is required.',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.editFieldVersion' => 'Version',
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
 			'integrations.form.copyCopied' => 'Copied',
@@ -21326,14 +21360,14 @@ extension on Translations {
 			'channels.snacks.channelDisabled' => 'Channel disabled.',
 			'channels.snacks.channelMuted' => 'Channel muted.',
 			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.configUpdated' => 'Channel config updated.',
 			'channels.snacks.channelDeleted' => 'Channel deleted.',
 			'channels.errorPrefix.test' => 'Test failed',
 			'channels.errorPrefix.toggle' => 'Toggle failed',
 			'channels.errorPrefix.muteToggle' => 'Mute toggle failed',
 			'channels.errorPrefix.update' => 'Update failed',
-			_ => null,
-		} ?? switch (path) {
 			'channels.errorPrefix.delete' => 'Delete failed',
 			'channels.failedToLoad' => 'Failed to load channels',
 			'channels.kinds.telegram.description' => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.',
@@ -21840,14 +21874,14 @@ extension on Translations {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',
 			'cortexHub.preview' => 'Preview',
 			'cortexHub.hide' => 'Hide',
 			'cortexHub.approve' => 'Approve',
 			'cortexHub.reject' => 'Reject',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.approvedToast' => 'Proposal approved',
 			'cortexHub.rejectedToast' => 'Proposal rejected',
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',

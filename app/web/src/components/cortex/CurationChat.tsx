@@ -42,11 +42,14 @@ import { listProviders } from '@/lib/memoryAmbient'
 import { probeEmbeddingEndpoint } from '@/lib/memory'
 
 // Cloud-agent providers selectable for a discussion. Mirrors the backend's
-// curation override set (claude | codex | antigravity); '' = global curation worker.
+// curation override set (validConvProvider) + the worker's buildCommand switch:
+// claude | codex | antigravity | grok | opencode; '' = global curation worker.
 const CURATION_PROVIDERS: { id: AgentProviderID; label: string }[] = [
   { id: 'claude', label: 'Claude' },
   { id: 'codex', label: 'Codex' },
   { id: 'antigravity', label: 'Antigravity' },
+  { id: 'grok', label: 'Grok' },
+  { id: 'opencode', label: 'OpenCode' },
 ]
 
 interface CurationChatProps {

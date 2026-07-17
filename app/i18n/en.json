@@ -2836,6 +2836,14 @@
           "create": "Create page",
           "createdToast": "Knowledge page created"
         },
+        "pageSettings": {
+          "button": "Settings",
+          "title": "Page settings",
+          "description": "Edit this page's title, summary, nature and injection. The slug is fixed and the page body is edited separately.",
+          "hint": "Edit this page's title, summary, nature and inject flag",
+          "save": "Save settings",
+          "savedToast": "Page settings updated"
+        },
         "librarian": {
           "button": "Manage KB with AI",
           "hint": "Launch a cross-page AI librarian that can organize, create and edit any knowledge page",

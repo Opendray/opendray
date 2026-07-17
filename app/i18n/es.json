@@ -2836,6 +2836,14 @@
           "create": "Crear página",
           "createdToast": "Página de conocimiento creada"
         },
+        "pageSettings": {
+          "button": "Ajustes",
+          "title": "Ajustes de la página",
+          "description": "Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.",
+          "hint": "Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página",
+          "save": "Guardar ajustes",
+          "savedToast": "Ajustes de la página actualizados"
+        },
         "librarian": {
           "button": "Gestionar KB con IA",
           "hint": "Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento",

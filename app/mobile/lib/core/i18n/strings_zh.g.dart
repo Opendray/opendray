@@ -5755,6 +5755,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get removePageHint => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）';
 	@override String get pageRemovedToast => '页面已移除';
 	@override late final _TranslationsWebKnowledgeKbNewPageZh newPage = _TranslationsWebKnowledgeKbNewPageZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbPageSettingsZh pageSettings = _TranslationsWebKnowledgeKbPageSettingsZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianZh librarian = _TranslationsWebKnowledgeKbLibrarianZh._(_root);
 }
 
@@ -9147,6 +9148,21 @@ class _TranslationsWebKnowledgeKbNewPageZh extends TranslationsWebKnowledgeKbNew
 	@override String get createdToast => '知识页已创建';
 }
 
+// Path: web.knowledge.kb.pageSettings
+class _TranslationsWebKnowledgeKbPageSettingsZh extends TranslationsWebKnowledgeKbPageSettingsEn {
+	_TranslationsWebKnowledgeKbPageSettingsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '设置';
+	@override String get title => '页面设置';
+	@override String get description => '编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改,页面正文另行编辑。';
+	@override String get hint => '编辑此页面的标题、摘要、性质与注入开关';
+	@override String get save => '保存设置';
+	@override String get savedToast => '页面设置已更新';
+}
+
 // Path: web.knowledge.kb.librarian
 class _TranslationsWebKnowledgeKbLibrarianZh extends TranslationsWebKnowledgeKbLibrarianEn {
 	_TranslationsWebKnowledgeKbLibrarianZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -11632,6 +11648,12 @@ extension on TranslationsZh {
 			'web.knowledge.kb.newPage.injectHint' => '关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。',
 			'web.knowledge.kb.newPage.create' => '创建页面',
 			'web.knowledge.kb.newPage.createdToast' => '知识页已创建',
+			'web.knowledge.kb.pageSettings.button' => '设置',
+			'web.knowledge.kb.pageSettings.title' => '页面设置',
+			'web.knowledge.kb.pageSettings.description' => '编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改,页面正文另行编辑。',
+			'web.knowledge.kb.pageSettings.hint' => '编辑此页面的标题、摘要、性质与注入开关',
+			'web.knowledge.kb.pageSettings.save' => '保存设置',
+			'web.knowledge.kb.pageSettings.savedToast' => '页面设置已更新',
 			'web.knowledge.kb.librarian.button' => '用 AI 管理知识库',
 			'web.knowledge.kb.librarian.hint' => '启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB 图书管理员会话已启动',
@@ -11960,14 +11982,14 @@ extension on TranslationsZh {
 			'web.roundTable.plan.bindProject' => '绑定',
 			'web.roundTable.plan.projectBound' => '项目已绑定',
 			'web.roundTable.plan.runTitle' => '运行此步',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => '运行',
 			'web.roundTable.plan.account' => '账号',
 			'web.roundTable.plan.accountDefault' => '默认',
 			'web.roundTable.plan.bypass' => '跳过权限 (YOLO)',
 			'web.roundTable.plan.bypassHint' => '用 bypass 标志启动会话,不再逐个请求批准。',
 			'more.title' => '更多',
-			_ => null,
-		} ?? switch (path) {
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
 			'more.identity.tokenExpires' => '令牌到期',
@@ -12474,14 +12496,14 @@ extension on TranslationsZh {
 			'integrations.directionOutbound' => '出站',
 			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
 			'integrations.form.fieldName' => '名称',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => '路由前缀',
 			'integrations.form.routePrefixHelper' => '可通过 /api/v1/<前缀>/... 访问',
 			'integrations.form.fieldVersion' => '版本（可选）',
 			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.editFieldVersion' => '版本',
 			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
 			'integrations.form.copyCopied' => '已复制',
@@ -12988,14 +13010,14 @@ extension on TranslationsZh {
 			'channels.snacks.channelDisabled' => '通道已停用。',
 			'channels.snacks.channelMuted' => '通道已静音。',
 			'channels.snacks.channelUnmuted' => '通道已取消静音。',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.configUpdated' => '通道配置已更新。',
 			'channels.snacks.channelDeleted' => '通道已删除。',
 			'channels.errorPrefix.test' => '测试失败',
 			'channels.errorPrefix.toggle' => '切换失败',
 			'channels.errorPrefix.muteToggle' => '静音切换失败',
 			'channels.errorPrefix.update' => '更新失败',
-			_ => null,
-		} ?? switch (path) {
 			'channels.errorPrefix.delete' => '删除失败',
 			'channels.failedToLoad' => '加载通道失败',
 			'channels.kinds.telegram.description' => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。',
@@ -13502,14 +13524,14 @@ extension on TranslationsZh {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.disabled' => '已禁用',
 			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
 			'cortexHub.kbLabel' => '知识库',
 			'cortexHub.preview' => '预览',
 			'cortexHub.hide' => '收起',
 			'cortexHub.approve' => '批准',
 			'cortexHub.reject' => '拒绝',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.approvedToast' => '提案已批准',
 			'cortexHub.rejectedToast' => '提案已拒绝',
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
