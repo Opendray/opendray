@@ -5752,6 +5752,8 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get discuss => '与 AI 讨论';
 	@override String get discussHint => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写';
 	@override String get onDemand => '按需';
+	@override String get searchHint => '搜索知识页';
+	@override String get searchEmpty => '没有匹配的知识页';
 	@override String get removePage => '移除页面';
 	@override String get removePageHint => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）';
 	@override String get pageRemovedToast => '页面已移除';
@@ -11637,6 +11639,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.discuss' => '与 AI 讨论',
 			'web.knowledge.kb.discussHint' => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写',
 			'web.knowledge.kb.onDemand' => '按需',
+			'web.knowledge.kb.searchHint' => '搜索知识页',
+			'web.knowledge.kb.searchEmpty' => '没有匹配的知识页',
 			'web.knowledge.kb.removePage' => '移除页面',
 			'web.knowledge.kb.removePageHint' => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）',
 			'web.knowledge.kb.pageRemovedToast' => '页面已移除',
@@ -11981,10 +11985,10 @@ extension on TranslationsZh {
 			'web.roundTable.plan.pending' => '待运行',
 			'web.roundTable.plan.openSession' => '打开会话',
 			'web.roundTable.plan.needProject' => '运行步骤前需绑定项目(cwd)。',
-			'web.roundTable.plan.bindProject' => '绑定',
-			'web.roundTable.plan.projectBound' => '项目已绑定',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.bindProject' => '绑定',
+			'web.roundTable.plan.projectBound' => '项目已绑定',
 			'web.roundTable.plan.runTitle' => '运行此步',
 			'web.roundTable.plan.runStep' => '运行',
 			'web.roundTable.plan.account' => '账号',
@@ -12495,10 +12499,10 @@ extension on TranslationsZh {
 			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
 			'integrations.directionAll' => '全部',
 			'integrations.directionInbound' => '入站',
-			'integrations.directionOutbound' => '出站',
-			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.directionOutbound' => '出站',
+			'integrations.form.validateRequired' => '名称、Base URL、路由前缀必填。',
 			'integrations.form.fieldName' => '名称',
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
@@ -13009,10 +13013,10 @@ extension on TranslationsZh {
 			'channels.deleteBody' => '停止该通道并移除其配置。仍在传输中的通知会被静默丢弃。',
 			'channels.snacks.testDispatched' => '测试消息已发送。',
 			'channels.snacks.channelEnabled' => '通道已启用。',
-			'channels.snacks.channelDisabled' => '通道已停用。',
-			'channels.snacks.channelMuted' => '通道已静音。',
 			_ => null,
 		} ?? switch (path) {
+			'channels.snacks.channelDisabled' => '通道已停用。',
+			'channels.snacks.channelMuted' => '通道已静音。',
 			'channels.snacks.channelUnmuted' => '通道已取消静音。',
 			'channels.snacks.configUpdated' => '通道配置已更新。',
 			'channels.snacks.channelDeleted' => '通道已删除。',
@@ -13523,10 +13527,10 @@ extension on TranslationsZh {
 			'cortexHub.knowledge' => '知识',
 			'cortexHub.knowledgeDesc' => '跨项目沉淀的专业知识。',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} 条待审',
-			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
-			'cortexHub.disabled' => '已禁用',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
+			'cortexHub.disabled' => '已禁用',
 			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
 			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
 			'cortexHub.kbLabel' => '知识库',

@@ -11273,6 +11273,12 @@ class TranslationsWebKnowledgeKbEn {
 	/// en: 'on-demand'
 	String get onDemand => 'on-demand';
 
+	/// en: 'Search knowledge pages'
+	String get searchHint => 'Search knowledge pages';
+
+	/// en: 'No pages match your search'
+	String get searchEmpty => 'No pages match your search';
+
 	/// en: 'Remove page'
 	String get removePage => 'Remove page';
 
@@ -19989,6 +19995,8 @@ extension on Translations {
 			'web.knowledge.kb.discuss' => 'Discuss with AI',
 			'web.knowledge.kb.discussHint' => 'Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites',
 			'web.knowledge.kb.onDemand' => 'on-demand',
+			'web.knowledge.kb.searchHint' => 'Search knowledge pages',
+			'web.knowledge.kb.searchEmpty' => 'No pages match your search',
 			'web.knowledge.kb.removePage' => 'Remove page',
 			'web.knowledge.kb.removePageHint' => 'Remove this page from the knowledge base (its content is kept and resurrects if the slug is re-added)',
 			'web.knowledge.kb.pageRemovedToast' => 'Page removed',
@@ -20333,10 +20341,10 @@ extension on Translations {
 			'web.roundTable.plan.pending' => 'Pending',
 			'web.roundTable.plan.openSession' => 'Open session',
 			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
-			'web.roundTable.plan.bindProject' => 'Bind',
-			'web.roundTable.plan.projectBound' => 'Project bound',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.bindProject' => 'Bind',
+			'web.roundTable.plan.projectBound' => 'Project bound',
 			'web.roundTable.plan.runTitle' => 'Run step',
 			'web.roundTable.plan.runStep' => 'Run',
 			'web.roundTable.plan.account' => 'Account',
@@ -20847,10 +20855,10 @@ extension on Translations {
 			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
 			'integrations.directionAll' => 'All',
 			'integrations.directionInbound' => 'Inbound',
-			'integrations.directionOutbound' => 'Outbound',
-			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.directionOutbound' => 'Outbound',
+			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
 			'integrations.form.fieldName' => 'Name',
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
@@ -21361,10 +21369,10 @@ extension on Translations {
 			'channels.deleteBody' => 'Stops the channel and removes its configuration. In-flight notifications addressed to it will be dropped silently.',
 			'channels.snacks.testDispatched' => 'Test message dispatched.',
 			'channels.snacks.channelEnabled' => 'Channel enabled.',
-			'channels.snacks.channelDisabled' => 'Channel disabled.',
-			'channels.snacks.channelMuted' => 'Channel muted.',
 			_ => null,
 		} ?? switch (path) {
+			'channels.snacks.channelDisabled' => 'Channel disabled.',
+			'channels.snacks.channelMuted' => 'Channel muted.',
 			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
 			'channels.snacks.configUpdated' => 'Channel config updated.',
 			'channels.snacks.channelDeleted' => 'Channel deleted.',
@@ -21875,10 +21883,10 @@ extension on Translations {
 			'cortexHub.knowledge' => 'Knowledge',
 			'cortexHub.knowledgeDesc' => 'Cross-project, distilled expertise.',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} to review',
-			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
-			'cortexHub.disabled' => 'disabled',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
+			'cortexHub.disabled' => 'disabled',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
 			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',

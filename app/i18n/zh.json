@@ -2822,6 +2822,8 @@
         "discuss": "与 AI 讨论",
         "discussHint": "与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写",
         "onDemand": "按需",
+        "searchHint": "搜索知识页",
+        "searchEmpty": "没有匹配的知识页",
         "removePage": "移除页面",
         "removePageHint": "从知识库移除此页（内容保留，重新添加同名标识即可恢复）",
         "pageRemovedToast": "页面已移除",

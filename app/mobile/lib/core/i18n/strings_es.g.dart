@@ -5752,6 +5752,8 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get discuss => 'Hablar con la IA';
 	@override String get discussHint => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras';
 	@override String get onDemand => 'bajo demanda';
+	@override String get searchHint => 'Buscar páginas de conocimiento';
+	@override String get searchEmpty => 'Ninguna página coincide con tu búsqueda';
 	@override String get removePage => 'Quitar página';
 	@override String get removePageHint => 'Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)';
 	@override String get pageRemovedToast => 'Página quitada';
@@ -11637,6 +11639,8 @@ extension on TranslationsEs {
 			'web.knowledge.kb.discuss' => 'Hablar con la IA',
 			'web.knowledge.kb.discussHint' => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras',
 			'web.knowledge.kb.onDemand' => 'bajo demanda',
+			'web.knowledge.kb.searchHint' => 'Buscar páginas de conocimiento',
+			'web.knowledge.kb.searchEmpty' => 'Ninguna página coincide con tu búsqueda',
 			'web.knowledge.kb.removePage' => 'Quitar página',
 			'web.knowledge.kb.removePageHint' => 'Quita esta página de la base de conocimiento (su contenido se conserva y vuelve si se re-añade el slug)',
 			'web.knowledge.kb.pageRemovedToast' => 'Página quitada',
@@ -11981,10 +11985,10 @@ extension on TranslationsEs {
 			'web.roundTable.plan.pending' => 'Pendiente',
 			'web.roundTable.plan.openSession' => 'Abrir sesión',
 			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
-			'web.roundTable.plan.bindProject' => 'Vincular',
-			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.bindProject' => 'Vincular',
+			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
 			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
 			'web.roundTable.plan.runStep' => 'Ejecutar',
 			'web.roundTable.plan.account' => 'Cuenta',
@@ -12495,10 +12499,10 @@ extension on TranslationsEs {
 			'integrations.noMatchingCalls' => 'Aún no hay llamadas coincidentes en el registro.',
 			'integrations.directionAll' => 'Todas',
 			'integrations.directionInbound' => 'Entrantes',
-			'integrations.directionOutbound' => 'Salientes',
-			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.directionOutbound' => 'Salientes',
+			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
 			'integrations.form.fieldName' => 'Nombre',
 			'integrations.form.fieldNameHint' => 'Mi Bot',
 			'integrations.form.fieldBaseUrl' => 'URL base',
@@ -13009,10 +13013,10 @@ extension on TranslationsEs {
 			'channels.deleteBody' => 'Detiene el canal y elimina su configuración. Las notificaciones en curso dirigidas a él se descartarán de forma silenciosa.',
 			'channels.snacks.testDispatched' => 'Mensaje de prueba enviado.',
 			'channels.snacks.channelEnabled' => 'Canal activado.',
-			'channels.snacks.channelDisabled' => 'Canal desactivado.',
-			'channels.snacks.channelMuted' => 'Canal silenciado.',
 			_ => null,
 		} ?? switch (path) {
+			'channels.snacks.channelDisabled' => 'Canal desactivado.',
+			'channels.snacks.channelMuted' => 'Canal silenciado.',
 			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
 			'channels.snacks.configUpdated' => 'Configuración del canal actualizada.',
 			'channels.snacks.channelDeleted' => 'Canal eliminado.',
@@ -13523,10 +13527,10 @@ extension on TranslationsEs {
 			'cortexHub.knowledge' => 'Conocimiento',
 			'cortexHub.knowledgeDesc' => 'Experiencia destilada entre proyectos.',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
-			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
-			'cortexHub.disabled' => 'desactivado',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
+			'cortexHub.disabled' => 'desactivado',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
