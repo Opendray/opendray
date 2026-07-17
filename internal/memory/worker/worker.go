@@ -196,11 +196,12 @@ func (c Config) Valid() error {
 	case WorkerSummarizer:
 		return nil
 	case WorkerAgent:
+		// Must match AgentWorker.Run's headless provider switch.
 		switch c.ProviderID {
-		case "claude", "codex", "antigravity":
+		case "claude", "codex", "antigravity", "grok", "opencode":
 			return nil
 		default:
-			return errors.New("memory worker: agent provider_id required (claude, codex, or antigravity)")
+			return errors.New("memory worker: agent provider_id required (claude, codex, antigravity, grok, or opencode)")
 		}
 	default:
 		return errors.New("memory worker: invalid kind")

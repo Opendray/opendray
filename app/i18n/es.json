@@ -510,6 +510,8 @@
       "modelBackToList": "Lista",
       "cliCodex": "Codex (codex exec)",
       "cliAntigravity": "Antigravity (agy --print)",
+      "cliGrok": "Grok (grok)",
+      "cliOpencode": "OpenCode (opencode run)",
       "infraGateOff": "El enrutado de {label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.",
       "infraGateOpen": "Activarla",
       "providerModel": "modelo:"
@@ -3952,6 +3954,8 @@
     "cliClaude": "Claude",
     "cliCodex": "Codex (codex exec)",
     "cliAntigravity": "Antigravity (agy --print)",
+    "cliGrok": "Grok (grok)",
+    "cliOpencode": "OpenCode (opencode run)",
     "modelLabel": "Modelo",
     "modelCliDefault": "Predeterminado del CLI (último)",
     "modelCustom": "Personalizado…",

@@ -423,6 +423,8 @@ class _TranslationsMemoryWorkersEs extends TranslationsMemoryWorkersEn {
 	@override String get cliClaude => 'Claude';
 	@override String get cliCodex => 'Codex (codex exec)';
 	@override String get cliAntigravity => 'Antigravity (agy --print)';
+	@override String get cliGrok => 'Grok (grok)';
+	@override String get cliOpencode => 'OpenCode (opencode run)';
 	@override String get modelLabel => 'Modelo';
 	@override String get modelCliDefault => 'Predeterminado del CLI (último)';
 	@override String get modelCustom => 'Personalizado…';
@@ -1278,6 +1280,8 @@ class _TranslationsWebMemoryWorkersEs extends TranslationsWebMemoryWorkersEn {
 	@override String get modelBackToList => 'Lista';
 	@override String get cliCodex => 'Codex (codex exec)';
 	@override String get cliAntigravity => 'Antigravity (agy --print)';
+	@override String get cliGrok => 'Grok (grok)';
+	@override String get cliOpencode => 'OpenCode (opencode run)';
 	@override String infraGateOff({required Object label}) => 'El enrutado de ${label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.';
 	@override String get infraGateOpen => 'Activarla';
 	@override String get providerModel => 'modelo:';
@@ -9840,6 +9844,8 @@ extension on TranslationsEs {
 			'web.memoryWorkers.modelBackToList' => 'Lista',
 			'web.memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
+			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => 'El enrutado de ${label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.',
 			'web.memoryWorkers.infraGateOpen' => 'Activarla',
 			'web.memoryWorkers.providerModel' => 'modelo:',
@@ -9927,10 +9933,10 @@ extension on TranslationsEs {
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} actualizado',
 			'web.project.inbox.approveFailedToast' => 'Error al aprobar',
 			'web.project.inbox.rejectedToast' => 'Rechazado',
-			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
-			'web.project.inbox.sessionPrefix' => 'ses',
 			_ => null,
 		} ?? switch (path) {
+			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
+			'web.project.inbox.sessionPrefix' => 'ses',
 			'web.project.inbox.warning' => ({required Object label}) => 'Aprobar REEMPLAZARÁ por completo el ${label} actual.',
 			'web.project.inbox.warningSuffix' => 'Revisa el diff de abajo; esto no es una fusión.',
 			'web.project.inbox.current' => 'Actual',
@@ -10441,10 +10447,10 @@ extension on TranslationsEs {
 			'web.channels.toasts.deleted' => 'Canal eliminado',
 			'web.channels.toasts.created' => 'Canal creado',
 			'web.channels.toasts.updated' => 'Canal actualizado',
-			'web.channels.toasts.muted' => 'Canal silenciado',
-			'web.channels.toasts.unmuted' => 'Canal reactivado',
 			_ => null,
 		} ?? switch (path) {
+			'web.channels.toasts.muted' => 'Canal silenciado',
+			'web.channels.toasts.unmuted' => 'Canal reactivado',
 			'web.channels.dialog.editTitle' => 'Editar canal',
 			'web.channels.dialog.createTitle' => 'Registrar canal',
 			'web.channels.dialog.descriptionBridge' => 'Un adaptador externo (Python/Node/...) se conecta vía WebSocket y presenta este token.',
@@ -10955,10 +10961,10 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.columns.keep' => 'Conservar',
 			'web.backups.schedulesTab.columns.nextRun' => 'Próxima ejecución',
 			'web.backups.schedulesTab.columns.enabled' => 'Habilitada',
-			'web.backups.schedulesTab.columns.actions' => 'Acciones',
-			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.schedulesTab.columns.actions' => 'Acciones',
+			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
 			'web.backups.schedulesTab.deleteTooltip' => 'Eliminar',
 			'web.backups.newSchedule.title' => 'Nueva programación de copia de seguridad',
 			'web.backups.newSchedule.targetLabel' => 'Destinos',
@@ -11469,10 +11475,10 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.create' => 'Crear',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'El nombre es obligatorio',
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Regla ${name} creada',
-			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
-			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
+			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
 			'web.memoryAmbient.profiles.addButton' => 'Añadir perfil',
 			'web.memoryAmbient.profiles.intro' => 'Al arrancar, opendray antepone un banner en markdown con las memorias recientes del proyecto al system prompt del agente, SI hay un perfil configurado. Sin un perfil, el modelo sigue usando memory_search bajo demanda.',
 			'web.memoryAmbient.profiles.empty' => 'No hay perfil de inyección. Las memorias no se inyectan automáticamente al arrancar; el modelo sigue usando memory_search.',
@@ -11983,10 +11989,10 @@ extension on TranslationsEs {
 			'web.roundTable.plan.running' => 'En curso',
 			'web.roundTable.plan.done' => 'Hecho',
 			'web.roundTable.plan.pending' => 'Pendiente',
-			'web.roundTable.plan.openSession' => 'Abrir sesión',
-			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.plan.openSession' => 'Abrir sesión',
+			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
 			'web.roundTable.plan.bindProject' => 'Vincular',
 			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
 			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
@@ -12497,10 +12503,10 @@ extension on TranslationsEs {
 			'integrations.detailLoadFailed' => ({required Object error}) => 'Error al cargar la integración: ${error}',
 			'integrations.callsLoadFailed' => 'Error al cargar las llamadas',
 			'integrations.noMatchingCalls' => 'Aún no hay llamadas coincidentes en el registro.',
-			'integrations.directionAll' => 'Todas',
-			'integrations.directionInbound' => 'Entrantes',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.directionAll' => 'Todas',
+			'integrations.directionInbound' => 'Entrantes',
 			'integrations.directionOutbound' => 'Salientes',
 			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
 			'integrations.form.fieldName' => 'Nombre',
@@ -12539,6 +12545,8 @@ extension on TranslationsEs {
 			'memoryWorkers.cliClaude' => 'Claude',
 			'memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
+			'memoryWorkers.cliGrok' => 'Grok (grok)',
+			'memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'memoryWorkers.modelLabel' => 'Modelo',
 			'memoryWorkers.modelCliDefault' => 'Predeterminado del CLI (último)',
 			'memoryWorkers.modelCustom' => 'Personalizado…',
@@ -13009,12 +13017,12 @@ extension on TranslationsEs {
 			'channels.badges.muted' => 'silenciado',
 			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
 			'channels.bridgeWebOnly' => 'Los canales bridge solo están disponibles en la web',
+			_ => null,
+		} ?? switch (path) {
 			'channels.bridgeEmptyAdd' => 'Añade uno desde el admin web: Canales → Nuevo.',
 			'channels.deleteBody' => 'Detiene el canal y elimina su configuración. Las notificaciones en curso dirigidas a él se descartarán de forma silenciosa.',
 			'channels.snacks.testDispatched' => 'Mensaje de prueba enviado.',
 			'channels.snacks.channelEnabled' => 'Canal activado.',
-			_ => null,
-		} ?? switch (path) {
 			'channels.snacks.channelDisabled' => 'Canal desactivado.',
 			'channels.snacks.channelMuted' => 'Canal silenciado.',
 			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
@@ -13523,12 +13531,12 @@ extension on TranslationsEs {
 			'cortexHub.memory' => 'Memoria',
 			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
 			'cortexHub.notes' => 'Notas',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.notesDesc' => 'El objetivo / plan / diario oficial de cada proyecto.',
 			'cortexHub.knowledge' => 'Conocimiento',
 			'cortexHub.knowledgeDesc' => 'Experiencia destilada entre proyectos.',
 			'cortexHub.quarantineBadge' => ({required Object count}) => '${count} por revisar',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
