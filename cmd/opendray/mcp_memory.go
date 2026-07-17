@@ -100,6 +100,11 @@ type memMCPConfig struct {
 	apiKey   string
 	scope    string
 	scopeKey string
+	// kbAdmin lights up the global-KB write tools (kb_list/kb_page_upsert/
+	// kb_page_write/kb_page_delete). Set (OPENDRAY_KB_ADMIN=1) ONLY on the
+	// "KB Librarian" session by the session adapter; every other session's
+	// memory MCP omits it, so no ordinary session can rewrite the KB.
+	kbAdmin bool
 }
 
 func loadMemMCPConfig() (memMCPConfig, error) {
@@ -108,6 +113,7 @@ func loadMemMCPConfig() (memMCPConfig, error) {
 		apiKey:   os.Getenv("OPENDRAY_API_KEY"),
 		scope:    os.Getenv("OPENDRAY_MEMORY_SCOPE"),
 		scopeKey: os.Getenv("OPENDRAY_MEMORY_SCOPE_KEY"),
+		kbAdmin:  os.Getenv("OPENDRAY_KB_ADMIN") == "1",
 	}
 	if c.baseURL == "" {
 		return c, errors.New("mcp-memory: OPENDRAY_BASE_URL is required")
@@ -194,7 +200,13 @@ func (s *memMCPServer) handle(raw []byte) {
 	case "ping":
 		s.respond(req.ID, map[string]any{})
 	case "tools/list":
-		s.respond(req.ID, map[string]any{"tools": toolDefs})
+		tools := toolDefs
+		// The KB Librarian session (OPENDRAY_KB_ADMIN=1) additionally sees
+		// the global-KB write tools; no other session does.
+		if s.cfg.kbAdmin {
+			tools = append(append([]map[string]any{}, toolDefs...), kbAdminToolDefs...)
+		}
+		s.respond(req.ID, map[string]any{"tools": tools})
 	case "tools/call":
 		s.handleToolCall(req)
 	default:
@@ -609,6 +621,69 @@ var toolDefs = []map[string]any{
 	},
 }
 
+// kbAdminToolDefs are the global-KB curation tools, listed ONLY for the KB
+// Librarian session (OPENDRAY_KB_ADMIN=1). They let a cross-page admin agent
+// organize the whole knowledge base — unlike the per-page Discuss chat.
+var kbAdminToolDefs = []map[string]any{
+	{
+		"name": "kb_list",
+		"description": "List every global knowledge page (kb_* pages) with its " +
+			"config: slug, title, description, nature (foundational|emergent), " +
+			"inject flag, pinned flag, and lock state. Use this FIRST to see the " +
+			"whole knowledge base before creating, editing, or reorganizing pages.",
+		"inputSchema": map[string]any{"type": "object", "properties": map[string]any{}},
+	},
+	{
+		"name": "kb_page_upsert",
+		"description": "Create a new global knowledge page, or update an existing " +
+			"page's CONFIG (title, description, nature, inject). Slug is the primary " +
+			"key: a new kb_* slug creates the page; an existing slug edits its config " +
+			"(the body is written separately via kb_page_write). Fields not given are " +
+			"preserved on an existing page. Pinned/reserved flags are never changed.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"slug":        map[string]any{"type": "string", "description": "kb_* slug, e.g. kb_network_topology. Lowercase, must start with kb_."},
+				"title":       map[string]any{"type": "string", "description": "Human title shown in the KB nav."},
+				"description": map[string]any{"type": "string", "description": "One sentence: what belongs on this page. Drives on-demand retrieval."},
+				"nature":      map[string]any{"type": "string", "description": "'foundational' (binding rule, injected in full) or 'emergent' (reference). Default emergent."},
+				"inject":      map[string]any{"type": "boolean", "description": "true = inject full body into every spawn; false (default) = index only, fetched on demand."},
+			},
+			"required": []string{"slug"},
+		},
+	},
+	{
+		"name": "kb_page_write",
+		"description": "Write/replace the BODY (markdown content) of a global " +
+			"knowledge page. Respects human locks: if the page was last edited by the " +
+			"operator it files a PROPOSAL for approval; otherwise it writes directly. " +
+			"Read the current body first (doc_read) so you edit rather than clobber.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"slug":    map[string]any{"type": "string", "description": "Existing kb_* slug to write."},
+				"content": map[string]any{"type": "string", "description": "The full new markdown body for the page."},
+				"reason":  map[string]any{"type": "string", "description": "Short note on what changed (shown to the operator on a locked-page proposal)."},
+			},
+			"required": []string{"slug", "content"},
+		},
+	},
+	{
+		"name": "kb_page_delete",
+		"description": "Delete a global knowledge page. Pinned pages (the classic " +
+			"four + Integrations) are reserved and cannot be deleted — the gateway " +
+			"refuses and this returns that error. Deleting keeps the page's body row, " +
+			"which resurrects if the slug is re-added.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"slug": map[string]any{"type": "string", "description": "kb_* slug to remove."},
+			},
+			"required": []string{"slug"},
+		},
+	},
+}
+
 // handleToolCall dispatches one MCP tools/call invocation to the
 // appropriate gateway endpoint. All tool calls share the same
 // scope/scope_key envelope coming from env so the agent never has
@@ -689,6 +764,23 @@ func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result a
 		result, err = s.callSkillDistill(args)
 	case "project_search":
 		result, err = s.callProjectSearch(args)
+	case "kb_list", "kb_page_upsert", "kb_page_write", "kb_page_delete":
+		// KB Librarian write surface — refuse unless this session was
+		// spawned as the KB admin (defence in depth: the tools aren't even
+		// listed otherwise, but a client could still call by name).
+		if !s.cfg.kbAdmin {
+			return nil, errors.New("kb admin tools require the KB Librarian session"), true
+		}
+		switch name {
+		case "kb_list":
+			result, err = s.callKBList()
+		case "kb_page_upsert":
+			result, err = s.callKBPageUpsert(args)
+		case "kb_page_write":
+			result, err = s.callKBPageWrite(args)
+		case "kb_page_delete":
+			result, err = s.callKBPageDelete(args)
+		}
 	default:
 		return nil, nil, false
 	}
@@ -1099,6 +1191,206 @@ func (s *memMCPServer) callProjectDocSet(kind string, args json.RawMessage) (any
 	}, nil
 }
 
+// ── KB Librarian tools (OPENDRAY_KB_ADMIN sessions only) ─────────────
+
+const kbGlobalCwd = "__global__"
+
+// kbSection mirrors the blueprint Section fields the librarian needs.
+type kbSection struct {
+	Slug        string `json:"slug"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Position    int    `json:"position"`
+	Maintainer  string `json:"maintainer_mode"`
+	WritePolicy string `json:"write_policy"`
+	PromptHint  string `json:"prompt_hint"`
+	Pinned      bool   `json:"pinned"`
+	Inject      bool   `json:"inject"`
+	Nature      string `json:"nature"`
+}
+
+// kbListSections fetches the global knowledge blueprint (all kb_* pages).
+func (s *memMCPServer) kbListSections() ([]kbSection, error) {
+	var out struct {
+		Sections []kbSection `json:"sections"`
+	}
+	if err := s.gatewayGetJSON("/api/v1/project-docs/blueprint?cwd="+urlQuery(kbGlobalCwd), &out); err != nil {
+		return nil, err
+	}
+	return out.Sections, nil
+}
+
+// callKBList returns the whole knowledge base as a config table so the
+// librarian can plan cross-page work.
+func (s *memMCPServer) callKBList() (any, error) {
+	secs, err := s.kbListSections()
+	if err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	b.WriteString("Global knowledge pages:\n\n")
+	for _, sec := range secs {
+		if !strings.HasPrefix(sec.Slug, "kb_") {
+			continue
+		}
+		inject := "on-demand"
+		if sec.Inject {
+			inject = "injected"
+		}
+		nature := sec.Nature
+		if nature == "" {
+			nature = "emergent"
+		}
+		fmt.Fprintf(&b, "- %s (%s) — nature=%s, %s", sec.Title, sec.Slug, nature, inject)
+		if sec.Pinned {
+			b.WriteString(", pinned")
+		}
+		if d := strings.TrimSpace(sec.Description); d != "" {
+			b.WriteString(" — " + d)
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\nRead a page's body with doc_read(slug). Edit config with " +
+		"kb_page_upsert, body with kb_page_write, remove with kb_page_delete.")
+	return textResult(b.String()), nil
+}
+
+// callKBPageUpsert creates a page (new slug) or edits an existing page's
+// config, preserving fields the caller omits + reserved flags.
+func (s *memMCPServer) callKBPageUpsert(args json.RawMessage) (any, error) {
+	var in struct {
+		Slug        string  `json:"slug"`
+		Title       *string `json:"title"`
+		Description *string `json:"description"`
+		Nature      *string `json:"nature"`
+		Inject      *bool   `json:"inject"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("bad arguments: %w", err)
+	}
+	slug := strings.TrimSpace(in.Slug)
+	if !strings.HasPrefix(slug, "kb_") {
+		return nil, errors.New("slug must start with kb_")
+	}
+
+	// Start from the existing section (edit) or sensible defaults (create).
+	secs, err := s.kbListSections()
+	if err != nil {
+		return nil, err
+	}
+	sec := kbSection{
+		Slug: slug, Position: 99, Maintainer: "ai",
+		WritePolicy: "proposal", Nature: "emergent",
+	}
+	existing := false
+	for _, e := range secs {
+		if e.Slug == slug {
+			sec, existing = e, true
+			break
+		}
+	}
+	if in.Title != nil {
+		sec.Title = strings.TrimSpace(*in.Title)
+	}
+	if in.Description != nil {
+		sec.Description = strings.TrimSpace(*in.Description)
+	}
+	if in.Nature != nil {
+		n := strings.TrimSpace(*in.Nature)
+		if n != "foundational" && n != "emergent" {
+			return nil, errors.New("nature must be 'foundational' or 'emergent'")
+		}
+		sec.Nature = n
+	}
+	if in.Inject != nil {
+		sec.Inject = *in.Inject
+	}
+	if strings.TrimSpace(sec.Title) == "" {
+		return nil, errors.New("title is required when creating a page")
+	}
+
+	body := map[string]any{
+		"cwd": kbGlobalCwd, "slug": sec.Slug, "title": sec.Title,
+		"description": sec.Description, "position": sec.Position,
+		"maintainer_mode": sec.Maintainer, "write_policy": sec.WritePolicy,
+		"prompt_hint": sec.PromptHint, "pinned": sec.Pinned,
+		"inject": sec.Inject, "nature": sec.Nature,
+	}
+	if err := s.gatewayPutJSON("/api/v1/project-docs/blueprint/"+urlQuery(slug), body, nil); err != nil {
+		return nil, err
+	}
+	verb := "Created"
+	if existing {
+		verb = "Updated the config of"
+	}
+	return textResult(fmt.Sprintf("%s knowledge page %s (%q). Write its body with kb_page_write(slug=%q).", verb, slug, sec.Title, slug)), nil
+}
+
+// callKBPageWrite writes a page body, honouring human locks: an
+// operator-locked page files a proposal; an unlocked page writes directly.
+func (s *memMCPServer) callKBPageWrite(args json.RawMessage) (any, error) {
+	var in struct {
+		Slug    string `json:"slug"`
+		Content string `json:"content"`
+		Reason  string `json:"reason"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("bad arguments: %w", err)
+	}
+	slug := strings.TrimSpace(in.Slug)
+	if !strings.HasPrefix(slug, "kb_") {
+		return nil, errors.New("slug must start with kb_")
+	}
+	if strings.TrimSpace(in.Content) == "" {
+		return nil, errors.New("content is required")
+	}
+	// Lock check: a page last written by the operator is human-locked.
+	var doc struct {
+		UpdatedBy string `json:"updated_by"`
+	}
+	if err := s.gatewayGetJSON("/api/v1/project-docs/"+urlQuery(slug)+"?cwd="+urlQuery(kbGlobalCwd), &doc); err != nil {
+		return nil, err
+	}
+	if doc.UpdatedBy == "operator" {
+		// Locked → file a proposal the operator approves in the inbox.
+		body := map[string]any{
+			"cwd": kbGlobalCwd, "kind": slug,
+			"proposed_content": in.Content, "reason": in.Reason,
+		}
+		var out struct {
+			ID string `json:"id"`
+		}
+		if err := s.gatewayPostJSON("/api/v1/project-doc-proposals/", body, &out); err != nil {
+			return nil, err
+		}
+		return textResult(fmt.Sprintf("Page %s is human-locked, so I filed proposal %s — the body is unchanged until the operator approves it in the inbox.", slug, out.ID)), nil
+	}
+	// Unlocked → write the live body directly (authored by the agent).
+	body := map[string]any{"cwd": kbGlobalCwd, "content": in.Content, "updated_by": "agent"}
+	if err := s.gatewayPutJSON("/api/v1/project-docs/"+urlQuery(slug), body, nil); err != nil {
+		return nil, err
+	}
+	return textResult(fmt.Sprintf("Wrote the body of %s directly (it was AI-maintained, not human-locked).", slug)), nil
+}
+
+// callKBPageDelete removes a page; the gateway refuses pinned/reserved ones.
+func (s *memMCPServer) callKBPageDelete(args json.RawMessage) (any, error) {
+	var in struct {
+		Slug string `json:"slug"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("bad arguments: %w", err)
+	}
+	slug := strings.TrimSpace(in.Slug)
+	if !strings.HasPrefix(slug, "kb_") {
+		return nil, errors.New("slug must start with kb_")
+	}
+	if err := s.gatewayDelete("/api/v1/project-docs/blueprint/" + urlQuery(slug) + "?cwd=" + urlQuery(kbGlobalCwd)); err != nil {
+		return nil, err
+	}
+	return textResult(fmt.Sprintf("Removed knowledge page %s from the blueprint.", slug)), nil
+}
+
 // callSessionLogAppend writes one journal entry. Used by both
 // session_log_append (kind=manual) and decision_record (kind=
 // decision); the schema then tags it author=agent so the operator
@@ -1278,6 +1570,55 @@ func (s *memMCPServer) gatewayGetJSON(path string, out any) error {
 		if err := json.Unmarshal(rawRes, out); err != nil {
 			return fmt.Errorf("decode response: %w", err)
 		}
+	}
+	return nil
+}
+
+// gatewayPutJSON is the PUT twin of gatewayPostJSON (used by the KB
+// Librarian write tools: blueprint upsert + direct doc writes).
+func (s *memMCPServer) gatewayPutJSON(path string, body, out any) error {
+	raw, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("encode body: %w", err)
+	}
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, s.cfg.baseURL+path, bytes.NewReader(raw))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.cfg.apiKey)
+	res, err := s.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("gateway %s: %w", path, err)
+	}
+	defer res.Body.Close()
+	rawRes, _ := io.ReadAll(res.Body)
+	if res.StatusCode/100 != 2 {
+		return fmt.Errorf("gateway %s returned %d: %s", path, res.StatusCode, string(rawRes))
+	}
+	if out != nil {
+		if err := json.Unmarshal(rawRes, out); err != nil {
+			return fmt.Errorf("decode response: %w", err)
+		}
+	}
+	return nil
+}
+
+// gatewayDelete sends a DELETE to a gateway path (KB page removal).
+func (s *memMCPServer) gatewayDelete(path string) error {
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, s.cfg.baseURL+path, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+s.cfg.apiKey)
+	res, err := s.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("gateway %s: %w", path, err)
+	}
+	defer res.Body.Close()
+	rawRes, _ := io.ReadAll(res.Body)
+	if res.StatusCode/100 != 2 {
+		return fmt.Errorf("gateway %s returned %d: %s", path, res.StatusCode, string(rawRes))
 	}
 	return nil
 }

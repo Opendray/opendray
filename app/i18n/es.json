@@ -2835,6 +2835,16 @@
           "injectHint": "Apagado (recomendado): la página queda fuera del banner de arranque y los agentes la alcanzan bajo demanda vía búsqueda. Encendido: las fundacionales se inyectan como reglas vinculantes, las emergentes como referencia.",
           "create": "Crear página",
           "createdToast": "Página de conocimiento creada"
+        },
+        "librarian": {
+          "button": "Gestionar KB con IA",
+          "hint": "Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento",
+          "launchedToast": "Sesión del bibliotecario de KB iniciada",
+          "title": "Lanzar bibliotecario de KB",
+          "dialogHint": "Elige el agente en la nube que organizará tu base de conocimiento. Tendrá herramientas de lectura y escritura en todas las páginas.",
+          "provider": "Agente en la nube",
+          "account": "Cuenta de Claude",
+          "launch": "Lanzar"
         }
       },
       "kinds": {

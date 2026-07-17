@@ -236,6 +236,18 @@ export async function escalateConversation(
   )
 }
 
+// Launch the cross-page KB Librarian session (a knowledge-base admin agent
+// whose memory MCP has the global-KB write tools). Returns the new session id
+// so the UI can navigate to it. All fields optional; defaults to claude.
+export async function launchKBLibrarian(
+  input: { provider?: string; model?: string; claude_account_id?: string } = {},
+): Promise<{ session_id: string }> {
+  return api<{ session_id: string }>('/api/v1/cortex/librarian', {
+    method: 'POST',
+    body: input,
+  })
+}
+
 export async function closeConversation(id: string): Promise<void> {
   await api(`/api/v1/cortex/conversations/${id}/close`, { method: 'POST' })
 }

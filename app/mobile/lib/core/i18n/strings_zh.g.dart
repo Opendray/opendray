@@ -5755,6 +5755,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get removePageHint => '从知识库移除此页（内容保留，重新添加同名标识即可恢复）';
 	@override String get pageRemovedToast => '页面已移除';
 	@override late final _TranslationsWebKnowledgeKbNewPageZh newPage = _TranslationsWebKnowledgeKbNewPageZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbLibrarianZh librarian = _TranslationsWebKnowledgeKbLibrarianZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9146,6 +9147,23 @@ class _TranslationsWebKnowledgeKbNewPageZh extends TranslationsWebKnowledgeKbNew
 	@override String get createdToast => '知识页已创建';
 }
 
+// Path: web.knowledge.kb.librarian
+class _TranslationsWebKnowledgeKbLibrarianZh extends TranslationsWebKnowledgeKbLibrarianEn {
+	_TranslationsWebKnowledgeKbLibrarianZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => '用 AI 管理知识库';
+	@override String get hint => '启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页';
+	@override String get launchedToast => 'KB 图书管理员会话已启动';
+	@override String get title => '启动 KB 图书管理员';
+	@override String get dialogHint => '选择用来整理知识库的 cloud agent。它将获得对所有 KB 页面的读写工具。';
+	@override String get provider => 'Cloud agent';
+	@override String get account => 'Claude 账号';
+	@override String get launch => '启动';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementZh extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -11614,6 +11632,14 @@ extension on TranslationsZh {
 			'web.knowledge.kb.newPage.injectHint' => '关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。',
 			'web.knowledge.kb.newPage.create' => '创建页面',
 			'web.knowledge.kb.newPage.createdToast' => '知识页已创建',
+			'web.knowledge.kb.librarian.button' => '用 AI 管理知识库',
+			'web.knowledge.kb.librarian.hint' => '启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页',
+			'web.knowledge.kb.librarian.launchedToast' => 'KB 图书管理员会话已启动',
+			'web.knowledge.kb.librarian.title' => '启动 KB 图书管理员',
+			'web.knowledge.kb.librarian.dialogHint' => '选择用来整理知识库的 cloud agent。它将获得对所有 KB 页面的读写工具。',
+			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
+			'web.knowledge.kb.librarian.account' => 'Claude 账号',
+			'web.knowledge.kb.librarian.launch' => '启动',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -11940,6 +11966,8 @@ extension on TranslationsZh {
 			'web.roundTable.plan.bypass' => '跳过权限 (YOLO)',
 			'web.roundTable.plan.bypassHint' => '用 bypass 标志启动会话,不再逐个请求批准。',
 			'more.title' => '更多',
+			_ => null,
+		} ?? switch (path) {
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
 			'more.identity.tokenExpires' => '令牌到期',
@@ -11948,8 +11976,6 @@ extension on TranslationsZh {
 			'more.sections.memory' => '记忆',
 			'more.sections.system' => '系统',
 			'more.items.integrations.title' => '集成',
-			_ => null,
-		} ?? switch (path) {
 			'more.items.integrations.subtitle' => 'API 调用方 — 近期活动与错误率',
 			'more.items.activity.title' => '活动',
 			'more.items.activity.subtitle' => '集成 API 调用审计',
@@ -12454,6 +12480,8 @@ extension on TranslationsZh {
 			'integrations.form.routePrefixHelper' => '可通过 /api/v1/<前缀>/... 访问',
 			'integrations.form.fieldVersion' => '版本（可选）',
 			'integrations.form.validateBaseUrl' => '必须填写 Base URL。',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.editFieldVersion' => '版本',
 			'integrations.form.apiKeyWarn' => '此 key 只显示这一次。',
 			'integrations.form.copyCopied' => '已复制',
@@ -12462,8 +12490,6 @@ extension on TranslationsZh {
 			'integrations.defaultAgent.description' => '当该集成创建会话且请求未指定相应字段时套用。请求值始终优先。',
 			'integrations.defaultAgent.providerLabel' => '默认 provider',
 			'integrations.defaultAgent.providerNone' => '无默认',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.defaultAgent.modelLabel' => '默认模型',
 			'integrations.defaultAgent.modelHint' => 'provider 默认(如 opus)',
 			'integrations.defaultAgent.accountLabel' => '默认 Claude 账号',
@@ -12968,6 +12994,8 @@ extension on TranslationsZh {
 			'channels.errorPrefix.toggle' => '切换失败',
 			'channels.errorPrefix.muteToggle' => '静音切换失败',
 			'channels.errorPrefix.update' => '更新失败',
+			_ => null,
+		} ?? switch (path) {
 			'channels.errorPrefix.delete' => '删除失败',
 			'channels.failedToLoad' => '加载通道失败',
 			'channels.kinds.telegram.description' => '通过 @BotFather 创建机器人。opendray 长轮询 getUpdates 并通过 REST 发送。原生支持按钮和 reply_to_message。',
@@ -12976,8 +13004,6 @@ extension on TranslationsZh {
 			'channels.kinds.telegram.chatIdLabel' => '默认 chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42（可选 — 没有 ReplyCtx 时使用）',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Telegram 拥有者用户 ID',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789（多个用逗号分隔）',
 			'channels.kinds.telegram.ownerUserIdsHint' => '只有这些数字 Telegram 用户 ID 才能驱动会话、运行命令或点击按钮；其他人一律忽略。留空则允许任何人（双向聊天不推荐）。私聊 @userinfobot 获取你的 ID。',
 			'channels.kinds.telegram.chatEnabledLabel' => '双向聊天（将消息路由进会话）',
@@ -13482,6 +13508,8 @@ extension on TranslationsZh {
 			'cortexHub.hide' => '收起',
 			'cortexHub.approve' => '批准',
 			'cortexHub.reject' => '拒绝',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.approvedToast' => '提案已批准',
 			'cortexHub.rejectedToast' => '提案已拒绝',
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
@@ -13490,8 +13518,6 @@ extension on TranslationsZh {
 			'cortexSettings.tabWorkers' => '工作器',
 			'cortexSettings.tabCapture' => '捕获与注入',
 			'cortexSettings.tabProviders' => 'Provider',
-			_ => null,
-		} ?? switch (path) {
 			'cortexSettings.providersHint' => '总结/agent 工作器路由到的 LLM 端点。',
 			'cortexSettings.providersEmpty' => '未配置 provider。',
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',

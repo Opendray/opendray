@@ -34,6 +34,9 @@ type LaunchSpec struct {
 	ProviderID      string
 	Model           string
 	ClaudeAccountID string
+	// KBAdmin spawns the session as the KB Librarian: its memory MCP gets
+	// the global-KB write tools. Only the LaunchLibrarian path sets this.
+	KBAdmin bool
 }
 
 // SessionLauncher escalates a conversation into a full agent session.
@@ -407,6 +410,45 @@ func (s *CurationService) applyRevision(ctx context.Context, conv Conversation, 
 // Escalate promotes the conversation to a full agent session seeded
 // with the transcript + instructions to ground the revision in the
 // codebase and file changes through the standard proposal tools.
+// kbLibrarianSeed is the system brief for the cross-page KB administrator.
+const kbLibrarianSeed = `You are the **KB Librarian** — the operator's cross-page knowledge-base administrator for opendray's Cortex knowledge system. Unlike the per-page "Discuss with AI" chat, you can organize the WHOLE knowledge base.
+
+Your tools (opendray-memory MCP):
+- kb_list — see every global knowledge page with its config + lock state. **Call this FIRST.**
+- doc_read(slug) / project_search(query) — read a page's body / find relevant content.
+- kb_page_upsert(slug, title?, description?, nature?, inject?) — create a new kb_* page or edit an existing page's config.
+- kb_page_write(slug, content, reason?) — write a page's body. An operator-locked page files a PROPOSAL (the operator approves it); an AI-maintained page is written directly. Always doc_read first so you EDIT rather than clobber.
+- kb_page_delete(slug) — remove a page (pinned pages like the classic four + Integrations are reserved and refuse deletion).
+
+Guidelines:
+- Wait for the operator to tell you what to organize/create/fix. Then plan across pages, confirm anything destructive, and use the tools above.
+- Keep pages focused: prefer a new fine-grained kb_* page over bloating an existing one. Write a precise one-sentence description — it drives on-demand retrieval.
+- The classic four (kb_infrastructure/conventions/lessons/reusable) have i18n-managed titles and fixed natures — reconfigure/rewrite them carefully, and never expect to delete them.
+
+Start by calling kb_list and greeting the operator with a short summary of the current knowledge base, then ask what they'd like to do.`
+
+// LaunchLibrarian spawns the KB Librarian session — a cross-page knowledge
+// administrator whose memory MCP has the global-KB write tools. Runs in the
+// opendray workspace cwd (KB lives under the global sentinel, not a project).
+func (s *CurationService) LaunchLibrarian(ctx context.Context, providerID, model, claudeAccountID string) (string, error) {
+	if s.sessions == nil {
+		return "", errors.New("cortex: session launcher not configured")
+	}
+	cwd := strings.TrimSpace(s.workspaceCwd)
+	if cwd == "" {
+		return "", errors.New("cortex: no workspace cwd configured for the KB Librarian")
+	}
+	return s.sessions.Launch(ctx, LaunchSpec{
+		Cwd:             cwd,
+		Name:            "KB Librarian",
+		SeedPrompt:      kbLibrarianSeed,
+		ProviderID:      providerID,
+		Model:           model,
+		ClaudeAccountID: claudeAccountID,
+		KBAdmin:         true,
+	})
+}
+
 func (s *CurationService) Escalate(ctx context.Context, conversationID string) (Conversation, error) {
 	if s.sessions == nil {
 		return Conversation{}, errors.New("cortex: session launcher not configured")

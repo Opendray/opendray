@@ -11280,6 +11280,7 @@ class TranslationsWebKnowledgeKbEn {
 	String get pageRemovedToast => 'Page removed';
 
 	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
+	late final TranslationsWebKnowledgeKbLibrarianEn librarian = TranslationsWebKnowledgeKbLibrarianEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -17327,6 +17328,39 @@ class TranslationsWebKnowledgeKbNewPageEn {
 	String get createdToast => 'Knowledge page created';
 }
 
+// Path: web.knowledge.kb.librarian
+class TranslationsWebKnowledgeKbLibrarianEn {
+	TranslationsWebKnowledgeKbLibrarianEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Manage KB with AI'
+	String get button => 'Manage KB with AI';
+
+	/// en: 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page'
+	String get hint => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page';
+
+	/// en: 'KB Librarian session started'
+	String get launchedToast => 'KB Librarian session started';
+
+	/// en: 'Launch KB Librarian'
+	String get title => 'Launch KB Librarian';
+
+	/// en: 'Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.'
+	String get dialogHint => 'Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.';
+
+	/// en: 'Cloud agent'
+	String get provider => 'Cloud agent';
+
+	/// en: 'Claude account'
+	String get account => 'Claude account';
+
+	/// en: 'Launch'
+	String get launch => 'Launch';
+}
+
 // Path: web.knowledge.distill.retirement
 class TranslationsWebKnowledgeDistillRetirementEn {
 	TranslationsWebKnowledgeDistillRetirementEn.internal(this._root);
@@ -19936,6 +19970,14 @@ extension on Translations {
 			'web.knowledge.kb.newPage.injectHint' => 'Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.',
 			'web.knowledge.kb.newPage.create' => 'Create page',
 			'web.knowledge.kb.newPage.createdToast' => 'Knowledge page created',
+			'web.knowledge.kb.librarian.button' => 'Manage KB with AI',
+			'web.knowledge.kb.librarian.hint' => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page',
+			'web.knowledge.kb.librarian.launchedToast' => 'KB Librarian session started',
+			'web.knowledge.kb.librarian.title' => 'Launch KB Librarian',
+			'web.knowledge.kb.librarian.dialogHint' => 'Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.',
+			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
+			'web.knowledge.kb.librarian.account' => 'Claude account',
+			'web.knowledge.kb.librarian.launch' => 'Launch',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -20262,6 +20304,8 @@ extension on Translations {
 			'web.roundTable.plan.bypass' => 'Skip permissions (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Start the session with its bypass flag so it does not prompt for approvals.',
 			'more.title' => 'More',
+			_ => null,
+		} ?? switch (path) {
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
 			'more.identity.tokenExpires' => 'Token expires',
@@ -20270,8 +20314,6 @@ extension on Translations {
 			'more.sections.memory' => 'Memory',
 			'more.sections.system' => 'System',
 			'more.items.integrations.title' => 'Integrations',
-			_ => null,
-		} ?? switch (path) {
 			'more.items.integrations.subtitle' => 'API callers — recent activity & error rates',
 			'more.items.activity.title' => 'Activity',
 			'more.items.activity.subtitle' => 'Integration API call audit',
@@ -20776,6 +20818,8 @@ extension on Translations {
 			'integrations.form.routePrefixHelper' => 'Reachable as /api/v1/<prefix>/...',
 			'integrations.form.fieldVersion' => 'Version (optional)',
 			'integrations.form.validateBaseUrl' => 'Base URL is required.',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.editFieldVersion' => 'Version',
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
 			'integrations.form.copyCopied' => 'Copied',
@@ -20784,8 +20828,6 @@ extension on Translations {
 			'integrations.defaultAgent.description' => 'Applied to sessions this integration creates when its request omits the field. The request always wins.',
 			'integrations.defaultAgent.providerLabel' => 'Default provider',
 			'integrations.defaultAgent.providerNone' => 'No default',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.defaultAgent.modelLabel' => 'Default model',
 			'integrations.defaultAgent.modelHint' => 'Provider default (e.g. opus)',
 			'integrations.defaultAgent.accountLabel' => 'Default Claude account',
@@ -21290,6 +21332,8 @@ extension on Translations {
 			'channels.errorPrefix.toggle' => 'Toggle failed',
 			'channels.errorPrefix.muteToggle' => 'Mute toggle failed',
 			'channels.errorPrefix.update' => 'Update failed',
+			_ => null,
+		} ?? switch (path) {
 			'channels.errorPrefix.delete' => 'Delete failed',
 			'channels.failedToLoad' => 'Failed to load channels',
 			'channels.kinds.telegram.description' => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.',
@@ -21298,8 +21342,6 @@ extension on Translations {
 			'channels.kinds.telegram.chatIdLabel' => 'Default chat ID',
 			'channels.kinds.telegram.chatIdPlaceholder' => '42 (optional — used when no ReplyCtx)',
 			'channels.kinds.telegram.ownerUserIdsLabel' => 'Owner Telegram user ID(s)',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.ownerUserIdsPlaceholder' => '123456789 (comma-separated for more than one)',
 			'channels.kinds.telegram.ownerUserIdsHint' => 'Only these numeric Telegram user IDs may drive sessions, run commands, or tap buttons; everyone else is ignored. Leave blank to allow anyone (not recommended for two-way chat). Get yours by DMing @userinfobot.',
 			'channels.kinds.telegram.chatEnabledLabel' => 'Two-way chat (route messages into the session)',
@@ -21804,6 +21846,8 @@ extension on Translations {
 			'cortexHub.hide' => 'Hide',
 			'cortexHub.approve' => 'Approve',
 			'cortexHub.reject' => 'Reject',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.approvedToast' => 'Proposal approved',
 			'cortexHub.rejectedToast' => 'Proposal rejected',
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
@@ -21812,8 +21856,6 @@ extension on Translations {
 			'cortexSettings.tabWorkers' => 'Workers',
 			'cortexSettings.tabCapture' => 'Capture & injection',
 			'cortexSettings.tabProviders' => 'Providers',
-			_ => null,
-		} ?? switch (path) {
 			'cortexSettings.providersHint' => 'LLM endpoints that summarizer/agent workers route to.',
 			'cortexSettings.providersEmpty' => 'No providers configured.',
 			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',

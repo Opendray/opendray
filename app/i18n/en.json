@@ -2835,6 +2835,16 @@
           "injectHint": "Off (recommended for most): the page stays out of the spawn banner and agents reach it on demand via memory search. On: foundational pages inject as binding rules, emergent pages as reference.",
           "create": "Create page",
           "createdToast": "Knowledge page created"
+        },
+        "librarian": {
+          "button": "Manage KB with AI",
+          "hint": "Launch a cross-page AI librarian that can organize, create and edit any knowledge page",
+          "launchedToast": "KB Librarian session started",
+          "title": "Launch KB Librarian",
+          "dialogHint": "Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.",
+          "provider": "Cloud agent",
+          "account": "Claude account",
+          "launch": "Launch"
         }
       },
       "kinds": {

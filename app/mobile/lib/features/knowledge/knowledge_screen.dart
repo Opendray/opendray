@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
+import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/knowledge_api.dart';
+import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/curation_chat_screen.dart';
@@ -308,6 +313,30 @@ class _KbViewState extends ConsumerState<_KbView> {
     await _load();
   }
 
+  // Pick the cloud agent + model (+ Claude account) for the KB Librarian,
+  // then launch the session and open it.
+  Future<void> _launchLibrarian() async {
+    final choice = await _LibrarianLaunchSheet.show(context);
+    if (choice == null || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final sid = await ref.read(cortexApiProvider).launchLibrarian(
+            provider: choice.provider,
+            model: choice.model,
+            claudeAccountId: choice.account,
+          );
+      if (!mounted || sid.isEmpty) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.web.knowledge.kb.librarian.launchedToast)),
+      );
+      unawaited(context.push('/session/$sid'));
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('${t.web.knowledge.actionFailed}: $e')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _editCtrl.dispose();
@@ -496,6 +525,15 @@ class _KbViewState extends ConsumerState<_KbView> {
                     avatar: const Icon(Icons.add, size: 16),
                     label: Text(t.web.knowledge.kb.newPage.button),
                     onPressed: _newPage,
+                  ),
+                ),
+                // Cross-page KB admin — the Librarian agent session.
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 4),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.auto_awesome, size: 16),
+                    label: Text(t.web.knowledge.kb.librarian.button),
+                    onPressed: _launchLibrarian,
                   ),
                 ),
               ],
@@ -1032,6 +1070,168 @@ class _NewKbPageDialogState extends ConsumerState<_NewKbPageDialog> {
           child: Text(t.web.knowledge.kb.newPage.create),
         ),
       ],
+    );
+  }
+}
+
+// _LibrarianLaunchSheet picks the cloud agent + model (+ Claude account) that
+// backs the KB Librarian session. Mirrors the web LaunchLibrarianDialog.
+typedef LibrarianChoice = ({String provider, String model, String account});
+
+class _LibrarianLaunchSheet extends ConsumerStatefulWidget {
+  const _LibrarianLaunchSheet();
+
+  static Future<LibrarianChoice?> show(BuildContext context) {
+    return showModalBottomSheet<LibrarianChoice>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => const _LibrarianLaunchSheet(),
+    );
+  }
+
+  @override
+  ConsumerState<_LibrarianLaunchSheet> createState() =>
+      _LibrarianLaunchSheetState();
+}
+
+class _LibrarianLaunchSheetState
+    extends ConsumerState<_LibrarianLaunchSheet> {
+  // Every worker-backed CLI. grok/opencode use a single host login, so only
+  // claude shows an account picker.
+  static const _providers = <({String id, String label})>[
+    (id: 'claude', label: 'Claude'),
+    (id: 'codex', label: 'Codex'),
+    (id: 'antigravity', label: 'Antigravity'),
+    (id: 'grok', label: 'Grok'),
+    (id: 'opencode', label: 'OpenCode'),
+  ];
+  String _provider = 'claude';
+  String _model = '';
+  String _account = '';
+  List<ModelOption> _models = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadModels();
+  }
+
+  Future<void> _loadModels() async {
+    try {
+      final m =
+          await ref.read(memoryWorkersApiProvider).listAgentModels(_provider);
+      if (mounted) setState(() => _models = m);
+    } on Object {
+      if (mounted) setState(() => _models = const []);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accounts = ref.watch(claudeAccountsListProvider).asData?.value
+            .where((a) => a.enabled)
+            .toList() ??
+        const [];
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.web.knowledge.kb.librarian.title,
+                  style: theme.textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(t.web.knowledge.kb.librarian.dialogHint,
+                  style: theme.textTheme.bodySmall),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _provider,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: t.web.knowledge.kb.librarian.provider,
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  for (final p in _providers)
+                    DropdownMenuItem(value: p.id, child: Text(p.label)),
+                ],
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() {
+                    _provider = v;
+                    _model = '';
+                    _account = '';
+                    _models = const [];
+                  });
+                  _loadModels();
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _models.any((m) => m.id == _model) ? _model : '',
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: t.web.cortex.chat.modelLabel,
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  DropdownMenuItem(
+                      value: '', child: Text(t.web.cortex.chat.modelCliDefault)),
+                  for (final m in _models)
+                    DropdownMenuItem(value: m.id, child: Text(m.label)),
+                ],
+                onChanged: (v) => setState(() => _model = v ?? ''),
+              ),
+              if (_provider == 'claude' && accounts.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue:
+                      accounts.any((a) => a.id == _account) ? _account : '',
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: t.web.knowledge.kb.librarian.account,
+                    isDense: true,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                        value: '',
+                        child: Text(t.web.cortex.chat.accountDefault)),
+                    for (final a in accounts)
+                      DropdownMenuItem(
+                          value: a.id, child: Text(a.displayName)),
+                  ],
+                  onChanged: (v) => setState(() => _account = v ?? ''),
+                ),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop((
+                    provider: _provider,
+                    model: _model,
+                    account: _provider == 'claude' ? _account : '',
+                  )),
+                  child: Text(t.web.knowledge.kb.librarian.launch),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

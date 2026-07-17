@@ -590,6 +590,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
+		KBAdmin:              req.kbAdmin,
 		StartedAt:            time.Now().UTC(),
 	}
 	if sess.Args == nil {
@@ -682,7 +683,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	if sess.ProviderID == "antigravity" {
 		accountID = sess.AntigravityAccountID
 	}
-	resolveCtx := WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model)
+	resolveCtx := WithKBAdmin(WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model), sess.KBAdmin)
 	// Integration spawn profile: provider-agnostic MCP servers + system
 	// prompt + auto-approve declared on the creating integration, applied
 	// to every session it spawns (create AND reactivate). Best-effort: a

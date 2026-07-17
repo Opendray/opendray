@@ -108,6 +108,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		h.mountSettings(r)
 		// Curation conversations (Phase 4).
 		h.mountConversations(r)
+		// KB Librarian — launch a cross-page knowledge-base admin session.
+		r.Post("/librarian", h.launchLibrarian)
 		h.docs.Mount(r)
 		h.mem.Mount(r)
 		if h.know != nil {

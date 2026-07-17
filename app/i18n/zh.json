@@ -2835,6 +2835,16 @@
           "injectHint": "关闭（多数情况推荐）：页面不进启动横幅，AI 通过记忆搜索按需取用。开启：基础类页面作为强约束注入，经验类作为参考注入。",
           "create": "创建页面",
           "createdToast": "知识页已创建"
+        },
+        "librarian": {
+          "button": "用 AI 管理知识库",
+          "hint": "启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页",
+          "launchedToast": "KB 图书管理员会话已启动",
+          "title": "启动 KB 图书管理员",
+          "dialogHint": "选择用来整理知识库的 cloud agent。它将获得对所有 KB 页面的读写工具。",
+          "provider": "Cloud agent",
+          "account": "Claude 账号",
+          "launch": "启动"
         }
       },
       "kinds": {

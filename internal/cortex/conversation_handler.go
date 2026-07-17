@@ -162,6 +162,28 @@ func (h *Handlers) sendConversationMessage(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusAccepted, msg)
 }
 
+// launchLibrarian spawns the cross-page KB Librarian session and returns its
+// id so the UI can navigate to it. Body (all optional): {provider, model,
+// claude_account_id}. Defaults to the claude agent.
+func (h *Handlers) launchLibrarian(w http.ResponseWriter, r *http.Request) {
+	if !h.curationReady(w) {
+		return
+	}
+	var body struct {
+		Provider        string `json:"provider"`
+		Model           string `json:"model"`
+		ClaudeAccountID string `json:"claude_account_id"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	sid, err := h.curation.LaunchLibrarian(r.Context(), body.Provider, body.Model, body.ClaudeAccountID)
+	if err != nil {
+		h.log.Error("launch librarian failed", "err", err)
+		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"session_id": sid})
+}
+
 func (h *Handlers) escalateConversation(w http.ResponseWriter, r *http.Request) {
 	if !h.curationReady(w) {
 		return

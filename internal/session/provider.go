@@ -166,6 +166,31 @@ func OriginFromContext(ctx context.Context) Origin {
 	return ""
 }
 
+// ── KB-admin propagation ───────────────────────────────────────────
+//
+// The "KB Librarian" session is the only one allowed to CREATE / EDIT /
+// DELETE global knowledge pages through the memory MCP. Prepare-time it
+// flips an env flag on the auto-attached memory MCP so its KB-write tools
+// light up ONLY for that session; every other operator/CLI session gets
+// the same MCP without those tools. Like origin/cwd, this rides context
+// because it isn't a Resolve() parameter.
+
+type kbAdminCtxKey struct{}
+
+// WithKBAdmin marks ctx as a KB-admin (Librarian) spawn. false is a no-op.
+func WithKBAdmin(ctx context.Context, on bool) context.Context {
+	if !on {
+		return ctx
+	}
+	return context.WithValue(ctx, kbAdminCtxKey{}, true)
+}
+
+// KBAdminFromContext reports whether WithKBAdmin marked this spawn.
+func KBAdminFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(kbAdminCtxKey{}).(bool)
+	return v
+}
+
 // sessionIDCtxKey + WithSessionID + SessionIDFromContext mirror the
 // cwd plumbing for the session.id, used by ambient-memory rendering
 // at spawn time. Defined here (alongside WithCwd) so callers don't
