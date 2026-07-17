@@ -11281,6 +11281,7 @@ class TranslationsWebKnowledgeKbEn {
 
 	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
 	late final TranslationsWebKnowledgeKbPageSettingsEn pageSettings = TranslationsWebKnowledgeKbPageSettingsEn.internal(_root);
+	late final TranslationsWebKnowledgeKbLibrarianEn librarian = TranslationsWebKnowledgeKbLibrarianEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -17355,6 +17356,39 @@ class TranslationsWebKnowledgeKbPageSettingsEn {
 	String get savedToast => 'Page settings updated';
 }
 
+// Path: web.knowledge.kb.librarian
+class TranslationsWebKnowledgeKbLibrarianEn {
+	TranslationsWebKnowledgeKbLibrarianEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Manage KB with AI'
+	String get button => 'Manage KB with AI';
+
+	/// en: 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page'
+	String get hint => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page';
+
+	/// en: 'KB Librarian session started'
+	String get launchedToast => 'KB Librarian session started';
+
+	/// en: 'Launch KB Librarian'
+	String get title => 'Launch KB Librarian';
+
+	/// en: 'Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.'
+	String get dialogHint => 'Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.';
+
+	/// en: 'Cloud agent'
+	String get provider => 'Cloud agent';
+
+	/// en: 'Claude account'
+	String get account => 'Claude account';
+
+	/// en: 'Launch'
+	String get launch => 'Launch';
+}
+
 // Path: web.knowledge.distill.retirement
 class TranslationsWebKnowledgeDistillRetirementEn {
 	TranslationsWebKnowledgeDistillRetirementEn.internal(this._root);
@@ -19970,6 +20004,14 @@ extension on Translations {
 			'web.knowledge.kb.pageSettings.hint' => 'Edit this page\'s title, summary, nature and inject flag',
 			'web.knowledge.kb.pageSettings.save' => 'Save settings',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Page settings updated',
+			'web.knowledge.kb.librarian.button' => 'Manage KB with AI',
+			'web.knowledge.kb.librarian.hint' => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page',
+			'web.knowledge.kb.librarian.launchedToast' => 'KB Librarian session started',
+			'web.knowledge.kb.librarian.title' => 'Launch KB Librarian',
+			'web.knowledge.kb.librarian.dialogHint' => 'Pick the cloud agent that will organize your knowledge base. It gets read + write tools across all KB pages.',
+			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
+			'web.knowledge.kb.librarian.account' => 'Claude account',
+			'web.knowledge.kb.librarian.launch' => 'Launch',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -20290,6 +20332,8 @@ extension on Translations {
 			'web.roundTable.plan.bindProject' => 'Bind',
 			'web.roundTable.plan.projectBound' => 'Project bound',
 			'web.roundTable.plan.runTitle' => 'Run step',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => 'Run',
 			'web.roundTable.plan.account' => 'Account',
 			'web.roundTable.plan.accountDefault' => 'Default',
@@ -20298,8 +20342,6 @@ extension on Translations {
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
-			_ => null,
-		} ?? switch (path) {
 			'more.identity.tokenExpires' => 'Token expires',
 			'more.sections.gateway' => 'Gateway',
 			'more.sections.plugins' => 'Plugins',
@@ -20804,6 +20846,8 @@ extension on Translations {
 			'integrations.directionOutbound' => 'Outbound',
 			'integrations.form.validateRequired' => 'Name, base URL, and route prefix are required.',
 			'integrations.form.fieldName' => 'Name',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'My Bot',
 			'integrations.form.fieldBaseUrl' => 'Base URL',
 			'integrations.form.fieldRoutePrefix' => 'Route prefix',
@@ -20812,8 +20856,6 @@ extension on Translations {
 			'integrations.form.validateBaseUrl' => 'Base URL is required.',
 			'integrations.form.editFieldVersion' => 'Version',
 			'integrations.form.apiKeyWarn' => 'You won\'t see this key again.',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.copyCopied' => 'Copied',
 			'integrations.form.copyCopy' => 'Copy',
 			'integrations.defaultAgent.title' => 'Default agent',
@@ -21318,6 +21360,8 @@ extension on Translations {
 			'channels.snacks.channelDisabled' => 'Channel disabled.',
 			'channels.snacks.channelMuted' => 'Channel muted.',
 			'channels.snacks.channelUnmuted' => 'Channel unmuted.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.configUpdated' => 'Channel config updated.',
 			'channels.snacks.channelDeleted' => 'Channel deleted.',
 			'channels.errorPrefix.test' => 'Test failed',
@@ -21326,8 +21370,6 @@ extension on Translations {
 			'channels.errorPrefix.update' => 'Update failed',
 			'channels.errorPrefix.delete' => 'Delete failed',
 			'channels.failedToLoad' => 'Failed to load channels',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.description' => 'Bot via @BotFather. opendray long-polls getUpdates and sends via REST. Buttons + reply_to_message work natively.',
 			'channels.kinds.telegram.botTokenLabel' => 'Bot token',
 			'channels.kinds.telegram.botTokenHint' => 'From @BotFather. Stored in channel config; admin-only API.',
@@ -21832,6 +21874,8 @@ extension on Translations {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',
 			'cortexHub.preview' => 'Preview',
@@ -21840,8 +21884,6 @@ extension on Translations {
 			'cortexHub.reject' => 'Reject',
 			'cortexHub.approvedToast' => 'Proposal approved',
 			'cortexHub.rejectedToast' => 'Proposal rejected',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Failed to load: ${error}',
 			'cortexSettings.title' => 'Cortex settings',

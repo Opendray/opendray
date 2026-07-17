@@ -264,6 +264,28 @@ class CortexApi {
     }
   }
 
+  // Launch the cross-page KB Librarian session (a knowledge-base admin agent
+  // whose memory MCP has the global-KB write tools). Returns the session id.
+  Future<String> launchLibrarian({
+    String provider = '',
+    String model = '',
+    String claudeAccountId = '',
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/cortex/librarian',
+        data: {
+          if (provider.isNotEmpty) 'provider': provider,
+          if (model.isNotEmpty) 'model': model,
+          if (claudeAccountId.isNotEmpty) 'claude_account_id': claudeAccountId,
+        },
+      );
+      return res.data?['session_id']?.toString() ?? '';
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<void> closeConversation(String id) async {
     try {
       await _dio.post<void>('/api/v1/cortex/conversations/$id/close');

@@ -2843,6 +2843,16 @@
           "hint": "Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página",
           "save": "Guardar ajustes",
           "savedToast": "Ajustes de la página actualizados"
+        },
+        "librarian": {
+          "button": "Gestionar KB con IA",
+          "hint": "Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento",
+          "launchedToast": "Sesión del bibliotecario de KB iniciada",
+          "title": "Lanzar bibliotecario de KB",
+          "dialogHint": "Elige el agente en la nube que organizará tu base de conocimiento. Tendrá herramientas de lectura y escritura en todas las páginas.",
+          "provider": "Agente en la nube",
+          "account": "Cuenta de Claude",
+          "launch": "Lanzar"
         }
       },
       "kinds": {

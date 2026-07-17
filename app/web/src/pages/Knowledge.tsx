@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { launchKBLibrarian } from '@/lib/cortex'
+import { listAgentModels, type AgentProviderID } from '@/lib/memoryWorkers'
+import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -36,7 +39,7 @@ import {
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
 import { Switch } from '@/components/ui/switch'
-import { Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -337,6 +340,7 @@ function KnowledgeBaseView() {
   const [chatOpen, setChatOpen] = useState(false)
   const [newPageOpen, setNewPageOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [librarianOpen, setLibrarianOpen] = useState(false)
 
   // The knowledge blueprint: the page set is data, not a constant.
   const blueprint = useQuery({
@@ -463,6 +467,16 @@ function KnowledgeBaseView() {
         >
           <Plus className="h-3 w-3" />
           {t('web.knowledge.kb.newPage.button')}
+        </button>
+        {/* Cross-page KB admin — launch the Librarian agent session that can
+            organize/create/edit any KB page (vs the per-page Discuss chat). */}
+        <button
+          onClick={() => setLibrarianOpen(true)}
+          className="text-muted-foreground hover:text-foreground flex items-center gap-1 rounded px-2 py-1.5 text-left text-xs"
+          title={t('web.knowledge.kb.librarian.hint')}
+        >
+          <Sparkles className="h-3 w-3" />
+          {t('web.knowledge.kb.librarian.button')}
         </button>
       </div>
 
@@ -677,7 +691,167 @@ function KnowledgeBaseView() {
           section={selSection}
         />
       )}
+
+      {librarianOpen && (
+        <LaunchLibrarianDialog onClose={() => setLibrarianOpen(false)} />
+      )}
     </div>
+  )
+}
+
+// LaunchLibrarianDialog picks the cloud agent + model (+ Claude account) that
+// backs the KB Librarian session, then spawns it and navigates to the session.
+// Mounted only while open so its state resets each time.
+function LaunchLibrarianDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  // Provider is a plain string (not AgentProviderID) so the Librarian can
+  // offer every worker-backed CLI — grok/opencode included — independent of
+  // the discuss-chat's narrower union.
+  const [provider, setProvider] = useState('claude')
+  const [model, setModel] = useState('')
+  const [account, setAccount] = useState('')
+
+  const modelsQuery = useQuery({
+    queryKey: ['agent-models', provider],
+    queryFn: () => listAgentModels(provider as AgentProviderID),
+    staleTime: 60 * 60 * 1000,
+  })
+  const accountsQuery = useQuery({
+    queryKey: ['claude-accounts'],
+    queryFn: listClaudeAccounts,
+    enabled: provider === 'claude',
+  })
+  const accounts = (accountsQuery.data ?? []).filter((a) => a.enabled)
+
+  const launch = useMutation({
+    mutationFn: () =>
+      launchKBLibrarian({
+        provider,
+        model: model.trim() || undefined,
+        claude_account_id:
+          provider === 'claude' ? account.trim() || undefined : undefined,
+      }),
+    onSuccess: ({ session_id }) => {
+      toast.success(t('web.knowledge.kb.librarian.launchedToast'))
+      onClose()
+      navigate({ to: '/sessions', search: { open: session_id } })
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.knowledge.actionFailed'), { description: e.message }),
+  })
+
+  // Every worker-backed CLI (matches the backend session providers + the
+  // memory MCP's KB tools attach to any of them). grok/opencode use a single
+  // host login, so no per-agent account picker — only claude is multi-account.
+  const LIB_PROVIDERS: { id: string; label: string }[] = [
+    { id: 'claude', label: 'Claude' },
+    { id: 'codex', label: 'Codex' },
+    { id: 'antigravity', label: 'Antigravity' },
+    { id: 'grok', label: 'Grok' },
+    { id: 'opencode', label: 'OpenCode' },
+  ]
+  const MODEL_DEFAULT = '__default__'
+  const ACCOUNT_DEFAULT = '__default__'
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('web.knowledge.kb.librarian.title')}</DialogTitle>
+          <DialogDescription>
+            {t('web.knowledge.kb.librarian.dialogHint')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-muted-foreground">
+              {t('web.knowledge.kb.librarian.provider')}
+            </span>
+            <Select
+              value={provider}
+              onValueChange={(v) => {
+                setProvider(v)
+                setModel('')
+                setAccount('')
+              }}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LIB_PROVIDERS.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-muted-foreground">
+              {t('web.cortex.chat.modelLabel')}
+            </span>
+            <Select
+              value={model === '' ? MODEL_DEFAULT : model}
+              onValueChange={(v) => setModel(v === MODEL_DEFAULT ? '' : v)}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={MODEL_DEFAULT}>
+                  {t('web.cortex.chat.modelCliDefault')}
+                </SelectItem>
+                {(modelsQuery.data ?? []).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {provider === 'claude' && accounts.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs text-muted-foreground">
+                {t('web.knowledge.kb.librarian.account')}
+              </span>
+              <Select
+                value={account === '' ? ACCOUNT_DEFAULT : account}
+                onValueChange={(v) =>
+                  setAccount(v === ACCOUNT_DEFAULT ? '' : v)
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ACCOUNT_DEFAULT}>
+                    {t('web.cortex.chat.accountDefault')}
+                  </SelectItem>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.display_name || a.name || a.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t('web.knowledge.kb.cancel')}
+          </Button>
+          <Button disabled={launch.isPending} onClick={() => launch.mutate()}>
+            {launch.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+            {t('web.knowledge.kb.librarian.launch')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

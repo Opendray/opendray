@@ -5756,6 +5756,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get pageRemovedToast => 'Página quitada';
 	@override late final _TranslationsWebKnowledgeKbNewPageEs newPage = _TranslationsWebKnowledgeKbNewPageEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbPageSettingsEs pageSettings = _TranslationsWebKnowledgeKbPageSettingsEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbLibrarianEs librarian = _TranslationsWebKnowledgeKbLibrarianEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9162,6 +9163,23 @@ class _TranslationsWebKnowledgeKbPageSettingsEs extends TranslationsWebKnowledge
 	@override String get savedToast => 'Ajustes de la página actualizados';
 }
 
+// Path: web.knowledge.kb.librarian
+class _TranslationsWebKnowledgeKbLibrarianEs extends TranslationsWebKnowledgeKbLibrarianEn {
+	_TranslationsWebKnowledgeKbLibrarianEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get button => 'Gestionar KB con IA';
+	@override String get hint => 'Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento';
+	@override String get launchedToast => 'Sesión del bibliotecario de KB iniciada';
+	@override String get title => 'Lanzar bibliotecario de KB';
+	@override String get dialogHint => 'Elige el agente en la nube que organizará tu base de conocimiento. Tendrá herramientas de lectura y escritura en todas las páginas.';
+	@override String get provider => 'Agente en la nube';
+	@override String get account => 'Cuenta de Claude';
+	@override String get launch => 'Lanzar';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementEs extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -11636,6 +11654,14 @@ extension on TranslationsEs {
 			'web.knowledge.kb.pageSettings.hint' => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página',
 			'web.knowledge.kb.pageSettings.save' => 'Guardar ajustes',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Ajustes de la página actualizados',
+			'web.knowledge.kb.librarian.button' => 'Gestionar KB con IA',
+			'web.knowledge.kb.librarian.hint' => 'Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento',
+			'web.knowledge.kb.librarian.launchedToast' => 'Sesión del bibliotecario de KB iniciada',
+			'web.knowledge.kb.librarian.title' => 'Lanzar bibliotecario de KB',
+			'web.knowledge.kb.librarian.dialogHint' => 'Elige el agente en la nube que organizará tu base de conocimiento. Tendrá herramientas de lectura y escritura en todas las páginas.',
+			'web.knowledge.kb.librarian.provider' => 'Agente en la nube',
+			'web.knowledge.kb.librarian.account' => 'Cuenta de Claude',
+			'web.knowledge.kb.librarian.launch' => 'Lanzar',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -11956,6 +11982,8 @@ extension on TranslationsEs {
 			'web.roundTable.plan.bindProject' => 'Vincular',
 			'web.roundTable.plan.projectBound' => 'Proyecto vinculado',
 			'web.roundTable.plan.runTitle' => 'Ejecutar paso',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.plan.runStep' => 'Ejecutar',
 			'web.roundTable.plan.account' => 'Cuenta',
 			'web.roundTable.plan.accountDefault' => 'Predeterminada',
@@ -11964,8 +11992,6 @@ extension on TranslationsEs {
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
-			_ => null,
-		} ?? switch (path) {
 			'more.identity.tokenExpires' => 'El token caduca',
 			'more.sections.gateway' => 'Gateway',
 			'more.sections.plugins' => 'Complementos',
@@ -12470,6 +12496,8 @@ extension on TranslationsEs {
 			'integrations.directionOutbound' => 'Salientes',
 			'integrations.form.validateRequired' => 'El nombre, la URL base y el prefijo de ruta son obligatorios.',
 			'integrations.form.fieldName' => 'Nombre',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.form.fieldNameHint' => 'Mi Bot',
 			'integrations.form.fieldBaseUrl' => 'URL base',
 			'integrations.form.fieldRoutePrefix' => 'Prefijo de ruta',
@@ -12478,8 +12506,6 @@ extension on TranslationsEs {
 			'integrations.form.validateBaseUrl' => 'La URL base es obligatoria.',
 			'integrations.form.editFieldVersion' => 'Versión',
 			'integrations.form.apiKeyWarn' => 'No volverás a ver esta key.',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.form.copyCopied' => 'Copiado',
 			'integrations.form.copyCopy' => 'Copiar',
 			'integrations.defaultAgent.title' => 'Agente predeterminado',
@@ -12984,6 +13010,8 @@ extension on TranslationsEs {
 			'channels.snacks.channelDisabled' => 'Canal desactivado.',
 			'channels.snacks.channelMuted' => 'Canal silenciado.',
 			'channels.snacks.channelUnmuted' => 'Sonido del canal reactivado.',
+			_ => null,
+		} ?? switch (path) {
 			'channels.snacks.configUpdated' => 'Configuración del canal actualizada.',
 			'channels.snacks.channelDeleted' => 'Canal eliminado.',
 			'channels.errorPrefix.test' => 'Error en la prueba',
@@ -12992,8 +13020,6 @@ extension on TranslationsEs {
 			'channels.errorPrefix.update' => 'Error al actualizar',
 			'channels.errorPrefix.delete' => 'Error al eliminar',
 			'channels.failedToLoad' => 'Error al cargar los canales',
-			_ => null,
-		} ?? switch (path) {
 			'channels.kinds.telegram.description' => 'Bot mediante @BotFather. opendray hace long-polling de getUpdates y envía vía REST. Los botones y reply_to_message funcionan de forma nativa.',
 			'channels.kinds.telegram.botTokenLabel' => 'Token del bot',
 			'channels.kinds.telegram.botTokenHint' => 'De @BotFather. Se guarda en la configuración del canal; API solo para administradores.',
@@ -13498,6 +13524,8 @@ extension on TranslationsEs {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
 			'cortexHub.preview' => 'Vista previa',
@@ -13506,8 +13534,6 @@ extension on TranslationsEs {
 			'cortexHub.reject' => 'Rechazar',
 			'cortexHub.approvedToast' => 'Propuesta aprobada',
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
 			'cortexHub.loadFailed' => ({required Object error}) => 'Error al cargar: ${error}',
 			'cortexSettings.title' => 'Ajustes de Cortex',

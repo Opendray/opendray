@@ -2459,13 +2459,16 @@ func (l *curationSessionLauncher) Launch(ctx context.Context, spec cortex.Launch
 	if providerID == "" {
 		providerID = "claude"
 	}
-	sess, err := l.mgr.Create(ctx, session.CreateRequest{
+	req := session.CreateRequest{
 		Name:            spec.Name,
 		ProviderID:      providerID,
 		Model:           spec.Model,
 		ClaudeAccountID: spec.ClaudeAccountID,
 		Cwd:             spec.Cwd,
-	})
+	}
+	// KB Librarian spawns light up the global-KB write tools on the memory MCP.
+	req.SetKBAdmin(spec.KBAdmin)
+	sess, err := l.mgr.Create(ctx, req)
 	if err != nil {
 		return "", err
 	}

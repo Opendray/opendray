@@ -118,6 +118,10 @@ type Session struct {
 	// IntegrationID is set when Origin == OriginIntegration: the id
 	// of the integration whose API key created the session.
 	IntegrationID string `json:"integration_id,omitempty"`
+	// KBAdmin marks the "KB Librarian" spawn: the only session whose
+	// auto-attached memory MCP gets the global-KB write tools. Runtime-only
+	// (not persisted): a resumed Librarian loses it and must be relaunched.
+	KBAdmin bool `json:"-"`
 	// InterruptReason is the audit cause set only when State == interrupted
 	// (see InterruptCause); empty otherwise. Persisted in
 	// sessions.interrupt_reason, cleared on resume.
@@ -163,7 +167,16 @@ type CreateRequest struct {
 	// and must never be settable from the JSON body.
 	origin        Origin
 	integrationID string
+	// kbAdmin marks a KB Librarian spawn. Unexported + set only by the
+	// internal Librarian launcher (never from the JSON body), so a normal
+	// session can't grant itself global-KB write tools.
+	kbAdmin bool
 }
+
+// SetKBAdmin marks this request as a KB Librarian spawn (internal launcher
+// only). It rides a runtime flag onto the memory MCP so its KB-write tools
+// light up for this session alone.
+func (r *CreateRequest) SetKBAdmin(on bool) { r.kbAdmin = on }
 
 // SetOrigin stamps the provenance derived from the authenticated
 // principal. integrationID is only meaningful for OriginIntegration.

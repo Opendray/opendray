@@ -457,22 +457,28 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// — that belief came from testing the wrong file; see the renderMCP
 	// antigravity arm.)
 	if sp.memory.Enabled && p.Manifest.Capabilities.SupportsMcp && !isIntegration {
+		memEnv := map[string]string{
+			"OPENDRAY_BASE_URL":     sp.memory.BaseURL,
+			"OPENDRAY_API_KEY":      sp.memory.APIKey,
+			"OPENDRAY_MEMORY_SCOPE": defaultStr(sp.memory.Scope, "project"),
+		}
+		// KB Librarian spawn only: light up the global-KB write tools
+		// (kb_page_upsert/write/delete). Every other operator/CLI session
+		// gets the same memory MCP without them, so no ordinary session can
+		// rewrite the knowledge base. Integrations never reach here at all.
+		if session.KBAdminFromContext(ctx) {
+			memEnv["OPENDRAY_KB_ADMIN"] = "1"
+		}
+		// Scope key is the cwd at spawn time — populated below inside
+		// Prepare since we need the live session.Cwd from context. (Except
+		// antigravity, whose entry lands in a HOME-global file shared across
+		// sessions: there the mcp-memory subprocess derives the scope from
+		// its own cwd, which agy sets to the session workspace.)
 		servers = append(servers, MCPServer{
 			Name:    "opendray-memory",
 			Command: sp.memory.BinaryPath,
 			Args:    []string{"mcp-memory"},
-			Env: map[string]string{
-				"OPENDRAY_BASE_URL":     sp.memory.BaseURL,
-				"OPENDRAY_API_KEY":      sp.memory.APIKey,
-				"OPENDRAY_MEMORY_SCOPE": defaultStr(sp.memory.Scope, "project"),
-				// Scope key is the cwd at spawn time — populated below
-				// inside Prepare since we need access to the live
-				// session.Cwd from context. (Except antigravity, whose
-				// entry lands in a HOME-global file shared across
-				// sessions: there the mcp-memory subprocess derives the
-				// scope from its own cwd, which agy sets to the session
-				// workspace.)
-			},
+			Env:     memEnv,
 		})
 	}
 	// Auto-attach the Database-tool MCP server under the same rules as

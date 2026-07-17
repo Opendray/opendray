@@ -2839,10 +2839,20 @@
         "pageSettings": {
           "button": "设置",
           "title": "页面设置",
-          "description": "编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改，页面正文另行编辑。",
+          "description": "编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改,页面正文另行编辑。",
           "hint": "编辑此页面的标题、摘要、性质与注入开关",
           "save": "保存设置",
           "savedToast": "页面设置已更新"
+        },
+        "librarian": {
+          "button": "用 AI 管理知识库",
+          "hint": "启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页",
+          "launchedToast": "KB 图书管理员会话已启动",
+          "title": "启动 KB 图书管理员",
+          "dialogHint": "选择用来整理知识库的 cloud agent。它将获得对所有 KB 页面的读写工具。",
+          "provider": "Cloud agent",
+          "account": "Claude 账号",
+          "launch": "启动"
         }
       },
       "kinds": {
