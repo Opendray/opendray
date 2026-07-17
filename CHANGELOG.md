@@ -10,6 +10,62 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.12.1] — 2026-07-18
+
+Grok reaches parity with the other cloud agents, the Cortex knowledge base
+grows a real management surface, and the mobile knowledge experience is
+rebuilt for phones.
+
+### Added
+
+- **Grok is now a first-class cloud agent.** It can drive the shared memory
+  MCP (memory search, `doc_read`, cross-layer recall) just like Claude / Codex
+  / Antigravity — its spawn folder is marked trusted so grok actually starts
+  the injected memory server instead of silently skipping it. Grok and OpenCode
+  are also selectable in **Discuss with AI** and as **Memory Worker** agent
+  providers, and creating a grok session now offers the **Bypass permissions /
+  YOLO** toggle (`--always-approve`) the other agents already had.
+- **A cross-page KB Librarian (experimental).** Launch a dedicated agent
+  session — pick its cloud agent, model and account — that can organize,
+  create, edit and delete **any** global knowledge page across the whole base,
+  driven conversationally, unlike the per-page Discuss chat. It gets read +
+  write KB tools (list / upsert config / write body / delete) on its memory
+  MCP; those tools are scoped to the Librarian session alone and never reach
+  ordinary or third-party sessions.
+- **Edit a knowledge page's settings after creation.** A `kb_*` page's title,
+  one-line description, nature (foundational / emergent) and *inject* flag were
+  locked in at creation; they are now editable in place (web + mobile) on every
+  page except the classic four — including seeded pages like Integrations, so
+  you can flip a page between full-inject and on-demand retrieval.
+- **Discuss with AI model lists are live and accurate.** Antigravity and
+  OpenCode models are enumerated straight from their CLIs, and Codex offers its
+  full model family (higher plans unlock the fuller models) instead of one
+  pinned choice — no more picking a stale model that fails at spawn.
+- **Round Table members can change mid-conversation.** Add or remove seated
+  providers on an active chat (web + mobile) — an added member is `@mentionable`
+  on the next turn with the full thread as context; a removed one stops
+  replying while its past messages stay.
+- **Mobile: staged image uploads.** Images queue in a dismissable tray before
+  send instead of uploading immediately.
+
+### Changed
+
+- **The mobile Knowledge (KB) page is rebuilt as a searchable list → detail
+  flow.** The old horizontal page-chip strip didn't scale once you had many
+  `kb_*` docs; the KB tab is now a grouped, searchable list (Foundational /
+  Emergent) that grows gracefully, and tapping a page opens a full-screen
+  reader/editor with its actions in an AppBar overflow menu. New page and the
+  Librarian move onto a FAB.
+
+### Fixed
+
+- **Grok sessions had no MCP / memory tools.** opendray wrote the memory server
+  into the project-scoped `<cwd>/.grok/config.toml`, but grok refuses to start
+  repo-local MCP servers in an untrusted folder as a supply-chain guard, so the
+  server was configured but never started. opendray now trusts the operator's
+  own spawn folder (`--trust`), matching the other CLIs.
+- **The web terminal input cursor no longer drifts on iPad.**
+
 ## [v2.12.0] — 2026-07-16
 
 ### Added
