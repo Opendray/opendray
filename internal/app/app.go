@@ -217,18 +217,27 @@ func (a knowledgeJournalSource) ListJournal(ctx context.Context, scopeKey string
 type knowledgeDocSink struct{ pd *projectdoc.Service }
 
 func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowledge.KBDoc, error) {
+	out := knowledge.KBDoc{}
 	d, err := a.pd.GetDoc(ctx, cwd, projectdoc.Kind(kind))
-	if errors.Is(err, projectdoc.ErrNotFound) {
-		return knowledge.KBDoc{}, nil
-	}
-	if err != nil {
+	switch {
+	case errors.Is(err, projectdoc.ErrNotFound):
+		// No content row yet — the blueprint meta below may still apply
+		// (an empty page can be operator-maintained).
+	case err != nil:
 		return knowledge.KBDoc{}, err
+	default:
+		out.Content = d.Content
+		out.HumanLocked = d.UpdatedBy == projectdoc.AuthorOperator
+		out.Exists = true
 	}
-	return knowledge.KBDoc{
-		Content:     d.Content,
-		HumanLocked: d.UpdatedBy == projectdoc.AuthorOperator,
-		Exists:      true,
-	}, nil
+	// Operator-owned-form controls from the page's blueprint section. Best
+	// effort: a missing section or lookup error just leaves the AI defaults
+	// (empty MaintainerMode → treated as "ai").
+	if sec, ok, serr := a.pd.GetSection(ctx, cwd, kind); serr == nil && ok {
+		out.MaintainerMode = sec.MaintainerMode
+		out.PromptHint = sec.PromptHint
+	}
+	return out, nil
 }
 
 func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content string) error {
