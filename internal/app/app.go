@@ -230,12 +230,17 @@ func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowl
 		out.HumanLocked = d.UpdatedBy == projectdoc.AuthorOperator
 		out.Exists = true
 	}
-	// Operator-owned-form controls from the page's blueprint section. Best
-	// effort: a missing section or lookup error just leaves the AI defaults
-	// (empty MaintainerMode → treated as "ai").
-	if sec, ok, serr := a.pd.GetSection(ctx, cwd, kind); serr == nil && ok {
-		out.MaintainerMode = sec.MaintainerMode
-		out.PromptHint = sec.PromptHint
+	// Operator-owned-form controls from the page's blueprint section. Only the
+	// four global KB pages carry (and have the drafter consult) these controls;
+	// the Overview drafter shares this sink but ignores them, so skip the extra
+	// blueprint lookup for anything that is not a global KB page. Best effort: a
+	// missing section or lookup error just leaves the AI defaults (empty
+	// MaintainerMode → treated as "ai").
+	if cwd == projectdoc.GlobalCwd && projectdoc.IsGlobalKBKind(projectdoc.Kind(kind)) {
+		if sec, ok, serr := a.pd.GetSection(ctx, cwd, kind); serr == nil && ok {
+			out.MaintainerMode = sec.MaintainerMode
+			out.PromptHint = sec.PromptHint
+		}
 	}
 	return out, nil
 }

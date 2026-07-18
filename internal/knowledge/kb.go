@@ -247,15 +247,25 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		res.Status = "skipped-human"
 		return res
 	}
+	// Fold the operator's prompt_hint into the dirty-check signature. The hint
+	// steers the page's form, so changing it must invalidate the cached draft —
+	// otherwise (sig keys on feedstock alone) a new hint would never take effect
+	// until the feedstock happened to diverge. Overview passes applyPromptHint
+	// off, so its signature stays feedstock-only (byte-identical behaviour).
+	hint := ""
+	if opts.applyPromptHint {
+		hint = strings.TrimSpace(cur.PromptHint)
+	}
 	sig := kbSig(feedstock)
+	if hint != "" {
+		sig = kbSig(feedstock + "\x00prompt_hint:" + hint)
+	}
 	if cur.Exists && extractKBSig(cur.Content) == sig {
 		res.Status = "skipped-unchanged"
-		return res // feedstock unchanged since last draft — nothing to do
+		return res // feedstock + hint unchanged since last draft — nothing to do
 	}
-	if opts.applyPromptHint {
-		if h := strings.TrimSpace(cur.PromptHint); h != "" {
-			system += "\n\nOPERATOR MAINTAINER HINT (authoritative on this page's form and scope):\n" + h
-		}
+	if hint != "" {
+		system += "\n\nOPERATOR MAINTAINER HINT (authoritative on this page's form and scope):\n" + hint
 	}
 	current := ""
 	if opts.preserveCurrent {

@@ -194,6 +194,42 @@ func TestDraftOrPropose_PromptHintSteersSystem(t *testing.T) {
 	}
 }
 
+// Changing the prompt_hint alone (feedstock unchanged) must still trigger a
+// redraft: the hint is folded into the dirty-check signature, so a page that
+// carries the plain-feedstock sig is no longer "unchanged" once a hint is set.
+func TestDraftOrPropose_PromptHintChangeTriggersRedraft(t *testing.T) {
+	// Content carries the OLD signature (feedstock only), but a hint now exists.
+	content := "body\n<!-- kb-sig:" + kbSig(testFeed) + " -->\n"
+	docs := &fakeDocSink{doc: KBDoc{Content: content, HumanLocked: false, Exists: true, PromptHint: "NEW-HINT"}}
+	llm := &fakeLLM{body: "fresh"}
+	res := run(llm, docs, &fakeProposalSink{}, kbOpts)
+
+	if res.Status != "written" {
+		t.Fatalf("status = %q, want written (a hint change must trigger a redraft)", res.Status)
+	}
+	if llm.calls != 1 || !strings.Contains(llm.lastSystem, "NEW-HINT") {
+		t.Fatalf("hint not applied on redraft (llm calls=%d, system=%q)", llm.calls, llm.lastSystem)
+	}
+}
+
+// Once a hinted page has been redrafted, its signature includes the hint, so an
+// unchanged feedstock + unchanged hint is a no-op (converges, no re-draft loop).
+func TestDraftOrPropose_HintedPageConverges(t *testing.T) {
+	const hint = "KEEP-IT-A-ONE-LINER"
+	settledSig := kbSig(testFeed + "\x00prompt_hint:" + hint)
+	content := "body\n<!-- kb-sig:" + settledSig + " -->\n"
+	docs := &fakeDocSink{doc: KBDoc{Content: content, HumanLocked: false, Exists: true, PromptHint: hint}}
+	llm := &fakeLLM{body: "should not be used"}
+	res := run(llm, docs, &fakeProposalSink{}, kbOpts)
+
+	if res.Status != "skipped-unchanged" {
+		t.Fatalf("status = %q, want skipped-unchanged (hinted page must converge)", res.Status)
+	}
+	if llm.calls != 0 {
+		t.Fatalf("settled hinted page must not call the LLM (calls=%d)", llm.calls)
+	}
+}
+
 // preserveCurrent feeds the current page into the LLM so it edits the operator's
 // structure rather than regenerating from scratch.
 func TestDraftOrPropose_PreservesCurrentContent(t *testing.T) {
