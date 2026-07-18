@@ -273,6 +273,30 @@ func (a knowledgeProposalSink) ProposeKBDoc(ctx context.Context, cwd, kind, cont
 	return err
 }
 
+// RejectedSigs recovers the feedstock signature of each rejected proposal for
+// a page (the sig lives in the proposed content's trailing kb-sig marker), so
+// the drafter won't re-file a refresh the operator already declined.
+func (a knowledgeProposalSink) RejectedSigs(ctx context.Context, cwd, kind string) ([]string, error) {
+	contents, err := a.pd.RejectedProposalContents(ctx, cwd, projectdoc.Kind(kind))
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{}, len(contents))
+	out := make([]string, 0, len(contents))
+	for _, c := range contents {
+		sig := knowledge.ExtractKBSig(c)
+		if sig == "" {
+			continue
+		}
+		if _, ok := seen[sig]; ok {
+			continue
+		}
+		seen[sig] = struct{}{}
+		out = append(out, sig)
+	}
+	return out, nil
+}
+
 // knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
 // Phase 1B entity extractor gets a general completion path. It borrows the
 // TaskCapture worker config (the closest existing touchpoint: extract
