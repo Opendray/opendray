@@ -52,6 +52,12 @@ type DocSink interface {
 type ProposalSink interface {
 	HasPendingKBProposal(ctx context.Context, cwd, kind string) (bool, error)
 	ProposeKBDoc(ctx context.Context, cwd, kind, content, reason string) error
+	// RejectedSigs returns the feedstock signatures of proposals the
+	// operator has already REJECTED for this page. The drafter uses them to
+	// avoid re-proposing an identical refresh every cycle: a rejection with
+	// no memory would otherwise resurface the same draft on the next sweep
+	// (the ~15m consolidation interval), nagging the operator forever.
+	RejectedSigs(ctx context.Context, cwd, kind string) ([]string, error)
 }
 
 // KBDrafter distils Memory + the graph into the global Knowledge pages.
@@ -152,7 +158,7 @@ Only include things genuinely reusable across projects — skip one-off project 
 type KBDraftResult struct {
 	Kind   string `json:"kind"`
 	Cwd    string `json:"cwd"`
-	Status string `json:"status"` // written | skipped-empty | skipped-locked | skipped-unchanged | error
+	Status string `json:"status"` // written | proposed | skipped-empty | skipped-locked | skipped-pending | skipped-rejected | skipped-unchanged | error
 	Bytes  int    `json:"bytes,omitempty"`
 	Err    string `json:"error,omitempty"`
 }
@@ -214,6 +220,21 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		if pending, _ := proposals.HasPendingKBProposal(ctx, cwd, kind); pending {
 			res.Status = "skipped-pending"
 			return res
+		}
+		// A rejected refresh must stay rejected: if the operator already said
+		// no to the draft for THIS feedstock, don't re-file it. Otherwise the
+		// same proposal resurfaces every consolidation cycle. On lookup error
+		// we fail open (proceed to propose) rather than silently drop a real
+		// divergence.
+		if rejected, err := proposals.RejectedSigs(ctx, cwd, kind); err != nil {
+			log.Warn("draft: rejected-sig lookup failed", "kind", kind, "cwd", cwd, "err", err)
+		} else {
+			for _, rs := range rejected {
+				if rs == sig {
+					res.Status = "skipped-rejected"
+					return res
+				}
+			}
 		}
 		body, err := draftPageBody(ctx, llm, log, system, feedstock, sig)
 		if err != nil {
@@ -357,6 +378,12 @@ func kbSig(feedstock string) string {
 	sum := sha256.Sum256([]byte(feedstock))
 	return hex.EncodeToString(sum[:])[:16]
 }
+
+// ExtractKBSig reads the feedstock signature a drafted page carries in its
+// trailing `<!-- kb-sig:… -->` marker, or "" if absent. Exported so the app's
+// proposal sink can recover the signature of a rejected proposal's content
+// (which was produced by draftPageBody and therefore carries the marker).
+func ExtractKBSig(content string) string { return extractKBSig(content) }
 
 func extractKBSig(content string) string {
 	const marker = "<!-- kb-sig:"
