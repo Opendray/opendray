@@ -524,6 +524,34 @@ func (s *Service) ListPendingProposals(ctx context.Context, cwd string) ([]Propo
 	return out, rows.Err()
 }
 
+// RejectedProposalContents returns the proposed_content of every REJECTED
+// proposal for one page, newest first (bounded — a page accrues at most a
+// handful of distinct rejected drafts). The knowledge drafter maps these to
+// feedstock signatures so it never re-files a refresh the operator already
+// declined. Kept content-only (no Proposal decode) so the layer stays generic:
+// projectdoc knows nothing about kb-sig markers.
+func (s *Service) RejectedProposalContents(ctx context.Context, cwd string, kind Kind) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT proposed_content
+		  FROM project_doc_proposals
+		 WHERE cwd = $1 AND kind = $2 AND decision = 'rejected'
+		 ORDER BY created_at DESC
+		 LIMIT 100`, cwd, string(kind))
+	if err != nil {
+		return nil, fmt.Errorf("projectdoc: list rejected proposals: %w", err)
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var c string
+		if err := rows.Scan(&c); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
 // ApproveProposal merges the proposed content into project_docs
 // and stamps the proposal row 'approved' with the prior content
 // captured for audit. Idempotent in the sense that re-approving an
@@ -562,13 +590,18 @@ func (s *Service) ApproveProposal(ctx context.Context, id string) (Doc, error) {
 		`SELECT content FROM project_docs WHERE cwd=$1 AND kind=$2`,
 		p.Cwd, string(p.Kind)).Scan(&prior)
 
+	// Approving is an operator decision, so the resulting doc is
+	// operator-authored — this PRESERVES the human-lock (updated_by=operator).
+	// Stamping 'agent' here would silently un-lock the page: the next time the
+	// feedstock diverged, the drafter would overwrite it directly instead of
+	// proposing, making the lock a one-shot that any approval throws away.
 	newDocID := newID("pd_")
 	docRow := tx.QueryRow(ctx, `
 		INSERT INTO project_docs (id, cwd, kind, content, updated_by)
-		VALUES ($1, $2, $3, $4, 'agent')
+		VALUES ($1, $2, $3, $4, 'operator')
 		ON CONFLICT (cwd, kind) DO UPDATE
 		   SET content      = EXCLUDED.content,
-		       updated_by   = 'agent',
+		       updated_by   = 'operator',
 		       updated_at   = NOW(),
 		       embedding    = NULL,
 		       embedder     = NULL,

@@ -217,18 +217,32 @@ func (a knowledgeJournalSource) ListJournal(ctx context.Context, scopeKey string
 type knowledgeDocSink struct{ pd *projectdoc.Service }
 
 func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowledge.KBDoc, error) {
+	out := knowledge.KBDoc{}
 	d, err := a.pd.GetDoc(ctx, cwd, projectdoc.Kind(kind))
-	if errors.Is(err, projectdoc.ErrNotFound) {
-		return knowledge.KBDoc{}, nil
-	}
-	if err != nil {
+	switch {
+	case errors.Is(err, projectdoc.ErrNotFound):
+		// No content row yet — the blueprint meta below may still apply
+		// (an empty page can be operator-maintained).
+	case err != nil:
 		return knowledge.KBDoc{}, err
+	default:
+		out.Content = d.Content
+		out.HumanLocked = d.UpdatedBy == projectdoc.AuthorOperator
+		out.Exists = true
 	}
-	return knowledge.KBDoc{
-		Content:     d.Content,
-		HumanLocked: d.UpdatedBy == projectdoc.AuthorOperator,
-		Exists:      true,
-	}, nil
+	// Operator-owned-form controls from the page's blueprint section. Only the
+	// four global KB pages carry (and have the drafter consult) these controls;
+	// the Overview drafter shares this sink but ignores them, so skip the extra
+	// blueprint lookup for anything that is not a global KB page. Best effort: a
+	// missing section or lookup error just leaves the AI defaults (empty
+	// MaintainerMode → treated as "ai").
+	if cwd == projectdoc.GlobalCwd && projectdoc.IsGlobalKBKind(projectdoc.Kind(kind)) {
+		if sec, ok, serr := a.pd.GetSection(ctx, cwd, kind); serr == nil && ok {
+			out.MaintainerMode = sec.MaintainerMode
+			out.PromptHint = sec.PromptHint
+		}
+	}
+	return out, nil
 }
 
 func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content string) error {
@@ -271,6 +285,30 @@ func (a knowledgeProposalSink) HasPendingKBProposal(ctx context.Context, cwd, ki
 func (a knowledgeProposalSink) ProposeKBDoc(ctx context.Context, cwd, kind, content, reason string) error {
 	_, err := a.pd.ProposeDoc(ctx, cwd, projectdoc.Kind(kind), content, reason, "")
 	return err
+}
+
+// RejectedSigs recovers the feedstock signature of each rejected proposal for
+// a page (the sig lives in the proposed content's trailing kb-sig marker), so
+// the drafter won't re-file a refresh the operator already declined.
+func (a knowledgeProposalSink) RejectedSigs(ctx context.Context, cwd, kind string) ([]string, error) {
+	contents, err := a.pd.RejectedProposalContents(ctx, cwd, projectdoc.Kind(kind))
+	if err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{}, len(contents))
+	out := make([]string, 0, len(contents))
+	for _, c := range contents {
+		sig := knowledge.ExtractKBSig(c)
+		if sig == "" {
+			continue
+		}
+		if _, ok := seen[sig]; ok {
+			continue
+		}
+		seen[sig] = struct{}{}
+		out = append(out, sig)
+	}
+	return out, nil
 }
 
 // knowledgeLLM adapts the memory worker registry to knowledge.LLM so the
