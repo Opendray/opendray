@@ -58,6 +58,7 @@ Running Claude Code or Codex over SSH means the agent dies the moment your lapto
 **opendray** wraps the AI coding CLIs you already use (Claude Code, Codex, Antigravity, Grok Build, OpenCode, plus any shell) and turns them into something you can drive from anywhere. Run sessions on your home server, NAS, or VPS. Get notified on Telegram when a session goes idle. Reply from your phone to feed the next prompt back in. All over a self-hosted gateway you control end to end.
 
 - 🛰 **One backend, three surfaces.** Single Go binary serving a React web admin and a Flutter mobile app, with every action also exposed over a REST + WebSocket API for third-party integrations.
+- 🎭 **Round Table — cross-vendor AI group chat (experimental).** Seat Claude, Codex, Antigravity, Grok, and OpenCode plus yourself in one shared thread. `@mention` who should answer (or `@all`); each replies in character after reading the whole conversation, so different foundation-model families react to each other. Summarize on demand, or turn the discussion into a role-assigned execution plan where every step runs as a real session.
 - 💬 **Six bidirectional channels, no walled gardens.** Telegram, Slack, Discord, Feishu (飞书), DingTalk (钉钉), WeCom (企业微信), plus a Bridge adapter for anything custom. Replies on any channel route back into the right session.
 - 🧠 **Local-first memory.** ONNX / Ollama / LM Studio embeddings with three-scope retrieval (user, project, session), smart ranking, and cross-layer conflict detection. No vector data leaves your network.
 - 🔌 **Integration-grade API.** Scoped API keys, per-call audit log, reverse-proxy mounts. Treat opendray as the gateway behind your own product or just as a personal command centre.
@@ -161,8 +162,10 @@ Same for Codex accounts and Antigravity accounts. `Carry-context` is on by defau
 
 |  |  |
 | --- | --- |
-| **Sessions** | Attach to a running Claude Code, Codex, Antigravity, Grok Build, OpenCode, or shell session from web, mobile, or chat. Sessions survive client disconnect and host reboot. Live transcript overlay for TUIs that skip wheel input. |
-| **Providers** | 5 first-class AI coding CLIs plus arbitrary shell. Adding a new CLI is a JSON descriptor drop-in under `internal/catalog/builtin/`. Per-provider MCP-server injection (Vault, memory, integrations). |
+| **Sessions** | Attach to a running Claude Code, Codex, Antigravity, Grok Build, OpenCode, or shell session from web, mobile, or chat. Sessions survive client disconnect and host reboot. Staged image attachments, TUI theme-following, and mouse-wheel scrolling in full-screen TUIs. |
+| **Round Table** *(experimental)* | Seat several providers (Claude / Codex / Antigravity / Grok / OpenCode) plus yourself in one shared thread. `@mention` who should reply (or `@all`); each answers in character after reading the whole conversation. Summarize the discussion, or convert it into a role-assigned, multi-session execution plan bound to a shared project. Web + mobile, per-agent bubble colours. |
+| **Providers** | 5 first-class AI coding CLIs plus arbitrary shell. Adding a new CLI is a JSON descriptor drop-in under `internal/catalog/builtin/`. Per-provider MCP-server injection (Vault, memory, integrations). One-click CLI version checks + updates from the Providers page. |
+| **Database** | Inspect and query your project databases from the session inspector — PostgreSQL, MySQL, MariaDB, and SQLite. Cryptographic per-project isolation, exact bigint handling, consistent table metadata. Available in web and mobile. |
 | **Memory** | Three-scope retrieval (user, project, session). Local-first embeddings via ONNX, Ollama, or LM Studio. Cross-layer conflict detection. Global knowledge pages injected at spawn. Compiler flywheel distils episodes into reusable playbooks. |
 | **Channels** | Telegram, Slack, Discord, Feishu, DingTalk, WeCom. Bridge adapter for custom transports. Bidirectional: sessions notify, replies feed back. |
 | **Integrations** | REST + WebSocket API with scoped API keys, per-call audit log, reverse-proxy mounts. HashiCorp Vault MCP for secret access. Public [`docs/integration-guide.md`](docs/integration-guide.md). |
