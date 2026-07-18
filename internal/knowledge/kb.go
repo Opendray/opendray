@@ -36,6 +36,13 @@ type KBDoc struct {
 	Content     string
 	HumanLocked bool // a human edit (operator-authored) locks it from AI overwrite
 	Exists      bool
+	// MaintainerMode + PromptHint come from the page's blueprint section and
+	// let the OPERATOR own the page's form: "human" hands the page entirely to
+	// the operator (the drafter never touches it); PromptHint steers the AI
+	// maintainer's shape/scope when the mode is "ai". Empty MaintainerMode is
+	// treated as "ai" (the historical default).
+	MaintainerMode string
+	PromptHint     string
 }
 
 // DocSink persists curated KB pages into the note system (projectdoc-backed in
@@ -132,33 +139,39 @@ NEVER include secrets: passwords, API keys, tokens, certificates' private materi
 When information conflicts across time, describe only the CURRENT state — if something was renamed, deprecated, or replaced (e.g. an old tool/host/path superseded by a new one), present the current one and note the predecessor as deprecated; never present superseded state as current.
 Be concise and factual. No preamble, no "here is", no markdown code fences around the whole document.`
 
-// kbInfraSystem + kbConvSystem produce FOUNDATIONAL pages: standing ground
-// truth + the rules for using it. They are injected into every project as
-// BINDING constraints, so each page must end with an explicit, imperative
-// "## Rules (MUST follow)" section separated from the descriptive facts.
+// kbBaseSystem is the shared, FORM-NEUTRAL maintainer prompt for the four
+// global KB pages. It deliberately mandates NO section skeleton — the page's
+// shape belongs to the operator, expressed by editing the page itself and/or
+// its blueprint prompt_hint. The drafter only folds genuinely new, on-topic
+// evidence into whatever structure the operator has established. (Historically
+// each page had a hardcoded skeleton here — Databases/Domains/Rules/… — which
+// re-manufactured the same shape on every sweep and made operator curation
+// impossible to keep. That is intentionally gone.)
+const kbBaseSystem = `You maintain a long-lived, operator-owned knowledge page.
+You receive the page's CURRENT content and fresh EVIDENCE (facts / entities / playbooks) from recent work.
+Keep the page accurate by folding in genuinely new, on-topic evidence — nothing more.
+RULES:
+- PRESERVE the operator's existing structure, section headings, ordering, and voice EXACTLY. Never re-title, reorder, split, or merge sections the operator established, and never impose a template of your own.
+- Only ADD or CORRECT individual items the evidence supports; leave everything else as-is.
+- If (and only if) the current page is EMPTY, create a minimal, clean starting point — a short intro and a few obvious bullets. Do not pad it into an elaborate template.
+- The operator's maintainer hint (if present below) is AUTHORITATIVE on this page's form and scope.` + kbSafety
 
-const kbInfraSystem = `You curate the home-lab / ecosystem INFRASTRUCTURE reference from a developer's accumulated facts and entities.
-Organize the FACTS into sections such as: Hosts & network, Databases, Gateways & services, Credential stores (names/locations only), Build & deploy targets, Domains.
-Include concrete values that are NOT secrets (IPs, ports, hostnames, container names, paths, ID ranges).
-Then end with a "## Rules (MUST follow)" section: the imperative rules for USING this infrastructure (e.g. which account to connect as, where credentials must be stored, ID ranges to allocate from). These are binding — phrase them as commands.` + kbSafety
-
-const kbConvSystem = `You curate the DEVELOPMENT CONVENTIONS & policies the developer follows — the binding "how we work" rules.
-Organize into sections such as: Package manager & stack, Source control (commits / PR / branching), Coding rules, Release & deploy process, Naming, Workflow, Language & model preferences.
-Phrase every item as an imperative RULE the developer/agent must follow (not a description). End with a "## Rules (MUST follow)" section collecting the hardest must/never constraints.` + kbSafety
-
-const kbLessonsSystem = `You curate a LESSONS / playbooks reference from already-distilled playbooks.
-Group related playbooks under thematic "## " sections. For each, give a one-line how-to and the key pitfall. Keep it skimmable — this is the "what we learned the hard way" index.` + kbSafety
-
-const kbReusableSystem = `You curate a REUSABLE FEATURES catalog from what has been built across the developer's projects.
-List features / components / patterns / integrations that could be LIFTED into a NEW project, grouped under "## " themes. For each: what it is, which project it came from, and how to reuse it.
-Only include things genuinely reusable across projects — skip one-off project specifics.` + kbSafety
+// kbTopics is the one-line SCOPE descriptor per page — what the page is about,
+// NOT how it must be structured. Used only to tell the maintainer which
+// evidence is on-topic; the operator owns the actual form.
+var kbTopics = map[string]string{
+	KBKindInfrastructure: "PAGE TOPIC: infrastructure ground truth — hosts, networks, databases, gateways/services, and the binding rules for using them.",
+	KBKindConventions:    "PAGE TOPIC: the developer's binding development conventions & policies (how we work).",
+	KBKindLessons:        "PAGE TOPIC: distilled lessons and playbooks from past work — reference guidance.",
+	KBKindReusable:       "PAGE TOPIC: features / components / patterns / integrations reusable across projects.",
+}
 
 // KBDraftResult reports the outcome of drafting one KB page (returned by the
 // manual draft endpoint so failures are observable without log access).
 type KBDraftResult struct {
 	Kind   string `json:"kind"`
 	Cwd    string `json:"cwd"`
-	Status string `json:"status"` // written | proposed | skipped-empty | skipped-locked | skipped-pending | skipped-rejected | skipped-unchanged | error
+	Status string `json:"status"` // written | proposed | skipped-empty | skipped-human | skipped-locked | skipped-pending | skipped-rejected | skipped-unchanged | error
 	Bytes  int    `json:"bytes,omitempty"`
 	Err    string `json:"error,omitempty"`
 }
@@ -180,22 +193,44 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	playbooks, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Limit: 200})
 
 	var out []KBDraftResult
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, kbInfraSystem, buildInfraFeedstock(facts, entities)))
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, kbConvSystem, buildConvFeedstock(facts)))
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindLessons, kbLessonsSystem, buildLessonsFeedstock(playbooks)))
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindReusable, kbReusableSystem, buildReusableFeedstock(playbooks, facts)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, buildInfraFeedstock(facts, entities)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, buildConvFeedstock(facts)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindLessons, buildLessonsFeedstock(playbooks)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindReusable, buildReusableFeedstock(playbooks, facts)))
 	return out, nil
 }
 
-func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, system, feedstock string) KBDraftResult {
-	return draftOrPropose(ctx, d.llm, d.docs, d.proposals, d.log, cwd, kind, system, feedstock)
+// draftOne maintains one global KB page. The operator owns its form, so the
+// drafter honours the page's blueprint maintainer_mode (human → hands off),
+// steers on its prompt_hint, and PRESERVES the current content's structure —
+// it edits the page rather than regenerating it from a fixed skeleton.
+func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, feedstock string) KBDraftResult {
+	system := kbBaseSystem + "\n\n" + kbTopics[kind]
+	return draftOrPropose(ctx, d.llm, d.docs, d.proposals, d.log, cwd, kind, system, feedstock,
+		draftOpts{honorMaintainerMode: true, preserveCurrent: true, applyPromptHint: true})
+}
+
+// draftOpts turns on the operator-owned-form behaviours. They default OFF so
+// the Overview drafter (which shares this path) is unaffected; only the global
+// KB drafter opts in.
+type draftOpts struct {
+	// honorMaintainerMode: a page whose blueprint maintainer_mode is "human"
+	// is the operator's to write by hand — the drafter never touches it.
+	honorMaintainerMode bool
+	// preserveCurrent: feed the current page content to the LLM so it EDITS
+	// the operator's structure in place instead of regenerating from scratch.
+	preserveCurrent bool
+	// applyPromptHint: append the page's blueprint prompt_hint to the system
+	// prompt so the operator can steer form/scope without a code change.
+	applyPromptHint bool
 }
 
 // draftOrPropose is the shared lock-aware, dirty-checked draft path used by the
 // KB drafter and the Overview drafter. An unlocked page is rewritten in place;
 // a human-locked page whose feedstock diverged is filed as an update proposal
-// (B3 — Iterate) instead of overwritten.
-func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals ProposalSink, log *slog.Logger, cwd, kind, system, feedstock string) KBDraftResult {
+// (B3 — Iterate) instead of overwritten. opts enables the KB-only
+// operator-owned-form behaviours (Overview passes the zero value).
+func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals ProposalSink, log *slog.Logger, cwd, kind, system, feedstock string, opts draftOpts) KBDraftResult {
 	res := KBDraftResult{Kind: kind, Cwd: cwd}
 	if strings.TrimSpace(feedstock) == "" {
 		res.Status = "skipped-empty"
@@ -207,10 +242,34 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		res.Status, res.Err = "error", "get: "+err.Error()
 		return res
 	}
+	// The operator fully owns a human-maintained page — never draft or propose.
+	if opts.honorMaintainerMode && cur.MaintainerMode == "human" {
+		res.Status = "skipped-human"
+		return res
+	}
+	// Fold the operator's prompt_hint into the dirty-check signature. The hint
+	// steers the page's form, so changing it must invalidate the cached draft —
+	// otherwise (sig keys on feedstock alone) a new hint would never take effect
+	// until the feedstock happened to diverge. Overview passes applyPromptHint
+	// off, so its signature stays feedstock-only (byte-identical behaviour).
+	hint := ""
+	if opts.applyPromptHint {
+		hint = strings.TrimSpace(cur.PromptHint)
+	}
 	sig := kbSig(feedstock)
+	if hint != "" {
+		sig = kbSig(feedstock + "\x00prompt_hint:" + hint)
+	}
 	if cur.Exists && extractKBSig(cur.Content) == sig {
 		res.Status = "skipped-unchanged"
-		return res // feedstock unchanged since last draft — nothing to do
+		return res // feedstock + hint unchanged since last draft — nothing to do
+	}
+	if hint != "" {
+		system += "\n\nOPERATOR MAINTAINER HINT (authoritative on this page's form and scope):\n" + hint
+	}
+	current := ""
+	if opts.preserveCurrent {
+		current = cur.Content
 	}
 	if cur.HumanLocked {
 		if proposals == nil {
@@ -236,7 +295,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 				}
 			}
 		}
-		body, err := draftPageBody(ctx, llm, log, system, feedstock, sig)
+		body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig)
 		if err != nil {
 			res.Status, res.Err = "error", err.Error()
 			return res
@@ -251,7 +310,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		res.Status, res.Bytes = "proposed", len(body)
 		return res
 	}
-	body, err := draftPageBody(ctx, llm, log, system, feedstock, sig)
+	body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig)
 	if err != nil {
 		res.Status, res.Err = "error", err.Error()
 		return res
@@ -266,10 +325,24 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 	return res
 }
 
+// draftUserMessage builds the LLM user turn. With no current content (Overview,
+// or a first-time KB page) it is just the feedstock — byte-identical to the
+// historical behaviour. When current content is supplied (KB edit-in-place) it
+// frames the current page as the structure to preserve and the feedstock as
+// new evidence to fold in.
+func draftUserMessage(current, feedstock string) string {
+	cur := stripKBSigText(strings.TrimSpace(current))
+	if cur == "" {
+		return feedstock
+	}
+	return "CURRENT PAGE (preserve this structure exactly; change only what the evidence updates):\n" +
+		cur + "\n\nNEW EVIDENCE (fold in only what is genuinely new and on-topic):\n" + feedstock
+}
+
 // draftPageBody runs the LLM and returns the cleaned page body with the
 // feedstock signature appended (so the next sweep's dirty-check can skip it).
-func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, feedstock, sig string) (string, error) {
-	body, err := llm.Complete(ctx, system, feedstock)
+func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, current, feedstock, sig string) (string, error) {
+	body, err := llm.Complete(ctx, system, draftUserMessage(current, feedstock))
 	if err != nil {
 		log.Warn("draft: llm failed", "err", err)
 		return "", fmt.Errorf("llm: %w", err)
