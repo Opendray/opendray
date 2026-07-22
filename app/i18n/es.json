@@ -3415,6 +3415,14 @@
     "strategyUnknown": "Desconocido"
   },
   "sessions": {
+    "dock": {
+      "more": "Más"
+    },
+    "tools": {
+      "searchHint": "Buscar herramientas",
+      "inspectSection": "Inspeccionar",
+      "sessionSection": "Sesión"
+    },
     "title": "Sesiones",
     "refresh": "Actualizar",
     "actions": "Acciones",

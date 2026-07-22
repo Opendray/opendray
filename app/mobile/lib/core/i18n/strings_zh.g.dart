@@ -256,6 +256,8 @@ class _TranslationsSessionsZh extends TranslationsSessionsEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
+	@override late final _TranslationsSessionsDockZh dock = _TranslationsSessionsDockZh._(_root);
+	@override late final _TranslationsSessionsToolsZh tools = _TranslationsSessionsToolsZh._(_root);
 	@override String get title => '会话';
 	@override String get refresh => '刷新';
 	@override String get actions => '操作';
@@ -1837,6 +1839,28 @@ class _TranslationsActivityDetailZh extends TranslationsActivityDetailEn {
 	@override String get requestId => '请求 ID';
 	@override String get resource => '资源';
 	@override String get timestamp => '时间';
+}
+
+// Path: sessions.dock
+class _TranslationsSessionsDockZh extends TranslationsSessionsDockEn {
+	_TranslationsSessionsDockZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get more => '更多';
+}
+
+// Path: sessions.tools
+class _TranslationsSessionsToolsZh extends TranslationsSessionsToolsEn {
+	_TranslationsSessionsToolsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get searchHint => '搜索工具';
+	@override String get inspectSection => '检查';
+	@override String get sessionSection => '会话';
 }
 
 // Path: sessions.filters
@@ -12100,6 +12124,10 @@ extension on TranslationsZh {
 			'memoryAmbient.strategyManualOnly' => '仅手动',
 			'memoryAmbient.strategyHybrid' => '混合摘要',
 			'memoryAmbient.strategyUnknown' => '未知',
+			'sessions.dock.more' => '更多',
+			'sessions.tools.searchHint' => '搜索工具',
+			'sessions.tools.inspectSection' => '检查',
+			'sessions.tools.sessionSection' => '会话',
 			'sessions.title' => '会话',
 			'sessions.refresh' => '刷新',
 			'sessions.actions' => '操作',
@@ -12501,12 +12529,12 @@ extension on TranslationsZh {
 			'integrations.kvBaseUrl' => 'Base URL',
 			'integrations.kvScopes' => '范围',
 			'integrations.kvVersion' => '版本',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => '最近健康检查',
 			'integrations.kvCreated' => '创建于',
 			'integrations.kvKeyRotated' => 'Key 轮换于',
 			'integrations.detailLoadFailed' => ({required Object error}) => '加载集成失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.callsLoadFailed' => '加载调用失败',
 			'integrations.noMatchingCalls' => '日志中暂无匹配的调用。',
 			'integrations.directionAll' => '全部',
@@ -13015,12 +13043,12 @@ extension on TranslationsZh {
 			'channels.popup.mute' => '静音',
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => '运行中',
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
 			'channels.badges.muted' => '已静音',
-			_ => null,
-		} ?? switch (path) {
 			'channels.capsLabel' => ({required Object list}) => '· 能力：${list}',
 			'channels.bridgeWebOnly' => 'Bridge 通道仅 Web 端',
 			'channels.bridgeEmptyAdd' => '在 Web 管理端添加：通道 → 新建。',
@@ -13529,12 +13557,12 @@ extension on TranslationsZh {
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
 			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => '活跃项目',
 			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
 			'cortexHub.settings' => '设置',
 			'cortexHub.memory' => '记忆',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
 			'cortexHub.notes' => '笔记',
 			'cortexHub.notesDesc' => '每个项目的官方目标 / 计划 / 日志。',

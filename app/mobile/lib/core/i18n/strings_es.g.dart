@@ -256,6 +256,8 @@ class _TranslationsSessionsEs extends TranslationsSessionsEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
+	@override late final _TranslationsSessionsDockEs dock = _TranslationsSessionsDockEs._(_root);
+	@override late final _TranslationsSessionsToolsEs tools = _TranslationsSessionsToolsEs._(_root);
 	@override String get title => 'Sesiones';
 	@override String get refresh => 'Actualizar';
 	@override String get actions => 'Acciones';
@@ -1837,6 +1839,28 @@ class _TranslationsActivityDetailEs extends TranslationsActivityDetailEn {
 	@override String get requestId => 'ID de solicitud';
 	@override String get resource => 'Recurso';
 	@override String get timestamp => 'Marca de tiempo';
+}
+
+// Path: sessions.dock
+class _TranslationsSessionsDockEs extends TranslationsSessionsDockEn {
+	_TranslationsSessionsDockEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get more => 'Más';
+}
+
+// Path: sessions.tools
+class _TranslationsSessionsToolsEs extends TranslationsSessionsToolsEn {
+	_TranslationsSessionsToolsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get searchHint => 'Buscar herramientas';
+	@override String get inspectSection => 'Inspeccionar';
+	@override String get sessionSection => 'Sesión';
 }
 
 // Path: sessions.filters
@@ -12100,6 +12124,10 @@ extension on TranslationsEs {
 			'memoryAmbient.strategyManualOnly' => 'Solo manual',
 			'memoryAmbient.strategyHybrid' => 'Resumen híbrido',
 			'memoryAmbient.strategyUnknown' => 'Desconocido',
+			'sessions.dock.more' => 'Más',
+			'sessions.tools.searchHint' => 'Buscar herramientas',
+			'sessions.tools.inspectSection' => 'Inspeccionar',
+			'sessions.tools.sessionSection' => 'Sesión',
 			'sessions.title' => 'Sesiones',
 			'sessions.refresh' => 'Actualizar',
 			'sessions.actions' => 'Acciones',
@@ -12501,12 +12529,12 @@ extension on TranslationsEs {
 			'integrations.kvBaseUrl' => 'URL base',
 			'integrations.kvScopes' => 'Ámbitos',
 			'integrations.kvVersion' => 'Versión',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Último ping de estado',
 			'integrations.kvCreated' => 'Creada',
 			'integrations.kvKeyRotated' => 'Key rotada',
 			'integrations.detailLoadFailed' => ({required Object error}) => 'Error al cargar la integración: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.callsLoadFailed' => 'Error al cargar las llamadas',
 			'integrations.noMatchingCalls' => 'Aún no hay llamadas coincidentes en el registro.',
 			'integrations.directionAll' => 'Todas',
@@ -13015,12 +13043,12 @@ extension on TranslationsEs {
 			'channels.popup.mute' => 'Silenciar',
 			'channels.popup.unmute' => 'Reactivar sonido',
 			'channels.popup.deleteLabel' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => 'en ejecución',
 			'channels.badges.starting' => 'iniciando…',
 			'channels.badges.disabled' => 'desactivado',
 			'channels.badges.muted' => 'silenciado',
-			_ => null,
-		} ?? switch (path) {
 			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
 			'channels.bridgeWebOnly' => 'Los canales bridge solo están disponibles en la web',
 			'channels.bridgeEmptyAdd' => 'Añade uno desde el admin web: Canales → Nuevo.',
@@ -13529,12 +13557,12 @@ extension on TranslationsEs {
 			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'inactivo ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} activos',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Proyectos activos',
 			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.',
 			'cortexHub.settings' => 'Ajustes',
 			'cortexHub.memory' => 'Memoria',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
 			'cortexHub.notes' => 'Notas',
 			'cortexHub.notesDesc' => 'El objetivo / plan / diario oficial de cada proyecto.',
