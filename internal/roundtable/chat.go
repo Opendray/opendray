@@ -38,8 +38,9 @@ type Service struct {
 	store    *Store
 	registry *worker.Registry
 	bus      *eventbus.Hub
-	context  ContextSource   // optional
-	sessions SessionLauncher // optional — Handoff 503s without it
+	context  ContextSource           // optional
+	sessions SessionLauncher         // optional — Handoff 503s without it
+	mcp      worker.MCPProvisionFunc // optional — attaches read-only opendray-memory to members
 	log      *slog.Logger
 }
 
@@ -59,6 +60,17 @@ func NewService(store *Store, reg *worker.Registry, bus *eventbus.Hub, log *slog
 // WithContextSource enables reply-prompt enrichment with relevant memories.
 func (s *Service) WithContextSource(c ContextSource) *Service {
 	s.context = c
+	return s
+}
+
+// WithMemoryMCP gives every member live, read-only access to the
+// opendray-memory MCP tools (memory_search / project_search / doc_read / …)
+// scoped to the table's cwd, so they can pull real facts on demand instead
+// of only seeing the pre-injected context snapshot. fn is
+// catalog.AttachMemoryMCP bound to the memory config + read-only=true. When
+// unset, members run tool-less as before.
+func (s *Service) WithMemoryMCP(fn worker.MCPProvisionFunc) *Service {
+	s.mcp = fn
 	return s
 }
 
@@ -129,7 +141,7 @@ func (s *Service) runReplies(id string, providers []string) {
 			if !ok {
 				continue
 			}
-			system := chatSystemPrompt(rt, seat)
+			system := chatSystemPrompt(rt, seat, s.mcp != nil && strings.TrimSpace(rt.Cwd) != "")
 			// Re-read the thread each turn so a member sees earlier replies
 			// (within this round and prior rounds).
 			rt, err = s.store.Get(ctx, id)
@@ -142,7 +154,7 @@ func (s *Service) runReplies(id string, providers []string) {
 				s.memberFailed(ctx, id, seat, err)
 				continue
 			}
-			resp, err := s.invokeSeat(ctx, seat, system, user, replyMaxTokens)
+			resp, err := s.invokeSeat(ctx, seat, system, user, replyMaxTokens, rt.Cwd)
 			if err != nil {
 				s.memberFailed(ctx, id, seat, err)
 				continue
@@ -300,7 +312,7 @@ func (s *Service) runSummary(id string, seat Seat) {
 		s.memberFailed(ctx, id, seat, err)
 		return
 	}
-	resp, err := s.invokeSeat(ctx, seat, summarySystemPrompt(rt), user, summaryMaxTokens)
+	resp, err := s.invokeSeat(ctx, seat, summarySystemPrompt(rt), user, summaryMaxTokens, rt.Cwd)
 	if err != nil {
 		s.memberFailed(ctx, id, seat, err)
 		return
@@ -319,7 +331,20 @@ func (s *Service) runSummary(id string, seat Seat) {
 // registry's per-call override path. TaskCuration is reused purely as the
 // metrics label (round table needs no memory_workers row of its own — see
 // ROLLBACK.md).
-func (s *Service) invokeSeat(ctx context.Context, seat Seat, system, user string, maxTokens int) (string, error) {
+func (s *Service) invokeSeat(ctx context.Context, seat Seat, system, user string, maxTokens int, cwd string) (string, error) {
+	req := worker.Request{
+		Task:         worker.TaskCuration,
+		SystemPrompt: system,
+		UserInput:    user,
+		MaxTokens:    maxTokens,
+		Timeout:      callTimeout,
+	}
+	// Attach read-only opendray-memory tools when configured and the table is
+	// bound to a project cwd (the memory scope). A table with no cwd, or a
+	// gateway without memory auto-attach, runs the member tool-less.
+	if s.mcp != nil && strings.TrimSpace(cwd) != "" {
+		req.MCP = &worker.MCPAttach{Cwd: cwd, Provision: s.mcp}
+	}
 	resp, err := s.registry.RunWith(ctx, worker.Config{
 		Task:       worker.TaskCuration,
 		Kind:       worker.WorkerAgent,
@@ -327,13 +352,7 @@ func (s *Service) invokeSeat(ctx context.Context, seat Seat, system, user string
 		Model:      seat.Model,
 		AccountID:  seat.AccountID,
 		Enabled:    true,
-	}, worker.Request{
-		Task:         worker.TaskCuration,
-		SystemPrompt: system,
-		UserInput:    user,
-		MaxTokens:    maxTokens,
-		Timeout:      callTimeout,
-	})
+	}, req)
 	if err != nil {
 		return "", err
 	}

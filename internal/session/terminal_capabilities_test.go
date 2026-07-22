@@ -140,3 +140,18 @@ func TestStripTerminalCapabilityResponses_MalformedSequencePassesThrough(t *test
 		t.Errorf("malformed bytes stripped: got %q want %q", got, in)
 	}
 }
+
+func TestStripTerminalCapabilityResponses_PreservesBracketedPaste(t *testing.T) {
+	// A programmatically-injected seed (round-table handoff / cortex
+	// escalation) is wrapped in bracketed-paste markers so a CLI treats
+	// the multi-line block as one pasted message. Those markers end in
+	// '~', not the c/R/n terminators this filter targets, so they MUST
+	// survive intact — otherwise the CLI never enters paste mode and
+	// embedded newlines submit line by line again.
+	seed := "line one\nline two\n\nfinal paragraph"
+	in := []byte("\x1b[200~" + seed + "\x1b[201~")
+	got := stripTerminalCapabilityResponses(in)
+	if !bytes.Equal(got, in) {
+		t.Errorf("bracketed-paste seed mutated by stripper:\n got %q\nwant %q", got, in)
+	}
+}

@@ -644,6 +644,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// run the one-time M-U Phase 5 file-memory backfill import against
 	// it. Nil when memory is disabled or the mirror wasn't wired.
 	var memoryMirror *memory.Mirror
+	// memoryAutoAttach is hoisted so the Round Table wiring below can reuse
+	// the same memory-server config to attach read-only tools to members.
+	// Zero value (Enabled=false) → members run tool-less.
+	var memoryAutoAttach catalog.MemoryAutoAttach
 	if memorySvc != nil {
 		log.Info("memory ready",
 			"embedder", memorySvc.EmbedderName(),
@@ -677,13 +681,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				log.Warn("memory MCP auto-attach disabled — os.Executable failed",
 					"err", perr)
 			} else {
-				sessionProvider.WithMemoryAutoAttach(catalog.MemoryAutoAttach{
+				memoryAutoAttach = catalog.MemoryAutoAttach{
 					Enabled:    true,
 					BinaryPath: binPath,
 					BaseURL:    listenLoopback(cfg.Listen),
 					APIKey:     key,
 					Scope:      cfg.Memory.Scope.Default,
-				})
+				}
+				sessionProvider.WithMemoryAutoAttach(memoryAutoAttach)
 				log.Info("memory MCP auto-attach enabled",
 					"bin", binPath,
 					"base_url", listenLoopback(cfg.Listen))
@@ -1211,6 +1216,17 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		WithSessionLauncher(&roundTableSessionLauncher{mgr: sessionMgr})
 	if memquerySvc != nil {
 		roundTableSvc.WithContextSource(&curationContextAdapter{mq: memquerySvc})
+	}
+	// Give members live, read-only opendray-memory tools (search / project_search
+	// / doc_read / …) scoped to the table's cwd — the same dynamic per-spawn
+	// injector interactive sessions use, so they can pull real facts instead of
+	// only the pre-injected snapshot. read-only=true: members run with tool
+	// permissions open, so the server is the write boundary.
+	if memoryAutoAttach.Enabled {
+		mem := memoryAutoAttach
+		roundTableSvc.WithMemoryMCP(func(providerID, baseDir, runCwd, scopeKey, home string) ([]string, map[string]string, error) {
+			return catalog.AttachMemoryMCP(mem, providerID, baseDir, runCwd, scopeKey, home, true)
+		})
 	}
 	roundTableHandlers := roundtable.NewHandlers(roundTableStore, roundTableSvc, log)
 	// ─── END ROUND TABLE ────────────────────────────────────────
@@ -2468,9 +2484,35 @@ func (a *curationContextAdapter) RelevantContext(ctx context.Context, cwd, query
 	return b.String(), nil
 }
 
+// Bracketed-paste markers. Wrapping a programmatically-injected seed in
+// these makes a CLI's input parser treat the whole (usually multi-line)
+// block as ONE pasted message: embedded newlines become soft line breaks,
+// not per-line submissions. This mirrors exactly what a human paste from the
+// web terminal delivers (xterm.js emits the same markers), so every provider
+// that already accepts pasted input handles it identically. Without it, TUIs
+// that read a raw '\n' as Enter (antigravity) submit a multi-paragraph
+// handoff seed as many separate turns — the round-table "full discussion
+// dribbled into the chat box as a conversation" bug. The submitting Enter
+// stays OUTSIDE the paste (inside, it would be a literal newline, not submit).
+const (
+	bracketedPasteStart = "\x1b[200~"
+	bracketedPasteEnd   = "\x1b[201~"
+)
+
+// seedIntoSession pastes a seed prompt into an already-booted session and
+// submits it with a single Enter, so a multi-line seed lands as one message
+// instead of one turn per line. Callers own the pre-boot delay + timeout ctx.
+func seedIntoSession(ctx context.Context, mgr *session.Manager, sid, prompt string) error {
+	if err := mgr.Input(ctx, sid, []byte(bracketedPasteStart+prompt+bracketedPasteEnd)); err != nil {
+		return err
+	}
+	time.Sleep(500 * time.Millisecond)
+	return mgr.Input(ctx, sid, []byte{'\r'})
+}
+
 // curationSessionLauncher implements cortex.SessionLauncher over the
 // session manager: spawn a claude session in cwd, give the CLI a
-// moment to boot, then type the seed prompt and submit it.
+// moment to boot, then paste the seed prompt and submit it.
 type curationSessionLauncher struct {
 	mgr *session.Manager
 }
@@ -2503,11 +2545,7 @@ func (l *curationSessionLauncher) Launch(ctx context.Context, spec cortex.Launch
 		time.Sleep(4 * time.Second)
 		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		if err := l.mgr.Input(bg, sid, []byte(prompt)); err != nil {
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+		_ = seedIntoSession(bg, l.mgr, sid, prompt)
 	}(sess.ID, spec.SeedPrompt)
 	return sess.ID, nil
 }
@@ -2540,11 +2578,7 @@ func (l *roundTableSessionLauncher) Launch(ctx context.Context, spec roundtable.
 		time.Sleep(4 * time.Second)
 		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		if err := l.mgr.Input(bg, sid, []byte(prompt)); err != nil {
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+		_ = seedIntoSession(bg, l.mgr, sid, prompt)
 	}(sess.ID, spec.SeedPrompt)
 	return sess.ID, nil
 }
@@ -2559,16 +2593,12 @@ func (l *roundTableSessionLauncher) Alive(ctx context.Context, sessionID string)
 	return !sess.State.IsTerminal()
 }
 
-// Deliver types a follow-up prompt into an existing (already booted) session.
+// Deliver pastes a follow-up prompt into an existing (already booted) session.
 func (l *roundTableSessionLauncher) Deliver(_ context.Context, sessionID, prompt string) error {
 	go func(sid, p string) {
 		bg, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		if err := l.mgr.Input(bg, sid, []byte(p)); err != nil {
-			return
-		}
-		time.Sleep(500 * time.Millisecond)
-		_ = l.mgr.Input(bg, sid, []byte{'\r'})
+		_ = seedIntoSession(bg, l.mgr, sid, p)
 	}(sessionID, prompt)
 	return nil
 }

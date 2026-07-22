@@ -30,7 +30,10 @@ func vendorLabel(provider string) string {
 
 // chatSystemPrompt is the persona for one member's reply turn. self is the
 // seat about to speak (its Persona, if set, becomes an extra role instruction).
-func chatSystemPrompt(rt RoundTable, self Seat) string {
+// hasMemoryTools tells the member whether the read-only opendray-memory MCP
+// tools are attached this turn, which flips the tool-use instruction from
+// "don't" to "ground your claims with them".
+func chatSystemPrompt(rt RoundTable, self Seat, hasMemoryTools bool) string {
 	selfProvider := self.Provider
 	var others []string
 	for _, seat := range rt.Seats {
@@ -73,7 +76,15 @@ func chatSystemPrompt(rt RoundTable, self Seat) string {
 	}
 	b.WriteString("- To bring another member into the discussion, @mention them (e.g. " + otherList + "); they'll get a turn to reply.\n")
 	b.WriteString("- Do NOT speak for the other members or the Operator. Do NOT prefix your message with your own name.\n")
-	b.WriteString("- Do NOT use tools, browse, or read files — answer from the conversation and any context provided.")
+	if hasMemoryTools {
+		b.WriteString("- You have READ-ONLY access to the team's shared opendray-memory through MCP tools " +
+			"(memory_search, project_search, doc_read, memory_list, and the project goal/plan getters). " +
+			"Before asserting anything about our setup, our past decisions, or our project docs, CALL these " +
+			"tools to ground it in the real store instead of guessing from the conversation. You cannot write " +
+			"memory — these are read-only, so use them freely to check facts, then answer in your own words.")
+	} else {
+		b.WriteString("- Do NOT use tools, browse, or read files — answer from the conversation and any context provided.")
+	}
 	return b.String()
 }
 
