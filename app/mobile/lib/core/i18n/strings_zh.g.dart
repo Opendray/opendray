@@ -193,6 +193,8 @@ class _TranslationsMoreZh extends TranslationsMoreEn {
 
 	// Translations
 	@override String get title => '更多';
+	@override String get searchHint => '搜索设置';
+	@override String noResults({required Object query}) => '没有匹配“${query}”的设置';
 	@override late final _TranslationsMoreIdentityZh identity = _TranslationsMoreIdentityZh._(_root);
 	@override late final _TranslationsMoreSectionsZh sections = _TranslationsMoreSectionsZh._(_root);
 	@override late final _TranslationsMoreItemsZh items = _TranslationsMoreItemsZh._(_root);
@@ -12029,6 +12031,8 @@ extension on TranslationsZh {
 			'web.roundTable.plan.bypass' => '跳过权限 (YOLO)',
 			'web.roundTable.plan.bypassHint' => '用 bypass 标志启动会话,不再逐个请求批准。',
 			'more.title' => '更多',
+			'more.searchHint' => '搜索设置',
+			'more.noResults' => ({required Object query}) => '没有匹配“${query}”的设置',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
 			'more.identity.tokenExpires' => '令牌到期',
@@ -12527,10 +12531,10 @@ extension on TranslationsZh {
 			'integrations.tooltipReadOnly' => '系统集成 — 只读',
 			'integrations.kvRoutePrefix' => '路由前缀',
 			'integrations.kvBaseUrl' => 'Base URL',
-			'integrations.kvScopes' => '范围',
-			'integrations.kvVersion' => '版本',
 			_ => null,
 		} ?? switch (path) {
+			'integrations.kvScopes' => '范围',
+			'integrations.kvVersion' => '版本',
 			'integrations.kvLastHealthPing' => '最近健康检查',
 			'integrations.kvCreated' => '创建于',
 			'integrations.kvKeyRotated' => 'Key 轮换于',
@@ -13041,10 +13045,10 @@ extension on TranslationsZh {
 			'channels.popup.enable' => '启用',
 			'channels.popup.disable' => '停用',
 			'channels.popup.mute' => '静音',
-			'channels.popup.unmute' => '取消静音',
-			'channels.popup.deleteLabel' => '删除',
 			_ => null,
 		} ?? switch (path) {
+			'channels.popup.unmute' => '取消静音',
+			'channels.popup.deleteLabel' => '删除',
 			'channels.badges.running' => '运行中',
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
@@ -13555,10 +13559,10 @@ extension on TranslationsZh {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
-			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
-			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
 			_ => null,
 		} ?? switch (path) {
+			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
+			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
 			'cortexHub.activeProjectsTitle' => '活跃项目',
 			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
 			'cortexHub.settings' => '设置',
