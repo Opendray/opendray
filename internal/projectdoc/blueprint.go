@@ -350,6 +350,22 @@ func (s *Service) validateWriteTarget(ctx context.Context, cwd string, kind Kind
 	return nil
 }
 
+// GetSection returns one blueprint section by slug (found=false when the cwd
+// has no such section). Used by the KB drafter to read a page's operator-owned
+// form controls (maintainer_mode, prompt_hint).
+func (s *Service) GetSection(ctx context.Context, cwd, slug string) (Section, bool, error) {
+	sections, err := s.ListSections(ctx, cwd)
+	if err != nil {
+		return Section{}, false, err
+	}
+	for _, sec := range sections {
+		if sec.Slug == slug {
+			return sec, true, nil
+		}
+	}
+	return Section{}, false, nil
+}
+
 // HasSection reports whether the blueprint for cwd currently contains
 // slug with the given maintainer mode (mode "" = any). Used by the
 // scanners so a removed scanner section silently stops being written.

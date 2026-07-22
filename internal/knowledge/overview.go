@@ -116,7 +116,9 @@ func (o *OverviewDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error)
 			continue
 		}
 		feedstock := o.buildFeedstock(ctx, k)
-		out = append(out, draftOrPropose(ctx, o.llm, o.docs, o.proposals, o.log, k, OverviewKind, overviewSystem, feedstock))
+		// Overview keeps its historical behaviour: regenerate from the project
+		// feedstock (no operator-owned-form opts — those are KB-only).
+		out = append(out, draftOrPropose(ctx, o.llm, o.docs, o.proposals, o.log, k, OverviewKind, overviewSystem, feedstock, draftOpts{}))
 	}
 	return out, nil
 }
