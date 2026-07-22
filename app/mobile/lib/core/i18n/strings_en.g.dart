@@ -419,6 +419,8 @@ class TranslationsSessionsEn {
 	final Translations _root; // ignore: unused_field
 
 	// Translations
+	late final TranslationsSessionsDockEn dock = TranslationsSessionsDockEn.internal(_root);
+	late final TranslationsSessionsToolsEn tools = TranslationsSessionsToolsEn.internal(_root);
 
 	/// en: 'Sessions'
 	String get title => 'Sessions';
@@ -3666,6 +3668,36 @@ class TranslationsActivityDetailEn {
 
 	/// en: 'Timestamp'
 	String get timestamp => 'Timestamp';
+}
+
+// Path: sessions.dock
+class TranslationsSessionsDockEn {
+	TranslationsSessionsDockEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'More'
+	String get more => 'More';
+}
+
+// Path: sessions.tools
+class TranslationsSessionsToolsEn {
+	TranslationsSessionsToolsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Search tools'
+	String get searchHint => 'Search tools';
+
+	/// en: 'Inspect'
+	String get inspectSection => 'Inspect';
+
+	/// en: 'Session'
+	String get sessionSection => 'Session';
 }
 
 // Path: sessions.filters
@@ -20468,6 +20500,10 @@ extension on Translations {
 			'memoryAmbient.strategyManualOnly' => 'Manual only',
 			'memoryAmbient.strategyHybrid' => 'Hybrid summary',
 			'memoryAmbient.strategyUnknown' => 'Unknown',
+			'sessions.dock.more' => 'More',
+			'sessions.tools.searchHint' => 'Search tools',
+			'sessions.tools.inspectSection' => 'Inspect',
+			'sessions.tools.sessionSection' => 'Session',
 			'sessions.title' => 'Sessions',
 			'sessions.refresh' => 'Refresh',
 			'sessions.actions' => 'Actions',
@@ -20869,12 +20905,12 @@ extension on Translations {
 			'integrations.kvBaseUrl' => 'Base URL',
 			'integrations.kvScopes' => 'Scopes',
 			'integrations.kvVersion' => 'Version',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Last health ping',
 			'integrations.kvCreated' => 'Created',
 			'integrations.kvKeyRotated' => 'Key rotated',
 			'integrations.detailLoadFailed' => ({required Object error}) => 'Failed to load integration: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.callsLoadFailed' => 'Failed to load calls',
 			'integrations.noMatchingCalls' => 'No matching calls in the log yet.',
 			'integrations.directionAll' => 'All',
@@ -21383,12 +21419,12 @@ extension on Translations {
 			'channels.popup.mute' => 'Mute',
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => 'running',
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
 			'channels.badges.muted' => 'muted',
-			_ => null,
-		} ?? switch (path) {
 			'channels.capsLabel' => ({required Object list}) => '· caps: ${list}',
 			'channels.bridgeWebOnly' => 'Bridge channels stay web-only',
 			'channels.bridgeEmptyAdd' => 'Add one from the web admin: Channels → New.',
@@ -21897,12 +21933,12 @@ extension on Translations {
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} active',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Active projects',
 			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
 			'cortexHub.settings' => 'Settings',
 			'cortexHub.memory' => 'Memory',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
 			'cortexHub.notes' => 'Notes',
 			'cortexHub.notesDesc' => 'Each project’s official goal / plan / journal.',

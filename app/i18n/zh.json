@@ -3415,6 +3415,14 @@
     "strategyUnknown": "未知"
   },
   "sessions": {
+    "dock": {
+      "more": "更多"
+    },
+    "tools": {
+      "searchHint": "搜索工具",
+      "inspectSection": "检查",
+      "sessionSection": "会话"
+    },
     "title": "会话",
     "refresh": "刷新",
     "actions": "操作",

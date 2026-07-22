@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import 'package:opendray/core/api/antigravity_accounts_api.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
@@ -10,19 +9,21 @@ import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/core/providers/provider_visual.dart';
 import 'package:opendray/core/widgets/brand_avatar.dart';
-import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/sessions/account_switch_sheet.dart';
 import 'package:opendray/features/sessions/session_action_sheet.dart';
 import 'package:opendray/features/sessions/session_terminal_view.dart';
+import 'package:opendray/features/sessions/session_tool_dock.dart';
 
-// Session detail surface. The terminal eats most of the screen;
-// metadata sits in a collapsible header that defaults to one
-// compact row (provider + state badge), expanding on tap to show
-// the long fields (cwd, timestamps). The connection-state line
-// from earlier iterations is gone — its full strip now appears
-// only when the WS is *not* connected (handled inside
-// SessionTerminalView), so a healthy live session shows just a
-// thin colored accent.
+// Session detail surface.
+//
+// The terminal is the hero and now owns the full height of the body —
+// the old expandable metadata header is gone. Identity + lifecycle
+// state live in a compact two-line AppBar title (name on top, provider
+// + state beneath with a colour dot), and every cwd-scoped project tool
+// is one tap away on the SessionToolDock pinned under the terminal
+// (Files / Git / Tasks / Project memory / More). The AppBar "⋮" keeps
+// only the low-frequency, session-level actions (refresh, account
+// switch, lifecycle) — Inspector/Memory no longer hide in there.
 class SessionDetailScreen extends ConsumerStatefulWidget {
   const SessionDetailScreen({required this.sessionId, super.key});
 
@@ -34,39 +35,17 @@ class SessionDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
-  bool _metadataExpanded = false;
-
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(sessionByIdProvider(widget.sessionId));
     return Scaffold(
       appBar: AppBar(
-        // Brand mark next to the title so the operator can tell at
-        // a glance which CLI is driving the session, matching the
-        // sessions list and the web admin's workbench header. Kept
-        // inside `title` (rather than the leading slot) so the
-        // system back arrow stays in place.
         titleSpacing: 0,
         title: async.when(
-          data: (s) => Row(
-            children: [
-              BrandAvatar(providerId: s.providerId, size: 28),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  s.displayName,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          data: _TitleBar.new,
           loading: () => Text(t.sessions.detail.fallbackTitle),
           error: (_, __) => Text(t.sessions.detail.fallbackTitle),
         ),
-        // Phone bars are narrow and a row of unlabeled icons is easy to
-        // mis-tap — collapse every action into ONE labelled overflow menu so
-        // each item shows its name. The lifecycle actions (stop / restart /
-        // delete) keep their richer SessionActionSheet, opened from the menu.
         actions: [
           PopupMenuButton<String>(
             tooltip: MaterialLocalizations.of(context).showMenuTooltip,
@@ -79,40 +58,28 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       body: async.when(
         data: (session) => Column(
           children: [
-            _MetadataHeader(
-              session: session,
-              expanded: _metadataExpanded,
-              onToggle: () =>
-                  setState(() => _metadataExpanded = !_metadataExpanded),
-            ),
             Expanded(child: SessionTerminalView(sessionId: widget.sessionId)),
+            SessionToolDock(session: session),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(
           error: e,
-          onRetry: () =>
-              ref.invalidate(sessionByIdProvider(widget.sessionId)),
+          onRetry: () => ref.invalidate(sessionByIdProvider(widget.sessionId)),
         ),
       ),
     );
   }
 
-  // Overflow-menu items. Session-dependent entries (project memory, account
-  // switch, lifecycle actions) only appear once the session has loaded; the
-  // account switcher is Claude/Antigravity-live only (nothing to rebind
-  // otherwise), mirroring the web header.
+  // Overflow menu — only the low-frequency, session-level actions now
+  // that the tools moved to the dock. The account switcher is
+  // Claude/Antigravity-live only (nothing to rebind otherwise).
   List<PopupMenuEntry<String>> _menuItems(SessionSummary? s) {
     final canAccount = s != null &&
         (s.providerId == 'claude' || s.providerId == 'antigravity') &&
         s.isLive;
     return [
       _menuItem('refresh', Icons.refresh, t.sessions.detail.refreshMetadata),
-      _menuItem('inspector', Icons.dashboard_customize_outlined,
-          t.sessions.detail.inspector),
-      if (s != null)
-        _menuItem(
-            'project', Icons.flag_outlined, t.sessions.detail.projectMemory),
       if (canAccount)
         _menuItem(
           'account',
@@ -145,16 +112,6 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     switch (value) {
       case 'refresh':
         ref.invalidate(sessionByIdProvider(widget.sessionId));
-      case 'inspector':
-        context.push('/session/${widget.sessionId}/inspector');
-      case 'project':
-        if (s != null) {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => ProjectScreen(initialCwd: s.cwd),
-            ),
-          );
-        }
       case 'account':
         if (s != null) _switchAccount(s);
       case 'actions':
@@ -162,8 +119,6 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     }
   }
 
-  // Rebind the running session to a different account (mirrors the web header
-  // AccountSwitcher).
   Future<void> _switchAccount(SessionSummary s) async {
     final isAgy = s.providerId == 'antigravity';
     final switched = await AccountSwitchSheet.show(context, session: s);
@@ -176,8 +131,6 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       );
   }
 
-  // Lifecycle actions (stop / restart / delete) keep their richer sheet, which
-  // carries per-action descriptions and a delete confirmation.
   Future<void> _openActions(SessionSummary s) async {
     final result = await SessionActionSheet.show(context, session: s);
     if (result == null || !mounted) return;
@@ -192,139 +145,70 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
   }
 }
 
-class _MetadataHeader extends StatelessWidget {
-  const _MetadataHeader({
-    required this.session,
-    required this.expanded,
-    required this.onToggle,
-  });
-
+// Compact two-line AppBar title: brand mark + session name on top, and
+// "provider · state" with a lifecycle colour dot beneath.
+class _TitleBar extends StatelessWidget {
+  const _TitleBar(this.session);
   final SessionSummary session;
-  final bool expanded;
-  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final visual = providerVisualFor(session.providerId);
     final muted = Theme.of(context).textTheme.bodySmall;
-    return Material(
-      color: scheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Always-visible compact row.
-          InkWell(
-            onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
-              child: Row(
+    return Row(
+      children: [
+        BrandAvatar(providerId: session.providerId, size: 28),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                session.displayName,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 1),
+              Row(
                 children: [
-                  Text(
-                    providerVisualFor(session.providerId).label,
-                    style: muted?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(width: 8),
-                  _StateBadge(state: session.state),
-                  const Spacer(),
-                  Icon(
-                    expanded ? Icons.expand_less : Icons.expand_more,
-                    color: scheme.onSurface.withValues(alpha: 0.6),
-                    size: 20,
+                  _StateDot(state: session.state),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      '${visual.label} · ${session.state.wire}',
+                      overflow: TextOverflow.ellipsis,
+                      style: muted,
+                    ),
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            alignment: Alignment.topCenter,
-            child: expanded
-                ? _ExpandedDetail(session: session)
-                : const SizedBox(width: double.infinity),
-          ),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: Theme.of(context).dividerColor,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _ExpandedDetail extends StatelessWidget {
-  const _ExpandedDetail({required this.session});
-  final SessionSummary session;
-
-  @override
-  Widget build(BuildContext context) {
-    final muted = Theme.of(context).textTheme.bodySmall;
-    final started =
-        DateFormat.yMMMd().add_Hm().format(session.startedAt.toLocal());
-    final ended = session.endedAt != null
-        ? DateFormat.yMMMd().add_Hm().format(session.endedAt!.toLocal())
-        : null;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SelectableText(session.cwd, style: muted),
-          const SizedBox(height: 2),
-          Text(
-            ended == null
-                ? t.sessions.detail.started(when: started)
-                : t.sessions.detail.startedEnded(
-                    started: started,
-                    ended: ended,
-                  ),
-            style: muted,
-          ),
-          const SizedBox(height: 2),
-          SelectableText(
-            t.sessions.detail.idPrefix(id: session.id),
-            style: muted,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StateBadge extends StatelessWidget {
-  const _StateBadge({required this.state});
+class _StateDot extends StatelessWidget {
+  const _StateDot({required this.state});
   final SessionState state;
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg) = switch (state) {
-      SessionState.running => (Colors.green.shade900, Colors.greenAccent),
-      SessionState.idle => (Colors.amber.shade900, Colors.amberAccent),
-      SessionState.pending => (Colors.grey.shade800, Colors.grey.shade300),
-      SessionState.stopped ||
-      SessionState.ended =>
-        (Colors.grey.shade800, Colors.grey.shade400),
-      SessionState.unknown => (Colors.grey.shade800, Colors.grey.shade400),
+    final color = switch (state) {
+      SessionState.running => Colors.greenAccent,
+      SessionState.idle => Colors.amberAccent,
+      _ => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg.withValues(alpha: 0.45),
-        border: Border.all(color: fg.withValues(alpha: 0.4)),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        state.wire,
-        style: TextStyle(
-          color: fg,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-        ),
-      ),
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
