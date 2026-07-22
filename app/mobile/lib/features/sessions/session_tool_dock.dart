@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
-import 'package:opendray/features/project/project_screen.dart';
 import 'package:opendray/features/sessions/session_tool_sheets.dart';
 import 'package:opendray/features/sessions/session_tools_sheet.dart';
 
 // Persistent tool dock shown directly under the live terminal on the
 // session detail screen. It promotes the four highest-traffic project
-// tools to a single tap — Files / Git / Tasks / Project memory — and
-// tucks the rest behind "More" (SessionToolsSheet). This replaces the
-// old flow where every one of those destinations was buried in the
+// tools to a single tap — Files / Git / Database / Vault — and tucks
+// the rest behind "More" (SessionToolsSheet). This replaces the old
+// flow where every one of those destinations was buried in the
 // AppBar's "⋮" overflow menu, two taps and a text list away.
 //
-// Files / Git / Tasks open as bottom sheets that float over the
-// terminal (see openSessionToolSheet); Project memory pushes its own
-// full workspace; More lifts the complete grid of tools.
+// Each of the four opens as a bottom sheet that floats over the
+// terminal (see openSessionToolSheet), so the terminal is never
+// unmounted; More lifts the complete grid of tools.
 class SessionToolDock extends StatelessWidget {
   const SessionToolDock({required this.session, super.key});
 
@@ -50,19 +49,16 @@ class SessionToolDock extends StatelessWidget {
                     openSessionToolSheet(context, session, SessionTool.git),
               ),
               _DockItem(
-                icon: sessionToolIcon(SessionTool.tasks),
-                label: sessionToolLabel(SessionTool.tasks),
-                onTap: () =>
-                    openSessionToolSheet(context, session, SessionTool.tasks),
+                icon: sessionToolIcon(SessionTool.database),
+                label: sessionToolLabel(SessionTool.database),
+                onTap: () => openSessionToolSheet(
+                    context, session, SessionTool.database),
               ),
               _DockItem(
-                icon: Icons.flag_outlined,
-                label: t.sessions.detail.projectMemory,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ProjectScreen(initialCwd: session.cwd),
-                  ),
-                ),
+                icon: sessionToolIcon(SessionTool.vault),
+                label: sessionToolLabel(SessionTool.vault),
+                onTap: () =>
+                    openSessionToolSheet(context, session, SessionTool.vault),
               ),
               _DockItem(
                 icon: Icons.grid_view_outlined,
