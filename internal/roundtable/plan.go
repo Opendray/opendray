@@ -56,7 +56,7 @@ func (s *Service) runDraftPlan(id string, drafter Seat) {
 		s.memberFailed(ctx, id, drafter, err)
 		return
 	}
-	resp, err := s.invokeSeat(ctx, drafter, planSystemPrompt(rt), transcript, summaryMaxTokens)
+	resp, err := s.invokeSeat(ctx, drafter, planSystemPrompt(rt), transcript, summaryMaxTokens, rt.Cwd)
 	if err != nil {
 		s.memberFailed(ctx, id, drafter, err)
 		return

@@ -35,13 +35,13 @@ func TestChatSystemPrompt_FramingAndPersona(t *testing.T) {
 	}
 
 	// Framing appears in every member's prompt.
-	claudePrompt := chatSystemPrompt(rt, rt.Seats[0])
+	claudePrompt := chatSystemPrompt(rt, rt.Seats[0], false)
 	if !strings.Contains(claudePrompt, "session tokens") {
 		t.Errorf("framing must be injected for all members; got:\n%s", claudePrompt)
 	}
 
 	// A seat's persona is injected as a directive lens for that seat.
-	codexPrompt := chatSystemPrompt(rt, rt.Seats[1])
+	codexPrompt := chatSystemPrompt(rt, rt.Seats[1], false)
 	if !strings.Contains(codexPrompt, "only hunt security holes") {
 		t.Errorf("persona must be injected for the seat; got:\n%s", codexPrompt)
 	}
@@ -51,8 +51,30 @@ func TestChatSystemPrompt_FramingAndPersona(t *testing.T) {
 	}
 
 	// No framing → no framing header.
-	noFraming := chatSystemPrompt(RoundTable{Seats: rt.Seats}, rt.Seats[0])
+	noFraming := chatSystemPrompt(RoundTable{Seats: rt.Seats}, rt.Seats[0], false)
 	if strings.Contains(noFraming, "DISCUSSION FRAMING") {
 		t.Errorf("empty framing must not emit a framing header")
+	}
+}
+
+// The tool-use instruction flips with hasMemoryTools: off tells members not to
+// use tools; on tells them they have read-only opendray-memory to ground claims.
+func TestChatSystemPrompt_MemoryToolsInstruction(t *testing.T) {
+	rt := RoundTable{Topic: "kb", Seats: []Seat{{Provider: "claude"}}}
+
+	off := chatSystemPrompt(rt, rt.Seats[0], false)
+	if !strings.Contains(off, "Do NOT use tools") {
+		t.Errorf("tool-less member must be told not to use tools; got:\n%s", off)
+	}
+	if strings.Contains(off, "memory_search") {
+		t.Errorf("tool-less member prompt must not advertise memory tools")
+	}
+
+	on := chatSystemPrompt(rt, rt.Seats[0], true)
+	if !strings.Contains(on, "memory_search") || !strings.Contains(on, "read-only") {
+		t.Errorf("tool-enabled member must be told about the read-only memory tools; got:\n%s", on)
+	}
+	if strings.Contains(on, "Do NOT use tools") {
+		t.Errorf("tool-enabled member must not carry the no-tools instruction")
 	}
 }

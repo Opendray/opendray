@@ -105,6 +105,13 @@ type memMCPConfig struct {
 	// "KB Librarian" session by the session adapter; every other session's
 	// memory MCP omits it, so no ordinary session can rewrite the KB.
 	kbAdmin bool
+	// readOnly exposes ONLY the read/search tools and refuses every write
+	// tool (memory_store, *_set, session_log_append, decision_record,
+	// skill_distill). Set (OPENDRAY_MEMORY_READONLY=1) for headless callers
+	// that must observe but never mutate the store — e.g. Round Table
+	// discussion members, which run with permissions fully open and so rely
+	// on the server itself, not the CLI, to enforce the boundary.
+	readOnly bool
 }
 
 func loadMemMCPConfig() (memMCPConfig, error) {
@@ -114,6 +121,7 @@ func loadMemMCPConfig() (memMCPConfig, error) {
 		scope:    os.Getenv("OPENDRAY_MEMORY_SCOPE"),
 		scopeKey: os.Getenv("OPENDRAY_MEMORY_SCOPE_KEY"),
 		kbAdmin:  os.Getenv("OPENDRAY_KB_ADMIN") == "1",
+		readOnly: os.Getenv("OPENDRAY_MEMORY_READONLY") == "1",
 	}
 	if c.baseURL == "" {
 		return c, errors.New("mcp-memory: OPENDRAY_BASE_URL is required")
@@ -201,9 +209,20 @@ func (s *memMCPServer) handle(raw []byte) {
 		s.respond(req.ID, map[string]any{})
 	case "tools/list":
 		tools := toolDefs
-		// The KB Librarian session (OPENDRAY_KB_ADMIN=1) additionally sees
-		// the global-KB write tools; no other session does.
-		if s.cfg.kbAdmin {
+		// Read-only sessions never see any write tool (nor the KB admin
+		// write surface, which read-only implies is off).
+		if s.cfg.readOnly {
+			filtered := make([]map[string]any, 0, len(toolDefs))
+			for _, t := range toolDefs {
+				if name, _ := t["name"].(string); writeToolNames[name] {
+					continue
+				}
+				filtered = append(filtered, t)
+			}
+			tools = filtered
+		} else if s.cfg.kbAdmin {
+			// The KB Librarian session (OPENDRAY_KB_ADMIN=1) additionally sees
+			// the global-KB write tools; no other session does.
 			tools = append(append([]map[string]any{}, toolDefs...), kbAdminToolDefs...)
 		}
 		s.respond(req.ID, map[string]any{"tools": tools})
@@ -278,6 +297,21 @@ CRITICAL HABITS:
    doc_read(slug, section=…) the matching section. Do NOT infer
    our system's design or rules from memory; the kb_* pages are the
    source of truth and they update.`
+
+// writeToolNames is the set of tools that mutate the store (facts, project
+// docs, journal, distilled skills). Read-only sessions omit them from
+// tools/list and refuse them by name in dispatchTool. The KB admin write
+// tools are gated separately (kbAdmin) and are never listed for a read-only
+// session anyway. Keep this in sync with the write cases in dispatchTool.
+var writeToolNames = map[string]bool{
+	"memory_store":          true,
+	"project_goal_set":      true,
+	"project_plan_set":      true,
+	"current_objective_set": true,
+	"session_log_append":    true,
+	"decision_record":       true,
+	"skill_distill":         true,
+}
 
 // toolDefs is the static list returned for tools/list.
 var toolDefs = []map[string]any{
@@ -730,6 +764,12 @@ func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result a
 		// argv callers may omit arguments for no-arg tools; the per-tool
 		// handlers unmarshal into a struct, which rejects empty input.
 		args = json.RawMessage("{}")
+	}
+	// Read-only sessions refuse every write tool by name, even though such
+	// tools aren't listed for them — a client can still call by name, and a
+	// read-only member runs with CLI permissions fully open.
+	if s.cfg.readOnly && writeToolNames[name] {
+		return nil, errors.New("this session is read-only; " + name + " is not permitted"), true
 	}
 	switch name {
 	case "memory_search":

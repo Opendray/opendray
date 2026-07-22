@@ -114,13 +114,35 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 		return Response{}, err
 	}
 
+	// Optional MCP attach: render the provider's MCP config, apply the
+	// returned args + env, and add the per-provider flags that let the CLI
+	// execute the tools headless. runCwd is where the CLI runs — the scratch
+	// dir for every provider except antigravity, which derives the memory
+	// scope from its own cwd and so must run in the project dir.
+	runCwd := scratch
+	if req.MCP != nil && req.MCP.Provision != nil {
+		home := w.effectiveHome(runCtx)
+		if w.cfg.ProviderID == "antigravity" && strings.TrimSpace(req.MCP.Cwd) != "" {
+			runCwd = req.MCP.Cwd
+		}
+		mcpArgs, mcpEnv, perr := req.MCP.Provision(w.cfg.ProviderID, scratch, runCwd, req.MCP.Cwd, home)
+		if perr != nil {
+			return Response{}, fmt.Errorf("agent worker: provision mcp: %w", perr)
+		}
+		args = append(args, mcpArgs...)
+		for k, v := range mcpEnv {
+			env = append(env, k+"="+v)
+		}
+		args = append(args, mcpToolApprovalArgs(w.cfg.ProviderID)...)
+	}
+
 	binary := agentBinary(w.cfg.ProviderID)
 	if p, err := exec.LookPath(binary); err == nil {
 		binary = p
 	}
 
 	cmd := exec.CommandContext(runCtx, binary, args...)
-	cmd.Dir = scratch
+	cmd.Dir = runCwd
 	cmd.Env = append(os.Environ(), env...)
 
 	var stdout, stderr bytes.Buffer
@@ -204,6 +226,51 @@ func (w *AgentWorker) Run(ctx context.Context, req Request) (Response, error) {
 		// reliably. The metrics table records 0; cost UI will
 		// estimate from byte counts as a stopgap.
 	}, nil
+}
+
+// effectiveHome resolves the HOME the MCP renderer should target. For an
+// account-bound antigravity spawn that's the account's dedicated HOME (agy
+// keys its whole state — and its mcp_config.json — off HOME); everything
+// else uses the gateway user's real HOME. Mirrors buildCommand's agy account
+// resolution so the mcp_config.json lands where the CLI will read it.
+func (w *AgentWorker) effectiveHome(ctx context.Context) string {
+	if w.cfg.ProviderID == "antigravity" && w.cfg.AccountID != "" && w.agyAccounts != nil {
+		hctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		if home, err := w.agyAccounts.ResolveSpawnHome(hctx, w.cfg.AccountID); err == nil && home != "" {
+			return home
+		}
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return home
+	}
+	return ""
+}
+
+// mcpToolApprovalArgs returns the extra CLI flags a headless spawn needs to
+// actually EXECUTE MCP tools (not merely have them configured). Each CLI
+// gates tool use differently in non-interactive mode:
+//
+//   - claude allow-lists the memory server's tools so --print runs them with
+//     no prompt while every other tool (file writes, bash) stays unlisted and
+//     is auto-denied — this is both the tool gate and the file-safety boundary.
+//   - grok / opencode auto-DENY tool approvals in headless mode unless told to
+//     approve; the read-only memory server is the only tool source and the CLI
+//     runs in a throwaway scratch dir, so blanket approval is safe here.
+//   - antigravity already carries --dangerously-skip-permissions from
+//     buildCommand; codex exec auto-runs configured MCP tools while its
+//     read-only sandbox still blocks its own file/shell writes.
+func mcpToolApprovalArgs(providerID string) []string {
+	switch providerID {
+	case "claude":
+		return []string{"--allowedTools", "mcp__opendray-memory"}
+	case "grok":
+		return []string{"--always-approve"}
+	case "opencode":
+		return []string{"--dangerously-skip-permissions"}
+	default:
+		return nil
+	}
 }
 
 func (w *AgentWorker) buildCommand(req Request, sessionID, scratch string) ([]string, []string, error) {

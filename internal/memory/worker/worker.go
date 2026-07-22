@@ -120,7 +120,36 @@ type Request struct {
 	// schema instructions to the system prompt instead (since
 	// agent CLIs don't natively support response_format).
 	ResponseFormatJSONSchema string
+
+	// MCP, when non-nil, attaches MCP tool servers to this headless call.
+	// The AgentWorker runs MCP.Provision after creating its scratch dir to
+	// render the provider-specific config, applies the returned args + env,
+	// and adds the per-provider flags that let the CLI execute the tools in
+	// headless mode. Nil (the default) keeps the deliberately tool-less
+	// one-shot behaviour every memory-touchpoint worker relies on.
+	MCP *MCPAttach
 }
+
+// MCPAttach carries the per-call MCP intent for an AgentWorker run. It holds
+// a caller-supplied closure rather than a concrete server list so the worker
+// package stays decoupled from the catalog rendering machinery (which owns
+// every provider's config-file format).
+type MCPAttach struct {
+	// Cwd is the memory scope key — the project whose facts / journal the
+	// agent should observe. It is also the working directory the CLI runs in
+	// for providers that derive scope from the subprocess cwd (antigravity);
+	// other providers run in the scratch dir and get the scope via env.
+	Cwd string
+	// Provision renders the MCP config for providerID into baseDir and
+	// returns the extra CLI args + env. It is catalog.AttachMemoryMCP bound
+	// to the memory config + read-only flag. runCwd is where the CLI will
+	// run; scopeKey is the memory scope; home is the effective HOME.
+	Provision MCPProvisionFunc
+}
+
+// MCPProvisionFunc renders a provider's MCP config and returns the extra CLI
+// args + env needed to load it. See catalog.AttachMemoryMCP.
+type MCPProvisionFunc func(providerID, baseDir, runCwd, scopeKey, home string) (args []string, env map[string]string, err error)
 
 // Response is what every Worker returns on success. Latency +
 // token counts are best-effort: AgentWorker can't always get
