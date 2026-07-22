@@ -65,147 +65,152 @@ class MoreScreen extends ConsumerWidget {
       body: ListView(
         children: [
           _IdentityCard(auth: auth),
-          const SizedBox(height: 8),
           // Round Table + Integrations are top-level bottom-nav tabs now;
           // Activity (per-call integration audit) lives here in the gateway
           // section alongside the lower-frequency destinations.
           _SectionHeader(label: t.more.sections.gateway),
-          _MenuTile(
-            icon: Icons.timeline_outlined,
-            title: t.more.items.activity.title,
-            subtitle: t.more.items.activity.subtitle,
-            onTap: () => _push(context, const ActivityScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.notifications_outlined,
-            title: t.more.items.channels.title,
-            subtitle: t.more.items.channels.subtitle,
-            onTap: () => _push(context, const ChannelsScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.psychology_outlined,
-            title: t.more.items.providers.title,
-            subtitle: t.more.items.providers.subtitle,
-            onTap: () => _push(context, const ProvidersScreen()),
-          ),
-          const SizedBox(height: 8),
+          _MenuGroup(children: [
+            _MenuTile(
+              icon: Icons.timeline_outlined,
+              title: t.more.items.activity.title,
+              subtitle: t.more.items.activity.subtitle,
+              onTap: () => _push(context, const ActivityScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.notifications_outlined,
+              title: t.more.items.channels.title,
+              subtitle: t.more.items.channels.subtitle,
+              onTap: () => _push(context, const ChannelsScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.psychology_outlined,
+              title: t.more.items.providers.title,
+              subtitle: t.more.items.providers.subtitle,
+              onTap: () => _push(context, const ProvidersScreen()),
+            ),
+          ]),
           _SectionHeader(label: t.more.sections.plugins),
-          _MenuTile(
-            icon: Icons.extension_outlined,
-            title: t.more.items.mcp.title,
-            subtitle: t.more.items.mcp.subtitle,
-            onTap: () => _push(context, const McpScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.auto_awesome_outlined,
-            title: t.more.items.skills.title,
-            subtitle: t.more.items.skills.subtitle,
-            onTap: () => _push(context, const SkillsScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.account_tree_outlined,
-            title: t.more.items.gitHosts.title,
-            subtitle: t.more.items.gitHosts.subtitle,
-            onTap: () => _push(context, const GitHostsScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.terminal_outlined,
-            title: t.more.items.customTasks.title,
-            subtitle: t.more.items.customTasks.subtitle,
-            onTap: () => _push(context, const CustomTasksScreen()),
-          ),
-          const SizedBox(height: 8),
+          _MenuGroup(children: [
+            _MenuTile(
+              icon: Icons.extension_outlined,
+              title: t.more.items.mcp.title,
+              subtitle: t.more.items.mcp.subtitle,
+              onTap: () => _push(context, const McpScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.auto_awesome_outlined,
+              title: t.more.items.skills.title,
+              subtitle: t.more.items.skills.subtitle,
+              onTap: () => _push(context, const SkillsScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.account_tree_outlined,
+              title: t.more.items.gitHosts.title,
+              subtitle: t.more.items.gitHosts.subtitle,
+              onTap: () => _push(context, const GitHostsScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.terminal_outlined,
+              title: t.more.items.customTasks.title,
+              subtitle: t.more.items.customTasks.subtitle,
+              onTap: () => _push(context, const CustomTasksScreen()),
+            ),
+          ]),
           // Cortex hub is the bottom-nav "Cortex" tab and its ⚙ opens the
           // unified Cortex settings (workers + capture/injection +
           // providers) — so capture/injection no longer needs its own More
           // entry. This section keeps the deeper, lower-frequency tools.
           _SectionHeader(label: t.more.sections.memory),
-          _MenuTile(
-            icon: Icons.flag_outlined,
-            title: t.more.items.projectMemory.title,
-            subtitle: t.more.items.projectMemory.subtitle,
-            onTap: () => _push(context, const ProjectScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.inventory_2_outlined,
-            title: t.more.items.archived.title,
-            subtitle: t.more.items.archived.subtitle,
-            onTap: () => _push(context, const ArchivedMemoriesScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.shield_outlined,
-            title: t.more.items.quarantine.title,
-            subtitle: t.more.items.quarantine.subtitle,
-            onTap: () => _push(context, const QuarantineScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.folder_outlined,
-            title: t.more.items.vault.title,
-            subtitle: t.more.items.vault.subtitle,
-            onTap: () => _push(context, const NotesVaultScreen()),
-          ),
-          const SizedBox(height: 8),
+          _MenuGroup(children: [
+            _MenuTile(
+              icon: Icons.flag_outlined,
+              title: t.more.items.projectMemory.title,
+              subtitle: t.more.items.projectMemory.subtitle,
+              onTap: () => _push(context, const ProjectScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.inventory_2_outlined,
+              title: t.more.items.archived.title,
+              subtitle: t.more.items.archived.subtitle,
+              onTap: () => _push(context, const ArchivedMemoriesScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.shield_outlined,
+              title: t.more.items.quarantine.title,
+              subtitle: t.more.items.quarantine.subtitle,
+              onTap: () => _push(context, const QuarantineScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.folder_outlined,
+              title: t.more.items.vault.title,
+              subtitle: t.more.items.vault.subtitle,
+              onTap: () => _push(context, const NotesVaultScreen()),
+            ),
+          ]),
           _SectionHeader(label: t.more.sections.system),
-          _MenuTile(
-            icon: Icons.backup_outlined,
-            title: t.more.items.backups.title,
-            subtitle: t.more.items.backups.subtitle,
-            onTap: () => _push(context, const BackupsScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.import_export_outlined,
-            title: t.more.items.dataExport.title,
-            subtitle: t.more.items.dataExport.subtitle,
-            onTap: () => _push(context, const DataExportScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.tune_outlined,
-            title: t.more.items.settings.title,
-            subtitle: t.more.items.settings.subtitle,
-            badge: updateAvailable,
-            onTap: () => _push(context, const SettingsScreen()),
-          ),
-          _MenuTile(
-            icon: Icons.info_outline,
-            title: t.more.items.about.title,
-            subtitle: t.more.items.about.subtitle,
-            onTap: () => _push(context, const AboutScreen()),
-          ),
-          const SizedBox(height: 8),
+          _MenuGroup(children: [
+            _MenuTile(
+              icon: Icons.backup_outlined,
+              title: t.more.items.backups.title,
+              subtitle: t.more.items.backups.subtitle,
+              onTap: () => _push(context, const BackupsScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.import_export_outlined,
+              title: t.more.items.dataExport.title,
+              subtitle: t.more.items.dataExport.subtitle,
+              onTap: () => _push(context, const DataExportScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.tune_outlined,
+              title: t.more.items.settings.title,
+              subtitle: t.more.items.settings.subtitle,
+              badge: updateAvailable,
+              onTap: () => _push(context, const SettingsScreen()),
+            ),
+            _MenuTile(
+              icon: Icons.info_outline,
+              title: t.more.items.about.title,
+              subtitle: t.more.items.about.subtitle,
+              onTap: () => _push(context, const AboutScreen()),
+            ),
+          ]),
           _SectionHeader(label: t.nav.resources),
-          _MenuTile(
-            icon: Icons.auto_awesome_outlined,
-            title: t.nav.updates.title,
-            badge: showUpdatesBadge,
-            // Accent-primary when only release notes are unread; the
-            // system error red is reserved for a waiting binary update
-            // (matches web's accent-vs-primary dot).
-            badgeColor: updateAvailable
-                ? Theme.of(context).colorScheme.error
-                : Theme.of(context).colorScheme.primary,
-            trailingText: (notesUnread && highlightCount > 0)
-                ? '· $highlightCount'
-                : null,
-            onTap: () => showUpdatesSheet(context),
-          ),
-          _MenuTile(
-            icon: Icons.menu_book_outlined,
-            title: t.nav.docs,
-            external: true,
-            onTap: () => _openUrl(_docsUrl),
-          ),
-          _MenuTile(
-            icon: Icons.forum_outlined,
-            title: t.nav.community,
-            external: true,
-            onTap: () => _openUrl(_communityUrl),
-          ),
-          _MenuTile(
-            icon: Icons.favorite_outline,
-            title: t.nav.sponsor,
-            external: true,
-            onTap: () => _openUrl(_sponsorUrl),
-          ),
+          _MenuGroup(children: [
+            _MenuTile(
+              icon: Icons.auto_awesome_outlined,
+              title: t.nav.updates.title,
+              badge: showUpdatesBadge,
+              // Accent-primary when only release notes are unread; the
+              // system error red is reserved for a waiting binary update
+              // (matches web's accent-vs-primary dot).
+              badgeColor: updateAvailable
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.primary,
+              trailingText: (notesUnread && highlightCount > 0)
+                  ? '· $highlightCount'
+                  : null,
+              onTap: () => showUpdatesSheet(context),
+            ),
+            _MenuTile(
+              icon: Icons.menu_book_outlined,
+              title: t.nav.docs,
+              external: true,
+              onTap: () => _openUrl(_docsUrl),
+            ),
+            _MenuTile(
+              icon: Icons.forum_outlined,
+              title: t.nav.community,
+              external: true,
+              onTap: () => _openUrl(_communityUrl),
+            ),
+            _MenuTile(
+              icon: Icons.favorite_outline,
+              title: t.nav.sponsor,
+              external: true,
+              onTap: () => _openUrl(_sponsorUrl),
+            ),
+          ]),
           const Divider(height: 32),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -248,9 +253,23 @@ class _IdentityCard extends StatelessWidget {
   const _IdentityCard({required this.auth});
   final AuthLoggedIn auth;
 
+  // First one or two letters of the username, for the avatar monogram.
+  String get _initials {
+    final name = auth.username.trim();
+    if (name.isEmpty) return '?';
+    final parts = name.split(RegExp(r'[\s._-]+')).where((p) => p.isNotEmpty);
+    if (parts.length >= 2) {
+      return (parts.first[0] + parts.elementAt(1)[0]).toUpperCase();
+    }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).textTheme.bodySmall;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final muted = theme.textTheme.bodySmall
+        ?.copyWith(color: scheme.onSurface.withValues(alpha: 0.6));
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       child: Card(
@@ -259,27 +278,100 @@ class _IdentityCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(t.more.identity.signedInAs, style: muted),
-              Text(
-                auth.username,
-                style: Theme.of(context).textTheme.titleMedium,
+              // Profile row: monogram avatar + "signed in as" / username.
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      _initials,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.more.identity.signedInAs, style: muted),
+                        Text(
+                          auth.username,
+                          style: theme.textTheme.titleMedium,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 14),
+              Divider(height: 1, color: theme.dividerColor),
               const SizedBox(height: 12),
-              Text(t.more.identity.server, style: muted),
-              Text(
-                auth.serverUrl,
-                style: Theme.of(context).textTheme.bodyMedium,
+              // Secondary detail rows: server + token expiry.
+              _DetailRow(
+                icon: Icons.dns_outlined,
+                label: t.more.identity.server,
+                value: auth.serverUrl,
               ),
-              const SizedBox(height: 12),
-              Text(t.more.identity.tokenExpires, style: muted),
-              Text(
-                DateFormat.yMMMd().add_jm().format(auth.expiresAt.toLocal()),
-                style: Theme.of(context).textTheme.bodyMedium,
+              const SizedBox(height: 10),
+              _DetailRow(
+                icon: Icons.schedule_outlined,
+                label: t.more.identity.tokenExpires,
+                value:
+                    DateFormat.yMMMd().add_jm().format(auth.expiresAt.toLocal()),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+// One muted label + value line in the identity card, prefixed by a small
+// glyph so server / token expiry read as distinct at a glance.
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: muted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
+              Text(value, style: theme.textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -291,13 +383,47 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 16, 6),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
       child: Text(
         label.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           letterSpacing: 0.8,
+          fontWeight: FontWeight.w600,
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
         ),
+      ),
+    );
+  }
+}
+
+// Wraps a section's tiles in one inset, bordered, rounded card with thin
+// dividers between rows — the standard grouped-settings look. Uses the
+// app-wide CardTheme (elevation 0, border, radius 12) so it matches the
+// identity card and every other card surface.
+class _MenuGroup extends StatelessWidget {
+  const _MenuGroup({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    // Divider indented past the leading icon so it starts under the text,
+    // the way iOS/Material grouped lists separate rows.
+    final divider = Divider(
+      height: 1,
+      thickness: 1,
+      indent: 56,
+      color: Theme.of(context).dividerColor,
+    );
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      if (i > 0) rows.add(divider);
+      rows.add(children[i]);
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: Column(mainAxisSize: MainAxisSize.min, children: rows),
       ),
     );
   }
