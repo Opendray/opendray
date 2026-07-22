@@ -293,12 +293,6 @@ class TranslationsMoreEn {
 	/// en: 'More'
 	String get title => 'More';
 
-	/// en: 'Search settings'
-	String get searchHint => 'Search settings';
-
-	/// en: 'No settings match “{query}”'
-	String noResults({required Object query}) => 'No settings match “${query}”';
-
 	late final TranslationsMoreIdentityEn identity = TranslationsMoreIdentityEn.internal(_root);
 	late final TranslationsMoreSectionsEn sections = TranslationsMoreSectionsEn.internal(_root);
 	late final TranslationsMoreItemsEn items = TranslationsMoreItemsEn.internal(_root);
@@ -20411,8 +20405,6 @@ extension on Translations {
 			'web.roundTable.plan.bypass' => 'Skip permissions (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Start the session with its bypass flag so it does not prompt for approvals.',
 			'more.title' => 'More',
-			'more.searchHint' => 'Search settings',
-			'more.noResults' => ({required Object query}) => 'No settings match “${query}”',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
 			'more.identity.tokenExpires' => 'Token expires',
@@ -20911,10 +20903,10 @@ extension on Translations {
 			'integrations.tooltipReadOnly' => 'System integration — read-only',
 			'integrations.kvRoutePrefix' => 'Route prefix',
 			'integrations.kvBaseUrl' => 'Base URL',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvScopes' => 'Scopes',
 			'integrations.kvVersion' => 'Version',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Last health ping',
 			'integrations.kvCreated' => 'Created',
 			'integrations.kvKeyRotated' => 'Key rotated',
@@ -21425,10 +21417,10 @@ extension on Translations {
 			'channels.popup.enable' => 'Enable',
 			'channels.popup.disable' => 'Disable',
 			'channels.popup.mute' => 'Mute',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => 'running',
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
@@ -21939,10 +21931,10 @@ extension on Translations {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} active',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Active projects',
 			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
 			'cortexHub.settings' => 'Settings',

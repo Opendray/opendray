@@ -3266,8 +3266,6 @@
   },
   "more": {
     "title": "More",
-    "searchHint": "Search settings",
-    "noResults": "No settings match “{query}”",
     "identity": {
       "signedInAs": "Signed in as",
       "server": "Server",

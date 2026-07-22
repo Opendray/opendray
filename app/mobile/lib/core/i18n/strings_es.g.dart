@@ -193,8 +193,6 @@ class _TranslationsMoreEs extends TranslationsMoreEn {
 
 	// Translations
 	@override String get title => 'Más';
-	@override String get searchHint => 'Buscar ajustes';
-	@override String noResults({required Object query}) => 'Ningún ajuste coincide con «${query}»';
 	@override late final _TranslationsMoreIdentityEs identity = _TranslationsMoreIdentityEs._(_root);
 	@override late final _TranslationsMoreSectionsEs sections = _TranslationsMoreSectionsEs._(_root);
 	@override late final _TranslationsMoreItemsEs items = _TranslationsMoreItemsEs._(_root);
@@ -12031,8 +12029,6 @@ extension on TranslationsEs {
 			'web.roundTable.plan.bypass' => 'Omitir permisos (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Inicia la sesión con su indicador de bypass para no pedir aprobaciones.',
 			'more.title' => 'Más',
-			'more.searchHint' => 'Buscar ajustes',
-			'more.noResults' => ({required Object query}) => 'Ningún ajuste coincide con «${query}»',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
 			'more.identity.tokenExpires' => 'El token caduca',
@@ -12531,10 +12527,10 @@ extension on TranslationsEs {
 			'integrations.tooltipReadOnly' => 'Integración del sistema (solo lectura)',
 			'integrations.kvRoutePrefix' => 'Prefijo de ruta',
 			'integrations.kvBaseUrl' => 'URL base',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvScopes' => 'Ámbitos',
 			'integrations.kvVersion' => 'Versión',
+			_ => null,
+		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Último ping de estado',
 			'integrations.kvCreated' => 'Creada',
 			'integrations.kvKeyRotated' => 'Key rotada',
@@ -13045,10 +13041,10 @@ extension on TranslationsEs {
 			'channels.popup.enable' => 'Activar',
 			'channels.popup.disable' => 'Desactivar',
 			'channels.popup.mute' => 'Silenciar',
-			_ => null,
-		} ?? switch (path) {
 			'channels.popup.unmute' => 'Reactivar sonido',
 			'channels.popup.deleteLabel' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'channels.badges.running' => 'en ejecución',
 			'channels.badges.starting' => 'iniciando…',
 			'channels.badges.disabled' => 'desactivado',
@@ -13559,10 +13555,10 @@ extension on TranslationsEs {
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.idleBadge' => ({required Object days}) => 'inactivo ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} activos',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Proyectos activos',
 			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.',
 			'cortexHub.settings' => 'Ajustes',

@@ -3266,8 +3266,6 @@
   },
   "more": {
     "title": "Más",
-    "searchHint": "Buscar ajustes",
-    "noResults": "Ningún ajuste coincide con «{query}»",
     "identity": {
       "signedInAs": "Sesión iniciada como",
       "server": "Servidor",
