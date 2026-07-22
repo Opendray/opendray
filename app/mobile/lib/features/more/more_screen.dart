@@ -211,10 +211,10 @@ class MoreScreen extends ConsumerWidget {
               onTap: () => _openUrl(_sponsorUrl),
             ),
           ]),
-          const Divider(height: 32),
+          const SizedBox(height: 24),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            child: OutlinedButton(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
                 side: BorderSide(
@@ -226,9 +226,27 @@ class MoreScreen extends ConsumerWidget {
               ),
               onPressed: () =>
                   ref.read(authControllerProvider.notifier).logout(),
-              child: Text(t.more.signOut),
+              icon: const Icon(Icons.logout, size: 18),
+              label: Text(t.more.signOut),
             ),
           ),
+          // App version footer — a quiet, centred build stamp gives the
+          // page a finished bottom edge instead of trailing off.
+          if (version != null && version.current.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+              child: Center(
+                child: Text(
+                  'opendray ${version.current}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.4),
+                      ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -411,7 +429,7 @@ class _MenuGroup extends StatelessWidget {
     final divider = Divider(
       height: 1,
       thickness: 1,
-      indent: 56,
+      indent: 60,
       color: Theme.of(context).dividerColor,
     );
     final rows = <Widget>[];
@@ -458,14 +476,30 @@ class _MenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final subtitle = this.subtitle;
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: theme.colorScheme.primary),
-      title: Text(title),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      horizontalTitleGap: 12,
+      minLeadingWidth: 34,
+      leading: _IconChip(icon: icon),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+      ),
       subtitle: subtitle == null
           ? null
-          : Text(subtitle, style: theme.textTheme.bodySmall),
+          : Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.55),
+                  height: 1.25,
+                ),
+              ),
+            ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -475,7 +509,7 @@ class _MenuTile extends StatelessWidget {
               child: Text(
                 trailingText!,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: scheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -485,17 +519,41 @@ class _MenuTile extends StatelessWidget {
               height: 8,
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
-                color: badgeColor ?? theme.colorScheme.error,
+                color: badgeColor ?? scheme.error,
                 shape: BoxShape.circle,
               ),
             ),
-          Icon(external ? Icons.open_in_new : Icons.chevron_right,
-              size: external ? 18 : null,
-              color: external
-                  ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
-                  : null),
+          Icon(
+            external ? Icons.open_in_new : Icons.chevron_right,
+            size: external ? 16 : 20,
+            color: scheme.onSurface.withValues(alpha: external ? 0.4 : 0.3),
+          ),
         ],
       ),
+    );
+  }
+}
+
+// Rounded-square tinted chip behind each menu icon — the signature
+// "app-icon" affordance of a polished settings page. Kept on the single
+// gold accent (primary) so the page stays on-brand rather than turning
+// into a rainbow of per-row colours.
+class _IconChip extends StatelessWidget {
+  const _IconChip({required this.icon});
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 34,
+      height: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Icon(icon, size: 19, color: scheme.primary),
     );
   }
 }
