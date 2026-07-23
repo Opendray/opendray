@@ -10,6 +10,67 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.12.2] — 2026-07-23
+
+Round Table members gain live, grounded memory, the mobile session screen
+is rebuilt around a tool dock, and the operator takes ownership of the four
+global knowledge pages so their curation finally sticks.
+
+### Added
+
+- **Round Table members read the shared memory.** Every seated provider now
+  gets live, **read-only** access to the shared `opendray-memory` MCP, so
+  members ground their claims in the real store instead of guessing. A new
+  read-only mode (`OPENDRAY_MEMORY_READONLY=1`) exposes only the search / read
+  tools and refuses every write server-side — safe even with tool permissions
+  open — and the table prompt flips to "ground your claims via these tools".
+  A single per-provider attach point (`catalog.AttachMemoryMCP`) handles the
+  antigravity / codex quirks and is reusable for any spawn.
+- **Operator owns the form of the four global KB pages.** The shape of
+  `kb_infrastructure` / `kb_conventions` / `kb_lessons` / `kb_reusable` was
+  hardcoded in the drafter's prompts, so every consolidation sweep
+  re-manufactured the fixed fat skeleton and operator curation never stuck.
+  The drafter now honours each page's blueprint `maintainer_mode` (`human` →
+  the operator owns it outright, never drafted) and, for AI-maintained pages,
+  edits the operator's current structure **in place** — folding in only new,
+  on-topic evidence — instead of regenerating from a template. A per-page
+  `prompt_hint` lets the operator steer form and scope without a code change.
+  Set both via `PUT /blueprint/{slug}` (cwd `__global__`); a web/mobile toggle
+  is a follow-up. No migration — the four pages default to the previous
+  behaviour.
+- **Mobile: session tool dock.** The session detail screen is rebuilt so the
+  terminal owns the full height under a two-line AppBar title, and a new
+  **SessionToolDock** (Files · Git · Database · Vault · More) opens each tool
+  as a bottom sheet over the live terminal. The overflow ⋮ menu is slimmed to
+  session actions.
+
+### Changed
+
+- **Mobile: More / settings redesigned.** The flat menu is rebuilt as grouped
+  inset cards per section, with an account-block identity header (monogram
+  avatar), accent-tinted icon chips, refined typography and a version footer.
+  New `sessions.dock.more` / `sessions.tools.*` strings ship across en / zh /
+  es at 100% parity.
+
+### Fixed
+
+- **A human-locked global KB page could never converge from the UI.** Two bugs
+  are fixed: approving a divergence proposal silently dropped the lock (the
+  merge was written as `updated_by='agent'`, flipping `HumanLocked` off) — an
+  approval is an operator decision, so the result now stays operator-authored
+  and locked; and rejecting a proposal didn't stick — the drafter re-generated
+  and re-filed the identical refresh every consolidation cycle. The drafter now
+  skips a locked page whose feedstock signature matches an already-rejected
+  proposal, so a rejection holds instead of nagging forever.
+
+### Docs
+
+- The README surfaces the two marquee capabilities shipped since the last pass
+  — **Round Table** (cross-vendor AI group chat + role-assigned execution
+  plans) and the **Database tool** (Postgres / MySQL / MariaDB / SQLite,
+  per-project crypto isolation, web + mobile) — plus staged image attachments,
+  TUI theme-following / wheel-scroll, and one-click provider updates.
+
 ## [v2.12.1] — 2026-07-18
 
 Grok reaches parity with the other cloud agents, the Cortex knowledge base
