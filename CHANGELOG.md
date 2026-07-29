@@ -10,6 +10,19 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The mouse wheel (and touch swipe) now scrolls grok and opencode
+  sessions.** These TUIs enable mouse tracking — so xterm hands them the
+  wheel instead of scrolling its own viewport — but then ignore wheel events,
+  scrolling only on arrow keys. opendray's wheel→arrow fallback was gated
+  behind "app hasn't grabbed the mouse", so it never ran for them and the
+  wheel did nothing (verified live: grok sets `?1000/1002/1003/1006` at
+  startup yet does nothing on button-64/65). The web terminal now recognises
+  these wheel-ignoring providers and sends arrow keys for both wheel and
+  one-finger touch scroll, scoped by `providerId` so Claude/Codex/Antigravity
+  (which genuinely consume the wheel) are untouched.
+
 ## [v2.12.2] — 2026-07-23
 
 Round Table members gain live, grounded memory, the mobile session screen

@@ -22,6 +22,13 @@ import { AttachmentTray, type AttachmentItem } from './AttachmentTray'
 
 interface TerminalProps {
   sessionId: string
+  /**
+   * The session's provider (e.g. 'grok', 'opencode'). Used to work around
+   * TUIs that grab the mouse but ignore wheel events — they scroll only on
+   * arrow keys, so the wheel/touch handlers send arrows instead of an SGR
+   * wheel report for them.
+   */
+  providerId?: string
 }
 
 export interface TerminalHandle {
@@ -95,7 +102,7 @@ function buildTheme(applied: 'light' | 'dark') {
 }
 
 export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
-  { sessionId },
+  { sessionId, providerId },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -258,17 +265,30 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     let touchActive = false
     let lastTouchY = 0
     let touchAccum = 0
+    const sendKeys = (seq: string) => {
+      const enc = new TextEncoder().encode(seq)
+      ws.send(
+        enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer,
+      )
+    }
+    // grok / opencode enable mouse tracking (so xterm hands them the wheel
+    // instead of scrolling its own viewport) but their TUIs then IGNORE wheel
+    // events — they scroll only on arrow keys. For those providers, send an
+    // arrow instead of an SGR wheel report; every other provider keeps the
+    // native wheel path. Verified live: grok sets ?1000/1002/1003/1006 at
+    // startup yet does nothing on button-64/65.
+    const wheelIgnorer = providerId === 'grok' || providerId === 'opencode'
     const sendWheel = (up: boolean) => {
+      if (wheelIgnorer) {
+        sendKeys(up ? '\x1b[A' : '\x1b[B')
+        return
+      }
       // SGR mouse: button 64 = wheel up, 65 = wheel down; press ('M').
       // Report the pointer at screen centre so the app treats it as a
       // scroll over its content region.
       const col = Math.max(1, Math.floor(term.cols / 2))
       const row = Math.max(1, Math.floor(term.rows / 2))
-      const seq = `\x1b[<${up ? 64 : 65};${col};${row}M`
-      const enc = new TextEncoder().encode(seq)
-      ws.send(
-        enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer,
-      )
+      sendKeys(`\x1b[<${up ? 64 : 65};${col};${row}M`)
     }
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1 || term.modes.mouseTrackingMode === 'none') {
@@ -313,17 +333,15 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     const WHEEL_LINES = 3
     const onWheel = (e: WheelEvent) => {
       if (term.buffer.active.type !== 'alternate') return
-      if (term.modes.mouseTrackingMode !== 'none') return
+      // Normally only translate when the app has NOT grabbed the mouse (apps
+      // that grabbed it receive the wheel as SGR and scroll themselves). The
+      // wheelIgnorer providers grabbed it but drop the wheel, so translate for
+      // them too — they get a harmless duplicate SGR wheel from xterm plus the
+      // arrows below, which they honour.
+      if (term.modes.mouseTrackingMode !== 'none' && !wheelIgnorer) return
       if (e.deltaY === 0) return
       e.preventDefault()
-      const seq = (e.deltaY < 0 ? '\x1b[A' : '\x1b[B').repeat(WHEEL_LINES)
-      const enc = new TextEncoder().encode(seq)
-      ws.send(
-        enc.buffer.slice(
-          enc.byteOffset,
-          enc.byteOffset + enc.byteLength,
-        ) as ArrayBuffer,
-      )
+      sendKeys((e.deltaY < 0 ? '\x1b[A' : '\x1b[B').repeat(WHEEL_LINES))
     }
 
     touchHost?.addEventListener('touchstart', onTouchStart, { passive: true })
@@ -395,7 +413,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       fitRef.current = null
       wsRef.current = null
     }
-  }, [sessionId, token])
+  }, [sessionId, token, providerId])
 
   // Clipboard + drag-and-drop image attach. Browsers don't expose
   // clipboard images through xterm's default paste hook (which only
