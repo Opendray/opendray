@@ -331,6 +331,7 @@ export function SessionsPage() {
                   // pump goroutine, so we must reconnect from scratch.
                   key={`${currentId}:${currentSession?.pid ?? 0}`}
                   sessionId={currentId}
+                  providerId={currentSession?.provider_id}
                 />
               )}
             </div>
