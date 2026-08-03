@@ -36,7 +36,33 @@ const (
 func runStart(args []string) int   { return runServiceAction("start", args) }
 func runStop(args []string) int    { return runServiceAction("stop", args) }
 func runRestart(args []string) int { return runServiceAction("restart", args) }
-func runStatus(args []string) int  { return runServiceAction("status", args) }
+
+// runStatus renders a systemctl-style health summary by default; `--raw`
+// falls back to the native `launchctl print` / `systemctl status` dump.
+func runStatus(args []string) int {
+	fs := flag.NewFlagSet("status", flag.ExitOnError)
+	system := fs.Bool("system", false, "macOS only: target the system LaunchDaemon instead of the user LaunchAgent")
+	raw := fs.Bool("raw", false, "print the raw launchctl/systemctl output instead of the summary")
+	_ = fs.Parse(args)
+
+	if *raw {
+		return statusRaw(*system)
+	}
+	return renderStatusDashboard(*system)
+}
+
+// statusRaw shows the unfiltered platform-native service status.
+func statusRaw(system bool) int {
+	switch runtime.GOOS {
+	case "linux":
+		return linuxService("status")
+	case "darwin":
+		return macService("status", system)
+	default:
+		fmt.Fprintf(os.Stderr, "`opendray status` is not supported on %s.\n", runtime.GOOS)
+		return 1
+	}
+}
 
 func runServiceAction(action string, args []string) int {
 	fs := flag.NewFlagSet(action, flag.ExitOnError)
