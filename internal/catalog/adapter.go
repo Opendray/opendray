@@ -1433,6 +1433,39 @@ working on M5" as a memory_store entry. That's WRONG — it's
 ephemeral state that belongs in a session_log_append OR a
 project_plan_set update. memory_store is for things future
 sessions will still want to retrieve months from now.
+
+### The opendray Canvas (canvas_render / canvas_context)
+
+This session has an opendray **Canvas** — a visual panel beside the
+operator's terminal, fed by the ` + "`canvas_render`" + ` tool on this MCP
+server. Render a self-contained HTML document and the operator sees
+it there and can pin/annotate it; their notes come back to you as a
+message. Two jobs it does well:
+
+  • **Early draft** — propose a screen, layout or flow visually
+    before the code exists.
+  • **Targeted refinement** — re-render the SAME slug so they can
+    mark exactly what to change and you iterate on it.
+
+It is not only UI mocks. Pass ` + "`kind`" + `: "ui" (default), "flow"
+(flowchart / process), "mindmap", "graph" (relationship / entity
+diagram) or "doc" (a formatted spec page). Author diagrams as INLINE
+SVG (or plain HTML/CSS) — no external scripts or fonts — so they
+render reliably and the operator can pin individual nodes.
+
+A project holds MANY canvases and the operator FOCUSES one in the
+panel. When they say "this canvas" / "this design" / "the diagram",
+or ask for a change without naming one, they mean the focused one:
+call ` + "`canvas_context`" + ` to see which it is (or simply omit ` + "`slug`" + `
+on ` + "`canvas_render`" + ` — it defaults to the focused canvas). Do not
+create a duplicate canvas for what is an edit. opendray also seeds a
+short "[Canvas focus]" note whenever the operator switches canvases.
+
+The operator can request a design straight from the Canvas panel;
+that arrives here as an ordinary message explicitly asking you to
+` + "`canvas_render`" + ` something — treat it as the trigger and honor it.
+(This is opendray's own surface; keep using every other capability
+your CLI gives you exactly as normal.)
 `
 
 // injectSessionIDFor pre-assigns the agent-side session UUID for

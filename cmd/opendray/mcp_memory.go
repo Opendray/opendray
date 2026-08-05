@@ -266,6 +266,16 @@ each with a different rhythm and time-horizon — pick the right one:
                       doc_read(slug="kb_integrations", section="…") to read
                       just one heading-section of a large page (~1K) rather
                       than the whole guide.
+  canvas_render       SHOW, don't just describe. Render a self-contained HTML
+                      page to the operator's live Canvas so they SEE — and can
+                      pin/annotate — what you mean. Not only UI mocks: also
+                      flowcharts, mind maps and relationship diagrams (kind=),
+                      authored as inline SVG. Their annotations come back to
+                      you as a message.
+  canvas_context      Which canvas is the operator looking at? Lists the
+                      project's canvases and marks the FOCUSED one. Call it
+                      when they say "this canvas / this design / the diagram"
+                      without naming it.
 
 CRITICAL HABITS:
 
@@ -296,7 +306,24 @@ CRITICAL HABITS:
    scan the knowledge index for a relevant kb_* page and
    doc_read(slug, section=…) the matching section. Do NOT infer
    our system's design or rules from memory; the kb_* pages are the
-   source of truth and they update.`
+   source of truth and they update.
+
+6. The opendray Canvas is your visual channel. canvas_render draws a
+   self-contained HTML page onto the operator's Canvas panel, where
+   they pin/annotate it and their notes return to you. Two jobs it
+   does well: (a) an EARLY draft — propose a screen, a layout, a
+   flow before code exists; (b) TARGETED refinement — re-render the
+   same slug so they can mark exactly what to change. And it is not
+   only UI: pass kind='flow' | 'mindmap' | 'graph' | 'doc' to draw a
+   flowchart, mind map, relationship diagram or spec page (inline SVG,
+   no external assets). Use it when SEEING beats describing — not as a
+   reflex on every task, and never as a substitute for the real code.
+   A project holds MANY canvases; the operator focuses one in the
+   panel. If they refer to a canvas without naming it, call
+   canvas_context and edit THAT slug (or just omit slug — it defaults
+   to the focused canvas) instead of creating a duplicate. The
+   operator can also request a design straight from the panel; that
+   arrives as a message asking you to canvas_render — honor it.`
 
 // writeToolNames is the set of tools that mutate the store (facts, project
 // docs, journal, distilled skills). Read-only sessions omit them from
@@ -311,6 +338,7 @@ var writeToolNames = map[string]bool{
 	"session_log_append":    true,
 	"decision_record":       true,
 	"skill_distill":         true,
+	"canvas_render":         true,
 }
 
 // toolDefs is the static list returned for tools/list.
@@ -653,6 +681,80 @@ var toolDefs = []map[string]any{
 			"required": []string{"query"},
 		},
 	},
+	{
+		"name": "canvas_render",
+		"description": "Render an HTML preview onto the operator's live " +
+			"opendray Canvas panel (a sandboxed iframe beside this session's " +
+			"terminal) — opendray's own preview surface, which the operator " +
+			"views and annotates inside opendray. Reach for it when SEEING a " +
+			"design beats describing it: proposing a look, showing a screen for " +
+			"sign-off, or when the operator asks to see/design/preview a UI. It " +
+			"is a preview/mock, NOT a replacement for real app code — don't " +
+			"reflexively render on every UI task. Pass a self-contained HTML " +
+			"document — inline your CSS/JS and prefer data: URI assets so the " +
+			"preview renders reliably and can be stored and re-opened later. " +
+			"Design it properly: real content (never lorem), a clear type " +
+			"hierarchy, considered spacing and a chosen palette, support light " +
+			"AND dark (the preview follows the operator's theme), calibrated to " +
+			"the task (a utilitarian mock stays clean; a landing page earns " +
+			"editorial polish); avoid generic AI-design cliches. Ground it in " +
+			"THIS project's existing design system — read its theme tokens " +
+			"(tailwind/CSS variables, config, CLAUDE.md, existing components) " +
+			"and match them, so the mock looks like this product, not a generic " +
+			"page (precedence: the operator's words, then the project's system, " +
+			"then your own choices) — the operator can hold it against the real " +
+			"running app. Sketch a quick palette / type / layout plan, then " +
+			"build to it. Re-render the same slug " +
+			"to replace the canvas in place (a new version) and iterate. The " +
+			"operator can then pin/annotate elements and that feedback returns " +
+			"to you as a message.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"html": map[string]any{
+					"type":        "string",
+					"description": "A complete, self-contained HTML document to render.",
+				},
+				"title": map[string]any{
+					"type":        "string",
+					"description": "Short human label for this canvas (e.g. 'Login page v2').",
+				},
+				"slug": map[string]any{
+					"type": "string",
+					"description": "Optional stable id for THIS canvas within the project. " +
+						"Re-render the same slug to update it in place; use a NEW slug " +
+						"for a separate canvas. OMIT it to write to the canvas the " +
+						"operator currently has focused in the panel (that is almost " +
+						"always what they mean by 'this canvas').",
+				},
+				"kind": map[string]any{
+					"type": "string",
+					"enum": []string{"ui", "flow", "mindmap", "graph", "doc"},
+					"description": "What this canvas is: 'ui' (a screen/component mock, " +
+						"default), 'flow' (flowchart / process diagram), 'mindmap', " +
+						"'graph' (relationship / entity diagram) or 'doc' (a formatted " +
+						"spec page). Diagrams: author them as INLINE SVG (or plain " +
+						"HTML/CSS) — no external scripts, no CDN — so they render " +
+						"reliably, stay crisp at any zoom, and the operator can pin " +
+						"individual nodes. Omit on a re-render to keep the stored kind.",
+				},
+			},
+			"required": []string{"html"},
+		},
+	},
+	{
+		"name": "canvas_context",
+		"description": "List this project's canvases and see which one the operator " +
+			"currently has FOCUSED in the Canvas panel. Call it whenever they refer " +
+			"to a canvas without naming it — \"this canvas\", \"this design\", \"the " +
+			"diagram\", \"change the header\" — so you edit the one they are actually " +
+			"looking at instead of guessing or creating a duplicate. Cheap and " +
+			"read-only; prefer it over asking the operator which canvas they mean.",
+		"inputSchema": map[string]any{
+			"type":       "object",
+			"properties": map[string]any{},
+		},
+	},
 }
 
 // kbAdminToolDefs are the global-KB curation tools, listed ONLY for the KB
@@ -804,6 +906,10 @@ func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result a
 		result, err = s.callSkillDistill(args)
 	case "project_search":
 		result, err = s.callProjectSearch(args)
+	case "canvas_render":
+		result, err = s.callCanvasRender(args)
+	case "canvas_context":
+		result, err = s.callCanvasContext(args)
 	case "kb_list", "kb_page_upsert", "kb_page_write", "kb_page_delete":
 		// KB Librarian write surface — refuse unless this session was
 		// spawned as the KB admin (defence in depth: the tools aren't even
@@ -1227,6 +1333,113 @@ func (s *memMCPServer) callProjectDocSet(kind string, args json.RawMessage) (any
 	return map[string]any{
 		"content": []map[string]any{
 			{"type": "text", "text": text},
+		},
+	}, nil
+}
+
+// callCanvasRender pushes an HTML preview to the operator's live Canvas panel
+// for this project (scoped by cwd), replacing the same slug in place. The
+// gateway persists the artifact and broadcasts canvas.updated so the panel
+// refreshes without a poll.
+func (s *memMCPServer) callCanvasRender(args json.RawMessage) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("canvas_render requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	var in struct {
+		HTML  string `json:"html"`
+		Title string `json:"title"`
+		Slug  string `json:"slug"`
+		Kind  string `json:"kind"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+	if strings.TrimSpace(in.HTML) == "" {
+		return nil, errors.New("html is required")
+	}
+	body := map[string]any{
+		"cwd":   cwd,
+		"slug":  in.Slug,
+		"title": in.Title,
+		"kind":  in.Kind,
+		"html":  in.HTML,
+	}
+	var out struct {
+		ID      string `json:"id"`
+		Slug    string `json:"slug"`
+		Kind    string `json:"kind"`
+		Version int    `json:"version"`
+	}
+	if err := s.gatewayPostJSON("/api/v1/canvas", body, &out); err != nil {
+		return nil, err
+	}
+	text := fmt.Sprintf(
+		"Rendered to the operator's Canvas panel (slug %q, kind %q, version %d). They can see it next to this session and pin/annotate parts of it — that feedback comes back to you as a message.",
+		out.Slug, out.Kind, out.Version)
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": text},
+		},
+	}, nil
+}
+
+// callCanvasContext lists the project's canvases and says which one the
+// operator currently has focused, so "change this" in plain conversation
+// resolves to a specific canvas instead of a guess.
+func (s *memMCPServer) callCanvasContext(json.RawMessage) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("canvas_context requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	var list struct {
+		Artifacts []struct {
+			Slug    string `json:"slug"`
+			Title   string `json:"title"`
+			Kind    string `json:"kind"`
+			Version int    `json:"version"`
+		} `json:"artifacts"`
+	}
+	if err := s.gatewayGetJSON("/api/v1/canvas?cwd="+urlQuery(cwd), &list); err != nil {
+		return nil, err
+	}
+	var focus struct {
+		Slug  string `json:"slug"`
+		Title string `json:"title"`
+		Kind  string `json:"kind"`
+	}
+	if err := s.gatewayGetJSON("/api/v1/canvas/focus?cwd="+urlQuery(cwd), &focus); err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	if len(list.Artifacts) == 0 {
+		b.WriteString("This project has no canvases yet. Call canvas_render to create one.")
+	} else {
+		if focus.Slug != "" {
+			name := focus.Title
+			if name == "" {
+				name = focus.Slug
+			}
+			fmt.Fprintf(&b, "FOCUSED canvas (what the operator means by \"this canvas/design/diagram\"): %q — slug=%q, kind=%s. Update it in place with canvas_render slug=%q.\n\n", name, focus.Slug, focus.Kind, focus.Slug)
+		} else {
+			b.WriteString("No canvas is focused right now; ask the operator which one, or pick by name.\n\n")
+		}
+		b.WriteString("All canvases in this project:\n")
+		for _, a := range list.Artifacts {
+			name := a.Title
+			if name == "" {
+				name = a.Slug
+			}
+			marker := " "
+			if a.Slug == focus.Slug {
+				marker = "*"
+			}
+			fmt.Fprintf(&b, "%s %s — slug=%q, kind=%s, v%d\n", marker, name, a.Slug, a.Kind, a.Version)
+		}
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
 		},
 	}, nil
 }
