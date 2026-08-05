@@ -1997,6 +1997,7 @@ class _TranslationsSessionsInspectorEs extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitEs git = _TranslationsSessionsInspectorGitEs._(_root);
 	@override late final _TranslationsSessionsInspectorTasksEs tasks = _TranslationsSessionsInspectorTasksEs._(_root);
 	@override late final _TranslationsSessionsInspectorNotesEs notes = _TranslationsSessionsInspectorNotesEs._(_root);
+	@override late final _TranslationsSessionsInspectorCanvasEs canvas = _TranslationsSessionsInspectorCanvasEs._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -3354,6 +3355,7 @@ class _TranslationsWebSessionsInspectorEs extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorTabsEs tabs = _TranslationsWebSessionsInspectorTabsEs._(_root);
 	@override late final _TranslationsWebSessionsInspectorVaultPanelEs vaultPanel = _TranslationsWebSessionsInspectorVaultPanelEs._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelEs cortexPanel = _TranslationsWebSessionsInspectorCortexPanelEs._(_root);
+	@override late final _TranslationsWebSessionsInspectorCanvasEs canvas = _TranslationsWebSessionsInspectorCanvasEs._(_root);
 }
 
 // Path: web.sessions.ended
@@ -6744,6 +6746,37 @@ class _TranslationsSessionsInspectorNotesEs extends TranslationsSessionsInspecto
 	@override String get save => 'Guardar';
 }
 
+// Path: sessions.inspector.canvas
+class _TranslationsSessionsInspectorCanvasEs extends TranslationsSessionsInspectorCanvasEn {
+	_TranslationsSessionsInspectorCanvasEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get kindUi => 'Maqueta UI';
+	@override String get kindFlow => 'Diagrama de flujo';
+	@override String get kindMindmap => 'Mapa mental';
+	@override String get kindGraph => 'Relaciones';
+	@override String get kindDoc => 'Documento';
+	@override String get modeView => 'Ver';
+	@override String get modePin => 'Marcar';
+	@override String get modeRegion => 'Encuadrar';
+	@override String focusLine({required Object title, required Object kind}) => 'Trabajando en ${title} · ${kind}: el agente lo trata como «este lienzo».';
+	@override String get notePlaceholder => 'Qué cambiar aquí…';
+	@override String get messagePlaceholder => 'Nota general (opcional)…';
+	@override String get send => 'Enviar';
+	@override String get sent => 'Comentarios enviados a la sesión.';
+	@override String get nothingToSend => 'Añade primero un marcador, un encuadre o una nota.';
+	@override String get requestPlaceholder => 'Pide al agente que diseñe o dibuje algo…';
+	@override String get requestSend => 'Diseñar';
+	@override String get requested => 'Enviado: el agente lo renderizará aquí.';
+	@override String get delete => 'Eliminar';
+	@override String get deleteTitle => '¿Eliminar lienzo?';
+	@override String deleteBody({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.';
+	@override String get emptyTitle => 'Aún no hay lienzos';
+	@override String get emptyBlurb => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassEs extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7324,6 +7357,7 @@ class _TranslationsWebSessionsInspectorTabsEs extends TranslationsWebSessionsIns
 	@override String get vault => 'Bóveda';
 	@override String get cortex => 'Cortex';
 	@override String get database => 'BD';
+	@override String get canvas => 'Lienzo';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -7375,6 +7409,58 @@ class _TranslationsWebSessionsInspectorCortexPanelEs extends TranslationsWebSess
 	@override String get plan => 'Plan';
 	@override String get latestJournal => 'Último diario';
 	@override String get empty => 'Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla.';
+}
+
+// Path: web.sessions.inspector.canvas
+class _TranslationsWebSessionsInspectorCanvasEs extends TranslationsWebSessionsInspectorCanvasEn {
+	_TranslationsWebSessionsInspectorCanvasEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => 'Aún no hay lienzos. Pide arriba una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: el agente lo renderiza aquí y podrás anotarlo.';
+	@override String get modePreview => 'Vista previa';
+	@override String get modePin => 'Marcar';
+	@override String get modeRegion => 'Región';
+	@override String get hintPin => 'Haz clic en un elemento de la vista previa para marcarlo: el agente obtiene su selector y su marcado.';
+	@override String get hintRegion => 'Arrastra un rectángulo sobre el área que quieres señalar.';
+	@override String get notePlaceholder => 'Qué cambiar aquí…';
+	@override String get removeAnnotation => 'Quitar anotación';
+	@override String get messagePlaceholder => 'Nota general para el agente (opcional)…';
+	@override String get send => 'Enviar al agente';
+	@override String get clear => 'Limpiar';
+	@override String get sent => 'Comentarios enviados a la sesión.';
+	@override String get sendFailed => 'No se pudieron enviar los comentarios';
+	@override String get nothingToSend => 'Añade primero un marcador, una región o una nota.';
+	@override String get previewFailed => 'No se pudo renderizar la vista previa';
+	@override String get previewHtml => 'Previsualizar en el lienzo';
+	@override String get popOut => 'Expandir';
+	@override String get popOutHint => 'Abre el lienzo en una ventana completa (deja libre la terminal)';
+	@override String get popOutTitle => 'Lienzo';
+	@override String get popOutMissing => 'Falta la sesión o el proyecto: vuelve a abrir el lienzo desde la pestaña Lienzo de una sesión.';
+	@override String get viewportMobile => 'Ancho móvil (375px)';
+	@override String get viewportTablet => 'Ancho tablet (768px)';
+	@override String get viewportFull => 'Ancho completo';
+	@override String get requestPlaceholder => 'Pide al agente que diseñe o dibuje algo…';
+	@override String get requestSend => 'Diseñar';
+	@override String get requested => 'Enviado al agente: lo renderizará en el lienzo.';
+	@override String get requestFailed => 'No se pudo enviar la solicitud';
+	@override String get deleteMock => 'Eliminar este lienzo';
+	@override String deleteConfirm({required Object title}) => '¿Eliminar el lienzo «${title}»? Esto no se puede deshacer.';
+	@override String get deleted => 'Lienzo eliminado';
+	@override String get deleteFailed => 'No se pudo eliminar el lienzo';
+	@override String get newMock => 'Nuevo lienzo';
+	@override String get newMockHint => 'Crear un lienzo nuevo en lugar de actualizar el seleccionado';
+	@override String get targetLabel => '→ Trabajando en:';
+	@override String get targetNew => 'Nuevo lienzo';
+	@override String get newMockPlaceholder => 'Elige arriba qué dibujar y descríbelo en la barra de solicitud: el agente renderizará el nuevo lienzo aquí.';
+	@override String get kindLabel => 'Dibujar como:';
+	@override String get kind_ui => 'Maqueta UI';
+	@override String get kind_flow => 'Diagrama de flujo';
+	@override String get kind_mindmap => 'Mapa mental';
+	@override String get kind_graph => 'Relaciones';
+	@override String get kind_doc => 'Documento';
+	@override String get focusHint => 'El agente lo trata como «este lienzo»: solo di en la terminal qué cambiar.';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9376,6 +9462,7 @@ class _TranslationsSessionsInspectorShellTabsEs extends TranslationsSessionsInsp
 	@override String get tasks => 'Tareas';
 	@override String get history => 'Historial';
 	@override String get vault => 'Bóveda';
+	@override String get canvas => 'Lienzo';
 	@override String get cortex => 'Cortex';
 	@override String get database => 'BD';
 }
@@ -9655,6 +9742,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.tabs.vault' => 'Bóveda',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
 			'web.sessions.inspector.tabs.database' => 'BD',
+			'web.sessions.inspector.tabs.canvas' => 'Lienzo',
 			'web.sessions.inspector.vaultPanel.open' => 'Abrir Bóveda',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Docs del proyecto',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Docs del proyecto escritos por el agente en la bóveda. Revincula la carpeta si las notas de este proyecto viven en otro sitio.',
@@ -9688,6 +9776,49 @@ extension on TranslationsEs {
 			'web.sessions.inspector.cortexPanel.plan' => 'Plan',
 			'web.sessions.inspector.cortexPanel.latestJournal' => 'Último diario',
 			'web.sessions.inspector.cortexPanel.empty' => 'Aún no se ha capturado memoria de Cortex para este proyecto. Inicia una sesión o define un objetivo para poblarla.',
+			'web.sessions.inspector.canvas.empty' => 'Aún no hay lienzos. Pide arriba una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: el agente lo renderiza aquí y podrás anotarlo.',
+			'web.sessions.inspector.canvas.modePreview' => 'Vista previa',
+			'web.sessions.inspector.canvas.modePin' => 'Marcar',
+			'web.sessions.inspector.canvas.modeRegion' => 'Región',
+			'web.sessions.inspector.canvas.hintPin' => 'Haz clic en un elemento de la vista previa para marcarlo: el agente obtiene su selector y su marcado.',
+			'web.sessions.inspector.canvas.hintRegion' => 'Arrastra un rectángulo sobre el área que quieres señalar.',
+			'web.sessions.inspector.canvas.notePlaceholder' => 'Qué cambiar aquí…',
+			'web.sessions.inspector.canvas.removeAnnotation' => 'Quitar anotación',
+			'web.sessions.inspector.canvas.messagePlaceholder' => 'Nota general para el agente (opcional)…',
+			'web.sessions.inspector.canvas.send' => 'Enviar al agente',
+			'web.sessions.inspector.canvas.clear' => 'Limpiar',
+			'web.sessions.inspector.canvas.sent' => 'Comentarios enviados a la sesión.',
+			'web.sessions.inspector.canvas.sendFailed' => 'No se pudieron enviar los comentarios',
+			'web.sessions.inspector.canvas.nothingToSend' => 'Añade primero un marcador, una región o una nota.',
+			'web.sessions.inspector.canvas.previewFailed' => 'No se pudo renderizar la vista previa',
+			'web.sessions.inspector.canvas.previewHtml' => 'Previsualizar en el lienzo',
+			'web.sessions.inspector.canvas.popOut' => 'Expandir',
+			'web.sessions.inspector.canvas.popOutHint' => 'Abre el lienzo en una ventana completa (deja libre la terminal)',
+			'web.sessions.inspector.canvas.popOutTitle' => 'Lienzo',
+			'web.sessions.inspector.canvas.popOutMissing' => 'Falta la sesión o el proyecto: vuelve a abrir el lienzo desde la pestaña Lienzo de una sesión.',
+			'web.sessions.inspector.canvas.viewportMobile' => 'Ancho móvil (375px)',
+			'web.sessions.inspector.canvas.viewportTablet' => 'Ancho tablet (768px)',
+			'web.sessions.inspector.canvas.viewportFull' => 'Ancho completo',
+			'web.sessions.inspector.canvas.requestPlaceholder' => 'Pide al agente que diseñe o dibuje algo…',
+			'web.sessions.inspector.canvas.requestSend' => 'Diseñar',
+			'web.sessions.inspector.canvas.requested' => 'Enviado al agente: lo renderizará en el lienzo.',
+			'web.sessions.inspector.canvas.requestFailed' => 'No se pudo enviar la solicitud',
+			'web.sessions.inspector.canvas.deleteMock' => 'Eliminar este lienzo',
+			'web.sessions.inspector.canvas.deleteConfirm' => ({required Object title}) => '¿Eliminar el lienzo «${title}»? Esto no se puede deshacer.',
+			'web.sessions.inspector.canvas.deleted' => 'Lienzo eliminado',
+			'web.sessions.inspector.canvas.deleteFailed' => 'No se pudo eliminar el lienzo',
+			'web.sessions.inspector.canvas.newMock' => 'Nuevo lienzo',
+			'web.sessions.inspector.canvas.newMockHint' => 'Crear un lienzo nuevo en lugar de actualizar el seleccionado',
+			'web.sessions.inspector.canvas.targetLabel' => '→ Trabajando en:',
+			'web.sessions.inspector.canvas.targetNew' => 'Nuevo lienzo',
+			'web.sessions.inspector.canvas.newMockPlaceholder' => 'Elige arriba qué dibujar y descríbelo en la barra de solicitud: el agente renderizará el nuevo lienzo aquí.',
+			'web.sessions.inspector.canvas.kindLabel' => 'Dibujar como:',
+			'web.sessions.inspector.canvas.kind_ui' => 'Maqueta UI',
+			'web.sessions.inspector.canvas.kind_flow' => 'Diagrama de flujo',
+			'web.sessions.inspector.canvas.kind_mindmap' => 'Mapa mental',
+			'web.sessions.inspector.canvas.kind_graph' => 'Relaciones',
+			'web.sessions.inspector.canvas.kind_doc' => 'Documento',
+			'web.sessions.inspector.canvas.focusHint' => 'El agente lo trata como «este lienzo»: solo di en la terminal qué cambiar.',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -9915,6 +10046,8 @@ extension on TranslationsEs {
 			'web.project.header.docsCount_one' => ({required Object count}) => '${count} documento',
 			'web.project.header.docsCount_other' => ({required Object count}) => '${count} documentos',
 			'web.project.header.journalEntries_one' => ({required Object count}) => '${count} entrada del diario',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} entradas del diario',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} propuesta pendiente',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} propuestas pendientes',
@@ -9959,8 +10092,6 @@ extension on TranslationsEs {
 			'web.project.inbox.emptyHint' => 'Los agentes presentan propuestas aquí mediante las herramientas MCP `project_goal_set` / `project_plan_set`.',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} actualizado',
 			'web.project.inbox.approveFailedToast' => 'Error al aprobar',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.rejectedToast' => 'Rechazado',
 			'web.project.inbox.rejectFailedToast' => 'Error al rechazar',
 			'web.project.inbox.sessionPrefix' => 'ses',
@@ -10429,6 +10560,8 @@ extension on TranslationsEs {
 			'web.providers.antigravityAccounts.removedToast' => 'Cuenta eliminada',
 			'web.providers.antigravityAccounts.removeFailedToast' => 'Error al eliminar',
 			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => 'Alternar ${name}',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => 'Quitar ${name}',
 			'web.providers.models.title' => 'Modelos',
 			'web.providers.models.help' => 'Modelos ofrecidos para este proveedor. El predeterminado se pasa a cada session mediante el flag de modelo; las sessions aún pueden sobrescribirlo.',
@@ -10473,8 +10606,6 @@ extension on TranslationsEs {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => '¿Eliminar el canal ${id}?',
 			'web.channels.toasts.deleted' => 'Canal eliminado',
 			'web.channels.toasts.created' => 'Canal creado',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.toasts.updated' => 'Canal actualizado',
 			'web.channels.toasts.muted' => 'Canal silenciado',
 			'web.channels.toasts.unmuted' => 'Canal reactivado',
@@ -10943,6 +11074,8 @@ extension on TranslationsEs {
 			'web.backups.restore.previewing' => 'Previsualizando…',
 			'web.backups.restore.previewFirstHint' => 'Ejecuta primero una simulación',
 			'web.backups.restore.applyRestore' => 'Aplicar restauración',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.kind.dbOnly' => 'Solo BD',
 			'web.backups.kind.fullInstance' => 'Instancia completa',
 			'web.backups.kind.fullInstanceHint' => 'Incluye el vault, secrets.env y config.toml',
@@ -10987,8 +11120,6 @@ extension on TranslationsEs {
 			'web.backups.schedulesTab.columns.interval' => 'Intervalo',
 			'web.backups.schedulesTab.columns.keep' => 'Conservar',
 			'web.backups.schedulesTab.columns.nextRun' => 'Próxima ejecución',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.schedulesTab.columns.enabled' => 'Habilitada',
 			'web.backups.schedulesTab.columns.actions' => 'Acciones',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} copias de seguridad',
@@ -11457,6 +11588,8 @@ extension on TranslationsEs {
 			'web.memoryAmbient.providers.dialog.makeDefaultLabel' => 'Hacer de este el proveedor predeterminado',
 			'web.memoryAmbient.providers.dialog.create' => 'Crear',
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => 'El nombre es obligatorio',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => 'Proveedor ${name} creado',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.providers.modelSelect.editTitle' => 'Cambiar modelo',
@@ -11501,8 +11634,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.rules.dialog.dedupHint' => 'Más alto = deduplicación más estricta. 0.85 es el punto óptimo recomendado.',
 			'web.memoryAmbient.rules.dialog.create' => 'Crear',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'El nombre es obligatorio',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Regla ${name} creada',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.profiles.title' => 'Perfiles de inyección',
@@ -11971,6 +12102,8 @@ extension on TranslationsEs {
 			'web.roundTable.detail.send' => 'Enviar',
 			'web.roundTable.detail.delete' => 'Eliminar',
 			'web.roundTable.detail.deleteConfirm' => '¿Eliminar este chat y todos sus mensajes? No se puede deshacer.',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.detail.roles' => 'Miembros',
 			'web.roundTable.detail.rolesTitle' => 'Miembros y roles',
 			'web.roundTable.detail.rolesFraming' => 'Marco de la discusión (compartido por todos)',
@@ -12015,8 +12148,6 @@ extension on TranslationsEs {
 			'web.roundTable.plan.rerun' => 'Re-ejecutar',
 			'web.roundTable.plan.running' => 'En curso',
 			'web.roundTable.plan.done' => 'Hecho',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.pending' => 'Pendiente',
 			'web.roundTable.plan.openSession' => 'Abrir sesión',
 			'web.roundTable.plan.needProject' => 'Vincula un proyecto (cwd) para ejecutar pasos.',
@@ -12228,6 +12359,7 @@ extension on TranslationsEs {
 			'sessions.inspector.shell.tabs.tasks' => 'Tareas',
 			'sessions.inspector.shell.tabs.history' => 'Historial',
 			'sessions.inspector.shell.tabs.vault' => 'Bóveda',
+			'sessions.inspector.shell.tabs.canvas' => 'Lienzo',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
 			'sessions.inspector.shell.tabs.database' => 'BD',
 			'sessions.inspector.cortex.title' => 'Espacio Cortex',
@@ -12308,6 +12440,28 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
+			'sessions.inspector.canvas.kindUi' => 'Maqueta UI',
+			'sessions.inspector.canvas.kindFlow' => 'Diagrama de flujo',
+			'sessions.inspector.canvas.kindMindmap' => 'Mapa mental',
+			'sessions.inspector.canvas.kindGraph' => 'Relaciones',
+			'sessions.inspector.canvas.kindDoc' => 'Documento',
+			'sessions.inspector.canvas.modeView' => 'Ver',
+			'sessions.inspector.canvas.modePin' => 'Marcar',
+			'sessions.inspector.canvas.modeRegion' => 'Encuadrar',
+			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => 'Trabajando en ${title} · ${kind}: el agente lo trata como «este lienzo».',
+			'sessions.inspector.canvas.notePlaceholder' => 'Qué cambiar aquí…',
+			'sessions.inspector.canvas.messagePlaceholder' => 'Nota general (opcional)…',
+			'sessions.inspector.canvas.send' => 'Enviar',
+			'sessions.inspector.canvas.sent' => 'Comentarios enviados a la sesión.',
+			'sessions.inspector.canvas.nothingToSend' => 'Añade primero un marcador, un encuadre o una nota.',
+			'sessions.inspector.canvas.requestPlaceholder' => 'Pide al agente que diseñe o dibuje algo…',
+			'sessions.inspector.canvas.requestSend' => 'Diseñar',
+			'sessions.inspector.canvas.requested' => 'Enviado: el agente lo renderizará aquí.',
+			'sessions.inspector.canvas.delete' => 'Eliminar',
+			'sessions.inspector.canvas.deleteTitle' => '¿Eliminar lienzo?',
+			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.',
+			'sessions.inspector.canvas.emptyTitle' => 'Aún no hay lienzos',
+			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12462,6 +12616,8 @@ extension on TranslationsEs {
 			'providers.accounts.importLocal' => 'Importar local',
 			'providers.accounts.addHint' => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.',
 			'providers.accounts.addBody' => 'El nuevo directorio aparece aquí automáticamente. Consulta la documentación para los pasos del flujo OAuth.',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Error al cargar las cuentas: ${error}',
 			'providers.accounts.intro' => 'Las sessions creadas con el proveedor Claude eligen entre estas cuentas (o recurren a las variables de entorno).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} activada.',
@@ -12529,8 +12685,6 @@ extension on TranslationsEs {
 			'integrations.kvBaseUrl' => 'URL base',
 			'integrations.kvScopes' => 'Ámbitos',
 			'integrations.kvVersion' => 'Versión',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Último ping de estado',
 			'integrations.kvCreated' => 'Creada',
 			'integrations.kvKeyRotated' => 'Key rotada',
@@ -12976,6 +13130,8 @@ extension on TranslationsEs {
 			'githosts.form.nameLabel' => 'Nombre',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -13043,8 +13199,6 @@ extension on TranslationsEs {
 			'channels.popup.mute' => 'Silenciar',
 			'channels.popup.unmute' => 'Reactivar sonido',
 			'channels.popup.deleteLabel' => 'Eliminar',
-			_ => null,
-		} ?? switch (path) {
 			'channels.badges.running' => 'en ejecución',
 			'channels.badges.starting' => 'iniciando…',
 			'channels.badges.disabled' => 'desactivado',
@@ -13490,6 +13644,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.rootHelper' => 'Padre de las sub-rutas notes / skills / git_root.',
 			'settings.serverSettings.fields.notesPath' => 'Ruta de notas',
 			'settings.serverSettings.fields.skillsPath' => 'Ruta de skills',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.gitRoot' => 'Raíz de git',
 			'settings.serverSettings.fields.personalPrefix' => 'Prefijo personal',
 			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',
@@ -13557,8 +13713,6 @@ extension on TranslationsEs {
 			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'inactivo ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} activos',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Proyectos activos',
 			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.',
 			'cortexHub.settings' => 'Ajustes',

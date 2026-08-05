@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/database/database_tab.dart';
+import 'package:opendray/features/sessions/inspector/canvas_tab.dart';
 import 'package:opendray/features/sessions/inspector/cortex_tab.dart';
 import 'package:opendray/features/sessions/inspector/files_tab.dart';
 import 'package:opendray/features/sessions/inspector/git_tab.dart';
@@ -22,7 +23,7 @@ import 'package:opendray/features/sessions/inspector/tasks_tab.dart';
 // its TabBarView, so behaviour and state handling stay identical.
 
 /// The cwd-scoped project tools that can be opened over a session.
-enum SessionTool { files, git, tasks, history, vault, cortex, database }
+enum SessionTool { files, git, tasks, history, vault, canvas, cortex, database }
 
 IconData sessionToolIcon(SessionTool tool) => switch (tool) {
       SessionTool.files => Icons.folder_outlined,
@@ -30,6 +31,7 @@ IconData sessionToolIcon(SessionTool tool) => switch (tool) {
       SessionTool.tasks => Icons.play_circle_outline,
       SessionTool.history => Icons.history,
       SessionTool.vault => Icons.menu_book_outlined,
+      SessionTool.canvas => Icons.palette_outlined,
       SessionTool.cortex => Icons.psychology_outlined,
       SessionTool.database => Icons.storage_outlined,
     };
@@ -40,6 +42,7 @@ String sessionToolLabel(SessionTool tool) => switch (tool) {
       SessionTool.tasks => t.sessions.inspector.shell.tabs.tasks,
       SessionTool.history => t.sessions.inspector.shell.tabs.history,
       SessionTool.vault => t.sessions.inspector.shell.tabs.vault,
+      SessionTool.canvas => t.sessions.inspector.shell.tabs.canvas,
       SessionTool.cortex => t.sessions.inspector.shell.tabs.cortex,
       SessionTool.database => t.sessions.inspector.shell.tabs.database,
     };
@@ -57,6 +60,7 @@ Future<void> openSessionToolSheet(
     SessionTool.tasks => TasksTab(sessionId: session.id, cwd: session.cwd),
     SessionTool.history => HistoryTab(sessionId: session.id),
     SessionTool.vault => NotesTab(sessionId: session.id, cwd: session.cwd),
+    SessionTool.canvas => CanvasTab(sessionId: session.id, cwd: session.cwd),
     SessionTool.cortex => CortexTab(cwd: session.cwd),
     SessionTool.database => DatabaseTab(cwd: session.cwd),
   };

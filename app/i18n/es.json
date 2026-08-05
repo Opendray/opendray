@@ -3606,6 +3606,7 @@
           "tasks": "Tareas",
           "history": "Historial",
           "vault": "Bóveda",
+          "canvas": "Lienzo",
           "cortex": "Cortex",
           "database": "BD"
         }
@@ -3701,6 +3702,30 @@
         "noProjectMapping2": "(sin asignación de proyecto)",
         "clearOverride": "Borrar anulación",
         "save": "Guardar"
+      },
+      "canvas": {
+        "kindUi": "Maqueta UI",
+        "kindFlow": "Diagrama de flujo",
+        "kindMindmap": "Mapa mental",
+        "kindGraph": "Relaciones",
+        "kindDoc": "Documento",
+        "modeView": "Ver",
+        "modePin": "Marcar",
+        "modeRegion": "Encuadrar",
+        "focusLine": "Trabajando en {title} · {kind}: el agente lo trata como «este lienzo».",
+        "notePlaceholder": "Qué cambiar aquí…",
+        "messagePlaceholder": "Nota general (opcional)…",
+        "send": "Enviar",
+        "sent": "Comentarios enviados a la sesión.",
+        "nothingToSend": "Añade primero un marcador, un encuadre o una nota.",
+        "requestPlaceholder": "Pide al agente que diseñe o dibuje algo…",
+        "requestSend": "Diseñar",
+        "requested": "Enviado: el agente lo renderizará aquí.",
+        "delete": "Eliminar",
+        "deleteTitle": "¿Eliminar lienzo?",
+        "deleteBody": "¿Eliminar «{title}»? Esto no se puede deshacer.",
+        "emptyTitle": "Aún no hay lienzos",
+        "emptyBlurb": "Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo."
       }
     },
     "spawnSheet": {

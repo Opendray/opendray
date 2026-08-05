@@ -3606,6 +3606,7 @@
           "tasks": "Tasks",
           "history": "History",
           "vault": "Vault",
+          "canvas": "Canvas",
           "cortex": "Cortex",
           "database": "Database"
         }
@@ -3701,6 +3702,30 @@
         "noProjectMapping2": "(no project mapping)",
         "clearOverride": "Clear override",
         "save": "Save"
+      },
+      "canvas": {
+        "kindUi": "UI mock",
+        "kindFlow": "Flowchart",
+        "kindMindmap": "Mind map",
+        "kindGraph": "Relationships",
+        "kindDoc": "Document",
+        "modeView": "View",
+        "modePin": "Pin",
+        "modeRegion": "Frame",
+        "focusLine": "Working on {title} · {kind} — the agent treats this as \"this canvas\".",
+        "notePlaceholder": "What to change here…",
+        "messagePlaceholder": "Overall note (optional)…",
+        "send": "Send",
+        "sent": "Feedback sent to the session.",
+        "nothingToSend": "Add a pin, a frame, or a note first.",
+        "requestPlaceholder": "Ask the agent to design or draw something…",
+        "requestSend": "Design",
+        "requested": "Sent — the agent will render it here.",
+        "delete": "Delete",
+        "deleteTitle": "Delete canvas?",
+        "deleteBody": "Delete \"{title}\"? This can't be undone.",
+        "emptyTitle": "No canvas yet",
+        "emptyBlurb": "Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it."
       }
     },
     "spawnSheet": {

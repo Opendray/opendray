@@ -3606,6 +3606,7 @@
           "tasks": "任务",
           "history": "历史",
           "vault": "文档库",
+          "canvas": "画布",
           "cortex": "心智中枢",
           "database": "数据库"
         }
@@ -3701,6 +3702,30 @@
         "noProjectMapping2": "（无项目映射）",
         "clearOverride": "清除覆盖",
         "save": "保存"
+      },
+      "canvas": {
+        "kindUi": "UI 稿",
+        "kindFlow": "流程图",
+        "kindMindmap": "思维导图",
+        "kindGraph": "关系图",
+        "kindDoc": "文档",
+        "modeView": "查看",
+        "modePin": "钉点",
+        "modeRegion": "框选",
+        "focusLine": "正在处理 {title} · {kind} —— agent 已把它当作「这个画布」。",
+        "notePlaceholder": "这里要改什么……",
+        "messagePlaceholder": "整体说明(可选)……",
+        "send": "发送",
+        "sent": "反馈已发送到会话。",
+        "nothingToSend": "请先添加钉点、框选或说明。",
+        "requestPlaceholder": "让 agent 设计或画点什么……",
+        "requested": "已发送 —— agent 会渲染到这里。",
+        "requestSend": "设计",
+        "delete": "删除",
+        "deleteTitle": "删除画布?",
+        "deleteBody": "删除「{title}」?此操作无法撤销。",
+        "emptyTitle": "还没有画布",
+        "emptyBlurb": "让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。"
       }
     },
     "spawnSheet": {

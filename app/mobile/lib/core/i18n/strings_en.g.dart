@@ -3913,6 +3913,7 @@ class TranslationsSessionsInspectorEn {
 	late final TranslationsSessionsInspectorGitEn git = TranslationsSessionsInspectorGitEn.internal(_root);
 	late final TranslationsSessionsInspectorTasksEn tasks = TranslationsSessionsInspectorTasksEn.internal(_root);
 	late final TranslationsSessionsInspectorNotesEn notes = TranslationsSessionsInspectorNotesEn.internal(_root);
+	late final TranslationsSessionsInspectorCanvasEn canvas = TranslationsSessionsInspectorCanvasEn.internal(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -6603,6 +6604,7 @@ class TranslationsWebSessionsInspectorEn {
 	late final TranslationsWebSessionsInspectorTabsEn tabs = TranslationsWebSessionsInspectorTabsEn.internal(_root);
 	late final TranslationsWebSessionsInspectorVaultPanelEn vaultPanel = TranslationsWebSessionsInspectorVaultPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCortexPanelEn cortexPanel = TranslationsWebSessionsInspectorCortexPanelEn.internal(_root);
+	late final TranslationsWebSessionsInspectorCanvasEn canvas = TranslationsWebSessionsInspectorCanvasEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -13158,6 +13160,81 @@ class TranslationsSessionsInspectorNotesEn {
 	String get save => 'Save';
 }
 
+// Path: sessions.inspector.canvas
+class TranslationsSessionsInspectorCanvasEn {
+	TranslationsSessionsInspectorCanvasEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'UI mock'
+	String get kindUi => 'UI mock';
+
+	/// en: 'Flowchart'
+	String get kindFlow => 'Flowchart';
+
+	/// en: 'Mind map'
+	String get kindMindmap => 'Mind map';
+
+	/// en: 'Relationships'
+	String get kindGraph => 'Relationships';
+
+	/// en: 'Document'
+	String get kindDoc => 'Document';
+
+	/// en: 'View'
+	String get modeView => 'View';
+
+	/// en: 'Pin'
+	String get modePin => 'Pin';
+
+	/// en: 'Frame'
+	String get modeRegion => 'Frame';
+
+	/// en: 'Working on {title} · {kind} — the agent treats this as "this canvas".'
+	String focusLine({required Object title, required Object kind}) => 'Working on ${title} · ${kind} — the agent treats this as "this canvas".';
+
+	/// en: 'What to change here…'
+	String get notePlaceholder => 'What to change here…';
+
+	/// en: 'Overall note (optional)…'
+	String get messagePlaceholder => 'Overall note (optional)…';
+
+	/// en: 'Send'
+	String get send => 'Send';
+
+	/// en: 'Feedback sent to the session.'
+	String get sent => 'Feedback sent to the session.';
+
+	/// en: 'Add a pin, a frame, or a note first.'
+	String get nothingToSend => 'Add a pin, a frame, or a note first.';
+
+	/// en: 'Ask the agent to design or draw something…'
+	String get requestPlaceholder => 'Ask the agent to design or draw something…';
+
+	/// en: 'Design'
+	String get requestSend => 'Design';
+
+	/// en: 'Sent — the agent will render it here.'
+	String get requested => 'Sent — the agent will render it here.';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Delete canvas?'
+	String get deleteTitle => 'Delete canvas?';
+
+	/// en: 'Delete "{title}"? This can't be undone.'
+	String deleteBody({required Object title}) => 'Delete "${title}"? This can\'t be undone.';
+
+	/// en: 'No canvas yet'
+	String get emptyTitle => 'No canvas yet';
+
+	/// en: 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.'
+	String get emptyBlurb => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.';
+}
+
 // Path: sessions.spawnSheet.bypass
 class TranslationsSessionsSpawnSheetBypassEn {
 	TranslationsSessionsSpawnSheetBypassEn.internal(this._root);
@@ -14218,6 +14295,9 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Database'
 	String get database => 'Database';
+
+	/// en: 'Canvas'
+	String get canvas => 'Canvas';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -14335,6 +14415,144 @@ class TranslationsWebSessionsInspectorCortexPanelEn {
 
 	/// en: 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.'
 	String get empty => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.';
+}
+
+// Path: web.sessions.inspector.canvas
+class TranslationsWebSessionsInspectorCanvasEn {
+	TranslationsWebSessionsInspectorCanvasEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No canvas yet. Ask for a screen, a flowchart, a mind map or a relationship diagram above — the agent renders it here and you can pin and annotate it.'
+	String get empty => 'No canvas yet. Ask for a screen, a flowchart, a mind map or a relationship diagram above — the agent renders it here and you can pin and annotate it.';
+
+	/// en: 'Preview'
+	String get modePreview => 'Preview';
+
+	/// en: 'Pin'
+	String get modePin => 'Pin';
+
+	/// en: 'Region'
+	String get modeRegion => 'Region';
+
+	/// en: 'Click an element in the preview to pin it — the agent gets its selector and markup.'
+	String get hintPin => 'Click an element in the preview to pin it — the agent gets its selector and markup.';
+
+	/// en: 'Drag a rectangle over the area you want to point at.'
+	String get hintRegion => 'Drag a rectangle over the area you want to point at.';
+
+	/// en: 'What to change here…'
+	String get notePlaceholder => 'What to change here…';
+
+	/// en: 'Remove annotation'
+	String get removeAnnotation => 'Remove annotation';
+
+	/// en: 'Overall note for the agent (optional)…'
+	String get messagePlaceholder => 'Overall note for the agent (optional)…';
+
+	/// en: 'Send to agent'
+	String get send => 'Send to agent';
+
+	/// en: 'Clear'
+	String get clear => 'Clear';
+
+	/// en: 'Feedback sent to the session.'
+	String get sent => 'Feedback sent to the session.';
+
+	/// en: 'Could not send feedback'
+	String get sendFailed => 'Could not send feedback';
+
+	/// en: 'Add a pin, a region, or a note first.'
+	String get nothingToSend => 'Add a pin, a region, or a note first.';
+
+	/// en: 'Could not render preview'
+	String get previewFailed => 'Could not render preview';
+
+	/// en: 'Preview on canvas'
+	String get previewHtml => 'Preview on canvas';
+
+	/// en: 'Pop out'
+	String get popOut => 'Pop out';
+
+	/// en: 'Open the canvas in a full window (keeps the terminal free)'
+	String get popOutHint => 'Open the canvas in a full window (keeps the terminal free)';
+
+	/// en: 'Canvas'
+	String get popOutTitle => 'Canvas';
+
+	/// en: 'Missing session or project — reopen the canvas from a session's Canvas tab.'
+	String get popOutMissing => 'Missing session or project — reopen the canvas from a session\'s Canvas tab.';
+
+	/// en: 'Mobile width (375px)'
+	String get viewportMobile => 'Mobile width (375px)';
+
+	/// en: 'Tablet width (768px)'
+	String get viewportTablet => 'Tablet width (768px)';
+
+	/// en: 'Full width'
+	String get viewportFull => 'Full width';
+
+	/// en: 'Ask the agent to design or draw something…'
+	String get requestPlaceholder => 'Ask the agent to design or draw something…';
+
+	/// en: 'Design'
+	String get requestSend => 'Design';
+
+	/// en: 'Sent to the agent — it will render to the canvas.'
+	String get requested => 'Sent to the agent — it will render to the canvas.';
+
+	/// en: 'Could not send the request'
+	String get requestFailed => 'Could not send the request';
+
+	/// en: 'Delete this canvas'
+	String get deleteMock => 'Delete this canvas';
+
+	/// en: 'Delete the canvas "{title}"? This can't be undone.'
+	String deleteConfirm({required Object title}) => 'Delete the canvas "${title}"? This can\'t be undone.';
+
+	/// en: 'Canvas deleted'
+	String get deleted => 'Canvas deleted';
+
+	/// en: 'Could not delete the canvas'
+	String get deleteFailed => 'Could not delete the canvas';
+
+	/// en: 'New canvas'
+	String get newMock => 'New canvas';
+
+	/// en: 'Start a fresh canvas instead of updating the selected one'
+	String get newMockHint => 'Start a fresh canvas instead of updating the selected one';
+
+	/// en: '→ Working on:'
+	String get targetLabel => '→ Working on:';
+
+	/// en: 'New canvas'
+	String get targetNew => 'New canvas';
+
+	/// en: 'Pick what to draw above, then describe it in the request bar — the agent renders the new canvas here.'
+	String get newMockPlaceholder => 'Pick what to draw above, then describe it in the request bar — the agent renders the new canvas here.';
+
+	/// en: 'Draw as:'
+	String get kindLabel => 'Draw as:';
+
+	/// en: 'UI mock'
+	String get kind_ui => 'UI mock';
+
+	/// en: 'Flowchart'
+	String get kind_flow => 'Flowchart';
+
+	/// en: 'Mind map'
+	String get kind_mindmap => 'Mind map';
+
+	/// en: 'Relationships'
+	String get kind_graph => 'Relationships';
+
+	/// en: 'Document'
+	String get kind_doc => 'Document';
+
+	/// en: 'The agent treats this as "this canvas" — just say what to change in the terminal.'
+	String get focusHint => 'The agent treats this as "this canvas" — just say what to change in the terminal.';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -17725,6 +17943,9 @@ class TranslationsSessionsInspectorShellTabsEn {
 	/// en: 'Vault'
 	String get vault => 'Vault';
 
+	/// en: 'Canvas'
+	String get canvas => 'Canvas';
+
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
 
@@ -18031,6 +18252,7 @@ extension on Translations {
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
 			'web.sessions.inspector.tabs.database' => 'Database',
+			'web.sessions.inspector.tabs.canvas' => 'Canvas',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
@@ -18064,6 +18286,49 @@ extension on Translations {
 			'web.sessions.inspector.cortexPanel.plan' => 'Plan',
 			'web.sessions.inspector.cortexPanel.latestJournal' => 'Latest journal',
 			'web.sessions.inspector.cortexPanel.empty' => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.',
+			'web.sessions.inspector.canvas.empty' => 'No canvas yet. Ask for a screen, a flowchart, a mind map or a relationship diagram above — the agent renders it here and you can pin and annotate it.',
+			'web.sessions.inspector.canvas.modePreview' => 'Preview',
+			'web.sessions.inspector.canvas.modePin' => 'Pin',
+			'web.sessions.inspector.canvas.modeRegion' => 'Region',
+			'web.sessions.inspector.canvas.hintPin' => 'Click an element in the preview to pin it — the agent gets its selector and markup.',
+			'web.sessions.inspector.canvas.hintRegion' => 'Drag a rectangle over the area you want to point at.',
+			'web.sessions.inspector.canvas.notePlaceholder' => 'What to change here…',
+			'web.sessions.inspector.canvas.removeAnnotation' => 'Remove annotation',
+			'web.sessions.inspector.canvas.messagePlaceholder' => 'Overall note for the agent (optional)…',
+			'web.sessions.inspector.canvas.send' => 'Send to agent',
+			'web.sessions.inspector.canvas.clear' => 'Clear',
+			'web.sessions.inspector.canvas.sent' => 'Feedback sent to the session.',
+			'web.sessions.inspector.canvas.sendFailed' => 'Could not send feedback',
+			'web.sessions.inspector.canvas.nothingToSend' => 'Add a pin, a region, or a note first.',
+			'web.sessions.inspector.canvas.previewFailed' => 'Could not render preview',
+			'web.sessions.inspector.canvas.previewHtml' => 'Preview on canvas',
+			'web.sessions.inspector.canvas.popOut' => 'Pop out',
+			'web.sessions.inspector.canvas.popOutHint' => 'Open the canvas in a full window (keeps the terminal free)',
+			'web.sessions.inspector.canvas.popOutTitle' => 'Canvas',
+			'web.sessions.inspector.canvas.popOutMissing' => 'Missing session or project — reopen the canvas from a session\'s Canvas tab.',
+			'web.sessions.inspector.canvas.viewportMobile' => 'Mobile width (375px)',
+			'web.sessions.inspector.canvas.viewportTablet' => 'Tablet width (768px)',
+			'web.sessions.inspector.canvas.viewportFull' => 'Full width',
+			'web.sessions.inspector.canvas.requestPlaceholder' => 'Ask the agent to design or draw something…',
+			'web.sessions.inspector.canvas.requestSend' => 'Design',
+			'web.sessions.inspector.canvas.requested' => 'Sent to the agent — it will render to the canvas.',
+			'web.sessions.inspector.canvas.requestFailed' => 'Could not send the request',
+			'web.sessions.inspector.canvas.deleteMock' => 'Delete this canvas',
+			'web.sessions.inspector.canvas.deleteConfirm' => ({required Object title}) => 'Delete the canvas "${title}"? This can\'t be undone.',
+			'web.sessions.inspector.canvas.deleted' => 'Canvas deleted',
+			'web.sessions.inspector.canvas.deleteFailed' => 'Could not delete the canvas',
+			'web.sessions.inspector.canvas.newMock' => 'New canvas',
+			'web.sessions.inspector.canvas.newMockHint' => 'Start a fresh canvas instead of updating the selected one',
+			'web.sessions.inspector.canvas.targetLabel' => '→ Working on:',
+			'web.sessions.inspector.canvas.targetNew' => 'New canvas',
+			'web.sessions.inspector.canvas.newMockPlaceholder' => 'Pick what to draw above, then describe it in the request bar — the agent renders the new canvas here.',
+			'web.sessions.inspector.canvas.kindLabel' => 'Draw as:',
+			'web.sessions.inspector.canvas.kind_ui' => 'UI mock',
+			'web.sessions.inspector.canvas.kind_flow' => 'Flowchart',
+			'web.sessions.inspector.canvas.kind_mindmap' => 'Mind map',
+			'web.sessions.inspector.canvas.kind_graph' => 'Relationships',
+			'web.sessions.inspector.canvas.kind_doc' => 'Document',
+			'web.sessions.inspector.canvas.focusHint' => 'The agent treats this as "this canvas" — just say what to change in the terminal.',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -18291,6 +18556,8 @@ extension on Translations {
 			'web.project.header.docsCount_one' => ({required Object count}) => '${count} doc',
 			'web.project.header.docsCount_other' => ({required Object count}) => '${count} docs',
 			'web.project.header.journalEntries_one' => ({required Object count}) => '${count} journal entry',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} journal entries',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} pending proposal',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} pending proposals',
@@ -18335,8 +18602,6 @@ extension on Translations {
 			'web.project.inbox.emptyHint' => 'Agents file proposals here via `project_goal_set` / `project_plan_set` MCP tools.',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} updated',
 			'web.project.inbox.approveFailedToast' => 'Approve failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.rejectedToast' => 'Rejected',
 			'web.project.inbox.rejectFailedToast' => 'Reject failed',
 			'web.project.inbox.sessionPrefix' => 'ses',
@@ -18805,6 +19070,8 @@ extension on Translations {
 			'web.providers.antigravityAccounts.removedToast' => 'Account removed',
 			'web.providers.antigravityAccounts.removeFailedToast' => 'Remove failed',
 			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => 'Toggle ${name}',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
 			'web.providers.models.title' => 'Models',
 			'web.providers.models.help' => 'Models offered for this provider. The default is passed to every session via the model flag; sessions can still override it.',
@@ -18849,8 +19116,6 @@ extension on Translations {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => 'Delete channel ${id}?',
 			'web.channels.toasts.deleted' => 'Channel deleted',
 			'web.channels.toasts.created' => 'Channel created',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.toasts.updated' => 'Channel updated',
 			'web.channels.toasts.muted' => 'Channel muted',
 			'web.channels.toasts.unmuted' => 'Channel unmuted',
@@ -19319,6 +19584,8 @@ extension on Translations {
 			'web.backups.restore.previewing' => 'Previewing…',
 			'web.backups.restore.previewFirstHint' => 'Run a dry-run preview first',
 			'web.backups.restore.applyRestore' => 'Apply restore',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.kind.dbOnly' => 'DB only',
 			'web.backups.kind.fullInstance' => 'Full instance',
 			'web.backups.kind.fullInstanceHint' => 'Includes the vault, secrets.env and config.toml',
@@ -19363,8 +19630,6 @@ extension on Translations {
 			'web.backups.schedulesTab.columns.interval' => 'Interval',
 			'web.backups.schedulesTab.columns.keep' => 'Keep',
 			'web.backups.schedulesTab.columns.nextRun' => 'Next run',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.schedulesTab.columns.enabled' => 'Enabled',
 			'web.backups.schedulesTab.columns.actions' => 'Actions',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
@@ -19833,6 +20098,8 @@ extension on Translations {
 			'web.memoryAmbient.providers.dialog.makeDefaultLabel' => 'Make this the default provider',
 			'web.memoryAmbient.providers.dialog.create' => 'Create',
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => 'Name is required',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => 'Provider ${name} created',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => 'Create failed',
 			'web.memoryAmbient.providers.modelSelect.editTitle' => 'Change model',
@@ -19877,8 +20144,6 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.dedupHint' => 'Higher = stricter de-duplication. 0.85 is the recommended sweet spot.',
 			'web.memoryAmbient.rules.dialog.create' => 'Create',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'Name is required',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Rule ${name} created',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
 			'web.memoryAmbient.profiles.title' => 'Injection profiles',
@@ -20347,6 +20612,8 @@ extension on Translations {
 			'web.roundTable.detail.send' => 'Send',
 			'web.roundTable.detail.delete' => 'Delete',
 			'web.roundTable.detail.deleteConfirm' => 'Delete this chat and all its messages? This cannot be undone.',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.detail.roles' => 'Members',
 			'web.roundTable.detail.rolesTitle' => 'Members & roles',
 			'web.roundTable.detail.rolesFraming' => 'Discussion framing (shared by all members)',
@@ -20391,8 +20658,6 @@ extension on Translations {
 			'web.roundTable.plan.rerun' => 'Re-run',
 			'web.roundTable.plan.running' => 'Running',
 			'web.roundTable.plan.done' => 'Done',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.pending' => 'Pending',
 			'web.roundTable.plan.openSession' => 'Open session',
 			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
@@ -20604,6 +20869,7 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.tasks' => 'Tasks',
 			'sessions.inspector.shell.tabs.history' => 'History',
 			'sessions.inspector.shell.tabs.vault' => 'Vault',
+			'sessions.inspector.shell.tabs.canvas' => 'Canvas',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
 			'sessions.inspector.shell.tabs.database' => 'Database',
 			'sessions.inspector.cortex.title' => 'Cortex workspace',
@@ -20684,6 +20950,28 @@ extension on Translations {
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
+			'sessions.inspector.canvas.kindUi' => 'UI mock',
+			'sessions.inspector.canvas.kindFlow' => 'Flowchart',
+			'sessions.inspector.canvas.kindMindmap' => 'Mind map',
+			'sessions.inspector.canvas.kindGraph' => 'Relationships',
+			'sessions.inspector.canvas.kindDoc' => 'Document',
+			'sessions.inspector.canvas.modeView' => 'View',
+			'sessions.inspector.canvas.modePin' => 'Pin',
+			'sessions.inspector.canvas.modeRegion' => 'Frame',
+			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => 'Working on ${title} · ${kind} — the agent treats this as "this canvas".',
+			'sessions.inspector.canvas.notePlaceholder' => 'What to change here…',
+			'sessions.inspector.canvas.messagePlaceholder' => 'Overall note (optional)…',
+			'sessions.inspector.canvas.send' => 'Send',
+			'sessions.inspector.canvas.sent' => 'Feedback sent to the session.',
+			'sessions.inspector.canvas.nothingToSend' => 'Add a pin, a frame, or a note first.',
+			'sessions.inspector.canvas.requestPlaceholder' => 'Ask the agent to design or draw something…',
+			'sessions.inspector.canvas.requestSend' => 'Design',
+			'sessions.inspector.canvas.requested' => 'Sent — the agent will render it here.',
+			'sessions.inspector.canvas.delete' => 'Delete',
+			'sessions.inspector.canvas.deleteTitle' => 'Delete canvas?',
+			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => 'Delete "${title}"? This can\'t be undone.',
+			'sessions.inspector.canvas.emptyTitle' => 'No canvas yet',
+			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -20838,6 +21126,8 @@ extension on Translations {
 			'providers.accounts.importLocal' => 'Import local',
 			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
 			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
 			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
@@ -20905,8 +21195,6 @@ extension on Translations {
 			'integrations.kvBaseUrl' => 'Base URL',
 			'integrations.kvScopes' => 'Scopes',
 			'integrations.kvVersion' => 'Version',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Last health ping',
 			'integrations.kvCreated' => 'Created',
 			'integrations.kvKeyRotated' => 'Key rotated',
@@ -21352,6 +21640,8 @@ extension on Translations {
 			'githosts.form.nameLabel' => 'Name',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -21419,8 +21709,6 @@ extension on Translations {
 			'channels.popup.mute' => 'Mute',
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'channels.badges.running' => 'running',
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
@@ -21866,6 +22154,8 @@ extension on Translations {
 			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
 			'settings.serverSettings.fields.notesPath' => 'Notes path',
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
@@ -21933,8 +22223,6 @@ extension on Translations {
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} active',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Active projects',
 			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
 			'cortexHub.settings' => 'Settings',

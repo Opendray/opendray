@@ -1997,6 +1997,7 @@ class _TranslationsSessionsInspectorZh extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitZh git = _TranslationsSessionsInspectorGitZh._(_root);
 	@override late final _TranslationsSessionsInspectorTasksZh tasks = _TranslationsSessionsInspectorTasksZh._(_root);
 	@override late final _TranslationsSessionsInspectorNotesZh notes = _TranslationsSessionsInspectorNotesZh._(_root);
+	@override late final _TranslationsSessionsInspectorCanvasZh canvas = _TranslationsSessionsInspectorCanvasZh._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -3354,6 +3355,7 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorTabsZh tabs = _TranslationsWebSessionsInspectorTabsZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorVaultPanelZh vaultPanel = _TranslationsWebSessionsInspectorVaultPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelZh cortexPanel = _TranslationsWebSessionsInspectorCortexPanelZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorCanvasZh canvas = _TranslationsWebSessionsInspectorCanvasZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -6744,6 +6746,37 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get save => '保存';
 }
 
+// Path: sessions.inspector.canvas
+class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspectorCanvasEn {
+	_TranslationsSessionsInspectorCanvasZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get kindUi => 'UI 稿';
+	@override String get kindFlow => '流程图';
+	@override String get kindMindmap => '思维导图';
+	@override String get kindGraph => '关系图';
+	@override String get kindDoc => '文档';
+	@override String get modeView => '查看';
+	@override String get modePin => '钉点';
+	@override String get modeRegion => '框选';
+	@override String focusLine({required Object title, required Object kind}) => '正在处理 ${title} · ${kind} —— agent 已把它当作「这个画布」。';
+	@override String get notePlaceholder => '这里要改什么……';
+	@override String get messagePlaceholder => '整体说明(可选)……';
+	@override String get send => '发送';
+	@override String get sent => '反馈已发送到会话。';
+	@override String get nothingToSend => '请先添加钉点、框选或说明。';
+	@override String get requestPlaceholder => '让 agent 设计或画点什么……';
+	@override String get requested => '已发送 —— agent 会渲染到这里。';
+	@override String get requestSend => '设计';
+	@override String get delete => '删除';
+	@override String get deleteTitle => '删除画布?';
+	@override String deleteBody({required Object title}) => '删除「${title}」?此操作无法撤销。';
+	@override String get emptyTitle => '还没有画布';
+	@override String get emptyBlurb => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7324,6 +7357,7 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
 	@override String get database => '数据库';
+	@override String get canvas => '画布';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -7375,6 +7409,58 @@ class _TranslationsWebSessionsInspectorCortexPanelZh extends TranslationsWebSess
 	@override String get plan => '计划';
 	@override String get latestJournal => '最新日志';
 	@override String get empty => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。';
+}
+
+// Path: web.sessions.inspector.canvas
+class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsInspectorCanvasEn {
+	_TranslationsWebSessionsInspectorCanvasZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '还没有画布。在上面让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。';
+	@override String get modePreview => '预览';
+	@override String get modePin => '钉点';
+	@override String get modeRegion => '框选';
+	@override String get hintPin => '点击预览中的元素来钉住它——agent 会拿到它的选择器和标记。';
+	@override String get hintRegion => '在你想指出的区域上拖出一个矩形。';
+	@override String get notePlaceholder => '这里要改什么……';
+	@override String get removeAnnotation => '删除标注';
+	@override String get messagePlaceholder => '给 agent 的整体说明(可选)……';
+	@override String get send => '发送给 agent';
+	@override String get clear => '清空';
+	@override String get sent => '反馈已发送到会话。';
+	@override String get sendFailed => '反馈发送失败';
+	@override String get nothingToSend => '请先添加钉点、框选或说明。';
+	@override String get previewFailed => '预览渲染失败';
+	@override String get previewHtml => '在画布中预览';
+	@override String get popOut => '弹出';
+	@override String get popOutHint => '在独立大窗口中打开画布(不占用终端)';
+	@override String get popOutTitle => '画布';
+	@override String get popOutMissing => '缺少会话或项目信息——请从某个会话的 Canvas 标签页重新打开画布。';
+	@override String get viewportMobile => '手机宽度 (375px)';
+	@override String get viewportTablet => '平板宽度 (768px)';
+	@override String get viewportFull => '全宽';
+	@override String get requestPlaceholder => '让 agent 设计或画点什么……';
+	@override String get requestSend => '设计';
+	@override String get requested => '已发送给 agent —— 它会渲染到画布。';
+	@override String get requestFailed => '请求发送失败';
+	@override String get deleteMock => '删除此画布';
+	@override String deleteConfirm({required Object title}) => '删除画布「${title}」?此操作无法撤销。';
+	@override String get deleted => '画布已删除';
+	@override String get deleteFailed => '删除画布失败';
+	@override String get newMock => '新建画布';
+	@override String get newMockHint => '新建一个画布,而不是更新选中的那个';
+	@override String get targetLabel => '→ 正在处理:';
+	@override String get targetNew => '新建画布';
+	@override String get newMockPlaceholder => '先在上面选择要画什么,再到请求栏描述 —— agent 会把新画布渲染到这里。';
+	@override String get kindLabel => '画成:';
+	@override String get kind_ui => 'UI 稿';
+	@override String get kind_flow => '流程图';
+	@override String get kind_mindmap => '思维导图';
+	@override String get kind_graph => '关系图';
+	@override String get kind_doc => '文档';
+	@override String get focusHint => 'agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9376,6 +9462,7 @@ class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInsp
 	@override String get tasks => '任务';
 	@override String get history => '历史';
 	@override String get vault => '文档库';
+	@override String get canvas => '画布';
 	@override String get cortex => '心智中枢';
 	@override String get database => '数据库';
 }
@@ -9655,6 +9742,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.vault' => '文档库',
 			'web.sessions.inspector.tabs.cortex' => '心智中枢',
 			'web.sessions.inspector.tabs.database' => '数据库',
+			'web.sessions.inspector.tabs.canvas' => '画布',
 			'web.sessions.inspector.vaultPanel.open' => '打开文档库',
 			'web.sessions.inspector.vaultPanel.projectDocs' => '项目文档',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => '文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。',
@@ -9688,6 +9776,49 @@ extension on TranslationsZh {
 			'web.sessions.inspector.cortexPanel.plan' => '计划',
 			'web.sessions.inspector.cortexPanel.latestJournal' => '最新日志',
 			'web.sessions.inspector.cortexPanel.empty' => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。',
+			'web.sessions.inspector.canvas.empty' => '还没有画布。在上面让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
+			'web.sessions.inspector.canvas.modePreview' => '预览',
+			'web.sessions.inspector.canvas.modePin' => '钉点',
+			'web.sessions.inspector.canvas.modeRegion' => '框选',
+			'web.sessions.inspector.canvas.hintPin' => '点击预览中的元素来钉住它——agent 会拿到它的选择器和标记。',
+			'web.sessions.inspector.canvas.hintRegion' => '在你想指出的区域上拖出一个矩形。',
+			'web.sessions.inspector.canvas.notePlaceholder' => '这里要改什么……',
+			'web.sessions.inspector.canvas.removeAnnotation' => '删除标注',
+			'web.sessions.inspector.canvas.messagePlaceholder' => '给 agent 的整体说明(可选)……',
+			'web.sessions.inspector.canvas.send' => '发送给 agent',
+			'web.sessions.inspector.canvas.clear' => '清空',
+			'web.sessions.inspector.canvas.sent' => '反馈已发送到会话。',
+			'web.sessions.inspector.canvas.sendFailed' => '反馈发送失败',
+			'web.sessions.inspector.canvas.nothingToSend' => '请先添加钉点、框选或说明。',
+			'web.sessions.inspector.canvas.previewFailed' => '预览渲染失败',
+			'web.sessions.inspector.canvas.previewHtml' => '在画布中预览',
+			'web.sessions.inspector.canvas.popOut' => '弹出',
+			'web.sessions.inspector.canvas.popOutHint' => '在独立大窗口中打开画布(不占用终端)',
+			'web.sessions.inspector.canvas.popOutTitle' => '画布',
+			'web.sessions.inspector.canvas.popOutMissing' => '缺少会话或项目信息——请从某个会话的 Canvas 标签页重新打开画布。',
+			'web.sessions.inspector.canvas.viewportMobile' => '手机宽度 (375px)',
+			'web.sessions.inspector.canvas.viewportTablet' => '平板宽度 (768px)',
+			'web.sessions.inspector.canvas.viewportFull' => '全宽',
+			'web.sessions.inspector.canvas.requestPlaceholder' => '让 agent 设计或画点什么……',
+			'web.sessions.inspector.canvas.requestSend' => '设计',
+			'web.sessions.inspector.canvas.requested' => '已发送给 agent —— 它会渲染到画布。',
+			'web.sessions.inspector.canvas.requestFailed' => '请求发送失败',
+			'web.sessions.inspector.canvas.deleteMock' => '删除此画布',
+			'web.sessions.inspector.canvas.deleteConfirm' => ({required Object title}) => '删除画布「${title}」?此操作无法撤销。',
+			'web.sessions.inspector.canvas.deleted' => '画布已删除',
+			'web.sessions.inspector.canvas.deleteFailed' => '删除画布失败',
+			'web.sessions.inspector.canvas.newMock' => '新建画布',
+			'web.sessions.inspector.canvas.newMockHint' => '新建一个画布,而不是更新选中的那个',
+			'web.sessions.inspector.canvas.targetLabel' => '→ 正在处理:',
+			'web.sessions.inspector.canvas.targetNew' => '新建画布',
+			'web.sessions.inspector.canvas.newMockPlaceholder' => '先在上面选择要画什么,再到请求栏描述 —— agent 会把新画布渲染到这里。',
+			'web.sessions.inspector.canvas.kindLabel' => '画成:',
+			'web.sessions.inspector.canvas.kind_ui' => 'UI 稿',
+			'web.sessions.inspector.canvas.kind_flow' => '流程图',
+			'web.sessions.inspector.canvas.kind_mindmap' => '思维导图',
+			'web.sessions.inspector.canvas.kind_graph' => '关系图',
+			'web.sessions.inspector.canvas.kind_doc' => '文档',
+			'web.sessions.inspector.canvas.focusHint' => 'agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -9915,6 +10046,8 @@ extension on TranslationsZh {
 			'web.project.header.docsCount_one' => ({required Object count}) => '${count} 份文档',
 			'web.project.header.docsCount_other' => ({required Object count}) => '${count} 份文档',
 			'web.project.header.journalEntries_one' => ({required Object count}) => '${count} 条日志',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} 条日志',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} 条待处理提案',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} 条待处理提案',
@@ -9959,8 +10092,6 @@ extension on TranslationsZh {
 			'web.project.inbox.emptyHint' => 'Agent 通过 `project_goal_set` / `project_plan_set` MCP 工具在这里提交提案。',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label}已更新',
 			'web.project.inbox.approveFailedToast' => '批准失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.rejectedToast' => '已驳回',
 			'web.project.inbox.rejectFailedToast' => '驳回失败',
 			'web.project.inbox.sessionPrefix' => 'ses',
@@ -10429,6 +10560,8 @@ extension on TranslationsZh {
 			'web.providers.antigravityAccounts.removedToast' => '账号已移除',
 			'web.providers.antigravityAccounts.removeFailedToast' => '移除失败',
 			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => '切换 ${name}',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => '移除 ${name}',
 			'web.providers.models.title' => '模型',
 			'web.providers.models.help' => '该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。',
@@ -10473,8 +10606,6 @@ extension on TranslationsZh {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => '删除频道 ${id}?',
 			'web.channels.toasts.deleted' => '频道已删除',
 			'web.channels.toasts.created' => '频道已创建',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.toasts.updated' => '频道已更新',
 			'web.channels.toasts.muted' => '频道已静音',
 			'web.channels.toasts.unmuted' => '频道已取消静音',
@@ -10943,6 +11074,8 @@ extension on TranslationsZh {
 			'web.backups.restore.previewing' => '预览中…',
 			'web.backups.restore.previewFirstHint' => '请先运行试运行预览',
 			'web.backups.restore.applyRestore' => '应用恢复',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.kind.dbOnly' => '仅数据库',
 			'web.backups.kind.fullInstance' => '完整实例',
 			'web.backups.kind.fullInstanceHint' => '包含 vault、secrets.env 和 config.toml',
@@ -10987,8 +11120,6 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.columns.interval' => '间隔',
 			'web.backups.schedulesTab.columns.keep' => '保留',
 			'web.backups.schedulesTab.columns.nextRun' => '下次运行',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.schedulesTab.columns.enabled' => '启用',
 			'web.backups.schedulesTab.columns.actions' => '操作',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} 个备份',
@@ -11457,6 +11588,8 @@ extension on TranslationsZh {
 			'web.memoryAmbient.providers.dialog.makeDefaultLabel' => '将此设为默认 provider',
 			'web.memoryAmbient.providers.dialog.create' => '创建',
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => '名称不能为空',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => '已创建 Provider ${name}',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.providers.modelSelect.editTitle' => '更换模型',
@@ -11501,8 +11634,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.dedupHint' => '越高 = 去重越严格。0.85 是推荐的平衡点。',
 			'web.memoryAmbient.rules.dialog.create' => '创建',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => '名称不能为空',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => '已创建规则 ${name}',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.profiles.title' => 'Injection Profiles',
@@ -11971,6 +12102,8 @@ extension on TranslationsZh {
 			'web.roundTable.detail.send' => '发送',
 			'web.roundTable.detail.delete' => '删除',
 			'web.roundTable.detail.deleteConfirm' => '删除这个群聊及其所有消息?此操作不可撤销。',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.detail.roles' => '成员',
 			'web.roundTable.detail.rolesTitle' => '成员与角色',
 			'web.roundTable.detail.rolesFraming' => '讨论框架(所有成员共享)',
@@ -12015,8 +12148,6 @@ extension on TranslationsZh {
 			'web.roundTable.plan.rerun' => '重跑',
 			'web.roundTable.plan.running' => '运行中',
 			'web.roundTable.plan.done' => '完成',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.pending' => '待运行',
 			'web.roundTable.plan.openSession' => '打开会话',
 			'web.roundTable.plan.needProject' => '运行步骤前需绑定项目(cwd)。',
@@ -12228,6 +12359,7 @@ extension on TranslationsZh {
 			'sessions.inspector.shell.tabs.tasks' => '任务',
 			'sessions.inspector.shell.tabs.history' => '历史',
 			'sessions.inspector.shell.tabs.vault' => '文档库',
+			'sessions.inspector.shell.tabs.canvas' => '画布',
 			'sessions.inspector.shell.tabs.cortex' => '心智中枢',
 			'sessions.inspector.shell.tabs.database' => '数据库',
 			'sessions.inspector.cortex.title' => '心智中枢工作区',
@@ -12308,6 +12440,28 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
+			'sessions.inspector.canvas.kindUi' => 'UI 稿',
+			'sessions.inspector.canvas.kindFlow' => '流程图',
+			'sessions.inspector.canvas.kindMindmap' => '思维导图',
+			'sessions.inspector.canvas.kindGraph' => '关系图',
+			'sessions.inspector.canvas.kindDoc' => '文档',
+			'sessions.inspector.canvas.modeView' => '查看',
+			'sessions.inspector.canvas.modePin' => '钉点',
+			'sessions.inspector.canvas.modeRegion' => '框选',
+			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => '正在处理 ${title} · ${kind} —— agent 已把它当作「这个画布」。',
+			'sessions.inspector.canvas.notePlaceholder' => '这里要改什么……',
+			'sessions.inspector.canvas.messagePlaceholder' => '整体说明(可选)……',
+			'sessions.inspector.canvas.send' => '发送',
+			'sessions.inspector.canvas.sent' => '反馈已发送到会话。',
+			'sessions.inspector.canvas.nothingToSend' => '请先添加钉点、框选或说明。',
+			'sessions.inspector.canvas.requestPlaceholder' => '让 agent 设计或画点什么……',
+			'sessions.inspector.canvas.requested' => '已发送 —— agent 会渲染到这里。',
+			'sessions.inspector.canvas.requestSend' => '设计',
+			'sessions.inspector.canvas.delete' => '删除',
+			'sessions.inspector.canvas.deleteTitle' => '删除画布?',
+			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '删除「${title}」?此操作无法撤销。',
+			'sessions.inspector.canvas.emptyTitle' => '还没有画布',
+			'sessions.inspector.canvas.emptyBlurb' => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12462,6 +12616,8 @@ extension on TranslationsZh {
 			'providers.accounts.importLocal' => '导入本地',
 			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
 			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
 			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
@@ -12529,8 +12685,6 @@ extension on TranslationsZh {
 			'integrations.kvBaseUrl' => 'Base URL',
 			'integrations.kvScopes' => '范围',
 			'integrations.kvVersion' => '版本',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => '最近健康检查',
 			'integrations.kvCreated' => '创建于',
 			'integrations.kvKeyRotated' => 'Key 轮换于',
@@ -12976,6 +13130,8 @@ extension on TranslationsZh {
 			'githosts.form.nameLabel' => '名称',
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
 			'githosts.form.kinds.github' => 'GitHub',
+			_ => null,
+		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -13043,8 +13199,6 @@ extension on TranslationsZh {
 			'channels.popup.mute' => '静音',
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'channels.badges.running' => '运行中',
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
@@ -13490,6 +13644,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
 			'settings.serverSettings.fields.notesPath' => '笔记路径',
 			'settings.serverSettings.fields.skillsPath' => '技能路径',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
@@ -13557,8 +13713,6 @@ extension on TranslationsZh {
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
 			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => '活跃项目',
 			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
 			'cortexHub.settings' => '设置',
