@@ -6789,6 +6789,9 @@ class _TranslationsSessionsInspectorCanvasEs extends TranslationsSessionsInspect
 	@override String get newCanvas => 'Nuevo';
 	@override String get newCanvasTitle => 'Nuevo lienzo';
 	@override String get newCanvasBlurb => 'Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.';
+	@override String get setWorkspace => 'Trabajar aquí';
+	@override String get workspaceSet => 'El agente ya trabaja en este lienzo.';
+	@override String get previewOnlyHint => 'Solo vista previa: pulsa «Trabajar aquí» para apuntarlo.';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7475,6 +7478,13 @@ class _TranslationsWebSessionsInspectorCanvasEs extends TranslationsWebSessionsI
 	@override String get kind_graph => 'Relaciones';
 	@override String get kind_doc => 'Documento';
 	@override String get focusHint => 'El agente lo trata como «este lienzo»: solo di en la terminal qué cambiar.';
+	@override String get setWorkspace => 'Trabajar aquí';
+	@override String get setWorkspaceHint => 'Indica al agente que trabaje en este lienzo: envía una nota breve a la sesión';
+	@override String get isWorkspace => '· espacio del agente';
+	@override String get workspaceBadge => 'Espacio de trabajo del agente';
+	@override String get workspaceSet => 'El agente ya trabaja en este lienzo.';
+	@override String get workspaceFailed => 'No se pudo fijar el espacio de trabajo';
+	@override String get previewOnlyHint => 'Solo vista previa: pulsa «Trabajar aquí» para apuntar el agente a él.';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9833,6 +9843,13 @@ extension on TranslationsEs {
 			'web.sessions.inspector.canvas.kind_graph' => 'Relaciones',
 			'web.sessions.inspector.canvas.kind_doc' => 'Documento',
 			'web.sessions.inspector.canvas.focusHint' => 'El agente lo trata como «este lienzo»: solo di en la terminal qué cambiar.',
+			'web.sessions.inspector.canvas.setWorkspace' => 'Trabajar aquí',
+			'web.sessions.inspector.canvas.setWorkspaceHint' => 'Indica al agente que trabaje en este lienzo: envía una nota breve a la sesión',
+			'web.sessions.inspector.canvas.isWorkspace' => '· espacio del agente',
+			'web.sessions.inspector.canvas.workspaceBadge' => 'Espacio de trabajo del agente',
+			'web.sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
+			'web.sessions.inspector.canvas.workspaceFailed' => 'No se pudo fijar el espacio de trabajo',
+			'web.sessions.inspector.canvas.previewOnlyHint' => 'Solo vista previa: pulsa «Trabajar aquí» para apuntar el agente a él.',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -10053,6 +10070,8 @@ extension on TranslationsEs {
 			'web.project.picker.browse' => 'Examinar',
 			'web.project.picker.browseTooltip' => 'Examina el sistema de archivos del host del gateway',
 			'web.project.picker.open' => 'Abrir',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.picker.recentLabel' => 'Proyectos recientes (desde la memoria almacenada):',
 			'web.project.picker.orphanTooltip' => 'Parece un scope_key truncado (antiguo error de importación del mirror). Puede que no tenga documentos del proyecto.',
 			'web.project.picker.orphanBadge' => 'huérfano',
@@ -10060,8 +10079,6 @@ extension on TranslationsEs {
 			'web.project.header.docsCount_one' => ({required Object count}) => '${count} documento',
 			'web.project.header.docsCount_other' => ({required Object count}) => '${count} documentos',
 			'web.project.header.journalEntries_one' => ({required Object count}) => '${count} entrada del diario',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} entradas del diario',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} propuesta pendiente',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} propuestas pendientes',
@@ -10567,6 +10584,8 @@ extension on TranslationsEs {
 			'web.providers.antigravityAccounts.addingBodySuffix' => 'Luego haz clic en <1>Importar locales</1> para registrarla. El directorio solo cuenta como cuenta cuando el inicio de sesión de Google ha escrito su token OAuth.',
 			'web.providers.antigravityAccounts.loading' => 'Cargando…',
 			'web.providers.antigravityAccounts.empty' => 'Aún no hay cuentas de Antigravity. Ejecuta <1>HOME=~/.antigravity-accounts/&lt;nombre&gt; agy</1> en el host del gateway, completa el inicio de sesión de Google y luego haz clic en Importar locales.',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.antigravityAccounts.noTokenYet' => 'sin sesión iniciada',
 			'web.providers.antigravityAccounts.homeDir' => 'home:',
 			'web.providers.antigravityAccounts.toggleFailedToast' => 'Error al alternar',
@@ -10574,8 +10593,6 @@ extension on TranslationsEs {
 			'web.providers.antigravityAccounts.removedToast' => 'Cuenta eliminada',
 			'web.providers.antigravityAccounts.removeFailedToast' => 'Error al eliminar',
 			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => 'Alternar ${name}',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => 'Quitar ${name}',
 			'web.providers.models.title' => 'Modelos',
 			'web.providers.models.help' => 'Modelos ofrecidos para este proveedor. El predeterminado se pasa a cada session mediante el flag de modelo; las sessions aún pueden sobrescribirlo.',
@@ -11081,6 +11098,8 @@ extension on TranslationsEs {
 			'web.backups.restore.planTitle' => 'Plan de restauración (simulación: nada cambió)',
 			'web.backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
 			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
 			'web.backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de instancia completa, luego sobrescribe lo anterior y ejecuta pg_restore.',
@@ -11088,8 +11107,6 @@ extension on TranslationsEs {
 			'web.backups.restore.previewing' => 'Previsualizando…',
 			'web.backups.restore.previewFirstHint' => 'Ejecuta primero una simulación',
 			'web.backups.restore.applyRestore' => 'Aplicar restauración',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.kind.dbOnly' => 'Solo BD',
 			'web.backups.kind.fullInstance' => 'Instancia completa',
 			'web.backups.kind.fullInstanceHint' => 'Incluye el vault, secrets.env y config.toml',
@@ -11595,6 +11612,8 @@ extension on TranslationsEs {
 			'web.memoryAmbient.providers.dialog.nameLabel' => 'Nombre',
 			'web.memoryAmbient.providers.dialog.namePlaceholder' => 'p. ej. lmstudio-qwen',
 			'web.memoryAmbient.providers.dialog.modelLabel' => 'Modelo',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.baseUrlLabel' => 'URL base',
 			'web.memoryAmbient.providers.dialog.integrationNote' => 'Los proveedores de integración resuelven su URL base a partir de una integración registrada. Configúrala primero en Integraciones; el cableado avanzado (extra_config) es solo de DB en esta versión.',
 			'web.memoryAmbient.providers.dialog.apiKeyLabel' => 'Clave de API',
@@ -11602,8 +11621,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.providers.dialog.makeDefaultLabel' => 'Hacer de este el proveedor predeterminado',
 			'web.memoryAmbient.providers.dialog.create' => 'Crear',
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => 'El nombre es obligatorio',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => 'Proveedor ${name} creado',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => 'La creación falló',
 			'web.memoryAmbient.providers.modelSelect.editTitle' => 'Cambiar modelo',
@@ -12109,6 +12126,8 @@ extension on TranslationsEs {
 			'web.roundTable.detail.summarize' => 'Resumir',
 			'web.roundTable.detail.summarizing' => 'Resumiendo…',
 			'web.roundTable.detail.emptyThread' => 'Aún no hay mensajes.',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.detail.emptyHint' => 'Escribe algo y menciona con @ a un miembro para que responda.',
 			'web.roundTable.detail.replying' => 'los miembros están respondiendo…',
 			'web.roundTable.detail.mentionHint' => 'Mencionar:',
@@ -12116,8 +12135,6 @@ extension on TranslationsEs {
 			'web.roundTable.detail.send' => 'Enviar',
 			'web.roundTable.detail.delete' => 'Eliminar',
 			'web.roundTable.detail.deleteConfirm' => '¿Eliminar este chat y todos sus mensajes? No se puede deshacer.',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.detail.roles' => 'Miembros',
 			'web.roundTable.detail.rolesTitle' => 'Miembros y roles',
 			'web.roundTable.detail.rolesFraming' => 'Marco de la discusión (compartido por todos)',
@@ -12490,6 +12507,9 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.newCanvas' => 'Nuevo',
 			'sessions.inspector.canvas.newCanvasTitle' => 'Nuevo lienzo',
 			'sessions.inspector.canvas.newCanvasBlurb' => 'Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.',
+			'sessions.inspector.canvas.setWorkspace' => 'Trabajar aquí',
+			'sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
+			'sessions.inspector.canvas.previewOnlyHint' => 'Solo vista previa: pulsa «Trabajar aquí» para apuntarlo.',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12620,6 +12640,8 @@ extension on TranslationsEs {
 			'providers.updateCheck.latest' => ({required Object version}) => 'última ${version}',
 			'providers.updateCheck.updateButton' => 'Actualizar CLI',
 			'providers.updateCheck.updating' => 'Actualizando…',
+			_ => null,
+		} ?? switch (path) {
 			'providers.updateCheck.updatedSnack' => ({required Object version}) => 'Actualizado a ${version}.',
 			'providers.updateCheck.noChangeSnack' => 'Ya está en la última versión.',
 			'providers.updateCheck.updateFailed' => ({required Object error}) => 'Actualización fallida: ${error}',
@@ -12630,8 +12652,6 @@ extension on TranslationsEs {
 			'providers.accounts.displayNameLabel' => 'Nombre visible',
 			'providers.accounts.displayNameHint' => 'Cuenta de trabajo',
 			'providers.accounts.deleteTitle' => '¿Eliminar la cuenta?',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importFailedApi' => ({required Object error}) => 'Error al importar: ${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => 'Error al importar: ${error}',
 			'providers.accounts.enable' => 'Activar',
@@ -13134,6 +13154,8 @@ extension on TranslationsEs {
 			'backupTargetEditor.baseUrlLabel' => 'URL base',
 			'backupTargetEditor.baseUrlHint' => 'URL completa incluyendo la ruta. Nextcloud: https://cloud.example/remote.php/dav/files/<user>',
 			'backupTargetEditor.sftpPasswordHintEdit' => 'Déjalo en blanco para conservarla. Si están presentes tanto la contraseña como la clave privada, prevalece la clave privada.',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.sftpPasswordHintNew' => 'Contraseña O clave privada. Si están ambas, la contraseña pasa a ser solo un respaldo.',
 			'backupTargetEditor.privateKeyLabel' => 'Clave privada (PEM)',
 			'backupTargetEditor.privateKeyHintEdit' => 'Déjalo en blanco para conservarla. Pega el contenido OpenSSH/PEM.',
@@ -13144,8 +13166,6 @@ extension on TranslationsEs {
 			'backupTargetEditor.rcloneRemoteLabel' => 'Nombre del remoto',
 			'backupTargetEditor.rcloneRemoteHint' => 'Nombre de `rclone config` (sin los dos puntos).',
 			'backupTargetEditor.rcloneBinaryLabel' => 'Ruta del binario',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.rcloneBinaryHint' => 'Anula `which rclone`. Vacío = búsqueda en PATH.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Ruta de configuración',
 			'backupTargetEditor.rcloneConfigHint' => 'Anula --config. Vacío = valor por defecto de rclone.',
@@ -13648,6 +13668,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Umbrales de detección de inactividad.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notas, skills y raíz versionada con git.',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Rutas del vault para servidores MCP + archivo de secretos.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.memory' => 'Subsistema de memoria persistente entre CLIs.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Dónde viven los transcripts de Claude en disco.',
@@ -13658,8 +13680,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.adminUserHelper' => 'Efectivo cuando no hay keyfile ni variable de entorno configurada. Si no, consulta Ajustes → Cuenta.',
 			'settings.serverSettings.fields.adminPassword' => 'Contraseña admin',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Envíalo en blanco para conservarlo. Para rotaciones continuas usa Ajustes → Cuenta (respaldado por keyfile, sin reinicio).',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => 'TTL del token (web)',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Cadena de duración de Go, p. ej. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Nivel',

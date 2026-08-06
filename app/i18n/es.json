@@ -321,7 +321,14 @@
           "kind_mindmap": "Mapa mental",
           "kind_graph": "Relaciones",
           "kind_doc": "Documento",
-          "focusHint": "El agente lo trata como «este lienzo»: solo di en la terminal qué cambiar."
+          "focusHint": "El agente lo trata como «este lienzo»: solo di en la terminal qué cambiar.",
+          "setWorkspace": "Trabajar aquí",
+          "setWorkspaceHint": "Indica al agente que trabaje en este lienzo: envía una nota breve a la sesión",
+          "isWorkspace": "· espacio del agente",
+          "workspaceBadge": "Espacio de trabajo del agente",
+          "workspaceSet": "El agente ya trabaja en este lienzo.",
+          "workspaceFailed": "No se pudo fijar el espacio de trabajo",
+          "previewOnlyHint": "Solo vista previa: pulsa «Trabajar aquí» para apuntar el agente a él."
         }
       },
       "ended": {
@@ -3739,7 +3746,10 @@
         "hintRegion": "Arrastra un marco sobre la zona que quieres y confirma.",
         "newCanvas": "Nuevo",
         "newCanvasTitle": "Nuevo lienzo",
-        "newCanvasBlurb": "Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí."
+        "newCanvasBlurb": "Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.",
+        "setWorkspace": "Trabajar aquí",
+        "workspaceSet": "El agente ya trabaja en este lienzo.",
+        "previewOnlyHint": "Solo vista previa: pulsa «Trabajar aquí» para apuntarlo."
       }
     },
     "spawnSheet": {

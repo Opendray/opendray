@@ -27,6 +27,7 @@ import {
   submitFeedback,
   requestDesign,
   setCanvasFocus,
+  getCanvasFocus,
   subscribeCanvas,
   type CanvasAnnotation,
   type CanvasKind,
@@ -182,31 +183,50 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
     if (!selectedId || !list.some((a) => a.id === selectedId)) setSelectedId(list[0].id)
   }, [list, selectedId])
 
-  // Tell the gateway which canvas we're on, so plain conversation in the session
-  // ("make the header bigger") resolves to it. Silent here — this covers mount
-  // and auto-select; an explicit click notifies the agent instead (pickCanvas).
-  // assertedSlug tracks what we last sent so the two paths never double-send
-  // (and a silent send can't race ahead of the explicit one and swallow it).
-  const assertedSlug = useRef<string | null>(null)
-  const selectedSlug = list?.find((a) => a.id === selectedId)?.slug
+  // Which canvas the agent is working on. Browsing the list does NOT change it:
+  // picking a canvas is just a preview (free), while making it the workspace is
+  // a deliberate act that costs one seeded note. Otherwise flicking through
+  // canvases to decide would burn a turn per click.
+  const [workspace, setWorkspace] = useState<string>('')
+  const [committing, setCommitting] = useState(false)
   useEffect(() => {
-    if (newMock || !selectedSlug || assertedSlug.current === selectedSlug) return
-    assertedSlug.current = selectedSlug
-    void setCanvasFocus({ cwd, slug: selectedSlug }).catch(() => {})
-  }, [cwd, selectedSlug, newMock])
+    let cancelled = false
+    void getCanvasFocus(cwd)
+      .then((f) => {
+        if (!cancelled) setWorkspace(f.slug || '')
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [cwd])
 
-  // pickCanvas is an explicit operator switch: focus it AND seed the one-line
-  // focus note into the session, so the agent follows along in conversation.
-  const pickCanvas = useCallback(
-    (id: string, slug: string) => {
-      setNewMock(false)
-      setSelectedId(id)
-      setAnnotations([])
-      if (assertedSlug.current === slug) return
-      assertedSlug.current = slug
-      void setCanvasFocus({ cwd, slug, sessionId, notify: true }).catch(() => {})
+  // pickCanvas is preview-only — no request, no tokens.
+  const pickCanvas = useCallback((id: string) => {
+    setNewMock(false)
+    setSelectedId(id)
+    setAnnotations([])
+  }, [])
+
+  // setAsWorkspace is the deliberate "work on THIS one" action: it records the
+  // focus and seeds the single note that makes plain terminal conversation
+  // resolve here.
+  const commitWorkspace = useCallback(
+    async (slug: string) => {
+      setCommitting(true)
+      try {
+        await setCanvasFocus({ cwd, slug, sessionId, notify: true })
+        setWorkspace(slug)
+        toast.success(t('web.sessions.inspector.canvas.workspaceSet'))
+      } catch (e) {
+        toast.error(t('web.sessions.inspector.canvas.workspaceFailed'), {
+          description: (e as Error).message,
+        })
+      } finally {
+        setCommitting(false)
+      }
     },
-    [cwd, sessionId],
+    [cwd, sessionId, t],
   )
 
   const selRef = useRef({ slug: artifact?.slug, id: selectedId, newMock })
@@ -226,20 +246,11 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
           void qc.invalidateQueries({ queryKey: ['canvas-artifact', selRef.current.id] })
         }
       },
-      // Another panel for this project (e.g. the pop-out window) switched
-      // canvases — follow it, silently: it already notified the session.
+      // Another surface (the pop-out, or the phone) set the workspace — just
+      // reflect it. Nothing is seeded from here; that side already did it.
       onFocus: (ev) => {
-        if (ev.cwd !== cwd || !ev.slug || ev.slug === assertedSlug.current) return
-        assertedSlug.current = ev.slug
-        setNewMock(false)
-        setAnnotations([])
-        void qc
-          .fetchQuery({ queryKey: ['canvas', cwd], queryFn: () => listCanvas(cwd) })
-          .then((items) => {
-            const hit = items.find((a) => a.slug === ev.slug)
-            if (hit) setSelectedId(hit.id)
-          })
-          .catch(() => {})
+        if (ev.cwd !== cwd) return
+        setWorkspace(ev.slug || '')
       },
     })
   }, [token, cwd, qc])
@@ -483,20 +494,26 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
         {toolbarExtra}
       </div>
 
-      {/* Canvas list. The active pill is what you preview/annotate, what a Design
-          request updates in place, AND the canvas the agent resolves "this
-          canvas" to in ordinary conversation. "＋ New canvas" starts a fresh one. */}
+      {/* Canvas list. Picking one only PREVIEWS it — free. The dot marks the
+          workspace: the canvas the agent works on and resolves "this canvas" to
+          in ordinary conversation. "＋ New canvas" starts a fresh one. */}
       <div className="flex flex-wrap gap-1 shrink-0">
         {(list ?? []).map((a) => (
           <button
             key={a.id}
             type="button"
-            onClick={() => pickCanvas(a.id, a.slug)}
+            onClick={() => pickCanvas(a.id)}
             className={cn('flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] border', !newMock && a.id === selectedId ? 'bg-card border-primary/50 text-foreground' : 'border-border text-muted-foreground hover:text-foreground')}
             title={`${a.title || a.slug} · ${t(`web.sessions.inspector.canvas.kind_${a.kind || 'ui'}`)}`}
           >
             <KindIcon kind={a.kind} className="size-3" />
             {a.title || a.slug}
+            {a.slug === workspace && (
+              <span
+                className="size-1.5 rounded-full bg-primary"
+                title={t('web.sessions.inspector.canvas.workspaceBadge')}
+              />
+            )}
           </button>
         ))}
         <button
@@ -528,8 +545,8 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
         </div>
       )}
 
-      {/* Focus line: the canvas the agent will act on — for Design requests AND
-          for plain talk in the terminal. */}
+      {/* Workspace line: which canvas the agent acts on. Selecting is free;
+          committing costs exactly one seeded note, so it's an explicit act. */}
       <div className="flex items-center gap-1.5 shrink-0 text-[11px]">
         <span className="text-muted-foreground">{t('web.sessions.inspector.canvas.targetLabel')}</span>
         {newMock ? (
@@ -544,6 +561,22 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
         ) : (
           <span className="text-muted-foreground">{t('web.sessions.inspector.canvas.targetNew')}</span>
         )}
+        {!newMock && artifact && artifact.slug !== workspace && (
+          <button
+            type="button"
+            onClick={() => void commitWorkspace(artifact.slug)}
+            disabled={committing}
+            className="ml-auto shrink-0 px-2 py-0.5 rounded-sm border border-primary/50 text-foreground hover:border-primary disabled:opacity-50"
+            title={t('web.sessions.inspector.canvas.setWorkspaceHint')}
+          >
+            {t('web.sessions.inspector.canvas.setWorkspace')}
+          </button>
+        )}
+        {!newMock && artifact && artifact.slug === workspace && (
+          <span className="ml-auto shrink-0 text-primary">
+            {t('web.sessions.inspector.canvas.isWorkspace')}
+          </span>
+        )}
         {!newMock && artifact && (
           <button
             type="button"
@@ -551,7 +584,7 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
             disabled={deleting}
             aria-label={t('web.sessions.inspector.canvas.deleteMock')}
             title={t('web.sessions.inspector.canvas.deleteMock')}
-            className="ml-auto flex items-center justify-center size-6 shrink-0 rounded-sm border border-border text-muted-foreground hover:text-state-failed hover:border-state-failed/50 disabled:opacity-50"
+            className="flex items-center justify-center size-6 shrink-0 rounded-sm border border-border text-muted-foreground hover:text-state-failed hover:border-state-failed/50 disabled:opacity-50"
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -559,7 +592,9 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
       </div>
       {!newMock && artifact && (
         <p className="text-[10px] text-muted-foreground shrink-0 -mt-1">
-          {t('web.sessions.inspector.canvas.focusHint')}
+          {artifact.slug === workspace
+            ? t('web.sessions.inspector.canvas.focusHint')
+            : t('web.sessions.inspector.canvas.previewOnlyHint')}
         </p>
       )}
 

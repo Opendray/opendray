@@ -42,9 +42,12 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
   InAppWebViewController? _thumb;
   StreamSubscription<CanvasEvent>? _events;
 
-  /// The slug we last told the gateway we're on, so a silent assert can't
-  /// double-send or race the explicit (notifying) one.
-  String? _assertedSlug;
+  /// The canvas the agent actually works on. Browsing the rail does NOT change
+  /// it — picking a canvas only previews it (free), while making it the
+  /// workspace is a deliberate act that costs one seeded note. Otherwise
+  /// flicking through canvases to decide would burn a turn per tap.
+  String _workspace = '';
+  bool _committing = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -53,6 +56,7 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
   void initState() {
     super.initState();
     unawaited(_load());
+    unawaited(_loadWorkspace());
     _events = ref.read(canvasEventsProvider)?.stream.listen(_onEvent);
   }
 
@@ -67,12 +71,10 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
     if (ev.cwd != widget.cwd || !mounted) return;
     if (ev.isUpdated) {
       unawaited(_load(keepSelection: true));
-    } else if (ev.isFocus && ev.slug.isNotEmpty && ev.slug != _assertedSlug) {
-      // Another surface (the web panel) switched canvases — follow it
-      // silently; it already notified the session.
-      _assertedSlug = ev.slug;
-      final hit = _list.valueOrNull?.where((a) => a.slug == ev.slug).firstOrNull;
-      if (hit != null) unawaited(_select(hit, notify: false));
+    } else if (ev.isFocus) {
+      // Another surface (the web panel) set the workspace — just reflect it.
+      // Nothing is seeded from here; that side already did it.
+      setState(() => _workspace = ev.slug);
     }
   }
 
@@ -89,7 +91,7 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
           _artifact = null;
         });
       } else if (!items.any((a) => a.id == current)) {
-        await _select(items.first, notify: false);
+        await _select(items.first);
       } else if (keepSelection && current != null) {
         await _loadArtifact(current);
       }
@@ -102,26 +104,43 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
     }
   }
 
-  /// Select a canvas. [notify] marks an explicit operator switch, which also
-  /// seeds the "[Canvas focus]" note into the session so the agent knows which
-  /// canvas plain conversation refers to.
-  Future<void> _select(CanvasSummary item, {required bool notify}) async {
+  /// Preview a canvas. Free: no request, no tokens — the operator is browsing.
+  Future<void> _select(CanvasSummary item) async {
     setState(() {
       _selectedId = item.id;
       _newCanvas = false;
     });
     await _loadArtifact(item.id);
-    if (_assertedSlug == item.slug) return;
-    _assertedSlug = item.slug;
+  }
+
+  Future<void> _loadWorkspace() async {
+    try {
+      final f = await ref.read(canvasApiProvider).getFocus(widget.cwd);
+      if (!mounted) return;
+      setState(() => _workspace = f.slug);
+    } on Object catch (_) {
+      // Unknown workspace just means no badge.
+    }
+  }
+
+  /// The deliberate "work on THIS one" action: records the workspace and seeds
+  /// the single note that makes plain terminal conversation resolve here.
+  Future<void> _commitWorkspace(CanvasSummary item) async {
+    setState(() => _committing = true);
     try {
       await ref.read(canvasApiProvider).setFocus(
             cwd: widget.cwd,
             slug: item.slug,
-            sessionId: notify ? widget.sessionId : null,
-            notify: notify,
+            sessionId: widget.sessionId,
+            notify: true,
           );
-    } on Object catch (_) {
-      // Focus is a convenience; a failure must not block viewing.
+      if (!mounted) return;
+      setState(() => _workspace = item.slug);
+      _snack(t.sessions.inspector.canvas.workspaceSet);
+    } on Object catch (e) {
+      _snack(t.sessions.inspector.shared.insertFailedGeneric(error: '$e'));
+    } finally {
+      if (mounted) setState(() => _committing = false);
     }
   }
 
@@ -206,7 +225,7 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
     if (ok != true) return;
     try {
       await ref.read(canvasApiProvider).delete(a.id);
-      _assertedSlug = null;
+      if (a.slug == _workspace) setState(() => _workspace = '');
       await _load();
     } on Object catch (e) {
       _snack(t.sessions.inspector.shared.insertFailedGeneric(error: '$e'));
@@ -260,11 +279,28 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
             );
           }
           final a = items[i];
+          final isWorkspace = a.slug == _workspace;
           return ChoiceChip(
             selected: !_newCanvas && a.id == _selectedId,
             avatar: Icon(canvasKindIcon(a.kind), size: 16),
-            label: Text(a.label, overflow: TextOverflow.ellipsis),
-            onSelected: (_) => unawaited(_select(a, notify: true)),
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: Text(a.label, overflow: TextOverflow.ellipsis)),
+                if (isWorkspace) ...[
+                  const SizedBox(width: 5),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            onSelected: (_) => unawaited(_select(a)),
           );
         },
       ),
@@ -292,24 +328,43 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
     );
   }
 
+  /// Says whether the previewed canvas is merely being looked at or is the
+  /// agent's workspace — and offers the one deliberate action that changes it.
   Widget _focusLine(ThemeData theme) {
     final a = _artifact!;
+    final isWorkspace = a.slug == _workspace;
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 0, 4, 4),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              t.sessions.inspector.canvas.focusLine(
-                title: a.title.isEmpty ? a.slug : a.title,
-                kind: canvasKindLabel(a.kind),
-              ),
+              isWorkspace
+                  ? t.sessions.inspector.canvas.focusLine(
+                      title: a.title.isEmpty ? a.slug : a.title,
+                      kind: canvasKindLabel(a.kind),
+                    )
+                  : t.sessions.inspector.canvas.previewOnlyHint,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: isWorkspace
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (!isWorkspace)
+            TextButton(
+              onPressed: _committing
+                  ? null
+                  : () {
+                      final item = _list.valueOrNull
+                          ?.where((c) => c.id == _selectedId)
+                          .firstOrNull;
+                      if (item != null) unawaited(_commitWorkspace(item));
+                    },
+              child: Text(t.sessions.inspector.canvas.setWorkspace),
+            ),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 18),
             tooltip: t.sessions.inspector.canvas.delete,

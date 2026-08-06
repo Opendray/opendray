@@ -321,7 +321,14 @@
           "kind_mindmap": "思维导图",
           "kind_graph": "关系图",
           "kind_doc": "文档",
-          "focusHint": "agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。"
+          "focusHint": "agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。",
+          "setWorkspace": "在这上面工作",
+          "setWorkspaceHint": "让 agent 在这个画布上工作 —— 会向会话发送一条简短说明",
+          "isWorkspace": "· agent 的工作区",
+          "workspaceBadge": "agent 的工作区",
+          "workspaceSet": "agent 现在在这个画布上工作。",
+          "workspaceFailed": "设置工作区失败",
+          "previewOnlyHint": "仅预览 —— 点「在这上面工作」才会让 agent 指向它。"
         }
       },
       "ended": {
@@ -3739,7 +3746,10 @@
         "hintRegion": "拖出一个框覆盖你要指的区域,然后确认。",
         "newCanvas": "新建",
         "newCanvasTitle": "新建画布",
-        "newCanvasBlurb": "先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。"
+        "newCanvasBlurb": "先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。",
+        "setWorkspace": "在这上面工作",
+        "workspaceSet": "agent 现在在这个画布上工作。",
+        "previewOnlyHint": "仅预览 —— 点「在这上面工作」才会让 agent 指向它。"
       }
     },
     "spawnSheet": {

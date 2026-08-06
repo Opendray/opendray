@@ -321,7 +321,14 @@
           "kind_mindmap": "Mind map",
           "kind_graph": "Relationships",
           "kind_doc": "Document",
-          "focusHint": "The agent treats this as \"this canvas\" — just say what to change in the terminal."
+          "focusHint": "The agent treats this as \"this canvas\" — just say what to change in the terminal.",
+          "setWorkspace": "Work on this",
+          "setWorkspaceHint": "Tell the agent to work on this canvas — sends one short note to the session",
+          "isWorkspace": "· agent's workspace",
+          "workspaceBadge": "The agent's workspace",
+          "workspaceSet": "The agent is now working on this canvas.",
+          "workspaceFailed": "Could not set the workspace",
+          "previewOnlyHint": "Previewing only — press \"Work on this\" to point the agent at it."
         }
       },
       "ended": {
@@ -3739,7 +3746,10 @@
         "hintRegion": "Drag a frame over the area you mean, then confirm.",
         "newCanvas": "New",
         "newCanvasTitle": "New canvas",
-        "newCanvasBlurb": "Pick what to draw above, then describe it below — the agent renders the new canvas here."
+        "newCanvasBlurb": "Pick what to draw above, then describe it below — the agent renders the new canvas here.",
+        "setWorkspace": "Work on this",
+        "workspaceSet": "The agent is now working on this canvas.",
+        "previewOnlyHint": "Previewing only — tap \"Work on this\" to point the agent at it."
       }
     },
     "spawnSheet": {

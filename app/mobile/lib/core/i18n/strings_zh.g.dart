@@ -6789,6 +6789,9 @@ class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspect
 	@override String get newCanvas => '新建';
 	@override String get newCanvasTitle => '新建画布';
 	@override String get newCanvasBlurb => '先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。';
+	@override String get setWorkspace => '在这上面工作';
+	@override String get workspaceSet => 'agent 现在在这个画布上工作。';
+	@override String get previewOnlyHint => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7475,6 +7478,13 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get kind_graph => '关系图';
 	@override String get kind_doc => '文档';
 	@override String get focusHint => 'agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。';
+	@override String get setWorkspace => '在这上面工作';
+	@override String get setWorkspaceHint => '让 agent 在这个画布上工作 —— 会向会话发送一条简短说明';
+	@override String get isWorkspace => '· agent 的工作区';
+	@override String get workspaceBadge => 'agent 的工作区';
+	@override String get workspaceSet => 'agent 现在在这个画布上工作。';
+	@override String get workspaceFailed => '设置工作区失败';
+	@override String get previewOnlyHint => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9833,6 +9843,13 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.kind_graph' => '关系图',
 			'web.sessions.inspector.canvas.kind_doc' => '文档',
 			'web.sessions.inspector.canvas.focusHint' => 'agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。',
+			'web.sessions.inspector.canvas.setWorkspace' => '在这上面工作',
+			'web.sessions.inspector.canvas.setWorkspaceHint' => '让 agent 在这个画布上工作 —— 会向会话发送一条简短说明',
+			'web.sessions.inspector.canvas.isWorkspace' => '· agent 的工作区',
+			'web.sessions.inspector.canvas.workspaceBadge' => 'agent 的工作区',
+			'web.sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
+			'web.sessions.inspector.canvas.workspaceFailed' => '设置工作区失败',
+			'web.sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -10053,6 +10070,8 @@ extension on TranslationsZh {
 			'web.project.picker.browse' => '浏览',
 			'web.project.picker.browseTooltip' => '浏览网关主机的文件系统',
 			'web.project.picker.open' => '打开',
+			_ => null,
+		} ?? switch (path) {
 			'web.project.picker.recentLabel' => '最近的项目（来自已存记忆）：',
 			'web.project.picker.orphanTooltip' => '看上去是被截断的 scope_key（老旧镜像导入 bug）。可能没有项目文档。',
 			'web.project.picker.orphanBadge' => '孤立',
@@ -10060,8 +10079,6 @@ extension on TranslationsZh {
 			'web.project.header.docsCount_one' => ({required Object count}) => '${count} 份文档',
 			'web.project.header.docsCount_other' => ({required Object count}) => '${count} 份文档',
 			'web.project.header.journalEntries_one' => ({required Object count}) => '${count} 条日志',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.header.journalEntries_other' => ({required Object count}) => '${count} 条日志',
 			'web.project.header.pendingProposals_one' => ({required Object count}) => '${count} 条待处理提案',
 			'web.project.header.pendingProposals_other' => ({required Object count}) => '${count} 条待处理提案',
@@ -10567,6 +10584,8 @@ extension on TranslationsZh {
 			'web.providers.antigravityAccounts.addingBodySuffix' => '然后点击 <1>导入本地</1> 进行注册。只有当 Google 登录写入 OAuth 令牌后，该目录才会被视为账号。',
 			'web.providers.antigravityAccounts.loading' => '加载中…',
 			'web.providers.antigravityAccounts.empty' => '尚无 Antigravity 账号。在网关主机上运行 <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1>，完成 Google 登录，然后点击“导入本地”。',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.antigravityAccounts.noTokenYet' => '未登录',
 			'web.providers.antigravityAccounts.homeDir' => 'home：',
 			'web.providers.antigravityAccounts.toggleFailedToast' => '切换失败',
@@ -10574,8 +10593,6 @@ extension on TranslationsZh {
 			'web.providers.antigravityAccounts.removedToast' => '账号已移除',
 			'web.providers.antigravityAccounts.removeFailedToast' => '移除失败',
 			'web.providers.antigravityAccounts.toggleAria' => ({required Object name}) => '切换 ${name}',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.antigravityAccounts.removeAria' => ({required Object name}) => '移除 ${name}',
 			'web.providers.models.title' => '模型',
 			'web.providers.models.help' => '该提供方可用的模型。默认模型会通过 model 参数传给每个会话；会话仍可覆盖。',
@@ -11081,6 +11098,8 @@ extension on TranslationsZh {
 			'web.backups.restore.planTitle' => '恢复计划（试运行 —— 未改动任何内容）',
 			'web.backups.restore.planDump' => ({required Object size}) => '数据库 dump：${size}',
 			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
 			'web.backups.restore.planApplyHint' => '应用前会先做一次完整实例安全快照,再覆盖上述内容并执行 pg_restore。',
@@ -11088,8 +11107,6 @@ extension on TranslationsZh {
 			'web.backups.restore.previewing' => '预览中…',
 			'web.backups.restore.previewFirstHint' => '请先运行试运行预览',
 			'web.backups.restore.applyRestore' => '应用恢复',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.kind.dbOnly' => '仅数据库',
 			'web.backups.kind.fullInstance' => '完整实例',
 			'web.backups.kind.fullInstanceHint' => '包含 vault、secrets.env 和 config.toml',
@@ -11595,6 +11612,8 @@ extension on TranslationsZh {
 			'web.memoryAmbient.providers.dialog.nameLabel' => '名称',
 			'web.memoryAmbient.providers.dialog.namePlaceholder' => '例如 lmstudio-qwen',
 			'web.memoryAmbient.providers.dialog.modelLabel' => '模型',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.baseUrlLabel' => 'Base URL',
 			'web.memoryAmbient.providers.dialog.integrationNote' => 'Integration 类型 provider 通过一个已注册的集成解析 base URL。请先在 Integrations 中配置；更高级的 wiring（extra_config）在本版本中仅 DB 配置。',
 			'web.memoryAmbient.providers.dialog.apiKeyLabel' => 'API key',
@@ -11602,8 +11621,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.providers.dialog.makeDefaultLabel' => '将此设为默认 provider',
 			'web.memoryAmbient.providers.dialog.create' => '创建',
 			'web.memoryAmbient.providers.dialog.nameRequiredToast' => '名称不能为空',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.createdToast' => ({required Object name}) => '已创建 Provider ${name}',
 			'web.memoryAmbient.providers.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.providers.modelSelect.editTitle' => '更换模型',
@@ -12109,6 +12126,8 @@ extension on TranslationsZh {
 			'web.roundTable.detail.summarize' => '总结',
 			'web.roundTable.detail.summarizing' => '总结中…',
 			'web.roundTable.detail.emptyThread' => '还没有消息。',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.detail.emptyHint' => '发条消息并 @ 点名某个成员,它就会回复。',
 			'web.roundTable.detail.replying' => '成员正在回复…',
 			'web.roundTable.detail.mentionHint' => '点名:',
@@ -12116,8 +12135,6 @@ extension on TranslationsZh {
 			'web.roundTable.detail.send' => '发送',
 			'web.roundTable.detail.delete' => '删除',
 			'web.roundTable.detail.deleteConfirm' => '删除这个群聊及其所有消息?此操作不可撤销。',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.detail.roles' => '成员',
 			'web.roundTable.detail.rolesTitle' => '成员与角色',
 			'web.roundTable.detail.rolesFraming' => '讨论框架(所有成员共享)',
@@ -12490,6 +12507,9 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.newCanvas' => '新建',
 			'sessions.inspector.canvas.newCanvasTitle' => '新建画布',
 			'sessions.inspector.canvas.newCanvasBlurb' => '先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。',
+			'sessions.inspector.canvas.setWorkspace' => '在这上面工作',
+			'sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
+			'sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12620,6 +12640,8 @@ extension on TranslationsZh {
 			'providers.updateCheck.latest' => ({required Object version}) => '最新 ${version}',
 			'providers.updateCheck.updateButton' => '更新 CLI',
 			'providers.updateCheck.updating' => '正在更新…',
+			_ => null,
+		} ?? switch (path) {
 			'providers.updateCheck.updatedSnack' => ({required Object version}) => '已更新到 ${version}。',
 			'providers.updateCheck.noChangeSnack' => '已是最新版本。',
 			'providers.updateCheck.updateFailed' => ({required Object error}) => '更新失败：${error}',
@@ -12630,8 +12652,6 @@ extension on TranslationsZh {
 			'providers.accounts.displayNameLabel' => '显示名',
 			'providers.accounts.displayNameHint' => '工作账号',
 			'providers.accounts.deleteTitle' => '删除账号？',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.importFailedApi' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.enable' => '启用',
@@ -13134,6 +13154,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.baseUrlLabel' => 'Base URL',
 			'backupTargetEditor.baseUrlHint' => '完整 URL 包含路径。Nextcloud：https://cloud.example/remote.php/dav/files/<user>',
 			'backupTargetEditor.sftpPasswordHintEdit' => '留空 = 保留。如果密码 + 私钥同时存在，私钥优先。',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.sftpPasswordHintNew' => '密码或私钥二选一。两者同时存在时，密码仅作回退。',
 			'backupTargetEditor.privateKeyLabel' => '私钥（PEM）',
 			'backupTargetEditor.privateKeyHintEdit' => '留空 = 保留。粘贴 OpenSSH/PEM 内容。',
@@ -13144,8 +13166,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
 			'backupTargetEditor.rcloneRemoteHint' => '来自 `rclone config` 的名字（不带冒号）。',
 			'backupTargetEditor.rcloneBinaryLabel' => '二进制路径',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.rcloneBinaryHint' => '覆盖 `which rclone`。留空 = PATH 查找。',
 			'backupTargetEditor.rcloneConfigLabel' => '配置路径',
 			'backupTargetEditor.rcloneConfigHint' => '覆盖 --config。留空 = rclone 默认。',
@@ -13648,6 +13668,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
@@ -13658,8 +13680,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
 			'settings.serverSettings.fields.adminPassword' => '管理员密码',
 			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
 			'settings.serverSettings.fields.level' => '级别',
