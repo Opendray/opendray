@@ -578,7 +578,7 @@ opendray は、あなたが普段使っている AI コーディング CLI（Cla
 
 ### opendray はどの AI CLI に対応していますか？
 
-v2.10.x 時点で、5 つのファーストクラスなプロバイダーに対応しています。**Claude Code**（Anthropic）、**Codex**（OpenAI）、**Antigravity**（Google の `agy`）、**Grok Build**（xAI）、そして **OpenCode** です。それ以外は任意の shell で対応できます。新しい CLI の追加は `internal/catalog/builtin/` 配下の JSON ディスクリプタで済み、一般的なケースであればアダプターコードは不要です。
+v2.13.x 時点で、5 つのファーストクラスなプロバイダーに対応しています。**Claude Code**（Anthropic）、**Codex**（OpenAI）、**Antigravity**（Google の `agy`）、**Grok Build**（xAI）、そして **OpenCode** です。それ以外は任意の shell で対応できます。新しい CLI の追加は `internal/catalog/builtin/` 配下の JSON ディスクリプタで済み、一般的なケースであればアダプターコードは不要です。
 
 ### opendray は Claude Desktop や ChatGPT Desktop とどう違いますか？
 
@@ -629,7 +629,7 @@ Apache 2.0 です。永久に無料です。有料ティアなし、テレメト
 
 ## ステータス
 
-現行世代: **v2.10.x**。リリース履歴については [`CHANGELOG.md`](CHANGELOG.md) を、major-as-generation 方針（major = 製品世代であり、厳密な SemVer の意味での「破壊的変更」ではない）については [`VERSIONING.md`](VERSIONING.md) を参照してください。
+現行世代: **v2.13.x**。リリース履歴については [`CHANGELOG.md`](CHANGELOG.md) を、major-as-generation 方針（major = 製品世代であり、厳密な SemVer の意味での「破壊的変更」ではない）については [`VERSIONING.md`](VERSIONING.md) を参照してください。
 
 この世代で提供される主な内容:
 

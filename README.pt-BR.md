@@ -587,7 +587,7 @@ O opendray é um gateway self-hosted que encapsula as CLIs de coding com IA que 
 
 ### Quais CLIs de IA o opendray suporta?
 
-Cinco providers de primeira classe na v2.10.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI) e **OpenCode**. Mais shell arbitrário pra qualquer outra coisa. Adicionar uma nova CLI é um descritor JSON em `internal/catalog/builtin/`; sem código de adapter na maioria dos casos.
+Cinco providers de primeira classe na v2.13.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI) e **OpenCode**. Mais shell arbitrário pra qualquer outra coisa. Adicionar uma nova CLI é um descritor JSON em `internal/catalog/builtin/`; sem código de adapter na maioria dos casos.
 
 ### Qual a diferença entre o opendray e o Claude Desktop ou o ChatGPT Desktop?
 
@@ -638,7 +638,7 @@ Leia [`CONTRIBUTING.md`](CONTRIBUTING.md) e [`CODE_OF_CONDUCT.md`](CODE_OF_CONDU
 
 ## Status
 
-Geração atual: **v2.10.x**. Veja [`CHANGELOG.md`](CHANGELOG.md) pro histórico de releases e [`VERSIONING.md`](VERSIONING.md) pra política major-como-geração (major = geração de produto, não "breaking change" estrito ao estilo SemVer).
+Geração atual: **v2.13.x**. Veja [`CHANGELOG.md`](CHANGELOG.md) pro histórico de releases e [`VERSIONING.md`](VERSIONING.md) pra política major-como-geração (major = geração de produto, não "breaking change" estrito ao estilo SemVer).
 
 Esta geração entrega:
 

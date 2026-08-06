@@ -535,7 +535,7 @@ opendray 是一个自托管网关，把你已经在用的 AI 编程 CLI(Claude C
 
 ### opendray 支持哪些 AI CLI?
 
-截至 v2.10.x，共有五个一等公民级 provider：**Claude Code**(Anthropic)、**Codex**(OpenAI)、**Antigravity**(Google `agy`)、**Grok Build**(xAI)，以及 **OpenCode**。其余任何场景都可以用任意 shell 兜底。新增一个 CLI 只需在 `internal/catalog/builtin/` 下加一个 JSON 描述文件，常见场景不需要写适配代码。
+截至 v2.13.x，共有五个一等公民级 provider：**Claude Code**(Anthropic)、**Codex**(OpenAI)、**Antigravity**(Google `agy`)、**Grok Build**(xAI)，以及 **OpenCode**。其余任何场景都可以用任意 shell 兜底。新增一个 CLI 只需在 `internal/catalog/builtin/` 下加一个 JSON 描述文件，常见场景不需要写适配代码。
 
 ### opendray 跟 Claude Desktop 或 ChatGPT Desktop 有什么区别?
 
@@ -586,7 +586,7 @@ Apache 2.0。永久免费。没有付费档位，没有遥测，不 phone-home�
 
 ## 当前状态
 
-当前代号：**v2.10.x**。发布历史见 [`CHANGELOG.md`](CHANGELOG.md)，major-as-generation 版本策略(major = 产品代号，不是严格的 SemVer "破坏性变更")见 [`VERSIONING.md`](VERSIONING.md)。
+当前代号：**v2.13.x**。发布历史见 [`CHANGELOG.md`](CHANGELOG.md)，major-as-generation 版本策略(major = 产品代号，不是严格的 SemVer "破坏性变更")见 [`VERSIONING.md`](VERSIONING.md)。
 
 这一代产品包含:
 
