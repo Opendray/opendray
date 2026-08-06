@@ -13306,6 +13306,9 @@ class TranslationsSessionsInspectorCanvasEn {
 	/// en: 'Design system saved.'
 	String get designSaved => 'Design system saved.';
 
+	/// en: 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.'
+	String get designWarningAchromatic => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.';
+
 	/// en: 'Primary'
 	String get tokenPrimary => 'Primary';
 
@@ -14760,6 +14763,9 @@ class TranslationsWebSessionsInspectorCanvasEn {
 
 	/// en: 'Could not save the design system'
 	String get designSaveFailed => 'Could not save the design system';
+
+	/// en: 'Every colour here resolves to a grey, so canvases built from it will have no brand colour. If this project uses shadcn/ui or a Tailwind template, its --primary is an ink — put the brand hue (usually --accent) in Primary and the ink in Text. Ignore this if the design really is monochrome.'
+	String get designWarningAchromatic => 'Every colour here resolves to a grey, so canvases built from it will have no brand colour. If this project uses shadcn/ui or a Tailwind template, its --primary is an ink — put the brand hue (usually --accent) in Primary and the ink in Text. Ignore this if the design really is monochrome.';
 
 	/// en: 'Primary'
 	String get token_primary => 'Primary';
@@ -18647,6 +18653,7 @@ extension on Translations {
 			'web.sessions.inspector.canvas.designClose' => 'Close',
 			'web.sessions.inspector.canvas.designSaved' => 'Design system saved — every canvas request now carries it.',
 			'web.sessions.inspector.canvas.designSaveFailed' => 'Could not save the design system',
+			'web.sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey, so canvases built from it will have no brand colour. If this project uses shadcn/ui or a Tailwind template, its --primary is an ink — put the brand hue (usually --accent) in Primary and the ink in Text. Ignore this if the design really is monochrome.',
 			'web.sessions.inspector.canvas.token_primary' => 'Primary',
 			'web.sessions.inspector.canvas.token_secondary' => 'Secondary',
 			'web.sessions.inspector.canvas.token_background' => 'Background',
@@ -18855,9 +18862,9 @@ extension on Translations {
 			'web.memoryWorkers.tasks.curation.description' => 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.',
 			'web.memoryWorkers.modelLabel' => 'Model',
 			'web.memoryWorkers.modelHint' => 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.',
-			'web.memoryWorkers.modelCliDefault' => 'CLI default (latest)',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.modelCliDefault' => 'CLI default (latest)',
 			'web.memoryWorkers.modelCustom' => 'Custom…',
 			'web.memoryWorkers.modelCustomPlaceholder' => 'exact model id',
 			'web.memoryWorkers.modelBackToList' => 'List',
@@ -19369,9 +19376,9 @@ extension on Translations {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => 'Updated ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => 'Already up to date',
 			'web.providers.detail.updateFailedToast' => 'Update failed',
-			'web.providers.detail.updateUnavailable' => 'In-app update not available here',
 			_ => null,
 		} ?? switch (path) {
+			'web.providers.detail.updateUnavailable' => 'In-app update not available here',
 			'web.providers.configForm.selectPlaceholder' => 'Select…',
 			'web.providers.configForm.defaultOption' => '(default)',
 			'web.providers.configForm.switchOn' => 'On',
@@ -19883,9 +19890,9 @@ extension on Translations {
 			'web.backups.status.pgDumpHint' => 'Backups can\'t run until pg_dump is on PATH (or its absolute path is set in <1>backup.pg_dump_path</1>). Install <3>postgresql-client</3> matching your server\'s major version and restart.',
 			'web.backups.backupsTab.backupNow' => 'Backup now',
 			'web.backups.backupsTab.triggering' => 'Triggering…',
-			'web.backups.backupsTab.includeConfig' => 'include config.toml',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.backupsTab.includeConfig' => 'include config.toml',
 			'web.backups.backupsTab.fullInstance' => 'Full instance',
 			'web.backups.backupsTab.fullInstanceHint' => 'Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.',
 			'web.backups.backupsTab.restoreFromFile' => 'Restore from file',
@@ -20397,9 +20404,9 @@ extension on Translations {
 			'web.settings.about.forcePrompt' => ({required Object count}) => '${count} live session(s) will be interrupted by the restart (they auto-resume afterward).',
 			'web.settings.about.upgradeAnyway' => 'Upgrade anyway',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
-			'web.logViewer.debugTooltip' => 'Debug count',
 			_ => null,
 		} ?? switch (path) {
+			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
 			'web.logViewer.warnTooltip' => 'Warn count',
 			'web.logViewer.errorTooltip' => 'Error count',
@@ -20911,9 +20918,9 @@ extension on Translations {
 			'web.database.panel.console' => 'SQL console',
 			'web.database.panel.openWorkbench' => 'Open workbench',
 			'web.database.workbench.title' => 'Database workbench',
-			'web.roundTable.title' => 'Round Table',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.title' => 'Round Table',
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'A cross-vendor AI group chat. @mention claude, codex or antigravity and they reply in the thread — like a Telegram group, with a different vendor\'s model behind each member.',
 			'web.roundTable.kNew' => 'New round table',
@@ -21345,6 +21352,7 @@ extension on Translations {
 			'sessions.inspector.canvas.designAgentHint' => 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project\'s real theme.',
 			'sessions.inspector.canvas.designSave' => 'Save',
 			'sessions.inspector.canvas.designSaved' => 'Design system saved.',
+			'sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.',
 			'sessions.inspector.canvas.tokenPrimary' => 'Primary',
 			'sessions.inspector.canvas.tokenSecondary' => 'Secondary',
 			'sessions.inspector.canvas.tokenBackground' => 'Background',
@@ -21424,10 +21432,10 @@ extension on Translations {
 			'mcp.errorPrefix.update' => 'Update failed',
 			'mcp.errorPrefix.toggle' => 'Toggle failed',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
-			'mcp.editor.nameHint' => 'my-mcp-server',
-			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.editor.nameHint' => 'my-mcp-server',
+			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
 			'mcp.editor.descriptionPlaceholder' => 'Optional one-liner',
 			'mcp.editor.validateJsonObject' => 'Body must be a JSON object',
 			'mcp.editor.validateJsonInvalid' => ({required Object error}) => 'Invalid JSON: ${error}',
@@ -21938,10 +21946,10 @@ extension on Translations {
 			'backupSchedules.newButton' => 'New',
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Targets',
-			'backupSchedules.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
-			'backupSchedules.intervalLabel' => 'Interval',
 			_ => null,
 		} ?? switch (path) {
+			'backupSchedules.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
+			'backupSchedules.intervalLabel' => 'Interval',
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
@@ -22452,10 +22460,10 @@ extension on Translations {
 			'about.gateway.upToDate' => 'Up to date',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'about.gateway.releaseNotes' => 'Release notes',
-			'about.gateway.checkFailed' => 'Update check unavailable',
-			'settings.title' => 'Settings',
 			_ => null,
 		} ?? switch (path) {
+			'about.gateway.checkFailed' => 'Update check unavailable',
+			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
 			'settings.language.systemSubtitle' => 'Follow your phone\'s language setting',

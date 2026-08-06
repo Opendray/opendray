@@ -148,7 +148,28 @@ export interface CanvasDesignSystem {
   /** Dark-mode values for the colour tokens; missing keys fall back to light. */
   tokens_dark: Record<string, string>
   notes: string
+  /**
+   * Each token that IS a colour, resolved by the gateway to the #rrggbb a
+   * swatch needs — projects write oklch/hsl/rgb and neither surface can read
+   * those on its own. Tokens that aren't colours (radius, font, the shadow
+   * triple) are absent, which is how a panel knows not to draw a swatch.
+   */
+  tokens_resolved?: Record<string, string>
+  tokens_dark_resolved?: Record<string, string>
+  /** Advice about the saved system — never a reason the save failed. */
+  warnings?: CanvasDesignWarning[]
 }
+
+export interface CanvasDesignWarning {
+  /** Stable identifier a panel can localise on; see WARNING_* below. */
+  code: string
+  /** English fallback, and what an agent reads back through canvas_design. */
+  message: string
+}
+
+/** A system whose every colour resolves to a grey — usually a token mapped by
+ *  name off a shadcn theme, where `--primary` is an ink and not a brand colour. */
+export const WARNING_ACHROMATIC_PALETTE = 'achromatic_palette'
 
 // The colour tokens that differ between themes. The rest (type, radius,
 // spacing) are theme-independent, so the dark set doesn't carry them.
@@ -274,11 +295,21 @@ export function cssVarForToken(key: string): string {
   return `--od-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`
 }
 
+function normalizeDesignSystem(d: CanvasDesignSystem): CanvasDesignSystem {
+  return {
+    tokens: d.tokens ?? {},
+    tokens_dark: d.tokens_dark ?? {},
+    notes: d.notes ?? '',
+    tokens_resolved: d.tokens_resolved ?? {},
+    tokens_dark_resolved: d.tokens_dark_resolved ?? {},
+    warnings: d.warnings ?? [],
+  }
+}
+
 export async function getDesignSystem(cwd: string): Promise<CanvasDesignSystem> {
-  const d = await api<CanvasDesignSystem>(
-    `/api/v1/canvas/design?cwd=${encodeURIComponent(cwd)}`,
+  return normalizeDesignSystem(
+    await api<CanvasDesignSystem>(`/api/v1/canvas/design?cwd=${encodeURIComponent(cwd)}`),
   )
-  return { tokens: d.tokens ?? {}, tokens_dark: d.tokens_dark ?? {}, notes: d.notes ?? '' }
 }
 
 export async function setDesignSystem(
@@ -296,9 +327,14 @@ export async function setDesignSystem(
       tokens: input.tokens,
       tokens_dark: input.tokensDark,
       notes: input.notes,
+      // The panel's colour picker can only emit hex, so ask the gateway to
+      // write a picked colour back in whatever notation that token already
+      // used — otherwise editing one swatch of an oklch theme converts that
+      // token to hex and the palette ends up written two ways.
+      preserve_notation: true,
     },
   })
-  return { tokens: d.tokens ?? {}, tokens_dark: d.tokens_dark ?? {}, notes: d.notes ?? '' }
+  return normalizeDesignSystem(d)
 }
 
 /** One-click design-system jobs handed to the agent from the panel. */

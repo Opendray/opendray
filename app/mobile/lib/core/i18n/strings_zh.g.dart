@@ -6799,6 +6799,7 @@ class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspect
 	@override String get designAgentHint => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。';
 	@override String get designSave => '保存';
 	@override String get designSaved => '设计系统已保存。';
+	@override String get designWarningAchromatic => '这里每个颜色都是灰的 —— 画布将没有品牌色。若项目使用 shadcn/ui,其 --primary 是墨色;应把品牌色(通常是 --accent)填进「主色」。';
 	@override String get tokenPrimary => '主色';
 	@override String get tokenSecondary => '辅助色';
 	@override String get tokenBackground => '背景';
@@ -7530,6 +7531,7 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get designClose => '关闭';
 	@override String get designSaved => '设计系统已保存 —— 之后每次画布请求都会带上它。';
 	@override String get designSaveFailed => '保存设计系统失败';
+	@override String get designWarningAchromatic => '这里每个颜色都解析成灰色,据此生成的画布不会有任何品牌色。若项目使用 shadcn/ui 或基于它的 Tailwind 模板,其 --primary 是墨色 —— 应把品牌色(通常是 --accent)填进「主色」,墨色填进「正文色」。如果这套设计本来就是单色,忽略即可。';
 	@override String get token_primary => '主色';
 	@override String get token_secondary => '辅助色';
 	@override String get token_background => '背景';
@@ -9937,6 +9939,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.designClose' => '关闭',
 			'web.sessions.inspector.canvas.designSaved' => '设计系统已保存 —— 之后每次画布请求都会带上它。',
 			'web.sessions.inspector.canvas.designSaveFailed' => '保存设计系统失败',
+			'web.sessions.inspector.canvas.designWarningAchromatic' => '这里每个颜色都解析成灰色,据此生成的画布不会有任何品牌色。若项目使用 shadcn/ui 或基于它的 Tailwind 模板,其 --primary 是墨色 —— 应把品牌色(通常是 --accent)填进「主色」,墨色填进「正文色」。如果这套设计本来就是单色,忽略即可。',
 			'web.sessions.inspector.canvas.token_primary' => '主色',
 			'web.sessions.inspector.canvas.token_secondary' => '辅助色',
 			'web.sessions.inspector.canvas.token_background' => '背景',
@@ -10145,9 +10148,9 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.curation.description' => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。',
 			'web.memoryWorkers.modelLabel' => '模型',
 			'web.memoryWorkers.modelHint' => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。',
-			'web.memoryWorkers.modelCliDefault' => 'CLI 默认（最新）',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.modelCliDefault' => 'CLI 默认（最新）',
 			'web.memoryWorkers.modelCustom' => '自定义…',
 			'web.memoryWorkers.modelCustomPlaceholder' => '精确模型 ID',
 			'web.memoryWorkers.modelBackToList' => '返回列表',
@@ -10659,9 +10662,9 @@ extension on TranslationsZh {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => '已更新 ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => '已是最新',
 			'web.providers.detail.updateFailedToast' => '更新失败',
-			'web.providers.detail.updateUnavailable' => '此处无法在应用内更新',
 			_ => null,
 		} ?? switch (path) {
+			'web.providers.detail.updateUnavailable' => '此处无法在应用内更新',
 			'web.providers.configForm.selectPlaceholder' => '选择…',
 			'web.providers.configForm.defaultOption' => '(默认)',
 			'web.providers.configForm.switchOn' => '开',
@@ -11173,9 +11176,9 @@ extension on TranslationsZh {
 			'web.backups.status.pgDumpHint' => '备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。',
 			'web.backups.backupsTab.backupNow' => '立即备份',
 			'web.backups.backupsTab.triggering' => '触发中…',
-			'web.backups.backupsTab.includeConfig' => '包含 config.toml',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.backupsTab.includeConfig' => '包含 config.toml',
 			'web.backups.backupsTab.fullInstance' => '完整实例',
 			'web.backups.backupsTab.fullInstanceHint' => '同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。',
 			'web.backups.backupsTab.restoreFromFile' => '从文件恢复',
@@ -11687,9 +11690,9 @@ extension on TranslationsZh {
 			'web.settings.about.forcePrompt' => ({required Object count}) => '重启将中断 ${count} 个进行中的会话（之后会自动恢复）。',
 			'web.settings.about.upgradeAnyway' => '仍然升级',
 			'web.logViewer.filterPlaceholder' => '过滤…',
-			'web.logViewer.debugTooltip' => 'Debug 计数',
 			_ => null,
 		} ?? switch (path) {
+			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
 			'web.logViewer.warnTooltip' => 'Warn 计数',
 			'web.logViewer.errorTooltip' => 'Error 计数',
@@ -12201,9 +12204,9 @@ extension on TranslationsZh {
 			'web.database.panel.console' => 'SQL 控制台',
 			'web.database.panel.openWorkbench' => '展开工作台',
 			'web.database.workbench.title' => '数据库工作台',
-			'web.roundTable.title' => '圆桌',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.title' => '圆桌',
 			'web.roundTable.experimental' => '实验性',
 			'web.roundTable.subtitle' => '跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。',
 			'web.roundTable.kNew' => '新建圆桌',
@@ -12635,6 +12638,7 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。',
 			'sessions.inspector.canvas.designSave' => '保存',
 			'sessions.inspector.canvas.designSaved' => '设计系统已保存。',
+			'sessions.inspector.canvas.designWarningAchromatic' => '这里每个颜色都是灰的 —— 画布将没有品牌色。若项目使用 shadcn/ui,其 --primary 是墨色;应把品牌色(通常是 --accent)填进「主色」。',
 			'sessions.inspector.canvas.tokenPrimary' => '主色',
 			'sessions.inspector.canvas.tokenSecondary' => '辅助色',
 			'sessions.inspector.canvas.tokenBackground' => '背景',
@@ -12714,10 +12718,10 @@ extension on TranslationsZh {
 			'mcp.errorPrefix.update' => '更新失败',
 			'mcp.errorPrefix.toggle' => '切换失败',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
-			'mcp.editor.nameHint' => 'my-mcp-server',
-			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.editor.nameHint' => 'my-mcp-server',
+			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
 			'mcp.editor.descriptionPlaceholder' => '可选的一行说明',
 			'mcp.editor.validateJsonObject' => '正文必须是 JSON 对象',
 			'mcp.editor.validateJsonInvalid' => ({required Object error}) => '无效的 JSON：${error}',
@@ -13228,10 +13232,10 @@ extension on TranslationsZh {
 			'backupSchedules.newButton' => '新建',
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
-			'backupSchedules.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
-			'backupSchedules.intervalLabel' => '间隔',
 			_ => null,
 		} ?? switch (path) {
+			'backupSchedules.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
+			'backupSchedules.intervalLabel' => '间隔',
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
@@ -13742,10 +13746,10 @@ extension on TranslationsZh {
 			'about.gateway.upToDate' => '已是最新',
 			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'about.gateway.releaseNotes' => '更新说明',
-			'about.gateway.checkFailed' => '无法检查更新',
-			'settings.title' => '设置',
 			_ => null,
 		} ?? switch (path) {
+			'about.gateway.checkFailed' => '无法检查更新',
+			'settings.title' => '设置',
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
 			'settings.language.systemSubtitle' => '跟随手机的语言设置',

@@ -84,6 +84,32 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
   bool _loading = true;
   bool _saving = false;
 
+  // What the gateway last told us, kept so a swatch can show a colour written
+  // in a notation Dart can't read. The gateway resolves every colour token to
+  // #rrggbb; that only describes the value as SAVED, so `_saved` is kept
+  // alongside to tell an untouched field from one being edited.
+  final Map<String, String> _saved = {};
+  final Map<String, String> _savedDark = {};
+  final Map<String, String> _resolved = {};
+  final Map<String, String> _resolvedDark = {};
+  List<CanvasDesignWarning> _warnings = const [];
+
+  void _absorb(CanvasDesignSystem d) {
+    _saved
+      ..clear()
+      ..addAll(d.tokens);
+    _savedDark
+      ..clear()
+      ..addAll(d.tokensDark);
+    _resolved
+      ..clear()
+      ..addAll(d.tokensResolved);
+    _resolvedDark
+      ..clear()
+      ..addAll(d.tokensDarkResolved);
+    _warnings = d.warnings;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -116,6 +142,7 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
         d.tokens.forEach((k, v) => _ctls[k]?.text = v);
         d.tokensDark.forEach((k, v) => _darkCtls[k]?.text = v);
         _notesCtl.text = d.notes;
+        _absorb(d);
         _loading = false;
       });
     } on Object catch (_) {
@@ -171,17 +198,27 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
       _darkCtls.forEach((k, c) {
         if (c.text.trim().isNotEmpty) dark[k] = c.text.trim();
       });
-      await ref.read(canvasApiProvider).setDesign(
+      final saved = await ref.read(canvasApiProvider).setDesign(
             cwd: widget.cwd,
             tokens: tokens,
             tokensDark: dark,
             notes: _notesCtl.text.trim(),
           );
       if (!mounted) return;
-      Navigator.of(context).pop();
+      setState(() {
+        // The gateway may have rewritten a picked colour back into the
+        // project's own notation, so take its answer rather than our input.
+        saved.tokens.forEach((k, v) => _ctls[k]?.text = v);
+        saved.tokensDark.forEach((k, v) => _darkCtls[k]?.text = v);
+        _absorb(saved);
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.sessions.inspector.canvas.designSaved)),
       );
+      // A system the gateway thinks is wrong keeps the sheet open — closing on
+      // a warning would file it away unread, which is the whole failure mode
+      // this is here to break.
+      if (_warnings.isEmpty) Navigator.of(context).pop();
     } on Object catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -243,6 +280,38 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       children: [
+                        for (final w in _warnings)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiaryContainer
+                                  .withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: theme.dividerColor),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.warning_amber_rounded,
+                                    size: 16,
+                                    color: theme.colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  // Localised per code, with the gateway's
+                                  // English as the fallback so a warning added
+                                  // server-side still shows up.
+                                  child: Text(
+                                    w.code == kCanvasWarningAchromaticPalette
+                                        ? t.sessions.inspector.canvas
+                                            .designWarningAchromatic
+                                        : w.message,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -328,6 +397,10 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
                                 : cssVarForToken(key),
                             controller: (_dark ? _darkCtls : _ctls)[key]!,
                             showSwatch: _colorTokens.contains(key),
+                            savedValue:
+                                (_dark ? _savedDark : _saved)[key] ?? '',
+                            resolvedHex:
+                                (_dark ? _resolvedDark : _resolved)[key] ?? '',
                           ),
                         const SizedBox(height: 12),
                         Text(
@@ -393,12 +466,28 @@ class _TokenField extends StatelessWidget {
     required this.hint,
     required this.controller,
     required this.showSwatch,
+    this.savedValue = '',
+    this.resolvedHex = '',
   });
 
   final String label;
   final String hint;
   final TextEditingController controller;
   final bool showSwatch;
+
+  /// The value as last stored, and the #rrggbb the gateway resolved it to.
+  /// Dart cannot read oklch/hsl, so for anything but hex this pair is the only
+  /// way to show the real colour — and it only describes the SAVED text, which
+  /// is why it applies solely while the field is untouched.
+  final String savedValue;
+  final String resolvedHex;
+
+  Color? _swatch(String text) {
+    final direct = parseHexColor(text);
+    if (direct != null) return direct;
+    if (text.trim() == savedValue.trim()) return parseHexColor(resolvedHex);
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -414,7 +503,7 @@ class _TokenField extends StatelessWidget {
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: controller,
               builder: (context, value, _) {
-                final c = parseHexColor(value.text);
+                final c = _swatch(value.text);
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: InkWell(

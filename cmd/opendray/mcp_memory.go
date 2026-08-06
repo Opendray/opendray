@@ -770,7 +770,15 @@ var toolDefs = []map[string]any{
 						"variable, e.g. primary → var(--od-primary)): primary, " +
 						"secondary, background, surface, text, muted, border, font, " +
 						"headingFont, baseSize, radius, spacing, shadow. Extra keys " +
-						"are kept and exposed the same way. Omit to read only.",
+						"are kept and exposed the same way. Omit to read only. " +
+						"Map by MEANING, not by matching variable names: `primary` is " +
+						"the project's BRAND colour — what a main action is painted " +
+						"with — and `text` is the body ink. shadcn/ui and the Tailwind " +
+						"templates built on it are the trap: their `--primary` is a " +
+						"near-black or near-white ink and the brand hue is in " +
+						"`--accent`, so copying `--primary` here gives a palette of " +
+						"greys with no brand colour — saving one gets you a warning " +
+						"back saying so.",
 					"additionalProperties": map[string]any{"type": "string"},
 				},
 				"darkTokens": map[string]any{
@@ -1518,6 +1526,10 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 		Tokens     map[string]string `json:"tokens"`
 		TokensDark map[string]string `json:"tokens_dark"`
 		Notes      string            `json:"notes"`
+		Warnings   []struct {
+			Code    string `json:"code"`
+			Message string `json:"message"`
+		} `json:"warnings"`
 	}
 	writing := in.Tokens != nil || in.DarkTokens != nil || in.Notes != nil
 	if writing {
@@ -1577,6 +1589,13 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 		if n := strings.TrimSpace(out.Notes); n != "" {
 			fmt.Fprintf(&b, "Style rules: %s\n", n)
 		}
+	}
+	// The gateway checks the system it just stored and can tell us it looks
+	// wrong. Surfacing that here is the point: it turns a mistake the operator
+	// would otherwise have to spot in the panel into something the agent that
+	// made it reads back immediately.
+	for _, w := range out.Warnings {
+		fmt.Fprintf(&b, "\nWARNING (%s): %s\n", w.Code, w.Message)
 	}
 	return map[string]any{
 		"content": []map[string]any{

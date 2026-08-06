@@ -1,16 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Palette, X, Sun, Moon, ScanSearch, LayoutDashboard } from 'lucide-react'
+import {
+  Palette,
+  X,
+  Sun,
+  Moon,
+  ScanSearch,
+  LayoutDashboard,
+  TriangleAlert,
+} from 'lucide-react'
 
 import {
   CANVAS_DESIGN_TOKENS,
   CANVAS_THEMED_TOKENS,
   CANVAS_PALETTES,
+  WARNING_ACHROMATIC_PALETTE,
   cssVarForToken,
   getDesignSystem,
   setDesignSystem,
   runDesignTask,
+  type CanvasDesignWarning,
   type CanvasPalette,
 } from '@/lib/canvas'
 import { cn } from '@/lib/utils'
@@ -51,6 +61,10 @@ export function DesignSystemSheet({ sessionId, cwd, onClose }: DesignSystemSheet
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [tasking, setTasking] = useState(false)
+  // The gateway checks a stored system and can tell us it looks wrong — most
+  // usefully when a palette has no colour in it at all, the signature of tokens
+  // mapped by variable name off a shadcn theme.
+  const [warnings, setWarnings] = useState<CanvasDesignWarning[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -60,6 +74,7 @@ export function DesignSystemSheet({ sessionId, cwd, onClose }: DesignSystemSheet
         setTokens(d.tokens)
         setDark(d.tokens_dark)
         setNotes(d.notes)
+        setWarnings(d.warnings ?? [])
       })
       .catch((e: unknown) => {
         if (!cancelled) toast.error((e as Error).message)
@@ -107,8 +122,12 @@ export function DesignSystemSheet({ sessionId, cwd, onClose }: DesignSystemSheet
       setTokens(saved.tokens)
       setDark(saved.tokens_dark)
       setNotes(saved.notes)
+      setWarnings(saved.warnings ?? [])
       toast.success(t('web.sessions.inspector.canvas.designSaved'))
-      onClose()
+      // A system the gateway thinks is wrong keeps the sheet open — closing on
+      // a warning would file it away unread, which is the whole failure mode
+      // this is here to break.
+      if ((saved.warnings ?? []).length === 0) onClose()
     } catch (e) {
       toast.error(t('web.sessions.inspector.canvas.designSaveFailed'), {
         description: (e as Error).message,
@@ -148,6 +167,22 @@ export function DesignSystemSheet({ sessionId, cwd, onClose }: DesignSystemSheet
             </p>
           ) : (
             <>
+              {warnings.map((w) => (
+                <div
+                  key={w.code}
+                  className="mb-3 flex gap-2 rounded-sm border border-state-idle/40 bg-state-idle/10 px-2 py-1.5 text-[11px] leading-relaxed text-foreground"
+                >
+                  <TriangleAlert className="mt-0.5 size-3 shrink-0 text-state-idle" />
+                  {/* Localised per code, with the gateway's English as the
+                      fallback so a warning added server-side still shows up. */}
+                  <span>
+                    {w.code === WARNING_ACHROMATIC_PALETTE
+                      ? t('web.sessions.inspector.canvas.designWarningAchromatic')
+                      : w.message}
+                  </span>
+                </div>
+              ))}
+
               {/* Hand the job to the agent. Reading the project's real theme
                   beats any hand-entry, and seeing the system beats reading it. */}
               <div className="mb-3 flex flex-wrap gap-1.5">
@@ -299,10 +334,25 @@ function ThemeTab({
   )
 }
 
+// One offscreen 1x1 canvas + a memo, shared by every swatch: asHex runs once per
+// colour field on every render, and both allocating a canvas and reading a pixel
+// back are far too expensive to repeat ~20 times a keystroke.
+let swatchCtx: CanvasRenderingContext2D | null | undefined
+const hexCache = new Map<string, string | null>()
+
 /** Resolve ANY CSS colour — hex, rgb(), hsl(), oklch(), a named colour — to the
  *  #rrggbb the native picker needs. Projects write colours in whatever notation
  *  their theme uses (this one uses oklch), and the operator should still get a
- *  picker rather than a bare text box. Returns null only if it isn't a colour. */
+ *  picker rather than a bare text box. Returns null only if it isn't a colour.
+ *
+ *  Resolution is done by PAINTING the colour and reading the pixel back, not by
+ *  parsing getComputedStyle().color. Computed style only serialises to `rgb(…)`
+ *  for legacy sRGB notations; a modern colour function round-trips unchanged —
+ *  `oklch(0.65 0.20 35)` computes to `oklch(0.65 0.2 35)` in both WebKit and
+ *  Chromium. Scraping rgb() out of that fails, and an all-oklch theme (ours) got
+ *  a grid of identical grey fallback swatches. The canvas is sRGB, so the
+ *  read-back is the browser's own conversion, whatever notation went in. Alpha
+ *  is dropped: <input type="color"> has no alpha channel. */
 function asHex(value: string): string | null {
   const v = value.trim()
   if (!v) return null
@@ -312,19 +362,39 @@ function asHex(value: string): string | null {
       : v.toLowerCase()
   }
   if (typeof document === 'undefined') return null
-  const probe = document.createElement('span')
-  probe.style.color = ''
-  probe.style.color = v
-  if (!probe.style.color) return null // the browser rejected it — not a colour
-  probe.style.display = 'none'
-  document.body.appendChild(probe)
-  const resolved = getComputedStyle(probe).color
-  probe.remove()
-  const m = resolved.match(/^rgba?\(([^)]+)\)/)
-  if (!m) return null
-  const [r, g, b] = m[1].split(',').map((n) => Math.round(parseFloat(n)))
-  if ([r, g, b].some((n) => Number.isNaN(n))) return null
-  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
+
+  const cached = hexCache.get(v)
+  if (cached !== undefined) return cached
+
+  const resolve = (): string | null => {
+    // Validity gate: assigning an unparseable colour leaves the property empty.
+    // Canvas can't do this for us — an invalid fillStyle is silently ignored,
+    // keeping whatever colour was set before.
+    const probe = document.createElement('span')
+    probe.style.color = ''
+    probe.style.color = v
+    if (!probe.style.color) return null // the browser rejected it — not a colour
+
+    if (swatchCtx === undefined) {
+      const canvas = document.createElement('canvas')
+      canvas.width = canvas.height = 1
+      swatchCtx = canvas.getContext('2d', { willReadFrequently: true })
+    }
+    if (!swatchCtx) return null
+
+    swatchCtx.clearRect(0, 0, 1, 1)
+    swatchCtx.fillStyle = v
+    swatchCtx.fillRect(0, 0, 1, 1)
+    const [r, g, b] = swatchCtx.getImageData(0, 0, 1, 1).data
+    return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
+  }
+
+  const hex = resolve()
+  // Typing into a colour field interns one entry per keystroke, so drop the
+  // whole cache once it stops being a working set rather than growing forever.
+  if (hexCache.size > 512) hexCache.clear()
+  hexCache.set(v, hex)
+  return hex
 }
 
 function FieldRow({

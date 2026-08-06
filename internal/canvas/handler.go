@@ -213,7 +213,7 @@ func (h *Handlers) getDesign(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, d)
+	writeJSON(w, http.StatusOK, d.View())
 }
 
 // setDesign replaces the project's canvas design system. Both the operator
@@ -223,17 +223,23 @@ func (h *Handlers) setDesign(w http.ResponseWriter, r *http.Request) {
 	if !h.ready(w) {
 		return
 	}
-	var body DesignSystem
+	// PreserveNotation is set by the panels, whose colour picker can only emit
+	// hex; an agent writing through canvas_design omits it and keeps the
+	// notation it chose. See Store.SetDesign.
+	var body struct {
+		DesignSystem
+		PreserveNotation bool `json:"preserve_notation"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	d, err := h.store.SetDesign(r.Context(), body)
+	d, err := h.store.SetDesign(r.Context(), body.DesignSystem, body.PreserveNotation)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, d)
+	writeJSON(w, http.StatusOK, d.View())
 }
 
 // designTask hands the operator's one-click design-system jobs to the agent:

@@ -1470,7 +1470,12 @@ that is what stops successive canvases from drifting apart. Read or
 set it with ` + "`canvas_design`" + ` — when the operator asks you to set one
 up, read the project's REAL theme first (tailwind config, CSS custom
 properties, existing components) and record what the code actually
-uses.
+uses. Map the tokens by MEANING rather than by matching variable
+names: ` + "`primary`" + ` is the project's BRAND colour, the one a main
+action is painted with. shadcn/ui and the Tailwind templates built
+on it are the trap — their ` + "`--primary`" + ` is a near-black or
+near-white ink and the brand hue lives in ` + "`--accent`" + `, so copying
+by name gives a palette of greys with no brand colour in it.
 
 The operator can request a design straight from the Canvas panel;
 that arrives here as an ordinary message explicitly asking you to

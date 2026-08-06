@@ -293,6 +293,11 @@ class CanvasApi {
           'tokens': tokens,
           'tokens_dark': tokensDark,
           'notes': notes,
+          // The panel's colour picker can only emit hex, so ask the gateway to
+          // write a picked colour back in whatever notation that token already
+          // used — otherwise editing one swatch of an oklch theme converts that
+          // token to hex and the palette ends up written two ways.
+          'preserve_notation': true,
         },
       );
       return CanvasDesignSystem.fromJson(res.data ?? const {});
@@ -337,6 +342,9 @@ class CanvasDesignSystem {
     this.tokens = const {},
     this.tokensDark = const {},
     this.notes = '',
+    this.tokensResolved = const {},
+    this.tokensDarkResolved = const {},
+    this.warnings = const [],
   });
 
   factory CanvasDesignSystem.fromJson(Map<String, dynamic> json) =>
@@ -344,6 +352,12 @@ class CanvasDesignSystem {
         tokens: _tokenMap(json['tokens']),
         tokensDark: _tokenMap(json['tokens_dark']),
         notes: json['notes'] as String? ?? '',
+        tokensResolved: _tokenMap(json['tokens_resolved']),
+        tokensDarkResolved: _tokenMap(json['tokens_dark_resolved']),
+        warnings: (json['warnings'] as List<dynamic>? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(CanvasDesignWarning.fromJson)
+            .toList(growable: false),
       );
 
   final Map<String, String> tokens;
@@ -352,8 +366,38 @@ class CanvasDesignSystem {
   final Map<String, String> tokensDark;
   final String notes;
 
+  /// Each token that IS a colour, resolved by the gateway to #rrggbb. Projects
+  /// write oklch/hsl/rgb and Dart has no CSS colour parser, so this is the only
+  /// way the swatches can show anything but hex. Tokens that aren't colours
+  /// (radius, font, the shadow triple) are absent — that's how we know not to
+  /// draw a swatch beside them.
+  final Map<String, String> tokensResolved;
+  final Map<String, String> tokensDarkResolved;
+
+  /// Advice about the saved system — never a reason the save failed.
+  final List<CanvasDesignWarning> warnings;
+
   bool get isEmpty =>
       tokens.isEmpty && tokensDark.isEmpty && notes.trim().isEmpty;
+}
+
+/// A system whose every colour resolves to a grey — usually tokens mapped by
+/// variable name off a shadcn theme, where `--primary` is an ink, not a brand
+/// colour.
+const String kCanvasWarningAchromaticPalette = 'achromatic_palette';
+
+class CanvasDesignWarning {
+  const CanvasDesignWarning({required this.code, required this.message});
+
+  factory CanvasDesignWarning.fromJson(Map<String, dynamic> json) =>
+      CanvasDesignWarning(
+        code: json['code'] as String? ?? '',
+        // English fallback, shown when a code has no translation yet.
+        message: json['message'] as String? ?? '',
+      );
+
+  final String code;
+  final String message;
 }
 
 Map<String, String> _tokenMap(Object? raw) {

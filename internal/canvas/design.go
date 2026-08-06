@@ -44,6 +44,97 @@ func (d DesignSystem) IsEmpty() bool {
 	return len(d.Tokens) == 0 && len(d.TokensDark) == 0 && strings.TrimSpace(d.Notes) == ""
 }
 
+// DesignWarning is advice about a stored system, never a reason to reject one.
+// Code is what a panel localises on; Message is the English fallback and is
+// what an agent reads back through the canvas_design tool.
+type DesignWarning struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// WarningAchromaticPalette fires when a system has colour tokens but none of
+// them is actually a colour.
+const WarningAchromaticPalette = "achromatic_palette"
+
+// DesignSystemView is a design system plus everything computed from it. The
+// stored shape stays exactly what the operator or the agent wrote; the derived
+// parts ride alongside so neither panel has to understand CSS colours.
+type DesignSystemView struct {
+	DesignSystem
+	// TokensResolved maps each token that IS a colour to its #rrggbb, for the
+	// swatches. Tokens that aren't colours (radius, font, the shadow triple)
+	// are simply absent, which is how a panel knows not to draw one.
+	TokensResolved     map[string]string `json:"tokens_resolved,omitempty"`
+	TokensDarkResolved map[string]string `json:"tokens_dark_resolved,omitempty"`
+	Warnings           []DesignWarning   `json:"warnings,omitempty"`
+}
+
+// View decorates a stored system with resolved swatch colours and warnings.
+func (d DesignSystem) View() DesignSystemView {
+	return DesignSystemView{
+		DesignSystem:       d,
+		TokensResolved:     resolveSwatches(d.Tokens),
+		TokensDarkResolved: resolveSwatches(d.TokensDark),
+		Warnings:           d.warnings(),
+	}
+}
+
+// resolveSwatches renders every token that is a colour as #rrggbb. It runs over
+// ALL tokens, not just the documented ones, so an operator-added `accent` gets
+// a swatch on the same terms as `primary`.
+func resolveSwatches(tokens map[string]string) map[string]string {
+	out := map[string]string{}
+	for k, v := range tokens {
+		if hex := ResolvedHex(v); hex != "" {
+			out[k] = hex
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func (d DesignSystem) warnings() []DesignWarning {
+	var out []DesignWarning
+	if w, ok := makeAchromaticWarning(d.Tokens); ok {
+		out = append(out, w)
+	}
+	return out
+}
+
+// makeAchromaticWarning catches the mapping mistake described on designTokens:
+// a palette where every colour resolves to a grey. A restrained product still
+// has one colour it paints its main action with, so a whole system without one
+// is far more likely to be `--primary` copied off a shadcn theme than a
+// deliberate choice. It is advisory — a genuinely monochrome design is legal,
+// and the operator just ignores it.
+func makeAchromaticWarning(tokens map[string]string) (DesignWarning, bool) {
+	// Below a few colours this is a half-filled system, not a mapping mistake.
+	const minColours = 3
+	seen := 0
+	for _, v := range tokens {
+		c, ok := chromaOf(v)
+		if !ok {
+			continue
+		}
+		seen++
+		if c >= chromaticThreshold {
+			return DesignWarning{}, false
+		}
+	}
+	if seen < minColours {
+		return DesignWarning{}, false
+	}
+	return DesignWarning{
+		Code: WarningAchromaticPalette,
+		Message: "Every colour in this system resolves to a grey, so canvases built from it will have no brand colour. " +
+			"If this project uses shadcn/ui or a Tailwind template, `--primary` there is an ink (near-black or near-white), not a brand colour — " +
+			"take the brand hue from `--accent` (or whatever the project paints its main action with) and put the ink in `text`. " +
+			"Ignore this if the design really is monochrome.",
+	}, true
+}
+
 // themedTokens are the tokens that differ between light and dark. The rest
 // (type, radius, spacing) are theme-independent, so a dark override for them
 // is ignored rather than silently doubling the vocabulary.
@@ -57,7 +148,14 @@ var themedTokens = map[string]bool{
 // documented CSS variable and a place in the prompt. Order matters: it is the
 // order the operator and the agent read them in.
 var designTokens = []struct{ Key, Label string }{
-	{"primary", "primary / accent colour"},
+	// `primary` is the project's BRAND colour — the one a main action is
+	// painted with. Saying so is load-bearing, because the obvious way to fill
+	// this in is to copy a CSS variable of the same name, and in shadcn/ui and
+	// the Tailwind templates built on it `--primary` is a near-black or
+	// near-white INK, not a brand colour at all: the brand hue lives in
+	// `--accent`. Name-matching a shadcn project therefore produces a palette
+	// with no colour in it, which is what makeAchromaticWarning catches.
+	{"primary", "brand colour — what a main action is painted with (NOT shadcn's ink `--primary`)"},
 	{"secondary", "secondary colour"},
 	{"background", "page background"},
 	{"surface", "card / surface background"},
@@ -210,6 +308,9 @@ func DesignTaskPrompt(task string) string {
 		return "[Canvas design system] The operator asked you to set up this project's canvas design system FROM THE REAL CODE — do not invent values. " +
 			"Read what the project actually uses: the Tailwind config, CSS custom properties (`:root` / `.dark` / `@theme` blocks), the global stylesheet, existing components, and CLAUDE.md if it records conventions. " +
 			"Then call the `canvas_design` MCP tool once with BOTH `tokens` (light) and `darkTokens` (the dark counterparts of the colour tokens), plus `notes` describing the style rules tokens can't express — density, what to avoid, how buttons and accents are used — inferred from the same code. " +
+			"Map by MEANING, not by variable name — `primary` here is the project's BRAND colour, the one a main action is painted with. " +
+			"Watch out for shadcn/ui and the Tailwind templates built on it: their `--primary` is a near-black or near-white INK, not a brand colour, and copying it here yields a palette of greys with no brand colour at all. " +
+			"In that case put the brand hue (usually `--accent`) in `primary` and the ink in `text`. If the palette you are about to write has no chromatic colour in it, you have hit exactly this and should re-read the theme. " +
 			"Prefer the project's own colour notation (keep oklch if that's what it uses). If the project has no theme yet, say so plainly and ask the operator to pick a palette in the panel instead of inventing one."
 	case TaskShowcase:
 		return "[Canvas design system] The operator wants to SEE this project's design system. Render it to the Canvas with `canvas_render` using kind=\"doc\" and slug=\"design-system\" (re-render that slug if it already exists). " +
@@ -245,13 +346,28 @@ func (s *Store) GetDesign(ctx context.Context, cwd string) (DesignSystem, error)
 }
 
 // SetDesign replaces the project's design system.
-func (s *Store) SetDesign(ctx context.Context, d DesignSystem) (DesignSystem, error) {
+//
+// preserveNotation is for writes that came from a colour PICKER rather than
+// from someone choosing a notation. The native picker on both surfaces can only
+// emit #rrggbb, so without this, editing one swatch of an oklch theme converts
+// that token to hex and the stored palette ends up in two notations. Agents
+// writing through canvas_design pass false: they picked their notation on
+// purpose (usually the project's own) and it is not ours to rewrite.
+func (s *Store) SetDesign(ctx context.Context, d DesignSystem, preserveNotation bool) (DesignSystem, error) {
 	cwd := strings.TrimSpace(d.Cwd)
 	if cwd == "" {
 		return DesignSystem{}, errors.New("canvas: cwd is required")
 	}
 	tokens := cleanTokens(d.Tokens, false)
 	dark := cleanTokens(d.TokensDark, true)
+	if preserveNotation {
+		prev, err := s.GetDesign(ctx, cwd)
+		if err != nil {
+			return DesignSystem{}, err
+		}
+		tokens = keepNotation(tokens, prev.Tokens)
+		dark = keepNotation(dark, prev.TokensDark)
+	}
 	raw, err := json.Marshal(tokens)
 	if err != nil {
 		return DesignSystem{}, fmt.Errorf("canvas: encode tokens: %w", err)
@@ -272,6 +388,23 @@ func (s *Store) SetDesign(ctx context.Context, d DesignSystem) (DesignSystem, er
 		return DesignSystem{}, fmt.Errorf("canvas: write design system: %w", err)
 	}
 	return DesignSystem{Cwd: cwd, Tokens: tokens, TokensDark: dark, Notes: notes}, nil
+}
+
+// keepNotation rewrites incoming hex values back into the notation the same
+// token already used. Only a bare hex is touched, and only when the previous
+// value was written some other way — so typing a colour out in full still
+// changes the notation, and a project that was already hex stays hex.
+func keepNotation(in, prev map[string]string) map[string]string {
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[k] = v
+		old := prev[k]
+		if old == "" || notationOf(v) != notationHex {
+			continue
+		}
+		out[k] = reencode(v, old)
+	}
+	return out
 }
 
 // decodeTokens reads a tokens column; a hand-edited row shouldn't break

@@ -6799,6 +6799,7 @@ class _TranslationsSessionsInspectorCanvasEs extends TranslationsSessionsInspect
 	@override String get designAgentHint => 'Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud; se indica al agente que use var(--od-…). Consejo: pide al agente que lo configure desde el tema real del proyecto.';
 	@override String get designSave => 'Guardar';
 	@override String get designSaved => 'Sistema de diseño guardado.';
+	@override String get designWarningAchromatic => 'Todos los colores resuelven a un gris: los lienzos no tendrán color de marca. Si el proyecto usa shadcn/ui, su --primary es una tinta; pon el tono de marca (normalmente --accent) en Principal.';
 	@override String get tokenPrimary => 'Primario';
 	@override String get tokenSecondary => 'Secundario';
 	@override String get tokenBackground => 'Fondo';
@@ -7530,6 +7531,7 @@ class _TranslationsWebSessionsInspectorCanvasEs extends TranslationsWebSessionsI
 	@override String get designClose => 'Cerrar';
 	@override String get designSaved => 'Sistema de diseño guardado: ahora acompaña a cada solicitud.';
 	@override String get designSaveFailed => 'No se pudo guardar el sistema de diseño';
+	@override String get designWarningAchromatic => 'Todos los colores aquí resuelven a un gris, así que los lienzos no tendrán color de marca. Si este proyecto usa shadcn/ui o una plantilla de Tailwind, su --primary es una tinta: pon el tono de marca (normalmente --accent) en Principal y la tinta en Texto. Ignóralo si el diseño es realmente monocromo.';
 	@override String get token_primary => 'Primario';
 	@override String get token_secondary => 'Secundario';
 	@override String get token_background => 'Fondo';
@@ -9937,6 +9939,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.canvas.designClose' => 'Cerrar',
 			'web.sessions.inspector.canvas.designSaved' => 'Sistema de diseño guardado: ahora acompaña a cada solicitud.',
 			'web.sessions.inspector.canvas.designSaveFailed' => 'No se pudo guardar el sistema de diseño',
+			'web.sessions.inspector.canvas.designWarningAchromatic' => 'Todos los colores aquí resuelven a un gris, así que los lienzos no tendrán color de marca. Si este proyecto usa shadcn/ui o una plantilla de Tailwind, su --primary es una tinta: pon el tono de marca (normalmente --accent) en Principal y la tinta en Texto. Ignóralo si el diseño es realmente monocromo.',
 			'web.sessions.inspector.canvas.token_primary' => 'Primario',
 			'web.sessions.inspector.canvas.token_secondary' => 'Secundario',
 			'web.sessions.inspector.canvas.token_background' => 'Fondo',
@@ -10145,9 +10148,9 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.curation.description' => 'Impulsa el canal conversacional que actualiza secciones y re-redacta páginas de conocimiento.',
 			'web.memoryWorkers.modelLabel' => 'Modelo',
 			'web.memoryWorkers.modelHint' => 'Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI.',
-			'web.memoryWorkers.modelCliDefault' => 'Predeterminado del CLI (último)',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.modelCliDefault' => 'Predeterminado del CLI (último)',
 			'web.memoryWorkers.modelCustom' => 'Personalizado…',
 			'web.memoryWorkers.modelCustomPlaceholder' => 'id exacto del modelo',
 			'web.memoryWorkers.modelBackToList' => 'Lista',
@@ -10659,9 +10662,9 @@ extension on TranslationsEs {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => 'Actualizado ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => 'Ya está actualizado',
 			'web.providers.detail.updateFailedToast' => 'Error al actualizar',
-			'web.providers.detail.updateUnavailable' => 'La actualización dentro de la app no está disponible aquí',
 			_ => null,
 		} ?? switch (path) {
+			'web.providers.detail.updateUnavailable' => 'La actualización dentro de la app no está disponible aquí',
 			'web.providers.configForm.selectPlaceholder' => 'Selecciona…',
 			'web.providers.configForm.defaultOption' => '(predeterminado)',
 			'web.providers.configForm.switchOn' => 'Activado',
@@ -11173,9 +11176,9 @@ extension on TranslationsEs {
 			'web.backups.status.pgDumpHint' => 'Las copias de seguridad no pueden ejecutarse hasta que pg_dump esté en PATH (o se haya definido su ruta absoluta en <1>backup.pg_dump_path</1>). Instala <3>postgresql-client</3> de la misma versión mayor que tu servidor y reinicia.',
 			'web.backups.backupsTab.backupNow' => 'Hacer copia ahora',
 			'web.backups.backupsTab.triggering' => 'Lanzando…',
-			'web.backups.backupsTab.includeConfig' => 'incluir config.toml',
 			_ => null,
 		} ?? switch (path) {
+			'web.backups.backupsTab.includeConfig' => 'incluir config.toml',
 			'web.backups.backupsTab.fullInstance' => 'Instancia completa',
 			'web.backups.backupsTab.fullInstanceHint' => 'Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.',
 			'web.backups.backupsTab.restoreFromFile' => 'Restaurar desde archivo',
@@ -11687,9 +11690,9 @@ extension on TranslationsEs {
 			'web.settings.about.forcePrompt' => ({required Object count}) => 'El reinicio interrumpirá ${count} sesión(es) activa(s) (se reanudan automáticamente después).',
 			'web.settings.about.upgradeAnyway' => 'Actualizar de todos modos',
 			'web.logViewer.filterPlaceholder' => 'Filtrar…',
-			'web.logViewer.debugTooltip' => 'Recuento de debug',
 			_ => null,
 		} ?? switch (path) {
+			'web.logViewer.debugTooltip' => 'Recuento de debug',
 			'web.logViewer.infoTooltip' => 'Recuento de info',
 			'web.logViewer.warnTooltip' => 'Recuento de advertencias',
 			'web.logViewer.errorTooltip' => 'Recuento de errores',
@@ -12201,9 +12204,9 @@ extension on TranslationsEs {
 			'web.database.panel.console' => 'Consola SQL',
 			'web.database.panel.openWorkbench' => 'Abrir banco de trabajo',
 			'web.database.workbench.title' => 'Banco de trabajo de BD',
-			'web.roundTable.title' => 'Mesa redonda',
 			_ => null,
 		} ?? switch (path) {
+			'web.roundTable.title' => 'Mesa redonda',
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.',
 			'web.roundTable.kNew' => 'Nueva mesa redonda',
@@ -12635,6 +12638,7 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.designAgentHint' => 'Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud; se indica al agente que use var(--od-…). Consejo: pide al agente que lo configure desde el tema real del proyecto.',
 			'sessions.inspector.canvas.designSave' => 'Guardar',
 			'sessions.inspector.canvas.designSaved' => 'Sistema de diseño guardado.',
+			'sessions.inspector.canvas.designWarningAchromatic' => 'Todos los colores resuelven a un gris: los lienzos no tendrán color de marca. Si el proyecto usa shadcn/ui, su --primary es una tinta; pon el tono de marca (normalmente --accent) en Principal.',
 			'sessions.inspector.canvas.tokenPrimary' => 'Primario',
 			'sessions.inspector.canvas.tokenSecondary' => 'Secundario',
 			'sessions.inspector.canvas.tokenBackground' => 'Fondo',
@@ -12714,10 +12718,10 @@ extension on TranslationsEs {
 			'mcp.errorPrefix.update' => 'Error al actualizar',
 			'mcp.errorPrefix.toggle' => 'Error al alternar',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
-			'mcp.editor.nameHint' => 'my-mcp-server',
-			'mcp.editor.jsonHint' => 'Configuración JSON, nombre, transport: stdio, command, args…',
 			_ => null,
 		} ?? switch (path) {
+			'mcp.editor.nameHint' => 'my-mcp-server',
+			'mcp.editor.jsonHint' => 'Configuración JSON, nombre, transport: stdio, command, args…',
 			'mcp.editor.descriptionPlaceholder' => 'Descripción opcional de una línea',
 			'mcp.editor.validateJsonObject' => 'El cuerpo debe ser un objeto JSON',
 			'mcp.editor.validateJsonInvalid' => ({required Object error}) => 'JSON no válido: ${error}',
@@ -13228,10 +13232,10 @@ extension on TranslationsEs {
 			'backupSchedules.newButton' => 'Nueva',
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
 			'backupSchedules.targetLabel' => 'Destinos',
-			'backupSchedules.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
-			'backupSchedules.intervalLabel' => 'Intervalo',
 			_ => null,
 		} ?? switch (path) {
+			'backupSchedules.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
+			'backupSchedules.intervalLabel' => 'Intervalo',
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
@@ -13742,10 +13746,10 @@ extension on TranslationsEs {
 			'about.gateway.upToDate' => 'Actualizado',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'about.gateway.releaseNotes' => 'Notas de la versión',
-			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
-			'settings.title' => 'Ajustes',
 			_ => null,
 		} ?? switch (path) {
+			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
+			'settings.title' => 'Ajustes',
 			'settings.language.section' => 'Idioma',
 			'settings.language.system' => 'Sistema',
 			'settings.language.systemSubtitle' => 'Sigue la configuración de idioma de tu teléfono',
