@@ -3913,6 +3913,7 @@ class TranslationsSessionsInspectorEn {
 	late final TranslationsSessionsInspectorGitEn git = TranslationsSessionsInspectorGitEn.internal(_root);
 	late final TranslationsSessionsInspectorTasksEn tasks = TranslationsSessionsInspectorTasksEn.internal(_root);
 	late final TranslationsSessionsInspectorNotesEn notes = TranslationsSessionsInspectorNotesEn.internal(_root);
+	late final TranslationsSessionsInspectorCanvasEn canvas = TranslationsSessionsInspectorCanvasEn.internal(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -6603,6 +6604,7 @@ class TranslationsWebSessionsInspectorEn {
 	late final TranslationsWebSessionsInspectorTabsEn tabs = TranslationsWebSessionsInspectorTabsEn.internal(_root);
 	late final TranslationsWebSessionsInspectorVaultPanelEn vaultPanel = TranslationsWebSessionsInspectorVaultPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCortexPanelEn cortexPanel = TranslationsWebSessionsInspectorCortexPanelEn.internal(_root);
+	late final TranslationsWebSessionsInspectorCanvasEn canvas = TranslationsWebSessionsInspectorCanvasEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -13158,6 +13160,237 @@ class TranslationsSessionsInspectorNotesEn {
 	String get save => 'Save';
 }
 
+// Path: sessions.inspector.canvas
+class TranslationsSessionsInspectorCanvasEn {
+	TranslationsSessionsInspectorCanvasEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'UI mock'
+	String get kindUi => 'UI mock';
+
+	/// en: 'Flowchart'
+	String get kindFlow => 'Flowchart';
+
+	/// en: 'Mind map'
+	String get kindMindmap => 'Mind map';
+
+	/// en: 'Relationships'
+	String get kindGraph => 'Relationships';
+
+	/// en: 'Document'
+	String get kindDoc => 'Document';
+
+	/// en: 'View'
+	String get modeView => 'View';
+
+	/// en: 'Pin'
+	String get modePin => 'Pin';
+
+	/// en: 'Frame'
+	String get modeRegion => 'Frame';
+
+	/// en: 'Working on {title} · {kind} — the agent treats this as "this canvas".'
+	String focusLine({required Object title, required Object kind}) => 'Working on ${title} · ${kind} — the agent treats this as "this canvas".';
+
+	/// en: 'What to change here…'
+	String get notePlaceholder => 'What to change here…';
+
+	/// en: 'Overall note (optional)…'
+	String get messagePlaceholder => 'Overall note (optional)…';
+
+	/// en: 'Send'
+	String get send => 'Send';
+
+	/// en: 'Feedback sent to the session.'
+	String get sent => 'Feedback sent to the session.';
+
+	/// en: 'Add a pin, a frame, or a note first.'
+	String get nothingToSend => 'Add a pin, a frame, or a note first.';
+
+	/// en: 'Ask the agent to design or draw something…'
+	String get requestPlaceholder => 'Ask the agent to design or draw something…';
+
+	/// en: 'Design'
+	String get requestSend => 'Design';
+
+	/// en: 'Sent — the agent will render it here.'
+	String get requested => 'Sent — the agent will render it here.';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Delete canvas?'
+	String get deleteTitle => 'Delete canvas?';
+
+	/// en: 'Delete "{title}"? This can't be undone.'
+	String deleteBody({required Object title}) => 'Delete "${title}"? This can\'t be undone.';
+
+	/// en: 'No canvas yet'
+	String get emptyTitle => 'No canvas yet';
+
+	/// en: 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.'
+	String get emptyBlurb => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.';
+
+	/// en: 'Phone width'
+	String get viewportPhone => 'Phone width';
+
+	/// en: 'Tablet width'
+	String get viewportTablet => 'Tablet width';
+
+	/// en: 'Desktop width'
+	String get viewportDesktop => 'Desktop width';
+
+	/// en: 'Open full screen'
+	String get openFull => 'Open full screen';
+
+	/// en: 'Confirm'
+	String get confirm => 'Confirm';
+
+	/// en: 'Captured: {what}'
+	String captured({required Object what}) => 'Captured: ${what}';
+
+	/// en: 'Notes'
+	String get notes => 'Notes';
+
+	/// en: 'Clear marks'
+	String get clear => 'Clear marks';
+
+	/// en: 'Done'
+	String get done => 'Done';
+
+	/// en: 'Tap the spot, then drag to fine-tune — confirm when it has the right element.'
+	String get hintPin => 'Tap the spot, then drag to fine-tune — confirm when it has the right element.';
+
+	/// en: 'Drag a frame over the area you mean, then confirm.'
+	String get hintRegion => 'Drag a frame over the area you mean, then confirm.';
+
+	/// en: 'New'
+	String get newCanvas => 'New';
+
+	/// en: 'New canvas'
+	String get newCanvasTitle => 'New canvas';
+
+	/// en: 'Pick what to draw above, then describe it below — the agent renders the new canvas here.'
+	String get newCanvasBlurb => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.';
+
+	/// en: 'Work on this'
+	String get setWorkspace => 'Work on this';
+
+	/// en: 'The agent is now working on this canvas.'
+	String get workspaceSet => 'The agent is now working on this canvas.';
+
+	/// en: 'Previewing only — tap "Work on this" to point the agent at it.'
+	String get previewOnlyHint => 'Previewing only — tap "Work on this" to point the agent at it.';
+
+	/// en: 'Design system'
+	String get designTitle => 'Design system';
+
+	/// en: 'Tokens + rules every canvas follows'
+	String get designBlurb => 'Tokens + rules every canvas follows';
+
+	/// en: 'Style rules (what tokens can't express)'
+	String get designNotesLabel => 'Style rules (what tokens can\'t express)';
+
+	/// en: 'e.g. restrained and information-dense; no gradients; buttons solid or outline only'
+	String get designNotesPlaceholder => 'e.g. restrained and information-dense; no gradients; buttons solid or outline only';
+
+	/// en: 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project's real theme.'
+	String get designAgentHint => 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project\'s real theme.';
+
+	/// en: 'Save'
+	String get designSave => 'Save';
+
+	/// en: 'Design system saved.'
+	String get designSaved => 'Design system saved.';
+
+	/// en: 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.'
+	String get designWarningAchromatic => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.';
+
+	/// en: 'Primary'
+	String get tokenPrimary => 'Primary';
+
+	/// en: 'Secondary'
+	String get tokenSecondary => 'Secondary';
+
+	/// en: 'Background'
+	String get tokenBackground => 'Background';
+
+	/// en: 'Surface'
+	String get tokenSurface => 'Surface';
+
+	/// en: 'Text'
+	String get tokenText => 'Text';
+
+	/// en: 'Muted'
+	String get tokenMuted => 'Muted';
+
+	/// en: 'Border'
+	String get tokenBorder => 'Border';
+
+	/// en: 'Body font'
+	String get tokenFont => 'Body font';
+
+	/// en: 'Heading font'
+	String get tokenHeadingFont => 'Heading font';
+
+	/// en: 'Base size'
+	String get tokenBaseSize => 'Base size';
+
+	/// en: 'Radius'
+	String get tokenRadius => 'Radius';
+
+	/// en: 'Spacing'
+	String get tokenSpacing => 'Spacing';
+
+	/// en: 'Shadow'
+	String get tokenShadow => 'Shadow';
+
+	/// en: 'Light'
+	String get themeLight => 'Light';
+
+	/// en: 'Dark'
+	String get themeDark => 'Dark';
+
+	/// en: 'Start from a palette'
+	String get paletteLabel => 'Start from a palette';
+
+	/// en: 'blank = inherits light'
+	String get themeDarkHint => 'blank = inherits light';
+
+	/// en: 'Indigo'
+	String get paletteIndigo => 'Indigo';
+
+	/// en: 'Sky'
+	String get paletteSky => 'Sky';
+
+	/// en: 'Emerald'
+	String get paletteEmerald => 'Emerald';
+
+	/// en: 'Amber'
+	String get paletteAmber => 'Amber';
+
+	/// en: 'Rose'
+	String get paletteRose => 'Rose';
+
+	/// en: 'Violet'
+	String get paletteViolet => 'Violet';
+
+	/// en: 'Graphite'
+	String get paletteGraphite => 'Graphite';
+
+	/// en: 'Read from project'
+	String get extractBtn => 'Read from project';
+
+	/// en: 'Show as canvas'
+	String get showcaseBtn => 'Show as canvas';
+
+	/// en: 'Sent to the agent — watch the session.'
+	String get designTaskSent => 'Sent to the agent — watch the session.';
+}
+
 // Path: sessions.spawnSheet.bypass
 class TranslationsSessionsSpawnSheetBypassEn {
 	TranslationsSessionsSpawnSheetBypassEn.internal(this._root);
@@ -14218,6 +14451,9 @@ class TranslationsWebSessionsInspectorTabsEn {
 
 	/// en: 'Database'
 	String get database => 'Database';
+
+	/// en: 'Canvas'
+	String get canvas => 'Canvas';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -14335,6 +14571,294 @@ class TranslationsWebSessionsInspectorCortexPanelEn {
 
 	/// en: 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.'
 	String get empty => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.';
+}
+
+// Path: web.sessions.inspector.canvas
+class TranslationsWebSessionsInspectorCanvasEn {
+	TranslationsWebSessionsInspectorCanvasEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No canvas yet. Ask for a screen, a flowchart, a mind map or a relationship diagram above — the agent renders it here and you can pin and annotate it.'
+	String get empty => 'No canvas yet. Ask for a screen, a flowchart, a mind map or a relationship diagram above — the agent renders it here and you can pin and annotate it.';
+
+	/// en: 'Preview'
+	String get modePreview => 'Preview';
+
+	/// en: 'Pin'
+	String get modePin => 'Pin';
+
+	/// en: 'Region'
+	String get modeRegion => 'Region';
+
+	/// en: 'Click an element in the preview to pin it — the agent gets its selector and markup.'
+	String get hintPin => 'Click an element in the preview to pin it — the agent gets its selector and markup.';
+
+	/// en: 'Drag a rectangle over the area you want to point at.'
+	String get hintRegion => 'Drag a rectangle over the area you want to point at.';
+
+	/// en: 'What to change here…'
+	String get notePlaceholder => 'What to change here…';
+
+	/// en: 'Remove annotation'
+	String get removeAnnotation => 'Remove annotation';
+
+	/// en: 'Overall note for the agent (optional)…'
+	String get messagePlaceholder => 'Overall note for the agent (optional)…';
+
+	/// en: 'Send to agent'
+	String get send => 'Send to agent';
+
+	/// en: 'Clear'
+	String get clear => 'Clear';
+
+	/// en: 'Feedback sent to the session.'
+	String get sent => 'Feedback sent to the session.';
+
+	/// en: 'Could not send feedback'
+	String get sendFailed => 'Could not send feedback';
+
+	/// en: 'Add a pin, a region, or a note first.'
+	String get nothingToSend => 'Add a pin, a region, or a note first.';
+
+	/// en: 'Could not render preview'
+	String get previewFailed => 'Could not render preview';
+
+	/// en: 'Preview on canvas'
+	String get previewHtml => 'Preview on canvas';
+
+	/// en: 'Pop out'
+	String get popOut => 'Pop out';
+
+	/// en: 'Open the canvas in a full window (keeps the terminal free)'
+	String get popOutHint => 'Open the canvas in a full window (keeps the terminal free)';
+
+	/// en: 'Canvas'
+	String get popOutTitle => 'Canvas';
+
+	/// en: 'Missing session or project — reopen the canvas from a session's Canvas tab.'
+	String get popOutMissing => 'Missing session or project — reopen the canvas from a session\'s Canvas tab.';
+
+	/// en: 'Mobile width (375px)'
+	String get viewportMobile => 'Mobile width (375px)';
+
+	/// en: 'Tablet width (768px)'
+	String get viewportTablet => 'Tablet width (768px)';
+
+	/// en: 'Full width'
+	String get viewportFull => 'Full width';
+
+	/// en: 'Ask the agent to design or draw something…'
+	String get requestPlaceholder => 'Ask the agent to design or draw something…';
+
+	/// en: 'Design'
+	String get requestSend => 'Design';
+
+	/// en: 'Sent to the agent — it will render to the canvas.'
+	String get requested => 'Sent to the agent — it will render to the canvas.';
+
+	/// en: 'Could not send the request'
+	String get requestFailed => 'Could not send the request';
+
+	/// en: 'Delete this canvas'
+	String get deleteMock => 'Delete this canvas';
+
+	/// en: 'Delete the canvas "{title}"? This can't be undone.'
+	String deleteConfirm({required Object title}) => 'Delete the canvas "${title}"? This can\'t be undone.';
+
+	/// en: 'Canvas deleted'
+	String get deleted => 'Canvas deleted';
+
+	/// en: 'Could not delete the canvas'
+	String get deleteFailed => 'Could not delete the canvas';
+
+	/// en: 'New canvas'
+	String get newMock => 'New canvas';
+
+	/// en: 'Start a fresh canvas instead of updating the selected one'
+	String get newMockHint => 'Start a fresh canvas instead of updating the selected one';
+
+	/// en: '→ Working on:'
+	String get targetLabel => '→ Working on:';
+
+	/// en: 'New canvas'
+	String get targetNew => 'New canvas';
+
+	/// en: 'Pick what to draw above, then describe it in the request bar — the agent renders the new canvas here.'
+	String get newMockPlaceholder => 'Pick what to draw above, then describe it in the request bar — the agent renders the new canvas here.';
+
+	/// en: 'Draw as:'
+	String get kindLabel => 'Draw as:';
+
+	/// en: 'UI mock'
+	String get kind_ui => 'UI mock';
+
+	/// en: 'Flowchart'
+	String get kind_flow => 'Flowchart';
+
+	/// en: 'Mind map'
+	String get kind_mindmap => 'Mind map';
+
+	/// en: 'Relationships'
+	String get kind_graph => 'Relationships';
+
+	/// en: 'Document'
+	String get kind_doc => 'Document';
+
+	/// en: 'The agent treats this as "this canvas" — just say what to change in the terminal.'
+	String get focusHint => 'The agent treats this as "this canvas" — just say what to change in the terminal.';
+
+	/// en: 'Work on this'
+	String get setWorkspace => 'Work on this';
+
+	/// en: 'Tell the agent to work on this canvas — sends one short note to the session'
+	String get setWorkspaceHint => 'Tell the agent to work on this canvas — sends one short note to the session';
+
+	/// en: '· agent's workspace'
+	String get isWorkspace => '· agent\'s workspace';
+
+	/// en: 'The agent's workspace'
+	String get workspaceBadge => 'The agent\'s workspace';
+
+	/// en: 'The agent is now working on this canvas.'
+	String get workspaceSet => 'The agent is now working on this canvas.';
+
+	/// en: 'Could not set the workspace'
+	String get workspaceFailed => 'Could not set the workspace';
+
+	/// en: 'Previewing only — press "Work on this" to point the agent at it.'
+	String get previewOnlyHint => 'Previewing only — press "Work on this" to point the agent at it.';
+
+	/// en: 'Design system'
+	String get designTitle => 'Design system';
+
+	/// en: 'Tokens + rules every canvas follows, so they look like one product'
+	String get designBlurb => 'Tokens + rules every canvas follows, so they look like one product';
+
+	/// en: 'Loading…'
+	String get designLoading => 'Loading…';
+
+	/// en: 'Style rules (what tokens can't express)'
+	String get designNotesLabel => 'Style rules (what tokens can\'t express)';
+
+	/// en: 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only'
+	String get designNotesPlaceholder => 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only';
+
+	/// en: 'Pick a palette above if you're starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to "set up the canvas design system from our real theme" — it will read the tailwind config / CSS variables and fill this in.'
+	String get designAgentHint => 'Pick a palette above if you\'re starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to "set up the canvas design system from our real theme" — it will read the tailwind config / CSS variables and fill this in.';
+
+	/// en: 'Save'
+	String get designSave => 'Save';
+
+	/// en: 'Cancel'
+	String get designCancel => 'Cancel';
+
+	/// en: 'Close'
+	String get designClose => 'Close';
+
+	/// en: 'Design system saved — every canvas request now carries it.'
+	String get designSaved => 'Design system saved — every canvas request now carries it.';
+
+	/// en: 'Could not save the design system'
+	String get designSaveFailed => 'Could not save the design system';
+
+	/// en: 'Every colour here resolves to a grey, so canvases built from it will have no brand colour. If this project uses shadcn/ui or a Tailwind template, its --primary is an ink — put the brand hue (usually --accent) in Primary and the ink in Text. Ignore this if the design really is monochrome.'
+	String get designWarningAchromatic => 'Every colour here resolves to a grey, so canvases built from it will have no brand colour. If this project uses shadcn/ui or a Tailwind template, its --primary is an ink — put the brand hue (usually --accent) in Primary and the ink in Text. Ignore this if the design really is monochrome.';
+
+	/// en: 'Primary'
+	String get token_primary => 'Primary';
+
+	/// en: 'Secondary'
+	String get token_secondary => 'Secondary';
+
+	/// en: 'Background'
+	String get token_background => 'Background';
+
+	/// en: 'Surface'
+	String get token_surface => 'Surface';
+
+	/// en: 'Text'
+	String get token_text => 'Text';
+
+	/// en: 'Muted text'
+	String get token_muted => 'Muted text';
+
+	/// en: 'Border'
+	String get token_border => 'Border';
+
+	/// en: 'Body font'
+	String get token_font => 'Body font';
+
+	/// en: 'Heading font'
+	String get token_headingFont => 'Heading font';
+
+	/// en: 'Base size'
+	String get token_baseSize => 'Base size';
+
+	/// en: 'Radius'
+	String get token_radius => 'Radius';
+
+	/// en: 'Spacing unit'
+	String get token_spacing => 'Spacing unit';
+
+	/// en: 'Shadow'
+	String get token_shadow => 'Shadow';
+
+	/// en: 'Start from a palette (fills both themes)'
+	String get paletteLabel => 'Start from a palette (fills both themes)';
+
+	/// en: 'Indigo'
+	String get palette_indigo => 'Indigo';
+
+	/// en: 'Sky'
+	String get palette_sky => 'Sky';
+
+	/// en: 'Emerald'
+	String get palette_emerald => 'Emerald';
+
+	/// en: 'Amber'
+	String get palette_amber => 'Amber';
+
+	/// en: 'Rose'
+	String get palette_rose => 'Rose';
+
+	/// en: 'Violet'
+	String get palette_violet => 'Violet';
+
+	/// en: 'Graphite'
+	String get palette_graphite => 'Graphite';
+
+	/// en: 'Light'
+	String get themeLight => 'Light';
+
+	/// en: 'Dark'
+	String get themeDark => 'Dark';
+
+	/// en: 'the base palette'
+	String get themeLightHint => 'the base palette';
+
+	/// en: 'blank = inherits the light value'
+	String get themeDarkHint => 'blank = inherits the light value';
+
+	/// en: 'Read from project'
+	String get extractBtn => 'Read from project';
+
+	/// en: 'Ask the agent to read the project's real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type'
+	String get extractHint => 'Ask the agent to read the project\'s real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type';
+
+	/// en: 'Show as canvas'
+	String get showcaseBtn => 'Show as canvas';
+
+	/// en: 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens'
+	String get showcaseHint => 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens';
+
+	/// en: 'Sent to the agent — watch the session.'
+	String get designTaskSent => 'Sent to the agent — watch the session.';
+
+	/// en: 'Could not send the request'
+	String get designTaskFailed => 'Could not send the request';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -17725,6 +18249,9 @@ class TranslationsSessionsInspectorShellTabsEn {
 	/// en: 'Vault'
 	String get vault => 'Vault';
 
+	/// en: 'Canvas'
+	String get canvas => 'Canvas';
+
 	/// en: 'Cortex'
 	String get cortex => 'Cortex';
 
@@ -18031,6 +18558,7 @@ extension on Translations {
 			'web.sessions.inspector.tabs.vault' => 'Vault',
 			'web.sessions.inspector.tabs.cortex' => 'Cortex',
 			'web.sessions.inspector.tabs.database' => 'Database',
+			'web.sessions.inspector.tabs.canvas' => 'Canvas',
 			'web.sessions.inspector.vaultPanel.open' => 'Open Vault',
 			'web.sessions.inspector.vaultPanel.projectDocs' => 'Project docs',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => 'Agent-authored project docs in the vault. Re-bind the folder if this project\'s notes live elsewhere.',
@@ -18064,6 +18592,99 @@ extension on Translations {
 			'web.sessions.inspector.cortexPanel.plan' => 'Plan',
 			'web.sessions.inspector.cortexPanel.latestJournal' => 'Latest journal',
 			'web.sessions.inspector.cortexPanel.empty' => 'No Cortex memory captured yet for this project. Spawn a session or set a goal to populate.',
+			'web.sessions.inspector.canvas.empty' => 'No canvas yet. Ask for a screen, a flowchart, a mind map or a relationship diagram above — the agent renders it here and you can pin and annotate it.',
+			'web.sessions.inspector.canvas.modePreview' => 'Preview',
+			'web.sessions.inspector.canvas.modePin' => 'Pin',
+			'web.sessions.inspector.canvas.modeRegion' => 'Region',
+			'web.sessions.inspector.canvas.hintPin' => 'Click an element in the preview to pin it — the agent gets its selector and markup.',
+			'web.sessions.inspector.canvas.hintRegion' => 'Drag a rectangle over the area you want to point at.',
+			'web.sessions.inspector.canvas.notePlaceholder' => 'What to change here…',
+			'web.sessions.inspector.canvas.removeAnnotation' => 'Remove annotation',
+			'web.sessions.inspector.canvas.messagePlaceholder' => 'Overall note for the agent (optional)…',
+			'web.sessions.inspector.canvas.send' => 'Send to agent',
+			'web.sessions.inspector.canvas.clear' => 'Clear',
+			'web.sessions.inspector.canvas.sent' => 'Feedback sent to the session.',
+			'web.sessions.inspector.canvas.sendFailed' => 'Could not send feedback',
+			'web.sessions.inspector.canvas.nothingToSend' => 'Add a pin, a region, or a note first.',
+			'web.sessions.inspector.canvas.previewFailed' => 'Could not render preview',
+			'web.sessions.inspector.canvas.previewHtml' => 'Preview on canvas',
+			'web.sessions.inspector.canvas.popOut' => 'Pop out',
+			'web.sessions.inspector.canvas.popOutHint' => 'Open the canvas in a full window (keeps the terminal free)',
+			'web.sessions.inspector.canvas.popOutTitle' => 'Canvas',
+			'web.sessions.inspector.canvas.popOutMissing' => 'Missing session or project — reopen the canvas from a session\'s Canvas tab.',
+			'web.sessions.inspector.canvas.viewportMobile' => 'Mobile width (375px)',
+			'web.sessions.inspector.canvas.viewportTablet' => 'Tablet width (768px)',
+			'web.sessions.inspector.canvas.viewportFull' => 'Full width',
+			'web.sessions.inspector.canvas.requestPlaceholder' => 'Ask the agent to design or draw something…',
+			'web.sessions.inspector.canvas.requestSend' => 'Design',
+			'web.sessions.inspector.canvas.requested' => 'Sent to the agent — it will render to the canvas.',
+			'web.sessions.inspector.canvas.requestFailed' => 'Could not send the request',
+			'web.sessions.inspector.canvas.deleteMock' => 'Delete this canvas',
+			'web.sessions.inspector.canvas.deleteConfirm' => ({required Object title}) => 'Delete the canvas "${title}"? This can\'t be undone.',
+			'web.sessions.inspector.canvas.deleted' => 'Canvas deleted',
+			'web.sessions.inspector.canvas.deleteFailed' => 'Could not delete the canvas',
+			'web.sessions.inspector.canvas.newMock' => 'New canvas',
+			'web.sessions.inspector.canvas.newMockHint' => 'Start a fresh canvas instead of updating the selected one',
+			'web.sessions.inspector.canvas.targetLabel' => '→ Working on:',
+			'web.sessions.inspector.canvas.targetNew' => 'New canvas',
+			'web.sessions.inspector.canvas.newMockPlaceholder' => 'Pick what to draw above, then describe it in the request bar — the agent renders the new canvas here.',
+			'web.sessions.inspector.canvas.kindLabel' => 'Draw as:',
+			'web.sessions.inspector.canvas.kind_ui' => 'UI mock',
+			'web.sessions.inspector.canvas.kind_flow' => 'Flowchart',
+			'web.sessions.inspector.canvas.kind_mindmap' => 'Mind map',
+			'web.sessions.inspector.canvas.kind_graph' => 'Relationships',
+			'web.sessions.inspector.canvas.kind_doc' => 'Document',
+			'web.sessions.inspector.canvas.focusHint' => 'The agent treats this as "this canvas" — just say what to change in the terminal.',
+			'web.sessions.inspector.canvas.setWorkspace' => 'Work on this',
+			'web.sessions.inspector.canvas.setWorkspaceHint' => 'Tell the agent to work on this canvas — sends one short note to the session',
+			'web.sessions.inspector.canvas.isWorkspace' => '· agent\'s workspace',
+			'web.sessions.inspector.canvas.workspaceBadge' => 'The agent\'s workspace',
+			'web.sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
+			'web.sessions.inspector.canvas.workspaceFailed' => 'Could not set the workspace',
+			'web.sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — press "Work on this" to point the agent at it.',
+			'web.sessions.inspector.canvas.designTitle' => 'Design system',
+			'web.sessions.inspector.canvas.designBlurb' => 'Tokens + rules every canvas follows, so they look like one product',
+			'web.sessions.inspector.canvas.designLoading' => 'Loading…',
+			'web.sessions.inspector.canvas.designNotesLabel' => 'Style rules (what tokens can\'t express)',
+			'web.sessions.inspector.canvas.designNotesPlaceholder' => 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only',
+			'web.sessions.inspector.canvas.designAgentHint' => 'Pick a palette above if you\'re starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to "set up the canvas design system from our real theme" — it will read the tailwind config / CSS variables and fill this in.',
+			'web.sessions.inspector.canvas.designSave' => 'Save',
+			'web.sessions.inspector.canvas.designCancel' => 'Cancel',
+			'web.sessions.inspector.canvas.designClose' => 'Close',
+			'web.sessions.inspector.canvas.designSaved' => 'Design system saved — every canvas request now carries it.',
+			'web.sessions.inspector.canvas.designSaveFailed' => 'Could not save the design system',
+			'web.sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey, so canvases built from it will have no brand colour. If this project uses shadcn/ui or a Tailwind template, its --primary is an ink — put the brand hue (usually --accent) in Primary and the ink in Text. Ignore this if the design really is monochrome.',
+			'web.sessions.inspector.canvas.token_primary' => 'Primary',
+			'web.sessions.inspector.canvas.token_secondary' => 'Secondary',
+			'web.sessions.inspector.canvas.token_background' => 'Background',
+			'web.sessions.inspector.canvas.token_surface' => 'Surface',
+			'web.sessions.inspector.canvas.token_text' => 'Text',
+			'web.sessions.inspector.canvas.token_muted' => 'Muted text',
+			'web.sessions.inspector.canvas.token_border' => 'Border',
+			'web.sessions.inspector.canvas.token_font' => 'Body font',
+			'web.sessions.inspector.canvas.token_headingFont' => 'Heading font',
+			'web.sessions.inspector.canvas.token_baseSize' => 'Base size',
+			'web.sessions.inspector.canvas.token_radius' => 'Radius',
+			'web.sessions.inspector.canvas.token_spacing' => 'Spacing unit',
+			'web.sessions.inspector.canvas.token_shadow' => 'Shadow',
+			'web.sessions.inspector.canvas.paletteLabel' => 'Start from a palette (fills both themes)',
+			'web.sessions.inspector.canvas.palette_indigo' => 'Indigo',
+			'web.sessions.inspector.canvas.palette_sky' => 'Sky',
+			'web.sessions.inspector.canvas.palette_emerald' => 'Emerald',
+			'web.sessions.inspector.canvas.palette_amber' => 'Amber',
+			'web.sessions.inspector.canvas.palette_rose' => 'Rose',
+			'web.sessions.inspector.canvas.palette_violet' => 'Violet',
+			'web.sessions.inspector.canvas.palette_graphite' => 'Graphite',
+			'web.sessions.inspector.canvas.themeLight' => 'Light',
+			'web.sessions.inspector.canvas.themeDark' => 'Dark',
+			'web.sessions.inspector.canvas.themeLightHint' => 'the base palette',
+			'web.sessions.inspector.canvas.themeDarkHint' => 'blank = inherits the light value',
+			'web.sessions.inspector.canvas.extractBtn' => 'Read from project',
+			'web.sessions.inspector.canvas.extractHint' => 'Ask the agent to read the project\'s real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type',
+			'web.sessions.inspector.canvas.showcaseBtn' => 'Show as canvas',
+			'web.sessions.inspector.canvas.showcaseHint' => 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens',
+			'web.sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
+			'web.sessions.inspector.canvas.designTaskFailed' => 'Could not send the request',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -18241,6 +18862,8 @@ extension on Translations {
 			'web.memoryWorkers.tasks.curation.description' => 'Drives the talk-to-AI channel that updates doc sections and re-drafts knowledge pages; revisions respect lock state.',
 			'web.memoryWorkers.modelLabel' => 'Model',
 			'web.memoryWorkers.modelHint' => 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.modelCliDefault' => 'CLI default (latest)',
 			'web.memoryWorkers.modelCustom' => 'Custom…',
 			'web.memoryWorkers.modelCustomPlaceholder' => 'exact model id',
@@ -18335,8 +18958,6 @@ extension on Translations {
 			'web.project.inbox.emptyHint' => 'Agents file proposals here via `project_goal_set` / `project_plan_set` MCP tools.',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label} updated',
 			'web.project.inbox.approveFailedToast' => 'Approve failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.rejectedToast' => 'Rejected',
 			'web.project.inbox.rejectFailedToast' => 'Reject failed',
 			'web.project.inbox.sessionPrefix' => 'ses',
@@ -18755,6 +19376,8 @@ extension on Translations {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => 'Updated ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => 'Already up to date',
 			'web.providers.detail.updateFailedToast' => 'Update failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.updateUnavailable' => 'In-app update not available here',
 			'web.providers.configForm.selectPlaceholder' => 'Select…',
 			'web.providers.configForm.defaultOption' => '(default)',
@@ -18849,8 +19472,6 @@ extension on Translations {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => 'Delete channel ${id}?',
 			'web.channels.toasts.deleted' => 'Channel deleted',
 			'web.channels.toasts.created' => 'Channel created',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.toasts.updated' => 'Channel updated',
 			'web.channels.toasts.muted' => 'Channel muted',
 			'web.channels.toasts.unmuted' => 'Channel unmuted',
@@ -19269,6 +19890,8 @@ extension on Translations {
 			'web.backups.status.pgDumpHint' => 'Backups can\'t run until pg_dump is on PATH (or its absolute path is set in <1>backup.pg_dump_path</1>). Install <3>postgresql-client</3> matching your server\'s major version and restart.',
 			'web.backups.backupsTab.backupNow' => 'Backup now',
 			'web.backups.backupsTab.triggering' => 'Triggering…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.includeConfig' => 'include config.toml',
 			'web.backups.backupsTab.fullInstance' => 'Full instance',
 			'web.backups.backupsTab.fullInstanceHint' => 'Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.',
@@ -19363,8 +19986,6 @@ extension on Translations {
 			'web.backups.schedulesTab.columns.interval' => 'Interval',
 			'web.backups.schedulesTab.columns.keep' => 'Keep',
 			'web.backups.schedulesTab.columns.nextRun' => 'Next run',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.schedulesTab.columns.enabled' => 'Enabled',
 			'web.backups.schedulesTab.columns.actions' => 'Actions',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} backups',
@@ -19783,6 +20404,8 @@ extension on Translations {
 			'web.settings.about.forcePrompt' => ({required Object count}) => '${count} live session(s) will be interrupted by the restart (they auto-resume afterward).',
 			'web.settings.about.upgradeAnyway' => 'Upgrade anyway',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
 			'web.logViewer.warnTooltip' => 'Warn count',
@@ -19877,8 +20500,6 @@ extension on Translations {
 			'web.memoryAmbient.rules.dialog.dedupHint' => 'Higher = stricter de-duplication. 0.85 is the recommended sweet spot.',
 			'web.memoryAmbient.rules.dialog.create' => 'Create',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => 'Name is required',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => 'Rule ${name} created',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => 'Create failed',
 			'web.memoryAmbient.profiles.title' => 'Injection profiles',
@@ -20297,6 +20918,8 @@ extension on Translations {
 			'web.database.panel.console' => 'SQL console',
 			'web.database.panel.openWorkbench' => 'Open workbench',
 			'web.database.workbench.title' => 'Database workbench',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.title' => 'Round Table',
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'A cross-vendor AI group chat. @mention claude, codex or antigravity and they reply in the thread — like a Telegram group, with a different vendor\'s model behind each member.',
@@ -20391,8 +21014,6 @@ extension on Translations {
 			'web.roundTable.plan.rerun' => 'Re-run',
 			'web.roundTable.plan.running' => 'Running',
 			'web.roundTable.plan.done' => 'Done',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.pending' => 'Pending',
 			'web.roundTable.plan.openSession' => 'Open session',
 			'web.roundTable.plan.needProject' => 'Bind a project (cwd) to run steps.',
@@ -20604,6 +21225,7 @@ extension on Translations {
 			'sessions.inspector.shell.tabs.tasks' => 'Tasks',
 			'sessions.inspector.shell.tabs.history' => 'History',
 			'sessions.inspector.shell.tabs.vault' => 'Vault',
+			'sessions.inspector.shell.tabs.canvas' => 'Canvas',
 			'sessions.inspector.shell.tabs.cortex' => 'Cortex',
 			'sessions.inspector.shell.tabs.database' => 'Database',
 			'sessions.inspector.cortex.title' => 'Cortex workspace',
@@ -20684,6 +21306,80 @@ extension on Translations {
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
 			'sessions.inspector.notes.save' => 'Save',
+			'sessions.inspector.canvas.kindUi' => 'UI mock',
+			'sessions.inspector.canvas.kindFlow' => 'Flowchart',
+			'sessions.inspector.canvas.kindMindmap' => 'Mind map',
+			'sessions.inspector.canvas.kindGraph' => 'Relationships',
+			'sessions.inspector.canvas.kindDoc' => 'Document',
+			'sessions.inspector.canvas.modeView' => 'View',
+			'sessions.inspector.canvas.modePin' => 'Pin',
+			'sessions.inspector.canvas.modeRegion' => 'Frame',
+			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => 'Working on ${title} · ${kind} — the agent treats this as "this canvas".',
+			'sessions.inspector.canvas.notePlaceholder' => 'What to change here…',
+			'sessions.inspector.canvas.messagePlaceholder' => 'Overall note (optional)…',
+			'sessions.inspector.canvas.send' => 'Send',
+			'sessions.inspector.canvas.sent' => 'Feedback sent to the session.',
+			'sessions.inspector.canvas.nothingToSend' => 'Add a pin, a frame, or a note first.',
+			'sessions.inspector.canvas.requestPlaceholder' => 'Ask the agent to design or draw something…',
+			'sessions.inspector.canvas.requestSend' => 'Design',
+			'sessions.inspector.canvas.requested' => 'Sent — the agent will render it here.',
+			'sessions.inspector.canvas.delete' => 'Delete',
+			'sessions.inspector.canvas.deleteTitle' => 'Delete canvas?',
+			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => 'Delete "${title}"? This can\'t be undone.',
+			'sessions.inspector.canvas.emptyTitle' => 'No canvas yet',
+			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
+			'sessions.inspector.canvas.viewportPhone' => 'Phone width',
+			'sessions.inspector.canvas.viewportTablet' => 'Tablet width',
+			'sessions.inspector.canvas.viewportDesktop' => 'Desktop width',
+			'sessions.inspector.canvas.openFull' => 'Open full screen',
+			'sessions.inspector.canvas.confirm' => 'Confirm',
+			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Captured: ${what}',
+			'sessions.inspector.canvas.notes' => 'Notes',
+			'sessions.inspector.canvas.clear' => 'Clear marks',
+			'sessions.inspector.canvas.done' => 'Done',
+			'sessions.inspector.canvas.hintPin' => 'Tap the spot, then drag to fine-tune — confirm when it has the right element.',
+			'sessions.inspector.canvas.hintRegion' => 'Drag a frame over the area you mean, then confirm.',
+			'sessions.inspector.canvas.newCanvas' => 'New',
+			'sessions.inspector.canvas.newCanvasTitle' => 'New canvas',
+			'sessions.inspector.canvas.newCanvasBlurb' => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.',
+			'sessions.inspector.canvas.setWorkspace' => 'Work on this',
+			'sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
+			'sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — tap "Work on this" to point the agent at it.',
+			'sessions.inspector.canvas.designTitle' => 'Design system',
+			'sessions.inspector.canvas.designBlurb' => 'Tokens + rules every canvas follows',
+			'sessions.inspector.canvas.designNotesLabel' => 'Style rules (what tokens can\'t express)',
+			'sessions.inspector.canvas.designNotesPlaceholder' => 'e.g. restrained and information-dense; no gradients; buttons solid or outline only',
+			'sessions.inspector.canvas.designAgentHint' => 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project\'s real theme.',
+			'sessions.inspector.canvas.designSave' => 'Save',
+			'sessions.inspector.canvas.designSaved' => 'Design system saved.',
+			'sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.',
+			'sessions.inspector.canvas.tokenPrimary' => 'Primary',
+			'sessions.inspector.canvas.tokenSecondary' => 'Secondary',
+			'sessions.inspector.canvas.tokenBackground' => 'Background',
+			'sessions.inspector.canvas.tokenSurface' => 'Surface',
+			'sessions.inspector.canvas.tokenText' => 'Text',
+			'sessions.inspector.canvas.tokenMuted' => 'Muted',
+			'sessions.inspector.canvas.tokenBorder' => 'Border',
+			'sessions.inspector.canvas.tokenFont' => 'Body font',
+			'sessions.inspector.canvas.tokenHeadingFont' => 'Heading font',
+			'sessions.inspector.canvas.tokenBaseSize' => 'Base size',
+			'sessions.inspector.canvas.tokenRadius' => 'Radius',
+			'sessions.inspector.canvas.tokenSpacing' => 'Spacing',
+			'sessions.inspector.canvas.tokenShadow' => 'Shadow',
+			'sessions.inspector.canvas.themeLight' => 'Light',
+			'sessions.inspector.canvas.themeDark' => 'Dark',
+			'sessions.inspector.canvas.paletteLabel' => 'Start from a palette',
+			'sessions.inspector.canvas.themeDarkHint' => 'blank = inherits light',
+			'sessions.inspector.canvas.paletteIndigo' => 'Indigo',
+			'sessions.inspector.canvas.paletteSky' => 'Sky',
+			'sessions.inspector.canvas.paletteEmerald' => 'Emerald',
+			'sessions.inspector.canvas.paletteAmber' => 'Amber',
+			'sessions.inspector.canvas.paletteRose' => 'Rose',
+			'sessions.inspector.canvas.paletteViolet' => 'Violet',
+			'sessions.inspector.canvas.paletteGraphite' => 'Graphite',
+			'sessions.inspector.canvas.extractBtn' => 'Read from project',
+			'sessions.inspector.canvas.showcaseBtn' => 'Show as canvas',
+			'sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -20736,6 +21432,8 @@ extension on Translations {
 			'mcp.errorPrefix.update' => 'Update failed',
 			'mcp.errorPrefix.toggle' => 'Toggle failed',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
 			'mcp.editor.descriptionPlaceholder' => 'Optional one-liner',
@@ -20905,8 +21603,6 @@ extension on Translations {
 			'integrations.kvBaseUrl' => 'Base URL',
 			'integrations.kvScopes' => 'Scopes',
 			'integrations.kvVersion' => 'Version',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => 'Last health ping',
 			'integrations.kvCreated' => 'Created',
 			'integrations.kvKeyRotated' => 'Key rotated',
@@ -21250,6 +21946,8 @@ extension on Translations {
 			'backupSchedules.newButton' => 'New',
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Targets',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Interval',
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
@@ -21419,8 +22117,6 @@ extension on Translations {
 			'channels.popup.mute' => 'Mute',
 			'channels.popup.unmute' => 'Unmute',
 			'channels.popup.deleteLabel' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'channels.badges.running' => 'running',
 			'channels.badges.starting' => 'starting…',
 			'channels.badges.disabled' => 'disabled',
@@ -21764,6 +22460,8 @@ extension on Translations {
 			'about.gateway.upToDate' => 'Up to date',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'about.gateway.releaseNotes' => 'Release notes',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
@@ -21933,8 +22631,6 @@ extension on Translations {
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} active',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => 'Active projects',
 			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
 			'cortexHub.settings' => 'Settings',

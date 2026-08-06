@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import {
   Brain,
   BookText,
@@ -7,6 +8,7 @@ import {
   GitBranch,
   Search,
   Play,
+  Palette,
   History as HistoryIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -19,6 +21,7 @@ import {
   INSPECTOR_WIDTH_MIN,
   useLayout,
 } from '@/stores/layout'
+import { previewFileToCanvas } from '@/lib/canvas'
 import type { Session } from '@/lib/types'
 
 import { FilesPanel } from './inspector/FilesPanel'
@@ -28,6 +31,7 @@ import { CortexPanel } from './inspector/CortexPanel'
 import { VaultPanel } from './inspector/VaultPanel'
 import { SearchPanel } from './inspector/SearchPanel'
 import { TaskRunnerPanel } from './inspector/TaskRunnerPanel'
+import { CanvasPanel } from './inspector/CanvasPanel'
 import { DatabasePanel } from '@/components/database/DatabasePanel'
 
 interface InspectorPanelProps {
@@ -46,6 +50,23 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
   const width = useLayout((s) => s.inspectorWidth)
   const setWidth = useLayout((s) => s.setInspectorWidth)
   const asideRef = useRef<HTMLElement>(null)
+  const [tab, setTab] = useState('files')
+
+  // Render an HTML file the agent wrote onto the Canvas, then switch to the
+  // Canvas tab so the operator lands on the live preview.
+  const onPreviewHtml = useCallback(
+    async (path: string) => {
+      try {
+        await previewFileToCanvas(session.cwd, path)
+        setTab('canvas')
+      } catch (e) {
+        toast.error(t('web.sessions.inspector.canvas.previewFailed'), {
+          description: (e as Error).message,
+        })
+      }
+    },
+    [session.cwd, t],
+  )
 
   const onHandlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -104,7 +125,7 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
       >
         <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent group-hover:bg-primary/40 group-active:bg-primary transition-colors" />
       </div>
-      <Tabs defaultValue="files" className="flex-1 flex flex-col min-h-0">
+      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0">
         <div className="px-2 py-2 border-b border-border shrink-0">
           {/* 7 tabs in a 4-col grid → row 1: Files / Git / Search / Tasks,
               row 2: History (2) + Vault (2),
@@ -170,6 +191,13 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
               <Database className="size-3" />
               {t('web.sessions.inspector.tabs.database')}
             </TabsTrigger>
+            <TabsTrigger
+              value="canvas"
+              className="flex items-center justify-center gap-1.5 col-span-4 data-[state=active]:bg-card"
+            >
+              <Palette className="size-3" />
+              {t('web.sessions.inspector.tabs.canvas')}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -182,7 +210,7 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
             in its own overflow-auto containers, not this viewport). */}
         <ScrollArea className="flex-1 min-h-0 [&_[data-radix-scroll-area-viewport]>div]:!block">
           <TabsContent value="files" className="m-0 p-3">
-            <FilesPanel cwd={session.cwd} />
+            <FilesPanel cwd={session.cwd} onPreviewHtml={onPreviewHtml} />
           </TabsContent>
           <TabsContent value="git" className="m-0 p-3">
             <GitPanel cwd={session.cwd} />
@@ -204,6 +232,9 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
           </TabsContent>
           <TabsContent value="database" className="m-0 p-3">
             <DatabasePanel cwd={session.cwd} />
+          </TabsContent>
+          <TabsContent value="canvas" className="m-0 p-3">
+            <CanvasPanel session={session} />
           </TabsContent>
         </ScrollArea>
       </Tabs>

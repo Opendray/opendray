@@ -25,6 +25,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/audit"
 	"github.com/opendray/opendray-v2/internal/auth"
 	"github.com/opendray/opendray-v2/internal/backup"
+	"github.com/opendray/opendray-v2/internal/canvas"
 	"github.com/opendray/opendray-v2/internal/catalog"
 	"github.com/opendray/opendray-v2/internal/channel"
 	"github.com/opendray/opendray-v2/internal/channel/bridge"     // also registers kind=bridge via init()
@@ -1244,6 +1245,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 	roundTableHandlers := roundtable.NewHandlers(roundTableStore, roundTableSvc, log)
 	// ─── END ROUND TABLE ────────────────────────────────────────
+	// ─── CANVAS (beta) ──────────────────────────────────────────
+	// Live HTML preview surface: agents push rendered UI via the
+	// canvas_render MCP tool, the web Canvas panel shows it in a
+	// sandboxed iframe, and the operator's on-canvas annotations are
+	// seeded back into the session as a prompt. Self-contained; roll
+	// back by dropping canvas_artifacts + deleting internal/canvas.
+	canvasStore := canvas.NewStore(st.Pool())
+	canvasSvc := canvas.NewService(canvasStore, bus, &canvasSessionInjector{mgr: sessionMgr}, log)
+	canvasHandlers := canvas.NewHandlers(canvasStore, canvasSvc, log)
+	// ─── END CANVAS ─────────────────────────────────────────────
 	// Inject the cross-agent goal+plan+journal banner into every
 	// spawned session's system prompt. Composed alongside the
 	// memory-layer-5 banner (ambient injector) inside the catalog
@@ -1436,6 +1447,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				}
 				cortexHandlers.Mount(r)
 				roundTableHandlers.Mount(r) // ROUND TABLE (experimental)
+				canvasHandlers.Mount(r)     // CANVAS (beta)
 				r.Get("/integrations/_events", eventsHandler.Serve)
 			})
 		},
@@ -2522,6 +2534,18 @@ func seedIntoSession(ctx context.Context, mgr *session.Manager, sid, prompt stri
 	}
 	time.Sleep(500 * time.Millisecond)
 	return mgr.Input(ctx, sid, []byte{'\r'})
+}
+
+// canvasSessionInjector adapts the session manager to canvas.PromptInjector:
+// it seeds the operator's on-canvas feedback into a live session as a single
+// pasted, submitted prompt (reusing the bracketed-paste seed helper so a
+// multi-line annotation list lands as one message, not one turn per line).
+type canvasSessionInjector struct {
+	mgr *session.Manager
+}
+
+func (c *canvasSessionInjector) Seed(ctx context.Context, sessionID, prompt string) error {
+	return seedIntoSession(ctx, c.mgr, sessionID, prompt)
 }
 
 // curationSessionLauncher implements cortex.SessionLauncher over the

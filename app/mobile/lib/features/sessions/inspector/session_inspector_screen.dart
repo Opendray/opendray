@@ -4,6 +4,7 @@ import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/database/database_tab.dart';
+import 'package:opendray/features/sessions/inspector/canvas_tab.dart';
 import 'package:opendray/features/sessions/inspector/cortex_tab.dart';
 import 'package:opendray/features/sessions/inspector/files_tab.dart';
 import 'package:opendray/features/sessions/inspector/git_tab.dart';
@@ -43,7 +44,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final lastSegment = p.basename(session.cwd);
     return DefaultTabController(
-      length: 7,
+      length: 8,
       child: Scaffold(
         appBar: AppBar(
           title: Column(
@@ -86,6 +87,10 @@ class _Body extends StatelessWidget {
                 text: t.sessions.inspector.shell.tabs.vault,
               ),
               Tab(
+                icon: const Icon(Icons.palette_outlined),
+                text: t.sessions.inspector.shell.tabs.canvas,
+              ),
+              Tab(
                 icon: const Icon(Icons.psychology_outlined),
                 text: t.sessions.inspector.shell.tabs.cortex,
               ),
@@ -103,6 +108,7 @@ class _Body extends StatelessWidget {
             TasksTab(sessionId: session.id, cwd: session.cwd),
             HistoryTab(sessionId: session.id),
             NotesTab(sessionId: session.id, cwd: session.cwd),
+            CanvasTab(sessionId: session.id, cwd: session.cwd),
             CortexTab(cwd: session.cwd),
             DatabaseTab(cwd: session.cwd),
           ],
