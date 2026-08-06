@@ -18,6 +18,7 @@ import {
   Brain,
   Share2,
   FileText,
+  Palette,
 } from 'lucide-react'
 
 import {
@@ -36,6 +37,7 @@ import { useAuth } from '@/stores/auth'
 import { useTheme } from '@/stores/theme'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { DesignSystemSheet } from './DesignSystemSheet'
 
 type DraftAnnotation = Omit<CanvasAnnotation, 'n'>
 type Mode = 'preview' | 'pin' | 'region'
@@ -163,6 +165,7 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
   const [requesting, setRequesting] = useState(false)
   const [drag, setDrag] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [designOpen, setDesignOpen] = useState(false)
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -424,7 +427,7 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
     if (!p) return
     setRequesting(true)
     try {
-      await requestDesign(sessionId, p, targetMock, newMock ? newKind : undefined)
+      await requestDesign(sessionId, cwd, p, targetMock, newMock ? newKind : undefined)
       toast.success(t('web.sessions.inspector.canvas.requested'))
       setRequest('')
     } catch (err) {
@@ -493,6 +496,21 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
         <div className="flex-1">{requestBar}</div>
         {toolbarExtra}
       </div>
+
+      {/* The project's design contract — what stops successive renders from
+          drifting. Editing it is rare, so it lives behind one button. */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => setDesignOpen(true)}
+          className="flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] border border-border text-muted-foreground hover:text-foreground"
+          title={t('web.sessions.inspector.canvas.designBlurb')}
+        >
+          <Palette className="size-3" />
+          {t('web.sessions.inspector.canvas.designTitle')}
+        </button>
+      </div>
+      {designOpen && <DesignSystemSheet cwd={cwd} onClose={() => setDesignOpen(false)} />}
 
       {/* Canvas list. Picking one only PREVIEWS it — free. The dot marks the
           workspace: the canvas the agent works on and resolves "this canvas" to

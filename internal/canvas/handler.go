@@ -20,6 +20,8 @@ import (
 //	GET    /canvas?cwd=           → {artifacts:[Summary]}                    (Canvas tab selector)
 //	POST   /canvas/focus          {cwd, slug, session_id?, notify?}          → 200 (which canvas we're discussing)
 //	GET    /canvas/focus?cwd=     → {slug, title, kind}
+//	GET    /canvas/design?cwd=    → DesignSystem                             (tokens + style notes)
+//	POST   /canvas/design         {cwd, tokens, notes}                       → 200 DesignSystem
 //	GET    /canvas/{id}           → Artifact (with html)                     (panel render)
 //	POST   /canvas/{id}/feedback  {session_id, message?, annotations[]}      → 202 (seeded into the session)
 //	DELETE /canvas/{id}           → 204
@@ -46,6 +48,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/request", h.request)
 		r.Post("/focus", h.setFocus)
 		r.Get("/focus", h.getFocus)
+		r.Get("/design", h.getDesign)
+		r.Post("/design", h.setDesign)
 		r.Get("/{id}", h.get)
 		r.Post("/{id}/feedback", h.feedback)
 		r.Delete("/{id}", h.remove)
@@ -126,6 +130,7 @@ func (h *Handlers) request(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		SessionID string `json:"session_id"`
+		Cwd       string `json:"cwd"`
 		Prompt    string `json:"prompt"`
 		Slug      string `json:"slug"`
 		Title     string `json:"title"`
@@ -135,7 +140,7 @@ func (h *Handlers) request(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	if err := h.svc.RequestDesign(r.Context(), body.SessionID, body.Prompt, body.Slug, body.Title, body.Kind); err != nil {
+	if err := h.svc.RequestDesign(r.Context(), body.SessionID, body.Cwd, body.Prompt, body.Slug, body.Title, body.Kind); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
@@ -189,6 +194,44 @@ func (h *Handlers) getFocus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// getDesign returns the project's canvas design system (empty when unset).
+func (h *Handlers) getDesign(w http.ResponseWriter, r *http.Request) {
+	if !h.ready(w) {
+		return
+	}
+	cwd := strings.TrimSpace(r.URL.Query().Get("cwd"))
+	if cwd == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "cwd query param required"})
+		return
+	}
+	d, err := h.store.GetDesign(r.Context(), cwd)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, d)
+}
+
+// setDesign replaces the project's canvas design system. Both the operator
+// (from the panel) and an agent (via the canvas_design MCP tool, after reading
+// the project's real theme) write through here.
+func (h *Handlers) setDesign(w http.ResponseWriter, r *http.Request) {
+	if !h.ready(w) {
+		return
+	}
+	var body DesignSystem
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	d, err := h.store.SetDesign(r.Context(), body)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, d)
 }
 
 func (h *Handlers) feedback(w http.ResponseWriter, r *http.Request) {

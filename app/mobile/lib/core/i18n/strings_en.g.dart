@@ -13284,6 +13284,66 @@ class TranslationsSessionsInspectorCanvasEn {
 
 	/// en: 'Previewing only — tap "Work on this" to point the agent at it.'
 	String get previewOnlyHint => 'Previewing only — tap "Work on this" to point the agent at it.';
+
+	/// en: 'Design system'
+	String get designTitle => 'Design system';
+
+	/// en: 'Tokens + rules every canvas follows'
+	String get designBlurb => 'Tokens + rules every canvas follows';
+
+	/// en: 'Style rules (what tokens can't express)'
+	String get designNotesLabel => 'Style rules (what tokens can\'t express)';
+
+	/// en: 'e.g. restrained and information-dense; no gradients; buttons solid or outline only'
+	String get designNotesPlaceholder => 'e.g. restrained and information-dense; no gradients; buttons solid or outline only';
+
+	/// en: 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project's real theme.'
+	String get designAgentHint => 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project\'s real theme.';
+
+	/// en: 'Save'
+	String get designSave => 'Save';
+
+	/// en: 'Design system saved.'
+	String get designSaved => 'Design system saved.';
+
+	/// en: 'Primary'
+	String get tokenPrimary => 'Primary';
+
+	/// en: 'Secondary'
+	String get tokenSecondary => 'Secondary';
+
+	/// en: 'Background'
+	String get tokenBackground => 'Background';
+
+	/// en: 'Surface'
+	String get tokenSurface => 'Surface';
+
+	/// en: 'Text'
+	String get tokenText => 'Text';
+
+	/// en: 'Muted'
+	String get tokenMuted => 'Muted';
+
+	/// en: 'Border'
+	String get tokenBorder => 'Border';
+
+	/// en: 'Body font'
+	String get tokenFont => 'Body font';
+
+	/// en: 'Heading font'
+	String get tokenHeadingFont => 'Heading font';
+
+	/// en: 'Base size'
+	String get tokenBaseSize => 'Base size';
+
+	/// en: 'Radius'
+	String get tokenRadius => 'Radius';
+
+	/// en: 'Spacing'
+	String get tokenSpacing => 'Spacing';
+
+	/// en: 'Shadow'
+	String get tokenShadow => 'Shadow';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -14625,6 +14685,78 @@ class TranslationsWebSessionsInspectorCanvasEn {
 
 	/// en: 'Previewing only — press "Work on this" to point the agent at it.'
 	String get previewOnlyHint => 'Previewing only — press "Work on this" to point the agent at it.';
+
+	/// en: 'Design system'
+	String get designTitle => 'Design system';
+
+	/// en: 'Tokens + rules every canvas follows, so they look like one product'
+	String get designBlurb => 'Tokens + rules every canvas follows, so they look like one product';
+
+	/// en: 'Loading…'
+	String get designLoading => 'Loading…';
+
+	/// en: 'Style rules (what tokens can't express)'
+	String get designNotesLabel => 'Style rules (what tokens can\'t express)';
+
+	/// en: 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only'
+	String get designNotesPlaceholder => 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only';
+
+	/// en: 'Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to "set up the canvas design system from our real theme" and it will read the project's tailwind config / CSS variables and fill this in.'
+	String get designAgentHint => 'Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to "set up the canvas design system from our real theme" and it will read the project\'s tailwind config / CSS variables and fill this in.';
+
+	/// en: 'Save'
+	String get designSave => 'Save';
+
+	/// en: 'Cancel'
+	String get designCancel => 'Cancel';
+
+	/// en: 'Close'
+	String get designClose => 'Close';
+
+	/// en: 'Design system saved — every canvas request now carries it.'
+	String get designSaved => 'Design system saved — every canvas request now carries it.';
+
+	/// en: 'Could not save the design system'
+	String get designSaveFailed => 'Could not save the design system';
+
+	/// en: 'Primary'
+	String get token_primary => 'Primary';
+
+	/// en: 'Secondary'
+	String get token_secondary => 'Secondary';
+
+	/// en: 'Background'
+	String get token_background => 'Background';
+
+	/// en: 'Surface'
+	String get token_surface => 'Surface';
+
+	/// en: 'Text'
+	String get token_text => 'Text';
+
+	/// en: 'Muted text'
+	String get token_muted => 'Muted text';
+
+	/// en: 'Border'
+	String get token_border => 'Border';
+
+	/// en: 'Body font'
+	String get token_font => 'Body font';
+
+	/// en: 'Heading font'
+	String get token_headingFont => 'Heading font';
+
+	/// en: 'Base size'
+	String get token_baseSize => 'Base size';
+
+	/// en: 'Radius'
+	String get token_radius => 'Radius';
+
+	/// en: 'Spacing unit'
+	String get token_spacing => 'Spacing unit';
+
+	/// en: 'Shadow'
+	String get token_shadow => 'Shadow';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -18408,6 +18540,30 @@ extension on Translations {
 			'web.sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
 			'web.sessions.inspector.canvas.workspaceFailed' => 'Could not set the workspace',
 			'web.sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — press "Work on this" to point the agent at it.',
+			'web.sessions.inspector.canvas.designTitle' => 'Design system',
+			'web.sessions.inspector.canvas.designBlurb' => 'Tokens + rules every canvas follows, so they look like one product',
+			'web.sessions.inspector.canvas.designLoading' => 'Loading…',
+			'web.sessions.inspector.canvas.designNotesLabel' => 'Style rules (what tokens can\'t express)',
+			'web.sessions.inspector.canvas.designNotesPlaceholder' => 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only',
+			'web.sessions.inspector.canvas.designAgentHint' => 'Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to "set up the canvas design system from our real theme" and it will read the project\'s tailwind config / CSS variables and fill this in.',
+			'web.sessions.inspector.canvas.designSave' => 'Save',
+			'web.sessions.inspector.canvas.designCancel' => 'Cancel',
+			'web.sessions.inspector.canvas.designClose' => 'Close',
+			'web.sessions.inspector.canvas.designSaved' => 'Design system saved — every canvas request now carries it.',
+			'web.sessions.inspector.canvas.designSaveFailed' => 'Could not save the design system',
+			'web.sessions.inspector.canvas.token_primary' => 'Primary',
+			'web.sessions.inspector.canvas.token_secondary' => 'Secondary',
+			'web.sessions.inspector.canvas.token_background' => 'Background',
+			'web.sessions.inspector.canvas.token_surface' => 'Surface',
+			'web.sessions.inspector.canvas.token_text' => 'Text',
+			'web.sessions.inspector.canvas.token_muted' => 'Muted text',
+			'web.sessions.inspector.canvas.token_border' => 'Border',
+			'web.sessions.inspector.canvas.token_font' => 'Body font',
+			'web.sessions.inspector.canvas.token_headingFont' => 'Heading font',
+			'web.sessions.inspector.canvas.token_baseSize' => 'Base size',
+			'web.sessions.inspector.canvas.token_radius' => 'Radius',
+			'web.sessions.inspector.canvas.token_spacing' => 'Spacing unit',
+			'web.sessions.inspector.canvas.token_shadow' => 'Shadow',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -18604,6 +18760,8 @@ extension on Translations {
 			'web.archived.globalScope' => '(global)',
 			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} projects · ${memories} archived memories',
 			'web.archived.memCount' => ({required Object count}) => '${count} memories',
+			_ => null,
+		} ?? switch (path) {
 			'web.archived.restoreAll' => 'Restore all',
 			'web.archived.restoreAllTooltip' => 'Restore every archived memory in this project',
 			'web.archived.restoreAllConfirm' => ({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?',
@@ -18628,8 +18786,6 @@ extension on Translations {
 			'web.project.picker.browse' => 'Browse',
 			'web.project.picker.browseTooltip' => 'Browse the gateway host\'s filesystem',
 			'web.project.picker.open' => 'Open',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.picker.recentLabel' => 'Recent projects (from stored memory):',
 			'web.project.picker.orphanTooltip' => 'Looks like a truncated scope_key (old mirror import bug). May have no project docs.',
 			'web.project.picker.orphanBadge' => 'orphan',
@@ -19118,6 +19274,8 @@ extension on Translations {
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray\'s filesystem watcher will register the new directory automatically, or click <1>Import local</1> to scan immediately.',
 			'web.providers.claudeAccounts.architectureLink' => 'Architecture & full guide →',
 			'web.providers.claudeAccounts.loading' => 'Loading…',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.claudeAccounts.empty' => 'No Claude accounts yet. Easiest path: open Sessions, spawn a Claude session, and run <1>claude login</1> in the terminal — your OAuth credentials land in <3>~/.claude</3> on the gateway and show up here automatically. Power users juggling multiple identities can use the shell workflow above instead.',
 			'web.providers.claudeAccounts.noTokenYet' => 'no token yet',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
@@ -19142,8 +19300,6 @@ extension on Translations {
 			'web.providers.antigravityAccounts.addingBodySuffix' => 'Then click <1>Import local</1> to register it. The directory only counts as an account once the Google sign-in has written its OAuth token.',
 			'web.providers.antigravityAccounts.loading' => 'Loading…',
 			'web.providers.antigravityAccounts.empty' => 'No Antigravity accounts yet. Run <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1> on the gateway host, complete the Google sign-in, then click Import local.',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.antigravityAccounts.noTokenYet' => 'not logged in',
 			'web.providers.antigravityAccounts.homeDir' => 'home:',
 			'web.providers.antigravityAccounts.toggleFailedToast' => 'Toggle failed',
@@ -19632,6 +19788,8 @@ extension on Translations {
 			'web.backups.backupsTab.columns.started' => 'Started',
 			'web.backups.backupsTab.columns.size' => 'Size',
 			'web.backups.backupsTab.columns.actions' => 'Actions',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.downloadTooltip' => 'Download',
 			'web.backups.backupsTab.deleteTooltip' => 'Delete',
 			'web.backups.restore.title' => 'Restore from backup bundle',
@@ -19656,8 +19814,6 @@ extension on Translations {
 			'web.backups.restore.planTitle' => 'Restore plan (dry run — nothing changed)',
 			'web.backups.restore.planDump' => ({required Object size}) => 'Database dump: ${size}',
 			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
 			'web.backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
@@ -20146,6 +20302,8 @@ extension on Translations {
 			'web.pathInput.notFound' => 'not found ·',
 			'web.pathInput.childrenSuffix' => 'children',
 			'web.pathInput.expectedDirectory' => '· expected directory',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.header.title' => 'Ambient memory — auto-capture & inject',
 			'web.memoryAmbient.header.body' => 'opendray polls every live agent session every 10 seconds, extracts durable facts via a configurable LLM, and dedups before storing them in the shared memory pool. Configure which LLM does the extraction (Provider), when extraction fires (Capture rule), and what — if anything — gets prepended to the agent\'s system prompt at spawn (Injection profile).',
 			'web.memoryAmbient.loading' => 'Loading…',
@@ -20170,8 +20328,6 @@ extension on Translations {
 			'web.memoryAmbient.providers.dialog.nameLabel' => 'Name',
 			'web.memoryAmbient.providers.dialog.namePlaceholder' => 'e.g. lmstudio-qwen',
 			'web.memoryAmbient.providers.dialog.modelLabel' => 'Model',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.baseUrlLabel' => 'Base URL',
 			'web.memoryAmbient.providers.dialog.integrationNote' => 'Integration providers resolve their base URL from a registered integration. Configure that under Integrations first; advanced wiring (extra_config) is DB-only in this release.',
 			'web.memoryAmbient.providers.dialog.apiKeyLabel' => 'API key',
@@ -20660,6 +20816,8 @@ extension on Translations {
 			'web.roundTable.dialog.created' => 'Round table created',
 			'web.roundTable.dialog.project' => 'Project (optional)',
 			'web.roundTable.dialog.start' => 'Start chat',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.dialog.browse' => 'Browse',
 			'web.roundTable.dialog.cwdPlaceholder' => '/path/to/project (optional)',
 			'web.roundTable.dialog.modelPlaceholder' => 'Model',
@@ -20684,8 +20842,6 @@ extension on Translations {
 			'web.roundTable.detail.summarize' => 'Summarize',
 			'web.roundTable.detail.summarizing' => 'Summarizing…',
 			'web.roundTable.detail.emptyThread' => 'No messages yet.',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.detail.emptyHint' => 'Say something and @mention a member to get a reply.',
 			'web.roundTable.detail.replying' => 'members are replying…',
 			'web.roundTable.detail.mentionHint' => 'Mention:',
@@ -21068,6 +21224,26 @@ extension on Translations {
 			'sessions.inspector.canvas.setWorkspace' => 'Work on this',
 			'sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
 			'sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — tap "Work on this" to point the agent at it.',
+			'sessions.inspector.canvas.designTitle' => 'Design system',
+			'sessions.inspector.canvas.designBlurb' => 'Tokens + rules every canvas follows',
+			'sessions.inspector.canvas.designNotesLabel' => 'Style rules (what tokens can\'t express)',
+			'sessions.inspector.canvas.designNotesPlaceholder' => 'e.g. restrained and information-dense; no gradients; buttons solid or outline only',
+			'sessions.inspector.canvas.designAgentHint' => 'Tokens are injected into every canvas as CSS variables and included in every request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to set this up from your project\'s real theme.',
+			'sessions.inspector.canvas.designSave' => 'Save',
+			'sessions.inspector.canvas.designSaved' => 'Design system saved.',
+			'sessions.inspector.canvas.tokenPrimary' => 'Primary',
+			'sessions.inspector.canvas.tokenSecondary' => 'Secondary',
+			'sessions.inspector.canvas.tokenBackground' => 'Background',
+			'sessions.inspector.canvas.tokenSurface' => 'Surface',
+			'sessions.inspector.canvas.tokenText' => 'Text',
+			'sessions.inspector.canvas.tokenMuted' => 'Muted',
+			'sessions.inspector.canvas.tokenBorder' => 'Border',
+			'sessions.inspector.canvas.tokenFont' => 'Body font',
+			'sessions.inspector.canvas.tokenHeadingFont' => 'Heading font',
+			'sessions.inspector.canvas.tokenBaseSize' => 'Base size',
+			'sessions.inspector.canvas.tokenRadius' => 'Radius',
+			'sessions.inspector.canvas.tokenSpacing' => 'Spacing',
+			'sessions.inspector.canvas.tokenShadow' => 'Shadow',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -21154,6 +21330,8 @@ extension on Translations {
 			'mcp.secret.deleteBody' => 'Removes the value from the encrypted vault. Any MCP server that references it will fail until restored.',
 			'mcp.popup.editConfigSubtitle' => 'Full JSON editor — vault-backed servers only',
 			'mcp.popup.viewRawSubtitle' => 'Read-only inspector for the server JSON',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.popup.deleteLabel' => 'Delete',
 			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Description',
@@ -21198,8 +21376,6 @@ extension on Translations {
 			'providers.updateCheck.latest' => ({required Object version}) => 'latest ${version}',
 			'providers.updateCheck.updateButton' => 'Update CLI',
 			'providers.updateCheck.updating' => 'Updating…',
-			_ => null,
-		} ?? switch (path) {
 			'providers.updateCheck.updatedSnack' => ({required Object version}) => 'Updated to ${version}.',
 			'providers.updateCheck.noChangeSnack' => 'Already on the latest version.',
 			'providers.updateCheck.updateFailed' => ({required Object error}) => 'Update failed: ${error}',
@@ -21668,6 +21844,8 @@ extension on Translations {
 			'backupTargetEditor.kinds.local.label' => 'Local disk',
 			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
 			'backupTargetEditor.kinds.smb.label' => 'SMB share',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.smb.description' => 'Windows shares + most home NAS appliances',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
 			'backupTargetEditor.kinds.webdav.description' => 'Self-hosted clouds + file-sharing services',
@@ -21712,8 +21890,6 @@ extension on Translations {
 			'backupTargetEditor.baseUrlLabel' => 'Base URL',
 			'backupTargetEditor.baseUrlHint' => 'Full URL including path. Nextcloud: https://cloud.example/remote.php/dav/files/<user>',
 			'backupTargetEditor.sftpPasswordHintEdit' => 'Leave blank to keep. If both password + private key are present, the private key wins.',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.sftpPasswordHintNew' => 'Either password OR private key. If both, password becomes a fallback only.',
 			'backupTargetEditor.privateKeyLabel' => 'Private key (PEM)',
 			'backupTargetEditor.privateKeyHintEdit' => 'Leave blank to keep. Paste OpenSSH/PEM contents.',
@@ -22182,6 +22358,8 @@ extension on Translations {
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
 			'settings.changeCredentials.saving' => 'Saving…',
 			'settings.changeCredentials.update' => 'Update',
@@ -22226,8 +22404,6 @@ extension on Translations {
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Vault paths for MCP servers + secrets file.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Where Claude transcripts live on disk.',

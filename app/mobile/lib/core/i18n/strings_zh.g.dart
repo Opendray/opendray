@@ -6792,6 +6792,26 @@ class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspect
 	@override String get setWorkspace => '在这上面工作';
 	@override String get workspaceSet => 'agent 现在在这个画布上工作。';
 	@override String get previewOnlyHint => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。';
+	@override String get designTitle => '设计系统';
+	@override String get designBlurb => '每个画布都遵循的 tokens + 规范';
+	@override String get designNotesLabel => '风格说明(tokens 表达不了的部分)';
+	@override String get designNotesPlaceholder => '例如:克制、信息密度高;不用渐变;按钮只用实心/描边';
+	@override String get designAgentHint => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。';
+	@override String get designSave => '保存';
+	@override String get designSaved => '设计系统已保存。';
+	@override String get tokenPrimary => '主色';
+	@override String get tokenSecondary => '辅助色';
+	@override String get tokenBackground => '背景';
+	@override String get tokenSurface => '表面/卡片';
+	@override String get tokenText => '正文色';
+	@override String get tokenMuted => '次要文字';
+	@override String get tokenBorder => '描边';
+	@override String get tokenFont => '正文字体';
+	@override String get tokenHeadingFont => '标题字体';
+	@override String get tokenBaseSize => '基准字号';
+	@override String get tokenRadius => '圆角';
+	@override String get tokenSpacing => '间距';
+	@override String get tokenShadow => '阴影';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7485,6 +7505,30 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get workspaceSet => 'agent 现在在这个画布上工作。';
 	@override String get workspaceFailed => '设置工作区失败';
 	@override String get previewOnlyHint => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。';
+	@override String get designTitle => '设计系统';
+	@override String get designBlurb => '每个画布都遵循的 tokens + 规范,让它们看起来像同一个产品';
+	@override String get designLoading => '加载中……';
+	@override String get designNotesLabel => '风格说明(tokens 表达不了的部分)';
+	@override String get designNotesPlaceholder => '例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种';
+	@override String get designAgentHint => 'tokens 会以 CSS 变量注入每个画布,并随每次画布请求一起发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent「根据我们真实的主题配置设计系统」,它会读取项目的 tailwind config / CSS 变量自动填好。';
+	@override String get designSave => '保存';
+	@override String get designCancel => '取消';
+	@override String get designClose => '关闭';
+	@override String get designSaved => '设计系统已保存 —— 之后每次画布请求都会带上它。';
+	@override String get designSaveFailed => '保存设计系统失败';
+	@override String get token_primary => '主色';
+	@override String get token_secondary => '辅助色';
+	@override String get token_background => '背景';
+	@override String get token_surface => '表面/卡片';
+	@override String get token_text => '正文色';
+	@override String get token_muted => '次要文字';
+	@override String get token_border => '描边';
+	@override String get token_font => '正文字体';
+	@override String get token_headingFont => '标题字体';
+	@override String get token_baseSize => '基准字号';
+	@override String get token_radius => '圆角';
+	@override String get token_spacing => '间距基准';
+	@override String get token_shadow => '阴影';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9850,6 +9894,30 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
 			'web.sessions.inspector.canvas.workspaceFailed' => '设置工作区失败',
 			'web.sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
+			'web.sessions.inspector.canvas.designTitle' => '设计系统',
+			'web.sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范,让它们看起来像同一个产品',
+			'web.sessions.inspector.canvas.designLoading' => '加载中……',
+			'web.sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
+			'web.sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种',
+			'web.sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次画布请求一起发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent「根据我们真实的主题配置设计系统」,它会读取项目的 tailwind config / CSS 变量自动填好。',
+			'web.sessions.inspector.canvas.designSave' => '保存',
+			'web.sessions.inspector.canvas.designCancel' => '取消',
+			'web.sessions.inspector.canvas.designClose' => '关闭',
+			'web.sessions.inspector.canvas.designSaved' => '设计系统已保存 —— 之后每次画布请求都会带上它。',
+			'web.sessions.inspector.canvas.designSaveFailed' => '保存设计系统失败',
+			'web.sessions.inspector.canvas.token_primary' => '主色',
+			'web.sessions.inspector.canvas.token_secondary' => '辅助色',
+			'web.sessions.inspector.canvas.token_background' => '背景',
+			'web.sessions.inspector.canvas.token_surface' => '表面/卡片',
+			'web.sessions.inspector.canvas.token_text' => '正文色',
+			'web.sessions.inspector.canvas.token_muted' => '次要文字',
+			'web.sessions.inspector.canvas.token_border' => '描边',
+			'web.sessions.inspector.canvas.token_font' => '正文字体',
+			'web.sessions.inspector.canvas.token_headingFont' => '标题字体',
+			'web.sessions.inspector.canvas.token_baseSize' => '基准字号',
+			'web.sessions.inspector.canvas.token_radius' => '圆角',
+			'web.sessions.inspector.canvas.token_spacing' => '间距基准',
+			'web.sessions.inspector.canvas.token_shadow' => '阴影',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -10046,6 +10114,8 @@ extension on TranslationsZh {
 			'web.archived.globalScope' => '(全局)',
 			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} 个项目 · ${memories} 条归档记忆',
 			'web.archived.memCount' => ({required Object count}) => '${count} 条记忆',
+			_ => null,
+		} ?? switch (path) {
 			'web.archived.restoreAll' => '全部恢复',
 			'web.archived.restoreAllTooltip' => '恢复该项目下的全部归档记忆',
 			'web.archived.restoreAllConfirm' => ({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？',
@@ -10070,8 +10140,6 @@ extension on TranslationsZh {
 			'web.project.picker.browse' => '浏览',
 			'web.project.picker.browseTooltip' => '浏览网关主机的文件系统',
 			'web.project.picker.open' => '打开',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.picker.recentLabel' => '最近的项目（来自已存记忆）：',
 			'web.project.picker.orphanTooltip' => '看上去是被截断的 scope_key（老旧镜像导入 bug）。可能没有项目文档。',
 			'web.project.picker.orphanBadge' => '孤立',
@@ -10560,6 +10628,8 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。',
 			'web.providers.claudeAccounts.architectureLink' => '架构与完整指南 →',
 			'web.providers.claudeAccounts.loading' => '加载中…',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.claudeAccounts.empty' => '暂无 Claude 账号。最简单的方式:打开会话页,spawn 一个 Claude 会话,在终端里运行 <1>claude login</1> —— 完成 OAuth 后,凭据会落到网关的 <3>~/.claude</3>,自动出现在这里。需要管理多账号身份时,可改用上方的 shell 工作流。',
 			'web.providers.claudeAccounts.noTokenYet' => '尚无 token',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
@@ -10584,8 +10654,6 @@ extension on TranslationsZh {
 			'web.providers.antigravityAccounts.addingBodySuffix' => '然后点击 <1>导入本地</1> 进行注册。只有当 Google 登录写入 OAuth 令牌后，该目录才会被视为账号。',
 			'web.providers.antigravityAccounts.loading' => '加载中…',
 			'web.providers.antigravityAccounts.empty' => '尚无 Antigravity 账号。在网关主机上运行 <1>HOME=~/.antigravity-accounts/&lt;name&gt; agy</1>，完成 Google 登录，然后点击“导入本地”。',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.antigravityAccounts.noTokenYet' => '未登录',
 			'web.providers.antigravityAccounts.homeDir' => 'home：',
 			'web.providers.antigravityAccounts.toggleFailedToast' => '切换失败',
@@ -11074,6 +11142,8 @@ extension on TranslationsZh {
 			'web.backups.backupsTab.columns.started' => '开始',
 			'web.backups.backupsTab.columns.size' => '大小',
 			'web.backups.backupsTab.columns.actions' => '操作',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.downloadTooltip' => '下载',
 			'web.backups.backupsTab.deleteTooltip' => '删除',
 			'web.backups.restore.title' => '从备份 bundle 恢复',
@@ -11098,8 +11168,6 @@ extension on TranslationsZh {
 			'web.backups.restore.planTitle' => '恢复计划（试运行 —— 未改动任何内容）',
 			'web.backups.restore.planDump' => ({required Object size}) => '数据库 dump：${size}',
 			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
 			'web.backups.restore.planApplyHint' => '应用前会先做一次完整实例安全快照,再覆盖上述内容并执行 pg_restore。',
@@ -11588,6 +11656,8 @@ extension on TranslationsZh {
 			'web.pathInput.notFound' => '未找到 ·',
 			'web.pathInput.childrenSuffix' => '项',
 			'web.pathInput.expectedDirectory' => '· 期望是目录',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.header.title' => '环境记忆 — 自动捕获与注入',
 			'web.memoryAmbient.header.body' => 'opendray 每 10 秒轮询所有运行中的 agent 会话，通过可配置的 LLM 提取持久事实，去重后存入共享记忆池。配置由哪个 LLM 做提取（Provider）、何时触发提取（Capture rule）、以及在 spawn 时把什么内容（如果有）拼接到 agent 的 system prompt（Injection profile）。',
 			'web.memoryAmbient.loading' => '加载中…',
@@ -11612,8 +11682,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.providers.dialog.nameLabel' => '名称',
 			'web.memoryAmbient.providers.dialog.namePlaceholder' => '例如 lmstudio-qwen',
 			'web.memoryAmbient.providers.dialog.modelLabel' => '模型',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.baseUrlLabel' => 'Base URL',
 			'web.memoryAmbient.providers.dialog.integrationNote' => 'Integration 类型 provider 通过一个已注册的集成解析 base URL。请先在 Integrations 中配置；更高级的 wiring（extra_config）在本版本中仅 DB 配置。',
 			'web.memoryAmbient.providers.dialog.apiKeyLabel' => 'API key',
@@ -12102,6 +12170,8 @@ extension on TranslationsZh {
 			'web.roundTable.dialog.created' => '圆桌已创建',
 			'web.roundTable.dialog.project' => '项目(可选)',
 			'web.roundTable.dialog.start' => '开始聊天',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.dialog.browse' => '浏览',
 			'web.roundTable.dialog.cwdPlaceholder' => '/项目/路径(可选)',
 			'web.roundTable.dialog.modelPlaceholder' => '模型',
@@ -12126,8 +12196,6 @@ extension on TranslationsZh {
 			'web.roundTable.detail.summarize' => '总结',
 			'web.roundTable.detail.summarizing' => '总结中…',
 			'web.roundTable.detail.emptyThread' => '还没有消息。',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.detail.emptyHint' => '发条消息并 @ 点名某个成员,它就会回复。',
 			'web.roundTable.detail.replying' => '成员正在回复…',
 			'web.roundTable.detail.mentionHint' => '点名:',
@@ -12510,6 +12578,26 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.setWorkspace' => '在这上面工作',
 			'sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
 			'sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
+			'sessions.inspector.canvas.designTitle' => '设计系统',
+			'sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范',
+			'sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
+			'sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变;按钮只用实心/描边',
+			'sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。',
+			'sessions.inspector.canvas.designSave' => '保存',
+			'sessions.inspector.canvas.designSaved' => '设计系统已保存。',
+			'sessions.inspector.canvas.tokenPrimary' => '主色',
+			'sessions.inspector.canvas.tokenSecondary' => '辅助色',
+			'sessions.inspector.canvas.tokenBackground' => '背景',
+			'sessions.inspector.canvas.tokenSurface' => '表面/卡片',
+			'sessions.inspector.canvas.tokenText' => '正文色',
+			'sessions.inspector.canvas.tokenMuted' => '次要文字',
+			'sessions.inspector.canvas.tokenBorder' => '描边',
+			'sessions.inspector.canvas.tokenFont' => '正文字体',
+			'sessions.inspector.canvas.tokenHeadingFont' => '标题字体',
+			'sessions.inspector.canvas.tokenBaseSize' => '基准字号',
+			'sessions.inspector.canvas.tokenRadius' => '圆角',
+			'sessions.inspector.canvas.tokenSpacing' => '间距',
+			'sessions.inspector.canvas.tokenShadow' => '阴影',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12596,6 +12684,8 @@ extension on TranslationsZh {
 			'mcp.secret.deleteBody' => '从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。',
 			'mcp.popup.editConfigSubtitle' => '完整 JSON 编辑器 — 仅限密钥库支持的服务器',
 			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.popup.deleteLabel' => '删除',
 			'mcp.kv.transport' => '传输',
 			'mcp.kv.description' => '描述',
@@ -12640,8 +12730,6 @@ extension on TranslationsZh {
 			'providers.updateCheck.latest' => ({required Object version}) => '最新 ${version}',
 			'providers.updateCheck.updateButton' => '更新 CLI',
 			'providers.updateCheck.updating' => '正在更新…',
-			_ => null,
-		} ?? switch (path) {
 			'providers.updateCheck.updatedSnack' => ({required Object version}) => '已更新到 ${version}。',
 			'providers.updateCheck.noChangeSnack' => '已是最新版本。',
 			'providers.updateCheck.updateFailed' => ({required Object error}) => '更新失败：${error}',
@@ -13110,6 +13198,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.local.label' => '本地磁盘',
 			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
 			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.smb.description' => 'Windows 共享 + 多数家用 NAS 设备',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
 			'backupTargetEditor.kinds.webdav.description' => '自托管云盘 + 文件共享服务',
@@ -13154,8 +13244,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.baseUrlLabel' => 'Base URL',
 			'backupTargetEditor.baseUrlHint' => '完整 URL 包含路径。Nextcloud：https://cloud.example/remote.php/dav/files/<user>',
 			'backupTargetEditor.sftpPasswordHintEdit' => '留空 = 保留。如果密码 + 私钥同时存在，私钥优先。',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.sftpPasswordHintNew' => '密码或私钥二选一。两者同时存在时，密码仅作回退。',
 			'backupTargetEditor.privateKeyLabel' => '私钥（PEM）',
 			'backupTargetEditor.privateKeyHintEdit' => '留空 = 保留。粘贴 OpenSSH/PEM 内容。',
@@ -13624,6 +13712,8 @@ extension on TranslationsZh {
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
 			'settings.changeCredentials.saving' => '保存中…',
 			'settings.changeCredentials.update' => '更新',
@@ -13668,8 +13758,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',

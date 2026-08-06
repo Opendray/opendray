@@ -1461,6 +1461,17 @@ on ` + "`canvas_render`" + ` — it defaults to the focused canvas). Do not
 create a duplicate canvas for what is an edit. opendray also seeds a
 short "[Canvas focus]" note whenever the operator switches canvases.
 
+A project can also pin down a **design system** — colours, type,
+radius, spacing plus free-text style rules. When one is set, every
+canvas request you receive already carries it and its tokens are
+injected into the canvas document as CSS variables, so use
+` + "`var(--od-primary)`" + ` and friends rather than inventing values:
+that is what stops successive canvases from drifting apart. Read or
+set it with ` + "`canvas_design`" + ` — when the operator asks you to set one
+up, read the project's REAL theme first (tailwind config, CSS custom
+properties, existing components) and record what the code actually
+uses.
+
 The operator can request a design straight from the Canvas panel;
 that arrives here as an ordinary message explicitly asking you to
 ` + "`canvas_render`" + ` something — treat it as the trigger and honor it.

@@ -49,6 +49,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -276,6 +277,10 @@ each with a different rhythm and time-horizon — pick the right one:
                       project's canvases and marks the FOCUSED one. Call it
                       when they say "this canvas / this design / the diagram"
                       without naming it.
+  canvas_design       The project's design system (colours, type, radius,
+                      spacing + style rules) — what keeps successive canvases
+                      looking like ONE product. Set it from the project's real
+                      theme when asked; use var(--od-*) instead of raw values.
 
 CRITICAL HABITS:
 
@@ -339,6 +344,7 @@ var writeToolNames = map[string]bool{
 	"decision_record":       true,
 	"skill_distill":         true,
 	"canvas_render":         true,
+	"canvas_design":         true,
 }
 
 // toolDefs is the static list returned for tools/list.
@@ -743,6 +749,40 @@ var toolDefs = []map[string]any{
 		},
 	},
 	{
+		"name": "canvas_design",
+		"description": "Read — or, with tokens/notes, SET — this project's canvas " +
+			"DESIGN SYSTEM: the colours, type, radius and spacing every canvas " +
+			"must use, plus free-text style rules. Read it before designing if " +
+			"you want the details; you don't have to, because the gateway already " +
+			"puts it in every canvas request and injects the tokens into each " +
+			"canvas as CSS variables. WRITE it when the operator asks you to set " +
+			"up or update the design system: read the project's REAL theme first " +
+			"(tailwind config, CSS custom properties, existing components, " +
+			"CLAUDE.md) and record what the code actually uses — this is what " +
+			"stops every canvas from looking different. Setting it replaces the " +
+			"whole system, so pass the full set, not a patch.",
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"tokens": map[string]any{
+					"type": "object",
+					"description": "Token → value. Known keys (each becomes a CSS " +
+						"variable, e.g. primary → var(--od-primary)): primary, " +
+						"secondary, background, surface, text, muted, border, font, " +
+						"headingFont, baseSize, radius, spacing, shadow. Extra keys " +
+						"are kept and exposed the same way. Omit to read only.",
+					"additionalProperties": map[string]any{"type": "string"},
+				},
+				"notes": map[string]any{
+					"type": "string",
+					"description": "Style rules tokens can't express — voice, density, " +
+						"what to avoid (e.g. 'restrained, information-dense; no " +
+						"gradients; buttons are solid or outline only'). Omit to read.",
+				},
+			},
+		},
+	},
+	{
 		"name": "canvas_context",
 		"description": "List this project's canvases and see which one the operator " +
 			"currently has FOCUSED in the Canvas panel. Call it whenever they refer " +
@@ -910,6 +950,8 @@ func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result a
 		result, err = s.callCanvasRender(args)
 	case "canvas_context":
 		result, err = s.callCanvasContext(args)
+	case "canvas_design":
+		result, err = s.callCanvasDesign(args)
 	case "kb_list", "kb_page_upsert", "kb_page_write", "kb_page_delete":
 		// KB Librarian write surface — refuse unless this session was
 		// spawned as the KB admin (defence in depth: the tools aren't even
@@ -1435,6 +1477,83 @@ func (s *memMCPServer) callCanvasContext(json.RawMessage) (any, error) {
 				marker = "*"
 			}
 			fmt.Fprintf(&b, "%s %s — slug=%q, kind=%s, v%d\n", marker, name, a.Slug, a.Kind, a.Version)
+		}
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": b.String()},
+		},
+	}, nil
+}
+
+// callCanvasDesign reads or replaces the project's canvas design system — the
+// thing that keeps successive renders looking like one product.
+func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
+	cwd := s.cfg.scopeKey
+	if cwd == "" {
+		return nil, errors.New("canvas_design requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
+	}
+	var in struct {
+		Tokens map[string]string `json:"tokens"`
+		Notes  *string           `json:"notes"`
+	}
+	if len(args) > 0 {
+		if err := json.Unmarshal(args, &in); err != nil {
+			return nil, fmt.Errorf("invalid arguments: %w", err)
+		}
+	}
+	var out struct {
+		Tokens map[string]string `json:"tokens"`
+		Notes  string            `json:"notes"`
+	}
+	writing := in.Tokens != nil || in.Notes != nil
+	if writing {
+		// A write replaces the whole system, so start from what's stored and
+		// apply only what was passed — otherwise setting notes would wipe the
+		// tokens.
+		var cur struct {
+			Tokens map[string]string `json:"tokens"`
+			Notes  string            `json:"notes"`
+		}
+		if err := s.gatewayGetJSON("/api/v1/canvas/design?cwd="+urlQuery(cwd), &cur); err != nil {
+			return nil, err
+		}
+		tokens := in.Tokens
+		if tokens == nil {
+			tokens = cur.Tokens
+		}
+		notes := cur.Notes
+		if in.Notes != nil {
+			notes = *in.Notes
+		}
+		body := map[string]any{"cwd": cwd, "tokens": tokens, "notes": notes}
+		if err := s.gatewayPostJSON("/api/v1/canvas/design", body, &out); err != nil {
+			return nil, err
+		}
+	} else if err := s.gatewayGetJSON("/api/v1/canvas/design?cwd="+urlQuery(cwd), &out); err != nil {
+		return nil, err
+	}
+
+	var b strings.Builder
+	if writing {
+		b.WriteString("Design system saved. Every canvas request now carries it, and these tokens are injected into each canvas as CSS variables.\n\n")
+	}
+	if len(out.Tokens) == 0 && strings.TrimSpace(out.Notes) == "" {
+		b.WriteString("This project has no canvas design system yet. Read its real theme (tailwind config, CSS variables, existing components) and set one so canvases stop drifting.")
+	} else {
+		if len(out.Tokens) > 0 {
+			b.WriteString("Tokens (use the variable, never the raw value):\n")
+			keys := make([]string, 0, len(out.Tokens))
+			for k := range out.Tokens {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				fmt.Fprintf(&b, "  %s = %s\n", k, out.Tokens[k])
+			}
+		}
+		if n := strings.TrimSpace(out.Notes); n != "" {
+			fmt.Fprintf(&b, "Style rules: %s\n", n)
 		}
 	}
 	return map[string]any{

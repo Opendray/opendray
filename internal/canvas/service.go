@@ -149,6 +149,12 @@ func (s *Service) ResolveSlug(cwd, slug string) string {
 // Render upserts the artifact and broadcasts canvas.updated. An empty slug
 // targets the project's focused canvas (see ResolveSlug).
 func (s *Service) Render(ctx context.Context, cwd, slug, title, kind, html string) (Artifact, error) {
+	// Bake the project's design tokens into the document as CSS variables, so
+	// the look holds even when the agent's markup drifts — and so changing a
+	// token later re-styles every canvas that used var().
+	if d, derr := s.store.GetDesign(ctx, cwd); derr == nil {
+		html = injectDesign(html, d.StyleBlock())
+	}
 	a, err := s.store.Upsert(ctx, cwd, s.ResolveSlug(cwd, slug), title, kind, html)
 	if err != nil {
 		return Artifact{}, err
@@ -175,7 +181,7 @@ func (s *Service) Render(ctx context.Context, cwd, slug, title, kind, html strin
 // abilities). When targetSlug is set (the operator has a specific mock selected
 // in the panel), the prompt tells the agent to UPDATE that canvas in place — so
 // it doesn't spawn a new mock when the intent is to iterate on an existing one.
-func (s *Service) RequestDesign(ctx context.Context, sessionID, prompt, targetSlug, targetTitle, kind string) error {
+func (s *Service) RequestDesign(ctx context.Context, sessionID, cwd, prompt, targetSlug, targetTitle, kind string) error {
 	if s.inject == nil {
 		return fmt.Errorf("canvas: request injection not configured")
 	}
@@ -185,7 +191,21 @@ func (s *Service) RequestDesign(ctx context.Context, sessionID, prompt, targetSl
 	if strings.TrimSpace(prompt) == "" {
 		return fmt.Errorf("canvas: empty request")
 	}
-	return s.inject.Seed(ctx, sessionID, formatDesignRequest(prompt, targetSlug, targetTitle, kind))
+	return s.inject.Seed(ctx, sessionID, formatDesignRequest(prompt, targetSlug, targetTitle, kind)+s.designBlock(ctx, cwd))
+}
+
+// designBlock renders the project's design system for a seeded prompt. The
+// operator should never have to repeat it, and the agent should never have to
+// remember to look it up — so every canvas prompt carries it.
+func (s *Service) designBlock(ctx context.Context, cwd string) string {
+	if strings.TrimSpace(cwd) == "" {
+		return ""
+	}
+	d, err := s.store.GetDesign(ctx, cwd)
+	if err != nil {
+		return ""
+	}
+	return d.PromptBlock()
 }
 
 func formatDesignRequest(prompt, targetSlug, targetTitle, kind string) string {
@@ -253,7 +273,7 @@ func (s *Service) SubmitFeedback(ctx context.Context, artifactID string, fb Feed
 	if err != nil {
 		return err
 	}
-	return s.inject.Seed(ctx, fb.SessionID, formatFeedback(a, fb))
+	return s.inject.Seed(ctx, fb.SessionID, formatFeedback(a, fb)+s.designBlock(ctx, a.Cwd))
 }
 
 func formatFeedback(a Artifact, fb Feedback) string {

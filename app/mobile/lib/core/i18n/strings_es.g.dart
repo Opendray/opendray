@@ -6792,6 +6792,26 @@ class _TranslationsSessionsInspectorCanvasEs extends TranslationsSessionsInspect
 	@override String get setWorkspace => 'Trabajar aquí';
 	@override String get workspaceSet => 'El agente ya trabaja en este lienzo.';
 	@override String get previewOnlyHint => 'Solo vista previa: pulsa «Trabajar aquí» para apuntarlo.';
+	@override String get designTitle => 'Sistema de diseño';
+	@override String get designBlurb => 'Tokens y reglas que sigue cada lienzo';
+	@override String get designNotesLabel => 'Reglas de estilo (lo que los tokens no expresan)';
+	@override String get designNotesPlaceholder => 'p. ej. contenido y denso; sin degradados; botones sólidos o con borde';
+	@override String get designAgentHint => 'Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud; se indica al agente que use var(--od-…). Consejo: pide al agente que lo configure desde el tema real del proyecto.';
+	@override String get designSave => 'Guardar';
+	@override String get designSaved => 'Sistema de diseño guardado.';
+	@override String get tokenPrimary => 'Primario';
+	@override String get tokenSecondary => 'Secundario';
+	@override String get tokenBackground => 'Fondo';
+	@override String get tokenSurface => 'Superficie';
+	@override String get tokenText => 'Texto';
+	@override String get tokenMuted => 'Atenuado';
+	@override String get tokenBorder => 'Borde';
+	@override String get tokenFont => 'Fuente del cuerpo';
+	@override String get tokenHeadingFont => 'Fuente de títulos';
+	@override String get tokenBaseSize => 'Tamaño base';
+	@override String get tokenRadius => 'Radio';
+	@override String get tokenSpacing => 'Espaciado';
+	@override String get tokenShadow => 'Sombra';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7485,6 +7505,30 @@ class _TranslationsWebSessionsInspectorCanvasEs extends TranslationsWebSessionsI
 	@override String get workspaceSet => 'El agente ya trabaja en este lienzo.';
 	@override String get workspaceFailed => 'No se pudo fijar el espacio de trabajo';
 	@override String get previewOnlyHint => 'Solo vista previa: pulsa «Trabajar aquí» para apuntar el agente a él.';
+	@override String get designTitle => 'Sistema de diseño';
+	@override String get designBlurb => 'Tokens y reglas que sigue cada lienzo, para que parezcan un solo producto';
+	@override String get designLoading => 'Cargando…';
+	@override String get designNotesLabel => 'Reglas de estilo (lo que los tokens no expresan)';
+	@override String get designNotesPlaceholder => 'p. ej. contenido y denso en información; sin degradados ni radios grandes; botones solo sólidos o con borde';
+	@override String get designAgentHint => 'Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud, y se indica al agente que use var(--od-…) en lugar de valores fijos. Consejo: pide al agente que «configure el sistema de diseño a partir de nuestro tema real» y leerá la configuración de tailwind / las variables CSS del proyecto.';
+	@override String get designSave => 'Guardar';
+	@override String get designCancel => 'Cancelar';
+	@override String get designClose => 'Cerrar';
+	@override String get designSaved => 'Sistema de diseño guardado: ahora acompaña a cada solicitud.';
+	@override String get designSaveFailed => 'No se pudo guardar el sistema de diseño';
+	@override String get token_primary => 'Primario';
+	@override String get token_secondary => 'Secundario';
+	@override String get token_background => 'Fondo';
+	@override String get token_surface => 'Superficie';
+	@override String get token_text => 'Texto';
+	@override String get token_muted => 'Texto atenuado';
+	@override String get token_border => 'Borde';
+	@override String get token_font => 'Fuente del cuerpo';
+	@override String get token_headingFont => 'Fuente de títulos';
+	@override String get token_baseSize => 'Tamaño base';
+	@override String get token_radius => 'Radio';
+	@override String get token_spacing => 'Unidad de espaciado';
+	@override String get token_shadow => 'Sombra';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9850,6 +9894,30 @@ extension on TranslationsEs {
 			'web.sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
 			'web.sessions.inspector.canvas.workspaceFailed' => 'No se pudo fijar el espacio de trabajo',
 			'web.sessions.inspector.canvas.previewOnlyHint' => 'Solo vista previa: pulsa «Trabajar aquí» para apuntar el agente a él.',
+			'web.sessions.inspector.canvas.designTitle' => 'Sistema de diseño',
+			'web.sessions.inspector.canvas.designBlurb' => 'Tokens y reglas que sigue cada lienzo, para que parezcan un solo producto',
+			'web.sessions.inspector.canvas.designLoading' => 'Cargando…',
+			'web.sessions.inspector.canvas.designNotesLabel' => 'Reglas de estilo (lo que los tokens no expresan)',
+			'web.sessions.inspector.canvas.designNotesPlaceholder' => 'p. ej. contenido y denso en información; sin degradados ni radios grandes; botones solo sólidos o con borde',
+			'web.sessions.inspector.canvas.designAgentHint' => 'Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud, y se indica al agente que use var(--od-…) en lugar de valores fijos. Consejo: pide al agente que «configure el sistema de diseño a partir de nuestro tema real» y leerá la configuración de tailwind / las variables CSS del proyecto.',
+			'web.sessions.inspector.canvas.designSave' => 'Guardar',
+			'web.sessions.inspector.canvas.designCancel' => 'Cancelar',
+			'web.sessions.inspector.canvas.designClose' => 'Cerrar',
+			'web.sessions.inspector.canvas.designSaved' => 'Sistema de diseño guardado: ahora acompaña a cada solicitud.',
+			'web.sessions.inspector.canvas.designSaveFailed' => 'No se pudo guardar el sistema de diseño',
+			'web.sessions.inspector.canvas.token_primary' => 'Primario',
+			'web.sessions.inspector.canvas.token_secondary' => 'Secundario',
+			'web.sessions.inspector.canvas.token_background' => 'Fondo',
+			'web.sessions.inspector.canvas.token_surface' => 'Superficie',
+			'web.sessions.inspector.canvas.token_text' => 'Texto',
+			'web.sessions.inspector.canvas.token_muted' => 'Texto atenuado',
+			'web.sessions.inspector.canvas.token_border' => 'Borde',
+			'web.sessions.inspector.canvas.token_font' => 'Fuente del cuerpo',
+			'web.sessions.inspector.canvas.token_headingFont' => 'Fuente de títulos',
+			'web.sessions.inspector.canvas.token_baseSize' => 'Tamaño base',
+			'web.sessions.inspector.canvas.token_radius' => 'Radio',
+			'web.sessions.inspector.canvas.token_spacing' => 'Unidad de espaciado',
+			'web.sessions.inspector.canvas.token_shadow' => 'Sombra',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -10046,6 +10114,8 @@ extension on TranslationsEs {
 			'web.archived.globalScope' => '(global)',
 			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} proyectos · ${memories} memorias archivadas',
 			'web.archived.memCount' => ({required Object count}) => '${count} memorias',
+			_ => null,
+		} ?? switch (path) {
 			'web.archived.restoreAll' => 'Restaurar todo',
 			'web.archived.restoreAllTooltip' => 'Restaurar todas las memorias archivadas de este proyecto',
 			'web.archived.restoreAllConfirm' => ({required Object count, required Object project}) => '¿Restaurar las ${count} memorias archivadas de ${project}?',
@@ -10070,8 +10140,6 @@ extension on TranslationsEs {
 			'web.project.picker.browse' => 'Examinar',
 			'web.project.picker.browseTooltip' => 'Examina el sistema de archivos del host del gateway',
 			'web.project.picker.open' => 'Abrir',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.picker.recentLabel' => 'Proyectos recientes (desde la memoria almacenada):',
 			'web.project.picker.orphanTooltip' => 'Parece un scope_key truncado (antiguo error de importación del mirror). Puede que no tenga documentos del proyecto.',
 			'web.project.picker.orphanBadge' => 'huérfano',
@@ -10560,6 +10628,8 @@ extension on TranslationsEs {
 			'web.providers.claudeAccounts.addingBodySuffix' => 'el monitor del sistema de archivos de opendray registrará el directorio nuevo automáticamente, o haz clic en <1>Importar local</1> para escanear de inmediato.',
 			'web.providers.claudeAccounts.architectureLink' => 'Arquitectura y guía completa →',
 			'web.providers.claudeAccounts.loading' => 'Cargando…',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.claudeAccounts.empty' => 'Aún no hay cuentas de Claude. La forma más sencilla: abre Sessions, inicia una session de Claude y ejecuta <1>claude login</1> en la terminal. Tus credenciales de OAuth se guardan en <3>~/.claude</3> en el gateway y aparecen aquí automáticamente. Los usuarios avanzados que gestionan varias identidades pueden usar el flujo de shell anterior en su lugar.',
 			'web.providers.claudeAccounts.noTokenYet' => 'aún no hay token',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
@@ -10584,8 +10654,6 @@ extension on TranslationsEs {
 			'web.providers.antigravityAccounts.addingBodySuffix' => 'Luego haz clic en <1>Importar locales</1> para registrarla. El directorio solo cuenta como cuenta cuando el inicio de sesión de Google ha escrito su token OAuth.',
 			'web.providers.antigravityAccounts.loading' => 'Cargando…',
 			'web.providers.antigravityAccounts.empty' => 'Aún no hay cuentas de Antigravity. Ejecuta <1>HOME=~/.antigravity-accounts/&lt;nombre&gt; agy</1> en el host del gateway, completa el inicio de sesión de Google y luego haz clic en Importar locales.',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.antigravityAccounts.noTokenYet' => 'sin sesión iniciada',
 			'web.providers.antigravityAccounts.homeDir' => 'home:',
 			'web.providers.antigravityAccounts.toggleFailedToast' => 'Error al alternar',
@@ -11074,6 +11142,8 @@ extension on TranslationsEs {
 			'web.backups.backupsTab.columns.started' => 'Iniciada',
 			'web.backups.backupsTab.columns.size' => 'Tamaño',
 			'web.backups.backupsTab.columns.actions' => 'Acciones',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.downloadTooltip' => 'Descargar',
 			'web.backups.backupsTab.deleteTooltip' => 'Eliminar',
 			'web.backups.restore.title' => 'Restaurar desde un paquete de copia de seguridad',
@@ -11098,8 +11168,6 @@ extension on TranslationsEs {
 			'web.backups.restore.planTitle' => 'Plan de restauración (simulación: nada cambió)',
 			'web.backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
 			'web.backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'web.backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
 			'web.backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de instancia completa, luego sobrescribe lo anterior y ejecuta pg_restore.',
@@ -11588,6 +11656,8 @@ extension on TranslationsEs {
 			'web.pathInput.notFound' => 'no encontrado ·',
 			'web.pathInput.childrenSuffix' => 'elementos',
 			'web.pathInput.expectedDirectory' => '· se esperaba un directorio',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryAmbient.header.title' => 'Memoria ambiental: captura e inyección automáticas',
 			'web.memoryAmbient.header.body' => 'opendray sondea cada session de agente activa cada 10 segundos, extrae hechos duraderos mediante un LLM configurable y los deduplica antes de almacenarlos en el pool de memoria compartida. Configura qué LLM realiza la extracción (Proveedor), cuándo se activa la extracción (Regla de captura) y qué (si es que algo) se antepone al system prompt del agente al arrancar (Perfil de inyección).',
 			'web.memoryAmbient.loading' => 'Cargando…',
@@ -11612,8 +11682,6 @@ extension on TranslationsEs {
 			'web.memoryAmbient.providers.dialog.nameLabel' => 'Nombre',
 			'web.memoryAmbient.providers.dialog.namePlaceholder' => 'p. ej. lmstudio-qwen',
 			'web.memoryAmbient.providers.dialog.modelLabel' => 'Modelo',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.providers.dialog.baseUrlLabel' => 'URL base',
 			'web.memoryAmbient.providers.dialog.integrationNote' => 'Los proveedores de integración resuelven su URL base a partir de una integración registrada. Configúrala primero en Integraciones; el cableado avanzado (extra_config) es solo de DB en esta versión.',
 			'web.memoryAmbient.providers.dialog.apiKeyLabel' => 'Clave de API',
@@ -12102,6 +12170,8 @@ extension on TranslationsEs {
 			'web.roundTable.dialog.created' => 'Mesa redonda creada',
 			'web.roundTable.dialog.project' => 'Proyecto (opcional)',
 			'web.roundTable.dialog.start' => 'Iniciar chat',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.dialog.browse' => 'Explorar',
 			'web.roundTable.dialog.cwdPlaceholder' => '/ruta/al/proyecto (opcional)',
 			'web.roundTable.dialog.modelPlaceholder' => 'Modelo',
@@ -12126,8 +12196,6 @@ extension on TranslationsEs {
 			'web.roundTable.detail.summarize' => 'Resumir',
 			'web.roundTable.detail.summarizing' => 'Resumiendo…',
 			'web.roundTable.detail.emptyThread' => 'Aún no hay mensajes.',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.detail.emptyHint' => 'Escribe algo y menciona con @ a un miembro para que responda.',
 			'web.roundTable.detail.replying' => 'los miembros están respondiendo…',
 			'web.roundTable.detail.mentionHint' => 'Mencionar:',
@@ -12510,6 +12578,26 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.setWorkspace' => 'Trabajar aquí',
 			'sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
 			'sessions.inspector.canvas.previewOnlyHint' => 'Solo vista previa: pulsa «Trabajar aquí» para apuntarlo.',
+			'sessions.inspector.canvas.designTitle' => 'Sistema de diseño',
+			'sessions.inspector.canvas.designBlurb' => 'Tokens y reglas que sigue cada lienzo',
+			'sessions.inspector.canvas.designNotesLabel' => 'Reglas de estilo (lo que los tokens no expresan)',
+			'sessions.inspector.canvas.designNotesPlaceholder' => 'p. ej. contenido y denso; sin degradados; botones sólidos o con borde',
+			'sessions.inspector.canvas.designAgentHint' => 'Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud; se indica al agente que use var(--od-…). Consejo: pide al agente que lo configure desde el tema real del proyecto.',
+			'sessions.inspector.canvas.designSave' => 'Guardar',
+			'sessions.inspector.canvas.designSaved' => 'Sistema de diseño guardado.',
+			'sessions.inspector.canvas.tokenPrimary' => 'Primario',
+			'sessions.inspector.canvas.tokenSecondary' => 'Secundario',
+			'sessions.inspector.canvas.tokenBackground' => 'Fondo',
+			'sessions.inspector.canvas.tokenSurface' => 'Superficie',
+			'sessions.inspector.canvas.tokenText' => 'Texto',
+			'sessions.inspector.canvas.tokenMuted' => 'Atenuado',
+			'sessions.inspector.canvas.tokenBorder' => 'Borde',
+			'sessions.inspector.canvas.tokenFont' => 'Fuente del cuerpo',
+			'sessions.inspector.canvas.tokenHeadingFont' => 'Fuente de títulos',
+			'sessions.inspector.canvas.tokenBaseSize' => 'Tamaño base',
+			'sessions.inspector.canvas.tokenRadius' => 'Radio',
+			'sessions.inspector.canvas.tokenSpacing' => 'Espaciado',
+			'sessions.inspector.canvas.tokenShadow' => 'Sombra',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12596,6 +12684,8 @@ extension on TranslationsEs {
 			'mcp.secret.deleteBody' => 'Elimina el valor del vault cifrado. Cualquier servidor MCP que lo referencie fallará hasta que se restaure.',
 			'mcp.popup.editConfigSubtitle' => 'Editor JSON completo, solo servidores respaldados por el vault',
 			'mcp.popup.viewRawSubtitle' => 'Inspector de solo lectura para el JSON del servidor',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.popup.deleteLabel' => 'Eliminar',
 			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Descripción',
@@ -12640,8 +12730,6 @@ extension on TranslationsEs {
 			'providers.updateCheck.latest' => ({required Object version}) => 'última ${version}',
 			'providers.updateCheck.updateButton' => 'Actualizar CLI',
 			'providers.updateCheck.updating' => 'Actualizando…',
-			_ => null,
-		} ?? switch (path) {
 			'providers.updateCheck.updatedSnack' => ({required Object version}) => 'Actualizado a ${version}.',
 			'providers.updateCheck.noChangeSnack' => 'Ya está en la última versión.',
 			'providers.updateCheck.updateFailed' => ({required Object error}) => 'Actualización fallida: ${error}',
@@ -13110,6 +13198,8 @@ extension on TranslationsEs {
 			'backupTargetEditor.kinds.local.label' => 'Disco local',
 			'backupTargetEditor.kinds.local.description' => 'Carpeta en la máquina que ejecuta opendray',
 			'backupTargetEditor.kinds.smb.label' => 'Recurso compartido SMB',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.kinds.smb.description' => 'Recursos compartidos de Windows y la mayoría de los NAS domésticos',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
 			'backupTargetEditor.kinds.webdav.description' => 'Nubes autoalojadas y servicios para compartir archivos',
@@ -13154,8 +13244,6 @@ extension on TranslationsEs {
 			'backupTargetEditor.baseUrlLabel' => 'URL base',
 			'backupTargetEditor.baseUrlHint' => 'URL completa incluyendo la ruta. Nextcloud: https://cloud.example/remote.php/dav/files/<user>',
 			'backupTargetEditor.sftpPasswordHintEdit' => 'Déjalo en blanco para conservarla. Si están presentes tanto la contraseña como la clave privada, prevalece la clave privada.',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.sftpPasswordHintNew' => 'Contraseña O clave privada. Si están ambas, la contraseña pasa a ser solo un respaldo.',
 			'backupTargetEditor.privateKeyLabel' => 'Clave privada (PEM)',
 			'backupTargetEditor.privateKeyHintEdit' => 'Déjalo en blanco para conservarla. Pega el contenido OpenSSH/PEM.',
@@ -13624,6 +13712,8 @@ extension on TranslationsEs {
 			'settings.changeCredentials.passwordTooShort' => 'Debe tener al menos 8 caracteres',
 			'settings.changeCredentials.passwordMismatch' => 'No coincide con la nueva contraseña',
 			'settings.changeCredentials.updatedSnack' => 'Credenciales actualizadas.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.changeCredentials.wrongCurrent' => 'La contraseña actual es incorrecta.',
 			'settings.changeCredentials.saving' => 'Guardando…',
 			'settings.changeCredentials.update' => 'Actualizar',
@@ -13668,8 +13758,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Umbrales de detección de inactividad.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notas, skills y raíz versionada con git.',
 			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Rutas del vault para servidores MCP + archivo de secretos.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.sectionDescriptions.memory' => 'Subsistema de memoria persistente entre CLIs.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Dónde viven los transcripts de Claude en disco.',

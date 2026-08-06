@@ -7,6 +7,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/canvas_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/inspector/canvas_common.dart';
+import 'package:opendray/features/sessions/inspector/canvas_design_sheet.dart';
 import 'package:opendray/features/sessions/inspector/canvas_viewer_screen.dart';
 
 // CanvasTab — the session inspector's Canvas: the visual channel between the
@@ -178,6 +179,7 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
     try {
       await ref.read(canvasApiProvider).requestDesign(
             sessionId: widget.sessionId,
+            cwd: widget.cwd,
             prompt: prompt,
             slug: target?.slug,
             title: target?.title,
@@ -434,6 +436,17 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
         padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
         child: Row(
           children: [
+            IconButton(
+              icon: const Icon(Icons.palette_outlined, size: 20),
+              tooltip: t.sessions.inspector.canvas.designTitle,
+              onPressed: () => unawaited(
+                showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => CanvasDesignSheet(cwd: widget.cwd),
+                ),
+              ),
+            ),
             Expanded(
               child: TextField(
                 controller: _requestCtl,

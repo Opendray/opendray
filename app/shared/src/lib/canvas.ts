@@ -104,13 +104,14 @@ export interface CanvasTarget {
 // is passed, the prompt tells the agent to update THAT slug in place.
 export async function requestDesign(
   sessionId: string,
+  cwd: string,
   prompt: string,
   target?: CanvasTarget,
   kind?: CanvasKind,
 ): Promise<void> {
   await api('/api/v1/canvas/request', {
     method: 'POST',
-    body: { session_id: sessionId, prompt, slug: target?.slug, title: target?.title, kind },
+    body: { session_id: sessionId, cwd, prompt, slug: target?.slug, title: target?.title, kind },
   })
 }
 
@@ -135,6 +136,58 @@ export async function setCanvasFocus(input: {
     method: 'POST',
     body: { cwd: input.cwd, slug: input.slug, session_id: input.sessionId, notify: input.notify },
   })
+}
+
+// A project's canvas design system: the tokens every canvas must use plus the
+// style rules tokens can't express. The gateway puts it in every canvas prompt
+// AND injects the tokens into each canvas as CSS variables, so it is what stops
+// successive renders from drifting apart.
+export interface CanvasDesignSystem {
+  cwd?: string
+  tokens: Record<string, string>
+  notes: string
+}
+
+// The tokens the Canvas documents, in the order they're presented. Each becomes
+// a CSS variable (primary → var(--od-primary)).
+export const CANVAS_DESIGN_TOKENS = [
+  'primary',
+  'secondary',
+  'background',
+  'surface',
+  'text',
+  'muted',
+  'border',
+  'font',
+  'headingFont',
+  'baseSize',
+  'radius',
+  'spacing',
+  'shadow',
+] as const
+
+// cssVarForToken mirrors the gateway's naming so the UI can show the variable
+// the agent is told to use.
+export function cssVarForToken(key: string): string {
+  return `--od-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`
+}
+
+export async function getDesignSystem(cwd: string): Promise<CanvasDesignSystem> {
+  const d = await api<CanvasDesignSystem>(
+    `/api/v1/canvas/design?cwd=${encodeURIComponent(cwd)}`,
+  )
+  return { tokens: d.tokens ?? {}, notes: d.notes ?? '' }
+}
+
+export async function setDesignSystem(
+  cwd: string,
+  input: { tokens: Record<string, string>; notes: string },
+): Promise<CanvasDesignSystem> {
+  const d = await api<CanvasDesignSystem>('/api/v1/canvas/design', {
+    method: 'POST',
+    body: { cwd, tokens: input.tokens, notes: input.notes },
+  })
+  return { tokens: d.tokens ?? {}, notes: d.notes ?? '' }
 }
 
 // getCanvasFocus reads the project's focused canvas (empty slug when none).

@@ -220,6 +220,7 @@ class CanvasApi {
   /// updates that canvas in place; without it, [kind] says what to draw new.
   Future<void> requestDesign({
     required String sessionId,
+    required String cwd,
     required String prompt,
     String? slug,
     String? title,
@@ -230,6 +231,7 @@ class CanvasApi {
         '/api/v1/canvas/request',
         data: {
           'session_id': sessionId,
+          'cwd': cwd,
           'prompt': prompt,
           if (slug != null) 'slug': slug,
           if (title != null) 'title': title,
@@ -263,6 +265,36 @@ class CanvasApi {
     }
   }
 
+  /// The project's canvas design system (empty when unset).
+  Future<CanvasDesignSystem> getDesign(String cwd) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/canvas/design',
+        queryParameters: {'cwd': cwd},
+      );
+      return CanvasDesignSystem.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// Replaces the project's canvas design system.
+  Future<CanvasDesignSystem> setDesign({
+    required String cwd,
+    required Map<String, String> tokens,
+    required String notes,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/canvas/design',
+        data: {'cwd': cwd, 'tokens': tokens, 'notes': notes},
+      );
+      return CanvasDesignSystem.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<void> delete(String id) async {
     try {
       await _dio.delete<void>('/api/v1/canvas/$id');
@@ -271,6 +303,51 @@ class CanvasApi {
     }
   }
 }
+
+/// A project's canvas design system: the tokens every canvas must use plus the
+/// style rules tokens can't express. The gateway puts it in every canvas prompt
+/// AND injects the tokens into each canvas as CSS variables — that pairing is
+/// what stops successive renders from drifting apart.
+class CanvasDesignSystem {
+  const CanvasDesignSystem({this.tokens = const {}, this.notes = ''});
+
+  factory CanvasDesignSystem.fromJson(Map<String, dynamic> json) {
+    final raw = json['tokens'];
+    final tokens = <String, String>{};
+    if (raw is Map) {
+      raw.forEach((k, v) {
+        if (v is String && v.trim().isNotEmpty) tokens['$k'] = v;
+      });
+    }
+    return CanvasDesignSystem(
+      tokens: tokens,
+      notes: json['notes'] as String? ?? '',
+    );
+  }
+
+  final Map<String, String> tokens;
+  final String notes;
+
+  bool get isEmpty => tokens.isEmpty && notes.trim().isEmpty;
+}
+
+/// The tokens the Canvas documents, in presentation order. Each becomes a CSS
+/// variable (primary → var(--od-primary)).
+const canvasDesignTokens = <String>[
+  'primary',
+  'secondary',
+  'background',
+  'surface',
+  'text',
+  'muted',
+  'border',
+  'font',
+  'headingFont',
+  'baseSize',
+  'radius',
+  'spacing',
+  'shadow',
+];
 
 /// A canvas event off the integration eventbus.
 class CanvasEvent {
