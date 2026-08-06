@@ -344,7 +344,7 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
       }
       if (d && (d.type === 'canvas:probed' || d.type === 'canvas:probedRect') && d.id) {
         const resolve = probePending.current.get(d.id)
-        if (resolve) {
+        if (typeof resolve === 'function') {
           probePending.current.delete(d.id)
           resolve({
             selector: d.selector || '',
