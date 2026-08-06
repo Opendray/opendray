@@ -28,16 +28,28 @@ var designBlockRE = regexp.MustCompile(`(?is)<style id="od-design-system">.*?</s
 // Prompt alone would leave a model free to drift; variables alone would not
 // reach an agent that writes its own colours. Together they pin the look down.
 
-// DesignSystem is a project's canvas styling contract.
+// DesignSystem is a project's canvas styling contract. Colour tokens come in
+// two sets because the canvas preview follows the operator's theme — a single
+// fixed palette looks wrong the moment they switch. Keys absent from TokensDark
+// fall back to their light value, so a one-theme project sets nothing there.
 type DesignSystem struct {
-	Cwd    string            `json:"cwd"`
-	Tokens map[string]string `json:"tokens"`
-	Notes  string            `json:"notes"`
+	Cwd        string            `json:"cwd"`
+	Tokens     map[string]string `json:"tokens"`
+	TokensDark map[string]string `json:"tokens_dark"`
+	Notes      string            `json:"notes"`
 }
 
 // IsEmpty reports whether there is nothing worth injecting.
 func (d DesignSystem) IsEmpty() bool {
-	return len(d.Tokens) == 0 && strings.TrimSpace(d.Notes) == ""
+	return len(d.Tokens) == 0 && len(d.TokensDark) == 0 && strings.TrimSpace(d.Notes) == ""
+}
+
+// themedTokens are the tokens that differ between light and dark. The rest
+// (type, radius, spacing) are theme-independent, so a dark override for them
+// is ignored rather than silently doubling the vocabulary.
+var themedTokens = map[string]bool{
+	"primary": true, "secondary": true, "background": true, "surface": true,
+	"text": true, "muted": true, "border": true, "shadow": true,
 }
 
 // designTokens are the tokens the Canvas understands. Anything else the
@@ -109,20 +121,47 @@ func (d DesignSystem) sortedTokens() [][2]string {
 	return out
 }
 
-// StyleBlock renders the tokens as a CSS custom-property block to inject into a
-// canvas document. Empty when there are no tokens.
+// StyleBlock renders the tokens as CSS custom properties to inject into a
+// canvas document: the light set on :root, the dark overrides behind
+// prefers-color-scheme, so one canvas serves both themes. Empty when there are
+// no tokens.
 func (d DesignSystem) StyleBlock() string {
 	toks := d.sortedTokens()
 	if len(toks) == 0 {
 		return ""
 	}
 	var b strings.Builder
-	b.WriteString("<style id=\"od-design-system\">:root{")
+	b.WriteString("<style id=\"od-design-system\">:root{color-scheme:light dark;")
 	for _, kv := range toks {
 		fmt.Fprintf(&b, "%s:%s;", cssVarName(kv[0]), kv[1])
 	}
-	b.WriteString("}</style>")
+	b.WriteString("}")
+	if dark := d.darkOverrides(); len(dark) > 0 {
+		b.WriteString("@media (prefers-color-scheme:dark){:root{")
+		for _, kv := range dark {
+			fmt.Fprintf(&b, "%s:%s;", cssVarName(kv[0]), kv[1])
+		}
+		b.WriteString("}}")
+	}
+	b.WriteString("</style>")
 	return b.String()
+}
+
+// darkOverrides returns the dark values that actually differ from the light
+// ones, in documented order — so the media query stays as small as it can be.
+func (d DesignSystem) darkOverrides() [][2]string {
+	out := make([][2]string, 0, len(d.TokensDark))
+	for _, t := range designTokens {
+		if !themedTokens[t.Key] {
+			continue
+		}
+		v := strings.TrimSpace(d.TokensDark[t.Key])
+		if v == "" || v == strings.TrimSpace(d.Tokens[t.Key]) {
+			continue
+		}
+		out = append(out, [2]string{t.Key, v})
+	}
+	return out
 }
 
 // PromptBlock renders the design system for a seeded prompt: the tokens with
@@ -139,6 +178,12 @@ func (d DesignSystem) PromptBlock() string {
 			fmt.Fprintf(&b, "  %s = %s   → var(%s)\n", kv[0], kv[1], cssVarName(kv[0]))
 		}
 	}
+	if dark := d.darkOverrides(); len(dark) > 0 {
+		b.WriteString("Dark mode is already handled: the same variables are re-declared under @media (prefers-color-scheme: dark), so a canvas built from them works in BOTH themes — never hard-code a light background or write your own dark-mode rules for these.\n")
+		for _, kv := range dark {
+			fmt.Fprintf(&b, "  %s (dark) = %s\n", kv[0], kv[1])
+		}
+	}
 	if n := strings.TrimSpace(d.Notes); n != "" {
 		fmt.Fprintf(&b, "Style rules: %s\n", n)
 	}
@@ -152,25 +197,23 @@ func (s *Store) GetDesign(ctx context.Context, cwd string) (DesignSystem, error)
 	if cwd == "" {
 		return DesignSystem{}, errors.New("canvas: cwd is required")
 	}
-	var raw []byte
+	var raw, rawDark []byte
 	var notes string
 	err := s.pool.QueryRow(ctx, `
-		SELECT tokens, notes FROM canvas_design_systems WHERE cwd = $1`, cwd).
-		Scan(&raw, &notes)
+		SELECT tokens, tokens_dark, notes FROM canvas_design_systems WHERE cwd = $1`, cwd).
+		Scan(&raw, &rawDark, &notes)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return DesignSystem{Cwd: cwd, Tokens: map[string]string{}}, nil
+		return DesignSystem{Cwd: cwd, Tokens: map[string]string{}, TokensDark: map[string]string{}}, nil
 	}
 	if err != nil {
 		return DesignSystem{}, fmt.Errorf("canvas: read design system: %w", err)
 	}
-	tokens := map[string]string{}
-	if len(raw) > 0 {
-		if err := json.Unmarshal(raw, &tokens); err != nil {
-			// A hand-edited row shouldn't break rendering — fall back to notes.
-			tokens = map[string]string{}
-		}
-	}
-	return DesignSystem{Cwd: cwd, Tokens: tokens, Notes: notes}, nil
+	return DesignSystem{
+		Cwd:        cwd,
+		Tokens:     decodeTokens(raw),
+		TokensDark: decodeTokens(rawDark),
+		Notes:      notes,
+	}, nil
 }
 
 // SetDesign replaces the project's design system.
@@ -179,27 +222,57 @@ func (s *Store) SetDesign(ctx context.Context, d DesignSystem) (DesignSystem, er
 	if cwd == "" {
 		return DesignSystem{}, errors.New("canvas: cwd is required")
 	}
-	tokens := map[string]string{}
-	for k, v := range d.Tokens {
-		if k = strings.TrimSpace(k); k != "" && strings.TrimSpace(v) != "" {
-			tokens[k] = strings.TrimSpace(v)
-		}
-	}
+	tokens := cleanTokens(d.Tokens, false)
+	dark := cleanTokens(d.TokensDark, true)
 	raw, err := json.Marshal(tokens)
 	if err != nil {
 		return DesignSystem{}, fmt.Errorf("canvas: encode tokens: %w", err)
 	}
+	rawDark, err := json.Marshal(dark)
+	if err != nil {
+		return DesignSystem{}, fmt.Errorf("canvas: encode dark tokens: %w", err)
+	}
 	notes := strings.TrimSpace(d.Notes)
 	if _, err := s.pool.Exec(ctx, `
-		INSERT INTO canvas_design_systems (cwd, tokens, notes)
-		VALUES ($1, $2, $3)
+		INSERT INTO canvas_design_systems (cwd, tokens, tokens_dark, notes)
+		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (cwd) DO UPDATE SET
 			tokens = EXCLUDED.tokens,
+			tokens_dark = EXCLUDED.tokens_dark,
 			notes = EXCLUDED.notes,
-			updated_at = NOW()`, cwd, raw, notes); err != nil {
+			updated_at = NOW()`, cwd, raw, rawDark, notes); err != nil {
 		return DesignSystem{}, fmt.Errorf("canvas: write design system: %w", err)
 	}
-	return DesignSystem{Cwd: cwd, Tokens: tokens, Notes: notes}, nil
+	return DesignSystem{Cwd: cwd, Tokens: tokens, TokensDark: dark, Notes: notes}, nil
+}
+
+// decodeTokens reads a tokens column; a hand-edited row shouldn't break
+// rendering, so a bad value just yields an empty set.
+func decodeTokens(raw []byte) map[string]string {
+	out := map[string]string{}
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &out); err != nil {
+			return map[string]string{}
+		}
+	}
+	return out
+}
+
+// cleanTokens trims and drops empties. themedOnly keeps the dark set to the
+// tokens that actually vary with the theme.
+func cleanTokens(in map[string]string, themedOnly bool) map[string]string {
+	out := map[string]string{}
+	for k, v := range in {
+		k, v = strings.TrimSpace(k), strings.TrimSpace(v)
+		if k == "" || v == "" {
+			continue
+		}
+		if themedOnly && !themedTokens[k] {
+			continue
+		}
+		out[k] = v
+	}
+	return out
 }
 
 // injectDesign puts the design system's CSS variables into a canvas document,

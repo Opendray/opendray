@@ -145,7 +145,109 @@ export async function setCanvasFocus(input: {
 export interface CanvasDesignSystem {
   cwd?: string
   tokens: Record<string, string>
+  /** Dark-mode values for the colour tokens; missing keys fall back to light. */
+  tokens_dark: Record<string, string>
   notes: string
+}
+
+// The colour tokens that differ between themes. The rest (type, radius,
+// spacing) are theme-independent, so the dark set doesn't carry them.
+export const CANVAS_THEMED_TOKENS = [
+  'primary',
+  'secondary',
+  'background',
+  'surface',
+  'text',
+  'muted',
+  'border',
+  'shadow',
+] as const
+
+// Starting palettes. Picking colours from memory is the part non-designers
+// can't do, so a new project starts from a complete, contrast-checked pair
+// (light + dark) and tweaks from there rather than facing 13 empty fields.
+// Values are plain hex because that is what people can read and edit.
+export interface CanvasPalette {
+  id: string
+  accent: string
+  tokens: Record<string, string>
+  tokensDark: Record<string, string>
+}
+
+const SCALE = { baseSize: '14px', radius: '8px', spacing: '4px' }
+const SANS = 'Inter, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif'
+
+function palette(
+  id: string,
+  accent: string,
+  accentDark: string,
+  opts: { neutral?: 'slate' | 'zinc' | 'stone'; radius?: string } = {},
+): CanvasPalette {
+  const n = {
+    slate: {
+      bg: '#f8fafc', surface: '#ffffff', text: '#0f172a', muted: '#64748b', border: '#e2e8f0',
+      dBg: '#0b1120', dSurface: '#151d2e', dText: '#e2e8f0', dMuted: '#94a3b8', dBorder: '#26324a',
+    },
+    zinc: {
+      bg: '#fafafa', surface: '#ffffff', text: '#18181b', muted: '#71717a', border: '#e4e4e7',
+      dBg: '#0c0c0e', dSurface: '#18181b', dText: '#e4e4e7', dMuted: '#a1a1aa', dBorder: '#2a2a2e',
+    },
+    stone: {
+      bg: '#faf9f7', surface: '#ffffff', text: '#1c1917', muted: '#78716c', border: '#e7e5e4',
+      dBg: '#0e0d0c', dSurface: '#1c1917', dText: '#e7e5e4', dMuted: '#a8a29e', dBorder: '#2d2926',
+    },
+  }[opts.neutral ?? 'slate']
+  return {
+    id,
+    accent,
+    tokens: {
+      primary: accent,
+      secondary: n.border,
+      background: n.bg,
+      surface: n.surface,
+      text: n.text,
+      muted: n.muted,
+      border: n.border,
+      font: SANS,
+      headingFont: SANS,
+      shadow: '0 1px 2px rgba(0,0,0,0.06)',
+      ...SCALE,
+      ...(opts.radius ? { radius: opts.radius } : {}),
+    },
+    tokensDark: {
+      primary: accentDark,
+      secondary: n.dBorder,
+      background: n.dBg,
+      surface: n.dSurface,
+      text: n.dText,
+      muted: n.dMuted,
+      border: n.dBorder,
+      shadow: '0 1px 2px rgba(0,0,0,0.4)',
+    },
+  }
+}
+
+export const CANVAS_PALETTES: CanvasPalette[] = [
+  palette('indigo', '#4f46e5', '#818cf8'),
+  palette('sky', '#0284c7', '#38bdf8'),
+  palette('emerald', '#059669', '#34d399'),
+  palette('amber', '#d97706', '#fbbf24', { neutral: 'stone' }),
+  palette('rose', '#e11d48', '#fb7185', { neutral: 'stone' }),
+  palette('violet', '#7c3aed', '#a78bfa', { neutral: 'zinc' }),
+  palette('graphite', '#f97316', '#fb923c', { neutral: 'zinc', radius: '6px' }),
+]
+
+// withAccent swaps just the accent colour of a palette, so the operator can
+// keep a checked neutral scale and still make it theirs.
+export function withAccent(
+  p: CanvasPalette,
+  accent: string,
+  accentDark: string,
+): { tokens: Record<string, string>; tokensDark: Record<string, string> } {
+  return {
+    tokens: { ...p.tokens, primary: accent },
+    tokensDark: { ...p.tokensDark, primary: accentDark },
+  }
 }
 
 // The tokens the Canvas documents, in the order they're presented. Each becomes
@@ -176,18 +278,27 @@ export async function getDesignSystem(cwd: string): Promise<CanvasDesignSystem> 
   const d = await api<CanvasDesignSystem>(
     `/api/v1/canvas/design?cwd=${encodeURIComponent(cwd)}`,
   )
-  return { tokens: d.tokens ?? {}, notes: d.notes ?? '' }
+  return { tokens: d.tokens ?? {}, tokens_dark: d.tokens_dark ?? {}, notes: d.notes ?? '' }
 }
 
 export async function setDesignSystem(
   cwd: string,
-  input: { tokens: Record<string, string>; notes: string },
+  input: {
+    tokens: Record<string, string>
+    tokensDark: Record<string, string>
+    notes: string
+  },
 ): Promise<CanvasDesignSystem> {
   const d = await api<CanvasDesignSystem>('/api/v1/canvas/design', {
     method: 'POST',
-    body: { cwd, tokens: input.tokens, notes: input.notes },
+    body: {
+      cwd,
+      tokens: input.tokens,
+      tokens_dark: input.tokensDark,
+      notes: input.notes,
+    },
   })
-  return { tokens: d.tokens ?? {}, notes: d.notes ?? '' }
+  return { tokens: d.tokens ?? {}, tokens_dark: d.tokens_dark ?? {}, notes: d.notes ?? '' }
 }
 
 // getCanvasFocus reads the project's focused canvas (empty slug when none).

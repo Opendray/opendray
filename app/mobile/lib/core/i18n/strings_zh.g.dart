@@ -6812,6 +6812,17 @@ class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspect
 	@override String get tokenRadius => '圆角';
 	@override String get tokenSpacing => '间距';
 	@override String get tokenShadow => '阴影';
+	@override String get themeLight => '浅色';
+	@override String get themeDark => '深色';
+	@override String get paletteLabel => '从预设配色开始';
+	@override String get themeDarkHint => '留空 = 沿用浅色';
+	@override String get paletteIndigo => '靛蓝';
+	@override String get paletteSky => '天蓝';
+	@override String get paletteEmerald => '翠绿';
+	@override String get paletteAmber => '琥珀';
+	@override String get paletteRose => '玫红';
+	@override String get paletteViolet => '紫罗兰';
+	@override String get paletteGraphite => '石墨';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7510,7 +7521,7 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get designLoading => '加载中……';
 	@override String get designNotesLabel => '风格说明(tokens 表达不了的部分)';
 	@override String get designNotesPlaceholder => '例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种';
-	@override String get designAgentHint => 'tokens 会以 CSS 变量注入每个画布,并随每次画布请求一起发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent「根据我们真实的主题配置设计系统」,它会读取项目的 tailwind config / CSS 变量自动填好。';
+	@override String get designAgentHint => '全新项目就先点上面的预设配色 —— 一次填好经过对比度检查的明暗两套,再微调即可;颜色字段带取色器,不需要记住任何色号。tokens 会以 CSS 变量注入每个画布(深色走 prefers-color-scheme),并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。已有项目最准的做法:让 agent「根据我们真实的主题配置设计系统」,它会读取 tailwind config / CSS 变量自动填好。';
 	@override String get designSave => '保存';
 	@override String get designCancel => '取消';
 	@override String get designClose => '关闭';
@@ -7529,6 +7540,18 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get token_radius => '圆角';
 	@override String get token_spacing => '间距基准';
 	@override String get token_shadow => '阴影';
+	@override String get paletteLabel => '从预设配色开始(明暗两套一次填好)';
+	@override String get palette_indigo => '靛蓝';
+	@override String get palette_sky => '天蓝';
+	@override String get palette_emerald => '翠绿';
+	@override String get palette_amber => '琥珀';
+	@override String get palette_rose => '玫红';
+	@override String get palette_violet => '紫罗兰';
+	@override String get palette_graphite => '石墨';
+	@override String get themeLight => '浅色';
+	@override String get themeDark => '深色';
+	@override String get themeLightHint => '基础配色';
+	@override String get themeDarkHint => '留空 = 沿用浅色的值';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9899,7 +9922,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.designLoading' => '加载中……',
 			'web.sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
 			'web.sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种',
-			'web.sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次画布请求一起发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent「根据我们真实的主题配置设计系统」,它会读取项目的 tailwind config / CSS 变量自动填好。',
+			'web.sessions.inspector.canvas.designAgentHint' => '全新项目就先点上面的预设配色 —— 一次填好经过对比度检查的明暗两套,再微调即可;颜色字段带取色器,不需要记住任何色号。tokens 会以 CSS 变量注入每个画布(深色走 prefers-color-scheme),并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。已有项目最准的做法:让 agent「根据我们真实的主题配置设计系统」,它会读取 tailwind config / CSS 变量自动填好。',
 			'web.sessions.inspector.canvas.designSave' => '保存',
 			'web.sessions.inspector.canvas.designCancel' => '取消',
 			'web.sessions.inspector.canvas.designClose' => '关闭',
@@ -9918,6 +9941,18 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.token_radius' => '圆角',
 			'web.sessions.inspector.canvas.token_spacing' => '间距基准',
 			'web.sessions.inspector.canvas.token_shadow' => '阴影',
+			'web.sessions.inspector.canvas.paletteLabel' => '从预设配色开始(明暗两套一次填好)',
+			'web.sessions.inspector.canvas.palette_indigo' => '靛蓝',
+			'web.sessions.inspector.canvas.palette_sky' => '天蓝',
+			'web.sessions.inspector.canvas.palette_emerald' => '翠绿',
+			'web.sessions.inspector.canvas.palette_amber' => '琥珀',
+			'web.sessions.inspector.canvas.palette_rose' => '玫红',
+			'web.sessions.inspector.canvas.palette_violet' => '紫罗兰',
+			'web.sessions.inspector.canvas.palette_graphite' => '石墨',
+			'web.sessions.inspector.canvas.themeLight' => '浅色',
+			'web.sessions.inspector.canvas.themeDark' => '深色',
+			'web.sessions.inspector.canvas.themeLightHint' => '基础配色',
+			'web.sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色的值',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -10102,6 +10137,8 @@ extension on TranslationsZh {
 			'web.memoryWorkers.cliCodex' => 'Codex（codex exec）',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity（agy --print）',
 			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} 的路由已保存，但它的功能总开关在 Server Settings 中处于关闭状态——开启之前不会执行任何调用。',
 			'web.memoryWorkers.infraGateOpen' => '去开启',
@@ -10114,8 +10151,6 @@ extension on TranslationsZh {
 			'web.archived.globalScope' => '(全局)',
 			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} 个项目 · ${memories} 条归档记忆',
 			'web.archived.memCount' => ({required Object count}) => '${count} 条记忆',
-			_ => null,
-		} ?? switch (path) {
 			'web.archived.restoreAll' => '全部恢复',
 			'web.archived.restoreAllTooltip' => '恢复该项目下的全部归档记忆',
 			'web.archived.restoreAllConfirm' => ({required Object project, required Object count}) => '恢复 ${project} 的全部 ${count} 条归档记忆？',
@@ -10616,6 +10651,8 @@ extension on TranslationsZh {
 			'web.providers.configForm.switchOff' => '关',
 			'web.providers.configForm.showSecret' => '显示密钥',
 			'web.providers.configForm.hideSecret' => '隐藏密钥',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.claudeAccounts.title' => 'Claude 账号',
 			'web.providers.claudeAccounts.importLocal' => '导入本地',
 			'web.providers.claudeAccounts.importLocalTooltip' => '扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作。',
@@ -10628,8 +10665,6 @@ extension on TranslationsZh {
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray 的文件系统监听会自动注册新目录，或点击 <1>导入本地</1> 立即扫描。',
 			'web.providers.claudeAccounts.architectureLink' => '架构与完整指南 →',
 			'web.providers.claudeAccounts.loading' => '加载中…',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.claudeAccounts.empty' => '暂无 Claude 账号。最简单的方式:打开会话页,spawn 一个 Claude 会话,在终端里运行 <1>claude login</1> —— 完成 OAuth 后,凭据会落到网关的 <3>~/.claude</3>,自动出现在这里。需要管理多账号身份时,可改用上方的 shell 工作流。',
 			'web.providers.claudeAccounts.noTokenYet' => '尚无 token',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
@@ -11130,6 +11165,8 @@ extension on TranslationsZh {
 			'web.backups.backupsTab.refresh' => '刷新',
 			'web.backups.backupsTab.queuedToast' => '备份已排队',
 			'web.backups.backupsTab.triggerFailedToast' => '触发失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.listFailedToast' => '加载备份列表失败',
 			'web.backups.backupsTab.deleteConfirm' => ({required Object id}) => '删除备份 ${id}? 该 blob 将从目标中移除。',
 			'web.backups.backupsTab.deletedToast' => '备份已删除',
@@ -11142,8 +11179,6 @@ extension on TranslationsZh {
 			'web.backups.backupsTab.columns.started' => '开始',
 			'web.backups.backupsTab.columns.size' => '大小',
 			'web.backups.backupsTab.columns.actions' => '操作',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.downloadTooltip' => '下载',
 			'web.backups.backupsTab.deleteTooltip' => '删除',
 			'web.backups.restore.title' => '从备份 bundle 恢复',
@@ -11644,6 +11679,8 @@ extension on TranslationsZh {
 			'web.logViewer.streaming' => '正在流式传输',
 			'web.logViewer.disconnected' => '已断开',
 			'web.logViewer.live' => '实时',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.offline' => '离线',
 			'web.logViewer.pauseTooltip' => '暂停自动滚动',
 			'web.logViewer.resumeTooltip' => '恢复自动滚动',
@@ -11656,8 +11693,6 @@ extension on TranslationsZh {
 			'web.pathInput.notFound' => '未找到 ·',
 			'web.pathInput.childrenSuffix' => '项',
 			'web.pathInput.expectedDirectory' => '· 期望是目录',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.header.title' => '环境记忆 — 自动捕获与注入',
 			'web.memoryAmbient.header.body' => 'opendray 每 10 秒轮询所有运行中的 agent 会话，通过可配置的 LLM 提取持久事实，去重后存入共享记忆池。配置由哪个 LLM 做提取（Provider）、何时触发提取（Capture rule）、以及在 spawn 时把什么内容（如果有）拼接到 agent 的 system prompt（Injection profile）。',
 			'web.memoryAmbient.loading' => '加载中…',
@@ -12158,6 +12193,8 @@ extension on TranslationsZh {
 			'web.roundTable.loading' => '加载中…',
 			'web.roundTable.empty' => '还没有圆桌。',
 			'web.roundTable.selectHint' => '选择一个圆桌打开群聊。',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.you' => '你',
 			'web.roundTable.summary' => '总结',
 			'web.roundTable.dialog.title' => '新建圆桌',
@@ -12170,8 +12207,6 @@ extension on TranslationsZh {
 			'web.roundTable.dialog.created' => '圆桌已创建',
 			'web.roundTable.dialog.project' => '项目(可选)',
 			'web.roundTable.dialog.start' => '开始聊天',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.dialog.browse' => '浏览',
 			'web.roundTable.dialog.cwdPlaceholder' => '/项目/路径(可选)',
 			'web.roundTable.dialog.modelPlaceholder' => '模型',
@@ -12598,6 +12633,17 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.tokenRadius' => '圆角',
 			'sessions.inspector.canvas.tokenSpacing' => '间距',
 			'sessions.inspector.canvas.tokenShadow' => '阴影',
+			'sessions.inspector.canvas.themeLight' => '浅色',
+			'sessions.inspector.canvas.themeDark' => '深色',
+			'sessions.inspector.canvas.paletteLabel' => '从预设配色开始',
+			'sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色',
+			'sessions.inspector.canvas.paletteIndigo' => '靛蓝',
+			'sessions.inspector.canvas.paletteSky' => '天蓝',
+			'sessions.inspector.canvas.paletteEmerald' => '翠绿',
+			'sessions.inspector.canvas.paletteAmber' => '琥珀',
+			'sessions.inspector.canvas.paletteRose' => '玫红',
+			'sessions.inspector.canvas.paletteViolet' => '紫罗兰',
+			'sessions.inspector.canvas.paletteGraphite' => '石墨',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12661,6 +12707,8 @@ extension on TranslationsZh {
 			'mcp.editor.jsonLabel' => '服务器 JSON',
 			'mcp.editor.jsonSchemaHelp' => 'Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \$secret:KEY 引用密钥库的密钥。',
 			'mcp.editor.idLabel' => 'id（URL 片段，小写字母数字 / 横线 / 下划线）',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.idRequired' => 'id 必填',
 			'mcp.editor.saving' => '保存中…',
 			'mcp.editor.save' => '保存',
@@ -12684,8 +12732,6 @@ extension on TranslationsZh {
 			'mcp.secret.deleteBody' => '从加密的密钥库中移除该值。引用此密钥的 MCP 服务器在恢复前将无法启动。',
 			'mcp.popup.editConfigSubtitle' => '完整 JSON 编辑器 — 仅限密钥库支持的服务器',
 			'mcp.popup.viewRawSubtitle' => '服务器 JSON 的只读查看器',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.popup.deleteLabel' => '删除',
 			'mcp.kv.transport' => '传输',
 			'mcp.kv.description' => '描述',
@@ -13175,6 +13221,8 @@ extension on TranslationsZh {
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
@@ -13198,8 +13246,6 @@ extension on TranslationsZh {
 			'backupTargetEditor.kinds.local.label' => '本地磁盘',
 			'backupTargetEditor.kinds.local.description' => '运行 opendray 的机器上的文件夹',
 			'backupTargetEditor.kinds.smb.label' => 'SMB 共享',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.smb.description' => 'Windows 共享 + 多数家用 NAS 设备',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
 			'backupTargetEditor.kinds.webdav.description' => '自托管云盘 + 文件共享服务',
@@ -13689,6 +13735,8 @@ extension on TranslationsZh {
 			'settings.appearance.section' => '外观',
 			'settings.appearance.system' => '跟随系统',
 			'settings.appearance.systemSubtitle' => '跟随手机的外观设置',
+			_ => null,
+		} ?? switch (path) {
 			'settings.appearance.light' => '浅色',
 			'settings.appearance.lightSubtitle' => '始终使用浅色主题',
 			'settings.appearance.dark' => '深色',
@@ -13712,8 +13760,6 @@ extension on TranslationsZh {
 			'settings.changeCredentials.passwordTooShort' => '至少需要 8 个字符',
 			'settings.changeCredentials.passwordMismatch' => '与新密码不一致',
 			'settings.changeCredentials.updatedSnack' => '凭据已更新。',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.wrongCurrent' => '当前密码不正确。',
 			'settings.changeCredentials.saving' => '保存中…',
 			'settings.changeCredentials.update' => '更新',

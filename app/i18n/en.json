@@ -334,7 +334,7 @@
           "designLoading": "Loading…",
           "designNotesLabel": "Style rules (what tokens can't express)",
           "designNotesPlaceholder": "e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only",
-          "designAgentHint": "Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to \"set up the canvas design system from our real theme\" and it will read the project's tailwind config / CSS variables and fill this in.",
+          "designAgentHint": "Pick a palette above if you're starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to \"set up the canvas design system from our real theme\" — it will read the tailwind config / CSS variables and fill this in.",
           "designSave": "Save",
           "designCancel": "Cancel",
           "designClose": "Close",
@@ -352,7 +352,19 @@
           "token_baseSize": "Base size",
           "token_radius": "Radius",
           "token_spacing": "Spacing unit",
-          "token_shadow": "Shadow"
+          "token_shadow": "Shadow",
+          "paletteLabel": "Start from a palette (fills both themes)",
+          "palette_indigo": "Indigo",
+          "palette_sky": "Sky",
+          "palette_emerald": "Emerald",
+          "palette_amber": "Amber",
+          "palette_rose": "Rose",
+          "palette_violet": "Violet",
+          "palette_graphite": "Graphite",
+          "themeLight": "Light",
+          "themeDark": "Dark",
+          "themeLightHint": "the base palette",
+          "themeDarkHint": "blank = inherits the light value"
         }
       },
       "ended": {
@@ -3793,7 +3805,18 @@
         "tokenBaseSize": "Base size",
         "tokenRadius": "Radius",
         "tokenSpacing": "Spacing",
-        "tokenShadow": "Shadow"
+        "tokenShadow": "Shadow",
+        "themeLight": "Light",
+        "themeDark": "Dark",
+        "paletteLabel": "Start from a palette",
+        "themeDarkHint": "blank = inherits light",
+        "paletteIndigo": "Indigo",
+        "paletteSky": "Sky",
+        "paletteEmerald": "Emerald",
+        "paletteAmber": "Amber",
+        "paletteRose": "Rose",
+        "paletteViolet": "Violet",
+        "paletteGraphite": "Graphite"
       }
     },
     "spawnSheet": {

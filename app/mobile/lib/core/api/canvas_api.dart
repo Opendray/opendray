@@ -282,12 +282,18 @@ class CanvasApi {
   Future<CanvasDesignSystem> setDesign({
     required String cwd,
     required Map<String, String> tokens,
+    required Map<String, String> tokensDark,
     required String notes,
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
         '/api/v1/canvas/design',
-        data: {'cwd': cwd, 'tokens': tokens, 'notes': notes},
+        data: {
+          'cwd': cwd,
+          'tokens': tokens,
+          'tokens_dark': tokensDark,
+          'notes': notes,
+        },
       );
       return CanvasDesignSystem.fromJson(res.data ?? const {});
     } on Object catch (e) {
@@ -309,30 +315,132 @@ class CanvasApi {
 /// AND injects the tokens into each canvas as CSS variables — that pairing is
 /// what stops successive renders from drifting apart.
 class CanvasDesignSystem {
-  const CanvasDesignSystem({this.tokens = const {}, this.notes = ''});
+  const CanvasDesignSystem({
+    this.tokens = const {},
+    this.tokensDark = const {},
+    this.notes = '',
+  });
 
-  factory CanvasDesignSystem.fromJson(Map<String, dynamic> json) {
-    final raw = json['tokens'];
-    final tokens = <String, String>{};
-    if (raw is Map) {
-      raw.forEach((k, v) {
-        if (v is String && v.trim().isNotEmpty) tokens['$k'] = v;
-      });
-    }
-    return CanvasDesignSystem(
-      tokens: tokens,
-      notes: json['notes'] as String? ?? '',
-    );
-  }
+  factory CanvasDesignSystem.fromJson(Map<String, dynamic> json) =>
+      CanvasDesignSystem(
+        tokens: _tokenMap(json['tokens']),
+        tokensDark: _tokenMap(json['tokens_dark']),
+        notes: json['notes'] as String? ?? '',
+      );
 
   final Map<String, String> tokens;
+
+  /// Dark-mode values for the colour tokens; missing keys inherit the light one.
+  final Map<String, String> tokensDark;
   final String notes;
 
-  bool get isEmpty => tokens.isEmpty && notes.trim().isEmpty;
+  bool get isEmpty =>
+      tokens.isEmpty && tokensDark.isEmpty && notes.trim().isEmpty;
+}
+
+Map<String, String> _tokenMap(Object? raw) {
+  final out = <String, String>{};
+  if (raw is Map) {
+    raw.forEach((k, v) {
+      if (v is String && v.trim().isNotEmpty) out['$k'] = v;
+    });
+  }
+  return out;
 }
 
 /// The tokens the Canvas documents, in presentation order. Each becomes a CSS
 /// variable (primary → var(--od-primary)).
+/// The colour tokens that differ between themes; the rest are theme-independent.
+const canvasThemedTokens = <String>[
+  'primary',
+  'secondary',
+  'background',
+  'surface',
+  'text',
+  'muted',
+  'border',
+  'shadow',
+];
+
+/// Starting palettes. Choosing colours from memory is the part people can't do,
+/// so a new project starts from a complete, contrast-checked light + dark pair
+/// and tweaks from there. Mirrors CANVAS_PALETTES in app/shared/src/lib/canvas.ts.
+class CanvasPalette {
+  const CanvasPalette({
+    required this.id,
+    required this.accent,
+    required this.tokens,
+    required this.tokensDark,
+  });
+
+  final String id;
+  final int accent;
+  final Map<String, String> tokens;
+  final Map<String, String> tokensDark;
+}
+
+const _sans =
+    'Inter, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif';
+
+Map<String, String> _light(String accent, _Neutral n, {String radius = '8px'}) => {
+      'primary': accent,
+      'secondary': n.border,
+      'background': n.bg,
+      'surface': n.surface,
+      'text': n.text,
+      'muted': n.muted,
+      'border': n.border,
+      'font': _sans,
+      'headingFont': _sans,
+      'baseSize': '14px',
+      'radius': radius,
+      'spacing': '4px',
+      'shadow': '0 1px 2px rgba(0,0,0,0.06)',
+    };
+
+Map<String, String> _dark(String accent, _Neutral n) => {
+      'primary': accent,
+      'secondary': n.dBorder,
+      'background': n.dBg,
+      'surface': n.dSurface,
+      'text': n.dText,
+      'muted': n.dMuted,
+      'border': n.dBorder,
+      'shadow': '0 1px 2px rgba(0,0,0,0.4)',
+    };
+
+class _Neutral {
+  const _Neutral(this.bg, this.surface, this.text, this.muted, this.border,
+      this.dBg, this.dSurface, this.dText, this.dMuted, this.dBorder);
+  final String bg;
+  final String surface;
+  final String text;
+  final String muted;
+  final String border;
+  final String dBg;
+  final String dSurface;
+  final String dText;
+  final String dMuted;
+  final String dBorder;
+}
+
+const _slate = _Neutral('#f8fafc', '#ffffff', '#0f172a', '#64748b', '#e2e8f0',
+    '#0b1120', '#151d2e', '#e2e8f0', '#94a3b8', '#26324a');
+const _zinc = _Neutral('#fafafa', '#ffffff', '#18181b', '#71717a', '#e4e4e7',
+    '#0c0c0e', '#18181b', '#e4e4e7', '#a1a1aa', '#2a2a2e');
+const _stone = _Neutral('#faf9f7', '#ffffff', '#1c1917', '#78716c', '#e7e5e4',
+    '#0e0d0c', '#1c1917', '#e7e5e4', '#a8a29e', '#2d2926');
+
+final canvasPalettes = <CanvasPalette>[
+  CanvasPalette(id: 'indigo', accent: 0xFF4F46E5, tokens: _light('#4f46e5', _slate), tokensDark: _dark('#818cf8', _slate)),
+  CanvasPalette(id: 'sky', accent: 0xFF0284C7, tokens: _light('#0284c7', _slate), tokensDark: _dark('#38bdf8', _slate)),
+  CanvasPalette(id: 'emerald', accent: 0xFF059669, tokens: _light('#059669', _slate), tokensDark: _dark('#34d399', _slate)),
+  CanvasPalette(id: 'amber', accent: 0xFFD97706, tokens: _light('#d97706', _stone), tokensDark: _dark('#fbbf24', _stone)),
+  CanvasPalette(id: 'rose', accent: 0xFFE11D48, tokens: _light('#e11d48', _stone), tokensDark: _dark('#fb7185', _stone)),
+  CanvasPalette(id: 'violet', accent: 0xFF7C3AED, tokens: _light('#7c3aed', _zinc), tokensDark: _dark('#a78bfa', _zinc)),
+  CanvasPalette(id: 'graphite', accent: 0xFFF97316, tokens: _light('#f97316', _zinc, radius: '6px'), tokensDark: _dark('#fb923c', _zinc)),
+];
+
 const canvasDesignTokens = <String>[
   'primary',
   'secondary',

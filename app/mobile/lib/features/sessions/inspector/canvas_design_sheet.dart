@@ -28,6 +28,17 @@ const _colorTokens = {
   'border',
 };
 
+String _paletteLabel(String id) => switch (id) {
+      'indigo' => t.sessions.inspector.canvas.paletteIndigo,
+      'sky' => t.sessions.inspector.canvas.paletteSky,
+      'emerald' => t.sessions.inspector.canvas.paletteEmerald,
+      'amber' => t.sessions.inspector.canvas.paletteAmber,
+      'rose' => t.sessions.inspector.canvas.paletteRose,
+      'violet' => t.sessions.inspector.canvas.paletteViolet,
+      'graphite' => t.sessions.inspector.canvas.paletteGraphite,
+      _ => id,
+    };
+
 String _tokenLabel(String key) => switch (key) {
       'primary' => t.sessions.inspector.canvas.tokenPrimary,
       'secondary' => t.sessions.inspector.canvas.tokenSecondary,
@@ -76,7 +87,9 @@ class CanvasDesignSheet extends ConsumerStatefulWidget {
 
 class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
   final Map<String, TextEditingController> _ctls = {};
+  final Map<String, TextEditingController> _darkCtls = {};
   final _notesCtl = TextEditingController();
+  bool _dark = false;
   bool _loading = true;
   bool _saving = false;
 
@@ -86,12 +99,18 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
     for (final k in canvasDesignTokens) {
       _ctls[k] = TextEditingController();
     }
+    for (final k in canvasThemedTokens) {
+      _darkCtls[k] = TextEditingController();
+    }
     unawaited(_load());
   }
 
   @override
   void dispose() {
     for (final c in _ctls.values) {
+      c.dispose();
+    }
+    for (final c in _darkCtls.values) {
       c.dispose();
     }
     _notesCtl.dispose();
@@ -104,12 +123,24 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
       if (!mounted) return;
       setState(() {
         d.tokens.forEach((k, v) => _ctls[k]?.text = v);
+        d.tokensDark.forEach((k, v) => _darkCtls[k]?.text = v);
         _notesCtl.text = d.notes;
         _loading = false;
       });
     } on Object catch (_) {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// One tap fills BOTH themes with a checked pair — the answer to "I don't
+  /// know what colours to pick".
+  void _applyPalette(CanvasPalette p) {
+    setState(() {
+      p.tokens.forEach((k, v) => _ctls[k]?.text = v);
+      for (final k in canvasThemedTokens) {
+        _darkCtls[k]?.text = p.tokensDark[k] ?? '';
+      }
+    });
   }
 
   Future<void> _save() async {
@@ -119,9 +150,14 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
       _ctls.forEach((k, c) {
         if (c.text.trim().isNotEmpty) tokens[k] = c.text.trim();
       });
+      final dark = <String, String>{};
+      _darkCtls.forEach((k, c) {
+        if (c.text.trim().isNotEmpty) dark[k] = c.text.trim();
+      });
       await ref.read(canvasApiProvider).setDesign(
             cwd: widget.cwd,
             tokens: tokens,
+            tokensDark: dark,
             notes: _notesCtl.text.trim(),
           );
       if (!mounted) return;
@@ -190,11 +226,71 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       children: [
-                        for (final key in canvasDesignTokens)
+                        Text(
+                          t.sessions.inspector.canvas.paletteLabel,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final p in canvasPalettes)
+                              ActionChip(
+                                avatar: CircleAvatar(
+                                  radius: 7,
+                                  backgroundColor: Color(p.accent),
+                                ),
+                                label: Text(_paletteLabel(p.id)),
+                                onPressed: () => _applyPalette(p),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        SegmentedButton<bool>(
+                          showSelectedIcon: false,
+                          style: const ButtonStyle(
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          segments: [
+                            ButtonSegment(
+                              value: false,
+                              icon: const Icon(Icons.light_mode_outlined, size: 15),
+                              label: Text(t.sessions.inspector.canvas.themeLight),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              icon: const Icon(Icons.dark_mode_outlined, size: 15),
+                              label: Text(t.sessions.inspector.canvas.themeDark),
+                            ),
+                          ],
+                          selected: {_dark},
+                          onSelectionChanged: (s) => setState(() => _dark = s.first),
+                        ),
+                        if (_dark)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              t.sessions.inspector.canvas.themeDarkHint,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        for (final key in (_dark
+                            ? canvasThemedTokens
+                            : canvasDesignTokens))
                           _TokenField(
                             label: _tokenLabel(key),
-                            hint: cssVarForToken(key),
-                            controller: _ctls[key]!,
+                            hint: _dark
+                                ? (_ctls[key]?.text.isNotEmpty ?? false
+                                    ? _ctls[key]!.text
+                                    : cssVarForToken(key))
+                                : cssVarForToken(key),
+                            controller: (_dark ? _darkCtls : _ctls)[key]!,
                             showSwatch: _colorTokens.contains(key),
                           ),
                         const SizedBox(height: 12),

@@ -773,6 +773,17 @@ var toolDefs = []map[string]any{
 						"are kept and exposed the same way. Omit to read only.",
 					"additionalProperties": map[string]any{"type": "string"},
 				},
+				"darkTokens": map[string]any{
+					"type": "object",
+					"description": "Dark-mode values for the colour tokens (primary, " +
+						"secondary, background, surface, text, muted, border, shadow). " +
+						"The canvas preview follows the operator's theme, so set these " +
+						"too — the gateway re-declares the same variables under " +
+						"@media (prefers-color-scheme: dark), which is why one canvas " +
+						"built from the variables works in BOTH themes. Keys you omit " +
+						"fall back to the light value.",
+					"additionalProperties": map[string]any{"type": "string"},
+				},
 				"notes": map[string]any{
 					"type": "string",
 					"description": "Style rules tokens can't express — voice, density, " +
@@ -1494,8 +1505,9 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 		return nil, errors.New("canvas_design requires OPENDRAY_MEMORY_SCOPE_KEY (cwd) to be set")
 	}
 	var in struct {
-		Tokens map[string]string `json:"tokens"`
-		Notes  *string           `json:"notes"`
+		Tokens     map[string]string `json:"tokens"`
+		DarkTokens map[string]string `json:"darkTokens"`
+		Notes      *string           `json:"notes"`
 	}
 	if len(args) > 0 {
 		if err := json.Unmarshal(args, &in); err != nil {
@@ -1503,17 +1515,19 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 		}
 	}
 	var out struct {
-		Tokens map[string]string `json:"tokens"`
-		Notes  string            `json:"notes"`
+		Tokens     map[string]string `json:"tokens"`
+		TokensDark map[string]string `json:"tokens_dark"`
+		Notes      string            `json:"notes"`
 	}
-	writing := in.Tokens != nil || in.Notes != nil
+	writing := in.Tokens != nil || in.DarkTokens != nil || in.Notes != nil
 	if writing {
 		// A write replaces the whole system, so start from what's stored and
 		// apply only what was passed — otherwise setting notes would wipe the
 		// tokens.
 		var cur struct {
-			Tokens map[string]string `json:"tokens"`
-			Notes  string            `json:"notes"`
+			Tokens     map[string]string `json:"tokens"`
+			TokensDark map[string]string `json:"tokens_dark"`
+			Notes      string            `json:"notes"`
 		}
 		if err := s.gatewayGetJSON("/api/v1/canvas/design?cwd="+urlQuery(cwd), &cur); err != nil {
 			return nil, err
@@ -1522,11 +1536,15 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 		if tokens == nil {
 			tokens = cur.Tokens
 		}
+		dark := in.DarkTokens
+		if dark == nil {
+			dark = cur.TokensDark
+		}
 		notes := cur.Notes
 		if in.Notes != nil {
 			notes = *in.Notes
 		}
-		body := map[string]any{"cwd": cwd, "tokens": tokens, "notes": notes}
+		body := map[string]any{"cwd": cwd, "tokens": tokens, "tokens_dark": dark, "notes": notes}
 		if err := s.gatewayPostJSON("/api/v1/canvas/design", body, &out); err != nil {
 			return nil, err
 		}
@@ -1538,7 +1556,7 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 	if writing {
 		b.WriteString("Design system saved. Every canvas request now carries it, and these tokens are injected into each canvas as CSS variables.\n\n")
 	}
-	if len(out.Tokens) == 0 && strings.TrimSpace(out.Notes) == "" {
+	if len(out.Tokens) == 0 && len(out.TokensDark) == 0 && strings.TrimSpace(out.Notes) == "" {
 		b.WriteString("This project has no canvas design system yet. Read its real theme (tailwind config, CSS variables, existing components) and set one so canvases stop drifting.")
 	} else {
 		if len(out.Tokens) > 0 {
@@ -1549,6 +1567,10 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 			}
 			sort.Strings(keys)
 			for _, k := range keys {
+				if d, ok := out.TokensDark[k]; ok && d != out.Tokens[k] {
+					fmt.Fprintf(&b, "  %s = %s   (dark: %s)\n", k, out.Tokens[k], d)
+					continue
+				}
 				fmt.Fprintf(&b, "  %s = %s\n", k, out.Tokens[k])
 			}
 		}

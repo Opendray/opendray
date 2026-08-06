@@ -334,7 +334,7 @@
           "designLoading": "加载中……",
           "designNotesLabel": "风格说明(tokens 表达不了的部分)",
           "designNotesPlaceholder": "例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种",
-          "designAgentHint": "tokens 会以 CSS 变量注入每个画布,并随每次画布请求一起发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent「根据我们真实的主题配置设计系统」,它会读取项目的 tailwind config / CSS 变量自动填好。",
+          "designAgentHint": "全新项目就先点上面的预设配色 —— 一次填好经过对比度检查的明暗两套,再微调即可;颜色字段带取色器,不需要记住任何色号。tokens 会以 CSS 变量注入每个画布(深色走 prefers-color-scheme),并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。已有项目最准的做法:让 agent「根据我们真实的主题配置设计系统」,它会读取 tailwind config / CSS 变量自动填好。",
           "designSave": "保存",
           "designCancel": "取消",
           "designClose": "关闭",
@@ -352,7 +352,19 @@
           "token_baseSize": "基准字号",
           "token_radius": "圆角",
           "token_spacing": "间距基准",
-          "token_shadow": "阴影"
+          "token_shadow": "阴影",
+          "paletteLabel": "从预设配色开始(明暗两套一次填好)",
+          "palette_indigo": "靛蓝",
+          "palette_sky": "天蓝",
+          "palette_emerald": "翠绿",
+          "palette_amber": "琥珀",
+          "palette_rose": "玫红",
+          "palette_violet": "紫罗兰",
+          "palette_graphite": "石墨",
+          "themeLight": "浅色",
+          "themeDark": "深色",
+          "themeLightHint": "基础配色",
+          "themeDarkHint": "留空 = 沿用浅色的值"
         }
       },
       "ended": {
@@ -3793,7 +3805,18 @@
         "tokenBaseSize": "基准字号",
         "tokenRadius": "圆角",
         "tokenSpacing": "间距",
-        "tokenShadow": "阴影"
+        "tokenShadow": "阴影",
+        "themeLight": "浅色",
+        "themeDark": "深色",
+        "paletteLabel": "从预设配色开始",
+        "themeDarkHint": "留空 = 沿用浅色",
+        "paletteIndigo": "靛蓝",
+        "paletteSky": "天蓝",
+        "paletteEmerald": "翠绿",
+        "paletteAmber": "琥珀",
+        "paletteRose": "玫红",
+        "paletteViolet": "紫罗兰",
+        "paletteGraphite": "石墨"
       }
     },
     "spawnSheet": {

@@ -334,7 +334,7 @@
           "designLoading": "Cargando…",
           "designNotesLabel": "Reglas de estilo (lo que los tokens no expresan)",
           "designNotesPlaceholder": "p. ej. contenido y denso en información; sin degradados ni radios grandes; botones solo sólidos o con borde",
-          "designAgentHint": "Los tokens se inyectan en cada lienzo como variables CSS y se incluyen en cada solicitud, y se indica al agente que use var(--od-…) en lugar de valores fijos. Consejo: pide al agente que «configure el sistema de diseño a partir de nuestro tema real» y leerá la configuración de tailwind / las variables CSS del proyecto.",
+          "designAgentHint": "Si empiezas de cero, elige una paleta arriba: rellena un par claro + oscuro ya verificado que luego puedes ajustar; los campos de color traen selector, así que nunca necesitas saber un código. Los tokens se inyectan en cada lienzo como variables CSS (el oscuro bajo prefers-color-scheme) y se incluyen en cada solicitud; se indica al agente que use var(--od-…). Para un proyecto existente, lo más fiable es pedir al agente que «configure el sistema de diseño a partir de nuestro tema real».",
           "designSave": "Guardar",
           "designCancel": "Cancelar",
           "designClose": "Cerrar",
@@ -352,7 +352,19 @@
           "token_baseSize": "Tamaño base",
           "token_radius": "Radio",
           "token_spacing": "Unidad de espaciado",
-          "token_shadow": "Sombra"
+          "token_shadow": "Sombra",
+          "paletteLabel": "Empieza con una paleta (rellena ambos temas)",
+          "palette_indigo": "Índigo",
+          "palette_sky": "Cielo",
+          "palette_emerald": "Esmeralda",
+          "palette_amber": "Ámbar",
+          "palette_rose": "Rosa",
+          "palette_violet": "Violeta",
+          "palette_graphite": "Grafito",
+          "themeLight": "Claro",
+          "themeDark": "Oscuro",
+          "themeLightHint": "la paleta base",
+          "themeDarkHint": "vacío = hereda el valor claro"
         }
       },
       "ended": {
@@ -3793,7 +3805,18 @@
         "tokenBaseSize": "Tamaño base",
         "tokenRadius": "Radio",
         "tokenSpacing": "Espaciado",
-        "tokenShadow": "Sombra"
+        "tokenShadow": "Sombra",
+        "themeLight": "Claro",
+        "themeDark": "Oscuro",
+        "paletteLabel": "Empieza con una paleta",
+        "themeDarkHint": "vacío = hereda claro",
+        "paletteIndigo": "Índigo",
+        "paletteSky": "Cielo",
+        "paletteEmerald": "Esmeralda",
+        "paletteAmber": "Ámbar",
+        "paletteRose": "Rosa",
+        "paletteViolet": "Violeta",
+        "paletteGraphite": "Grafito"
       }
     },
     "spawnSheet": {

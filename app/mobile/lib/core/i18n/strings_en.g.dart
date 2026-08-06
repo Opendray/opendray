@@ -13344,6 +13344,39 @@ class TranslationsSessionsInspectorCanvasEn {
 
 	/// en: 'Shadow'
 	String get tokenShadow => 'Shadow';
+
+	/// en: 'Light'
+	String get themeLight => 'Light';
+
+	/// en: 'Dark'
+	String get themeDark => 'Dark';
+
+	/// en: 'Start from a palette'
+	String get paletteLabel => 'Start from a palette';
+
+	/// en: 'blank = inherits light'
+	String get themeDarkHint => 'blank = inherits light';
+
+	/// en: 'Indigo'
+	String get paletteIndigo => 'Indigo';
+
+	/// en: 'Sky'
+	String get paletteSky => 'Sky';
+
+	/// en: 'Emerald'
+	String get paletteEmerald => 'Emerald';
+
+	/// en: 'Amber'
+	String get paletteAmber => 'Amber';
+
+	/// en: 'Rose'
+	String get paletteRose => 'Rose';
+
+	/// en: 'Violet'
+	String get paletteViolet => 'Violet';
+
+	/// en: 'Graphite'
+	String get paletteGraphite => 'Graphite';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -14701,8 +14734,8 @@ class TranslationsWebSessionsInspectorCanvasEn {
 	/// en: 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only'
 	String get designNotesPlaceholder => 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only';
 
-	/// en: 'Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to "set up the canvas design system from our real theme" and it will read the project's tailwind config / CSS variables and fill this in.'
-	String get designAgentHint => 'Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to "set up the canvas design system from our real theme" and it will read the project\'s tailwind config / CSS variables and fill this in.';
+	/// en: 'Pick a palette above if you're starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to "set up the canvas design system from our real theme" — it will read the tailwind config / CSS variables and fill this in.'
+	String get designAgentHint => 'Pick a palette above if you\'re starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to "set up the canvas design system from our real theme" — it will read the tailwind config / CSS variables and fill this in.';
 
 	/// en: 'Save'
 	String get designSave => 'Save';
@@ -14757,6 +14790,42 @@ class TranslationsWebSessionsInspectorCanvasEn {
 
 	/// en: 'Shadow'
 	String get token_shadow => 'Shadow';
+
+	/// en: 'Start from a palette (fills both themes)'
+	String get paletteLabel => 'Start from a palette (fills both themes)';
+
+	/// en: 'Indigo'
+	String get palette_indigo => 'Indigo';
+
+	/// en: 'Sky'
+	String get palette_sky => 'Sky';
+
+	/// en: 'Emerald'
+	String get palette_emerald => 'Emerald';
+
+	/// en: 'Amber'
+	String get palette_amber => 'Amber';
+
+	/// en: 'Rose'
+	String get palette_rose => 'Rose';
+
+	/// en: 'Violet'
+	String get palette_violet => 'Violet';
+
+	/// en: 'Graphite'
+	String get palette_graphite => 'Graphite';
+
+	/// en: 'Light'
+	String get themeLight => 'Light';
+
+	/// en: 'Dark'
+	String get themeDark => 'Dark';
+
+	/// en: 'the base palette'
+	String get themeLightHint => 'the base palette';
+
+	/// en: 'blank = inherits the light value'
+	String get themeDarkHint => 'blank = inherits the light value';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -18545,7 +18614,7 @@ extension on Translations {
 			'web.sessions.inspector.canvas.designLoading' => 'Loading…',
 			'web.sessions.inspector.canvas.designNotesLabel' => 'Style rules (what tokens can\'t express)',
 			'web.sessions.inspector.canvas.designNotesPlaceholder' => 'e.g. restrained and information-dense; no gradients or large radii; buttons are solid or outline only',
-			'web.sessions.inspector.canvas.designAgentHint' => 'Tokens are injected into every canvas as CSS variables and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. Tip: ask the agent to "set up the canvas design system from our real theme" and it will read the project\'s tailwind config / CSS variables and fill this in.',
+			'web.sessions.inspector.canvas.designAgentHint' => 'Pick a palette above if you\'re starting fresh — it fills a checked light + dark pair you can then tweak; colour fields have a real picker, so you never need to know a colour code. Tokens are injected into every canvas as CSS variables (dark under prefers-color-scheme) and included in every canvas request, and the agent is told to use var(--od-…) instead of raw values. For an existing project the accurate route is to ask the agent to "set up the canvas design system from our real theme" — it will read the tailwind config / CSS variables and fill this in.',
 			'web.sessions.inspector.canvas.designSave' => 'Save',
 			'web.sessions.inspector.canvas.designCancel' => 'Cancel',
 			'web.sessions.inspector.canvas.designClose' => 'Close',
@@ -18564,6 +18633,18 @@ extension on Translations {
 			'web.sessions.inspector.canvas.token_radius' => 'Radius',
 			'web.sessions.inspector.canvas.token_spacing' => 'Spacing unit',
 			'web.sessions.inspector.canvas.token_shadow' => 'Shadow',
+			'web.sessions.inspector.canvas.paletteLabel' => 'Start from a palette (fills both themes)',
+			'web.sessions.inspector.canvas.palette_indigo' => 'Indigo',
+			'web.sessions.inspector.canvas.palette_sky' => 'Sky',
+			'web.sessions.inspector.canvas.palette_emerald' => 'Emerald',
+			'web.sessions.inspector.canvas.palette_amber' => 'Amber',
+			'web.sessions.inspector.canvas.palette_rose' => 'Rose',
+			'web.sessions.inspector.canvas.palette_violet' => 'Violet',
+			'web.sessions.inspector.canvas.palette_graphite' => 'Graphite',
+			'web.sessions.inspector.canvas.themeLight' => 'Light',
+			'web.sessions.inspector.canvas.themeDark' => 'Dark',
+			'web.sessions.inspector.canvas.themeLightHint' => 'the base palette',
+			'web.sessions.inspector.canvas.themeDarkHint' => 'blank = inherits the light value',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -18748,6 +18829,8 @@ extension on Translations {
 			'web.memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
 			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.',
 			'web.memoryWorkers.infraGateOpen' => 'Enable it',
@@ -18760,8 +18843,6 @@ extension on Translations {
 			'web.archived.globalScope' => '(global)',
 			'web.archived.summary' => ({required Object projects, required Object memories}) => '${projects} projects · ${memories} archived memories',
 			'web.archived.memCount' => ({required Object count}) => '${count} memories',
-			_ => null,
-		} ?? switch (path) {
 			'web.archived.restoreAll' => 'Restore all',
 			'web.archived.restoreAllTooltip' => 'Restore every archived memory in this project',
 			'web.archived.restoreAllConfirm' => ({required Object count, required Object project}) => 'Restore all ${count} archived memories in ${project}?',
@@ -19262,6 +19343,8 @@ extension on Translations {
 			'web.providers.configForm.switchOff' => 'Off',
 			'web.providers.configForm.showSecret' => 'Show secret',
 			'web.providers.configForm.hideSecret' => 'Hide secret',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.claudeAccounts.title' => 'Claude accounts',
 			'web.providers.claudeAccounts.importLocal' => 'Import local',
 			'web.providers.claudeAccounts.importLocalTooltip' => 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only.',
@@ -19274,8 +19357,6 @@ extension on Translations {
 			'web.providers.claudeAccounts.addingBodySuffix' => 'opendray\'s filesystem watcher will register the new directory automatically, or click <1>Import local</1> to scan immediately.',
 			'web.providers.claudeAccounts.architectureLink' => 'Architecture & full guide →',
 			'web.providers.claudeAccounts.loading' => 'Loading…',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.claudeAccounts.empty' => 'No Claude accounts yet. Easiest path: open Sessions, spawn a Claude session, and run <1>claude login</1> in the terminal — your OAuth credentials land in <3>~/.claude</3> on the gateway and show up here automatically. Power users juggling multiple identities can use the shell workflow above instead.',
 			'web.providers.claudeAccounts.noTokenYet' => 'no token yet',
 			'web.providers.claudeAccounts.configDir' => 'config_dir:',
@@ -19776,6 +19857,8 @@ extension on Translations {
 			'web.backups.backupsTab.refresh' => 'Refresh',
 			'web.backups.backupsTab.queuedToast' => 'Backup queued',
 			'web.backups.backupsTab.triggerFailedToast' => 'Trigger failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.listFailedToast' => 'Failed to list backups',
 			'web.backups.backupsTab.deleteConfirm' => ({required Object id}) => 'Delete backup ${id}? The blob is removed from its target.',
 			'web.backups.backupsTab.deletedToast' => 'Backup deleted',
@@ -19788,8 +19871,6 @@ extension on Translations {
 			'web.backups.backupsTab.columns.started' => 'Started',
 			'web.backups.backupsTab.columns.size' => 'Size',
 			'web.backups.backupsTab.columns.actions' => 'Actions',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.downloadTooltip' => 'Download',
 			'web.backups.backupsTab.deleteTooltip' => 'Delete',
 			'web.backups.restore.title' => 'Restore from backup bundle',
@@ -20290,6 +20371,8 @@ extension on Translations {
 			'web.logViewer.streaming' => 'Streaming',
 			'web.logViewer.disconnected' => 'Disconnected',
 			'web.logViewer.live' => 'live',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.offline' => 'offline',
 			'web.logViewer.pauseTooltip' => 'Pause auto-scroll',
 			'web.logViewer.resumeTooltip' => 'Resume auto-scroll',
@@ -20302,8 +20385,6 @@ extension on Translations {
 			'web.pathInput.notFound' => 'not found ·',
 			'web.pathInput.childrenSuffix' => 'children',
 			'web.pathInput.expectedDirectory' => '· expected directory',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.header.title' => 'Ambient memory — auto-capture & inject',
 			'web.memoryAmbient.header.body' => 'opendray polls every live agent session every 10 seconds, extracts durable facts via a configurable LLM, and dedups before storing them in the shared memory pool. Configure which LLM does the extraction (Provider), when extraction fires (Capture rule), and what — if anything — gets prepended to the agent\'s system prompt at spawn (Injection profile).',
 			'web.memoryAmbient.loading' => 'Loading…',
@@ -20804,6 +20885,8 @@ extension on Translations {
 			'web.roundTable.loading' => 'Loading…',
 			'web.roundTable.empty' => 'No round tables yet.',
 			'web.roundTable.selectHint' => 'Select a round table to open the chat.',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.you' => 'You',
 			'web.roundTable.summary' => 'Summary',
 			'web.roundTable.dialog.title' => 'New round table',
@@ -20816,8 +20899,6 @@ extension on Translations {
 			'web.roundTable.dialog.created' => 'Round table created',
 			'web.roundTable.dialog.project' => 'Project (optional)',
 			'web.roundTable.dialog.start' => 'Start chat',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.dialog.browse' => 'Browse',
 			'web.roundTable.dialog.cwdPlaceholder' => '/path/to/project (optional)',
 			'web.roundTable.dialog.modelPlaceholder' => 'Model',
@@ -21244,6 +21325,17 @@ extension on Translations {
 			'sessions.inspector.canvas.tokenRadius' => 'Radius',
 			'sessions.inspector.canvas.tokenSpacing' => 'Spacing',
 			'sessions.inspector.canvas.tokenShadow' => 'Shadow',
+			'sessions.inspector.canvas.themeLight' => 'Light',
+			'sessions.inspector.canvas.themeDark' => 'Dark',
+			'sessions.inspector.canvas.paletteLabel' => 'Start from a palette',
+			'sessions.inspector.canvas.themeDarkHint' => 'blank = inherits light',
+			'sessions.inspector.canvas.paletteIndigo' => 'Indigo',
+			'sessions.inspector.canvas.paletteSky' => 'Sky',
+			'sessions.inspector.canvas.paletteEmerald' => 'Emerald',
+			'sessions.inspector.canvas.paletteAmber' => 'Amber',
+			'sessions.inspector.canvas.paletteRose' => 'Rose',
+			'sessions.inspector.canvas.paletteViolet' => 'Violet',
+			'sessions.inspector.canvas.paletteGraphite' => 'Graphite',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -21307,6 +21399,8 @@ extension on Translations {
 			'mcp.editor.jsonLabel' => 'Server JSON',
 			'mcp.editor.jsonSchemaHelp' => 'Schema: transport must be stdio, http or sse. For stdio set command + args. For http/sse set url + headers. Use \$secret:KEY to reference vault secrets.',
 			'mcp.editor.idLabel' => 'id (URL segment, lowercase alphanumeric / dash / underscore)',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.idRequired' => 'id is required',
 			'mcp.editor.saving' => 'Saving…',
 			'mcp.editor.save' => 'Save',
@@ -21330,8 +21424,6 @@ extension on Translations {
 			'mcp.secret.deleteBody' => 'Removes the value from the encrypted vault. Any MCP server that references it will fail until restored.',
 			'mcp.popup.editConfigSubtitle' => 'Full JSON editor — vault-backed servers only',
 			'mcp.popup.viewRawSubtitle' => 'Read-only inspector for the server JSON',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.popup.deleteLabel' => 'Delete',
 			'mcp.kv.transport' => 'Transport',
 			'mcp.kv.description' => 'Description',
@@ -21821,6 +21913,8 @@ extension on Translations {
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
@@ -21844,8 +21938,6 @@ extension on Translations {
 			'backupTargetEditor.kinds.local.label' => 'Local disk',
 			'backupTargetEditor.kinds.local.description' => 'Folder on the machine running opendray',
 			'backupTargetEditor.kinds.smb.label' => 'SMB share',
-			_ => null,
-		} ?? switch (path) {
 			'backupTargetEditor.kinds.smb.description' => 'Windows shares + most home NAS appliances',
 			'backupTargetEditor.kinds.webdav.label' => 'WebDAV',
 			'backupTargetEditor.kinds.webdav.description' => 'Self-hosted clouds + file-sharing services',
@@ -22335,6 +22427,8 @@ extension on Translations {
 			'settings.appearance.section' => 'Appearance',
 			'settings.appearance.system' => 'System',
 			'settings.appearance.systemSubtitle' => 'Follow your phone\'s appearance setting',
+			_ => null,
+		} ?? switch (path) {
 			'settings.appearance.light' => 'Light',
 			'settings.appearance.lightSubtitle' => 'Always use the light palette',
 			'settings.appearance.dark' => 'Dark',
@@ -22358,8 +22452,6 @@ extension on Translations {
 			'settings.changeCredentials.passwordTooShort' => 'Must be at least 8 characters',
 			'settings.changeCredentials.passwordMismatch' => 'Doesn\'t match the new password',
 			'settings.changeCredentials.updatedSnack' => 'Credentials updated.',
-			_ => null,
-		} ?? switch (path) {
 			'settings.changeCredentials.wrongCurrent' => 'Current password is wrong.',
 			'settings.changeCredentials.saving' => 'Saving…',
 			'settings.changeCredentials.update' => 'Update',
