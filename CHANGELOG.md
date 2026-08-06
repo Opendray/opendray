@@ -10,8 +10,71 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.13.0] — 2026-08-07
+
+The Canvas: the agent renders a page you can actually see, mark up and
+iterate on, instead of describing a screen in prose and hoping it matches.
+
+### Added
+
+- **Canvas — a visual surface for designing with the agent.** The agent
+  renders a self-contained HTML page via `canvas_render` and it appears in
+  the operator's panel, where they pin a point or drag a region and send
+  those marks back as feedback. Marking reports the real element selector
+  and markup — and for a region, the components inside the frame — so the
+  agent iterates on the DOM instead of guessing from coordinates. Not only
+  UI mocks: `ui`, `flow` (flowchart), `mindmap`, `graph` (relationship
+  diagram) and `doc` (a formatted spec page), with diagrams authored as
+  inline SVG so they need no external assets and stay markable node by node.
+- **A focused canvas per project.** A project accumulates many canvases, so
+  one is FOCUSED per cwd — scoped to the project rather than the session
+  because the MCP server only ever receives the cwd. Browsing the list is
+  free and costs nothing; only an explicit "Work on this" seeds the note
+  that makes ordinary conversation ("make the title bigger") resolve to that
+  canvas. Agents pull the same fact with `canvas_context`, and a slug-less
+  `canvas_render` targets the focused canvas rather than creating a
+  duplicate.
+- **A design system per project.** Colour / type / radius / spacing tokens
+  plus free-text style rules, carried in every canvas request AND injected
+  into each rendered document as CSS variables — the pairing is what stops
+  successive renders from drifting apart. Ships starting palettes for people
+  who don't think in hex, a real colour picker, and two one-click jobs: read
+  the project's actual theme, or draw the system as a canvas.
+- **Full mobile parity** for all of the above: viewer, viewport switching,
+  focus and precise marking from the phone.
+
+### Changed
+
+- **`primary` in a design system means the BRAND colour, and the gateway
+  now says so.** shadcn/ui and the Tailwind templates built on it use
+  `--primary` for a near-black or near-white ink and keep the brand hue in
+  `--accent`, so an agent mapping token names one-to-one produced a palette
+  of greys with no brand colour in it. The contract is now stated wherever
+  an agent reads it — the extract prompt, the `canvas_design` tool schema,
+  the token docs and the catalog guidance — and saving a palette whose every
+  colour resolves to a grey returns an advisory warning saying what probably
+  went wrong.
+
 ### Fixed
 
+- **Design-system swatches show the real colour, in any notation.** Reading
+  a colour back from `getComputedStyle().color` only yields `rgb(…)` for
+  legacy sRGB notations — a modern colour function round-trips unchanged in
+  both WebKit and Chromium — so an all-oklch project got a grid of identical
+  grey fallbacks on the web, and mobile, which parsed nothing but `#rrggbb`,
+  got no swatches at all. The gateway now resolves hex / rgb / hsl / oklch /
+  oklab centrally and serves the result, which also lets the hex-only OS
+  colour picker edit an oklch theme without converting it one field at a
+  time.
+- **Pin and region marks stay on the content they were placed on.** The web
+  panel recorded a mark as a percentage of the visible frame and drew it in
+  an overlay on top of the preview, so it was anchored to the window: scroll
+  the canvas and the mark stayed put while the content moved out from under
+  it, and a mark made after scrolling was stored pointing somewhere else
+  entirely. Marks are now recorded in document percentages and drawn into the
+  canvas document itself. This also settles a mismatch where the same `x`/`y`
+  field meant frame percentages from the web and document percentages from
+  mobile.
 - **The mouse wheel (and touch swipe) now scrolls grok and opencode
   sessions.** These TUIs enable mouse tracking — so xterm hands them the
   wheel instead of scrolling its own viewport — but then ignore wheel events,
