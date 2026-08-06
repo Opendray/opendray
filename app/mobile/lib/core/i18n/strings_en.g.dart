@@ -13233,6 +13233,48 @@ class TranslationsSessionsInspectorCanvasEn {
 
 	/// en: 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.'
 	String get emptyBlurb => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.';
+
+	/// en: 'Phone width'
+	String get viewportPhone => 'Phone width';
+
+	/// en: 'Tablet width'
+	String get viewportTablet => 'Tablet width';
+
+	/// en: 'Desktop width'
+	String get viewportDesktop => 'Desktop width';
+
+	/// en: 'Open full screen'
+	String get openFull => 'Open full screen';
+
+	/// en: 'Confirm'
+	String get confirm => 'Confirm';
+
+	/// en: 'Captured: {what}'
+	String captured({required Object what}) => 'Captured: ${what}';
+
+	/// en: 'Notes'
+	String get notes => 'Notes';
+
+	/// en: 'Clear marks'
+	String get clear => 'Clear marks';
+
+	/// en: 'Done'
+	String get done => 'Done';
+
+	/// en: 'Tap the spot, then drag to fine-tune — confirm when it has the right element.'
+	String get hintPin => 'Tap the spot, then drag to fine-tune — confirm when it has the right element.';
+
+	/// en: 'Drag a frame over the area you mean, then confirm.'
+	String get hintRegion => 'Drag a frame over the area you mean, then confirm.';
+
+	/// en: 'New'
+	String get newCanvas => 'New';
+
+	/// en: 'New canvas'
+	String get newCanvasTitle => 'New canvas';
+
+	/// en: 'Pick what to draw above, then describe it below — the agent renders the new canvas here.'
+	String get newCanvasBlurb => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -20972,6 +21014,20 @@ extension on Translations {
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => 'Delete "${title}"? This can\'t be undone.',
 			'sessions.inspector.canvas.emptyTitle' => 'No canvas yet',
 			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
+			'sessions.inspector.canvas.viewportPhone' => 'Phone width',
+			'sessions.inspector.canvas.viewportTablet' => 'Tablet width',
+			'sessions.inspector.canvas.viewportDesktop' => 'Desktop width',
+			'sessions.inspector.canvas.openFull' => 'Open full screen',
+			'sessions.inspector.canvas.confirm' => 'Confirm',
+			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Captured: ${what}',
+			'sessions.inspector.canvas.notes' => 'Notes',
+			'sessions.inspector.canvas.clear' => 'Clear marks',
+			'sessions.inspector.canvas.done' => 'Done',
+			'sessions.inspector.canvas.hintPin' => 'Tap the spot, then drag to fine-tune — confirm when it has the right element.',
+			'sessions.inspector.canvas.hintRegion' => 'Drag a frame over the area you mean, then confirm.',
+			'sessions.inspector.canvas.newCanvas' => 'New',
+			'sessions.inspector.canvas.newCanvasTitle' => 'New canvas',
+			'sessions.inspector.canvas.newCanvasBlurb' => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -21112,6 +21168,8 @@ extension on Translations {
 			'providers.accounts.displayNameLabel' => 'Display name',
 			'providers.accounts.displayNameHint' => 'Work account',
 			'providers.accounts.deleteTitle' => 'Delete account?',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importFailedApi' => ({required Object error}) => 'Import failed: ${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => 'Import failed: ${error}',
 			'providers.accounts.enable' => 'Enable',
@@ -21126,8 +21184,6 @@ extension on Translations {
 			'providers.accounts.importLocal' => 'Import local',
 			'providers.accounts.addHint' => 'Adding a new account is gateway-host only.',
 			'providers.accounts.addBody' => 'The new directory shows up here automatically. See the docs for OAuth flow steps.',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Failed to load accounts: ${error}',
 			'providers.accounts.intro' => 'Sessions spawned with the Claude provider pick from these accounts (or fall back to env).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} enabled.',
@@ -21626,6 +21682,8 @@ extension on Translations {
 			'backupTargetEditor.rcloneRemoteLabel' => 'Remote name',
 			'backupTargetEditor.rcloneRemoteHint' => 'Name from `rclone config` (no colon).',
 			'backupTargetEditor.rcloneBinaryLabel' => 'Binary path',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.rcloneBinaryHint' => 'Override `which rclone`. Empty = PATH lookup.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Config path',
 			'backupTargetEditor.rcloneConfigHint' => 'Override --config. Empty = rclone default.',
@@ -21640,8 +21698,6 @@ extension on Translations {
 			'githosts.form.nameLabel' => 'Name',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -22140,6 +22196,8 @@ extension on Translations {
 			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
 			'settings.serverSettings.fields.adminPassword' => 'Admin password',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Send blank to preserve. For ongoing rotations use Settings → Account (keyfile-backed, no restart).',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => 'Token TTL (web)',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration string, e.g. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Level',
@@ -22154,8 +22212,6 @@ extension on Translations {
 			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
 			'settings.serverSettings.fields.notesPath' => 'Notes path',
 			'settings.serverSettings.fields.skillsPath' => 'Skills path',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',

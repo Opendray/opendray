@@ -3725,7 +3725,21 @@
         "deleteTitle": "¿Eliminar lienzo?",
         "deleteBody": "¿Eliminar «{title}»? Esto no se puede deshacer.",
         "emptyTitle": "Aún no hay lienzos",
-        "emptyBlurb": "Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo."
+        "emptyBlurb": "Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.",
+        "viewportPhone": "Ancho de móvil",
+        "viewportTablet": "Ancho de tablet",
+        "viewportDesktop": "Ancho de escritorio",
+        "openFull": "Pantalla completa",
+        "confirm": "Confirmar",
+        "captured": "Capturado: {what}",
+        "notes": "Notas",
+        "clear": "Borrar marcas",
+        "done": "Listo",
+        "hintPin": "Toca el punto y arrastra para ajustar; confirma cuando tenga el elemento correcto.",
+        "hintRegion": "Arrastra un marco sobre la zona que quieres y confirma.",
+        "newCanvas": "Nuevo",
+        "newCanvasTitle": "Nuevo lienzo",
+        "newCanvasBlurb": "Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí."
       }
     },
     "spawnSheet": {

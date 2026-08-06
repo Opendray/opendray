@@ -3725,7 +3725,21 @@
         "deleteTitle": "Delete canvas?",
         "deleteBody": "Delete \"{title}\"? This can't be undone.",
         "emptyTitle": "No canvas yet",
-        "emptyBlurb": "Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it."
+        "emptyBlurb": "Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.",
+        "viewportPhone": "Phone width",
+        "viewportTablet": "Tablet width",
+        "viewportDesktop": "Desktop width",
+        "openFull": "Open full screen",
+        "confirm": "Confirm",
+        "captured": "Captured: {what}",
+        "notes": "Notes",
+        "clear": "Clear marks",
+        "done": "Done",
+        "hintPin": "Tap the spot, then drag to fine-tune — confirm when it has the right element.",
+        "hintRegion": "Drag a frame over the area you mean, then confirm.",
+        "newCanvas": "New",
+        "newCanvasTitle": "New canvas",
+        "newCanvasBlurb": "Pick what to draw above, then describe it below — the agent renders the new canvas here."
       }
     },
     "spawnSheet": {

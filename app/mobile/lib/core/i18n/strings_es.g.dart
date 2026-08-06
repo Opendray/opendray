@@ -6775,6 +6775,20 @@ class _TranslationsSessionsInspectorCanvasEs extends TranslationsSessionsInspect
 	@override String deleteBody({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.';
 	@override String get emptyTitle => 'Aún no hay lienzos';
 	@override String get emptyBlurb => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.';
+	@override String get viewportPhone => 'Ancho de móvil';
+	@override String get viewportTablet => 'Ancho de tablet';
+	@override String get viewportDesktop => 'Ancho de escritorio';
+	@override String get openFull => 'Pantalla completa';
+	@override String get confirm => 'Confirmar';
+	@override String captured({required Object what}) => 'Capturado: ${what}';
+	@override String get notes => 'Notas';
+	@override String get clear => 'Borrar marcas';
+	@override String get done => 'Listo';
+	@override String get hintPin => 'Toca el punto y arrastra para ajustar; confirma cuando tenga el elemento correcto.';
+	@override String get hintRegion => 'Arrastra un marco sobre la zona que quieres y confirma.';
+	@override String get newCanvas => 'Nuevo';
+	@override String get newCanvasTitle => 'Nuevo lienzo';
+	@override String get newCanvasBlurb => 'Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -12462,6 +12476,20 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.',
 			'sessions.inspector.canvas.emptyTitle' => 'Aún no hay lienzos',
 			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
+			'sessions.inspector.canvas.viewportPhone' => 'Ancho de móvil',
+			'sessions.inspector.canvas.viewportTablet' => 'Ancho de tablet',
+			'sessions.inspector.canvas.viewportDesktop' => 'Ancho de escritorio',
+			'sessions.inspector.canvas.openFull' => 'Pantalla completa',
+			'sessions.inspector.canvas.confirm' => 'Confirmar',
+			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Capturado: ${what}',
+			'sessions.inspector.canvas.notes' => 'Notas',
+			'sessions.inspector.canvas.clear' => 'Borrar marcas',
+			'sessions.inspector.canvas.done' => 'Listo',
+			'sessions.inspector.canvas.hintPin' => 'Toca el punto y arrastra para ajustar; confirma cuando tenga el elemento correcto.',
+			'sessions.inspector.canvas.hintRegion' => 'Arrastra un marco sobre la zona que quieres y confirma.',
+			'sessions.inspector.canvas.newCanvas' => 'Nuevo',
+			'sessions.inspector.canvas.newCanvasTitle' => 'Nuevo lienzo',
+			'sessions.inspector.canvas.newCanvasBlurb' => 'Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12602,6 +12630,8 @@ extension on TranslationsEs {
 			'providers.accounts.displayNameLabel' => 'Nombre visible',
 			'providers.accounts.displayNameHint' => 'Cuenta de trabajo',
 			'providers.accounts.deleteTitle' => '¿Eliminar la cuenta?',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importFailedApi' => ({required Object error}) => 'Error al importar: ${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => 'Error al importar: ${error}',
 			'providers.accounts.enable' => 'Activar',
@@ -12616,8 +12646,6 @@ extension on TranslationsEs {
 			'providers.accounts.importLocal' => 'Importar local',
 			'providers.accounts.addHint' => 'Añadir una cuenta nueva solo se puede hacer en el host del gateway.',
 			'providers.accounts.addBody' => 'El nuevo directorio aparece aquí automáticamente. Consulta la documentación para los pasos del flujo OAuth.',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => 'Error al cargar las cuentas: ${error}',
 			'providers.accounts.intro' => 'Las sessions creadas con el proveedor Claude eligen entre estas cuentas (o recurren a las variables de entorno).',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} activada.',
@@ -13116,6 +13144,8 @@ extension on TranslationsEs {
 			'backupTargetEditor.rcloneRemoteLabel' => 'Nombre del remoto',
 			'backupTargetEditor.rcloneRemoteHint' => 'Nombre de `rclone config` (sin los dos puntos).',
 			'backupTargetEditor.rcloneBinaryLabel' => 'Ruta del binario',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.rcloneBinaryHint' => 'Anula `which rclone`. Vacío = búsqueda en PATH.',
 			'backupTargetEditor.rcloneConfigLabel' => 'Ruta de configuración',
 			'backupTargetEditor.rcloneConfigHint' => 'Anula --config. Vacío = valor por defecto de rclone.',
@@ -13130,8 +13160,6 @@ extension on TranslationsEs {
 			'githosts.form.nameLabel' => 'Nombre',
 			'githosts.form.nameHint' => 'work-github, personal-gitlab, …',
 			'githosts.form.kinds.github' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -13630,6 +13658,8 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.adminUserHelper' => 'Efectivo cuando no hay keyfile ni variable de entorno configurada. Si no, consulta Ajustes → Cuenta.',
 			'settings.serverSettings.fields.adminPassword' => 'Contraseña admin',
 			'settings.serverSettings.fields.adminPasswordHelper' => 'Envíalo en blanco para conservarlo. Para rotaciones continuas usa Ajustes → Cuenta (respaldado por keyfile, sin reinicio).',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => 'TTL del token (web)',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Cadena de duración de Go, p. ej. 24h, 30m.',
 			'settings.serverSettings.fields.level' => 'Nivel',
@@ -13644,8 +13674,6 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.rootHelper' => 'Padre de las sub-rutas notes / skills / git_root.',
 			'settings.serverSettings.fields.notesPath' => 'Ruta de notas',
 			'settings.serverSettings.fields.skillsPath' => 'Ruta de skills',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.gitRoot' => 'Raíz de git',
 			'settings.serverSettings.fields.personalPrefix' => 'Prefijo personal',
 			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',

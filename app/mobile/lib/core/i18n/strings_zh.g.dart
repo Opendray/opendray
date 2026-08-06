@@ -6775,6 +6775,20 @@ class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspect
 	@override String deleteBody({required Object title}) => '删除「${title}」?此操作无法撤销。';
 	@override String get emptyTitle => '还没有画布';
 	@override String get emptyBlurb => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。';
+	@override String get viewportPhone => '手机宽度';
+	@override String get viewportTablet => '平板宽度';
+	@override String get viewportDesktop => '电脑宽度';
+	@override String get openFull => '全屏打开';
+	@override String get confirm => '确认';
+	@override String captured({required Object what}) => '已捕获:${what}';
+	@override String get notes => '备注';
+	@override String get clear => '清除标记';
+	@override String get done => '完成';
+	@override String get hintPin => '点一下目标位置,再拖动微调 —— 确认命中正确元素后点「确认」。';
+	@override String get hintRegion => '拖出一个框覆盖你要指的区域,然后确认。';
+	@override String get newCanvas => '新建';
+	@override String get newCanvasTitle => '新建画布';
+	@override String get newCanvasBlurb => '先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -12462,6 +12476,20 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '删除「${title}」?此操作无法撤销。',
 			'sessions.inspector.canvas.emptyTitle' => '还没有画布',
 			'sessions.inspector.canvas.emptyBlurb' => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
+			'sessions.inspector.canvas.viewportPhone' => '手机宽度',
+			'sessions.inspector.canvas.viewportTablet' => '平板宽度',
+			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
+			'sessions.inspector.canvas.openFull' => '全屏打开',
+			'sessions.inspector.canvas.confirm' => '确认',
+			'sessions.inspector.canvas.captured' => ({required Object what}) => '已捕获:${what}',
+			'sessions.inspector.canvas.notes' => '备注',
+			'sessions.inspector.canvas.clear' => '清除标记',
+			'sessions.inspector.canvas.done' => '完成',
+			'sessions.inspector.canvas.hintPin' => '点一下目标位置,再拖动微调 —— 确认命中正确元素后点「确认」。',
+			'sessions.inspector.canvas.hintRegion' => '拖出一个框覆盖你要指的区域,然后确认。',
+			'sessions.inspector.canvas.newCanvas' => '新建',
+			'sessions.inspector.canvas.newCanvasTitle' => '新建画布',
+			'sessions.inspector.canvas.newCanvasBlurb' => '先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12602,6 +12630,8 @@ extension on TranslationsZh {
 			'providers.accounts.displayNameLabel' => '显示名',
 			'providers.accounts.displayNameHint' => '工作账号',
 			'providers.accounts.deleteTitle' => '删除账号？',
+			_ => null,
+		} ?? switch (path) {
 			'providers.accounts.importFailedApi' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.importFailedGeneric' => ({required Object error}) => '导入失败：${error}',
 			'providers.accounts.enable' => '启用',
@@ -12616,8 +12646,6 @@ extension on TranslationsZh {
 			'providers.accounts.importLocal' => '导入本地',
 			'providers.accounts.addHint' => '添加新账号仅可在网关主机上操作。',
 			'providers.accounts.addBody' => '新目录会自动出现在这里。OAuth 流程步骤参见文档。',
-			_ => null,
-		} ?? switch (path) {
 			'providers.accounts.loadFailed' => ({required Object error}) => '加载账号失败：${error}',
 			'providers.accounts.intro' => '以 Claude 提供商启动的会话会从这些账号中选择（或回退到环境变量）。',
 			'providers.accounts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
@@ -13116,6 +13144,8 @@ extension on TranslationsZh {
 			'backupTargetEditor.rcloneRemoteLabel' => '远端名',
 			'backupTargetEditor.rcloneRemoteHint' => '来自 `rclone config` 的名字（不带冒号）。',
 			'backupTargetEditor.rcloneBinaryLabel' => '二进制路径',
+			_ => null,
+		} ?? switch (path) {
 			'backupTargetEditor.rcloneBinaryHint' => '覆盖 `which rclone`。留空 = PATH 查找。',
 			'backupTargetEditor.rcloneConfigLabel' => '配置路径',
 			'backupTargetEditor.rcloneConfigHint' => '覆盖 --config。留空 = rclone 默认。',
@@ -13130,8 +13160,6 @@ extension on TranslationsZh {
 			'githosts.form.nameLabel' => '名称',
 			'githosts.form.nameHint' => 'work-github、personal-gitlab、…',
 			'githosts.form.kinds.github' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'githosts.form.kinds.gitlab' => 'GitLab',
 			'githosts.form.kinds.bitbucket' => 'Bitbucket',
 			'githosts.form.kinds.gitea' => 'Gitea',
@@ -13630,6 +13658,8 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
 			'settings.serverSettings.fields.adminPassword' => '管理员密码',
 			'settings.serverSettings.fields.adminPasswordHelper' => '留空 = 保留。日常轮换请用 设置 → 账户（密钥文件支持，无需重启）。',
+			_ => null,
+		} ?? switch (path) {
 			'settings.serverSettings.fields.tokenTtlWeb' => '令牌 TTL（Web）',
 			'settings.serverSettings.fields.tokenTtlHelper' => 'Go duration 字符串，如 24h、30m。',
 			'settings.serverSettings.fields.level' => '级别',
@@ -13644,8 +13674,6 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
 			'settings.serverSettings.fields.notesPath' => '笔记路径',
 			'settings.serverSettings.fields.skillsPath' => '技能路径',
-			_ => null,
-		} ?? switch (path) {
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',

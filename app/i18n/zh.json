@@ -3725,7 +3725,21 @@
         "deleteTitle": "删除画布?",
         "deleteBody": "删除「{title}」?此操作无法撤销。",
         "emptyTitle": "还没有画布",
-        "emptyBlurb": "让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。"
+        "emptyBlurb": "让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。",
+        "viewportPhone": "手机宽度",
+        "viewportTablet": "平板宽度",
+        "viewportDesktop": "电脑宽度",
+        "openFull": "全屏打开",
+        "confirm": "确认",
+        "captured": "已捕获:{what}",
+        "notes": "备注",
+        "clear": "清除标记",
+        "done": "完成",
+        "hintPin": "点一下目标位置,再拖动微调 —— 确认命中正确元素后点「确认」。",
+        "hintRegion": "拖出一个框覆盖你要指的区域,然后确认。",
+        "newCanvas": "新建",
+        "newCanvasTitle": "新建画布",
+        "newCanvasBlurb": "先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。"
       }
     },
     "spawnSheet": {
