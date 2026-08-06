@@ -111,3 +111,37 @@ func TestUpload_EnforcesSizeCap(t *testing.T) {
 		t.Fatalf("partial file must not remain after 413")
 	}
 }
+
+func TestResolveWithinRoot_ContainmentTable(t *testing.T) {
+	// Resolve the temp dir first: on macOS t.TempDir() lives under the
+	// /var -> /private/var symlink, and callers (upload) always pass
+	// targets built from an already-resolved directory.
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "sub"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name    string
+		target  string
+		wantErr bool
+	}{
+		{"root itself", root, false},
+		{"existing subdir", filepath.Join(root, "sub"), false},
+		{"missing leaf inside root", filepath.Join(root, "sub", "new.txt"), false},
+		{"parent of root", filepath.Dir(root), true},
+		{"sibling escape via dotdot", filepath.Join(root, "..", "other"), true},
+		{"dotdot residue in a name", filepath.Join(root, "notes..md"), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := resolveWithinRoot(tt.target, root)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("resolveWithinRoot(%q, root) err = %v, wantErr = %v",
+					tt.target, err, tt.wantErr)
+			}
+		})
+	}
+}
