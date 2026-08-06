@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronRight,
   ChevronDown,
@@ -10,7 +11,10 @@ import {
   Download,
   FolderPlus,
   Upload,
+  Eye,
 } from 'lucide-react'
+
+import { isPreviewableHtml } from '@/lib/canvas'
 
 import {
   listDir,
@@ -30,13 +34,15 @@ import { runUploads, type UploadItem } from './uploads'
 
 interface FilesPanelProps {
   cwd: string
+  // Render an HTML file onto the Canvas (Files → Canvas "Preview" action).
+  onPreviewHtml?: (path: string) => void
 }
 
 // FilesPanel renders a lazy file tree rooted at the session's cwd.
 // Children are fetched via /api/v1/fs/list when a folder is expanded —
 // no recursive crawl, so large repos stay fast. Clicking a file opens
 // a modal viewer backed by /api/v1/fs/read.
-export function FilesPanel({ cwd }: FilesPanelProps) {
+export function FilesPanel({ cwd, onPreviewHtml }: FilesPanelProps) {
   const [viewing, setViewing] = useState<string | null>(null)
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(
     null,
@@ -231,6 +237,7 @@ export function FilesPanel({ cwd }: FilesPanelProps) {
           downloadRoot={cwd}
           onOpenFile={(p) => setViewing(p)}
           onDropFiles={onDropFiles}
+          onPreviewHtml={onPreviewHtml}
         />
         {dragging && (
           <div className="px-2 py-1 text-[11px] text-muted-foreground">
@@ -259,6 +266,7 @@ interface FsNodeProps {
   downloadRoot: string
   onOpenFile: (path: string) => void
   onDropFiles: (dir: string, dt: DataTransfer) => void
+  onPreviewHtml?: (path: string) => void
 }
 
 function FsNode({
@@ -269,7 +277,9 @@ function FsNode({
   downloadRoot,
   onOpenFile,
   onDropFiles,
+  onPreviewHtml,
 }: FsNodeProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(isRoot)
   const [rowDrag, setRowDrag] = useState(false)
   const indent = { paddingLeft: `${depth * 12}px` }
@@ -364,6 +374,7 @@ function FsNode({
                 downloadRoot={downloadRoot}
                 onOpenFile={onOpenFile}
                 onDropFiles={onDropFiles}
+                onPreviewHtml={onPreviewHtml}
               />
             ) : (
               <div key={e.path} className="group relative flex items-stretch">
@@ -372,7 +383,8 @@ function FsNode({
                   onClick={() => onOpenFile(e.path)}
                   style={{ paddingLeft: `${(depth + 1) * 12 + 16}px` }}
                   className={cn(
-                    'flex-1 min-w-0 flex items-center gap-1 text-[12px] py-0.5 pr-8 rounded-sm',
+                    'flex-1 min-w-0 flex items-center gap-1 text-[12px] py-0.5 rounded-sm',
+                    onPreviewHtml && isPreviewableHtml(e.path) ? 'pr-14' : 'pr-8',
                     'hover:bg-card text-muted-foreground/90 hover:text-foreground text-left',
                   )}
                   title={e.path}
@@ -380,6 +392,15 @@ function FsNode({
                   <FileText className="size-3 shrink-0 opacity-60" />
                   <span className="truncate">{e.name}</span>
                 </button>
+                {onPreviewHtml && isPreviewableHtml(e.path) && (
+                  <RowIconButton
+                    ariaLabel={t('web.sessions.inspector.canvas.previewHtml')}
+                    offsetClass="right-7"
+                    onActivate={() => onPreviewHtml(e.path)}
+                  >
+                    <Eye className="size-3" />
+                  </RowIconButton>
+                )}
                 {token && (
                   <DownloadIconButton
                     ariaLabel={`Download ${e.name}`}
@@ -438,6 +459,44 @@ function DownloadIconButton({
       )}
     >
       <Download className="size-3" />
+    </button>
+  )
+}
+
+// RowIconButton is a hover-revealed action icon anchored over a file row's
+// right padding, at a caller-chosen horizontal offset so multiple actions
+// (preview + download) can sit side by side without truncating the name.
+function RowIconButton({
+  ariaLabel,
+  offsetClass,
+  onActivate,
+  children,
+}: {
+  ariaLabel: string
+  offsetClass: string
+  onActivate: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        onActivate()
+      }}
+      aria-label={ariaLabel}
+      title={ariaLabel}
+      className={cn(
+        'absolute top-1/2 -translate-y-1/2',
+        offsetClass,
+        'size-5 flex items-center justify-center rounded-sm',
+        'text-muted-foreground/70 hover:text-foreground hover:bg-border',
+        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+        '[@media(hover:none)]:opacity-100',
+        'transition-opacity',
+      )}
+    >
+      {children}
     </button>
   )
 }

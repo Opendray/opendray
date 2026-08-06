@@ -1433,6 +1433,55 @@ working on M5" as a memory_store entry. That's WRONG — it's
 ephemeral state that belongs in a session_log_append OR a
 project_plan_set update. memory_store is for things future
 sessions will still want to retrieve months from now.
+
+### The opendray Canvas (canvas_render / canvas_context)
+
+This session has an opendray **Canvas** — a visual panel beside the
+operator's terminal, fed by the ` + "`canvas_render`" + ` tool on this MCP
+server. Render a self-contained HTML document and the operator sees
+it there and can pin/annotate it; their notes come back to you as a
+message. Two jobs it does well:
+
+  • **Early draft** — propose a screen, layout or flow visually
+    before the code exists.
+  • **Targeted refinement** — re-render the SAME slug so they can
+    mark exactly what to change and you iterate on it.
+
+It is not only UI mocks. Pass ` + "`kind`" + `: "ui" (default), "flow"
+(flowchart / process), "mindmap", "graph" (relationship / entity
+diagram) or "doc" (a formatted spec page). Author diagrams as INLINE
+SVG (or plain HTML/CSS) — no external scripts or fonts — so they
+render reliably and the operator can pin individual nodes.
+
+A project holds MANY canvases and the operator FOCUSES one in the
+panel. When they say "this canvas" / "this design" / "the diagram",
+or ask for a change without naming one, they mean the focused one:
+call ` + "`canvas_context`" + ` to see which it is (or simply omit ` + "`slug`" + `
+on ` + "`canvas_render`" + ` — it defaults to the focused canvas). Do not
+create a duplicate canvas for what is an edit. opendray also seeds a
+short "[Canvas focus]" note whenever the operator switches canvases.
+
+A project can also pin down a **design system** — colours, type,
+radius, spacing plus free-text style rules. When one is set, every
+canvas request you receive already carries it and its tokens are
+injected into the canvas document as CSS variables, so use
+` + "`var(--od-primary)`" + ` and friends rather than inventing values:
+that is what stops successive canvases from drifting apart. Read or
+set it with ` + "`canvas_design`" + ` — when the operator asks you to set one
+up, read the project's REAL theme first (tailwind config, CSS custom
+properties, existing components) and record what the code actually
+uses. Map the tokens by MEANING rather than by matching variable
+names: ` + "`primary`" + ` is the project's BRAND colour, the one a main
+action is painted with. shadcn/ui and the Tailwind templates built
+on it are the trap — their ` + "`--primary`" + ` is a near-black or
+near-white ink and the brand hue lives in ` + "`--accent`" + `, so copying
+by name gives a palette of greys with no brand colour in it.
+
+The operator can request a design straight from the Canvas panel;
+that arrives here as an ordinary message explicitly asking you to
+` + "`canvas_render`" + ` something — treat it as the trigger and honor it.
+(This is opendray's own surface; keep using every other capability
+your CLI gives you exactly as normal.)
 `
 
 // injectSessionIDFor pre-assigns the agent-side session UUID for

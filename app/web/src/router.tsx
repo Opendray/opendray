@@ -23,6 +23,7 @@ import { ExportPage } from '@/pages/Export'
 import { RoundTablePage } from '@/pages/RoundTable'
 import { VaultPage } from '@/pages/Notes'
 import { KnowledgePage } from '@/pages/Knowledge'
+import { CanvasPopoutPage } from '@/pages/CanvasPopout'
 import { PluginsPage } from '@/pages/Plugins'
 import { SettingsPage } from '@/pages/Settings'
 import { useAuth } from '@/stores/auth'
@@ -45,6 +46,24 @@ const protectedRoute = createRoute({
     }
   },
   component: AppShell,
+})
+
+// Canvas pop-out (beta) — a full-window preview opened from the Inspector's
+// Canvas tab. Auth-gated like the app, but deliberately a SIBLING of the shell
+// (no sidebar/topbar) so the design gets the whole window. Search: session+cwd.
+const canvasPopoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/canvas',
+  beforeLoad: ({ location }) => {
+    if (!useAuth.getState().isAuthed()) {
+      throw redirect({ to: '/login', search: { next: location.pathname } })
+    }
+  },
+  component: CanvasPopoutPage,
+  validateSearch: (search): { session?: string; cwd?: string } => ({
+    session: typeof search.session === 'string' ? search.session : undefined,
+    cwd: typeof search.cwd === 'string' ? search.cwd : undefined,
+  }),
 })
 
 const indexRoute = createRoute({
@@ -252,6 +271,7 @@ const roundTableRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   loginRoute,
+  canvasPopoutRoute,
   protectedRoute.addChildren([
     indexRoute,
     sessionsRoute,

@@ -1997,6 +1997,7 @@ class _TranslationsSessionsInspectorZh extends TranslationsSessionsInspectorEn {
 	@override late final _TranslationsSessionsInspectorGitZh git = _TranslationsSessionsInspectorGitZh._(_root);
 	@override late final _TranslationsSessionsInspectorTasksZh tasks = _TranslationsSessionsInspectorTasksZh._(_root);
 	@override late final _TranslationsSessionsInspectorNotesZh notes = _TranslationsSessionsInspectorNotesZh._(_root);
+	@override late final _TranslationsSessionsInspectorCanvasZh canvas = _TranslationsSessionsInspectorCanvasZh._(_root);
 }
 
 // Path: sessions.spawnSheet
@@ -3354,6 +3355,7 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorTabsZh tabs = _TranslationsWebSessionsInspectorTabsZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorVaultPanelZh vaultPanel = _TranslationsWebSessionsInspectorVaultPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelZh cortexPanel = _TranslationsWebSessionsInspectorCortexPanelZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorCanvasZh canvas = _TranslationsWebSessionsInspectorCanvasZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -6744,6 +6746,89 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get save => '保存';
 }
 
+// Path: sessions.inspector.canvas
+class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspectorCanvasEn {
+	_TranslationsSessionsInspectorCanvasZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get kindUi => 'UI 稿';
+	@override String get kindFlow => '流程图';
+	@override String get kindMindmap => '思维导图';
+	@override String get kindGraph => '关系图';
+	@override String get kindDoc => '文档';
+	@override String get modeView => '查看';
+	@override String get modePin => '钉点';
+	@override String get modeRegion => '框选';
+	@override String focusLine({required Object title, required Object kind}) => '正在处理 ${title} · ${kind} —— agent 已把它当作「这个画布」。';
+	@override String get notePlaceholder => '这里要改什么……';
+	@override String get messagePlaceholder => '整体说明(可选)……';
+	@override String get send => '发送';
+	@override String get sent => '反馈已发送到会话。';
+	@override String get nothingToSend => '请先添加钉点、框选或说明。';
+	@override String get requestPlaceholder => '让 agent 设计或画点什么……';
+	@override String get requested => '已发送 —— agent 会渲染到这里。';
+	@override String get requestSend => '设计';
+	@override String get delete => '删除';
+	@override String get deleteTitle => '删除画布?';
+	@override String deleteBody({required Object title}) => '删除「${title}」?此操作无法撤销。';
+	@override String get emptyTitle => '还没有画布';
+	@override String get emptyBlurb => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。';
+	@override String get viewportPhone => '手机宽度';
+	@override String get viewportTablet => '平板宽度';
+	@override String get viewportDesktop => '电脑宽度';
+	@override String get openFull => '全屏打开';
+	@override String get confirm => '确认';
+	@override String captured({required Object what}) => '已捕获:${what}';
+	@override String get notes => '备注';
+	@override String get clear => '清除标记';
+	@override String get done => '完成';
+	@override String get hintPin => '点一下目标位置,再拖动微调 —— 确认命中正确元素后点「确认」。';
+	@override String get hintRegion => '拖出一个框覆盖你要指的区域,然后确认。';
+	@override String get newCanvas => '新建';
+	@override String get newCanvasTitle => '新建画布';
+	@override String get newCanvasBlurb => '先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。';
+	@override String get setWorkspace => '在这上面工作';
+	@override String get workspaceSet => 'agent 现在在这个画布上工作。';
+	@override String get previewOnlyHint => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。';
+	@override String get designTitle => '设计系统';
+	@override String get designBlurb => '每个画布都遵循的 tokens + 规范';
+	@override String get designNotesLabel => '风格说明(tokens 表达不了的部分)';
+	@override String get designNotesPlaceholder => '例如:克制、信息密度高;不用渐变;按钮只用实心/描边';
+	@override String get designAgentHint => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。';
+	@override String get designSave => '保存';
+	@override String get designSaved => '设计系统已保存。';
+	@override String get designWarningAchromatic => '这里每个颜色都是灰的 —— 画布将没有品牌色。若项目使用 shadcn/ui,其 --primary 是墨色;应把品牌色(通常是 --accent)填进「主色」。';
+	@override String get tokenPrimary => '主色';
+	@override String get tokenSecondary => '辅助色';
+	@override String get tokenBackground => '背景';
+	@override String get tokenSurface => '表面/卡片';
+	@override String get tokenText => '正文色';
+	@override String get tokenMuted => '次要文字';
+	@override String get tokenBorder => '描边';
+	@override String get tokenFont => '正文字体';
+	@override String get tokenHeadingFont => '标题字体';
+	@override String get tokenBaseSize => '基准字号';
+	@override String get tokenRadius => '圆角';
+	@override String get tokenSpacing => '间距';
+	@override String get tokenShadow => '阴影';
+	@override String get themeLight => '浅色';
+	@override String get themeDark => '深色';
+	@override String get paletteLabel => '从预设配色开始';
+	@override String get themeDarkHint => '留空 = 沿用浅色';
+	@override String get paletteIndigo => '靛蓝';
+	@override String get paletteSky => '天蓝';
+	@override String get paletteEmerald => '翠绿';
+	@override String get paletteAmber => '琥珀';
+	@override String get paletteRose => '玫红';
+	@override String get paletteViolet => '紫罗兰';
+	@override String get paletteGraphite => '石墨';
+	@override String get extractBtn => '读取项目样式';
+	@override String get showcaseBtn => '生成配色画布';
+	@override String get designTaskSent => '已发送给 agent —— 留意会话。';
+}
+
 // Path: sessions.spawnSheet.bypass
 class _TranslationsSessionsSpawnSheetBypassZh extends TranslationsSessionsSpawnSheetBypassEn {
 	_TranslationsSessionsSpawnSheetBypassZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7324,6 +7409,7 @@ class _TranslationsWebSessionsInspectorTabsZh extends TranslationsWebSessionsIns
 	@override String get vault => '文档库';
 	@override String get cortex => '心智中枢';
 	@override String get database => '数据库';
+	@override String get canvas => '画布';
 }
 
 // Path: web.sessions.inspector.vaultPanel
@@ -7375,6 +7461,108 @@ class _TranslationsWebSessionsInspectorCortexPanelZh extends TranslationsWebSess
 	@override String get plan => '计划';
 	@override String get latestJournal => '最新日志';
 	@override String get empty => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。';
+}
+
+// Path: web.sessions.inspector.canvas
+class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsInspectorCanvasEn {
+	_TranslationsWebSessionsInspectorCanvasZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '还没有画布。在上面让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。';
+	@override String get modePreview => '预览';
+	@override String get modePin => '钉点';
+	@override String get modeRegion => '框选';
+	@override String get hintPin => '点击预览中的元素来钉住它——agent 会拿到它的选择器和标记。';
+	@override String get hintRegion => '在你想指出的区域上拖出一个矩形。';
+	@override String get notePlaceholder => '这里要改什么……';
+	@override String get removeAnnotation => '删除标注';
+	@override String get messagePlaceholder => '给 agent 的整体说明(可选)……';
+	@override String get send => '发送给 agent';
+	@override String get clear => '清空';
+	@override String get sent => '反馈已发送到会话。';
+	@override String get sendFailed => '反馈发送失败';
+	@override String get nothingToSend => '请先添加钉点、框选或说明。';
+	@override String get previewFailed => '预览渲染失败';
+	@override String get previewHtml => '在画布中预览';
+	@override String get popOut => '弹出';
+	@override String get popOutHint => '在独立大窗口中打开画布(不占用终端)';
+	@override String get popOutTitle => '画布';
+	@override String get popOutMissing => '缺少会话或项目信息——请从某个会话的 Canvas 标签页重新打开画布。';
+	@override String get viewportMobile => '手机宽度 (375px)';
+	@override String get viewportTablet => '平板宽度 (768px)';
+	@override String get viewportFull => '全宽';
+	@override String get requestPlaceholder => '让 agent 设计或画点什么……';
+	@override String get requestSend => '设计';
+	@override String get requested => '已发送给 agent —— 它会渲染到画布。';
+	@override String get requestFailed => '请求发送失败';
+	@override String get deleteMock => '删除此画布';
+	@override String deleteConfirm({required Object title}) => '删除画布「${title}」?此操作无法撤销。';
+	@override String get deleted => '画布已删除';
+	@override String get deleteFailed => '删除画布失败';
+	@override String get newMock => '新建画布';
+	@override String get newMockHint => '新建一个画布,而不是更新选中的那个';
+	@override String get targetLabel => '→ 正在处理:';
+	@override String get targetNew => '新建画布';
+	@override String get newMockPlaceholder => '先在上面选择要画什么,再到请求栏描述 —— agent 会把新画布渲染到这里。';
+	@override String get kindLabel => '画成:';
+	@override String get kind_ui => 'UI 稿';
+	@override String get kind_flow => '流程图';
+	@override String get kind_mindmap => '思维导图';
+	@override String get kind_graph => '关系图';
+	@override String get kind_doc => '文档';
+	@override String get focusHint => 'agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。';
+	@override String get setWorkspace => '在这上面工作';
+	@override String get setWorkspaceHint => '让 agent 在这个画布上工作 —— 会向会话发送一条简短说明';
+	@override String get isWorkspace => '· agent 的工作区';
+	@override String get workspaceBadge => 'agent 的工作区';
+	@override String get workspaceSet => 'agent 现在在这个画布上工作。';
+	@override String get workspaceFailed => '设置工作区失败';
+	@override String get previewOnlyHint => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。';
+	@override String get designTitle => '设计系统';
+	@override String get designBlurb => '每个画布都遵循的 tokens + 规范,让它们看起来像同一个产品';
+	@override String get designLoading => '加载中……';
+	@override String get designNotesLabel => '风格说明(tokens 表达不了的部分)';
+	@override String get designNotesPlaceholder => '例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种';
+	@override String get designAgentHint => '全新项目就先点上面的预设配色 —— 一次填好经过对比度检查的明暗两套,再微调即可;颜色字段带取色器,不需要记住任何色号。tokens 会以 CSS 变量注入每个画布(深色走 prefers-color-scheme),并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。已有项目最准的做法:让 agent「根据我们真实的主题配置设计系统」,它会读取 tailwind config / CSS 变量自动填好。';
+	@override String get designSave => '保存';
+	@override String get designCancel => '取消';
+	@override String get designClose => '关闭';
+	@override String get designSaved => '设计系统已保存 —— 之后每次画布请求都会带上它。';
+	@override String get designSaveFailed => '保存设计系统失败';
+	@override String get designWarningAchromatic => '这里每个颜色都解析成灰色,据此生成的画布不会有任何品牌色。若项目使用 shadcn/ui 或基于它的 Tailwind 模板,其 --primary 是墨色 —— 应把品牌色(通常是 --accent)填进「主色」,墨色填进「正文色」。如果这套设计本来就是单色,忽略即可。';
+	@override String get token_primary => '主色';
+	@override String get token_secondary => '辅助色';
+	@override String get token_background => '背景';
+	@override String get token_surface => '表面/卡片';
+	@override String get token_text => '正文色';
+	@override String get token_muted => '次要文字';
+	@override String get token_border => '描边';
+	@override String get token_font => '正文字体';
+	@override String get token_headingFont => '标题字体';
+	@override String get token_baseSize => '基准字号';
+	@override String get token_radius => '圆角';
+	@override String get token_spacing => '间距基准';
+	@override String get token_shadow => '阴影';
+	@override String get paletteLabel => '从预设配色开始(明暗两套一次填好)';
+	@override String get palette_indigo => '靛蓝';
+	@override String get palette_sky => '天蓝';
+	@override String get palette_emerald => '翠绿';
+	@override String get palette_amber => '琥珀';
+	@override String get palette_rose => '玫红';
+	@override String get palette_violet => '紫罗兰';
+	@override String get palette_graphite => '石墨';
+	@override String get themeLight => '浅色';
+	@override String get themeDark => '深色';
+	@override String get themeLightHint => '基础配色';
+	@override String get themeDarkHint => '留空 = 沿用浅色的值';
+	@override String get extractBtn => '读取项目样式';
+	@override String get extractHint => '让 agent 读取项目真实主题(Tailwind config、CSS 变量、现有组件)自动填写 —— 最准确,也不用手打任何色号';
+	@override String get showcaseBtn => '生成配色画布';
+	@override String get showcaseHint => '让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成';
+	@override String get designTaskSent => '已发送给 agent —— 留意会话。';
+	@override String get designTaskFailed => '发送请求失败';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9376,6 +9564,7 @@ class _TranslationsSessionsInspectorShellTabsZh extends TranslationsSessionsInsp
 	@override String get tasks => '任务';
 	@override String get history => '历史';
 	@override String get vault => '文档库';
+	@override String get canvas => '画布';
 	@override String get cortex => '心智中枢';
 	@override String get database => '数据库';
 }
@@ -9655,6 +9844,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.tabs.vault' => '文档库',
 			'web.sessions.inspector.tabs.cortex' => '心智中枢',
 			'web.sessions.inspector.tabs.database' => '数据库',
+			'web.sessions.inspector.tabs.canvas' => '画布',
 			'web.sessions.inspector.vaultPanel.open' => '打开文档库',
 			'web.sessions.inspector.vaultPanel.projectDocs' => '项目文档',
 			'web.sessions.inspector.vaultPanel.projectDocsHint' => '文档库中由 AI 撰写的项目文档。若本项目笔记在别处，可重新绑定文件夹。',
@@ -9688,6 +9878,99 @@ extension on TranslationsZh {
 			'web.sessions.inspector.cortexPanel.plan' => '计划',
 			'web.sessions.inspector.cortexPanel.latestJournal' => '最新日志',
 			'web.sessions.inspector.cortexPanel.empty' => '该项目尚未捕获任何心智中枢记忆。启动会话或设定目标以填充。',
+			'web.sessions.inspector.canvas.empty' => '还没有画布。在上面让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
+			'web.sessions.inspector.canvas.modePreview' => '预览',
+			'web.sessions.inspector.canvas.modePin' => '钉点',
+			'web.sessions.inspector.canvas.modeRegion' => '框选',
+			'web.sessions.inspector.canvas.hintPin' => '点击预览中的元素来钉住它——agent 会拿到它的选择器和标记。',
+			'web.sessions.inspector.canvas.hintRegion' => '在你想指出的区域上拖出一个矩形。',
+			'web.sessions.inspector.canvas.notePlaceholder' => '这里要改什么……',
+			'web.sessions.inspector.canvas.removeAnnotation' => '删除标注',
+			'web.sessions.inspector.canvas.messagePlaceholder' => '给 agent 的整体说明(可选)……',
+			'web.sessions.inspector.canvas.send' => '发送给 agent',
+			'web.sessions.inspector.canvas.clear' => '清空',
+			'web.sessions.inspector.canvas.sent' => '反馈已发送到会话。',
+			'web.sessions.inspector.canvas.sendFailed' => '反馈发送失败',
+			'web.sessions.inspector.canvas.nothingToSend' => '请先添加钉点、框选或说明。',
+			'web.sessions.inspector.canvas.previewFailed' => '预览渲染失败',
+			'web.sessions.inspector.canvas.previewHtml' => '在画布中预览',
+			'web.sessions.inspector.canvas.popOut' => '弹出',
+			'web.sessions.inspector.canvas.popOutHint' => '在独立大窗口中打开画布(不占用终端)',
+			'web.sessions.inspector.canvas.popOutTitle' => '画布',
+			'web.sessions.inspector.canvas.popOutMissing' => '缺少会话或项目信息——请从某个会话的 Canvas 标签页重新打开画布。',
+			'web.sessions.inspector.canvas.viewportMobile' => '手机宽度 (375px)',
+			'web.sessions.inspector.canvas.viewportTablet' => '平板宽度 (768px)',
+			'web.sessions.inspector.canvas.viewportFull' => '全宽',
+			'web.sessions.inspector.canvas.requestPlaceholder' => '让 agent 设计或画点什么……',
+			'web.sessions.inspector.canvas.requestSend' => '设计',
+			'web.sessions.inspector.canvas.requested' => '已发送给 agent —— 它会渲染到画布。',
+			'web.sessions.inspector.canvas.requestFailed' => '请求发送失败',
+			'web.sessions.inspector.canvas.deleteMock' => '删除此画布',
+			'web.sessions.inspector.canvas.deleteConfirm' => ({required Object title}) => '删除画布「${title}」?此操作无法撤销。',
+			'web.sessions.inspector.canvas.deleted' => '画布已删除',
+			'web.sessions.inspector.canvas.deleteFailed' => '删除画布失败',
+			'web.sessions.inspector.canvas.newMock' => '新建画布',
+			'web.sessions.inspector.canvas.newMockHint' => '新建一个画布,而不是更新选中的那个',
+			'web.sessions.inspector.canvas.targetLabel' => '→ 正在处理:',
+			'web.sessions.inspector.canvas.targetNew' => '新建画布',
+			'web.sessions.inspector.canvas.newMockPlaceholder' => '先在上面选择要画什么,再到请求栏描述 —— agent 会把新画布渲染到这里。',
+			'web.sessions.inspector.canvas.kindLabel' => '画成:',
+			'web.sessions.inspector.canvas.kind_ui' => 'UI 稿',
+			'web.sessions.inspector.canvas.kind_flow' => '流程图',
+			'web.sessions.inspector.canvas.kind_mindmap' => '思维导图',
+			'web.sessions.inspector.canvas.kind_graph' => '关系图',
+			'web.sessions.inspector.canvas.kind_doc' => '文档',
+			'web.sessions.inspector.canvas.focusHint' => 'agent 已把它当作「这个画布」—— 在终端里直接说要改什么即可。',
+			'web.sessions.inspector.canvas.setWorkspace' => '在这上面工作',
+			'web.sessions.inspector.canvas.setWorkspaceHint' => '让 agent 在这个画布上工作 —— 会向会话发送一条简短说明',
+			'web.sessions.inspector.canvas.isWorkspace' => '· agent 的工作区',
+			'web.sessions.inspector.canvas.workspaceBadge' => 'agent 的工作区',
+			'web.sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
+			'web.sessions.inspector.canvas.workspaceFailed' => '设置工作区失败',
+			'web.sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
+			'web.sessions.inspector.canvas.designTitle' => '设计系统',
+			'web.sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范,让它们看起来像同一个产品',
+			'web.sessions.inspector.canvas.designLoading' => '加载中……',
+			'web.sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
+			'web.sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变和大圆角;按钮只用实心/描边两种',
+			'web.sessions.inspector.canvas.designAgentHint' => '全新项目就先点上面的预设配色 —— 一次填好经过对比度检查的明暗两套,再微调即可;颜色字段带取色器,不需要记住任何色号。tokens 会以 CSS 变量注入每个画布(深色走 prefers-color-scheme),并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。已有项目最准的做法:让 agent「根据我们真实的主题配置设计系统」,它会读取 tailwind config / CSS 变量自动填好。',
+			'web.sessions.inspector.canvas.designSave' => '保存',
+			'web.sessions.inspector.canvas.designCancel' => '取消',
+			'web.sessions.inspector.canvas.designClose' => '关闭',
+			'web.sessions.inspector.canvas.designSaved' => '设计系统已保存 —— 之后每次画布请求都会带上它。',
+			'web.sessions.inspector.canvas.designSaveFailed' => '保存设计系统失败',
+			'web.sessions.inspector.canvas.designWarningAchromatic' => '这里每个颜色都解析成灰色,据此生成的画布不会有任何品牌色。若项目使用 shadcn/ui 或基于它的 Tailwind 模板,其 --primary 是墨色 —— 应把品牌色(通常是 --accent)填进「主色」,墨色填进「正文色」。如果这套设计本来就是单色,忽略即可。',
+			'web.sessions.inspector.canvas.token_primary' => '主色',
+			'web.sessions.inspector.canvas.token_secondary' => '辅助色',
+			'web.sessions.inspector.canvas.token_background' => '背景',
+			'web.sessions.inspector.canvas.token_surface' => '表面/卡片',
+			'web.sessions.inspector.canvas.token_text' => '正文色',
+			'web.sessions.inspector.canvas.token_muted' => '次要文字',
+			'web.sessions.inspector.canvas.token_border' => '描边',
+			'web.sessions.inspector.canvas.token_font' => '正文字体',
+			'web.sessions.inspector.canvas.token_headingFont' => '标题字体',
+			'web.sessions.inspector.canvas.token_baseSize' => '基准字号',
+			'web.sessions.inspector.canvas.token_radius' => '圆角',
+			'web.sessions.inspector.canvas.token_spacing' => '间距基准',
+			'web.sessions.inspector.canvas.token_shadow' => '阴影',
+			'web.sessions.inspector.canvas.paletteLabel' => '从预设配色开始(明暗两套一次填好)',
+			'web.sessions.inspector.canvas.palette_indigo' => '靛蓝',
+			'web.sessions.inspector.canvas.palette_sky' => '天蓝',
+			'web.sessions.inspector.canvas.palette_emerald' => '翠绿',
+			'web.sessions.inspector.canvas.palette_amber' => '琥珀',
+			'web.sessions.inspector.canvas.palette_rose' => '玫红',
+			'web.sessions.inspector.canvas.palette_violet' => '紫罗兰',
+			'web.sessions.inspector.canvas.palette_graphite' => '石墨',
+			'web.sessions.inspector.canvas.themeLight' => '浅色',
+			'web.sessions.inspector.canvas.themeDark' => '深色',
+			'web.sessions.inspector.canvas.themeLightHint' => '基础配色',
+			'web.sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色的值',
+			'web.sessions.inspector.canvas.extractBtn' => '读取项目样式',
+			'web.sessions.inspector.canvas.extractHint' => '让 agent 读取项目真实主题(Tailwind config、CSS 变量、现有组件)自动填写 —— 最准确,也不用手打任何色号',
+			'web.sessions.inspector.canvas.showcaseBtn' => '生成配色画布',
+			'web.sessions.inspector.canvas.showcaseHint' => '让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成',
+			'web.sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
+			'web.sessions.inspector.canvas.designTaskFailed' => '发送请求失败',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -9865,6 +10148,8 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.curation.description' => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。',
 			'web.memoryWorkers.modelLabel' => '模型',
 			'web.memoryWorkers.modelHint' => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.modelCliDefault' => 'CLI 默认（最新）',
 			'web.memoryWorkers.modelCustom' => '自定义…',
 			'web.memoryWorkers.modelCustomPlaceholder' => '精确模型 ID',
@@ -9959,8 +10244,6 @@ extension on TranslationsZh {
 			'web.project.inbox.emptyHint' => 'Agent 通过 `project_goal_set` / `project_plan_set` MCP 工具在这里提交提案。',
 			'web.project.inbox.approvedToast' => ({required Object label}) => '${label}已更新',
 			'web.project.inbox.approveFailedToast' => '批准失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.project.inbox.rejectedToast' => '已驳回',
 			'web.project.inbox.rejectFailedToast' => '驳回失败',
 			'web.project.inbox.sessionPrefix' => 'ses',
@@ -10379,6 +10662,8 @@ extension on TranslationsZh {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => '已更新 ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => '已是最新',
 			'web.providers.detail.updateFailedToast' => '更新失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.updateUnavailable' => '此处无法在应用内更新',
 			'web.providers.configForm.selectPlaceholder' => '选择…',
 			'web.providers.configForm.defaultOption' => '(默认)',
@@ -10473,8 +10758,6 @@ extension on TranslationsZh {
 			'web.channels.toasts.deleteConfirm' => ({required Object id}) => '删除频道 ${id}?',
 			'web.channels.toasts.deleted' => '频道已删除',
 			'web.channels.toasts.created' => '频道已创建',
-			_ => null,
-		} ?? switch (path) {
 			'web.channels.toasts.updated' => '频道已更新',
 			'web.channels.toasts.muted' => '频道已静音',
 			'web.channels.toasts.unmuted' => '频道已取消静音',
@@ -10893,6 +11176,8 @@ extension on TranslationsZh {
 			'web.backups.status.pgDumpHint' => '备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。',
 			'web.backups.backupsTab.backupNow' => '立即备份',
 			'web.backups.backupsTab.triggering' => '触发中…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.includeConfig' => '包含 config.toml',
 			'web.backups.backupsTab.fullInstance' => '完整实例',
 			'web.backups.backupsTab.fullInstanceHint' => '同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。',
@@ -10987,8 +11272,6 @@ extension on TranslationsZh {
 			'web.backups.schedulesTab.columns.interval' => '间隔',
 			'web.backups.schedulesTab.columns.keep' => '保留',
 			'web.backups.schedulesTab.columns.nextRun' => '下次运行',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.schedulesTab.columns.enabled' => '启用',
 			'web.backups.schedulesTab.columns.actions' => '操作',
 			'web.backups.schedulesTab.keepCount' => ({required Object count}) => '${count} 个备份',
@@ -11407,6 +11690,8 @@ extension on TranslationsZh {
 			'web.settings.about.forcePrompt' => ({required Object count}) => '重启将中断 ${count} 个进行中的会话（之后会自动恢复）。',
 			'web.settings.about.upgradeAnyway' => '仍然升级',
 			'web.logViewer.filterPlaceholder' => '过滤…',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
 			'web.logViewer.warnTooltip' => 'Warn 计数',
@@ -11501,8 +11786,6 @@ extension on TranslationsZh {
 			'web.memoryAmbient.rules.dialog.dedupHint' => '越高 = 去重越严格。0.85 是推荐的平衡点。',
 			'web.memoryAmbient.rules.dialog.create' => '创建',
 			'web.memoryAmbient.rules.dialog.nameRequiredToast' => '名称不能为空',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryAmbient.rules.dialog.createdToast' => ({required Object name}) => '已创建规则 ${name}',
 			'web.memoryAmbient.rules.dialog.createFailedToast' => '创建失败',
 			'web.memoryAmbient.profiles.title' => 'Injection Profiles',
@@ -11921,6 +12204,8 @@ extension on TranslationsZh {
 			'web.database.panel.console' => 'SQL 控制台',
 			'web.database.panel.openWorkbench' => '展开工作台',
 			'web.database.workbench.title' => '数据库工作台',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.title' => '圆桌',
 			'web.roundTable.experimental' => '实验性',
 			'web.roundTable.subtitle' => '跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。',
@@ -12015,8 +12300,6 @@ extension on TranslationsZh {
 			'web.roundTable.plan.rerun' => '重跑',
 			'web.roundTable.plan.running' => '运行中',
 			'web.roundTable.plan.done' => '完成',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.plan.pending' => '待运行',
 			'web.roundTable.plan.openSession' => '打开会话',
 			'web.roundTable.plan.needProject' => '运行步骤前需绑定项目(cwd)。',
@@ -12228,6 +12511,7 @@ extension on TranslationsZh {
 			'sessions.inspector.shell.tabs.tasks' => '任务',
 			'sessions.inspector.shell.tabs.history' => '历史',
 			'sessions.inspector.shell.tabs.vault' => '文档库',
+			'sessions.inspector.shell.tabs.canvas' => '画布',
 			'sessions.inspector.shell.tabs.cortex' => '心智中枢',
 			'sessions.inspector.shell.tabs.database' => '数据库',
 			'sessions.inspector.cortex.title' => '心智中枢工作区',
@@ -12308,6 +12592,80 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
+			'sessions.inspector.canvas.kindUi' => 'UI 稿',
+			'sessions.inspector.canvas.kindFlow' => '流程图',
+			'sessions.inspector.canvas.kindMindmap' => '思维导图',
+			'sessions.inspector.canvas.kindGraph' => '关系图',
+			'sessions.inspector.canvas.kindDoc' => '文档',
+			'sessions.inspector.canvas.modeView' => '查看',
+			'sessions.inspector.canvas.modePin' => '钉点',
+			'sessions.inspector.canvas.modeRegion' => '框选',
+			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => '正在处理 ${title} · ${kind} —— agent 已把它当作「这个画布」。',
+			'sessions.inspector.canvas.notePlaceholder' => '这里要改什么……',
+			'sessions.inspector.canvas.messagePlaceholder' => '整体说明(可选)……',
+			'sessions.inspector.canvas.send' => '发送',
+			'sessions.inspector.canvas.sent' => '反馈已发送到会话。',
+			'sessions.inspector.canvas.nothingToSend' => '请先添加钉点、框选或说明。',
+			'sessions.inspector.canvas.requestPlaceholder' => '让 agent 设计或画点什么……',
+			'sessions.inspector.canvas.requested' => '已发送 —— agent 会渲染到这里。',
+			'sessions.inspector.canvas.requestSend' => '设计',
+			'sessions.inspector.canvas.delete' => '删除',
+			'sessions.inspector.canvas.deleteTitle' => '删除画布?',
+			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '删除「${title}」?此操作无法撤销。',
+			'sessions.inspector.canvas.emptyTitle' => '还没有画布',
+			'sessions.inspector.canvas.emptyBlurb' => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
+			'sessions.inspector.canvas.viewportPhone' => '手机宽度',
+			'sessions.inspector.canvas.viewportTablet' => '平板宽度',
+			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
+			'sessions.inspector.canvas.openFull' => '全屏打开',
+			'sessions.inspector.canvas.confirm' => '确认',
+			'sessions.inspector.canvas.captured' => ({required Object what}) => '已捕获:${what}',
+			'sessions.inspector.canvas.notes' => '备注',
+			'sessions.inspector.canvas.clear' => '清除标记',
+			'sessions.inspector.canvas.done' => '完成',
+			'sessions.inspector.canvas.hintPin' => '点一下目标位置,再拖动微调 —— 确认命中正确元素后点「确认」。',
+			'sessions.inspector.canvas.hintRegion' => '拖出一个框覆盖你要指的区域,然后确认。',
+			'sessions.inspector.canvas.newCanvas' => '新建',
+			'sessions.inspector.canvas.newCanvasTitle' => '新建画布',
+			'sessions.inspector.canvas.newCanvasBlurb' => '先在上面选择要画什么,再到下面描述 —— agent 会把新画布渲染到这里。',
+			'sessions.inspector.canvas.setWorkspace' => '在这上面工作',
+			'sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
+			'sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
+			'sessions.inspector.canvas.designTitle' => '设计系统',
+			'sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范',
+			'sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
+			'sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变;按钮只用实心/描边',
+			'sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。',
+			'sessions.inspector.canvas.designSave' => '保存',
+			'sessions.inspector.canvas.designSaved' => '设计系统已保存。',
+			'sessions.inspector.canvas.designWarningAchromatic' => '这里每个颜色都是灰的 —— 画布将没有品牌色。若项目使用 shadcn/ui,其 --primary 是墨色;应把品牌色(通常是 --accent)填进「主色」。',
+			'sessions.inspector.canvas.tokenPrimary' => '主色',
+			'sessions.inspector.canvas.tokenSecondary' => '辅助色',
+			'sessions.inspector.canvas.tokenBackground' => '背景',
+			'sessions.inspector.canvas.tokenSurface' => '表面/卡片',
+			'sessions.inspector.canvas.tokenText' => '正文色',
+			'sessions.inspector.canvas.tokenMuted' => '次要文字',
+			'sessions.inspector.canvas.tokenBorder' => '描边',
+			'sessions.inspector.canvas.tokenFont' => '正文字体',
+			'sessions.inspector.canvas.tokenHeadingFont' => '标题字体',
+			'sessions.inspector.canvas.tokenBaseSize' => '基准字号',
+			'sessions.inspector.canvas.tokenRadius' => '圆角',
+			'sessions.inspector.canvas.tokenSpacing' => '间距',
+			'sessions.inspector.canvas.tokenShadow' => '阴影',
+			'sessions.inspector.canvas.themeLight' => '浅色',
+			'sessions.inspector.canvas.themeDark' => '深色',
+			'sessions.inspector.canvas.paletteLabel' => '从预设配色开始',
+			'sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色',
+			'sessions.inspector.canvas.paletteIndigo' => '靛蓝',
+			'sessions.inspector.canvas.paletteSky' => '天蓝',
+			'sessions.inspector.canvas.paletteEmerald' => '翠绿',
+			'sessions.inspector.canvas.paletteAmber' => '琥珀',
+			'sessions.inspector.canvas.paletteRose' => '玫红',
+			'sessions.inspector.canvas.paletteViolet' => '紫罗兰',
+			'sessions.inspector.canvas.paletteGraphite' => '石墨',
+			'sessions.inspector.canvas.extractBtn' => '读取项目样式',
+			'sessions.inspector.canvas.showcaseBtn' => '生成配色画布',
+			'sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12360,6 +12718,8 @@ extension on TranslationsZh {
 			'mcp.errorPrefix.update' => '更新失败',
 			'mcp.errorPrefix.toggle' => '切换失败',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
 			'mcp.editor.descriptionPlaceholder' => '可选的一行说明',
@@ -12529,8 +12889,6 @@ extension on TranslationsZh {
 			'integrations.kvBaseUrl' => 'Base URL',
 			'integrations.kvScopes' => '范围',
 			'integrations.kvVersion' => '版本',
-			_ => null,
-		} ?? switch (path) {
 			'integrations.kvLastHealthPing' => '最近健康检查',
 			'integrations.kvCreated' => '创建于',
 			'integrations.kvKeyRotated' => 'Key 轮换于',
@@ -12874,6 +13232,8 @@ extension on TranslationsZh {
 			'backupSchedules.newButton' => '新建',
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'backupSchedules.intervalLabel' => '间隔',
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
@@ -13043,8 +13403,6 @@ extension on TranslationsZh {
 			'channels.popup.mute' => '静音',
 			'channels.popup.unmute' => '取消静音',
 			'channels.popup.deleteLabel' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'channels.badges.running' => '运行中',
 			'channels.badges.starting' => '启动中…',
 			'channels.badges.disabled' => '已停用',
@@ -13388,6 +13746,8 @@ extension on TranslationsZh {
 			'about.gateway.upToDate' => '已是最新',
 			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'about.gateway.releaseNotes' => '更新说明',
+			_ => null,
+		} ?? switch (path) {
 			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
 			'settings.language.section' => '语言',
@@ -13557,8 +13917,6 @@ extension on TranslationsZh {
 			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
 			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
-			_ => null,
-		} ?? switch (path) {
 			'cortexHub.activeProjectsTitle' => '活跃项目',
 			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
 			'cortexHub.settings' => '设置',
