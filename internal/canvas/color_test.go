@@ -144,10 +144,10 @@ func TestReencodePassesThroughUnreadable(t *testing.T) {
 // brand colour. These are the real values on both sides of that line.
 func TestChromaSeparatesNeutralsFromBrandColours(t *testing.T) {
 	neutrals := []string{
-		"oklch(0.20 0.012 270)", // opendray ink
-		"oklch(0.99 0.004 270)", // background
-		"oklch(0.46 0.012 270)", // muted text
-		"oklch(0.88 0.008 270)", // border
+		"oklch(0.20 0.012 270)",         // opendray ink
+		"oklch(0.99 0.004 270)",         // background
+		"oklch(0.46 0.012 270)",         // muted text
+		"oklch(0.88 0.008 270)",         // border
 		"#ffffff", "#000000", "#71717a", // zinc-500
 		"#64748b", // slate-500, the most tinted neutral in common use
 	}
