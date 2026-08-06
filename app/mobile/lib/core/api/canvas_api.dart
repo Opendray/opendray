@@ -83,8 +83,12 @@ class CanvasArtifact extends CanvasSummary {
   final String html;
 }
 
-/// One operator mark on a canvas. Coordinates are percentages of the preview
-/// (0–100) so they survive a resize, exactly like the web panel.
+/// One operator mark on a canvas. Coordinates are percentages of the whole
+/// DOCUMENT (0–100) — "40% down the page", not "40% down the window" — so a
+/// mark means the same thing however far the canvas was scrolled when it was
+/// made. The page computes them itself (see toDocPct in canvas_common.dart),
+/// which is also what the web panel does, so both surfaces agree on what x/y
+/// mean before the agent ever sees them.
 class CanvasAnnotation {
   const CanvasAnnotation({
     required this.n,

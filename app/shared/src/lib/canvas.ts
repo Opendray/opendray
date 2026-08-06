@@ -27,7 +27,10 @@ export interface CanvasArtifact extends CanvasSummary {
 }
 
 // CanvasAnnotation is one operator mark. Coordinates are percentages of the
-// iframe viewport (0–100) so they survive a resize. `kind` is 'pin' (a point,
+// whole DOCUMENT (0–100) — "40% down the page", not "40% down the window" — so
+// a mark means the same thing however far the canvas was scrolled when it was
+// made, and stays on the content it was placed on. The page computes them
+// itself, since only it knows its own scroll offset. `kind` is 'pin' (a point,
 // usually on a specific element) or 'region' (a dragged rectangle).
 export interface CanvasAnnotation {
   n: number

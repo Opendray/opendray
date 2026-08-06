@@ -41,7 +41,18 @@ import { DesignSystemSheet } from './DesignSystemSheet'
 
 type DraftAnnotation = Omit<CanvasAnnotation, 'n'>
 type Mode = 'preview' | 'pin' | 'region'
-type ProbeResult = { selector: string; html: string; elements?: string[] }
+// The probe answers in DOCUMENT percentages (x/y, plus w/h for a region): the
+// page itself is the only thing that knows how far it is scrolled, so it does
+// the conversion. Absent when the probe timed out or the point hit nothing.
+type ProbeResult = {
+  selector: string
+  html: string
+  elements?: string[]
+  x?: number
+  y?: number
+  w?: number
+  h?: number
+}
 export type CanvasStageVariant = 'panel' | 'popout'
 
 interface CanvasStageProps {
@@ -72,11 +83,47 @@ function KindIcon({ kind, className }: { kind?: CanvasKind; className?: string }
   }
 }
 
+// Marks are drawn INSIDE the canvas document, so they stay glued to the content
+// the operator picked. Drawing them in the parent instead — over the iframe —
+// leaves them pinned to the frame: scroll the canvas and the pin sits on
+// whatever slid under it. Mobile already does it this way; these class names and
+// colours mirror app/mobile/lib/features/sessions/inspector/canvas_common.dart.
+const MARK_CSS = `
+.__od-mark{position:absolute;z-index:2147483000;pointer-events:none;box-sizing:border-box}
+.__od-mark.rect{border:2px solid #f43f5e;background:rgba(244,63,94,.12);box-shadow:0 0 6px rgba(0,0,0,.45);outline:1px solid #fff;outline-offset:-3px}
+.__od-badge{position:absolute;z-index:2147483001;pointer-events:none;
+  width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;
+  background:#f43f5e;color:#fff;font:bold 12px/22px sans-serif;text-align:center;
+  box-shadow:0 1px 4px rgba(0,0,0,.5);border:2px solid #fff}
+`
+
 // Probe injected into the mock iframe so a pin captures the element selector and
-// a region captures the framed DOM block + the components inside it.
+// a region captures the framed DOM block + the components inside it — and so the
+// committed marks can be drawn into the document itself.
 const PROBE_SCRIPT = `
 <script>
 (function(){
+  var style=document.createElement('style');
+  style.textContent=${JSON.stringify(MARK_CSS)};
+  (document.head||document.documentElement).appendChild(style);
+
+  function docSize(){
+    var de=document.documentElement, b=document.body;
+    return {
+      w: Math.max(de?de.scrollWidth:0, b?b.scrollWidth:0, 1),
+      h: Math.max(de?de.scrollHeight:0, b?b.scrollHeight:0, 1)
+    };
+  }
+  // Client -> document percentage, so a mark means "40% down the PAGE" rather
+  // than "40% down the window". Without adding the scroll offset, a mark
+  // recorded after scrolling points at the wrong content.
+  function toDocPct(cx, cy){
+    var d=docSize();
+    return {
+      x: ((cx + (window.scrollX||0)) / d.w) * 100,
+      y: ((cy + (window.scrollY||0)) / d.h) * 100
+    };
+  }
   function cssPath(el){
     if(!(el instanceof Element)) return '';
     var path=[];
@@ -99,7 +146,28 @@ const PROBE_SCRIPT = `
     var d=e.data||{};
     if(d.type==='canvas:probe'){
       var el=document.elementFromPoint(d.x,d.y);
-      parent.postMessage({type:'canvas:probed',id:d.id,selector:el?cssPath(el):'',html:el?el.outerHTML:''},'*');
+      var p=toDocPct(d.x,d.y);
+      parent.postMessage({type:'canvas:probed',id:d.id,selector:el?cssPath(el):'',html:el?el.outerHTML:'',x:p.x,y:p.y},'*');
+    } else if(d.type==='canvas:marks'){
+      // Redraw the whole set: the parent owns the list, this just mirrors it.
+      var old=document.querySelectorAll('.__od-mark, .__od-badge');
+      for(var j=0;j<old.length;j++) old[j].remove();
+      var ds=docSize();
+      for(var k=0;k<(d.marks||[]).length;k++){
+        var m=d.marks[k], mx=m.x/100*ds.w, my=m.y/100*ds.h;
+        if(m.kind==='region'){
+          var frame=document.createElement('div');
+          frame.className='__od-mark rect';
+          frame.style.left=mx+'px'; frame.style.top=my+'px';
+          frame.style.width=(m.w/100*ds.w)+'px'; frame.style.height=(m.h/100*ds.h)+'px';
+          document.body.appendChild(frame);
+        }
+        var badge=document.createElement('div');
+        badge.className='__od-badge';
+        badge.style.left=mx+'px'; badge.style.top=my+'px';
+        badge.textContent=String(k+1);
+        document.body.appendChild(badge);
+      }
     } else if(d.type==='canvas:probeRect'){
       // Find the smallest element that fully contains the dragged rectangle —
       // "the block you framed" — then list the components inside it, so the
@@ -121,7 +189,8 @@ const PROBE_SCRIPT = `
           kids.push(label+(txt?' “'+txt+'”':''));
         }
       }
-      parent.postMessage({type:'canvas:probedRect',id:d.id,selector:box?cssPath(box):'',html:box?box.outerHTML.slice(0,1500):'',kids:kids},'*');
+        var pa=toDocPct(x,y), pb=toDocPct(x+w,y+h);
+      parent.postMessage({type:'canvas:probedRect',id:d.id,selector:box?cssPath(box):'',html:box?box.outerHTML.slice(0,1500):'',kids:kids,x:pa.x,y:pa.y,w:pb.x-pa.x,h:pb.y-pa.y},'*');
     }
   });
 })();
@@ -262,12 +331,30 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
   // components inside it).
   useEffect(() => {
     function onMsg(e: MessageEvent) {
-      const d = e.data as { type?: string; id?: string; selector?: string; html?: string; kids?: string[] }
+      const d = e.data as {
+        type?: string
+        id?: string
+        selector?: string
+        html?: string
+        kids?: string[]
+        x?: number
+        y?: number
+        w?: number
+        h?: number
+      }
       if (d && (d.type === 'canvas:probed' || d.type === 'canvas:probedRect') && d.id) {
         const resolve = probePending.current.get(d.id)
         if (resolve) {
           probePending.current.delete(d.id)
-          resolve({ selector: d.selector || '', html: d.html || '', elements: d.kids })
+          resolve({
+            selector: d.selector || '',
+            html: d.html || '',
+            elements: d.kids,
+            x: d.x,
+            y: d.y,
+            w: d.w,
+            h: d.h,
+          })
         }
       }
     }
@@ -277,6 +364,24 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
 
   const srcDoc = useMemo(() => (artifact ? injectHead(injectProbe(artifact.html)) : ''), [artifact])
   const frameWidth = VIEWPORT_WIDTH[viewport]
+
+  // Mirror the committed marks into the canvas document, which is what keeps
+  // them glued to the content instead of to the frame. Driven from two places
+  // because either can happen first: the list changing (effect), and the
+  // document being replaced by a re-render, which takes the marks with it and
+  // only has a probe to talk to once it has loaded (the iframe's onLoad).
+  const paintMarks = useCallback(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      {
+        type: 'canvas:marks',
+        marks: annotations.map((a) => ({ kind: a.kind, x: a.x, y: a.y, w: a.w, h: a.h })),
+      },
+      '*',
+    )
+  }, [annotations])
+  useEffect(() => {
+    paintMarks()
+  }, [paintMarks])
 
   const probe = useCallback((x: number, y: number) => {
     return new Promise<ProbeResult>((resolve) => {
@@ -322,10 +427,22 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
       if (!rect) return
       const px = e.clientX - rect.left
       const py = e.clientY - rect.top
-      const { selector, html } = await probe(px, py)
+      // px/py are where the click landed in the visible frame — the right thing
+      // to probe with (elementFromPoint takes viewport coordinates) but the
+      // wrong thing to STORE, because it says nothing about how far the canvas
+      // is scrolled. The page answers in document percentages; fall back to the
+      // frame-relative figure only when the probe couldn't answer at all.
+      const { selector, html, x, y } = await probe(px, py)
       setAnnotations((prev) => [
         ...prev,
-        { kind: 'pin', note: '', selector, html, x: (px / rect.width) * 100, y: (py / rect.height) * 100 },
+        {
+          kind: 'pin',
+          note: '',
+          selector,
+          html,
+          x: x ?? (px / rect.width) * 100,
+          y: y ?? (py / rect.height) * 100,
+        },
       ])
     },
     [mode, probe],
@@ -360,10 +477,22 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
     dragStart.current = null
     setDrag(null)
     if (!rect || !d || d.w < 6 || d.h < 6) return
-    const { selector, html, elements } = await probeRect(d.x, d.y, d.w, d.h)
+    const p = await probeRect(d.x, d.y, d.w, d.h)
     setAnnotations((prev) => [
       ...prev,
-      { kind: 'region', note: '', selector, html, elements, x: (d.x / rect.width) * 100, y: (d.y / rect.height) * 100, w: (d.w / rect.width) * 100, h: (d.h / rect.height) * 100 },
+      {
+        kind: 'region',
+        note: '',
+        selector: p.selector,
+        html: p.html,
+        elements: p.elements,
+        // Document percentages from the page (see onOverlayClick); the
+        // frame-relative figures are only a fallback for a failed probe.
+        x: p.x ?? (d.x / rect.width) * 100,
+        y: p.y ?? (d.y / rect.height) * 100,
+        w: p.w ?? (d.w / rect.width) * 100,
+        h: p.h ?? (d.h / rect.height) * 100,
+      },
     ])
   }, [drag, probeRect])
 
@@ -455,32 +584,12 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
     }
   }
 
-  // High-contrast marks that read on ANY page (white, dark, busy): a vivid rose
-  // fill/border, a white edge, a drop shadow — and a dim-the-rest "spotlight"
-  // while dragging a region so the selection pops.
+  // Only the in-progress drag is drawn here. Committed marks live inside the
+  // canvas document (see paintMarks) so they scroll with the content; a drag
+  // rectangle is transient and frame-relative by nature — the page cannot
+  // scroll underneath it while the pointer is down.
   const markers = (
     <>
-      {annotations.map((a, i) =>
-        a.kind === 'pin' ? (
-          <div
-            key={i}
-            className="absolute -translate-x-1/2 -translate-y-1/2 size-6 rounded-full bg-rose-500 text-white text-[11px] font-bold flex items-center justify-center ring-2 ring-white shadow-[0_1px_5px_rgba(0,0,0,0.6)]"
-            style={{ left: `${a.x}%`, top: `${a.y}%` }}
-          >
-            {i + 1}
-          </div>
-        ) : (
-          <div
-            key={i}
-            className="absolute border-2 border-rose-500 ring-1 ring-inset ring-white bg-rose-500/10 shadow-[0_0_6px_rgba(0,0,0,0.45)]"
-            style={{ left: `${a.x}%`, top: `${a.y}%`, width: `${a.w}%`, height: `${a.h}%` }}
-          >
-            <span className="absolute -top-2.5 -left-2.5 h-4 min-w-[16px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center ring-1 ring-white shadow">
-              {i + 1}
-            </span>
-          </div>
-        ),
-      )}
       {drag && (
         <div
           className="absolute border-2 border-dashed border-rose-500 ring-1 ring-inset ring-white shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]"
@@ -651,7 +760,7 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
       {showMockPreview && (
         <div className={cn('relative w-full overflow-auto rounded-sm border border-border bg-muted/40', popout ? 'flex-1 min-h-0' : 'h-[420px]')}>
           <div className={cn('relative h-full mx-auto', frameWidth != null && 'ring-1 ring-border shadow-sm')} style={{ width: frameWidth != null ? `${frameWidth}px` : '100%' }}>
-            <iframe ref={iframeRef} title="canvas-preview" srcDoc={srcDoc} sandbox="allow-scripts" style={{ colorScheme: resolvedTheme }} className="w-full h-full block bg-background" />
+            <iframe ref={iframeRef} title="canvas-preview" srcDoc={srcDoc} onLoad={paintMarks} sandbox="allow-scripts" style={{ colorScheme: resolvedTheme }} className="w-full h-full block bg-background" />
             <div
               ref={overlayRef}
               onClick={onOverlayClick}
