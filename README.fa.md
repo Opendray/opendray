@@ -535,7 +535,7 @@ opendray یک self-hosted gateway است که ابزارهای AI coding CLI ک�
 
 ### opendray چه AI CLIهایی را پشتیبانی می‌کند؟
 
-پنج provider first-class در نسخه v2.10.x: **Claude Code** (Anthropic)، **Codex** (OpenAI)، **Antigravity** (Google `agy`)، **Grok Build** (xAI) و **OpenCode**. به‌همراه shell دلخواه برای هر چیز دیگر. اضافه کردن یک CLI جدید، یک JSON descriptor زیر `internal/catalog/builtin/` است؛ در موارد رایج به کد adapter نیازی نیست.
+پنج provider first-class در نسخه v2.13.x: **Claude Code** (Anthropic)، **Codex** (OpenAI)، **Antigravity** (Google `agy`)، **Grok Build** (xAI) و **OpenCode**. به‌همراه shell دلخواه برای هر چیز دیگر. اضافه کردن یک CLI جدید، یک JSON descriptor زیر `internal/catalog/builtin/` است؛ در موارد رایج به کد adapter نیازی نیست.
 
 ### opendray در مقابل Claude Desktop یا ChatGPT Desktop چه فرقی دارد؟
 
@@ -586,7 +586,7 @@ Apache 2.0. برای همیشه رایگان. بدون paid tier، بدون tele
 
 ## Status
 
-نسل فعلی: **v2.10.x**. برای تاریخچه release به [`CHANGELOG.md`](CHANGELOG.md) و برای policy مربوط به major-as-generation به [`VERSIONING.md`](VERSIONING.md) نگاه کنید (major به معنای نسل محصول است، نه breaking change به معنای سخت‌گیرانه SemVer).
+نسل فعلی: **v2.13.x**. برای تاریخچه release به [`CHANGELOG.md`](CHANGELOG.md) و برای policy مربوط به major-as-generation به [`VERSIONING.md`](VERSIONING.md) نگاه کنید (major به معنای نسل محصول است، نه breaking change به معنای سخت‌گیرانه SemVer).
 
 این نسل شامل موارد زیر است:
 

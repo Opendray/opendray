@@ -575,7 +575,7 @@ opendray는 이미 사용 중인 AI 코딩 CLI들(Claude Code, Codex, Antigravit
 
 ### opendray는 어떤 AI CLI를 지원하나요?
 
-v2.10.x 기준으로 5개의 first-class 프로바이더를 지원합니다: **Claude Code**(Anthropic), **Codex**(OpenAI), **Antigravity**(Google `agy`), **Grok Build**(xAI), **OpenCode**입니다. 그 외에는 임의의 shell로 대응할 수 있습니다. 새 CLI를 추가하는 작업은 `internal/catalog/builtin/` 아래의 JSON descriptor 하나로 끝나며, 일반적인 경우에는 어댑터 코드가 필요 없습니다.
+v2.13.x 기준으로 5개의 first-class 프로바이더를 지원합니다: **Claude Code**(Anthropic), **Codex**(OpenAI), **Antigravity**(Google `agy`), **Grok Build**(xAI), **OpenCode**입니다. 그 외에는 임의의 shell로 대응할 수 있습니다. 새 CLI를 추가하는 작업은 `internal/catalog/builtin/` 아래의 JSON descriptor 하나로 끝나며, 일반적인 경우에는 어댑터 코드가 필요 없습니다.
 
 ### opendray는 Claude Desktop이나 ChatGPT Desktop과 어떻게 다른가요?
 
@@ -626,7 +626,7 @@ Apache 2.0입니다. 영원히 무료입니다. 유료 티어도, 텔레메트�
 
 ## 현황
 
-현재 세대: **v2.10.x**. release 이력은 [`CHANGELOG.md`](CHANGELOG.md)에서, major-as-generation 정책(major = 제품 세대, 엄격한 SemVer "breaking change"가 아님)은 [`VERSIONING.md`](VERSIONING.md)에서 확인하세요.
+현재 세대: **v2.13.x**. release 이력은 [`CHANGELOG.md`](CHANGELOG.md)에서, major-as-generation 정책(major = 제품 세대, 엄격한 SemVer "breaking change"가 아님)은 [`VERSIONING.md`](VERSIONING.md)에서 확인하세요.
 
 이 세대에서 제공되는 것:
 

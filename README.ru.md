@@ -590,7 +590,7 @@ opendray это self-hosted шлюз, который оборачивает AI c
 
 ### Какие AI-CLI поддерживает opendray?
 
-Пять first-class-провайдеров на v2.10.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI) и **OpenCode**. Плюс произвольный shell для всего остального. Добавление нового CLI это JSON-дескриптор в `internal/catalog/builtin/`; в типовых случаях адаптерный код не нужен.
+Пять first-class-провайдеров на v2.13.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI) и **OpenCode**. Плюс произвольный shell для всего остального. Добавление нового CLI это JSON-дескриптор в `internal/catalog/builtin/`; в типовых случаях адаптерный код не нужен.
 
 ### Чем opendray отличается от Claude Desktop или ChatGPT Desktop?
 
@@ -641,7 +641,7 @@ Apache 2.0. Бесплатно навсегда. Никакого платног
 
 ## Статус
 
-Текущее поколение: **v2.10.x**. См. [`CHANGELOG.md`](CHANGELOG.md) для полной истории релизов и [`VERSIONING.md`](VERSIONING.md) для политики major-как-поколение (major = поколение продукта, а не строгий SemVer "breaking change").
+Текущее поколение: **v2.13.x**. См. [`CHANGELOG.md`](CHANGELOG.md) для полной истории релизов и [`VERSIONING.md`](VERSIONING.md) для политики major-как-поколение (major = поколение продукта, а не строгий SemVer "breaking change").
 
 В это поколение входит:
 

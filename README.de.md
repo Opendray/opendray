@@ -579,7 +579,7 @@ opendray ist ein Self-hosted Gateway, das die AI-Coding-CLIs, die Sie bereits ve
 
 ### Welche AI-CLIs unterstützt opendray?
 
-Fünf erstklassige Provider ab v2.10.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI) und **OpenCode**. Dazu beliebige Shell für alles andere. Eine neue CLI hinzuzufügen ist ein JSON-Deskriptor unter `internal/catalog/builtin/`; für gängige Fälle ist kein Adapter-Code nötig.
+Fünf erstklassige Provider ab v2.13.x: **Claude Code** (Anthropic), **Codex** (OpenAI), **Antigravity** (Google `agy`), **Grok Build** (xAI) und **OpenCode**. Dazu beliebige Shell für alles andere. Eine neue CLI hinzuzufügen ist ein JSON-Deskriptor unter `internal/catalog/builtin/`; für gängige Fälle ist kein Adapter-Code nötig.
 
 ### Wie unterscheidet sich opendray von Claude Desktop oder ChatGPT Desktop?
 
@@ -630,7 +630,7 @@ Lesen Sie [`CONTRIBUTING.md`](CONTRIBUTING.md) und [`CODE_OF_CONDUCT.md`](CODE_O
 
 ## Status
 
-Aktuelle Generation: **v2.10.x**. Siehe [`CHANGELOG.md`](CHANGELOG.md) für die Release-Historie und [`VERSIONING.md`](VERSIONING.md) für die Major-als-Generation-Policy (Major = Produktgeneration, kein strikter SemVer-"Breaking Change").
+Aktuelle Generation: **v2.13.x**. Siehe [`CHANGELOG.md`](CHANGELOG.md) für die Release-Historie und [`VERSIONING.md`](VERSIONING.md) für die Major-als-Generation-Policy (Major = Produktgeneration, kein strikter SemVer-"Breaking Change").
 
 Diese Generation liefert:
 

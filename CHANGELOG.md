@@ -42,6 +42,13 @@ iterate on, instead of describing a screen in prose and hoping it matches.
   the project's actual theme, or draw the system as a canvas.
 - **Full mobile parity** for all of the above: viewer, viewport switching,
   focus and precise marking from the phone.
+- **`opendray status` is now a systemctl-style health dashboard.** On macOS
+  the command used to dump ~80 lines of raw `launchctl print` internals —
+  a live process says nothing about whether the gateway is serving HTTP or
+  can reach its database. The default output is now a compact checklist:
+  process, HTTP health + uptime, database reachability, listen address,
+  restart count (with the last non-zero exit surfaced as a hint) and the
+  config path. The raw launchd/systemd dump moved behind `--raw`.
 
 ### Changed
 
@@ -85,6 +92,30 @@ iterate on, instead of describing a screen in prose and hoping it matches.
   these wheel-ignoring providers and sends arrow keys for both wheel and
   one-finger touch scroll, scoped by `providerId` so Claude/Codex/Antigravity
   (which genuinely consume the wheel) are untouched.
+- **Coming back to the mobile app after it slept no longer fails session
+  loads.** While the app is suspended the OS silently tears down its TCP
+  connections, but the HTTP client's pool didn't know — the next request
+  went out on a dead socket and stalled into a 30-second timeout and a
+  full-screen error, even on a LAN. Connection-level failures on GET/HEAD
+  are now replayed up to twice with backoff (a 4xx/5xx still passes
+  through untouched), the pool's idle timeout drops to 5 seconds so stale
+  sockets are rarely handed out at all, and returning from a suspension of
+  5+ seconds refetches the session list immediately instead of waiting for
+  the next tap.
+
+### Security
+
+- **Hardened the path-containment barrier behind `/fs/download`, `/fs/zip`
+  and `/fs/upload`.** The root-scoped filesystem endpoints now validate the
+  resolved path with `filepath.IsLocal` and refuse any residual `..`
+  sequence in the canonical path (which also means oddly-named entries like
+  `notes..md` are rejected inside these endpoints). Resolves all seven open
+  CodeQL `go/path-injection` alerts plus one allocation-size-overflow
+  finding.
+- **Bumped vulnerable transitive npm dependencies** in the web workspace
+  lockfile: seroval 1.6.2 (critical GHSA-mv8w-475r-vwqw), brace-expansion
+  5.0.9 (three DoS advisories), postcss 8.5.26 (path-traversal advisories)
+  and `@babel/core` 7.29.7. Lockfile-only; no manifest changes.
 
 ## [v2.12.2] — 2026-07-23
 
