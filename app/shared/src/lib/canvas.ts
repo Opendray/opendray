@@ -301,6 +301,23 @@ export async function setDesignSystem(
   return { tokens: d.tokens ?? {}, tokens_dark: d.tokens_dark ?? {}, notes: d.notes ?? '' }
 }
 
+/** One-click design-system jobs handed to the agent from the panel. */
+export type CanvasDesignTask = 'extract' | 'showcase'
+
+// runDesignTask asks the agent either to read the project's REAL theme and
+// record it as the design system, or to draw the system as a canvas. The prompt
+// lives in the gateway so every surface sends the same wording.
+export async function runDesignTask(
+  sessionId: string,
+  cwd: string,
+  task: CanvasDesignTask,
+): Promise<void> {
+  await api('/api/v1/canvas/design/task', {
+    method: 'POST',
+    body: { session_id: sessionId, cwd, task },
+  })
+}
+
 // getCanvasFocus reads the project's focused canvas (empty slug when none).
 export async function getCanvasFocus(cwd: string): Promise<CanvasFocus> {
   return api<CanvasFocus>(`/api/v1/canvas/focus?cwd=${encodeURIComponent(cwd)}`)

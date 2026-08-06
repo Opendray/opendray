@@ -301,6 +301,24 @@ class CanvasApi {
     }
   }
 
+  /// Hand a one-click design-system job to the agent: 'extract' (read the
+  /// project's real theme and record it) or 'showcase' (draw it as a canvas).
+  /// The prompt lives in the gateway so every surface sends the same wording.
+  Future<void> runDesignTask({
+    required String sessionId,
+    required String cwd,
+    required String task,
+  }) async {
+    try {
+      await _dio.post<void>(
+        '/api/v1/canvas/design/task',
+        data: {'session_id': sessionId, 'cwd': cwd, 'task': task},
+      );
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   Future<void> delete(String id) async {
     try {
       await _dio.delete<void>('/api/v1/canvas/$id');

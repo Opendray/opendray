@@ -364,7 +364,13 @@
           "themeLight": "浅色",
           "themeDark": "深色",
           "themeLightHint": "基础配色",
-          "themeDarkHint": "留空 = 沿用浅色的值"
+          "themeDarkHint": "留空 = 沿用浅色的值",
+          "extractBtn": "读取项目样式",
+          "extractHint": "让 agent 读取项目真实主题(Tailwind config、CSS 变量、现有组件)自动填写 —— 最准确,也不用手打任何色号",
+          "showcaseBtn": "生成配色画布",
+          "showcaseHint": "让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成",
+          "designTaskSent": "已发送给 agent —— 留意会话。",
+          "designTaskFailed": "发送请求失败"
         }
       },
       "ended": {
@@ -3816,7 +3822,10 @@
         "paletteAmber": "琥珀",
         "paletteRose": "玫红",
         "paletteViolet": "紫罗兰",
-        "paletteGraphite": "石墨"
+        "paletteGraphite": "石墨",
+        "extractBtn": "读取项目样式",
+        "showcaseBtn": "生成配色画布",
+        "designTaskSent": "已发送给 agent —— 留意会话。"
       }
     },
     "spawnSheet": {

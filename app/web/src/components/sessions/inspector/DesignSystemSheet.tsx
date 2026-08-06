@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Palette, X, Sun, Moon } from 'lucide-react'
+import { Palette, X, Sun, Moon, ScanSearch, LayoutDashboard } from 'lucide-react'
 
 import {
   CANVAS_DESIGN_TOKENS,
@@ -10,6 +10,7 @@ import {
   cssVarForToken,
   getDesignSystem,
   setDesignSystem,
+  runDesignTask,
   type CanvasPalette,
 } from '@/lib/canvas'
 import { cn } from '@/lib/utils'
@@ -36,11 +37,12 @@ const COLOR_TOKENS = new Set<string>(CANVAS_THEMED_TOKENS.filter((k) => k !== 's
 const THEMED = new Set<string>(CANVAS_THEMED_TOKENS)
 
 interface DesignSystemSheetProps {
+  sessionId: string
   cwd: string
   onClose: () => void
 }
 
-export function DesignSystemSheet({ cwd, onClose }: DesignSystemSheetProps) {
+export function DesignSystemSheet({ sessionId, cwd, onClose }: DesignSystemSheetProps) {
   const { t } = useTranslation()
   const [tokens, setTokens] = useState<Record<string, string>>({})
   const [dark, setDark] = useState<Record<string, string>>({})
@@ -48,6 +50,7 @@ export function DesignSystemSheet({ cwd, onClose }: DesignSystemSheetProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [tasking, setTasking] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -72,6 +75,23 @@ export function DesignSystemSheet({ cwd, onClose }: DesignSystemSheetProps) {
   function applyPalette(p: CanvasPalette) {
     setTokens(p.tokens)
     setDark(p.tokensDark)
+  }
+
+  // Hand a one-click job to the agent: read the project's real theme and record
+  // it, or draw the system as a canvas. The prompt lives in the gateway.
+  async function task(kind: 'extract' | 'showcase') {
+    setTasking(true)
+    try {
+      await runDesignTask(sessionId, cwd, kind)
+      toast.success(t('web.sessions.inspector.canvas.designTaskSent'))
+      onClose()
+    } catch (e) {
+      toast.error(t('web.sessions.inspector.canvas.designTaskFailed'), {
+        description: (e as Error).message,
+      })
+    } finally {
+      setTasking(false)
+    }
   }
 
   const editing = theme === 'light' ? tokens : dark
@@ -128,6 +148,31 @@ export function DesignSystemSheet({ cwd, onClose }: DesignSystemSheetProps) {
             </p>
           ) : (
             <>
+              {/* Hand the job to the agent. Reading the project's real theme
+                  beats any hand-entry, and seeing the system beats reading it. */}
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void task('extract')}
+                  disabled={tasking}
+                  className="flex items-center gap-1.5 rounded-sm border border-primary/50 px-2 py-1 text-[11px] text-foreground hover:border-primary disabled:opacity-50"
+                  title={t('web.sessions.inspector.canvas.extractHint')}
+                >
+                  <ScanSearch className="size-3" />
+                  {t('web.sessions.inspector.canvas.extractBtn')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void task('showcase')}
+                  disabled={tasking}
+                  className="flex items-center gap-1.5 rounded-sm border border-border px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+                  title={t('web.sessions.inspector.canvas.showcaseHint')}
+                >
+                  <LayoutDashboard className="size-3" />
+                  {t('web.sessions.inspector.canvas.showcaseBtn')}
+                </button>
+              </div>
+
               {/* Starting palettes — the answer to "I don't know what colours
                   to pick". One click fills both themes with a checked pair. */}
               <div className="mb-1 text-[11px] text-muted-foreground">
@@ -254,16 +299,32 @@ function ThemeTab({
   )
 }
 
-/** A hex the native colour input can show; anything else (oklch, a var) is
- *  still editable as text, we just can't preview it in the picker. */
+/** Resolve ANY CSS colour — hex, rgb(), hsl(), oklch(), a named colour — to the
+ *  #rrggbb the native picker needs. Projects write colours in whatever notation
+ *  their theme uses (this one uses oklch), and the operator should still get a
+ *  picker rather than a bare text box. Returns null only if it isn't a colour. */
 function asHex(value: string): string | null {
   const v = value.trim()
+  if (!v) return null
   if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) {
     return v.length === 4
       ? `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`
       : v.toLowerCase()
   }
-  return null
+  if (typeof document === 'undefined') return null
+  const probe = document.createElement('span')
+  probe.style.color = ''
+  probe.style.color = v
+  if (!probe.style.color) return null // the browser rejected it — not a colour
+  probe.style.display = 'none'
+  document.body.appendChild(probe)
+  const resolved = getComputedStyle(probe).color
+  probe.remove()
+  const m = resolved.match(/^rgba?\(([^)]+)\)/)
+  if (!m) return null
+  const [r, g, b] = m[1].split(',').map((n) => Math.round(parseFloat(n)))
+  if ([r, g, b].some((n) => Number.isNaN(n))) return null
+  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
 }
 
 function FieldRow({
@@ -281,32 +342,26 @@ function FieldRow({
   isColor: boolean
   onChange: (v: string) => void
 }) {
-  const hex = isColor ? asHex(value) : null
+  const hex = isColor ? asHex(value) ?? asHex(placeholder) : null
   return (
     <>
       <label className="truncate text-[11px] text-muted-foreground" title={cssVar}>
         {label}
       </label>
       <div className="flex items-center gap-1.5">
-        {isColor &&
-          (hex ? (
-            // A real picker, so nobody has to know a colour code.
-            <input
-              type="color"
-              value={hex}
-              onChange={(e) => onChange(e.target.value)}
-              aria-label={label}
-              className="size-5 shrink-0 cursor-pointer rounded-sm border border-border bg-transparent p-0"
-            />
-          ) : (
-            <span
-              className={cn(
-                'size-4 shrink-0 rounded-sm border border-border',
-                !value && 'bg-muted',
-              )}
-              style={value ? { background: value } : undefined}
-            />
-          ))}
+        {isColor && (
+          // Always a real picker — clicking the swatch opens the OS colour
+          // chooser, so nobody ever has to know a colour code. Empty fields
+          // start from the inherited/placeholder colour.
+          <input
+            type="color"
+            value={hex ?? '#888888'}
+            onChange={(e) => onChange(e.target.value)}
+            aria-label={label}
+            title={label}
+            className="size-5 shrink-0 cursor-pointer rounded-sm border border-border bg-transparent p-0"
+          />
+        )}
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}

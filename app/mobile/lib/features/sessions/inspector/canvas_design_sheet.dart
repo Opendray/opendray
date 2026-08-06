@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/canvas_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/sessions/inspector/canvas_color_picker.dart';
 
 // CanvasDesignSheet — the project's canvas design contract.
 //
@@ -61,24 +62,14 @@ String _tokenLabel(String key) => switch (key) {
 String cssVarForToken(String key) =>
     '--od-${key.replaceAllMapped(RegExp('[A-Z]'), (m) => '-${m[0]!.toLowerCase()}')}';
 
-/// Parses a CSS colour well enough to preview a swatch (#rgb / #rrggbb).
-Color? _swatch(String value) {
-  final v = value.trim();
-  if (!v.startsWith('#')) return null;
-  final hex = v.substring(1);
-  final full = hex.length == 3
-      ? hex.split('').map((c) => '$c$c').join()
-      : hex.length == 6
-          ? hex
-          : null;
-  if (full == null) return null;
-  final n = int.tryParse(full, radix: 16);
-  return n == null ? null : Color(0xFF000000 | n);
-}
-
 class CanvasDesignSheet extends ConsumerStatefulWidget {
-  const CanvasDesignSheet({required this.cwd, super.key});
+  const CanvasDesignSheet({
+    required this.sessionId,
+    required this.cwd,
+    super.key,
+  });
 
+  final String sessionId;
   final String cwd;
 
   @override
@@ -129,6 +120,32 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
       });
     } on Object catch (_) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Hand a one-click job to the agent: read the project's real theme and
+  /// record it, or draw the system as a canvas.
+  Future<void> _task(String kind) async {
+    try {
+      await ref.read(canvasApiProvider).runDesignTask(
+            sessionId: widget.sessionId,
+            cwd: widget.cwd,
+            task: kind,
+          );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.sessions.inspector.canvas.designTaskSent)),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.sessions.inspector.shared.insertFailedGeneric(error: '$e'),
+          ),
+        ),
+      );
     }
   }
 
@@ -226,6 +243,25 @@ class _CanvasDesignSheetState extends ConsumerState<CanvasDesignSheet> {
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                       children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton.tonalIcon(
+                              onPressed: () => unawaited(_task('extract')),
+                              icon: const Icon(Icons.travel_explore, size: 16),
+                              label:
+                                  Text(t.sessions.inspector.canvas.extractBtn),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () => unawaited(_task('showcase')),
+                              icon: const Icon(Icons.dashboard_outlined, size: 16),
+                              label:
+                                  Text(t.sessions.inspector.canvas.showcaseBtn),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         Text(
                           t.sessions.inspector.canvas.paletteLabel,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -378,15 +414,35 @@ class _TokenField extends StatelessWidget {
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: controller,
               builder: (context, value, _) {
-                final c = _swatch(value.text);
-                return Container(
-                  width: 18,
-                  height: 18,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: c ?? Theme.of(context).colorScheme.surfaceContainerHighest,
+                final c = parseHexColor(value.text);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    // Tap the swatch to choose a colour — nobody should have to
+                    // know a colour code to set a design system.
+                    onTap: () async {
+                      final picked = await pickCanvasColor(
+                        context,
+                        c ?? const Color(0xFF888888),
+                      );
+                      if (picked != null) controller.text = picked;
+                    },
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: c ??
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Theme.of(context).dividerColor),
+                      ),
+                      child: c == null
+                          ? Icon(Icons.colorize,
+                              size: 13,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant)
+                          : null,
+                    ),
                   ),
                 );
               },

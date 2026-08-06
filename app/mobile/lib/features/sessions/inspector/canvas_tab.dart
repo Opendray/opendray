@@ -443,7 +443,10 @@ class _CanvasTabState extends ConsumerState<CanvasTab>
                 showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
-                  builder: (_) => CanvasDesignSheet(cwd: widget.cwd),
+                  builder: (_) => CanvasDesignSheet(
+                    sessionId: widget.sessionId,
+                    cwd: widget.cwd,
+                  ),
                 ),
               ),
             ),

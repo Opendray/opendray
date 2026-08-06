@@ -22,6 +22,7 @@ import (
 //	GET    /canvas/focus?cwd=     → {slug, title, kind}
 //	GET    /canvas/design?cwd=    → DesignSystem                             (tokens + style notes)
 //	POST   /canvas/design         {cwd, tokens, notes}                       → 200 DesignSystem
+//	POST   /canvas/design/task    {session_id, cwd, task}                    → 202 (extract | showcase)
 //	GET    /canvas/{id}           → Artifact (with html)                     (panel render)
 //	POST   /canvas/{id}/feedback  {session_id, message?, annotations[]}      → 202 (seeded into the session)
 //	DELETE /canvas/{id}           → 204
@@ -50,6 +51,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/focus", h.getFocus)
 		r.Get("/design", h.getDesign)
 		r.Post("/design", h.setDesign)
+		r.Post("/design/task", h.designTask)
 		r.Get("/{id}", h.get)
 		r.Post("/{id}/feedback", h.feedback)
 		r.Delete("/{id}", h.remove)
@@ -232,6 +234,28 @@ func (h *Handlers) setDesign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, d)
+}
+
+// designTask hands the operator's one-click design-system jobs to the agent:
+// read the project's real theme and record it, or draw the system as a canvas.
+func (h *Handlers) designTask(w http.ResponseWriter, r *http.Request) {
+	if !h.ready(w) {
+		return
+	}
+	var body struct {
+		SessionID string `json:"session_id"`
+		Cwd       string `json:"cwd"`
+		Task      string `json:"task"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if err := h.svc.RequestDesignTask(r.Context(), body.SessionID, body.Cwd, body.Task); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]string{"status": "requested"})
 }
 
 func (h *Handlers) feedback(w http.ResponseWriter, r *http.Request) {

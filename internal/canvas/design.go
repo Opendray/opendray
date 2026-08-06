@@ -191,6 +191,34 @@ func (d DesignSystem) PromptBlock() string {
 	return b.String()
 }
 
+// Design tasks the operator can hand to the agent from the panel. Both are
+// things people ask for in words and get inconsistently; making them buttons
+// with a gateway-owned prompt means the wording stays in step with the token
+// vocabulary instead of drifting per surface.
+const (
+	// TaskExtract — read the project's real theme and record it as the system.
+	TaskExtract = "extract"
+	// TaskShowcase — render the system as a canvas the operator can look at.
+	TaskShowcase = "showcase"
+)
+
+// DesignTaskPrompt returns the seeded prompt for a design task, or "" if the
+// task is unknown.
+func DesignTaskPrompt(task string) string {
+	switch task {
+	case TaskExtract:
+		return "[Canvas design system] The operator asked you to set up this project's canvas design system FROM THE REAL CODE — do not invent values. " +
+			"Read what the project actually uses: the Tailwind config, CSS custom properties (`:root` / `.dark` / `@theme` blocks), the global stylesheet, existing components, and CLAUDE.md if it records conventions. " +
+			"Then call the `canvas_design` MCP tool once with BOTH `tokens` (light) and `darkTokens` (the dark counterparts of the colour tokens), plus `notes` describing the style rules tokens can't express — density, what to avoid, how buttons and accents are used — inferred from the same code. " +
+			"Prefer the project's own colour notation (keep oklch if that's what it uses). If the project has no theme yet, say so plainly and ask the operator to pick a palette in the panel instead of inventing one."
+	case TaskShowcase:
+		return "[Canvas design system] The operator wants to SEE this project's design system. Render it to the Canvas with `canvas_render` using kind=\"doc\" and slug=\"design-system\" (re-render that slug if it already exists). " +
+			"Show, in this order: a swatch per colour token with its name and CSS variable; a table of the type / radius / spacing / shadow tokens with a live sample of each; a small set of components (buttons in both forms, a chip, an input, a card) built ONLY from the tokens; and the style rules written out. " +
+			"Critical: use `var(--od-…)` for every single value — do not hard-code one colour, size or radius. That way the page doubles as proof the tokens are live, and it restyles itself when a token changes. It must read correctly in BOTH light and dark, which it will if you only use the variables."
+	}
+	return ""
+}
+
 // GetDesign returns the project's design system (zero value when unset).
 func (s *Store) GetDesign(ctx context.Context, cwd string) (DesignSystem, error) {
 	cwd = strings.TrimSpace(cwd)

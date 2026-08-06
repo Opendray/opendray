@@ -6823,6 +6823,9 @@ class _TranslationsSessionsInspectorCanvasEs extends TranslationsSessionsInspect
 	@override String get paletteRose => 'Rosa';
 	@override String get paletteViolet => 'Violeta';
 	@override String get paletteGraphite => 'Grafito';
+	@override String get extractBtn => 'Leer del proyecto';
+	@override String get showcaseBtn => 'Ver como lienzo';
+	@override String get designTaskSent => 'Enviado al agente: mira la sesión.';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7552,6 +7555,12 @@ class _TranslationsWebSessionsInspectorCanvasEs extends TranslationsWebSessionsI
 	@override String get themeDark => 'Oscuro';
 	@override String get themeLightHint => 'la paleta base';
 	@override String get themeDarkHint => 'vacío = hereda el valor claro';
+	@override String get extractBtn => 'Leer del proyecto';
+	@override String get extractHint => 'Pide al agente que lea el tema real del proyecto (config de Tailwind, variables CSS, componentes) y lo rellene: preciso y sin escribir códigos de color';
+	@override String get showcaseBtn => 'Ver como lienzo';
+	@override String get showcaseHint => 'Pide al agente que dibuje el sistema de diseño como un lienzo: muestras, escala tipográfica y componentes, todo hecho con los tokens';
+	@override String get designTaskSent => 'Enviado al agente: mira la sesión.';
+	@override String get designTaskFailed => 'No se pudo enviar la solicitud';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9953,6 +9962,12 @@ extension on TranslationsEs {
 			'web.sessions.inspector.canvas.themeDark' => 'Oscuro',
 			'web.sessions.inspector.canvas.themeLightHint' => 'la paleta base',
 			'web.sessions.inspector.canvas.themeDarkHint' => 'vacío = hereda el valor claro',
+			'web.sessions.inspector.canvas.extractBtn' => 'Leer del proyecto',
+			'web.sessions.inspector.canvas.extractHint' => 'Pide al agente que lea el tema real del proyecto (config de Tailwind, variables CSS, componentes) y lo rellene: preciso y sin escribir códigos de color',
+			'web.sessions.inspector.canvas.showcaseBtn' => 'Ver como lienzo',
+			'web.sessions.inspector.canvas.showcaseHint' => 'Pide al agente que dibuje el sistema de diseño como un lienzo: muestras, escala tipográfica y componentes, todo hecho con los tokens',
+			'web.sessions.inspector.canvas.designTaskSent' => 'Enviado al agente: mira la sesión.',
+			'web.sessions.inspector.canvas.designTaskFailed' => 'No se pudo enviar la solicitud',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -10131,14 +10146,14 @@ extension on TranslationsEs {
 			'web.memoryWorkers.modelLabel' => 'Modelo',
 			'web.memoryWorkers.modelHint' => 'Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI.',
 			'web.memoryWorkers.modelCliDefault' => 'Predeterminado del CLI (último)',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.modelCustom' => 'Personalizado…',
 			'web.memoryWorkers.modelCustomPlaceholder' => 'id exacto del modelo',
 			'web.memoryWorkers.modelBackToList' => 'Lista',
 			'web.memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
 			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => 'El enrutado de ${label} está guardado, pero su puerta de función está APAGADA en Server Settings — no se ejecutará nada hasta que la actives allí.',
 			'web.memoryWorkers.infraGateOpen' => 'Activarla',
@@ -10645,14 +10660,14 @@ extension on TranslationsEs {
 			'web.providers.detail.alreadyLatestToast' => 'Ya está actualizado',
 			'web.providers.detail.updateFailedToast' => 'Error al actualizar',
 			'web.providers.detail.updateUnavailable' => 'La actualización dentro de la app no está disponible aquí',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.configForm.selectPlaceholder' => 'Selecciona…',
 			'web.providers.configForm.defaultOption' => '(predeterminado)',
 			'web.providers.configForm.switchOn' => 'Activado',
 			'web.providers.configForm.switchOff' => 'Desactivado',
 			'web.providers.configForm.showSecret' => 'Mostrar secreto',
 			'web.providers.configForm.hideSecret' => 'Ocultar secreto',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.claudeAccounts.title' => 'Cuentas de Claude',
 			'web.providers.claudeAccounts.importLocal' => 'Importar local',
 			'web.providers.claudeAccounts.importLocalTooltip' => 'Escanea ~/.claude-accounts/ en el host del gateway y registra cualquier directorio nuevo. El botón solo funciona en el host del gateway.',
@@ -11159,14 +11174,14 @@ extension on TranslationsEs {
 			'web.backups.backupsTab.backupNow' => 'Hacer copia ahora',
 			'web.backups.backupsTab.triggering' => 'Lanzando…',
 			'web.backups.backupsTab.includeConfig' => 'incluir config.toml',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.fullInstance' => 'Instancia completa',
 			'web.backups.backupsTab.fullInstanceHint' => 'Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.',
 			'web.backups.backupsTab.restoreFromFile' => 'Restaurar desde archivo',
 			'web.backups.backupsTab.refresh' => 'Actualizar',
 			'web.backups.backupsTab.queuedToast' => 'Copia de seguridad en cola',
 			'web.backups.backupsTab.triggerFailedToast' => 'Error al lanzar',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.listFailedToast' => 'No se pudieron listar las copias de seguridad',
 			'web.backups.backupsTab.deleteConfirm' => ({required Object id}) => '¿Eliminar la copia de seguridad ${id}? El blob se elimina de su destino.',
 			'web.backups.backupsTab.deletedToast' => 'Copia de seguridad eliminada',
@@ -11673,14 +11688,14 @@ extension on TranslationsEs {
 			'web.settings.about.upgradeAnyway' => 'Actualizar de todos modos',
 			'web.logViewer.filterPlaceholder' => 'Filtrar…',
 			'web.logViewer.debugTooltip' => 'Recuento de debug',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.infoTooltip' => 'Recuento de info',
 			'web.logViewer.warnTooltip' => 'Recuento de advertencias',
 			'web.logViewer.errorTooltip' => 'Recuento de errores',
 			'web.logViewer.streaming' => 'Transmitiendo',
 			'web.logViewer.disconnected' => 'Desconectado',
 			'web.logViewer.live' => 'en directo',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.offline' => 'sin conexión',
 			'web.logViewer.pauseTooltip' => 'Pausar el desplazamiento automático',
 			'web.logViewer.resumeTooltip' => 'Reanudar el desplazamiento automático',
@@ -12187,14 +12202,14 @@ extension on TranslationsEs {
 			'web.database.panel.openWorkbench' => 'Abrir banco de trabajo',
 			'web.database.workbench.title' => 'Banco de trabajo de BD',
 			'web.roundTable.title' => 'Mesa redonda',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.',
 			'web.roundTable.kNew' => 'Nueva mesa redonda',
 			'web.roundTable.loading' => 'Cargando…',
 			'web.roundTable.empty' => 'Aún no hay mesas redondas.',
 			'web.roundTable.selectHint' => 'Selecciona una mesa redonda para abrir el chat.',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.you' => 'Tú',
 			'web.roundTable.summary' => 'Resumen',
 			'web.roundTable.dialog.title' => 'Nueva mesa redonda',
@@ -12644,6 +12659,9 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.paletteRose' => 'Rosa',
 			'sessions.inspector.canvas.paletteViolet' => 'Violeta',
 			'sessions.inspector.canvas.paletteGraphite' => 'Grafito',
+			'sessions.inspector.canvas.extractBtn' => 'Leer del proyecto',
+			'sessions.inspector.canvas.showcaseBtn' => 'Ver como lienzo',
+			'sessions.inspector.canvas.designTaskSent' => 'Enviado al agente: mira la sesión.',
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12698,6 +12716,8 @@ extension on TranslationsEs {
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'Configuración JSON, nombre, transport: stdio, command, args…',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.descriptionPlaceholder' => 'Descripción opcional de una línea',
 			'mcp.editor.validateJsonObject' => 'El cuerpo debe ser un objeto JSON',
 			'mcp.editor.validateJsonInvalid' => ({required Object error}) => 'JSON no válido: ${error}',
@@ -12707,8 +12727,6 @@ extension on TranslationsEs {
 			'mcp.editor.jsonLabel' => 'JSON del servidor',
 			'mcp.editor.jsonSchemaHelp' => 'Esquema: transport debe ser stdio, http o sse. Para stdio define command + args. Para http/sse define url + headers. Usa \$secret:KEY para referenciar secretos del vault.',
 			'mcp.editor.idLabel' => 'id (segmento de URL, alfanumérico en minúsculas / guion / guion bajo)',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.editor.idRequired' => 'el id es obligatorio',
 			'mcp.editor.saving' => 'Guardando…',
 			'mcp.editor.save' => 'Guardar',
@@ -13212,6 +13230,8 @@ extension on TranslationsEs {
 			'backupSchedules.targetLabel' => 'Destinos',
 			'backupSchedules.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Intervalo',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No hay destinos de copia de seguridad configurados. Añade uno desde el panel de administración web o la pantalla de Destinos.',
@@ -13221,8 +13241,6 @@ extension on TranslationsEs {
 			'backupSchedules.errorPrefixCreate' => 'Error al crear',
 			'backupSchedules.errorPrefixUpdate' => 'Error al actualizar',
 			'backupSchedules.errorPrefixDelete' => 'Error al eliminar',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Elimina la especificación recurrente para el destino ${targetId}. Los blobs de copia de seguridad existentes no se modifican.',
 			'backupSchedules.emptyList' => 'Aún no hay programaciones.\nToca "Nueva" para crear una.',
 			'backupSchedules.validatePickTarget' => 'Elige un destino.',
@@ -13726,6 +13744,8 @@ extension on TranslationsEs {
 			'about.gateway.releaseNotes' => 'Notas de la versión',
 			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
 			'settings.title' => 'Ajustes',
+			_ => null,
+		} ?? switch (path) {
 			'settings.language.section' => 'Idioma',
 			'settings.language.system' => 'Sistema',
 			'settings.language.systemSubtitle' => 'Sigue la configuración de idioma de tu teléfono',
@@ -13735,8 +13755,6 @@ extension on TranslationsEs {
 			'settings.appearance.section' => 'Apariencia',
 			'settings.appearance.system' => 'Sistema',
 			'settings.appearance.systemSubtitle' => 'Sigue la configuración de apariencia de tu teléfono',
-			_ => null,
-		} ?? switch (path) {
 			'settings.appearance.light' => 'Claro',
 			'settings.appearance.lightSubtitle' => 'Usa siempre la paleta clara',
 			'settings.appearance.dark' => 'Oscuro',

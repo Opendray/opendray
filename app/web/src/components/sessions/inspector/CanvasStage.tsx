@@ -510,7 +510,7 @@ export function CanvasStage({ sessionId, cwd, variant, toolbarExtra }: CanvasSta
           {t('web.sessions.inspector.canvas.designTitle')}
         </button>
       </div>
-      {designOpen && <DesignSystemSheet cwd={cwd} onClose={() => setDesignOpen(false)} />}
+      {designOpen && <DesignSystemSheet sessionId={sessionId} cwd={cwd} onClose={() => setDesignOpen(false)} />}
 
       {/* Canvas list. Picking one only PREVIEWS it — free. The dot marks the
           workspace: the canvas the agent works on and resolves "this canvas" to

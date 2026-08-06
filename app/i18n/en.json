@@ -364,7 +364,13 @@
           "themeLight": "Light",
           "themeDark": "Dark",
           "themeLightHint": "the base palette",
-          "themeDarkHint": "blank = inherits the light value"
+          "themeDarkHint": "blank = inherits the light value",
+          "extractBtn": "Read from project",
+          "extractHint": "Ask the agent to read the project's real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type",
+          "showcaseBtn": "Show as canvas",
+          "showcaseHint": "Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens",
+          "designTaskSent": "Sent to the agent — watch the session.",
+          "designTaskFailed": "Could not send the request"
         }
       },
       "ended": {
@@ -3816,7 +3822,10 @@
         "paletteAmber": "Amber",
         "paletteRose": "Rose",
         "paletteViolet": "Violet",
-        "paletteGraphite": "Graphite"
+        "paletteGraphite": "Graphite",
+        "extractBtn": "Read from project",
+        "showcaseBtn": "Show as canvas",
+        "designTaskSent": "Sent to the agent — watch the session."
       }
     },
     "spawnSheet": {

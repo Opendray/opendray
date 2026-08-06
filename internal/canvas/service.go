@@ -208,6 +208,28 @@ func (s *Service) designBlock(ctx context.Context, cwd string) string {
 	return d.PromptBlock()
 }
 
+// RequestDesignTask seeds one of the canned design-system tasks (read the real
+// theme / show me the system) into the session. The prompt lives in the gateway
+// so every surface sends the same thing.
+func (s *Service) RequestDesignTask(ctx context.Context, sessionID, cwd, task string) error {
+	if s.inject == nil {
+		return fmt.Errorf("canvas: request injection not configured")
+	}
+	if strings.TrimSpace(sessionID) == "" {
+		return fmt.Errorf("canvas: session_id is required")
+	}
+	prompt := DesignTaskPrompt(strings.TrimSpace(task))
+	if prompt == "" {
+		return fmt.Errorf("canvas: unknown design task %q", task)
+	}
+	// The showcase has to know the tokens it is drawing; the extract is about
+	// to write them, so telling it what's already there would only bias it.
+	if task == TaskShowcase {
+		prompt += s.designBlock(ctx, cwd)
+	}
+	return s.inject.Seed(ctx, sessionID, prompt)
+}
+
 func formatDesignRequest(prompt, targetSlug, targetTitle, kind string) string {
 	var b strings.Builder
 	b.WriteString("[Canvas request from the operator] ")

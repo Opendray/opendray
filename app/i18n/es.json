@@ -364,7 +364,13 @@
           "themeLight": "Claro",
           "themeDark": "Oscuro",
           "themeLightHint": "la paleta base",
-          "themeDarkHint": "vacío = hereda el valor claro"
+          "themeDarkHint": "vacío = hereda el valor claro",
+          "extractBtn": "Leer del proyecto",
+          "extractHint": "Pide al agente que lea el tema real del proyecto (config de Tailwind, variables CSS, componentes) y lo rellene: preciso y sin escribir códigos de color",
+          "showcaseBtn": "Ver como lienzo",
+          "showcaseHint": "Pide al agente que dibuje el sistema de diseño como un lienzo: muestras, escala tipográfica y componentes, todo hecho con los tokens",
+          "designTaskSent": "Enviado al agente: mira la sesión.",
+          "designTaskFailed": "No se pudo enviar la solicitud"
         }
       },
       "ended": {
@@ -3816,7 +3822,10 @@
         "paletteAmber": "Ámbar",
         "paletteRose": "Rosa",
         "paletteViolet": "Violeta",
-        "paletteGraphite": "Grafito"
+        "paletteGraphite": "Grafito",
+        "extractBtn": "Leer del proyecto",
+        "showcaseBtn": "Ver como lienzo",
+        "designTaskSent": "Enviado al agente: mira la sesión."
       }
     },
     "spawnSheet": {

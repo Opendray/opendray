@@ -13377,6 +13377,15 @@ class TranslationsSessionsInspectorCanvasEn {
 
 	/// en: 'Graphite'
 	String get paletteGraphite => 'Graphite';
+
+	/// en: 'Read from project'
+	String get extractBtn => 'Read from project';
+
+	/// en: 'Show as canvas'
+	String get showcaseBtn => 'Show as canvas';
+
+	/// en: 'Sent to the agent — watch the session.'
+	String get designTaskSent => 'Sent to the agent — watch the session.';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -14826,6 +14835,24 @@ class TranslationsWebSessionsInspectorCanvasEn {
 
 	/// en: 'blank = inherits the light value'
 	String get themeDarkHint => 'blank = inherits the light value';
+
+	/// en: 'Read from project'
+	String get extractBtn => 'Read from project';
+
+	/// en: 'Ask the agent to read the project's real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type'
+	String get extractHint => 'Ask the agent to read the project\'s real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type';
+
+	/// en: 'Show as canvas'
+	String get showcaseBtn => 'Show as canvas';
+
+	/// en: 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens'
+	String get showcaseHint => 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens';
+
+	/// en: 'Sent to the agent — watch the session.'
+	String get designTaskSent => 'Sent to the agent — watch the session.';
+
+	/// en: 'Could not send the request'
+	String get designTaskFailed => 'Could not send the request';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -18645,6 +18672,12 @@ extension on Translations {
 			'web.sessions.inspector.canvas.themeDark' => 'Dark',
 			'web.sessions.inspector.canvas.themeLightHint' => 'the base palette',
 			'web.sessions.inspector.canvas.themeDarkHint' => 'blank = inherits the light value',
+			'web.sessions.inspector.canvas.extractBtn' => 'Read from project',
+			'web.sessions.inspector.canvas.extractHint' => 'Ask the agent to read the project\'s real theme (Tailwind config, CSS variables, components) and fill this in — accurate, and no colour codes to type',
+			'web.sessions.inspector.canvas.showcaseBtn' => 'Show as canvas',
+			'web.sessions.inspector.canvas.showcaseHint' => 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens',
+			'web.sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
+			'web.sessions.inspector.canvas.designTaskFailed' => 'Could not send the request',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -18823,14 +18856,14 @@ extension on Translations {
 			'web.memoryWorkers.modelLabel' => 'Model',
 			'web.memoryWorkers.modelHint' => 'Pin the CLI model for this task (e.g. haiku for cheap chores). Empty = CLI default.',
 			'web.memoryWorkers.modelCliDefault' => 'CLI default (latest)',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.modelCustom' => 'Custom…',
 			'web.memoryWorkers.modelCustomPlaceholder' => 'exact model id',
 			'web.memoryWorkers.modelBackToList' => 'List',
 			'web.memoryWorkers.cliCodex' => 'Codex (codex exec)',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity (agy --print)',
 			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} routing is saved, but its feature gate is OFF in Server Settings — nothing will run until you enable it there.',
 			'web.memoryWorkers.infraGateOpen' => 'Enable it',
@@ -19337,14 +19370,14 @@ extension on Translations {
 			'web.providers.detail.alreadyLatestToast' => 'Already up to date',
 			'web.providers.detail.updateFailedToast' => 'Update failed',
 			'web.providers.detail.updateUnavailable' => 'In-app update not available here',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.configForm.selectPlaceholder' => 'Select…',
 			'web.providers.configForm.defaultOption' => '(default)',
 			'web.providers.configForm.switchOn' => 'On',
 			'web.providers.configForm.switchOff' => 'Off',
 			'web.providers.configForm.showSecret' => 'Show secret',
 			'web.providers.configForm.hideSecret' => 'Hide secret',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.claudeAccounts.title' => 'Claude accounts',
 			'web.providers.claudeAccounts.importLocal' => 'Import local',
 			'web.providers.claudeAccounts.importLocalTooltip' => 'Scan ~/.claude-accounts/ on the gateway host and register any new directories. The button is gateway-host only.',
@@ -19851,14 +19884,14 @@ extension on Translations {
 			'web.backups.backupsTab.backupNow' => 'Backup now',
 			'web.backups.backupsTab.triggering' => 'Triggering…',
 			'web.backups.backupsTab.includeConfig' => 'include config.toml',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.fullInstance' => 'Full instance',
 			'web.backups.backupsTab.fullInstanceHint' => 'Also bundle the vault (notes/skills/mcp), secrets.env and config.toml — everything needed to rebuild a working instance, not just its database.',
 			'web.backups.backupsTab.restoreFromFile' => 'Restore from file',
 			'web.backups.backupsTab.refresh' => 'Refresh',
 			'web.backups.backupsTab.queuedToast' => 'Backup queued',
 			'web.backups.backupsTab.triggerFailedToast' => 'Trigger failed',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.listFailedToast' => 'Failed to list backups',
 			'web.backups.backupsTab.deleteConfirm' => ({required Object id}) => 'Delete backup ${id}? The blob is removed from its target.',
 			'web.backups.backupsTab.deletedToast' => 'Backup deleted',
@@ -20365,14 +20398,14 @@ extension on Translations {
 			'web.settings.about.upgradeAnyway' => 'Upgrade anyway',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
 			'web.logViewer.debugTooltip' => 'Debug count',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.infoTooltip' => 'Info count',
 			'web.logViewer.warnTooltip' => 'Warn count',
 			'web.logViewer.errorTooltip' => 'Error count',
 			'web.logViewer.streaming' => 'Streaming',
 			'web.logViewer.disconnected' => 'Disconnected',
 			'web.logViewer.live' => 'live',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.offline' => 'offline',
 			'web.logViewer.pauseTooltip' => 'Pause auto-scroll',
 			'web.logViewer.resumeTooltip' => 'Resume auto-scroll',
@@ -20879,14 +20912,14 @@ extension on Translations {
 			'web.database.panel.openWorkbench' => 'Open workbench',
 			'web.database.workbench.title' => 'Database workbench',
 			'web.roundTable.title' => 'Round Table',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'A cross-vendor AI group chat. @mention claude, codex or antigravity and they reply in the thread — like a Telegram group, with a different vendor\'s model behind each member.',
 			'web.roundTable.kNew' => 'New round table',
 			'web.roundTable.loading' => 'Loading…',
 			'web.roundTable.empty' => 'No round tables yet.',
 			'web.roundTable.selectHint' => 'Select a round table to open the chat.',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.you' => 'You',
 			'web.roundTable.summary' => 'Summary',
 			'web.roundTable.dialog.title' => 'New round table',
@@ -21336,6 +21369,9 @@ extension on Translations {
 			'sessions.inspector.canvas.paletteRose' => 'Rose',
 			'sessions.inspector.canvas.paletteViolet' => 'Violet',
 			'sessions.inspector.canvas.paletteGraphite' => 'Graphite',
+			'sessions.inspector.canvas.extractBtn' => 'Read from project',
+			'sessions.inspector.canvas.showcaseBtn' => 'Show as canvas',
+			'sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -21390,6 +21426,8 @@ extension on Translations {
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.descriptionPlaceholder' => 'Optional one-liner',
 			'mcp.editor.validateJsonObject' => 'Body must be a JSON object',
 			'mcp.editor.validateJsonInvalid' => ({required Object error}) => 'Invalid JSON: ${error}',
@@ -21399,8 +21437,6 @@ extension on Translations {
 			'mcp.editor.jsonLabel' => 'Server JSON',
 			'mcp.editor.jsonSchemaHelp' => 'Schema: transport must be stdio, http or sse. For stdio set command + args. For http/sse set url + headers. Use \$secret:KEY to reference vault secrets.',
 			'mcp.editor.idLabel' => 'id (URL segment, lowercase alphanumeric / dash / underscore)',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.editor.idRequired' => 'id is required',
 			'mcp.editor.saving' => 'Saving…',
 			'mcp.editor.save' => 'Save',
@@ -21904,6 +21940,8 @@ extension on Translations {
 			'backupSchedules.targetLabel' => 'Targets',
 			'backupSchedules.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Interval',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
 			'backupSchedules.noTargets' => 'No backup targets configured. Add one from the web admin or the Targets screen.',
@@ -21913,8 +21951,6 @@ extension on Translations {
 			'backupSchedules.errorPrefixCreate' => 'Create failed',
 			'backupSchedules.errorPrefixUpdate' => 'Update failed',
 			'backupSchedules.errorPrefixDelete' => 'Delete failed',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => 'Removes the recurring spec for target ${targetId}. Existing backup blobs are not touched.',
 			'backupSchedules.emptyList' => 'No schedules yet.\nTap "New" to create one.',
 			'backupSchedules.validatePickTarget' => 'Pick a target.',
@@ -22418,6 +22454,8 @@ extension on Translations {
 			'about.gateway.releaseNotes' => 'Release notes',
 			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
+			_ => null,
+		} ?? switch (path) {
 			'settings.language.section' => 'Language',
 			'settings.language.system' => 'System',
 			'settings.language.systemSubtitle' => 'Follow your phone\'s language setting',
@@ -22427,8 +22465,6 @@ extension on Translations {
 			'settings.appearance.section' => 'Appearance',
 			'settings.appearance.system' => 'System',
 			'settings.appearance.systemSubtitle' => 'Follow your phone\'s appearance setting',
-			_ => null,
-		} ?? switch (path) {
 			'settings.appearance.light' => 'Light',
 			'settings.appearance.lightSubtitle' => 'Always use the light palette',
 			'settings.appearance.dark' => 'Dark',

@@ -6823,6 +6823,9 @@ class _TranslationsSessionsInspectorCanvasZh extends TranslationsSessionsInspect
 	@override String get paletteRose => '玫红';
 	@override String get paletteViolet => '紫罗兰';
 	@override String get paletteGraphite => '石墨';
+	@override String get extractBtn => '读取项目样式';
+	@override String get showcaseBtn => '生成配色画布';
+	@override String get designTaskSent => '已发送给 agent —— 留意会话。';
 }
 
 // Path: sessions.spawnSheet.bypass
@@ -7552,6 +7555,12 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get themeDark => '深色';
 	@override String get themeLightHint => '基础配色';
 	@override String get themeDarkHint => '留空 = 沿用浅色的值';
+	@override String get extractBtn => '读取项目样式';
+	@override String get extractHint => '让 agent 读取项目真实主题(Tailwind config、CSS 变量、现有组件)自动填写 —— 最准确,也不用手打任何色号';
+	@override String get showcaseBtn => '生成配色画布';
+	@override String get showcaseHint => '让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成';
+	@override String get designTaskSent => '已发送给 agent —— 留意会话。';
+	@override String get designTaskFailed => '发送请求失败';
 }
 
 // Path: web.memoryWorkers.tasks.gatekeeper
@@ -9953,6 +9962,12 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.themeDark' => '深色',
 			'web.sessions.inspector.canvas.themeLightHint' => '基础配色',
 			'web.sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色的值',
+			'web.sessions.inspector.canvas.extractBtn' => '读取项目样式',
+			'web.sessions.inspector.canvas.extractHint' => '让 agent 读取项目真实主题(Tailwind config、CSS 变量、现有组件)自动填写 —— 最准确,也不用手打任何色号',
+			'web.sessions.inspector.canvas.showcaseBtn' => '生成配色画布',
+			'web.sessions.inspector.canvas.showcaseHint' => '让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成',
+			'web.sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
+			'web.sessions.inspector.canvas.designTaskFailed' => '发送请求失败',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -10131,14 +10146,14 @@ extension on TranslationsZh {
 			'web.memoryWorkers.modelLabel' => '模型',
 			'web.memoryWorkers.modelHint' => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。',
 			'web.memoryWorkers.modelCliDefault' => 'CLI 默认（最新）',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.modelCustom' => '自定义…',
 			'web.memoryWorkers.modelCustomPlaceholder' => '精确模型 ID',
 			'web.memoryWorkers.modelBackToList' => '返回列表',
 			'web.memoryWorkers.cliCodex' => 'Codex（codex exec）',
 			'web.memoryWorkers.cliAntigravity' => 'Antigravity（agy --print）',
 			'web.memoryWorkers.cliGrok' => 'Grok (grok)',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.cliOpencode' => 'OpenCode (opencode run)',
 			'web.memoryWorkers.infraGateOff' => ({required Object label}) => '${label} 的路由已保存，但它的功能总开关在 Server Settings 中处于关闭状态——开启之前不会执行任何调用。',
 			'web.memoryWorkers.infraGateOpen' => '去开启',
@@ -10645,14 +10660,14 @@ extension on TranslationsZh {
 			'web.providers.detail.alreadyLatestToast' => '已是最新',
 			'web.providers.detail.updateFailedToast' => '更新失败',
 			'web.providers.detail.updateUnavailable' => '此处无法在应用内更新',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.configForm.selectPlaceholder' => '选择…',
 			'web.providers.configForm.defaultOption' => '(默认)',
 			'web.providers.configForm.switchOn' => '开',
 			'web.providers.configForm.switchOff' => '关',
 			'web.providers.configForm.showSecret' => '显示密钥',
 			'web.providers.configForm.hideSecret' => '隐藏密钥',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.claudeAccounts.title' => 'Claude 账号',
 			'web.providers.claudeAccounts.importLocal' => '导入本地',
 			'web.providers.claudeAccounts.importLocalTooltip' => '扫描网关主机上的 ~/.claude-accounts/ 目录并注册新的目录。该按钮仅在网关主机环境下工作。',
@@ -11159,14 +11174,14 @@ extension on TranslationsZh {
 			'web.backups.backupsTab.backupNow' => '立即备份',
 			'web.backups.backupsTab.triggering' => '触发中…',
 			'web.backups.backupsTab.includeConfig' => '包含 config.toml',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.backupsTab.fullInstance' => '完整实例',
 			'web.backups.backupsTab.fullInstanceHint' => '同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。',
 			'web.backups.backupsTab.restoreFromFile' => '从文件恢复',
 			'web.backups.backupsTab.refresh' => '刷新',
 			'web.backups.backupsTab.queuedToast' => '备份已排队',
 			'web.backups.backupsTab.triggerFailedToast' => '触发失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.listFailedToast' => '加载备份列表失败',
 			'web.backups.backupsTab.deleteConfirm' => ({required Object id}) => '删除备份 ${id}? 该 blob 将从目标中移除。',
 			'web.backups.backupsTab.deletedToast' => '备份已删除',
@@ -11673,14 +11688,14 @@ extension on TranslationsZh {
 			'web.settings.about.upgradeAnyway' => '仍然升级',
 			'web.logViewer.filterPlaceholder' => '过滤…',
 			'web.logViewer.debugTooltip' => 'Debug 计数',
+			_ => null,
+		} ?? switch (path) {
 			'web.logViewer.infoTooltip' => 'Info 计数',
 			'web.logViewer.warnTooltip' => 'Warn 计数',
 			'web.logViewer.errorTooltip' => 'Error 计数',
 			'web.logViewer.streaming' => '正在流式传输',
 			'web.logViewer.disconnected' => '已断开',
 			'web.logViewer.live' => '实时',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.offline' => '离线',
 			'web.logViewer.pauseTooltip' => '暂停自动滚动',
 			'web.logViewer.resumeTooltip' => '恢复自动滚动',
@@ -12187,14 +12202,14 @@ extension on TranslationsZh {
 			'web.database.panel.openWorkbench' => '展开工作台',
 			'web.database.workbench.title' => '数据库工作台',
 			'web.roundTable.title' => '圆桌',
+			_ => null,
+		} ?? switch (path) {
 			'web.roundTable.experimental' => '实验性',
 			'web.roundTable.subtitle' => '跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。',
 			'web.roundTable.kNew' => '新建圆桌',
 			'web.roundTable.loading' => '加载中…',
 			'web.roundTable.empty' => '还没有圆桌。',
 			'web.roundTable.selectHint' => '选择一个圆桌打开群聊。',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.you' => '你',
 			'web.roundTable.summary' => '总结',
 			'web.roundTable.dialog.title' => '新建圆桌',
@@ -12644,6 +12659,9 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.paletteRose' => '玫红',
 			'sessions.inspector.canvas.paletteViolet' => '紫罗兰',
 			'sessions.inspector.canvas.paletteGraphite' => '石墨',
+			'sessions.inspector.canvas.extractBtn' => '读取项目样式',
+			'sessions.inspector.canvas.showcaseBtn' => '生成配色画布',
+			'sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12698,6 +12716,8 @@ extension on TranslationsZh {
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
+			_ => null,
+		} ?? switch (path) {
 			'mcp.editor.descriptionPlaceholder' => '可选的一行说明',
 			'mcp.editor.validateJsonObject' => '正文必须是 JSON 对象',
 			'mcp.editor.validateJsonInvalid' => ({required Object error}) => '无效的 JSON：${error}',
@@ -12707,8 +12727,6 @@ extension on TranslationsZh {
 			'mcp.editor.jsonLabel' => '服务器 JSON',
 			'mcp.editor.jsonSchemaHelp' => 'Schema：transport 必须是 stdio、http 或 sse。stdio 需要 command + args。http/sse 需要 url + headers。用 \$secret:KEY 引用密钥库的密钥。',
 			'mcp.editor.idLabel' => 'id（URL 片段，小写字母数字 / 横线 / 下划线）',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.editor.idRequired' => 'id 必填',
 			'mcp.editor.saving' => '保存中…',
 			'mcp.editor.save' => '保存',
@@ -13212,6 +13230,8 @@ extension on TranslationsZh {
 			'backupSchedules.targetLabel' => '目标',
 			'backupSchedules.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'backupSchedules.intervalLabel' => '间隔',
+			_ => null,
+		} ?? switch (path) {
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
 			'backupSchedules.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
 			'backupSchedules.noTargets' => '未配置任何备份目标。请从 Web 管理端或「目标」屏添加。',
@@ -13221,8 +13241,6 @@ extension on TranslationsZh {
 			'backupSchedules.errorPrefixCreate' => '创建失败',
 			'backupSchedules.errorPrefixUpdate' => '更新失败',
 			'backupSchedules.errorPrefixDelete' => '删除失败',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.deleteBody' => ({required Object targetId}) => '移除目标 ${targetId} 的定期规格。已存在的备份不受影响。',
 			'backupSchedules.emptyList' => '暂无计划。\n点击「新建」创建一个。',
 			'backupSchedules.validatePickTarget' => '请选择一个目标。',
@@ -13726,6 +13744,8 @@ extension on TranslationsZh {
 			'about.gateway.releaseNotes' => '更新说明',
 			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
+			_ => null,
+		} ?? switch (path) {
 			'settings.language.section' => '语言',
 			'settings.language.system' => '跟随系统',
 			'settings.language.systemSubtitle' => '跟随手机的语言设置',
@@ -13735,8 +13755,6 @@ extension on TranslationsZh {
 			'settings.appearance.section' => '外观',
 			'settings.appearance.system' => '跟随系统',
 			'settings.appearance.systemSubtitle' => '跟随手机的外观设置',
-			_ => null,
-		} ?? switch (path) {
 			'settings.appearance.light' => '浅色',
 			'settings.appearance.lightSubtitle' => '始终使用浅色主题',
 			'settings.appearance.dark' => '深色',
