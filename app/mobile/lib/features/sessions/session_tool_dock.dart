@@ -43,10 +43,10 @@ class SessionToolDock extends StatelessWidget {
                     openSessionToolSheet(context, session, SessionTool.files),
               ),
               _DockItem(
-                icon: sessionToolIcon(SessionTool.git),
-                label: sessionToolLabel(SessionTool.git),
+                icon: sessionToolIcon(SessionTool.canvas),
+                label: sessionToolLabel(SessionTool.canvas),
                 onTap: () =>
-                    openSessionToolSheet(context, session, SessionTool.git),
+                    openSessionToolSheet(context, session, SessionTool.canvas),
               ),
               _DockItem(
                 icon: sessionToolIcon(SessionTool.database),
