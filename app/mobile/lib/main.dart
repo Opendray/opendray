@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/core/lifecycle/resume_refresh.dart';
 import 'package:opendray/core/locale/locale_controller.dart';
 import 'package:opendray/core/routing/app_router.dart';
 import 'package:opendray/core/theme/app_theme.dart';
@@ -13,7 +14,9 @@ void main() {
   LocaleSettings.useDeviceLocale();
   runApp(
     TranslationProvider(
-      child: const ProviderScope(child: OpendrayApp()),
+      child: const ProviderScope(
+        child: ResumeRefresh(child: OpendrayApp()),
+      ),
     ),
   );
 }
