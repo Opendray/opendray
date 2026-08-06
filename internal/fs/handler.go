@@ -646,7 +646,15 @@ func resolveWithinRoot(target, root string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("path outside allowed root: %w", err)
 	}
-	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+	if rel != "." && !filepath.IsLocal(rel) {
+		return "", errors.New("path is outside the allowed root")
+	}
+	// A canonical (Cleaned + symlink-resolved) path that survived the
+	// containment check above can only carry ".." as part of an
+	// oddly-named file ("notes..md"). Rejecting that residue too keeps
+	// the returned value provably free of traversal sequences, at the
+	// cost of refusing such names.
+	if strings.Contains(targetResolved, "..") {
 		return "", errors.New("path is outside the allowed root")
 	}
 	return targetResolved, nil

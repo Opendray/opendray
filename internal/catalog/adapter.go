@@ -1087,7 +1087,7 @@ func mergeMCPServers(vault, extra []MCPServer) []MCPServer {
 	for _, s := range extra {
 		overrides[s.Name] = true
 	}
-	out := make([]MCPServer, 0, len(vault)+len(extra))
+	out := make([]MCPServer, 0, len(vault))
 	for _, s := range vault {
 		if overrides[s.Name] {
 			continue // provider config will replace this entry
