@@ -83,6 +83,10 @@ func (h *Handler) put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.svc.Update(&patch); err != nil {
+		if errors.Is(err, ErrInvalidConfig) {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}

@@ -2118,6 +2118,10 @@
           "title": "General",
           "desc": "Dirección de escucha, cuenta de operador, TTL del token."
         },
+        "host": {
+          "title": "Energía del host",
+          "desc": "Mantén la máquina accesible desde el móvil y la web mientras está inactiva."
+        },
         "logging": {
           "title": "Registro",
           "desc": "Verbosidad, formato y seguimiento en vivo."
@@ -2488,7 +2492,32 @@
         "defaultOff": "Por defecto (off)"
       },
       "memoryRuntimeBanner": "El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).",
-      "memoryRuntimeBannerButton": "Abrir ajustes de Cortex"
+      "memoryRuntimeBannerButton": "Abrir ajustes de Cortex",
+      "host": {
+        "intro": "Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.",
+        "platformNote": "Solo macOS. En Linux y Windows este ajuste se acepta y se ignora: esos hosts no se suspenden por inactividad en una instalación de servidor normal. Nunca se bloquea una suspensión deliberada (cerrar la tapa, menú Apple → Reposo), y la aserción se libera si opendray termina o es forzado a cerrar.",
+        "modes": {
+          "ac": {
+            "label": "Despierto con corriente",
+            "desc": "La máquina no se duerme por inactividad mientras está enchufada, así que el móvil y la web conectan al instante. Con batería duerme con normalidad. La pantalla se sigue apagando igual."
+          },
+          "always": {
+            "label": "Despierto con cualquier alimentación",
+            "desc": "Nunca se duerme por inactividad, tampoco con batería.",
+            "caveat": "Agotará la batería de un portátil desenchufado."
+          },
+          "on_demand": {
+            "label": "Duerme inactivo, despierta con tráfico",
+            "desc": "La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.",
+            "caveat": "Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento."
+          },
+          "off": {
+            "label": "No tocar la energía",
+            "desc": "opendray no interviene en absoluto en la máquina.",
+            "caveat": "La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto."
+          }
+        }
+      }
     },
     "settings": {
       "title": "Ajustes",
@@ -5202,6 +5231,7 @@
       "loadFailed": "No se pudieron cargar los ajustes del servidor",
       "sections": {
         "general": "General",
+        "host": "Energía del host",
         "logging": "Registro",
         "sessions": "Sessions",
         "vault": "Vault",
@@ -5214,6 +5244,7 @@
       },
       "sectionDescriptions": {
         "general": "Dirección de escucha, cuenta del operador, TTL del token.",
+        "host": "Mantén esta máquina accesible mientras está inactiva.",
         "logging": "Verbosidad, formato y ruta del log en disco.",
         "sessions": "Umbrales de detección de inactividad.",
         "vault": "Notas, skills y raíz versionada con git.",
@@ -5288,7 +5319,13 @@
         "cleanerEnabled": "Cleaner",
         "cleanerHelper": "Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.",
         "knowledgeEnabled": "Grafo de conocimiento",
-        "knowledgeHelper": "La capa estructurada de entidades/playbooks/skills sobre la memoria."
+        "knowledgeHelper": "La capa estructurada de entidades/playbooks/skills sobre la memoria.",
+        "preventIdleSleep": "Reposo por inactividad",
+        "preventIdleSleepHelper": "Un Mac dormido apaga su red, así que la pasarela deja de responder desde el móvil y la web. «Despierto con corriente» es lo predeterminado y lo mantiene accesible (la pantalla se sigue apagando). «Dormir y despertar con tráfico» ahorra energía pero requiere Activar por acceso de red, y la primera petición tras dormir es lenta. Solo macOS.",
+        "sleepModeAc": "Despierto con corriente",
+        "sleepModeAlways": "Despierto con cualquier alimentación",
+        "sleepModeOnDemand": "Dormir, despertar con tráfico",
+        "sleepModeOff": "No tocar la energía"
       },
       "validateInteger": "\"{field}\" debe ser un entero",
       "validateNumber": "\"{field}\" debe ser un número",

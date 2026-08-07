@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -92,12 +93,15 @@ func TestService_Update_OverwritesSensitiveWhenProvided(t *testing.T) {
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "config.toml")
 	writeToml(t, path, config.Config{
-		Admin: config.AdminConfig{Password: "oldpass"},
+		Listen:   "0.0.0.0:8770",
+		Database: config.DatabaseConfig{URL: "postgres://u@localhost/db"},
+		Admin:    config.AdminConfig{Password: "oldpass"},
 	})
 
 	svc := NewService(path, nil)
 	patch := config.Config{
-		Admin: config.AdminConfig{Password: "newpass"},
+		Listen: "0.0.0.0:8770",
+		Admin:  config.AdminConfig{Password: "newpass"},
 	}
 	if err := svc.Update(&patch); err != nil {
 		t.Fatal(err)
@@ -115,7 +119,10 @@ func TestService_Update_OverwritesSensitiveWhenProvided(t *testing.T) {
 func TestService_Update_AtomicWrite_NoDanglingTmp(t *testing.T) {
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "config.toml")
-	writeToml(t, path, config.Config{Listen: "0.0.0.0:8770"})
+	writeToml(t, path, config.Config{
+		Listen:   "0.0.0.0:8770",
+		Database: config.DatabaseConfig{URL: "postgres://u@localhost/db"},
+	})
 
 	svc := NewService(path, nil)
 	if err := svc.Update(&config.Config{Listen: "0.0.0.0:9000"}); err != nil {
@@ -134,6 +141,11 @@ func TestService_Update_PreservesProvidersSection(t *testing.T) {
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "config.toml")
 	writeToml(t, path, config.Config{
+		// listen + database.url are what the loader insists on; a
+		// round-trip test has to start from a config that would
+		// actually boot.
+		Listen:   "0.0.0.0:8770",
+		Database: config.DatabaseConfig{URL: "postgres://u@localhost/db"},
 		Providers: config.ProvidersConfig{
 			Claude: config.ClaudeProviderConfig{
 				HistoryRoots: []string{"/custom/claude"},
@@ -175,5 +187,95 @@ func writeToml(t *testing.T, path string, c config.Config) {
 	defer f.Close()
 	if err := toml.NewEncoder(f).Encode(c); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A PUT that would write a config the loader rejects must fail at save
+// time. Otherwise the write succeeds, the operator hits Restart, and
+// the gateway never comes back — with the offending field unnamed.
+func TestService_Update_RejectsConfigTheLoaderWouldReject(t *testing.T) {
+	tests := []struct {
+		name  string
+		patch func(*config.Config)
+	}{
+		{
+			name: "unknown host sleep mode",
+			patch: func(c *config.Config) {
+				c.Host.PreventIdleSleep = "sometimes"
+			},
+		},
+		{
+			name: "unparseable idle threshold",
+			patch: func(c *config.Config) {
+				c.Session.IdleThreshold = "half an hour"
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmp := t.TempDir()
+			path := filepath.Join(tmp, "config.toml")
+			original := config.Config{
+				Listen:   "0.0.0.0:8770",
+				Database: config.DatabaseConfig{URL: "postgres://u@localhost/db"},
+				Admin:    config.AdminConfig{User: "admin", Password: "pw"},
+			}
+			writeToml(t, path, original)
+
+			patch := original
+			patch.Database.URL = "" // as the UI sends it: stripped, merged back
+			patch.Admin.Password = ""
+			tt.patch(&patch)
+
+			svc := NewService(path, nil)
+			err := svc.Update(&patch)
+			if err == nil {
+				t.Fatal("Update accepted a config the loader would reject")
+			}
+			if !errors.Is(err, ErrInvalidConfig) {
+				t.Fatalf("err = %v, want it to wrap ErrInvalidConfig", err)
+			}
+
+			// The on-disk config must be untouched, not half-written.
+			var onDisk config.Config
+			if _, err := toml.DecodeFile(path, &onDisk); err != nil {
+				t.Fatalf("config no longer decodes: %v", err)
+			}
+			if err := onDisk.Validate(); err != nil {
+				t.Fatalf("a rejected PUT corrupted the stored config: %v", err)
+			}
+			if onDisk.Admin.Password != "pw" {
+				t.Fatalf("stored password changed: %q", onDisk.Admin.Password)
+			}
+		})
+	}
+}
+
+// The valid modes must all survive a round-trip, so the settings UI
+// can offer every one of them.
+func TestService_Update_AcceptsEveryHostSleepMode(t *testing.T) {
+	for _, mode := range []string{"", "ac", "always", "on_demand", "off"} {
+		t.Run("mode="+mode, func(t *testing.T) {
+			tmp := t.TempDir()
+			path := filepath.Join(tmp, "config.toml")
+			writeToml(t, path, config.Config{
+				Listen:   "0.0.0.0:8770",
+				Database: config.DatabaseConfig{URL: "postgres://u@localhost/db"},
+			})
+
+			svc := NewService(path, nil)
+			patch := config.Config{Listen: "0.0.0.0:8770"}
+			patch.Host.PreventIdleSleep = mode
+			if err := svc.Update(&patch); err != nil {
+				t.Fatalf("Update(%q) = %v", mode, err)
+			}
+			var onDisk config.Config
+			if _, err := toml.DecodeFile(path, &onDisk); err != nil {
+				t.Fatal(err)
+			}
+			if onDisk.Host.PreventIdleSleep != mode {
+				t.Fatalf("stored mode = %q, want %q", onDisk.Host.PreventIdleSleep, mode)
+			}
+		})
 	}
 }

@@ -56,6 +56,7 @@ import { PathInput } from './PathInput'
 // are looked up at render time via useServerSectionLabel().
 export const SERVER_SECTIONS = [
   { id: 'general' },
+  { id: 'host' },
   { id: 'logging' },
   { id: 'sessions' },
   { id: 'vault' },
@@ -90,6 +91,7 @@ export function useServerSectionLabel() {
 // — flag them so we can show "Restart required" when changed.
 const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   general: true,
+  host: true, // the power assertion is claimed once, at app.New
   logging: true,
   sessions: true,
   vault: true,
@@ -501,6 +503,43 @@ function SectionForm({
               />,
             )}
           </FormGroup>
+        </div>
+      )
+
+    case 'host':
+      return (
+        <div className="flex flex-col gap-5">
+          {/* This setting is about the machine, and the failure it
+              prevents is invisible from inside the app ("the gateway
+              is flaky" is really "the Mac went to sleep"), so the
+              section leads with the explanation rather than a bare
+              control. */}
+          <div className="rounded-md border border-border bg-card/30 px-3 py-2.5">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {t('web.serverSettings.host.intro')}
+            </p>
+          </div>
+          <ModeCards
+            value={c.host.prevent_idle_sleep || 'ac'}
+            options={HOST_SLEEP_MODES.map((m) => ({
+              value: m,
+              label: t(`web.serverSettings.host.modes.${m}.label`),
+              desc: t(`web.serverSettings.host.modes.${m}.desc`),
+              caveat:
+                m === 'ac'
+                  ? undefined
+                  : t(`web.serverSettings.host.modes.${m}.caveat`),
+            }))}
+            onChange={(v) =>
+              setDraft({ ...draft, host: { prevent_idle_sleep: v } })
+            }
+          />
+          <p className="text-[10px] font-mono text-muted-foreground/50">
+            host.prevent_idle_sleep
+          </p>
+          <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
+            {t('web.serverSettings.host.platformNote')}
+          </p>
         </div>
       )
 
@@ -1346,6 +1385,67 @@ function FieldRow({
   )
 }
 
+// HOST_SLEEP_MODES is the wire order of host.prevent_idle_sleep, most
+// reachable first. Kept next to the renderer so adding a mode in Go
+// surfaces one compile-time place to update here.
+const HOST_SLEEP_MODES = ['ac', 'always', 'on_demand', 'off'] as const
+
+// ModeCards renders mutually exclusive modes as radio-style rows with
+// room for a sentence of consequence each. Used where picking wrong
+// has a real cost the label alone can't convey.
+function ModeCards({
+  value,
+  options,
+  onChange,
+}: {
+  value: string
+  options: { value: string; label: string; desc: string; caveat?: string }[]
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {options.map((opt) => {
+        const active = opt.value === value
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            aria-pressed={active}
+            className={cn(
+              'text-left rounded-md border px-3 py-2.5 transition-colors',
+              active
+                ? 'border-accent/60 bg-accent/10'
+                : 'border-border bg-background hover:bg-card/40',
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  'size-3 rounded-full border shrink-0',
+                  active ? 'border-accent bg-accent' : 'border-muted-foreground/40',
+                )}
+              />
+              <span className="text-[12.5px] font-medium">{opt.label}</span>
+              <code className="text-[10px] font-mono text-muted-foreground/50">
+                {opt.value}
+              </code>
+            </div>
+            <p className="text-[11px] text-muted-foreground/80 leading-snug mt-1 ml-5">
+              {opt.desc}
+            </p>
+            {opt.caveat && (
+              <p className="text-[11px] text-amber-300/80 leading-snug mt-1 ml-5">
+                {opt.caveat}
+              </p>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function SegmentedSelect({
   value,
   options,
@@ -1529,6 +1629,9 @@ function mergeSection(
       // re-introduce the previous draft value.
       out.admin = { ...src.admin, password: '' }
       out.database = src.database
+      break
+    case 'host':
+      out.host = src.host
       break
     case 'logging':
       out.log = src.log

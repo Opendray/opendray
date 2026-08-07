@@ -42,6 +42,7 @@ class _Field {
     required this.kind,
     this.helper,
     this.options,
+    this.optionLabels,
     this.monospace = false,
     this.placeholder,
   });
@@ -54,6 +55,12 @@ class _Field {
   final String? helper;
   // For select kind only.
   final List<String>? options;
+  // Optional human labels for `options`, keyed by the raw wire value.
+  // Without this the dropdown shows the stored value verbatim, which
+  // is fine for 'debug'/'json' but not for values like 'on_demand'
+  // whose meaning isn't in the word. Missing keys fall back to the
+  // raw value.
+  final Map<String, String>? optionLabels;
   final bool monospace;
   final String? placeholder;
 }
@@ -112,6 +119,28 @@ List<_Section> _buildSections() => <_Section>[
         monospace: true,
         placeholder: '24h',
         helper: t.settings.serverSettings.fields.tokenTtlHelper,
+      ),
+    ],
+  ),
+  _Section(
+    id: 'host',
+    title: t.settings.serverSettings.sections.host,
+    description: t.settings.serverSettings.sectionDescriptions.host,
+    restartRequired: true,
+    fields: [
+      _Field(
+        label: t.settings.serverSettings.fields.preventIdleSleep,
+        path: 'host.prevent_idle_sleep',
+        kind: _FieldKind.select,
+        options: const ['ac', 'always', 'on_demand', 'off'],
+        optionLabels: {
+          'ac': t.settings.serverSettings.fields.sleepModeAc,
+          'always': t.settings.serverSettings.fields.sleepModeAlways,
+          'on_demand': t.settings.serverSettings.fields.sleepModeOnDemand,
+          'off': t.settings.serverSettings.fields.sleepModeOff,
+        },
+        placeholder: 'ac',
+        helper: t.settings.serverSettings.fields.preventIdleSleepHelper,
       ),
     ],
   ),
@@ -1027,7 +1056,7 @@ class _SectionEditorScreenState
                 for (final opt in f.options ?? const <String>[])
                   DropdownMenuItem<String>(
                     value: opt,
-                    child: Text(opt),
+                    child: Text(f.optionLabels?[opt] ?? opt),
                   ),
               ],
               onChanged: _submitting

@@ -3202,6 +3202,8 @@ class TranslationsWebServerSettingsEn {
 
 	/// en: 'Open Cortex settings'
 	String get memoryRuntimeBannerButton => 'Open Cortex settings';
+
+	late final TranslationsWebServerSettingsHostEn host = TranslationsWebServerSettingsHostEn.internal(_root);
 }
 
 // Path: web.settings
@@ -10193,6 +10195,7 @@ class TranslationsWebServerSettingsSectionsEn {
 
 	// Translations
 	late final TranslationsWebServerSettingsSectionsGeneralEn general = TranslationsWebServerSettingsSectionsGeneralEn.internal(_root);
+	late final TranslationsWebServerSettingsSectionsHostEn host = TranslationsWebServerSettingsSectionsHostEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsLoggingEn logging = TranslationsWebServerSettingsSectionsLoggingEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsSessionsEn sessions = TranslationsWebServerSettingsSectionsSessionsEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsVaultEn vault = TranslationsWebServerSettingsSectionsVaultEn.internal(_root);
@@ -10603,6 +10606,23 @@ class TranslationsWebServerSettingsToggleEn {
 
 	/// en: 'Default (off)'
 	String get defaultOff => 'Default (off)';
+}
+
+// Path: web.serverSettings.host
+class TranslationsWebServerSettingsHostEn {
+	TranslationsWebServerSettingsHostEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as "opendray is flaky" when the machine is really just asleep. Pick how opendray should handle that.'
+	String get intro => 'A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as "opendray is flaky" when the machine is really just asleep. Pick how opendray should handle that.';
+
+	/// en: 'macOS only. On Linux and Windows this setting is accepted and ignored — those hosts do not idle-suspend under a normal server install. A deliberate sleep (lid close, Apple menu → Sleep) is never blocked, and the assertion is released if opendray exits or is killed.'
+	String get platformNote => 'macOS only. On Linux and Windows this setting is accepted and ignored — those hosts do not idle-suspend under a normal server install. A deliberate sleep (lid close, Apple menu → Sleep) is never blocked, and the assertion is released if opendray exits or is killed.';
+
+	late final TranslationsWebServerSettingsHostModesEn modes = TranslationsWebServerSettingsHostModesEn.internal(_root);
 }
 
 // Path: web.settings.groups
@@ -14104,6 +14124,9 @@ class TranslationsSettingsServerSettingsSectionsEn {
 	/// en: 'General'
 	String get general => 'General';
 
+	/// en: 'Host power'
+	String get host => 'Host power';
+
 	/// en: 'Logging'
 	String get logging => 'Logging';
 
@@ -14142,6 +14165,9 @@ class TranslationsSettingsServerSettingsSectionDescriptionsEn {
 
 	/// en: 'Listen address, operator account, token TTL.'
 	String get general => 'Listen address, operator account, token TTL.';
+
+	/// en: 'Keep this machine reachable while it is idle.'
+	String get host => 'Keep this machine reachable while it is idle.';
 
 	/// en: 'Verbosity, format, and on-disk log path.'
 	String get logging => 'Verbosity, format, and on-disk log path.';
@@ -14370,6 +14396,24 @@ class TranslationsSettingsServerSettingsFieldsEn {
 
 	/// en: 'The structured entities/playbooks/skills layer on top of memory.'
 	String get knowledgeHelper => 'The structured entities/playbooks/skills layer on top of memory.';
+
+	/// en: 'Idle sleep'
+	String get preventIdleSleep => 'Idle sleep';
+
+	/// en: 'A sleeping Mac takes its network down, so the gateway stops answering from phone and web. "Stay awake on wall power" is the default and keeps it reachable (the screen still turns off). "Sleep, wake on traffic" saves power but needs Wake for network access, and the first request after a sleep is slow. macOS only.'
+	String get preventIdleSleepHelper => 'A sleeping Mac takes its network down, so the gateway stops answering from phone and web. "Stay awake on wall power" is the default and keeps it reachable (the screen still turns off). "Sleep, wake on traffic" saves power but needs Wake for network access, and the first request after a sleep is slow. macOS only.';
+
+	/// en: 'Stay awake on wall power'
+	String get sleepModeAc => 'Stay awake on wall power';
+
+	/// en: 'Stay awake on any power'
+	String get sleepModeAlways => 'Stay awake on any power';
+
+	/// en: 'Sleep, wake on traffic'
+	String get sleepModeOnDemand => 'Sleep, wake on traffic';
+
+	/// en: 'Don't touch power'
+	String get sleepModeOff => 'Don\'t touch power';
 }
 
 // Path: settings.serverSettings.embedderModel
@@ -16440,6 +16484,21 @@ class TranslationsWebServerSettingsSectionsGeneralEn {
 	String get desc => 'Listen address, operator account, token TTL.';
 }
 
+// Path: web.serverSettings.sections.host
+class TranslationsWebServerSettingsSectionsHostEn {
+	TranslationsWebServerSettingsSectionsHostEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Host power'
+	String get title => 'Host power';
+
+	/// en: 'Keep the machine reachable from phone and web while it is idle.'
+	String get desc => 'Keep the machine reachable from phone and web while it is idle.';
+}
+
 // Path: web.serverSettings.sections.logging
 class TranslationsWebServerSettingsSectionsLoggingEn {
 	TranslationsWebServerSettingsSectionsLoggingEn.internal(this._root);
@@ -17356,6 +17415,19 @@ class TranslationsWebServerSettingsBackupScheduleHeadersEn {
 
 	/// en: 'State'
 	String get state => 'State';
+}
+
+// Path: web.serverSettings.host.modes
+class TranslationsWebServerSettingsHostModesEn {
+	TranslationsWebServerSettingsHostModesEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+	late final TranslationsWebServerSettingsHostModesAcEn ac = TranslationsWebServerSettingsHostModesAcEn.internal(_root);
+	late final TranslationsWebServerSettingsHostModesAlwaysEn always = TranslationsWebServerSettingsHostModesAlwaysEn.internal(_root);
+	late final TranslationsWebServerSettingsHostModesOnDemandEn on_demand = TranslationsWebServerSettingsHostModesOnDemandEn.internal(_root);
+	late final TranslationsWebServerSettingsHostModesOffEn off = TranslationsWebServerSettingsHostModesOffEn.internal(_root);
 }
 
 // Path: web.settings.appearance.options
@@ -18278,6 +18350,75 @@ class TranslationsWebNotesVaultSyncConflictKindsEn {
 
 	/// en: 'operation'
 	String get operation => 'operation';
+}
+
+// Path: web.serverSettings.host.modes.ac
+class TranslationsWebServerSettingsHostModesAcEn {
+	TranslationsWebServerSettingsHostModesAcEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Stay awake on wall power'
+	String get label => 'Stay awake on wall power';
+
+	/// en: 'The machine never idle-sleeps while plugged in, so phone and web connect instantly. On battery it sleeps normally. The screen still turns off as usual.'
+	String get desc => 'The machine never idle-sleeps while plugged in, so phone and web connect instantly. On battery it sleeps normally. The screen still turns off as usual.';
+}
+
+// Path: web.serverSettings.host.modes.always
+class TranslationsWebServerSettingsHostModesAlwaysEn {
+	TranslationsWebServerSettingsHostModesAlwaysEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Stay awake on any power'
+	String get label => 'Stay awake on any power';
+
+	/// en: 'Never idle-sleeps, including on battery.'
+	String get desc => 'Never idle-sleeps, including on battery.';
+
+	/// en: 'Will drain a laptop battery left unplugged.'
+	String get caveat => 'Will drain a laptop battery left unplugged.';
+}
+
+// Path: web.serverSettings.host.modes.on_demand
+class TranslationsWebServerSettingsHostModesOnDemandEn {
+	TranslationsWebServerSettingsHostModesOnDemandEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Sleep when idle, wake on traffic'
+	String get label => 'Sleep when idle, wake on traffic';
+
+	/// en: 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.'
+	String get desc => 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.';
+
+	/// en: 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.'
+	String get caveat => 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.';
+}
+
+// Path: web.serverSettings.host.modes.off
+class TranslationsWebServerSettingsHostModesOffEn {
+	TranslationsWebServerSettingsHostModesOffEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Never touch power settings'
+	String get label => 'Never touch power settings';
+
+	/// en: 'opendray leaves the machine alone entirely.'
+	String get desc => 'opendray leaves the machine alone entirely.';
+
+	/// en: 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.'
+	String get caveat => 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.';
 }
 
 // Path: web.memoryAmbient.rules.row.summary
@@ -20100,6 +20241,8 @@ extension on Translations {
 			'web.backups.targetEditor.rclone.configPathPlaceholder' => 'leave blank for rclone default',
 			'web.serverSettings.sections.general.title' => 'General',
 			'web.serverSettings.sections.general.desc' => 'Listen address, operator account, token TTL.',
+			'web.serverSettings.sections.host.title' => 'Host power',
+			'web.serverSettings.sections.host.desc' => 'Keep the machine reachable from phone and web while it is idle.',
 			'web.serverSettings.sections.logging.title' => 'Logging',
 			'web.serverSettings.sections.logging.desc' => 'Verbosity, format, and live tail.',
 			'web.serverSettings.sections.sessions.title' => 'Sessions',
@@ -20328,6 +20471,19 @@ extension on Translations {
 			'web.serverSettings.toggle.defaultOff' => 'Default (off)',
 			'web.serverSettings.memoryRuntimeBanner' => 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Open Cortex settings',
+			'web.serverSettings.host.intro' => 'A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as "opendray is flaky" when the machine is really just asleep. Pick how opendray should handle that.',
+			'web.serverSettings.host.platformNote' => 'macOS only. On Linux and Windows this setting is accepted and ignored — those hosts do not idle-suspend under a normal server install. A deliberate sleep (lid close, Apple menu → Sleep) is never blocked, and the assertion is released if opendray exits or is killed.',
+			'web.serverSettings.host.modes.ac.label' => 'Stay awake on wall power',
+			'web.serverSettings.host.modes.ac.desc' => 'The machine never idle-sleeps while plugged in, so phone and web connect instantly. On battery it sleeps normally. The screen still turns off as usual.',
+			'web.serverSettings.host.modes.always.label' => 'Stay awake on any power',
+			'web.serverSettings.host.modes.always.desc' => 'Never idle-sleeps, including on battery.',
+			'web.serverSettings.host.modes.always.caveat' => 'Will drain a laptop battery left unplugged.',
+			'web.serverSettings.host.modes.on_demand.label' => 'Sleep when idle, wake on traffic',
+			'web.serverSettings.host.modes.on_demand.desc' => 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.',
+			'web.serverSettings.host.modes.on_demand.caveat' => 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.',
+			'web.serverSettings.host.modes.off.label' => 'Never touch power settings',
+			'web.serverSettings.host.modes.off.desc' => 'opendray leaves the machine alone entirely.',
+			'web.serverSettings.host.modes.off.caveat' => 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.',
 			'web.settings.title' => 'Settings',
 			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
 			'web.settings.groups.workspace' => 'Workspace',
@@ -20389,6 +20545,8 @@ extension on Translations {
 			'web.settings.about.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'web.settings.about.releaseNotes' => 'Release notes ↗',
 			'web.settings.about.updateNow' => 'Update now',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.about.upgradingShort' => 'Upgrading…',
 			'web.settings.about.confirmRestart' => 'This restarts the service; running sessions reconnect.',
 			'web.settings.about.confirmUpgrade' => 'Upgrade & restart',
@@ -20404,8 +20562,6 @@ extension on Translations {
 			'web.settings.about.forcePrompt' => ({required Object count}) => '${count} live session(s) will be interrupted by the restart (they auto-resume afterward).',
 			'web.settings.about.upgradeAnyway' => 'Upgrade anyway',
 			'web.logViewer.filterPlaceholder' => 'Filter…',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.debugTooltip' => 'Debug count',
 			'web.logViewer.infoTooltip' => 'Info count',
 			'web.logViewer.warnTooltip' => 'Warn count',
@@ -20903,6 +21059,8 @@ extension on Translations {
 			'web.database.console.run' => 'Run',
 			'web.database.console.runHint' => 'Cmd/Ctrl+Enter to run',
 			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} row(s) · ${ms} ms',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.console.truncated' => 'truncated',
 			'web.database.console.empty' => 'Run a query to see results.',
 			'web.database.console.truncatedNote' => 'results truncated',
@@ -20918,8 +21076,6 @@ extension on Translations {
 			'web.database.panel.console' => 'SQL console',
 			'web.database.panel.openWorkbench' => 'Open workbench',
 			'web.database.workbench.title' => 'Database workbench',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.title' => 'Round Table',
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'A cross-vendor AI group chat. @mention claude, codex or antigravity and they reply in the thread — like a Telegram group, with a different vendor\'s model behind each member.',
@@ -21417,6 +21573,8 @@ extension on Translations {
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'New server',
@@ -21432,8 +21590,6 @@ extension on Translations {
 			'mcp.errorPrefix.update' => 'Update failed',
 			'mcp.errorPrefix.toggle' => 'Toggle failed',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON config — name, transport: stdio, command, args…',
 			'mcp.editor.descriptionPlaceholder' => 'Optional one-liner',
@@ -21931,6 +22087,8 @@ extension on Translations {
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} rows · ${tables} tables',
 			'backups.inventory.description' => 'Live row counts from opendray\'s Postgres database. Backups capture every row below; binary artifacts on disk are not included.',
 			'backups.inventory.rowsLabel' => 'rows',
+			_ => null,
+		} ?? switch (path) {
 			'backups.inventory.loadFailedToast' => 'Failed to load inventory',
 			'backups.inventory.loading' => 'Loading…',
 			'backups.inventory.tap' => 'Tap to expand',
@@ -21946,8 +22104,6 @@ extension on Translations {
 			'backupSchedules.newButton' => 'New',
 			'backupSchedules.deleteTitle' => 'Delete schedule?',
 			'backupSchedules.targetLabel' => 'Targets',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.targetsHint' => 'Pick one or more — the same backup is written to each (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Interval',
 			'backupSchedules.retentionLabel' => 'Retention (keep N most recent)',
@@ -22445,6 +22601,8 @@ extension on Translations {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Version',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
+			_ => null,
+		} ?? switch (path) {
 			'about.fields.package' => 'Package',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Signed in as',
@@ -22460,8 +22618,6 @@ extension on Translations {
 			'about.gateway.upToDate' => 'Up to date',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Update available: ${version}',
 			'about.gateway.releaseNotes' => 'Release notes',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.checkFailed' => 'Update check unavailable',
 			'settings.title' => 'Settings',
 			'settings.language.section' => 'Language',
@@ -22526,6 +22682,7 @@ extension on Translations {
 			'settings.serverSettings.changesNeedRestart' => 'Changes to this section need a gateway restart.',
 			'settings.serverSettings.loadFailed' => 'Failed to load server settings',
 			'settings.serverSettings.sections.general' => 'General',
+			'settings.serverSettings.sections.host' => 'Host power',
 			'settings.serverSettings.sections.logging' => 'Logging',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
 			'settings.serverSettings.sections.vault' => 'Vault',
@@ -22536,6 +22693,7 @@ extension on Translations {
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageAntigravity' => 'Storage · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
+			'settings.serverSettings.sectionDescriptions.host' => 'Keep this machine reachable while it is idle.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
@@ -22609,6 +22767,12 @@ extension on Translations {
 			'settings.serverSettings.fields.cleanerHelper' => 'Periodic auto-librarian that soft-archives stale / duplicate memories.',
 			'settings.serverSettings.fields.knowledgeEnabled' => 'Knowledge graph',
 			'settings.serverSettings.fields.knowledgeHelper' => 'The structured entities/playbooks/skills layer on top of memory.',
+			'settings.serverSettings.fields.preventIdleSleep' => 'Idle sleep',
+			'settings.serverSettings.fields.preventIdleSleepHelper' => 'A sleeping Mac takes its network down, so the gateway stops answering from phone and web. "Stay awake on wall power" is the default and keeps it reachable (the screen still turns off). "Sleep, wake on traffic" saves power but needs Wake for network access, and the first request after a sleep is slow. macOS only.',
+			'settings.serverSettings.fields.sleepModeAc' => 'Stay awake on wall power',
+			'settings.serverSettings.fields.sleepModeAlways' => 'Stay awake on any power',
+			'settings.serverSettings.fields.sleepModeOnDemand' => 'Sleep, wake on traffic',
+			'settings.serverSettings.fields.sleepModeOff' => 'Don\'t touch power',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
 			'settings.serverSettings.embedderModel.reprobe' => 'Re-check endpoint',

@@ -2118,6 +2118,10 @@
           "title": "通用",
           "desc": "监听地址、操作员账号、令牌 TTL。"
         },
+        "host": {
+          "title": "主机电源",
+          "desc": "让这台机器在闲置时仍能被手机和网页访问。"
+        },
         "logging": {
           "title": "日志",
           "desc": "日志级别、格式与实时跟踪。"
@@ -2488,7 +2492,32 @@
         "defaultOff": "默认（关）"
       },
       "memoryRuntimeBanner": "运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。",
-      "memoryRuntimeBannerButton": "打开 Cortex 设置"
+      "memoryRuntimeBannerButton": "打开 Cortex 设置",
+      "host": {
+        "intro": "睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像\"opendray 不稳定\",实际只是机器睡着了。请选择 opendray 的应对方式。",
+        "platformNote": "仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。",
+        "modes": {
+          "ac": {
+            "label": "插电时保持唤醒",
+            "desc": "插电状态下机器不会空闲休眠,手机与网页随时秒连;使用电池时照常休眠。屏幕仍会正常熄灭。"
+          },
+          "always": {
+            "label": "任何供电下都保持唤醒",
+            "desc": "包括使用电池时也不会空闲休眠。",
+            "caveat": "笔记本拔掉电源后会持续耗电。"
+          },
+          "on_demand": {
+            "label": "闲时休眠,有请求时唤醒",
+            "desc": "网关空闲时机器正常入睡;收到请求时被唤醒,opendray 在服务期间保持唤醒,结束后让它继续休眠。",
+            "caveat": "需要开启\"网络访问唤醒\"(sudo pmset -a womp 1),有线以太网最可靠。休眠后的第一个请求会有几秒延迟,偶尔需要重试一次。"
+          },
+          "off": {
+            "label": "完全不干预电源",
+            "desc": "opendray 不对机器电源做任何操作。",
+            "caveat": "主机一旦休眠即无法连接,除非另有程序让它保持唤醒。"
+          }
+        }
+      }
     },
     "settings": {
       "title": "设置",
@@ -5202,6 +5231,7 @@
       "loadFailed": "加载服务器设置失败",
       "sections": {
         "general": "通用",
+        "host": "主机电源",
         "logging": "日志",
         "sessions": "会话",
         "vault": "凭据库",
@@ -5214,6 +5244,7 @@
       },
       "sectionDescriptions": {
         "general": "监听地址、管理员账号、令牌 TTL。",
+        "host": "让这台机器在闲置时仍可被访问。",
         "logging": "详细程度、格式、磁盘日志路径。",
         "sessions": "空闲检测阈值。",
         "vault": "笔记、技能、git 版本化的根目录。",
@@ -5288,7 +5319,13 @@
         "cleanerEnabled": "Cleaner",
         "cleanerHelper": "周期性自动馆员，软归档过期/重复记忆。",
         "knowledgeEnabled": "知识图谱",
-        "knowledgeHelper": "建立在记忆之上的结构化实体/手册/技能层。"
+        "knowledgeHelper": "建立在记忆之上的结构化实体/手册/技能层。",
+        "preventIdleSleep": "空闲休眠",
+        "preventIdleSleepHelper": "睡眠中的 Mac 会关掉网络,网关便无法从手机和网页应答。默认的\"插电时保持唤醒\"能确保随时可连(屏幕仍会正常熄灭)。\"闲时休眠,有请求时唤醒\"更省电,但需开启网络访问唤醒,且休眠后的第一个请求会较慢。仅 macOS 生效。",
+        "sleepModeAc": "插电时保持唤醒",
+        "sleepModeAlways": "任何供电下保持唤醒",
+        "sleepModeOnDemand": "闲时休眠,有请求时唤醒",
+        "sleepModeOff": "不干预电源"
       },
       "validateInteger": "「{field}」必须是整数",
       "validateNumber": "「{field}」必须是数字",
