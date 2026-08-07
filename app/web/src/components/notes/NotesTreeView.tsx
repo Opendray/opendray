@@ -1,5 +1,6 @@
 import { useImperativeHandle, useMemo, useState, forwardRef } from 'react'
 import {
+  BookOpen,
   ChevronRight,
   ChevronDown,
   Folder,
@@ -23,6 +24,12 @@ interface NotesTreeViewProps {
   // rendered outside the row's own button, since nesting a button in a
   // button is invalid HTML and swallows the click.
   renderFileAction?: (path: string) => React.ReactNode
+  // onOpenFolderIndex, when given, turns a folder that holds a
+  // README/index note into something you can open: the chevron still
+  // expands, and the extra control reads the folder's own page. Return
+  // undefined for folders without one and no control is rendered.
+  folderIndexPath?: (dir: string) => string | undefined
+  onOpenFolderIndex?: (path: string) => void
 }
 
 // Imperative handle exposed via ref so the parent's toolbar can drive
@@ -46,7 +53,15 @@ interface TreeNode {
 // needed (the /notes/list endpoint already returns the flat list).
 export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>(
   function NotesTreeView(
-    { notes, selected, onSelect, initialExpanded, renderFileAction },
+    {
+      notes,
+      selected,
+      onSelect,
+      initialExpanded,
+      renderFileAction,
+      folderIndexPath,
+      onOpenFolderIndex,
+    },
     ref,
   ) {
   const { t } = useTranslation()
@@ -110,6 +125,8 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
             selected={selected ?? null}
             onSelect={onSelect}
             renderFileAction={renderFileAction}
+            folderIndexPath={folderIndexPath}
+            onOpenFolderIndex={onOpenFolderIndex}
           />
         ))
       )}
@@ -125,6 +142,8 @@ function TreeRow({
   selected,
   onSelect,
   renderFileAction,
+  folderIndexPath,
+  onOpenFolderIndex,
 }: {
   node: TreeNode
   depth: number
@@ -133,39 +152,55 @@ function TreeRow({
   selected: string | null
   onSelect: (path: string) => void
   renderFileAction?: (path: string) => React.ReactNode
+  folderIndexPath?: (dir: string) => string | undefined
+  onOpenFolderIndex?: (path: string) => void
 }) {
+  const { t } = useTranslation()
   const indent = { paddingLeft: `${depth * 12 + 4}px` }
   const isOpen = expanded.has(node.path)
 
   if (node.isDir) {
+    const indexPath = folderIndexPath?.(node.path)
     return (
       <div className="flex flex-col">
-        <button
-          type="button"
-          onClick={() => {
-            const next = new Set(expanded)
-            if (isOpen) next.delete(node.path)
-            else next.add(node.path)
-            setExpanded(next)
-          }}
-          style={indent}
-          className={cn(
-            'flex items-center gap-1 py-0.5 pr-1 rounded-sm text-left',
-            'hover:bg-card text-foreground/85',
+        <div className="group flex items-center rounded-sm hover:bg-card">
+          <button
+            type="button"
+            onClick={() => {
+              const next = new Set(expanded)
+              if (isOpen) next.delete(node.path)
+              else next.add(node.path)
+              setExpanded(next)
+            }}
+            style={indent}
+            className={cn(
+              'flex min-w-0 flex-1 items-center gap-1 py-0.5 pr-1 text-left',
+              'text-foreground/85',
+            )}
+            title={node.path}
+          >
+            {isOpen ? (
+              <ChevronDown className="size-3 shrink-0 opacity-60" />
+            ) : (
+              <ChevronRight className="size-3 shrink-0 opacity-60" />
+            )}
+            <Folder className="size-3 shrink-0 text-muted-foreground" />
+            <span className="truncate">{node.name}</span>
+            <span className="ml-1 text-[10px] text-muted-foreground/50">
+              {node.children.size}
+            </span>
+          </button>
+          {indexPath && onOpenFolderIndex && (
+            <button
+              type="button"
+              onClick={() => onOpenFolderIndex(indexPath)}
+              className="shrink-0 px-1 text-muted-foreground hover:text-foreground"
+              title={`${t('web.sessions.inspector.vaultPanel.openFolderIndexTitle')} — ${indexPath}`}
+            >
+              <BookOpen className="size-3" />
+            </button>
           )}
-          title={node.path}
-        >
-          {isOpen ? (
-            <ChevronDown className="size-3 shrink-0 opacity-60" />
-          ) : (
-            <ChevronRight className="size-3 shrink-0 opacity-60" />
-          )}
-          <Folder className="size-3 shrink-0 text-muted-foreground" />
-          <span className="truncate">{node.name}</span>
-          <span className="ml-1 text-[10px] text-muted-foreground/50">
-            {node.children.size}
-          </span>
-        </button>
+        </div>
         {isOpen && (
           <div className="flex flex-col">
             {Array.from(node.children.values()).map((child) => (
@@ -178,6 +213,8 @@ function TreeRow({
                 selected={selected}
                 onSelect={onSelect}
                 renderFileAction={renderFileAction}
+                folderIndexPath={folderIndexPath}
+                onOpenFolderIndex={onOpenFolderIndex}
               />
             ))}
           </div>

@@ -13199,6 +13199,9 @@ class TranslationsSessionsInspectorNotesEn {
 
 	/// en: 'Move failed: {error}'
 	String renameFailed({required Object error}) => 'Move failed: ${error}';
+
+	/// en: 'Open folder index'
+	String get openFolderIndex => 'Open folder index';
 }
 
 // Path: sessions.inspector.canvas
@@ -14618,6 +14621,15 @@ class TranslationsWebSessionsInspectorVaultPanelEn {
 
 	/// en: 'Move failed'
 	String get renameFailed => 'Move failed';
+
+	/// en: 'Template'
+	String get templateLabel => 'Template';
+
+	/// en: 'From your vault (_templates/)'
+	String get templateFromVault => 'From your vault (_templates/)';
+
+	/// en: 'Open this folder’s index page'
+	String get openFolderIndexTitle => 'Open this folder’s index page';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -18775,6 +18787,9 @@ extension on Translations {
 			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {count, required Object {notes}) => 'Moved — updated ${{count}} link(s) in ${{notes}} note(s).',
 			'web.sessions.inspector.vaultPanel.renamedWithWarning' => 'Moved, but links may not be updated',
 			'web.sessions.inspector.vaultPanel.renameFailed' => 'Move failed',
+			'web.sessions.inspector.vaultPanel.templateLabel' => 'Template',
+			'web.sessions.inspector.vaultPanel.templateFromVault' => 'From your vault (_templates/)',
+			'web.sessions.inspector.vaultPanel.openFolderIndexTitle' => 'Open this folder’s index page',
 			'web.sessions.inspector.cortexPanel.noCwd' => 'Session has no cwd — Cortex features need a working directory.',
 			'web.sessions.inspector.cortexPanel.open' => 'Open Cortex workspace',
 			'web.sessions.inspector.cortexPanel.docs' => 'Docs',
@@ -19045,11 +19060,11 @@ extension on Translations {
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.',
 			'web.memoryWorkers.tasks.blueprint.label' => 'Blueprint proposer',
 			'web.memoryWorkers.tasks.blueprint.description' => 'Classifies a project from repo signals and proposes its doc section set. Operator-triggered from the blueprint editor.',
@@ -19559,11 +19574,11 @@ extension on Translations {
 			'web.providers.detail.toggleFailedToast' => 'Toggle failed',
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'not installed',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.brokenCli' => 'Installed but not runnable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'update available → ${version}',
 			'web.providers.detail.upToDate' => 'up to date',
@@ -20073,11 +20088,11 @@ extension on Translations {
 			'web.backups.generated.title' => 'Save this passphrase NOW',
 			'web.backups.generated.description' => 'This is shown <1>once</1>. It will not be retrievable from opendray or anywhere else. Copy it into a password manager before continuing.',
 			'web.backups.generated.copy' => 'Copy',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.generated.copiedToast' => 'Passphrase copied to clipboard',
 			'web.backups.generated.copyFailedToast' => 'Copy failed — select and copy manually',
 			'web.backups.generated.savedTo' => 'Saved to:',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.ack' => 'I have saved this passphrase to my password manager',
 			'web.backups.generated.kContinue' => 'Continue',
 			'web.backups.status.pgDump' => 'pg_dump',
@@ -20587,11 +20602,11 @@ extension on Translations {
 			'web.settings.system.description' => 'Live status from the gateway\'s /health endpoint.',
 			'web.settings.system.status' => 'Status',
 			'web.settings.system.version' => 'Version',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.system.uptime' => 'Uptime',
 			'web.settings.system.database' => 'Database',
 			'web.settings.system.reachable' => 'reachable',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.system.unreachable' => 'unreachable',
 			'web.settings.about.title' => 'About',
 			'web.settings.about.description' => 'opendray v2 — the multiplexer + integration gateway for AI agent CLIs. Source under Apache 2.0.',
@@ -21101,11 +21116,11 @@ extension on Translations {
 			'web.database.grid.insert' => 'Insert',
 			'web.database.grid.refresh' => 'Refresh',
 			'web.database.grid.edit' => 'Edit',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.grid.delete' => 'Delete',
 			'web.database.grid.deleted' => 'Row deleted',
 			'web.database.grid.confirmDelete' => 'Delete this row?',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.loading' => 'Loading rows…',
 			'web.database.grid.readOnlyHint' => 'This connection is read-only — rows cannot be edited.',
 			'web.database.grid.noPkHint' => 'This table has no primary key — row editing is disabled.',
@@ -21522,6 +21537,7 @@ extension on Translations {
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Move failed: ${error}',
+			'sessions.inspector.notes.openFolderIndex' => 'Open folder index',
 			'sessions.inspector.canvas.kindUi' => 'UI mock',
 			'sessions.inspector.canvas.kindFlow' => 'Flowchart',
 			'sessions.inspector.canvas.kindMindmap' => 'Mind map',
@@ -21614,12 +21630,12 @@ extension on Translations {
 			'sessions.spawnSheet.argsHelper' => 'Whitespace-separated; blank uses the provider\'s defaults.',
 			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Bypass permissions / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Off — confirmations and prompts behave normally.',
 			'sessions.spawnSheet.noProviders.title' => 'No providers configured',
 			'sessions.spawnSheet.noProviders.message' => 'The gateway has no CLI providers enabled. Configure one under Providers (web admin) or [providers] in config.toml, then tap Reload.',
@@ -22128,12 +22144,12 @@ extension on Translations {
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
 			'backups.restore.outputTitle' => 'pg_restore output',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestCreatedAt' => 'Created',
 			'backups.restore.manifestPgVersion' => 'pg_version',
 			'backups.restore.manifestOpendrayVersion' => 'opendray version',
@@ -22642,12 +22658,12 @@ extension on Translations {
 			'memory.create.submit' => 'Create',
 			'memory.archive' => 'Archive',
 			'memory.quarantine' => 'Quarantine',
+			_ => null,
+		} ?? switch (path) {
 			'memory.archivedToast' => 'Memory archived — restorable from Archived',
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'memory.reembed.menuItem' => 'Re-embed all',
 			'memory.reembed.confirmTitle' => 'Re-embed all memories?',
 			'memory.reembed.confirmBody' => 'Re-encodes every stored memory and KB page with the current embedding model. Needed after switching models, since the vector dimension changes. This can take a while.',
