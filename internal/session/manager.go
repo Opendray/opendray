@@ -1095,6 +1095,26 @@ func (m *Manager) ActiveCountByProvider(providerID string) int {
 	return n
 }
 
+// AnyMidTurn reports whether any live session is currently producing
+// output (state running, before the idle detector flips it). This is
+// the keep-awake activity signal that stops the host sleeping out from
+// under a CLI that is mid-task with no client attached — a turn started
+// from a phone must survive the phone locking. Iterates the in-memory
+// map only, so it's lock-cheap and safe to poll.
+func (m *Manager) AnyMidTurn() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, rs := range m.sessions {
+		rs.sessMu.RLock()
+		running := rs.sess.State == StateRunning
+		rs.sessMu.RUnlock()
+		if running {
+			return true
+		}
+	}
+	return false
+}
+
 // Stop terminates the running process for a session but preserves
 // the DB row. The user can subsequently call Start to re-spawn.
 // For an already-terminal session it succeeds as a no-op.

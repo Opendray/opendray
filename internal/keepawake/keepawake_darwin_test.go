@@ -23,6 +23,7 @@ func TestNewInhibitCmd_Flags(t *testing.T) {
 	}{
 		{"ac asserts only on wall power", ModeAC, "-s"},
 		{"always asserts on any power source", ModeAlways, "-i"},
+		{"on-demand holds assert on any power source", ModeOnDemand, "-i"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

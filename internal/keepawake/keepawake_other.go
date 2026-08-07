@@ -4,6 +4,7 @@ package keepawake
 
 import (
 	"context"
+	"log/slog"
 	"os/exec"
 )
 
@@ -12,3 +13,6 @@ import (
 // install, so there is nothing to inhibit. Keeper.Run sees the nil and
 // returns immediately.
 var newInhibitCmd func(ctx context.Context, mode Mode) *exec.Cmd
+
+// wakePreflight has nothing to verify off macOS.
+var wakePreflight func(ctx context.Context, log *slog.Logger)
