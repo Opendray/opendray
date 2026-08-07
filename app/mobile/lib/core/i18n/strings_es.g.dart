@@ -7475,7 +7475,7 @@ class _TranslationsWebSessionsInspectorVaultPanelEs extends TranslationsWebSessi
 	@override String get renameTitle => 'Renombrar o mover';
 	@override String get move => 'Mover';
 	@override String get renamed => 'Movido.';
-	@override String renamedWithLinks({required Object {count, required Object {notes}) => 'Movido: se actualizaron ${{count}} enlace(s) en ${{notes}} nota(s).';
+	@override String renamedWithLinks({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).';
 	@override String get renamedWithWarning => 'Movido, pero los enlaces podrían no actualizarse';
 	@override String get renameFailed => 'Error al mover';
 	@override String get templateLabel => 'Plantilla';
@@ -9982,7 +9982,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.vaultPanel.renameTitle' => 'Renombrar o mover',
 			'web.sessions.inspector.vaultPanel.move' => 'Mover',
 			'web.sessions.inspector.vaultPanel.renamed' => 'Movido.',
-			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {count, required Object {notes}) => 'Movido: se actualizaron ${{count}} enlace(s) en ${{notes}} nota(s).',
+			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			'web.sessions.inspector.vaultPanel.renamedWithWarning' => 'Movido, pero los enlaces podrían no actualizarse',
 			'web.sessions.inspector.vaultPanel.renameFailed' => 'Error al mover',
 			'web.sessions.inspector.vaultPanel.templateLabel' => 'Plantilla',

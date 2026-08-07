@@ -7475,7 +7475,7 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 	@override String get renameTitle => '重命名或移动';
 	@override String get move => '移动';
 	@override String get renamed => '已移动。';
-	@override String renamedWithLinks({required Object {notes, required Object {count}) => '已移动 —— 更新了 ${{notes}} 篇笔记中的 ${{count}} 处链接。';
+	@override String renamedWithLinks({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。';
 	@override String get renamedWithWarning => '已移动,但链接可能未更新';
 	@override String get renameFailed => '移动失败';
 	@override String get templateLabel => '模板';
@@ -9982,7 +9982,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.vaultPanel.renameTitle' => '重命名或移动',
 			'web.sessions.inspector.vaultPanel.move' => '移动',
 			'web.sessions.inspector.vaultPanel.renamed' => '已移动。',
-			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {notes, required Object {count}) => '已移动 —— 更新了 ${{notes}} 篇笔记中的 ${{count}} 处链接。',
+			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
 			'web.sessions.inspector.vaultPanel.renamedWithWarning' => '已移动,但链接可能未更新',
 			'web.sessions.inspector.vaultPanel.renameFailed' => '移动失败',
 			'web.sessions.inspector.vaultPanel.templateLabel' => '模板',

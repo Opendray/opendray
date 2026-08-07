@@ -268,7 +268,7 @@
           "renameTitle": "重命名或移动",
           "move": "移动",
           "renamed": "已移动。",
-          "renamedWithLinks": "已移动 —— 更新了 {{notes}} 篇笔记中的 {{count}} 处链接。",
+          "renamedWithLinks": "已移动 —— 更新了 {notes} 篇笔记中的 {count} 处链接。",
           "renamedWithWarning": "已移动,但链接可能未更新",
           "renameFailed": "移动失败",
           "templateLabel": "模板",

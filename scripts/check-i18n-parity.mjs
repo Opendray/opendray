@@ -34,6 +34,20 @@ const inCI = !!process.env.GITHUB_ACTIONS
 // {name} single-brace vars (i18next/slang) + <1>/</1> numbered Trans tags.
 // Both MUST be preserved (order may change) across a translation.
 const TOKEN = /\{[^{}]*\}|<\/?\d+>/g
+
+// react-i18next's DEFAULT interpolation is {{name}}, so it is the natural
+// thing to reach for — and it is wrong in both apps here. The web i18n is
+// configured with prefix '{' / suffix '}', so {{name}} never interpolates
+// and renders literally; slang, which generates Dart from this SAME file
+// including the web-only subtree, turns it into a parameter called
+// `{name` and emits code that does not compile.
+//
+// A locale-vs-locale diff can't catch this: write {{name}} in all three
+// and they agree perfectly. It is a convention error, not drift, so it
+// needs its own check — and it needs to be here, because the mobile
+// analyzer excludes **/*.g.dart and CI builds no APK, which left nothing
+// between a typo and a broken build.
+const DOUBLE_BRACE = /\{\{[^{}]+\}\}/g
 const PLURAL = /_(zero|one|two|few|many|other)$/
 
 const base = (k) => k.replace(PLURAL, '')
@@ -108,8 +122,15 @@ for (const loc of locales) {
     if (want !== got) mismatch.push({ k, en: want, loc: got })
   }
 
+  const doubleBraced = []
+  for (const [k, v] of locFlat) {
+    const hits = v.match(DOUBLE_BRACE)
+    if (hits) doubleBraced.push({ k, hits: [...new Set(hits)].join(' ') })
+  }
+
   if (missing.length) blocking += 0 // advisory
   if (mismatch.length) blocking += mismatch.length
+  if (doubleBraced.length) blocking += doubleBraced.length
 
   const pct = Math.round(((enGroups.size - missing.length) / enGroups.size) * 100)
   console.log(
@@ -118,6 +139,16 @@ for (const loc of locales) {
   for (const g of missing) {
     console.log(`  WARN missing (renders English via fallback): ${g}`)
     annotate('warning', file, `missing key, renders English via fallback: ${g}`)
+  }
+  for (const { k, hits } of doubleBraced) {
+    console.log(
+      `  FAIL {{double braces}}: ${k} -> ${hits}  (use {name}: {{name}} renders literally on web and breaks slang codegen)`,
+    )
+    annotate(
+      'error',
+      file,
+      `${k} uses ${hits}; this app interpolates with single braces — {{name}} renders literally on web and generates invalid Dart via slang`,
+    )
   }
   for (const g of extra) {
     console.log(`  WARN extra, not in en (stale or typo): ${g}`)
@@ -141,7 +172,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
     ...summary,
     '',
     blocking
-      ? `**${blocking} blocking issue(s)** (token mismatch or invalid JSON).`
+      ? `**${blocking} blocking issue(s)** (token mismatch, {{double braces}}, or invalid JSON).`
       : 'No blocking issues.',
     '',
     'Missing keys are advisory (they render English via the i18next / slang fallback). Token mismatches and invalid JSON are blocking, because a dropped or renamed `{placeholder}` / `<1>` tag breaks interpolation at runtime.',
