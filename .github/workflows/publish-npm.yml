@@ -31,6 +31,11 @@ on:
         required: false
         default: latest
         type: string
+      checkout_ref:
+        description: "Tree to run from. Empty = the tag itself, which is what you want. Set to 'main' only when back-filling a tag whose tooling predates a feature you need — first confirm `git diff <tag> main -- npm/` is empty, or you would publish package sources the tag never had."
+        required: false
+        default: ""
+        type: string
   workflow_call:
     inputs:
       tag:
@@ -51,10 +56,26 @@ jobs:
     env:
       TAG: ${{ inputs.tag }}
       DIST_TAG: ${{ inputs.dist_tag || 'latest' }}
+      CHECKOUT_REF: ${{ inputs.checkout_ref || inputs.tag }}
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.checkout_ref || inputs.tag }}
+
+      # The tree is normally the tag's, so the tooling is as old as the
+      # tag. publish-npm.mjs only learned --dist-tag in v2.13.2; older
+      # copies parse args by scanning for the flags they know and ignore
+      # the rest, so a back-fill dispatched against such a tag would
+      # accept the flag, drop it, publish to `latest`, and downgrade
+      # every install — silently, which is the whole failure mode this
+      # is meant to prevent. Turn it into a loud stop with the remedy.
+      - name: Verify the tooling honours the requested dist-tag
+        run: |
+          if [ "$DIST_TAG" != "latest" ] && ! grep -q -- "--dist-tag" scripts/publish-npm.mjs; then
+            echo "::error::scripts/publish-npm.mjs at $CHECKOUT_REF predates --dist-tag support: it would ignore dist_tag=$DIST_TAG and publish to 'latest', downgrading installs. Re-dispatch with checkout_ref=main after confirming 'git diff $TAG main -- npm/' is empty."
+            exit 1
+          fi
+          echo "tooling at $CHECKOUT_REF honours dist_tag=$DIST_TAG"
       - uses: actions/setup-node@v6
         with:
           node-version: "22"
