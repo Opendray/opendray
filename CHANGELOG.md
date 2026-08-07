@@ -12,6 +12,20 @@ for the full rationale and what triggers a major bump.
 
 ### Added
 
+- **New docs start from a template, and folders can explain themselves.**
+  Every doc previously started as an empty file with a heading, which is
+  how a vault ends up with five different ideas of what a feature note
+  is. Creating a doc now offers **Blank / Feature / Decision (ADR) /
+  Runbook**, and a folder holding a `README.md` gets a control that opens
+  it, so a directory can say what lives in it. Templates render
+  server-side — the title comes from the filename, the date from the
+  clock — so a doc started on the phone and one started on the web come
+  out identical rather than drifting. Dropping `_templates/<id>.md` in
+  the vault overrides a built-in or adds a new one, so a project can
+  change the shape of its docs without a gateway release.
+
+### Added
+
 - **The Vault can hold a folder structure you actually maintain.** Project
   docs were a flat list: the "New doc" box replaced `/` with `-`, so
   `features/canvas.md` became `features-canvas.md` and a folder could not

@@ -6764,6 +6764,7 @@ class _TranslationsSessionsInspectorNotesEs extends TranslationsSessionsInspecto
 	@override String renamedWithLinks({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).';
 	@override String renamedWithWarning({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}';
 	@override String renameFailed({required Object error}) => 'Error al mover: ${error}';
+	@override String get openFolderIndex => 'Abrir índice de carpeta';
 }
 
 // Path: sessions.inspector.canvas
@@ -7477,6 +7478,9 @@ class _TranslationsWebSessionsInspectorVaultPanelEs extends TranslationsWebSessi
 	@override String renamedWithLinks({required Object {count, required Object {notes}) => 'Movido: se actualizaron ${{count}} enlace(s) en ${{notes}} nota(s).';
 	@override String get renamedWithWarning => 'Movido, pero los enlaces podrían no actualizarse';
 	@override String get renameFailed => 'Error al mover';
+	@override String get templateLabel => 'Plantilla';
+	@override String get templateFromVault => 'Desde tu vault (_templates/)';
+	@override String get openFolderIndexTitle => 'Abrir la página índice de esta carpeta';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -9981,6 +9985,9 @@ extension on TranslationsEs {
 			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {count, required Object {notes}) => 'Movido: se actualizaron ${{count}} enlace(s) en ${{notes}} nota(s).',
 			'web.sessions.inspector.vaultPanel.renamedWithWarning' => 'Movido, pero los enlaces podrían no actualizarse',
 			'web.sessions.inspector.vaultPanel.renameFailed' => 'Error al mover',
+			'web.sessions.inspector.vaultPanel.templateLabel' => 'Plantilla',
+			'web.sessions.inspector.vaultPanel.templateFromVault' => 'Desde tu vault (_templates/)',
+			'web.sessions.inspector.vaultPanel.openFolderIndexTitle' => 'Abrir la página índice de esta carpeta',
 			'web.sessions.inspector.cortexPanel.noCwd' => 'La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.',
 			'web.sessions.inspector.cortexPanel.open' => 'Abrir espacio Cortex',
 			'web.sessions.inspector.cortexPanel.docs' => 'Docs',
@@ -10252,11 +10259,11 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Escaneo diario de contradicciones — un modelo equilibrado basta.',
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'La tarea más frecuente: extracción de hechos — usa el modelo MÁS BARATO que funcione (haiku / local).',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.blueprint.label' => 'Proponedor de planos',
 			'web.memoryWorkers.tasks.blueprint.description' => 'Clasifica un proyecto y propone su conjunto de secciones. Disparado por el operador.',
 			'web.memoryWorkers.tasks.curation.modelAdvice' => 'Tu editor conversacional de docs/políticas — modelo fuerte recomendado (sonnet/opus).',
@@ -10766,11 +10773,11 @@ extension on TranslationsEs {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'no instalado',
 			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'actualización disponible → ${version}',
 			'web.providers.detail.upToDate' => 'actualizado',
 			'web.providers.detail.update' => ({required Object version}) => 'Actualizar a ${version}',
@@ -11280,11 +11287,11 @@ extension on TranslationsEs {
 			'web.backups.generated.description' => 'Esto se muestra <1>una sola vez</1>. No se podrá recuperar desde opendray ni desde ningún otro sitio. Cópiala en un gestor de contraseñas antes de continuar.',
 			'web.backups.generated.copy' => 'Copiar',
 			'web.backups.generated.copiedToast' => 'Frase de contraseña copiada al portapapeles',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => 'Error al copiar, selecciónala y cópiala manualmente',
 			'web.backups.generated.savedTo' => 'Guardada en:',
 			'web.backups.generated.ack' => 'He guardado esta frase de contraseña en mi gestor de contraseñas',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.kContinue' => 'Continuar',
 			'web.backups.status.pgDump' => 'pg_dump',
 			'web.backups.status.pgRestore' => 'pg_restore',
@@ -11794,11 +11801,11 @@ extension on TranslationsEs {
 			'web.settings.system.status' => 'Estado',
 			'web.settings.system.version' => 'Versión',
 			'web.settings.system.uptime' => 'Tiempo de actividad',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.system.database' => 'Base de datos',
 			'web.settings.system.reachable' => 'accesible',
 			'web.settings.system.unreachable' => 'no accesible',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.about.title' => 'Acerca de',
 			'web.settings.about.description' => 'opendray v2: el multiplexor + gateway de integración para CLIs de agentes de IA. Código bajo Apache 2.0.',
 			'web.settings.about.version' => 'Versión',
@@ -12308,11 +12315,11 @@ extension on TranslationsEs {
 			'web.database.grid.refresh' => 'Actualizar',
 			'web.database.grid.edit' => 'Editar',
 			'web.database.grid.delete' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.grid.deleted' => 'Fila eliminada',
 			'web.database.grid.confirmDelete' => '¿Eliminar esta fila?',
 			'web.database.grid.loading' => 'Cargando filas…',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.readOnlyHint' => 'Esta conexión es de solo lectura — no se pueden editar filas.',
 			'web.database.grid.noPkHint' => 'Esta tabla no tiene clave primaria — la edición de filas está deshabilitada.',
 			'web.database.grid.pageInfo' => ({required Object from, required Object to}) => 'Filas ${from}–${to}',
@@ -12728,6 +12735,7 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Error al mover: ${error}',
+			'sessions.inspector.notes.openFolderIndex' => 'Abrir índice de carpeta',
 			'sessions.inspector.canvas.kindUi' => 'Maqueta UI',
 			'sessions.inspector.canvas.kindFlow' => 'Diagrama de flujo',
 			'sessions.inspector.canvas.kindMindmap' => 'Mapa mental',
@@ -12821,12 +12829,12 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.bypass.labelClaude' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Omitir aprobaciones y sandbox',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Omitir permisos / YOLO',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Saltar permisos / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.noProviders.title' => 'No hay proveedores configurados',
 			'sessions.spawnSheet.noProviders.message' => 'El gateway no tiene proveedores de CLI habilitados. Configura uno en Proveedores (admin web) o en [providers] en config.toml, y luego toca Recargar.',
 			'sessions.spawnSheet.noProviders.reload' => 'Recargar',
@@ -13335,12 +13343,12 @@ extension on TranslationsEs {
 			'backups.restore.pickFileToast' => 'Primero elige un archivo de paquete.',
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestTitle' => 'Manifiesto',
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
 			'backups.restore.manifestCreatedAt' => 'Creado',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestPgVersion' => 'pg_version',
 			'backups.restore.manifestOpendrayVersion' => 'versión de opendray',
 			'backups.restore.fingerprint' => 'Huella de la clave',
@@ -13849,12 +13857,12 @@ extension on TranslationsEs {
 			'memory.archive' => 'Archivar',
 			'memory.quarantine' => 'Cuarentena',
 			'memory.archivedToast' => 'Memoria archivada — restaurable desde Archivado',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',
 			'memory.reembed.menuItem' => 'Reincrustar todo',
-			_ => null,
-		} ?? switch (path) {
 			'memory.reembed.confirmTitle' => '¿Reincrustar todas las memorias?',
 			'memory.reembed.confirmBody' => 'Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.',
 			'memory.reembed.confirmButton' => 'Reincrustar',

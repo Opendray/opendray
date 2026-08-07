@@ -270,7 +270,10 @@
           "renamed": "已移动。",
           "renamedWithLinks": "已移动 —— 更新了 {{notes}} 篇笔记中的 {{count}} 处链接。",
           "renamedWithWarning": "已移动,但链接可能未更新",
-          "renameFailed": "移动失败"
+          "renameFailed": "移动失败",
+          "templateLabel": "模板",
+          "templateFromVault": "来自你的 vault(_templates/)",
+          "openFolderIndexTitle": "打开该目录的索引页"
         },
         "cortexPanel": {
           "noCwd": "会话没有工作目录——心智中枢功能需要工作目录。",
@@ -3794,7 +3797,8 @@
         "renamed": "已移动。",
         "renamedWithLinks": "已移动 —— 更新了 {notes} 篇笔记中的 {count} 处链接。",
         "renamedWithWarning": "已移动,但链接可能未更新:{warning}",
-        "renameFailed": "移动失败:{error}"
+        "renameFailed": "移动失败:{error}",
+        "openFolderIndex": "打开目录索引"
       },
       "canvas": {
         "kindUi": "UI 稿",

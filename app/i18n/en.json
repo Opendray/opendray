@@ -270,7 +270,10 @@
           "renamed": "Moved.",
           "renamedWithLinks": "Moved — updated {{count}} link(s) in {{notes}} note(s).",
           "renamedWithWarning": "Moved, but links may not be updated",
-          "renameFailed": "Move failed"
+          "renameFailed": "Move failed",
+          "templateLabel": "Template",
+          "templateFromVault": "From your vault (_templates/)",
+          "openFolderIndexTitle": "Open this folder’s index page"
         },
         "cortexPanel": {
           "noCwd": "Session has no cwd — Cortex features need a working directory.",
@@ -3794,7 +3797,8 @@
         "renamed": "Moved.",
         "renamedWithLinks": "Moved — updated {count} link(s) in {notes} note(s).",
         "renamedWithWarning": "Moved, but links may not be updated: {warning}",
-        "renameFailed": "Move failed: {error}"
+        "renameFailed": "Move failed: {error}",
+        "openFolderIndex": "Open folder index"
       },
       "canvas": {
         "kindUi": "UI mock",

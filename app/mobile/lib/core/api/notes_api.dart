@@ -195,6 +195,40 @@ class NotesApi {
     }
   }
 
+  Future<List<NoteTemplate>> templates() async {
+    try {
+      final res =
+          await _dio.get<Map<String, dynamic>>('/api/v1/notes/templates');
+      final raw = res.data?['templates'];
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(NoteTemplate.fromJson)
+          .toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// Create a note from a template. Separate from [write] because it
+  /// refuses to overwrite, and because the placeholders are rendered
+  /// server-side — so a doc started here and one started on the web
+  /// come out identical instead of drifting.
+  Future<NoteSummary> newFromTemplate({
+    required String path,
+    required String template,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/notes/new',
+        data: {'path': path, 'template': template},
+      );
+      return NoteSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   /// Move or rename a note, repointing the [[wiki-links]] that pointed
   /// at it. Without the rewrite a rename silently strands every
   /// reference, which is why reorganising was previously unsafe.
@@ -210,6 +244,31 @@ class NotesApi {
     }
   }
 }
+
+/// One starting shape for a new note. [source] is "builtin" or "vault"
+/// — the latter is a template the operator authored under `_templates/`.
+class NoteTemplate {
+  const NoteTemplate({
+    required this.id,
+    required this.name,
+    required this.source,
+  });
+
+  factory NoteTemplate.fromJson(Map<String, dynamic> json) => NoteTemplate(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        source: json['source'] as String? ?? 'builtin',
+      );
+
+  final String id;
+  final String name;
+  final String source;
+}
+
+/// Filenames treated as a folder's index page, in preference order.
+/// Mirrors INDEX_NAMES in app/shared/src/lib/notes.ts — resolved on the
+/// client because the listing is already here.
+const kIndexNames = ['README.md', 'index.md', '_index.md'];
 
 /// Outcome of a move. [warning] is set when the file moved but the link
 /// rewrite didn't finish — the move still happened, so the UI must not

@@ -6764,6 +6764,7 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String renamedWithLinks({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。';
 	@override String renamedWithWarning({required Object warning}) => '已移动,但链接可能未更新:${warning}';
 	@override String renameFailed({required Object error}) => '移动失败:${error}';
+	@override String get openFolderIndex => '打开目录索引';
 }
 
 // Path: sessions.inspector.canvas
@@ -7477,6 +7478,9 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 	@override String renamedWithLinks({required Object {notes, required Object {count}) => '已移动 —— 更新了 ${{notes}} 篇笔记中的 ${{count}} 处链接。';
 	@override String get renamedWithWarning => '已移动,但链接可能未更新';
 	@override String get renameFailed => '移动失败';
+	@override String get templateLabel => '模板';
+	@override String get templateFromVault => '来自你的 vault(_templates/)';
+	@override String get openFolderIndexTitle => '打开该目录的索引页';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -9981,6 +9985,9 @@ extension on TranslationsZh {
 			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {notes, required Object {count}) => '已移动 —— 更新了 ${{notes}} 篇笔记中的 ${{count}} 处链接。',
 			'web.sessions.inspector.vaultPanel.renamedWithWarning' => '已移动,但链接可能未更新',
 			'web.sessions.inspector.vaultPanel.renameFailed' => '移动失败',
+			'web.sessions.inspector.vaultPanel.templateLabel' => '模板',
+			'web.sessions.inspector.vaultPanel.templateFromVault' => '来自你的 vault(_templates/)',
+			'web.sessions.inspector.vaultPanel.openFolderIndexTitle' => '打开该目录的索引页',
 			'web.sessions.inspector.cortexPanel.noCwd' => '会话没有工作目录——心智中枢功能需要工作目录。',
 			'web.sessions.inspector.cortexPanel.open' => '打开心智中枢工作区',
 			'web.sessions.inspector.cortexPanel.docs' => '文档',
@@ -10252,11 +10259,11 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.blueprint.label' => '蓝图提议器',
 			'web.memoryWorkers.tasks.blueprint.description' => '根据仓库信号识别项目类型并提议文档章节结构。由蓝图编辑器手动触发。',
 			'web.memoryWorkers.tasks.curation.modelAdvice' => '你的对话式文档/方针编辑器——推荐强模型（sonnet/opus）；它改写的是你依赖的文档。',
@@ -10766,11 +10773,11 @@ extension on TranslationsZh {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
 			'web.providers.detail.brokenCli' => '已安装但无法运行',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.updateAvailable' => ({required Object version}) => '有可用更新 → ${version}',
 			'web.providers.detail.upToDate' => '已是最新',
 			'web.providers.detail.update' => ({required Object version}) => '更新到 ${version}',
@@ -11280,11 +11287,11 @@ extension on TranslationsZh {
 			'web.backups.generated.description' => '这是 <1>唯一一次</1> 显示。opendray 与任何其他地方都将无法取回。请在继续前复制到密码管理器。',
 			'web.backups.generated.copy' => '复制',
 			'web.backups.generated.copiedToast' => '口令已复制到剪贴板',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => '复制失败 — 请手动选中并复制',
 			'web.backups.generated.savedTo' => '已保存到：',
 			'web.backups.generated.ack' => '我已将此口令保存到密码管理器',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.kContinue' => '继续',
 			'web.backups.status.pgDump' => 'pg_dump',
 			'web.backups.status.pgRestore' => 'pg_restore',
@@ -11794,11 +11801,11 @@ extension on TranslationsZh {
 			'web.settings.system.status' => '状态',
 			'web.settings.system.version' => '版本',
 			'web.settings.system.uptime' => '运行时长',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.system.database' => '数据库',
 			'web.settings.system.reachable' => '可达',
 			'web.settings.system.unreachable' => '不可达',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.about.title' => '关于',
 			'web.settings.about.description' => 'opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。',
 			'web.settings.about.version' => '版本',
@@ -12308,11 +12315,11 @@ extension on TranslationsZh {
 			'web.database.grid.refresh' => '刷新',
 			'web.database.grid.edit' => '编辑',
 			'web.database.grid.delete' => '删除',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.grid.deleted' => '行已删除',
 			'web.database.grid.confirmDelete' => '删除此行?',
 			'web.database.grid.loading' => '正在加载数据…',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.readOnlyHint' => '此连接为只读 —— 无法编辑行。',
 			'web.database.grid.noPkHint' => '此表没有主键 —— 行编辑已禁用。',
 			'web.database.grid.pageInfo' => ({required Object from, required Object to}) => '第 ${from}–${to} 行',
@@ -12728,6 +12735,7 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
+			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
 			'sessions.inspector.canvas.kindFlow' => '流程图',
 			'sessions.inspector.canvas.kindMindmap' => '思维导图',
@@ -12821,12 +12829,12 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.labelGrok' => '跳过权限 / YOLO（--always-approve）',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
 			'sessions.spawnSheet.bypass.subtitleOff' => '关闭 — 确认和提示按正常方式处理。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.noProviders.title' => '未配置任何提供商',
 			'sessions.spawnSheet.noProviders.message' => '网关没有启用任何 CLI 提供商。在 Web 管理端的「提供商」中配置，或编辑 config.toml 的 [providers] 段，然后点击重新加载。',
 			'sessions.spawnSheet.noProviders.reload' => '重新加载',
@@ -13335,12 +13343,12 @@ extension on TranslationsZh {
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestTitle' => '清单',
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
 			'backups.restore.manifestCreatedAt' => '创建时间',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestPgVersion' => 'pg_version',
 			'backups.restore.manifestOpendrayVersion' => 'opendray 版本',
 			'backups.restore.fingerprint' => '密钥指纹',
@@ -13849,12 +13857,12 @@ extension on TranslationsZh {
 			'memory.archive' => '归档',
 			'memory.quarantine' => '隔离',
 			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
+			_ => null,
+		} ?? switch (path) {
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
 			'memory.reembed.menuItem' => '全部重嵌',
-			_ => null,
-		} ?? switch (path) {
 			'memory.reembed.confirmTitle' => '重嵌所有记忆？',
 			'memory.reembed.confirmBody' => '用当前 embedding 模型重新编码所有已存记忆和 KB 页面。切换模型后需要执行（向量维度会变）。可能需要一些时间。',
 			'memory.reembed.confirmButton' => '重嵌',

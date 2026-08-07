@@ -33,6 +33,8 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Post("/append", h.append_)
 		r.Delete("/delete", h.delete)
 		r.Post("/move", h.move)
+		r.Get("/templates", h.templates)
+		r.Post("/new", h.newFromTemplate)
 		r.Get("/backlinks", h.backlinks)
 		r.Get("/tags", h.tags)
 		r.Get("/project-mapping", h.projectMappingGet)
@@ -117,6 +119,38 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// templates lists the shapes a new note can start from. Rendering is
+// server-side (see templates.go), so this is the clients' only source
+// of truth for what exists.
+func (h *Handlers) templates(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"templates": h.v.Templates()})
+}
+
+// newFromTemplate creates a note from a template. Distinct from /write
+// because it refuses to overwrite — "new" that silently replaces an
+// existing doc loses work to a mistyped filename.
+func (h *Handlers) newFromTemplate(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Path     string `json:"path"`
+		Template string `json:"template"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	path := strings.TrimSpace(req.Path)
+	if path == "" {
+		writeError(w, http.StatusBadRequest, errors.New("path is required"))
+		return
+	}
+	n, err := h.v.NewFromTemplate(path, strings.TrimSpace(req.Template))
+	if err != nil {
+		respond(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, n)
 }
 
 // move renames/relocates a note and repoints the wiki-links that
