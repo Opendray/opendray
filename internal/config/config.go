@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/opendray/opendray-v2/internal/keepawake"
 )
 
 type Config struct {
@@ -26,6 +28,7 @@ type Config struct {
 	Backup    BackupConfig    `toml:"backup" json:"backup"`
 	Knowledge KnowledgeConfig `toml:"knowledge" json:"knowledge"`
 	Dbtool    DbtoolConfig    `toml:"dbtool" json:"dbtool"`
+	Host      HostConfig      `toml:"host" json:"host"`
 
 	// FilePath is the path config.toml was loaded from. Set by Load
 	// after a successful read so the runtime can find the same file
@@ -432,6 +435,25 @@ type DbtoolConfig struct {
 	PoolIdleTTL string `toml:"pool_idle_ttl" json:"pool_idle_ttl"`
 }
 
+// HostConfig covers the machine opendray runs on, rather than the
+// gateway process itself.
+type HostConfig struct {
+	// PreventIdleSleep stops the host idle-sleeping while the gateway is
+	// serving. A sleeping host takes its network with it, so phone and
+	// web clients simply cannot reach the gateway until something wakes
+	// the machine — the reason this defaults to on.
+	//
+	//   ""/"ac"  — hold the host awake only on wall power (default), so
+	//              a laptop on battery still sleeps normally
+	//   "always" — hold it awake on any power source
+	//   "off"    — never touch host power state
+	//
+	// A deliberate sleep (lid close, Apple menu → Sleep) is never
+	// blocked in any mode. Implemented on macOS only; elsewhere the
+	// setting is accepted and ignored.
+	PreventIdleSleep string `toml:"prevent_idle_sleep" json:"prevent_idle_sleep"`
+}
+
 // IsEnabled returns the effective feature state: nil pointer (omitted in
 // config) → true; explicit false → disabled.
 func (c DbtoolConfig) IsEnabled() bool {
@@ -582,6 +604,9 @@ func applyEnv(cfg *Config) {
 	if v := os.Getenv("OPENDRAY_VAULT_GIT_ROOT"); v != "" {
 		cfg.Vault.GitRoot = v
 	}
+	if v := os.Getenv("OPENDRAY_HOST_PREVENT_IDLE_SLEEP"); v != "" {
+		cfg.Host.PreventIdleSleep = v
+	}
 	if v := os.Getenv("OPENDRAY_MCP_ROOT"); v != "" {
 		cfg.MCP.Root = v
 	}
@@ -667,6 +692,9 @@ func (c Config) Validate() error {
 	}
 	if c.Dbtool.MaxRows < 0 || c.Dbtool.MaxRows > 10000 {
 		return fmt.Errorf("config: dbtool.max_rows must be 0..10000, got %d", c.Dbtool.MaxRows)
+	}
+	if _, err := keepawake.ParseMode(c.Host.PreventIdleSleep); err != nil {
+		return fmt.Errorf("config: host.prevent_idle_sleep: %w", err)
 	}
 	return nil
 }

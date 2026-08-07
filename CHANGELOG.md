@@ -10,6 +10,23 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The gateway keeps its host awake, so phone and web stay connected.**
+  A Mac left to itself idle-sleeps, and a sleeping host takes its network
+  with it: the gateway stops answering, a remote Postgres becomes
+  unreachable, and every phone or web request times out until someone
+  physically wakes the machine. Incoming traffic does dark-wake the host,
+  but the window is short and a user-session LaunchAgent isn't reliably
+  scheduled inside it, so the request has already timed out — which reads
+  as "opendray is flaky" and sends people reading gateway code instead of
+  `pmset -g log`. opendray now holds a power assertion for as long as it
+  serves. Default is wall-power only, so a laptop on battery still sleeps
+  normally; `[host] prevent_idle_sleep` takes `"always"` or `"off"`. A
+  deliberate sleep — lid close, Apple menu → Sleep — is never blocked, and
+  the assertion is tied to the gateway's pid so even a SIGKILL can't
+  strand the host awake. macOS only; accepted and ignored elsewhere.
+
 ## [v2.13.0] — 2026-08-07
 
 The Canvas: the agent renders a page you can actually see, mark up and
