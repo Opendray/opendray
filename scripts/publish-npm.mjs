@@ -8,7 +8,7 @@
 //   2. verifies the SHA-256 against SHA256SUMS (also from the release),
 //   3. extracts the `opendray` binary into npm/opendray-<os>-<arch>/bin/,
 //   4. bumps the matching package.json version to <VERSION>,
-//   5. runs `npm publish --provenance --access public`.
+//   5. runs `npm publish --provenance --access public --tag <dist-tag>`.
 //
 // Once all four platform packages are published it bumps the main
 // `opendray` package (matching `optionalDependencies` to the new version)
@@ -25,6 +25,18 @@
 //                      public repos but rate limits aggressively).
 // Required arg:
 //   --tag vX.Y.Z
+// Optional arg:
+//   --dist-tag NAME  — npm dist-tag to publish under. Defaults to
+//                      `latest`, which is what a normal release wants.
+//
+//                      Pass something else when back-filling a version
+//                      OLDER than what is already published: `npm
+//                      publish` does no semver comparison, it points
+//                      `latest` at whatever it just published. Filling
+//                      a historical hole under the default tag would
+//                      therefore downgrade every `npm install opendray`
+//                      to the older version — the hole is cosmetic, the
+//                      downgrade is not.
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -58,7 +70,19 @@ function parseArgs() {
   if (!/^v\d+\.\d+\.\d+/.test(tag)) {
     die(`tag must look like vX.Y.Z, got: ${tag}`);
   }
-  return { tag, version: tag.replace(/^v/, "") };
+
+  const distFlag = process.argv.indexOf("--dist-tag");
+  let distTag = "latest";
+  if (distFlag !== -1) {
+    distTag = process.argv[distFlag + 1] || "";
+    // A dist-tag that parses as a version confuses npm ("Tag name must
+    // not be a valid SemVer range"), and an empty one would silently
+    // fall back to latest — the exact mistake this flag exists to stop.
+    if (!/^[a-z][a-z0-9-]*$/i.test(distTag)) {
+      die(`--dist-tag must be a name like "previous", got: ${distTag || "(empty)"}`);
+    }
+  }
+  return { tag, version: tag.replace(/^v/, ""), distTag };
 }
 
 async function fetchBuffer(url, token) {
@@ -141,9 +165,11 @@ async function preparePlatform(platform, tag, version, sums, ghToken) {
   return pkgDir;
 }
 
-function npmPublish(pkgDir) {
-  console.log(`\n=== publishing ${pkgDir} ===`);
-  run("npm", ["publish", "--provenance", "--access", "public"], { cwd: pkgDir });
+function npmPublish(pkgDir, distTag) {
+  console.log(`\n=== publishing ${pkgDir} (dist-tag: ${distTag}) ===`);
+  run("npm", ["publish", "--provenance", "--access", "public", "--tag", distTag], {
+    cwd: pkgDir,
+  });
 }
 
 function prepareSdk(version) {
@@ -158,7 +184,7 @@ function prepareSdk(version) {
 }
 
 async function main() {
-  const { tag, version } = parseArgs();
+  const { tag, version, distTag } = parseArgs();
   const ghToken = process.env.GITHUB_TOKEN || "";
 
   if (!process.env.NODE_AUTH_TOKEN) {
@@ -181,7 +207,7 @@ async function main() {
     process.exit(0);
   }
 
-  console.log(`Publishing opendray @ ${version} (tag ${tag})`);
+  console.log(`Publishing opendray @ ${version} (tag ${tag}, dist-tag ${distTag})`);
 
   const sumsBuf = await fetchBuffer(
     `https://github.com/Opendray/opendray/releases/download/${tag}/SHA256SUMS`,
@@ -196,7 +222,7 @@ async function main() {
   }
 
   for (const pkgDir of platformDirs) {
-    npmPublish(pkgDir);
+    npmPublish(pkgDir, distTag);
   }
 
   const mainDir = join(NPM_ROOT, "opendray");
@@ -204,13 +230,17 @@ async function main() {
   for (const { pkg } of PLATFORMS) optDeps[pkg] = version;
   setPkgVersion(mainDir, version, { optionalDependencies: optDeps });
   copyLicenseInto(mainDir);
-  npmPublish(mainDir);
+  npmPublish(mainDir, distTag);
 
   const sdkDir = prepareSdk(version);
-  npmPublish(sdkDir);
+  npmPublish(sdkDir, distTag);
 
-  console.log(`\nopendray @ ${version} + @opendray/sdk @ ${version} published.`);
-  console.log(`Verify: npm view opendray version && npm view @opendray/sdk version`);
+  console.log(`\nopendray @ ${version} + @opendray/sdk @ ${version} published under "${distTag}".`);
+  if (distTag === "latest") {
+    console.log(`Verify: npm view opendray version && npm view @opendray/sdk version`);
+  } else {
+    console.log(`"latest" was left untouched. Verify: npm view opendray dist-tags`);
+  }
 }
 
 main().catch((err) => die(err.stack || err.message));
