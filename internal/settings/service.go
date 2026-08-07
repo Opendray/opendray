@@ -22,6 +22,11 @@ import (
 	"github.com/opendray/opendray-v2/internal/config"
 )
 
+// ErrInvalidConfig marks a PUT that would have written a config the
+// loader refuses, so the handler can answer 400 rather than 500 — the
+// operator's input is wrong, not the server.
+var ErrInvalidConfig = errors.New("invalid config")
+
 // Service owns read+write access to a single config.toml file.
 // Concurrent PUTs are serialised through mu so two operators can't
 // stomp each other.
@@ -72,6 +77,16 @@ func (s *Service) Update(patch *config.Config) error {
 		return err
 	}
 	mergeSensitive(patch, cur)
+
+	// Reject what the loader would reject. config.Load validates on every
+	// startup, so writing an invalid value here doesn't fail now — it
+	// fails at the *next restart*, leaving a gateway that won't come back
+	// up and an operator with no clue which field did it. Validating the
+	// post-merge patch (the exact bytes about to hit disk) turns that
+	// into an error message on the Save button.
+	if err := patch.Validate(); err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidConfig, err)
+	}
 
 	// Atomic write: encode → tmp → rename. Atomic rename on macOS/Linux
 	// guarantees readers never see a half-written file.

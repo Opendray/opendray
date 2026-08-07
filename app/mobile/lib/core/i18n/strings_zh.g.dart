@@ -1554,6 +1554,7 @@ class _TranslationsWebServerSettingsZh extends TranslationsWebServerSettingsEn {
 	@override late final _TranslationsWebServerSettingsToggleZh toggle = _TranslationsWebServerSettingsToggleZh._(_root);
 	@override String get memoryRuntimeBanner => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。';
 	@override String get memoryRuntimeBannerButton => '打开 Cortex 设置';
+	@override late final _TranslationsWebServerSettingsHostZh host = _TranslationsWebServerSettingsHostZh._(_root);
 }
 
 // Path: web.settings
@@ -5157,6 +5158,7 @@ class _TranslationsWebServerSettingsSectionsZh extends TranslationsWebServerSett
 
 	// Translations
 	@override late final _TranslationsWebServerSettingsSectionsGeneralZh general = _TranslationsWebServerSettingsSectionsGeneralZh._(_root);
+	@override late final _TranslationsWebServerSettingsSectionsHostZh host = _TranslationsWebServerSettingsSectionsHostZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsLoggingZh logging = _TranslationsWebServerSettingsSectionsLoggingZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsSessionsZh sessions = _TranslationsWebServerSettingsSectionsSessionsZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsVaultZh vault = _TranslationsWebServerSettingsSectionsVaultZh._(_root);
@@ -5399,6 +5401,18 @@ class _TranslationsWebServerSettingsToggleZh extends TranslationsWebServerSettin
 	@override String get off => '关闭';
 	@override String get defaultOn => '默认（开）';
 	@override String get defaultOff => '默认（关）';
+}
+
+// Path: web.serverSettings.host
+class _TranslationsWebServerSettingsHostZh extends TranslationsWebServerSettingsHostEn {
+	_TranslationsWebServerSettingsHostZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get intro => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。';
+	@override String get platformNote => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。';
+	@override late final _TranslationsWebServerSettingsHostModesZh modes = _TranslationsWebServerSettingsHostModesZh._(_root);
 }
 
 // Path: web.settings.groups
@@ -7263,6 +7277,7 @@ class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettings
 
 	// Translations
 	@override String get general => '通用';
+	@override String get host => '主机电源';
 	@override String get logging => '日志';
 	@override String get sessions => '会话';
 	@override String get vault => '凭据库';
@@ -7282,6 +7297,7 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsZh extends Translati
 
 	// Translations
 	@override String get general => '监听地址、管理员账号、令牌 TTL。';
+	@override String get host => '让这台机器在闲置时仍可被访问。';
 	@override String get logging => '详细程度、格式、磁盘日志路径。';
 	@override String get sessions => '空闲检测阈值。';
 	@override String get vault => '笔记、技能、git 版本化的根目录。';
@@ -7364,6 +7380,12 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get cleanerHelper => '周期性自动馆员，软归档过期/重复记忆。';
 	@override String get knowledgeEnabled => '知识图谱';
 	@override String get knowledgeHelper => '建立在记忆之上的结构化实体/手册/技能层。';
+	@override String get preventIdleSleep => '空闲休眠';
+	@override String get preventIdleSleepHelper => '睡眠中的 Mac 会关掉网络,网关便无法从手机和网页应答。默认的"插电时保持唤醒"能确保随时可连(屏幕仍会正常熄灭)。"闲时休眠,有请求时唤醒"更省电,但需开启网络访问唤醒,且休眠后的第一个请求会较慢。仅 macOS 生效。';
+	@override String get sleepModeAc => '插电时保持唤醒';
+	@override String get sleepModeAlways => '任何供电下保持唤醒';
+	@override String get sleepModeOnDemand => '闲时休眠,有请求时唤醒';
+	@override String get sleepModeOff => '不干预电源';
 }
 
 // Path: settings.serverSettings.embedderModel
@@ -8416,6 +8438,17 @@ class _TranslationsWebServerSettingsSectionsGeneralZh extends TranslationsWebSer
 	@override String get desc => '监听地址、操作员账号、令牌 TTL。';
 }
 
+// Path: web.serverSettings.sections.host
+class _TranslationsWebServerSettingsSectionsHostZh extends TranslationsWebServerSettingsSectionsHostEn {
+	_TranslationsWebServerSettingsSectionsHostZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '主机电源';
+	@override String get desc => '让这台机器在闲置时仍能被手机和网页访问。';
+}
+
 // Path: web.serverSettings.sections.logging
 class _TranslationsWebServerSettingsSectionsLoggingZh extends TranslationsWebServerSettingsSectionsLoggingEn {
 	_TranslationsWebServerSettingsSectionsLoggingZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9082,6 +9115,19 @@ class _TranslationsWebServerSettingsBackupScheduleHeadersZh extends Translations
 	@override String get state => '状态';
 }
 
+// Path: web.serverSettings.host.modes
+class _TranslationsWebServerSettingsHostModesZh extends TranslationsWebServerSettingsHostModesEn {
+	_TranslationsWebServerSettingsHostModesZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebServerSettingsHostModesAcZh ac = _TranslationsWebServerSettingsHostModesAcZh._(_root);
+	@override late final _TranslationsWebServerSettingsHostModesAlwaysZh always = _TranslationsWebServerSettingsHostModesAlwaysZh._(_root);
+	@override late final _TranslationsWebServerSettingsHostModesOnDemandZh on_demand = _TranslationsWebServerSettingsHostModesOnDemandZh._(_root);
+	@override late final _TranslationsWebServerSettingsHostModesOffZh off = _TranslationsWebServerSettingsHostModesOffZh._(_root);
+}
+
 // Path: web.settings.appearance.options
 class _TranslationsWebSettingsAppearanceOptionsZh extends TranslationsWebSettingsAppearanceOptionsEn {
 	_TranslationsWebSettingsAppearanceOptionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9580,6 +9626,53 @@ class _TranslationsWebNotesVaultSyncConflictKindsZh extends TranslationsWebNotes
 	@override String get merge => 'merge';
 	@override String get cherryPick => 'cherry-pick';
 	@override String get operation => 'operation';
+}
+
+// Path: web.serverSettings.host.modes.ac
+class _TranslationsWebServerSettingsHostModesAcZh extends TranslationsWebServerSettingsHostModesAcEn {
+	_TranslationsWebServerSettingsHostModesAcZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '插电时保持唤醒';
+	@override String get desc => '插电状态下机器不会空闲休眠,手机与网页随时秒连;使用电池时照常休眠。屏幕仍会正常熄灭。';
+}
+
+// Path: web.serverSettings.host.modes.always
+class _TranslationsWebServerSettingsHostModesAlwaysZh extends TranslationsWebServerSettingsHostModesAlwaysEn {
+	_TranslationsWebServerSettingsHostModesAlwaysZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '任何供电下都保持唤醒';
+	@override String get desc => '包括使用电池时也不会空闲休眠。';
+	@override String get caveat => '笔记本拔掉电源后会持续耗电。';
+}
+
+// Path: web.serverSettings.host.modes.on_demand
+class _TranslationsWebServerSettingsHostModesOnDemandZh extends TranslationsWebServerSettingsHostModesOnDemandEn {
+	_TranslationsWebServerSettingsHostModesOnDemandZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '闲时休眠,有请求时唤醒';
+	@override String get desc => '网关空闲时机器正常入睡;收到请求时被唤醒,opendray 在服务期间保持唤醒,结束后让它继续休眠。';
+	@override String get caveat => '需要开启"网络访问唤醒"(sudo pmset -a womp 1),有线以太网最可靠。休眠后的第一个请求会有几秒延迟,偶尔需要重试一次。';
+}
+
+// Path: web.serverSettings.host.modes.off
+class _TranslationsWebServerSettingsHostModesOffZh extends TranslationsWebServerSettingsHostModesOffEn {
+	_TranslationsWebServerSettingsHostModesOffZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '完全不干预电源';
+	@override String get desc => 'opendray 不对机器电源做任何操作。';
+	@override String get caveat => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。';
 }
 
 // Path: web.memoryAmbient.rules.row.summary
@@ -11386,6 +11479,8 @@ extension on TranslationsZh {
 			'web.backups.targetEditor.rclone.configPathPlaceholder' => '留空则使用 rclone 默认',
 			'web.serverSettings.sections.general.title' => '通用',
 			'web.serverSettings.sections.general.desc' => '监听地址、操作员账号、令牌 TTL。',
+			'web.serverSettings.sections.host.title' => '主机电源',
+			'web.serverSettings.sections.host.desc' => '让这台机器在闲置时仍能被手机和网页访问。',
 			'web.serverSettings.sections.logging.title' => '日志',
 			'web.serverSettings.sections.logging.desc' => '日志级别、格式与实时跟踪。',
 			'web.serverSettings.sections.sessions.title' => '会话',
@@ -11614,6 +11709,19 @@ extension on TranslationsZh {
 			'web.serverSettings.toggle.defaultOff' => '默认（关）',
 			'web.serverSettings.memoryRuntimeBanner' => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。',
 			'web.serverSettings.memoryRuntimeBannerButton' => '打开 Cortex 设置',
+			'web.serverSettings.host.intro' => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。',
+			'web.serverSettings.host.platformNote' => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。',
+			'web.serverSettings.host.modes.ac.label' => '插电时保持唤醒',
+			'web.serverSettings.host.modes.ac.desc' => '插电状态下机器不会空闲休眠,手机与网页随时秒连;使用电池时照常休眠。屏幕仍会正常熄灭。',
+			'web.serverSettings.host.modes.always.label' => '任何供电下都保持唤醒',
+			'web.serverSettings.host.modes.always.desc' => '包括使用电池时也不会空闲休眠。',
+			'web.serverSettings.host.modes.always.caveat' => '笔记本拔掉电源后会持续耗电。',
+			'web.serverSettings.host.modes.on_demand.label' => '闲时休眠,有请求时唤醒',
+			'web.serverSettings.host.modes.on_demand.desc' => '网关空闲时机器正常入睡;收到请求时被唤醒,opendray 在服务期间保持唤醒,结束后让它继续休眠。',
+			'web.serverSettings.host.modes.on_demand.caveat' => '需要开启"网络访问唤醒"(sudo pmset -a womp 1),有线以太网最可靠。休眠后的第一个请求会有几秒延迟,偶尔需要重试一次。',
+			'web.serverSettings.host.modes.off.label' => '完全不干预电源',
+			'web.serverSettings.host.modes.off.desc' => 'opendray 不对机器电源做任何操作。',
+			'web.serverSettings.host.modes.off.caveat' => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。',
 			'web.settings.title' => '设置',
 			'web.settings.subtitle' => '工作区、账号与网关配置。',
 			'web.settings.groups.workspace' => '工作区',
@@ -11675,6 +11783,8 @@ extension on TranslationsZh {
 			'web.settings.about.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'web.settings.about.releaseNotes' => '发行说明 ↗',
 			'web.settings.about.updateNow' => '立即更新',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.about.upgradingShort' => '更新中…',
 			'web.settings.about.confirmRestart' => '这将重启服务，正在运行的会话会重新连接。',
 			'web.settings.about.confirmUpgrade' => '升级并重启',
@@ -11690,8 +11800,6 @@ extension on TranslationsZh {
 			'web.settings.about.forcePrompt' => ({required Object count}) => '重启将中断 ${count} 个进行中的会话（之后会自动恢复）。',
 			'web.settings.about.upgradeAnyway' => '仍然升级',
 			'web.logViewer.filterPlaceholder' => '过滤…',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.debugTooltip' => 'Debug 计数',
 			'web.logViewer.infoTooltip' => 'Info 计数',
 			'web.logViewer.warnTooltip' => 'Warn 计数',
@@ -12189,6 +12297,8 @@ extension on TranslationsZh {
 			'web.database.console.run' => '运行',
 			'web.database.console.runHint' => 'Cmd/Ctrl+Enter 运行',
 			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} 行 · ${ms} 毫秒',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.console.truncated' => '已截断',
 			'web.database.console.empty' => '运行查询以查看结果。',
 			'web.database.console.truncatedNote' => '结果已截断',
@@ -12204,8 +12314,6 @@ extension on TranslationsZh {
 			'web.database.panel.console' => 'SQL 控制台',
 			'web.database.panel.openWorkbench' => '展开工作台',
 			'web.database.workbench.title' => '数据库工作台',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.title' => '圆桌',
 			'web.roundTable.experimental' => '实验性',
 			'web.roundTable.subtitle' => '跨厂商 AI 群聊。@ 点名 claude、codex 或 antigravity,它们就在群里回复——像 Telegram 群一样,每个成员背后是不同厂商的模型。',
@@ -12703,6 +12811,8 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => '（已停用）',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => '（无令牌）',
 			'sessions.spawnSheet.claudeAccount.noneHint' => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => '新建服务器',
@@ -12718,8 +12828,6 @@ extension on TranslationsZh {
 			'mcp.errorPrefix.update' => '更新失败',
 			'mcp.errorPrefix.toggle' => '切换失败',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'JSON 配置 — name、transport: stdio、command、args…',
 			'mcp.editor.descriptionPlaceholder' => '可选的一行说明',
@@ -13217,6 +13325,8 @@ extension on TranslationsZh {
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表',
 			'backups.inventory.description' => 'opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。',
 			'backups.inventory.rowsLabel' => '行',
+			_ => null,
+		} ?? switch (path) {
 			'backups.inventory.loadFailedToast' => '加载清单失败',
 			'backups.inventory.loading' => '加载中…',
 			'backups.inventory.tap' => '点击展开',
@@ -13232,8 +13342,6 @@ extension on TranslationsZh {
 			'backupSchedules.newButton' => '新建',
 			'backupSchedules.deleteTitle' => '删除计划？',
 			'backupSchedules.targetLabel' => '目标',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.targetsHint' => '选择一个或多个 —— 同一份备份会写入每个目标（3-2-1）。',
 			'backupSchedules.intervalLabel' => '间隔',
 			'backupSchedules.retentionLabel' => '保留（最近 N 个）',
@@ -13731,6 +13839,8 @@ extension on TranslationsZh {
 			'about.fields.app' => '应用',
 			'about.fields.version' => '版本',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version}（build ${build}）',
+			_ => null,
+		} ?? switch (path) {
 			'about.fields.package' => '包名',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => '登录账号',
@@ -13746,8 +13856,6 @@ extension on TranslationsZh {
 			'about.gateway.upToDate' => '已是最新',
 			'about.gateway.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'about.gateway.releaseNotes' => '更新说明',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.checkFailed' => '无法检查更新',
 			'settings.title' => '设置',
 			'settings.language.section' => '语言',
@@ -13812,6 +13920,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.changesNeedRestart' => '此配置的修改需重启网关。',
 			'settings.serverSettings.loadFailed' => '加载服务器设置失败',
 			'settings.serverSettings.sections.general' => '通用',
+			'settings.serverSettings.sections.host' => '主机电源',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
 			'settings.serverSettings.sections.vault' => '凭据库',
@@ -13822,6 +13931,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
 			'settings.serverSettings.sections.storageAntigravity' => '存储 · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
+			'settings.serverSettings.sectionDescriptions.host' => '让这台机器在闲置时仍可被访问。',
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
 			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
@@ -13895,6 +14005,12 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.cleanerHelper' => '周期性自动馆员，软归档过期/重复记忆。',
 			'settings.serverSettings.fields.knowledgeEnabled' => '知识图谱',
 			'settings.serverSettings.fields.knowledgeHelper' => '建立在记忆之上的结构化实体/手册/技能层。',
+			'settings.serverSettings.fields.preventIdleSleep' => '空闲休眠',
+			'settings.serverSettings.fields.preventIdleSleepHelper' => '睡眠中的 Mac 会关掉网络,网关便无法从手机和网页应答。默认的"插电时保持唤醒"能确保随时可连(屏幕仍会正常熄灭)。"闲时休眠,有请求时唤醒"更省电,但需开启网络访问唤醒,且休眠后的第一个请求会较慢。仅 macOS 生效。',
+			'settings.serverSettings.fields.sleepModeAc' => '插电时保持唤醒',
+			'settings.serverSettings.fields.sleepModeAlways' => '任何供电下保持唤醒',
+			'settings.serverSettings.fields.sleepModeOnDemand' => '闲时休眠,有请求时唤醒',
+			'settings.serverSettings.fields.sleepModeOff' => '不干预电源',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
 			'settings.serverSettings.embedderModel.reprobe' => '重新检测端点',

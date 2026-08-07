@@ -1554,6 +1554,7 @@ class _TranslationsWebServerSettingsEs extends TranslationsWebServerSettingsEn {
 	@override late final _TranslationsWebServerSettingsToggleEs toggle = _TranslationsWebServerSettingsToggleEs._(_root);
 	@override String get memoryRuntimeBanner => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).';
 	@override String get memoryRuntimeBannerButton => 'Abrir ajustes de Cortex';
+	@override late final _TranslationsWebServerSettingsHostEs host = _TranslationsWebServerSettingsHostEs._(_root);
 }
 
 // Path: web.settings
@@ -5157,6 +5158,7 @@ class _TranslationsWebServerSettingsSectionsEs extends TranslationsWebServerSett
 
 	// Translations
 	@override late final _TranslationsWebServerSettingsSectionsGeneralEs general = _TranslationsWebServerSettingsSectionsGeneralEs._(_root);
+	@override late final _TranslationsWebServerSettingsSectionsHostEs host = _TranslationsWebServerSettingsSectionsHostEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsLoggingEs logging = _TranslationsWebServerSettingsSectionsLoggingEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsSessionsEs sessions = _TranslationsWebServerSettingsSectionsSessionsEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsVaultEs vault = _TranslationsWebServerSettingsSectionsVaultEs._(_root);
@@ -5399,6 +5401,18 @@ class _TranslationsWebServerSettingsToggleEs extends TranslationsWebServerSettin
 	@override String get off => 'Desactivado';
 	@override String get defaultOn => 'Por defecto (on)';
 	@override String get defaultOff => 'Por defecto (off)';
+}
+
+// Path: web.serverSettings.host
+class _TranslationsWebServerSettingsHostEs extends TranslationsWebServerSettingsHostEn {
+	_TranslationsWebServerSettingsHostEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get intro => 'Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.';
+	@override String get platformNote => 'Solo macOS. En Linux y Windows este ajuste se acepta y se ignora: esos hosts no se suspenden por inactividad en una instalación de servidor normal. Nunca se bloquea una suspensión deliberada (cerrar la tapa, menú Apple → Reposo), y la aserción se libera si opendray termina o es forzado a cerrar.';
+	@override late final _TranslationsWebServerSettingsHostModesEs modes = _TranslationsWebServerSettingsHostModesEs._(_root);
 }
 
 // Path: web.settings.groups
@@ -7263,6 +7277,7 @@ class _TranslationsSettingsServerSettingsSectionsEs extends TranslationsSettings
 
 	// Translations
 	@override String get general => 'General';
+	@override String get host => 'Energía del host';
 	@override String get logging => 'Registro';
 	@override String get sessions => 'Sessions';
 	@override String get vault => 'Vault';
@@ -7282,6 +7297,7 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsEs extends Translati
 
 	// Translations
 	@override String get general => 'Dirección de escucha, cuenta del operador, TTL del token.';
+	@override String get host => 'Mantén esta máquina accesible mientras está inactiva.';
 	@override String get logging => 'Verbosidad, formato y ruta del log en disco.';
 	@override String get sessions => 'Umbrales de detección de inactividad.';
 	@override String get vault => 'Notas, skills y raíz versionada con git.';
@@ -7364,6 +7380,12 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get cleanerHelper => 'Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.';
 	@override String get knowledgeEnabled => 'Grafo de conocimiento';
 	@override String get knowledgeHelper => 'La capa estructurada de entidades/playbooks/skills sobre la memoria.';
+	@override String get preventIdleSleep => 'Reposo por inactividad';
+	@override String get preventIdleSleepHelper => 'Un Mac dormido apaga su red, así que la pasarela deja de responder desde el móvil y la web. «Despierto con corriente» es lo predeterminado y lo mantiene accesible (la pantalla se sigue apagando). «Dormir y despertar con tráfico» ahorra energía pero requiere Activar por acceso de red, y la primera petición tras dormir es lenta. Solo macOS.';
+	@override String get sleepModeAc => 'Despierto con corriente';
+	@override String get sleepModeAlways => 'Despierto con cualquier alimentación';
+	@override String get sleepModeOnDemand => 'Dormir, despertar con tráfico';
+	@override String get sleepModeOff => 'No tocar la energía';
 }
 
 // Path: settings.serverSettings.embedderModel
@@ -8416,6 +8438,17 @@ class _TranslationsWebServerSettingsSectionsGeneralEs extends TranslationsWebSer
 	@override String get desc => 'Dirección de escucha, cuenta de operador, TTL del token.';
 }
 
+// Path: web.serverSettings.sections.host
+class _TranslationsWebServerSettingsSectionsHostEs extends TranslationsWebServerSettingsSectionsHostEn {
+	_TranslationsWebServerSettingsSectionsHostEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Energía del host';
+	@override String get desc => 'Mantén la máquina accesible desde el móvil y la web mientras está inactiva.';
+}
+
 // Path: web.serverSettings.sections.logging
 class _TranslationsWebServerSettingsSectionsLoggingEs extends TranslationsWebServerSettingsSectionsLoggingEn {
 	_TranslationsWebServerSettingsSectionsLoggingEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9082,6 +9115,19 @@ class _TranslationsWebServerSettingsBackupScheduleHeadersEs extends Translations
 	@override String get state => 'Estado';
 }
 
+// Path: web.serverSettings.host.modes
+class _TranslationsWebServerSettingsHostModesEs extends TranslationsWebServerSettingsHostModesEn {
+	_TranslationsWebServerSettingsHostModesEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override late final _TranslationsWebServerSettingsHostModesAcEs ac = _TranslationsWebServerSettingsHostModesAcEs._(_root);
+	@override late final _TranslationsWebServerSettingsHostModesAlwaysEs always = _TranslationsWebServerSettingsHostModesAlwaysEs._(_root);
+	@override late final _TranslationsWebServerSettingsHostModesOnDemandEs on_demand = _TranslationsWebServerSettingsHostModesOnDemandEs._(_root);
+	@override late final _TranslationsWebServerSettingsHostModesOffEs off = _TranslationsWebServerSettingsHostModesOffEs._(_root);
+}
+
 // Path: web.settings.appearance.options
 class _TranslationsWebSettingsAppearanceOptionsEs extends TranslationsWebSettingsAppearanceOptionsEn {
 	_TranslationsWebSettingsAppearanceOptionsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9580,6 +9626,53 @@ class _TranslationsWebNotesVaultSyncConflictKindsEs extends TranslationsWebNotes
 	@override String get merge => 'merge';
 	@override String get cherryPick => 'cherry-pick';
 	@override String get operation => 'operación';
+}
+
+// Path: web.serverSettings.host.modes.ac
+class _TranslationsWebServerSettingsHostModesAcEs extends TranslationsWebServerSettingsHostModesAcEn {
+	_TranslationsWebServerSettingsHostModesAcEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Despierto con corriente';
+	@override String get desc => 'La máquina no se duerme por inactividad mientras está enchufada, así que el móvil y la web conectan al instante. Con batería duerme con normalidad. La pantalla se sigue apagando igual.';
+}
+
+// Path: web.serverSettings.host.modes.always
+class _TranslationsWebServerSettingsHostModesAlwaysEs extends TranslationsWebServerSettingsHostModesAlwaysEn {
+	_TranslationsWebServerSettingsHostModesAlwaysEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Despierto con cualquier alimentación';
+	@override String get desc => 'Nunca se duerme por inactividad, tampoco con batería.';
+	@override String get caveat => 'Agotará la batería de un portátil desenchufado.';
+}
+
+// Path: web.serverSettings.host.modes.on_demand
+class _TranslationsWebServerSettingsHostModesOnDemandEs extends TranslationsWebServerSettingsHostModesOnDemandEn {
+	_TranslationsWebServerSettingsHostModesOnDemandEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Duerme inactivo, despierta con tráfico';
+	@override String get desc => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.';
+	@override String get caveat => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.';
+}
+
+// Path: web.serverSettings.host.modes.off
+class _TranslationsWebServerSettingsHostModesOffEs extends TranslationsWebServerSettingsHostModesOffEn {
+	_TranslationsWebServerSettingsHostModesOffEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'No tocar la energía';
+	@override String get desc => 'opendray no interviene en absoluto en la máquina.';
+	@override String get caveat => 'La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto.';
 }
 
 // Path: web.memoryAmbient.rules.row.summary
@@ -11386,6 +11479,8 @@ extension on TranslationsEs {
 			'web.backups.targetEditor.rclone.configPathPlaceholder' => 'déjalo en blanco para el valor por defecto de rclone',
 			'web.serverSettings.sections.general.title' => 'General',
 			'web.serverSettings.sections.general.desc' => 'Dirección de escucha, cuenta de operador, TTL del token.',
+			'web.serverSettings.sections.host.title' => 'Energía del host',
+			'web.serverSettings.sections.host.desc' => 'Mantén la máquina accesible desde el móvil y la web mientras está inactiva.',
 			'web.serverSettings.sections.logging.title' => 'Registro',
 			'web.serverSettings.sections.logging.desc' => 'Verbosidad, formato y seguimiento en vivo.',
 			'web.serverSettings.sections.sessions.title' => 'Sesiones',
@@ -11614,6 +11709,19 @@ extension on TranslationsEs {
 			'web.serverSettings.toggle.defaultOff' => 'Por defecto (off)',
 			'web.serverSettings.memoryRuntimeBanner' => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Abrir ajustes de Cortex',
+			'web.serverSettings.host.intro' => 'Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.',
+			'web.serverSettings.host.platformNote' => 'Solo macOS. En Linux y Windows este ajuste se acepta y se ignora: esos hosts no se suspenden por inactividad en una instalación de servidor normal. Nunca se bloquea una suspensión deliberada (cerrar la tapa, menú Apple → Reposo), y la aserción se libera si opendray termina o es forzado a cerrar.',
+			'web.serverSettings.host.modes.ac.label' => 'Despierto con corriente',
+			'web.serverSettings.host.modes.ac.desc' => 'La máquina no se duerme por inactividad mientras está enchufada, así que el móvil y la web conectan al instante. Con batería duerme con normalidad. La pantalla se sigue apagando igual.',
+			'web.serverSettings.host.modes.always.label' => 'Despierto con cualquier alimentación',
+			'web.serverSettings.host.modes.always.desc' => 'Nunca se duerme por inactividad, tampoco con batería.',
+			'web.serverSettings.host.modes.always.caveat' => 'Agotará la batería de un portátil desenchufado.',
+			'web.serverSettings.host.modes.on_demand.label' => 'Duerme inactivo, despierta con tráfico',
+			'web.serverSettings.host.modes.on_demand.desc' => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.',
+			'web.serverSettings.host.modes.on_demand.caveat' => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.',
+			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
+			'web.serverSettings.host.modes.off.desc' => 'opendray no interviene en absoluto en la máquina.',
+			'web.serverSettings.host.modes.off.caveat' => 'La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto.',
 			'web.settings.title' => 'Ajustes',
 			'web.settings.subtitle' => 'Configuración del espacio de trabajo, la cuenta y el gateway.',
 			'web.settings.groups.workspace' => 'Espacio de trabajo',
@@ -11675,6 +11783,8 @@ extension on TranslationsEs {
 			'web.settings.about.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'web.settings.about.releaseNotes' => 'Notas de la versión ↗',
 			'web.settings.about.updateNow' => 'Actualizar ahora',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.about.upgradingShort' => 'Actualizando…',
 			'web.settings.about.confirmRestart' => 'Esto reinicia el servicio; las sesiones en ejecución se reconectan.',
 			'web.settings.about.confirmUpgrade' => 'Actualizar y reiniciar',
@@ -11690,8 +11800,6 @@ extension on TranslationsEs {
 			'web.settings.about.forcePrompt' => ({required Object count}) => 'El reinicio interrumpirá ${count} sesión(es) activa(s) (se reanudan automáticamente después).',
 			'web.settings.about.upgradeAnyway' => 'Actualizar de todos modos',
 			'web.logViewer.filterPlaceholder' => 'Filtrar…',
-			_ => null,
-		} ?? switch (path) {
 			'web.logViewer.debugTooltip' => 'Recuento de debug',
 			'web.logViewer.infoTooltip' => 'Recuento de info',
 			'web.logViewer.warnTooltip' => 'Recuento de advertencias',
@@ -12189,6 +12297,8 @@ extension on TranslationsEs {
 			'web.database.console.run' => 'Ejecutar',
 			'web.database.console.runHint' => 'Cmd/Ctrl+Enter para ejecutar',
 			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} fila(s) · ${ms} ms',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.console.truncated' => 'truncado',
 			'web.database.console.empty' => 'Ejecuta una consulta para ver resultados.',
 			'web.database.console.truncatedNote' => 'resultados truncados',
@@ -12204,8 +12314,6 @@ extension on TranslationsEs {
 			'web.database.panel.console' => 'Consola SQL',
 			'web.database.panel.openWorkbench' => 'Abrir banco de trabajo',
 			'web.database.workbench.title' => 'Banco de trabajo de BD',
-			_ => null,
-		} ?? switch (path) {
 			'web.roundTable.title' => 'Mesa redonda',
 			'web.roundTable.experimental' => 'Experimental',
 			'web.roundTable.subtitle' => 'Un chat grupal de IA entre proveedores. Menciona con @ a claude, codex o antigravity y responden en el hilo, como un grupo de Telegram, con el modelo de un proveedor distinto detrás de cada miembro.',
@@ -12703,6 +12811,8 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => ' (desactivada)',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (sin token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No hay cuentas de Claude configuradas. El gateway usará la ANTHROPIC_API_KEY del sistema. Añade cuentas en Ajustes → Cuentas en el admin web.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'No se pudieron cargar las cuentas de Claude (${error}). La session se creará con el valor predeterminado del gateway.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'Nuevo servidor',
@@ -12718,8 +12828,6 @@ extension on TranslationsEs {
 			'mcp.errorPrefix.update' => 'Error al actualizar',
 			'mcp.errorPrefix.toggle' => 'Error al alternar',
 			'mcp.errorWithMessage' => ({required Object prefix, required Object error}) => '${prefix}: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'mcp.editor.nameHint' => 'my-mcp-server',
 			'mcp.editor.jsonHint' => 'Configuración JSON, nombre, transport: stdio, command, args…',
 			'mcp.editor.descriptionPlaceholder' => 'Descripción opcional de una línea',
@@ -13217,6 +13325,8 @@ extension on TranslationsEs {
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} filas · ${tables} tablas',
 			'backups.inventory.description' => 'Recuentos de filas en vivo desde la base de datos Postgres de opendray. Las copias de seguridad capturan todas las filas de abajo; los artefactos binarios en disco no se incluyen.',
 			'backups.inventory.rowsLabel' => 'filas',
+			_ => null,
+		} ?? switch (path) {
 			'backups.inventory.loadFailedToast' => 'Error al cargar el inventario',
 			'backups.inventory.loading' => 'Cargando…',
 			'backups.inventory.tap' => 'Toca para expandir',
@@ -13232,8 +13342,6 @@ extension on TranslationsEs {
 			'backupSchedules.newButton' => 'Nueva',
 			'backupSchedules.deleteTitle' => '¿Eliminar programación?',
 			'backupSchedules.targetLabel' => 'Destinos',
-			_ => null,
-		} ?? switch (path) {
 			'backupSchedules.targetsHint' => 'Elige uno o más: la misma copia se escribe en cada destino (3-2-1).',
 			'backupSchedules.intervalLabel' => 'Intervalo',
 			'backupSchedules.retentionLabel' => 'Retención (conservar las N más recientes)',
@@ -13731,6 +13839,8 @@ extension on TranslationsEs {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Versión',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
+			_ => null,
+		} ?? switch (path) {
 			'about.fields.package' => 'Paquete',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Sesión iniciada como',
@@ -13746,8 +13856,6 @@ extension on TranslationsEs {
 			'about.gateway.upToDate' => 'Actualizado',
 			'about.gateway.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'about.gateway.releaseNotes' => 'Notas de la versión',
-			_ => null,
-		} ?? switch (path) {
 			'about.gateway.checkFailed' => 'Comprobación de actualizaciones no disponible',
 			'settings.title' => 'Ajustes',
 			'settings.language.section' => 'Idioma',
@@ -13812,6 +13920,7 @@ extension on TranslationsEs {
 			'settings.serverSettings.changesNeedRestart' => 'Los cambios en esta sección necesitan un reinicio del gateway.',
 			'settings.serverSettings.loadFailed' => 'No se pudieron cargar los ajustes del servidor',
 			'settings.serverSettings.sections.general' => 'General',
+			'settings.serverSettings.sections.host' => 'Energía del host',
 			'settings.serverSettings.sections.logging' => 'Registro',
 			'settings.serverSettings.sections.sessions' => 'Sessions',
 			'settings.serverSettings.sections.vault' => 'Vault',
@@ -13822,6 +13931,7 @@ extension on TranslationsEs {
 			'settings.serverSettings.sections.storageCodex' => 'Almacenamiento · Codex',
 			'settings.serverSettings.sections.storageAntigravity' => 'Almacenamiento · Antigravity',
 			'settings.serverSettings.sectionDescriptions.general' => 'Dirección de escucha, cuenta del operador, TTL del token.',
+			'settings.serverSettings.sectionDescriptions.host' => 'Mantén esta máquina accesible mientras está inactiva.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosidad, formato y ruta del log en disco.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Umbrales de detección de inactividad.',
 			'settings.serverSettings.sectionDescriptions.vault' => 'Notas, skills y raíz versionada con git.',
@@ -13895,6 +14005,12 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.cleanerHelper' => 'Auto-bibliotecario periódico que archiva memorias obsoletas / duplicadas.',
 			'settings.serverSettings.fields.knowledgeEnabled' => 'Grafo de conocimiento',
 			'settings.serverSettings.fields.knowledgeHelper' => 'La capa estructurada de entidades/playbooks/skills sobre la memoria.',
+			'settings.serverSettings.fields.preventIdleSleep' => 'Reposo por inactividad',
+			'settings.serverSettings.fields.preventIdleSleepHelper' => 'Un Mac dormido apaga su red, así que la pasarela deja de responder desde el móvil y la web. «Despierto con corriente» es lo predeterminado y lo mantiene accesible (la pantalla se sigue apagando). «Dormir y despertar con tráfico» ahorra energía pero requiere Activar por acceso de red, y la primera petición tras dormir es lenta. Solo macOS.',
+			'settings.serverSettings.fields.sleepModeAc' => 'Despierto con corriente',
+			'settings.serverSettings.fields.sleepModeAlways' => 'Despierto con cualquier alimentación',
+			'settings.serverSettings.fields.sleepModeOnDemand' => 'Dormir, despertar con tráfico',
+			'settings.serverSettings.fields.sleepModeOff' => 'No tocar la energía',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" debe ser un entero',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" debe ser un número',
 			'settings.serverSettings.embedderModel.reprobe' => 'Volver a comprobar el endpoint',

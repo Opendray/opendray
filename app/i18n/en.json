@@ -2118,6 +2118,10 @@
           "title": "General",
           "desc": "Listen address, operator account, token TTL."
         },
+        "host": {
+          "title": "Host power",
+          "desc": "Keep the machine reachable from phone and web while it is idle."
+        },
         "logging": {
           "title": "Logging",
           "desc": "Verbosity, format, and live tail."
@@ -2488,7 +2492,32 @@
         "defaultOff": "Default (off)"
       },
       "memoryRuntimeBanner": "Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).",
-      "memoryRuntimeBannerButton": "Open Cortex settings"
+      "memoryRuntimeBannerButton": "Open Cortex settings",
+      "host": {
+        "intro": "A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as \"opendray is flaky\" when the machine is really just asleep. Pick how opendray should handle that.",
+        "platformNote": "macOS only. On Linux and Windows this setting is accepted and ignored — those hosts do not idle-suspend under a normal server install. A deliberate sleep (lid close, Apple menu → Sleep) is never blocked, and the assertion is released if opendray exits or is killed.",
+        "modes": {
+          "ac": {
+            "label": "Stay awake on wall power",
+            "desc": "The machine never idle-sleeps while plugged in, so phone and web connect instantly. On battery it sleeps normally. The screen still turns off as usual."
+          },
+          "always": {
+            "label": "Stay awake on any power",
+            "desc": "Never idle-sleeps, including on battery.",
+            "caveat": "Will drain a laptop battery left unplugged."
+          },
+          "on_demand": {
+            "label": "Sleep when idle, wake on traffic",
+            "desc": "The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.",
+            "caveat": "Needs \"Wake for network access\" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry."
+          },
+          "off": {
+            "label": "Never touch power settings",
+            "desc": "opendray leaves the machine alone entirely.",
+            "caveat": "The gateway is unreachable whenever the host sleeps, unless something else keeps it awake."
+          }
+        }
+      }
     },
     "settings": {
       "title": "Settings",
@@ -5202,6 +5231,7 @@
       "loadFailed": "Failed to load server settings",
       "sections": {
         "general": "General",
+        "host": "Host power",
         "logging": "Logging",
         "sessions": "Sessions",
         "vault": "Vault",
@@ -5214,6 +5244,7 @@
       },
       "sectionDescriptions": {
         "general": "Listen address, operator account, token TTL.",
+        "host": "Keep this machine reachable while it is idle.",
         "logging": "Verbosity, format, and on-disk log path.",
         "sessions": "Idle detection thresholds.",
         "vault": "Notes, skills, and git-versioned root.",
@@ -5288,7 +5319,13 @@
         "cleanerEnabled": "Cleaner",
         "cleanerHelper": "Periodic auto-librarian that soft-archives stale / duplicate memories.",
         "knowledgeEnabled": "Knowledge graph",
-        "knowledgeHelper": "The structured entities/playbooks/skills layer on top of memory."
+        "knowledgeHelper": "The structured entities/playbooks/skills layer on top of memory.",
+        "preventIdleSleep": "Idle sleep",
+        "preventIdleSleepHelper": "A sleeping Mac takes its network down, so the gateway stops answering from phone and web. \"Stay awake on wall power\" is the default and keeps it reachable (the screen still turns off). \"Sleep, wake on traffic\" saves power but needs Wake for network access, and the first request after a sleep is slow. macOS only.",
+        "sleepModeAc": "Stay awake on wall power",
+        "sleepModeAlways": "Stay awake on any power",
+        "sleepModeOnDemand": "Sleep, wake on traffic",
+        "sleepModeOff": "Don't touch power"
       },
       "validateInteger": "\"{field}\" must be an integer",
       "validateNumber": "\"{field}\" must be a number",

@@ -105,6 +105,12 @@ export interface ServerConfig {
   knowledge: {
     enabled: boolean
   }
+  host: {
+    /** How the gateway keeps its host machine reachable: "ac" (default,
+     * hold awake on wall power), "always", "on_demand" (let the host
+     * sleep, incoming traffic wakes it) or "off". macOS only. */
+    prevent_idle_sleep: string
+  }
 }
 
 export interface SettingsResponse {
@@ -202,5 +208,6 @@ export function emptyConfig(): ServerConfig {
       pg_restore_path: '',
     },
     knowledge: { enabled: false },
+    host: { prevent_idle_sleep: '' },
   }
 }

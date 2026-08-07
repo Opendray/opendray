@@ -12,6 +12,15 @@ for the full rationale and what triggers a major bump.
 
 ### Added
 
+- **Host power is now a setting you can see, on web and mobile.** The
+  choice between "stay reachable" and "let the machine sleep" was only
+  reachable by hand-editing `config.toml`, which meant nobody found it.
+  Server settings gain a **Host power** section listing all four modes
+  with what each one costs — web renders them as annotated cards, mobile
+  as a labelled picker — plus a note that a deliberate sleep is never
+  blocked and that non-macOS hosts ignore the setting. Translated across
+  English, 中文 and Español.
+
 - **Wake-on-demand: the host may sleep, and phone/web traffic wakes it.**
   `[host] prevent_idle_sleep = "on_demand"` lets the gateway's Mac sleep
   whenever things are quiet instead of being held awake around the clock.
@@ -26,6 +35,14 @@ for the full rationale and what triggers a major bump.
   `"always"` and `"off"` behaviours are unchanged.
 
 ### Fixed
+
+- **Saving invalid server settings no longer bricks the next restart.**
+  `PUT /admin/settings` wrote whatever it was given. Since the loader
+  validates on every startup, a bad value — an unparseable duration, an
+  unknown mode — saved cleanly and then stopped the gateway from coming
+  back up, with nothing naming the offending field. The write path now
+  validates exactly what is about to hit disk and answers 400 instead,
+  leaving the stored config untouched.
 
 - **The gateway keeps its host awake, so phone and web stay connected.**
   A Mac left to itself idle-sleeps, and a sleeping host takes its network
