@@ -22,8 +22,10 @@ class NotesScreen extends ConsumerWidget {
   }
 }
 
-// NotesVaultScreen — the markdown/Obsidian-sync vault, demoted out of the
-// core triad (reachable from the More menu).
+// NotesVaultScreen — the markdown doc library, demoted out of the
+// core triad (reachable from the More menu). It syncs through a plain
+// git remote; Obsidian is merely one editor that can be pointed at the
+// same repo, not something opendray integrates with.
 //
 // A flat list mixes personal scratchpads with every project's docs in one
 // stream — usable at 10 notes, unreadable at 200. Mirrors the web vault: the

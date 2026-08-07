@@ -48,7 +48,7 @@ const LS_OUTLINE_OPEN = 'opendray.notes.outlineOpen'
 type LeftMode = 'tree' | 'tags'
 
 // VaultPage is the markdown-vault browser/editor (demoted out of the
-// core triad — a freeform/Obsidian-sync utility). Two-pane layout: left = navigation (tree or
+// core triad — a freeform, git-synced doc library). Two-pane layout: left = navigation (tree or
 // tag picker, with title/path filter at top), right = NoteEditor for the
 // selected note. Independent of any session.
 export function VaultPage() {

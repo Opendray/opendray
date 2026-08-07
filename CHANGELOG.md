@@ -12,6 +12,24 @@ for the full rationale and what triggers a major bump.
 
 ### Added
 
+- **Markdown in the Vault is syntax-highlighted while you edit it.** The
+  file viewer has always coloured what it shows, so raw markdown in the
+  Vault — the one place people actually read and write it — was the last
+  flat grey surface. Web layers a highlighted backdrop under the
+  textarea; mobile colours the field directly through its editing
+  controller, so the caret can't drift from the glyphs. Headings, bold,
+  italic, code, links, quotes, lists, tags and `[[wiki-links]]`.
+
+### Fixed
+
+- **The Vault no longer describes itself as an Obsidian feature.** It
+  syncs through a plain git remote — Obsidian is merely one editor that
+  can be pointed at the same repo, not something opendray integrates
+  with. The user-facing wording was corrected in the previous release;
+  this clears the same claim from the code that outlives it.
+
+### Added
+
 - **New docs start from a template, and folders can explain themselves.**
   Every doc previously started as an empty file with a heading, which is
   how a vault ends up with five different ideas of what a feature note
