@@ -177,9 +177,6 @@ class TranslationsNavEn {
 	/// en: 'Memory'
 	String get memory => 'Memory';
 
-	/// en: 'Notes'
-	String get notes => 'Notes';
-
 	/// en: 'More'
 	String get more => 'More';
 
@@ -1885,8 +1882,8 @@ class TranslationsNotesPageEn {
 
 	// Translations
 
-	/// en: 'Notes'
-	String get title => 'Notes';
+	/// en: 'Vault'
+	String get title => 'Vault';
 
 	/// en: 'New'
 	String get newButton => 'New';
@@ -2167,8 +2164,8 @@ class TranslationsCortexHubEn {
 	/// en: 'Cortex'
 	String get title => 'Cortex';
 
-	/// en: 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.'
-	String get subtitle => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.';
+	/// en: 'The experience flywheel: Memory → Brief → Knowledge, fed back into every session.'
+	String get subtitle => 'The experience flywheel: Memory → Brief → Knowledge, fed back into every session.';
 
 	/// en: 'idle {days}d'
 	String idleBadge({required Object days}) => 'idle ${days}d';
@@ -2179,8 +2176,8 @@ class TranslationsCortexHubEn {
 	/// en: 'Active projects'
 	String get activeProjectsTitle => 'Active projects';
 
-	/// en: 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.'
-	String get loopHint => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.';
+	/// en: 'Sessions feed Memory → Memory distills into a Brief → Briefs compound into Knowledge → Knowledge guides every new session.'
+	String get loopHint => 'Sessions feed Memory → Memory distills into a Brief → Briefs compound into Knowledge → Knowledge guides every new session.';
 
 	/// en: 'Settings'
 	String get settings => 'Settings';
@@ -2191,8 +2188,8 @@ class TranslationsCortexHubEn {
 	/// en: 'Raw cross-session facts the agents store and recall.'
 	String get memoryDesc => 'Raw cross-session facts the agents store and recall.';
 
-	/// en: 'Notes'
-	String get notes => 'Notes';
+	/// en: 'Brief'
+	String get notes => 'Brief';
 
 	/// en: 'Each project’s official goal / plan / journal.'
 	String get notesDesc => 'Each project’s official goal / plan / journal.';
@@ -2215,8 +2212,8 @@ class TranslationsCortexHubEn {
 	/// en: 'Pending proposals ({count})'
 	String inboxTitle({required Object count}) => 'Pending proposals (${count})';
 
-	/// en: 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.'
-	String get inboxHint => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.';
+	/// en: 'AI-proposed updates to project briefs and KB pages. Approve to publish, reject to drop.'
+	String get inboxHint => 'AI-proposed updates to project briefs and KB pages. Approve to publish, reject to drop.';
 
 	/// en: 'Knowledge Base'
 	String get kbLabel => 'Knowledge Base';
@@ -11551,8 +11548,8 @@ class TranslationsWebCortexHomeEn {
 	/// en: '{count} pending'
 	String pendingProposals({required Object count}) => '${count} pending';
 
-	/// en: 'Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.'
-	String get loopHint => 'Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.';
+	/// en: 'Memory → Brief → Knowledge → injected back into every spawn. Promotion is transformation, never copy.'
+	String get loopHint => 'Memory → Brief → Knowledge → injected back into every spawn. Promotion is transformation, never copy.';
 
 	/// en: 'Active projects'
 	String get activeProjects => 'Active projects';
@@ -12496,8 +12493,8 @@ class TranslationsMoreItemsCortexHubEn {
 	/// en: 'Cortex'
 	String get title => 'Cortex';
 
-	/// en: 'Memory → Notes → Knowledge hub + pending proposals'
-	String get subtitle => 'Memory → Notes → Knowledge hub + pending proposals';
+	/// en: 'Memory → Brief → Knowledge hub + pending proposals'
+	String get subtitle => 'Memory → Brief → Knowledge hub + pending proposals';
 }
 
 // Path: more.items.projectMemory
@@ -12616,8 +12613,8 @@ class TranslationsMoreItemsVaultEn {
 	/// en: 'Vault'
 	String get title => 'Vault';
 
-	/// en: 'Freeform markdown notes (Obsidian-sync)'
-	String get subtitle => 'Freeform markdown notes (Obsidian-sync)';
+	/// en: 'Freeform markdown docs (folders, wiki-links, git sync)'
+	String get subtitle => 'Freeform markdown docs (folders, wiki-links, git sync)';
 }
 
 // Path: more.items.roundTable
@@ -18175,11 +18172,11 @@ class TranslationsWebCortexHomeNotesEn {
 
 	// Translations
 
-	/// en: 'Notes'
-	String get title => 'Notes';
+	/// en: 'Brief'
+	String get title => 'Brief';
 
-	/// en: 'Each project's official document — blueprint-shaped sections the AI keeps current as you work.'
-	String get description => 'Each project\'s official document — blueprint-shaped sections the AI keeps current as you work.';
+	/// en: 'Each project's live brief — blueprint-shaped sections the AI keeps current as you work.'
+	String get description => 'Each project\'s live brief — blueprint-shaped sections the AI keeps current as you work.';
 
 	/// en: '{count} active'
 	String projects({required Object count}) => '${count} active';
@@ -18211,8 +18208,8 @@ class TranslationsWebCortexHomeProposalsEn {
 	/// en: 'Pending proposals ({count})'
 	String title({required Object count}) => 'Pending proposals (${count})';
 
-	/// en: 'AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.'
-	String get hint => 'AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.';
+	/// en: 'AI-proposed updates to project briefs and KB pages, waiting for your verdict. Approve to publish, reject to drop.'
+	String get hint => 'AI-proposed updates to project briefs and KB pages, waiting for your verdict. Approve to publish, reject to drop.';
 
 	/// en: 'Knowledge Base'
 	String get kbLabel => 'Knowledge Base';
@@ -18574,7 +18571,6 @@ extension on Translations {
 			'auth.errorFallback' => 'Login failed',
 			'nav.sessions' => 'Sessions',
 			'nav.memory' => 'Memory',
-			'nav.notes' => 'Notes',
 			'nav.more' => 'More',
 			'nav.activity' => 'Activity',
 			'nav.providers' => 'Providers',
@@ -19060,9 +19056,9 @@ extension on Translations {
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			_ => null,
 		} ?? switch (path) {
-			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.',
@@ -19574,9 +19570,9 @@ extension on Translations {
 			'web.providers.detail.toggleFailedToast' => 'Toggle failed',
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
+			'web.providers.detail.caps.images' => 'images',
 			_ => null,
 		} ?? switch (path) {
-			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'not installed',
 			'web.providers.detail.brokenCli' => 'Installed but not runnable',
@@ -20088,9 +20084,9 @@ extension on Translations {
 			'web.backups.generated.title' => 'Save this passphrase NOW',
 			'web.backups.generated.description' => 'This is shown <1>once</1>. It will not be retrievable from opendray or anywhere else. Copy it into a password manager before continuing.',
 			'web.backups.generated.copy' => 'Copy',
+			'web.backups.generated.copiedToast' => 'Passphrase copied to clipboard',
 			_ => null,
 		} ?? switch (path) {
-			'web.backups.generated.copiedToast' => 'Passphrase copied to clipboard',
 			'web.backups.generated.copyFailedToast' => 'Copy failed — select and copy manually',
 			'web.backups.generated.savedTo' => 'Saved to:',
 			'web.backups.generated.ack' => 'I have saved this passphrase to my password manager',
@@ -20602,9 +20598,9 @@ extension on Translations {
 			'web.settings.system.description' => 'Live status from the gateway\'s /health endpoint.',
 			'web.settings.system.status' => 'Status',
 			'web.settings.system.version' => 'Version',
+			'web.settings.system.uptime' => 'Uptime',
 			_ => null,
 		} ?? switch (path) {
-			'web.settings.system.uptime' => 'Uptime',
 			'web.settings.system.database' => 'Database',
 			'web.settings.system.reachable' => 'reachable',
 			'web.settings.system.unreachable' => 'unreachable',
@@ -20982,20 +20978,20 @@ extension on Translations {
 			'web.cortex.home.subtitle' => 'One module, three rungs, one loop: raw memory crystallises into each project\'s official doc, distils into cross-project knowledge, and is injected back into every new session.',
 			'web.cortex.home.disabled' => 'disabled',
 			'web.cortex.home.pendingProposals' => ({required Object count}) => '${count} pending',
-			'web.cortex.home.loopHint' => 'Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.',
+			'web.cortex.home.loopHint' => 'Memory → Brief → Knowledge → injected back into every spawn. Promotion is transformation, never copy.',
 			'web.cortex.home.activeProjects' => 'Active projects',
 			'web.cortex.home.idle' => ({required Object days}) => 'idle ${days}d',
 			'web.cortex.home.memory.title' => 'Memory',
 			'web.cortex.home.memory.description' => 'Raw episodic facts captured from your sessions — recalled by relevance, quarantined when third-party.',
 			'web.cortex.home.memory.quarantine' => ({required Object count}) => '${count} quarantined',
-			'web.cortex.home.notes.title' => 'Notes',
-			'web.cortex.home.notes.description' => 'Each project\'s official document — blueprint-shaped sections the AI keeps current as you work.',
+			'web.cortex.home.notes.title' => 'Brief',
+			'web.cortex.home.notes.description' => 'Each project\'s live brief — blueprint-shaped sections the AI keeps current as you work.',
 			'web.cortex.home.notes.projects' => ({required Object count}) => '${count} active',
 			'web.cortex.home.knowledge.title' => 'Knowledge',
 			'web.cortex.home.knowledge.description' => 'Cross-project, iterable expertise: binding foundational rules + emergent lessons, injected into every spawn.',
 			'web.cortex.home.settings' => 'Settings',
 			'web.cortex.home.proposals.title' => ({required Object count}) => 'Pending proposals (${count})',
-			'web.cortex.home.proposals.hint' => 'AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.',
+			'web.cortex.home.proposals.hint' => 'AI-proposed updates to project briefs and KB pages, waiting for your verdict. Approve to publish, reject to drop.',
 			'web.cortex.home.proposals.kbLabel' => 'Knowledge Base',
 			'web.cortex.home.proposals.preview' => 'Preview',
 			'web.cortex.home.proposals.hide' => 'Hide',
@@ -21116,9 +21112,9 @@ extension on Translations {
 			'web.database.grid.insert' => 'Insert',
 			'web.database.grid.refresh' => 'Refresh',
 			'web.database.grid.edit' => 'Edit',
+			'web.database.grid.delete' => 'Delete',
 			_ => null,
 		} ?? switch (path) {
-			'web.database.grid.delete' => 'Delete',
 			'web.database.grid.deleted' => 'Row deleted',
 			'web.database.grid.confirmDelete' => 'Delete this row?',
 			'web.database.grid.loading' => 'Loading rows…',
@@ -21276,7 +21272,7 @@ extension on Translations {
 			'more.items.customTasks.title' => 'Custom tasks',
 			'more.items.customTasks.subtitle' => 'Slash commands shown in the session task picker',
 			'more.items.cortexHub.title' => 'Cortex',
-			'more.items.cortexHub.subtitle' => 'Memory → Notes → Knowledge hub + pending proposals',
+			'more.items.cortexHub.subtitle' => 'Memory → Brief → Knowledge hub + pending proposals',
 			'more.items.projectMemory.title' => 'Project goal / plan / journal',
 			'more.items.projectMemory.subtitle' => 'Per-cwd memory layers 2-4 + agent proposals',
 			'more.items.archived.title' => 'Archived memories',
@@ -21292,7 +21288,7 @@ extension on Translations {
 			'more.items.about.title' => 'About',
 			'more.items.about.subtitle' => 'Build version & server info',
 			'more.items.vault.title' => 'Vault',
-			'more.items.vault.subtitle' => 'Freeform markdown notes (Obsidian-sync)',
+			'more.items.vault.subtitle' => 'Freeform markdown docs (folders, wiki-links, git sync)',
 			'more.items.roundTable.title' => 'Round Table',
 			'more.items.roundTable.subtitle' => 'Cross-vendor AI group chat',
 			'more.signOut' => 'Sign out',
@@ -21630,9 +21626,9 @@ extension on Translations {
 			'sessions.spawnSheet.argsHelper' => 'Whitespace-separated; blank uses the provider\'s defaults.',
 			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
+			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Bypass permissions / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
@@ -22144,9 +22140,9 @@ extension on Translations {
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
 			'backups.restore.outputTitle' => 'pg_restore output',
+			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			_ => null,
 		} ?? switch (path) {
-			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
 			'backups.restore.manifestTitle' => 'Manifest',
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
@@ -22494,7 +22490,7 @@ extension on Translations {
 			'customTasks.save' => 'Save',
 			'customTasks.create' => 'Create',
 			'customTasks.failedToLoad' => 'Failed to load custom tasks',
-			'notesPage.title' => 'Notes',
+			'notesPage.title' => 'Vault',
 			'notesPage.newButton' => 'New',
 			'notesPage.newNoteDialogTitle' => 'New note',
 			'notesPage.searchHint' => 'Search across the whole vault…',
@@ -22658,9 +22654,9 @@ extension on Translations {
 			'memory.create.submit' => 'Create',
 			'memory.archive' => 'Archive',
 			'memory.quarantine' => 'Quarantine',
+			'memory.archivedToast' => 'Memory archived — restorable from Archived',
 			_ => null,
 		} ?? switch (path) {
-			'memory.archivedToast' => 'Memory archived — restorable from Archived',
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',
@@ -22868,15 +22864,15 @@ extension on Translations {
 			'memoryQuarantine.expires' => ({required Object date}) => 'expires ${date}',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.title' => 'Cortex',
-			'cortexHub.subtitle' => 'The experience flywheel: Memory → Notes → Knowledge, fed back into every session.',
+			'cortexHub.subtitle' => 'The experience flywheel: Memory → Brief → Knowledge, fed back into every session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} active',
 			'cortexHub.activeProjectsTitle' => 'Active projects',
-			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.',
+			'cortexHub.loopHint' => 'Sessions feed Memory → Memory distills into a Brief → Briefs compound into Knowledge → Knowledge guides every new session.',
 			'cortexHub.settings' => 'Settings',
 			'cortexHub.memory' => 'Memory',
 			'cortexHub.memoryDesc' => 'Raw cross-session facts the agents store and recall.',
-			'cortexHub.notes' => 'Notes',
+			'cortexHub.notes' => 'Brief',
 			'cortexHub.notesDesc' => 'Each project’s official goal / plan / journal.',
 			'cortexHub.knowledge' => 'Knowledge',
 			'cortexHub.knowledgeDesc' => 'Cross-project, distilled expertise.',
@@ -22884,7 +22880,7 @@ extension on Translations {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pending',
 			'cortexHub.disabled' => 'disabled',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Pending proposals (${count})',
-			'cortexHub.inboxHint' => 'AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.',
+			'cortexHub.inboxHint' => 'AI-proposed updates to project briefs and KB pages. Approve to publish, reject to drop.',
 			'cortexHub.kbLabel' => 'Knowledge Base',
 			'cortexHub.preview' => 'Preview',
 			'cortexHub.hide' => 'Hide',

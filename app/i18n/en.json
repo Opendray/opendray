@@ -30,7 +30,6 @@
   "nav": {
     "sessions": "Sessions",
     "memory": "Memory",
-    "notes": "Notes",
     "more": "More",
     "activity": "Activity",
     "providers": "Providers",
@@ -3070,7 +3069,7 @@
         "subtitle": "One module, three rungs, one loop: raw memory crystallises into each project's official doc, distils into cross-project knowledge, and is injected back into every new session.",
         "disabled": "disabled",
         "pendingProposals": "{count} pending",
-        "loopHint": "Memory → Notes → Knowledge → injected back into every spawn. Promotion is transformation, never copy.",
+        "loopHint": "Memory → Brief → Knowledge → injected back into every spawn. Promotion is transformation, never copy.",
         "activeProjects": "Active projects",
         "idle": "idle {days}d",
         "memory": {
@@ -3079,8 +3078,8 @@
           "quarantine": "{count} quarantined"
         },
         "notes": {
-          "title": "Notes",
-          "description": "Each project's official document — blueprint-shaped sections the AI keeps current as you work.",
+          "title": "Brief",
+          "description": "Each project's live brief — blueprint-shaped sections the AI keeps current as you work.",
           "projects": "{count} active"
         },
         "knowledge": {
@@ -3090,7 +3089,7 @@
         "settings": "Settings",
         "proposals": {
           "title": "Pending proposals ({count})",
-          "hint": "AI-proposed updates to project notes and KB pages, waiting for your verdict. Approve to publish, reject to drop.",
+          "hint": "AI-proposed updates to project briefs and KB pages, waiting for your verdict. Approve to publish, reject to drop.",
           "kbLabel": "Knowledge Base",
           "preview": "Preview",
           "hide": "Hide",
@@ -3452,7 +3451,7 @@
       },
       "cortexHub": {
         "title": "Cortex",
-        "subtitle": "Memory → Notes → Knowledge hub + pending proposals"
+        "subtitle": "Memory → Brief → Knowledge hub + pending proposals"
       },
       "projectMemory": {
         "title": "Project goal / plan / journal",
@@ -3484,7 +3483,7 @@
       },
       "vault": {
         "title": "Vault",
-        "subtitle": "Freeform markdown notes (Obsidian-sync)"
+        "subtitle": "Freeform markdown docs (folders, wiki-links, git sync)"
       },
       "roundTable": {
         "title": "Round Table",
@@ -4918,7 +4917,7 @@
     "failedToLoad": "Failed to load custom tasks"
   },
   "notesPage": {
-    "title": "Notes",
+    "title": "Vault",
     "newButton": "New",
     "newNoteDialogTitle": "New note",
     "searchHint": "Search across the whole vault…",
@@ -5372,15 +5371,15 @@
   },
   "cortexHub": {
     "title": "Cortex",
-    "subtitle": "The experience flywheel: Memory → Notes → Knowledge, fed back into every session.",
+    "subtitle": "The experience flywheel: Memory → Brief → Knowledge, fed back into every session.",
     "idleBadge": "idle {days}d",
     "activeProjectsBadge": "{count} active",
     "activeProjectsTitle": "Active projects",
-    "loopHint": "Sessions feed Memory → Memory distills into Notes → Notes compound into Knowledge → Knowledge guides every new session.",
+    "loopHint": "Sessions feed Memory → Memory distills into a Brief → Briefs compound into Knowledge → Knowledge guides every new session.",
     "settings": "Settings",
     "memory": "Memory",
     "memoryDesc": "Raw cross-session facts the agents store and recall.",
-    "notes": "Notes",
+    "notes": "Brief",
     "notesDesc": "Each project’s official goal / plan / journal.",
     "knowledge": "Knowledge",
     "knowledgeDesc": "Cross-project, distilled expertise.",
@@ -5388,7 +5387,7 @@
     "pendingBadge": "{count} pending",
     "disabled": "disabled",
     "inboxTitle": "Pending proposals ({count})",
-    "inboxHint": "AI-proposed updates to project notes and KB pages. Approve to publish, reject to drop.",
+    "inboxHint": "AI-proposed updates to project briefs and KB pages. Approve to publish, reject to drop.",
     "kbLabel": "Knowledge Base",
     "preview": "Preview",
     "hide": "Hide",

@@ -123,7 +123,6 @@ class _TranslationsNavZh extends TranslationsNavEn {
 	// Translations
 	@override String get sessions => '会话';
 	@override String get memory => '记忆';
-	@override String get notes => '笔记';
 	@override String get more => '更多';
 	@override String get activity => '活动';
 	@override String get providers => '提供方';
@@ -866,7 +865,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '笔记';
+	@override String get title => '文档库';
 	@override String get newButton => '新建';
 	@override String get newNoteDialogTitle => '新建笔记';
 	@override String get searchHint => '搜索整个仓库…';
@@ -1010,15 +1009,15 @@ class _TranslationsCortexHubZh extends TranslationsCortexHubEn {
 
 	// Translations
 	@override String get title => 'Cortex';
-	@override String get subtitle => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。';
+	@override String get subtitle => '经验飞轮：记忆 → 简报 → 知识，回流到每个会话。';
 	@override String idleBadge({required Object days}) => '闲置 ${days} 天';
 	@override String activeProjectsBadge({required Object count}) => '${count} 个活跃';
 	@override String get activeProjectsTitle => '活跃项目';
-	@override String get loopHint => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。';
+	@override String get loopHint => '会话喂养记忆 → 记忆提炼为简报 → 简报沉淀为知识 → 知识引导每个新会话。';
 	@override String get settings => '设置';
 	@override String get memory => '记忆';
 	@override String get memoryDesc => '代理存取的跨会话原始事实。';
-	@override String get notes => '笔记';
+	@override String get notes => '简报';
 	@override String get notesDesc => '每个项目的官方目标 / 计划 / 日志。';
 	@override String get knowledge => '知识';
 	@override String get knowledgeDesc => '跨项目沉淀的专业知识。';
@@ -1026,7 +1025,7 @@ class _TranslationsCortexHubZh extends TranslationsCortexHubEn {
 	@override String pendingBadge({required Object count}) => '${count} 条待审';
 	@override String get disabled => '已禁用';
 	@override String inboxTitle({required Object count}) => '待审提案（${count}）';
-	@override String get inboxHint => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。';
+	@override String get inboxHint => 'AI 对项目简报与知识库页面提出的更新。批准即发布，拒绝即丢弃。';
 	@override String get kbLabel => '知识库';
 	@override String get preview => '预览';
 	@override String get hide => '收起';
@@ -5893,7 +5892,7 @@ class _TranslationsWebCortexHomeZh extends TranslationsWebCortexHomeEn {
 	@override String get subtitle => '一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。';
 	@override String get disabled => '未启用';
 	@override String pendingProposals({required Object count}) => '${count} 个待审';
-	@override String get loopHint => '记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。';
+	@override String get loopHint => '记忆 → 简报 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。';
 	@override String get activeProjects => '活跃项目';
 	@override String idle({required Object days}) => '闲置 ${days} 天';
 	@override late final _TranslationsWebCortexHomeMemoryZh memory = _TranslationsWebCortexHomeMemoryZh._(_root);
@@ -6374,7 +6373,7 @@ class _TranslationsMoreItemsCortexHubZh extends TranslationsMoreItemsCortexHubEn
 
 	// Translations
 	@override String get title => 'Cortex';
-	@override String get subtitle => '记忆 → 笔记 → 知识中枢 + 待审提案';
+	@override String get subtitle => '记忆 → 简报 → 知识中枢 + 待审提案';
 }
 
 // Path: more.items.projectMemory
@@ -6462,7 +6461,7 @@ class _TranslationsMoreItemsVaultZh extends TranslationsMoreItemsVaultEn {
 
 	// Translations
 	@override String get title => '文档库';
-	@override String get subtitle => '自由 markdown 笔记(Obsidian 同步)';
+	@override String get subtitle => '自由 markdown 文档(目录、wiki 链接、git 同步)';
 }
 
 // Path: more.items.roundTable
@@ -9513,8 +9512,8 @@ class _TranslationsWebCortexHomeNotesZh extends TranslationsWebCortexHomeNotesEn
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => '笔记';
-	@override String get description => '每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。';
+	@override String get title => '简报';
+	@override String get description => '每个项目的实时简报——按蓝图组织章节，AI 随工作进展持续维护。';
 	@override String projects({required Object count}) => '${count} 个活跃';
 }
 
@@ -9537,7 +9536,7 @@ class _TranslationsWebCortexHomeProposalsZh extends TranslationsWebCortexHomePro
 
 	// Translations
 	@override String title({required Object count}) => '待审提案（${count}）';
-	@override String get hint => 'AI 对项目笔记与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。';
+	@override String get hint => 'AI 对项目简报与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。';
 	@override String get kbLabel => '知识库';
 	@override String get preview => '预览';
 	@override String get hide => '收起';
@@ -9774,7 +9773,6 @@ extension on TranslationsZh {
 			'auth.errorFallback' => '登录失败',
 			'nav.sessions' => '会话',
 			'nav.memory' => '记忆',
-			'nav.notes' => '笔记',
 			'nav.more' => '更多',
 			'nav.activity' => '活动',
 			'nav.providers' => '提供方',
@@ -10260,9 +10258,9 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			_ => null,
 		} ?? switch (path) {
-			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。',
@@ -10774,9 +10772,9 @@ extension on TranslationsZh {
 			'web.providers.detail.toggleFailedToast' => '切换失败',
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
+			'web.providers.detail.caps.images' => 'images',
 			_ => null,
 		} ?? switch (path) {
-			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
 			'web.providers.detail.brokenCli' => '已安装但无法运行',
@@ -11288,9 +11286,9 @@ extension on TranslationsZh {
 			'web.backups.generated.title' => '立即保存此口令',
 			'web.backups.generated.description' => '这是 <1>唯一一次</1> 显示。opendray 与任何其他地方都将无法取回。请在继续前复制到密码管理器。',
 			'web.backups.generated.copy' => '复制',
+			'web.backups.generated.copiedToast' => '口令已复制到剪贴板',
 			_ => null,
 		} ?? switch (path) {
-			'web.backups.generated.copiedToast' => '口令已复制到剪贴板',
 			'web.backups.generated.copyFailedToast' => '复制失败 — 请手动选中并复制',
 			'web.backups.generated.savedTo' => '已保存到：',
 			'web.backups.generated.ack' => '我已将此口令保存到密码管理器',
@@ -11802,9 +11800,9 @@ extension on TranslationsZh {
 			'web.settings.system.description' => '来自网关 /health 接口的实时状态。',
 			'web.settings.system.status' => '状态',
 			'web.settings.system.version' => '版本',
+			'web.settings.system.uptime' => '运行时长',
 			_ => null,
 		} ?? switch (path) {
-			'web.settings.system.uptime' => '运行时长',
 			'web.settings.system.database' => '数据库',
 			'web.settings.system.reachable' => '可达',
 			'web.settings.system.unreachable' => '不可达',
@@ -12182,20 +12180,20 @@ extension on TranslationsZh {
 			'web.cortex.home.subtitle' => '一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。',
 			'web.cortex.home.disabled' => '未启用',
 			'web.cortex.home.pendingProposals' => ({required Object count}) => '${count} 个待审',
-			'web.cortex.home.loopHint' => '记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。',
+			'web.cortex.home.loopHint' => '记忆 → 简报 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。',
 			'web.cortex.home.activeProjects' => '活跃项目',
 			'web.cortex.home.idle' => ({required Object days}) => '闲置 ${days} 天',
 			'web.cortex.home.memory.title' => '记忆',
 			'web.cortex.home.memory.description' => '从会话中自动采集的原始事实——按相关性召回；第三方来源默认隔离。',
 			'web.cortex.home.memory.quarantine' => ({required Object count}) => '${count} 条隔离中',
-			'web.cortex.home.notes.title' => '笔记',
-			'web.cortex.home.notes.description' => '每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。',
+			'web.cortex.home.notes.title' => '简报',
+			'web.cortex.home.notes.description' => '每个项目的实时简报——按蓝图组织章节，AI 随工作进展持续维护。',
 			'web.cortex.home.notes.projects' => ({required Object count}) => '${count} 个活跃',
 			'web.cortex.home.knowledge.title' => '知识',
 			'web.cortex.home.knowledge.description' => '跨项目、可迭代的经验资产：绑定性基础方针 + 涌现的经验教训，注入每次启动。',
 			'web.cortex.home.settings' => '设置',
 			'web.cortex.home.proposals.title' => ({required Object count}) => '待审提案（${count}）',
-			'web.cortex.home.proposals.hint' => 'AI 对项目笔记与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。',
+			'web.cortex.home.proposals.hint' => 'AI 对项目简报与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。',
 			'web.cortex.home.proposals.kbLabel' => '知识库',
 			'web.cortex.home.proposals.preview' => '预览',
 			'web.cortex.home.proposals.hide' => '收起',
@@ -12316,9 +12314,9 @@ extension on TranslationsZh {
 			'web.database.grid.insert' => '插入',
 			'web.database.grid.refresh' => '刷新',
 			'web.database.grid.edit' => '编辑',
+			'web.database.grid.delete' => '删除',
 			_ => null,
 		} ?? switch (path) {
-			'web.database.grid.delete' => '删除',
 			'web.database.grid.deleted' => '行已删除',
 			'web.database.grid.confirmDelete' => '删除此行?',
 			'web.database.grid.loading' => '正在加载数据…',
@@ -12476,7 +12474,7 @@ extension on TranslationsZh {
 			'more.items.customTasks.title' => '自定义任务',
 			'more.items.customTasks.subtitle' => '会话任务选择器中显示的斜杠命令',
 			'more.items.cortexHub.title' => 'Cortex',
-			'more.items.cortexHub.subtitle' => '记忆 → 笔记 → 知识中枢 + 待审提案',
+			'more.items.cortexHub.subtitle' => '记忆 → 简报 → 知识中枢 + 待审提案',
 			'more.items.projectMemory.title' => '项目目标 / 计划 / 日志',
 			'more.items.projectMemory.subtitle' => '按 cwd 的记忆层 2-4 + 代理提案',
 			'more.items.archived.title' => '已归档记忆',
@@ -12492,7 +12490,7 @@ extension on TranslationsZh {
 			'more.items.about.title' => '关于',
 			'more.items.about.subtitle' => '构建版本与服务器信息',
 			'more.items.vault.title' => '文档库',
-			'more.items.vault.subtitle' => '自由 markdown 笔记(Obsidian 同步)',
+			'more.items.vault.subtitle' => '自由 markdown 文档(目录、wiki 链接、git 同步)',
 			'more.items.roundTable.title' => '圆桌',
 			'more.items.roundTable.subtitle' => '跨厂商 AI 群聊',
 			'more.signOut' => '退出登录',
@@ -12830,9 +12828,9 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.argsHelper' => '以空格分隔；留空使用提供商默认值。',
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
+			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.labelGrok' => '跳过权限 / YOLO（--always-approve）',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
@@ -13344,9 +13342,9 @@ extension on TranslationsZh {
 			'backups.restore.failedTitle' => '恢复失败',
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
 			'backups.restore.outputTitle' => 'pg_restore 输出',
+			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			_ => null,
 		} ?? switch (path) {
-			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
 			'backups.restore.manifestTitle' => '清单',
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
@@ -13694,7 +13692,7 @@ extension on TranslationsZh {
 			'customTasks.save' => '保存',
 			'customTasks.create' => '创建',
 			'customTasks.failedToLoad' => '加载自定义任务失败',
-			'notesPage.title' => '笔记',
+			'notesPage.title' => '文档库',
 			'notesPage.newButton' => '新建',
 			'notesPage.newNoteDialogTitle' => '新建笔记',
 			'notesPage.searchHint' => '搜索整个仓库…',
@@ -13858,9 +13856,9 @@ extension on TranslationsZh {
 			'memory.create.submit' => '创建',
 			'memory.archive' => '归档',
 			'memory.quarantine' => '隔离',
+			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
 			_ => null,
 		} ?? switch (path) {
-			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
@@ -14068,15 +14066,15 @@ extension on TranslationsZh {
 			'memoryQuarantine.expires' => ({required Object date}) => '${date} 过期',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.title' => 'Cortex',
-			'cortexHub.subtitle' => '经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。',
+			'cortexHub.subtitle' => '经验飞轮：记忆 → 简报 → 知识，回流到每个会话。',
 			'cortexHub.idleBadge' => ({required Object days}) => '闲置 ${days} 天',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} 个活跃',
 			'cortexHub.activeProjectsTitle' => '活跃项目',
-			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。',
+			'cortexHub.loopHint' => '会话喂养记忆 → 记忆提炼为简报 → 简报沉淀为知识 → 知识引导每个新会话。',
 			'cortexHub.settings' => '设置',
 			'cortexHub.memory' => '记忆',
 			'cortexHub.memoryDesc' => '代理存取的跨会话原始事实。',
-			'cortexHub.notes' => '笔记',
+			'cortexHub.notes' => '简报',
 			'cortexHub.notesDesc' => '每个项目的官方目标 / 计划 / 日志。',
 			'cortexHub.knowledge' => '知识',
 			'cortexHub.knowledgeDesc' => '跨项目沉淀的专业知识。',
@@ -14084,7 +14082,7 @@ extension on TranslationsZh {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} 条待审',
 			'cortexHub.disabled' => '已禁用',
 			'cortexHub.inboxTitle' => ({required Object count}) => '待审提案（${count}）',
-			'cortexHub.inboxHint' => 'AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
+			'cortexHub.inboxHint' => 'AI 对项目简报与知识库页面提出的更新。批准即发布，拒绝即丢弃。',
 			'cortexHub.kbLabel' => '知识库',
 			'cortexHub.preview' => '预览',
 			'cortexHub.hide' => '收起',

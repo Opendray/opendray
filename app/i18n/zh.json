@@ -30,7 +30,6 @@
   "nav": {
     "sessions": "会话",
     "memory": "记忆",
-    "notes": "笔记",
     "more": "更多",
     "activity": "活动",
     "providers": "提供方",
@@ -3070,7 +3069,7 @@
         "subtitle": "一个模块、三层一环：原始记忆结晶为各项目的官方文档，再蒸馏为跨项目知识，并注入每个新会话。",
         "disabled": "未启用",
         "pendingProposals": "{count} 个待审",
-        "loopHint": "记忆 → 笔记 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。",
+        "loopHint": "记忆 → 简报 → 知识 → 注入每次启动。层级提升是转化，绝不是复制。",
         "activeProjects": "活跃项目",
         "idle": "闲置 {days} 天",
         "memory": {
@@ -3079,8 +3078,8 @@
           "quarantine": "{count} 条隔离中"
         },
         "notes": {
-          "title": "笔记",
-          "description": "每个项目的官方文档——按蓝图组织章节，AI 随工作进展持续维护。",
+          "title": "简报",
+          "description": "每个项目的实时简报——按蓝图组织章节，AI 随工作进展持续维护。",
           "projects": "{count} 个活跃"
         },
         "knowledge": {
@@ -3090,7 +3089,7 @@
         "settings": "设置",
         "proposals": {
           "title": "待审提案（{count}）",
-          "hint": "AI 对项目笔记与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。",
+          "hint": "AI 对项目简报与知识库页面提出的更新，等待你的裁决。批准即发布，拒绝即丢弃。",
           "kbLabel": "知识库",
           "preview": "预览",
           "hide": "收起",
@@ -3452,7 +3451,7 @@
       },
       "cortexHub": {
         "title": "Cortex",
-        "subtitle": "记忆 → 笔记 → 知识中枢 + 待审提案"
+        "subtitle": "记忆 → 简报 → 知识中枢 + 待审提案"
       },
       "projectMemory": {
         "title": "项目目标 / 计划 / 日志",
@@ -3484,7 +3483,7 @@
       },
       "vault": {
         "title": "文档库",
-        "subtitle": "自由 markdown 笔记(Obsidian 同步)"
+        "subtitle": "自由 markdown 文档(目录、wiki 链接、git 同步)"
       },
       "roundTable": {
         "title": "圆桌",
@@ -4918,7 +4917,7 @@
     "failedToLoad": "加载自定义任务失败"
   },
   "notesPage": {
-    "title": "笔记",
+    "title": "文档库",
     "newButton": "新建",
     "newNoteDialogTitle": "新建笔记",
     "searchHint": "搜索整个仓库…",
@@ -5372,15 +5371,15 @@
   },
   "cortexHub": {
     "title": "Cortex",
-    "subtitle": "经验飞轮：记忆 → 笔记 → 知识，回流到每个会话。",
+    "subtitle": "经验飞轮：记忆 → 简报 → 知识，回流到每个会话。",
     "idleBadge": "闲置 {days} 天",
     "activeProjectsBadge": "{count} 个活跃",
     "activeProjectsTitle": "活跃项目",
-    "loopHint": "会话喂养记忆 → 记忆提炼为笔记 → 笔记沉淀为知识 → 知识引导每个新会话。",
+    "loopHint": "会话喂养记忆 → 记忆提炼为简报 → 简报沉淀为知识 → 知识引导每个新会话。",
     "settings": "设置",
     "memory": "记忆",
     "memoryDesc": "代理存取的跨会话原始事实。",
-    "notes": "笔记",
+    "notes": "简报",
     "notesDesc": "每个项目的官方目标 / 计划 / 日志。",
     "knowledge": "知识",
     "knowledgeDesc": "跨项目沉淀的专业知识。",
@@ -5388,7 +5387,7 @@
     "pendingBadge": "{count} 条待审",
     "disabled": "已禁用",
     "inboxTitle": "待审提案（{count}）",
-    "inboxHint": "AI 对项目笔记与知识库页面提出的更新。批准即发布，拒绝即丢弃。",
+    "inboxHint": "AI 对项目简报与知识库页面提出的更新。批准即发布，拒绝即丢弃。",
     "kbLabel": "知识库",
     "preview": "预览",
     "hide": "收起",
