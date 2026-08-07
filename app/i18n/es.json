@@ -1120,10 +1120,11 @@
         },
         "auth": {
           "title": "Autenticación",
-          "httpsTokenOk": "Usará el token guardado para <1>{host}</1> en Plugins → Hosts de git. ✓",
+          "httpsTokenOk": "Usará el token guardado para <1>{scope}</1> en Plugins → Git hosts. ✓",
           "httpsTokenMissing": "Remoto HTTPS en <1>{host}</1> sin ningún token de opendray configurado. Es probable que push / pull fallen en repos privados hasta que añadas uno.",
           "ssh": "Remoto SSH en <1>{host}</1>. La autenticación usa el <3>~/.ssh/</3> del host del gateway (ssh-agent, archivo de identidad, configuración de host). Verifícalo con <5>ssh -T git@{host}</5> desde la shell del host.",
-          "configureTokenLink": "→ Configurar token de host de git"
+          "configureTokenLink": "→ Configurar token de host de git",
+          "httpsTokenFallback": "No hay credencial para {owner}: se recurre a la de todo el host {host}. Añade una entrada para {owner} si necesita su propio token."
         },
         "autoSync": {
           "loading": "Cargando ajustes de sincronización automática…",

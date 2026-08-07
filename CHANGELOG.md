@@ -22,7 +22,9 @@ for the full rationale and what triggers a major bump.
   resolution prefers the owner-scoped credential and falls back to the
   host-wide one, so existing setups keep working untouched. Vault sync
   resolves the same way, which it previously could not: it only ever
-  looked up by hostname.
+  looked up by hostname — and its auth panel now names the credential it
+  resolved to, saying plainly when the remote's owner has none of its
+  own and the host-wide one is standing in.
 
 ### Added
 

@@ -887,11 +887,36 @@ function AuthSection({
       <div className="text-[11.5px] text-foreground/85 leading-relaxed">
         {isHTTPS ? (
           info.using_token ? (
-            <Trans
-              i18nKey="web.notes.vaultSync.auth.httpsTokenOk"
-              values={{ host: info.host }}
-              components={{ 1: <code className="font-mono text-[11px]" /> }}
-            />
+            <div className="flex flex-col gap-1">
+              <Trans
+                i18nKey="web.notes.vaultSync.auth.httpsTokenOk"
+                values={{
+                  // Name the credential that will be used, not just the
+                  // host — with several tokens per host, "github.com"
+                  // no longer identifies anything.
+                  scope: info.token_owner
+                    ? `${info.host}/${info.token_owner}`
+                    : info.host,
+                }}
+                components={{ 1: <code className="font-mono text-[11px]" /> }}
+              />
+              {info.token_name && (
+                <span className="text-[11px] text-muted-foreground/80">
+                  {info.token_name}
+                </span>
+              )}
+              {info.token_is_fallback && (
+                // The remote belongs to an owner with no credential of
+                // its own. Saying so here is the difference between a
+                // five-second fix and an afternoon spent reading a 403.
+                <span className="text-[11px] text-state-idle">
+                  {t('web.notes.vaultSync.auth.httpsTokenFallback', {
+                    owner: info.remote_owner,
+                    host: info.host,
+                  })}
+                </span>
+              )}
+            </div>
           ) : (
             <Trans
               i18nKey="web.notes.vaultSync.auth.httpsTokenMissing"

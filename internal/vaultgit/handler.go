@@ -514,12 +514,28 @@ type AuthInfo struct {
 	RemoteURL string `json:"remote_url,omitempty"`
 	Scheme    string `json:"scheme,omitempty"` // "ssh" | "https" | "git" | "http"
 	Host      string `json:"host,omitempty"`
+	// RemoteOwner is the account/org the remote URL points at. Reported
+	// so the panel can say which credential the remote SELECTS, not
+	// merely which host it lives on.
+	RemoteOwner string `json:"remote_owner,omitempty"`
 	// For HTTPS remotes: report whether opendray will inject a token
-	// from the matching git_hosts row, and where it came from.
-	UsingToken   bool   `json:"using_token,omitempty"`
-	TokenSource  string `json:"token_source,omitempty"` // "git_hosts:<host>"
-	TokenMissing bool   `json:"token_missing,omitempty"`
-	HelpfulHint  string `json:"helpful_hint,omitempty"`
+	// from the matching git_hosts row, and WHICH row that is.
+	UsingToken  bool   `json:"using_token,omitempty"`
+	TokenSource string `json:"token_source,omitempty"` // "git_hosts:<host>[/<owner>]"
+	// TokenOwner is the owner the resolved credential is scoped to, ""
+	// for the host-wide one.
+	TokenOwner string `json:"token_owner,omitempty"`
+	// TokenName is that row's display name, so several credentials on
+	// one host are distinguishable in the panel.
+	TokenName string `json:"token_name,omitempty"`
+	// TokenIsFallback is true when the remote's owner has no credential
+	// of its own and the host-wide one is being used instead. That is a
+	// legitimate setup AND the shape of the mistake where a token
+	// silently authenticates as the wrong identity, so it is stated
+	// rather than left for the operator to infer from a 403.
+	TokenIsFallback bool   `json:"token_is_fallback,omitempty"`
+	TokenMissing    bool   `json:"token_missing,omitempty"`
+	HelpfulHint     string `json:"helpful_hint,omitempty"`
 }
 
 func (h *Handlers) auth(w http.ResponseWriter, r *http.Request) {
@@ -536,10 +552,11 @@ func (h *Handlers) auth(w http.ResponseWriter, r *http.Request) {
 	urlStr := strings.TrimSpace(string(rawURL))
 	scheme, host, owner := parseRemote(urlStr)
 	info := AuthInfo{
-		HasRemote: true,
-		RemoteURL: urlStr,
-		Scheme:    scheme,
-		Host:      host,
+		HasRemote:   true,
+		RemoteURL:   urlStr,
+		Scheme:      scheme,
+		Host:        host,
+		RemoteOwner: owner,
 	}
 	switch scheme {
 	case "https", "http":
@@ -553,6 +570,9 @@ func (h *Handlers) auth(w http.ResponseWriter, r *http.Request) {
 				if hv.Owner != "" {
 					info.TokenSource += "/" + hv.Owner
 				}
+				info.TokenOwner = hv.Owner
+				info.TokenName = hv.Name
+				info.TokenIsFallback = hv.Owner == "" && owner != ""
 			} else {
 				info.TokenMissing = true
 				info.HelpfulHint =

@@ -1120,10 +1120,11 @@
         },
         "auth": {
           "title": "Authentication",
-          "httpsTokenOk": "Will use the token stored for <1>{host}</1> in Plugins → Git hosts. ✓",
+          "httpsTokenOk": "Will use the token stored for <1>{scope}</1> in Plugins → Git hosts. ✓",
           "httpsTokenMissing": "HTTPS remote on <1>{host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.",
           "ssh": "SSH remote on <1>{host}</1>. Auth uses the gateway host's <3>~/.ssh/</3> (ssh-agent, identity file, host config). Verify with <5>ssh -T git@{host}</5> from the host shell.",
-          "configureTokenLink": "→ Configure git host token"
+          "configureTokenLink": "→ Configure git host token",
+          "httpsTokenFallback": "No credential for {owner} — falling back to the host-wide one for {host}. Add an entry scoped to {owner} if it needs its own token."
         },
         "autoSync": {
           "loading": "Loading auto-sync settings…",

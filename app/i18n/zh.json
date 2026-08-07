@@ -1120,10 +1120,11 @@
         },
         "auth": {
           "title": "认证",
-          "httpsTokenOk": "将使用 Plugins → Git hosts 中为 <1>{host}</1> 存的 token。✓",
+          "httpsTokenOk": "将使用 Plugins → Git hosts 中为 <1>{scope}</1> 存的 token。✓",
           "httpsTokenMissing": "<1>{host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。",
           "ssh": "<1>{host}</1> 上的 SSH remote。认证使用网关主机的 <3>~/.ssh/</3>（ssh-agent、identity 文件、host config）。可在主机 shell 用 <5>ssh -T git@{host}</5> 验证。",
-          "configureTokenLink": "→ 配置 git host token"
+          "configureTokenLink": "→ 配置 git host token",
+          "httpsTokenFallback": "{owner} 没有专属凭据 —— 正在回退使用 {host} 的全主机凭据。若它需要自己的 token,请为 {owner} 单独添加一条。"
         },
         "autoSync": {
           "loading": "加载自动同步设置…",
