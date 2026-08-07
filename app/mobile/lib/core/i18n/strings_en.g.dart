@@ -14610,8 +14610,8 @@ class TranslationsWebSessionsInspectorVaultPanelEn {
 	/// en: 'Moved.'
 	String get renamed => 'Moved.';
 
-	/// en: 'Moved — updated {{count}} link(s) in {{notes}} note(s).'
-	String renamedWithLinks({required Object {count, required Object {notes}) => 'Moved — updated ${{count}} link(s) in ${{notes}} note(s).';
+	/// en: 'Moved — updated {count} link(s) in {notes} note(s).'
+	String renamedWithLinks({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).';
 
 	/// en: 'Moved, but links may not be updated'
 	String get renamedWithWarning => 'Moved, but links may not be updated';
@@ -18780,7 +18780,7 @@ extension on Translations {
 			'web.sessions.inspector.vaultPanel.renameTitle' => 'Rename or move',
 			'web.sessions.inspector.vaultPanel.move' => 'Move',
 			'web.sessions.inspector.vaultPanel.renamed' => 'Moved.',
-			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {count, required Object {notes}) => 'Moved — updated ${{count}} link(s) in ${{notes}} note(s).',
+			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'web.sessions.inspector.vaultPanel.renamedWithWarning' => 'Moved, but links may not be updated',
 			'web.sessions.inspector.vaultPanel.renameFailed' => 'Move failed',
 			'web.sessions.inspector.vaultPanel.templateLabel' => 'Template',
