@@ -101,10 +101,26 @@ provided automatically by Actions — you don't manage it. The other:
 
   If the secret is missing, `scripts/publish-npm.mjs` skips cleanly
   with a clear log message — the GitHub release tarballs still ship,
-  just without the npm channel. To recover after adding the secret:
-  re-run the failed `Publish to npm` job on the existing workflow
-  run, or trigger `workflow_dispatch` on `release.yml` with the
-  existing tag.
+  just without the npm channel.
+
+  **To publish npm for a tag whose release already exists** — a missing
+  secret, a skipped job, any reason the package fell behind GitHub:
+
+  ```sh
+  gh workflow run publish-npm.yml -f tag=v2.13.1
+  ```
+
+  `publish-npm.yml` is standalone (`workflow_dispatch`) *and* the
+  definition `release.yml` calls, so the recovery path and the release
+  path are the same code. It downloads the tarballs from the existing
+  GitHub release and verifies them against `SHA256SUMS` before
+  publishing, so it never ships bits the release doesn't have. npm
+  refuses to overwrite a published version, so a redundant run fails
+  loudly instead of doing damage.
+
+  Don't run `scripts/publish-npm.mjs` from a workstation: `npm publish
+  --provenance` needs the OIDC identity only CI has, and the credential
+  belongs in a repository secret.
 
   Operational note: never paste an npm token into a chat transcript,
   PR comment, issue, or any persisted log. If you do, treat it as

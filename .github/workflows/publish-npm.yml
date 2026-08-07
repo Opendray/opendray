@@ -1,0 +1,56 @@
+name: Publish to npm
+
+# The npm half of a release, callable on its own.
+#
+# It used to live inline in release.yml as a job with `needs: release`,
+# which meant anything that failed the release job — including the
+# cosmetic docs-site dispatch at its very end — silently skipped the npm
+# publish. That is how npm sat on 2.12.2 while GitHub Releases served
+# 2.13.0 and 2.13.1, with no way to publish the missing versions short
+# of re-running goreleaser against an already-published tag.
+#
+# Splitting it out gives a recovery path: dispatch this with a tag and
+# it republishes from the GitHub release artifacts, verifying SHA256SUMS
+# first. Publishing is idempotent-ish — npm refuses to overwrite an
+# existing version, so a re-run for an already-published version fails
+# loudly rather than corrupting anything.
+#
+# It must stay in CI rather than being run from a laptop: `npm publish
+# --provenance` needs the OIDC token this environment provides, and the
+# npm credential belongs in a repository secret, not on a workstation.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v2.13.1). The GitHub release must already exist with its tarballs + SHA256SUMS."
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for `npm publish --provenance`
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-npm.mjs --tag "$TAG"

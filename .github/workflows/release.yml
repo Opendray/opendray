@@ -222,26 +222,13 @@ jobs:
           fi
           echo "Dispatched opendray-release for $TAG"
 
+  # Delegated to publish-npm.yml so the same definition can be dispatched
+  # on its own when a release publishes but this step doesn't — see that
+  # file's header for how npm fell two versions behind.
   publish-npm:
-    name: Publish to npm
     needs: release
-    runs-on: ubuntu-latest
     if: ${{ !contains(github.event.inputs.tag || github.ref_name, '-') }}
-    permissions:
-      contents: read
-      id-token: write   # required for `npm publish --provenance`
-    env:
-      TAG: ${{ github.event.inputs.tag || github.ref_name }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/publish-npm.mjs --tag "$TAG"
+    uses: ./.github/workflows/publish-npm.yml
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}
+    secrets: inherit
