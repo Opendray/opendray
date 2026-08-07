@@ -66,11 +66,24 @@ snapshot:
   version_template: "{{ .Tag }}-snapshot-{{ .ShortCommit }}"
 
 changelog:
-  # CHANGELOG.md is hand-curated per Keep-a-Changelog; goreleaser's
-  # auto-generated changelog would compete with it. Disable here so
-  # the release notes come exclusively from the tag annotation /
-  # Release notes field on GitHub.
-  disable: true
+  # CHANGELOG.md is hand-curated per Keep-a-Changelog, and release.yml
+  # extracts the section matching the tag and passes it as
+  # --release-notes. That flag fills goreleaser's changelog slot, so
+  # this section must NOT be disabled: `disable: true` skips the slot
+  # entirely and the body collapses to `release.header` alone. That is
+  # exactly what happened to every release from v2.12.0 to v2.13.1 —
+  # the notes were extracted correctly on every run and then dropped
+  # on the floor.
+  #
+  # Filtering only affects the auto-generated commit list, which
+  # --release-notes replaces; it is kept as the shape of the fallback
+  # when someone runs goreleaser by hand without the flag.
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
 
 release:
   # Publish directly (not as draft). The publish-npm job in
@@ -80,5 +93,11 @@ release:
   draft: false
   prerelease: auto
   name_template: "v{{ .Version }}"
-  header: |
-    See [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md) for the full release notes.
+  # No header: the body IS the CHANGELOG section for this tag, passed
+  # via --release-notes. A "see CHANGELOG.md for the full notes" line
+  # above the full notes is just noise — the link belongs at the end,
+  # where it points at the history rather than at the page you are on.
+  footer: |
+
+    ---
+    Full history: [CHANGELOG.md](https://github.com/Opendray/opendray/blob/main/CHANGELOG.md)

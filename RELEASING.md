@@ -68,6 +68,20 @@ Recovery if you tagged first: PATCH the release body via the GitHub
 API with the changelog section after the fact. Annoying, single-use
 mistake — better to do it in the right order.
 
+**A note on the same symptom with a different cause.** Every release
+from v2.12.0 to v2.13.1 published that placeholder body *despite* the
+CHANGELOG landing first: `.goreleaser.yml` had `changelog.disable:
+true`, which skips the body slot that `--release-notes` fills, so the
+extracted section was dropped and only `release.header` survived.
+Fixed by dropping `disable` and moving the CHANGELOG link to
+`footer`. If a release body ever looks bare again, check the
+"Extract release notes" step log first: it prints the line count it
+extracted. Notes extracted but body empty = a goreleaser config
+problem, not an ordering problem.
+
+**Check the release body after every release.** Both failure modes are
+silent — the workflow goes green and the release publishes either way.
+
 ## Repository secrets (one-time setup)
 
 The release pipeline reads two repository secrets. `GITHUB_TOKEN` is

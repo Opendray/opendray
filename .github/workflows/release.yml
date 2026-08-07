@@ -195,8 +195,16 @@ jobs:
       #    So the site went stale for every goreleaser release. Dispatch
       #    from inside the release job instead. Skipped for prerelease
       #    ('-') tags — mirrors publish-npm — and no-ops if the PAT is unset.
+      #
+      #    continue-on-error because this is the last step of the release
+      #    job and publish-npm `needs:` it. An expired PAT here used to
+      #    fail the whole job *after* the release was already published,
+      #    which silently skipped the npm publish — that is how npm sat
+      #    on 2.12.2 while GitHub had 2.13.0 and 2.13.1. A stale docs
+      #    site must not cost the package registry.
       - name: Rebuild opendray.dev
         if: success() && !contains(env.TAG, '-')
+        continue-on-error: true
         env:
           PAT: ${{ secrets.ODSITE_DISPATCH_PAT }}
         run: |
@@ -204,11 +212,14 @@ jobs:
             echo "ODSITE_DISPATCH_PAT not set — skipping site rebuild."
             exit 0
           fi
-          curl -sSf -X POST \
+          if ! curl -sSf -X POST \
             -H "Authorization: token $PAT" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/Opendray/opendray.dev/dispatches" \
-            -d "{\"event_type\":\"opendray-release\",\"client_payload\":{\"tag\":\"$TAG\"}}"
+            -d "{\"event_type\":\"opendray-release\",\"client_payload\":{\"tag\":\"$TAG\"}}"; then
+            echo "::warning::Could not dispatch the opendray.dev rebuild (is ODSITE_DISPATCH_PAT expired?). The release itself is fine; the site will show the previous version until rebuilt."
+            exit 0
+          fi
           echo "Dispatched opendray-release for $TAG"
 
   publish-npm:
