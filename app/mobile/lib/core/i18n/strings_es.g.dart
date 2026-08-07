@@ -123,7 +123,6 @@ class _TranslationsNavEs extends TranslationsNavEn {
 	// Translations
 	@override String get sessions => 'Sessions';
 	@override String get memory => 'Memoria';
-	@override String get notes => 'Notas';
 	@override String get more => 'Más';
 	@override String get activity => 'Actividad';
 	@override String get providers => 'Proveedores';
@@ -866,7 +865,7 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Notas';
+	@override String get title => 'Bóveda';
 	@override String get newButton => 'Nueva';
 	@override String get newNoteDialogTitle => 'Nueva nota';
 	@override String get searchHint => 'Busca en todo el vault…';
@@ -1010,15 +1009,15 @@ class _TranslationsCortexHubEs extends TranslationsCortexHubEn {
 
 	// Translations
 	@override String get title => 'Cortex';
-	@override String get subtitle => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.';
+	@override String get subtitle => 'El volante de experiencia: Memoria → Informe → Conocimiento, de vuelta a cada sesión.';
 	@override String idleBadge({required Object days}) => 'inactivo ${days}d';
 	@override String activeProjectsBadge({required Object count}) => '${count} activos';
 	@override String get activeProjectsTitle => 'Proyectos activos';
-	@override String get loopHint => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.';
+	@override String get loopHint => 'Las sesiones alimentan la Memoria → la Memoria se destila en un Informe → los Informes se consolidan en Conocimiento → el Conocimiento guía cada nueva sesión.';
 	@override String get settings => 'Ajustes';
 	@override String get memory => 'Memoria';
 	@override String get memoryDesc => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.';
-	@override String get notes => 'Notas';
+	@override String get notes => 'Informe';
 	@override String get notesDesc => 'El objetivo / plan / diario oficial de cada proyecto.';
 	@override String get knowledge => 'Conocimiento';
 	@override String get knowledgeDesc => 'Experiencia destilada entre proyectos.';
@@ -1026,7 +1025,7 @@ class _TranslationsCortexHubEs extends TranslationsCortexHubEn {
 	@override String pendingBadge({required Object count}) => '${count} pendientes';
 	@override String get disabled => 'desactivado';
 	@override String inboxTitle({required Object count}) => 'Propuestas pendientes (${count})';
-	@override String get inboxHint => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.';
+	@override String get inboxHint => 'Actualizaciones propuestas por la IA a los informes de proyecto y páginas del KB. Aprobar publica, rechazar descarta.';
 	@override String get kbLabel => 'Base de conocimiento';
 	@override String get preview => 'Vista previa';
 	@override String get hide => 'Ocultar';
@@ -5893,7 +5892,7 @@ class _TranslationsWebCortexHomeEs extends TranslationsWebCortexHomeEn {
 	@override String get subtitle => 'Un módulo, tres peldaños, un ciclo: la memoria bruta cristaliza en el documento oficial de cada proyecto, se destila en conocimiento entre proyectos y se inyecta en cada nueva sesión.';
 	@override String get disabled => 'desactivado';
 	@override String pendingProposals({required Object count}) => '${count} pendientes';
-	@override String get loopHint => 'Memoria → Notas → Conocimiento → inyectado en cada arranque. Ascender es transformar, nunca copiar.';
+	@override String get loopHint => 'Memoria → Informe → Conocimiento → inyectado en cada arranque. Promover es transformar, nunca copiar.';
 	@override String get activeProjects => 'Proyectos activos';
 	@override String idle({required Object days}) => 'inactivo ${days}d';
 	@override late final _TranslationsWebCortexHomeMemoryEs memory = _TranslationsWebCortexHomeMemoryEs._(_root);
@@ -6374,7 +6373,7 @@ class _TranslationsMoreItemsCortexHubEs extends TranslationsMoreItemsCortexHubEn
 
 	// Translations
 	@override String get title => 'Cortex';
-	@override String get subtitle => 'Hub Memoria → Notas → Conocimiento + propuestas pendientes';
+	@override String get subtitle => 'Centro Memoria → Informe → Conocimiento + propuestas pendientes';
 }
 
 // Path: more.items.projectMemory
@@ -6462,7 +6461,7 @@ class _TranslationsMoreItemsVaultEs extends TranslationsMoreItemsVaultEn {
 
 	// Translations
 	@override String get title => 'Bóveda';
-	@override String get subtitle => 'Notas markdown libres (sincronización Obsidian)';
+	@override String get subtitle => 'Documentos markdown libres (carpetas, wiki-links, sync git)';
 }
 
 // Path: more.items.roundTable
@@ -9509,8 +9508,8 @@ class _TranslationsWebCortexHomeNotesEs extends TranslationsWebCortexHomeNotesEn
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Notas';
-	@override String get description => 'El documento oficial de cada proyecto — secciones según su plano, mantenidas por la IA mientras trabajas.';
+	@override String get title => 'Informe';
+	@override String get description => 'El informe vivo de cada proyecto: secciones con forma de plano que la IA mantiene al día mientras trabajas.';
 	@override String projects({required Object count}) => '${count} activos';
 }
 
@@ -9533,7 +9532,7 @@ class _TranslationsWebCortexHomeProposalsEs extends TranslationsWebCortexHomePro
 
 	// Translations
 	@override String title({required Object count}) => 'Propuestas pendientes (${count})';
-	@override String get hint => 'Actualizaciones propuestas por la IA para notas de proyecto y páginas KB, a la espera de tu veredicto. Aprueba para publicar, rechaza para descartar.';
+	@override String get hint => 'Actualizaciones propuestas por la IA a los informes de proyecto y páginas del KB, a la espera de tu veredicto. Aprobar publica, rechazar descarta.';
 	@override String get kbLabel => 'Base de conocimiento';
 	@override String get preview => 'Vista previa';
 	@override String get hide => 'Ocultar';
@@ -9770,7 +9769,6 @@ extension on TranslationsEs {
 			'auth.errorFallback' => 'Error al iniciar sesión',
 			'nav.sessions' => 'Sessions',
 			'nav.memory' => 'Memoria',
-			'nav.notes' => 'Notas',
 			'nav.more' => 'Más',
 			'nav.activity' => 'Actividad',
 			'nav.providers' => 'Proveedores',
@@ -10256,9 +10254,9 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'La tarea más frecuente: extracción de hechos — usa el modelo MÁS BARATO que funcione (haiku / local).',
+			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.',
 			_ => null,
 		} ?? switch (path) {
-			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.',
 			'web.memoryWorkers.tasks.blueprint.label' => 'Proponedor de planos',
 			'web.memoryWorkers.tasks.blueprint.description' => 'Clasifica un proyecto y propone su conjunto de secciones. Disparado por el operador.',
 			'web.memoryWorkers.tasks.curation.modelAdvice' => 'Tu editor conversacional de docs/políticas — modelo fuerte recomendado (sonnet/opus).',
@@ -10770,9 +10768,9 @@ extension on TranslationsEs {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'no instalado',
+			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
 			_ => null,
 		} ?? switch (path) {
-			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'actualización disponible → ${version}',
 			'web.providers.detail.upToDate' => 'actualizado',
 			'web.providers.detail.update' => ({required Object version}) => 'Actualizar a ${version}',
@@ -11284,9 +11282,9 @@ extension on TranslationsEs {
 			'web.backups.generated.copiedToast' => 'Frase de contraseña copiada al portapapeles',
 			'web.backups.generated.copyFailedToast' => 'Error al copiar, selecciónala y cópiala manualmente',
 			'web.backups.generated.savedTo' => 'Guardada en:',
+			'web.backups.generated.ack' => 'He guardado esta frase de contraseña en mi gestor de contraseñas',
 			_ => null,
 		} ?? switch (path) {
-			'web.backups.generated.ack' => 'He guardado esta frase de contraseña en mi gestor de contraseñas',
 			'web.backups.generated.kContinue' => 'Continuar',
 			'web.backups.status.pgDump' => 'pg_dump',
 			'web.backups.status.pgRestore' => 'pg_restore',
@@ -11798,9 +11796,9 @@ extension on TranslationsEs {
 			'web.settings.system.uptime' => 'Tiempo de actividad',
 			'web.settings.system.database' => 'Base de datos',
 			'web.settings.system.reachable' => 'accesible',
+			'web.settings.system.unreachable' => 'no accesible',
 			_ => null,
 		} ?? switch (path) {
-			'web.settings.system.unreachable' => 'no accesible',
 			'web.settings.about.title' => 'Acerca de',
 			'web.settings.about.description' => 'opendray v2: el multiplexor + gateway de integración para CLIs de agentes de IA. Código bajo Apache 2.0.',
 			'web.settings.about.version' => 'Versión',
@@ -12175,20 +12173,20 @@ extension on TranslationsEs {
 			'web.cortex.home.subtitle' => 'Un módulo, tres peldaños, un ciclo: la memoria bruta cristaliza en el documento oficial de cada proyecto, se destila en conocimiento entre proyectos y se inyecta en cada nueva sesión.',
 			'web.cortex.home.disabled' => 'desactivado',
 			'web.cortex.home.pendingProposals' => ({required Object count}) => '${count} pendientes',
-			'web.cortex.home.loopHint' => 'Memoria → Notas → Conocimiento → inyectado en cada arranque. Ascender es transformar, nunca copiar.',
+			'web.cortex.home.loopHint' => 'Memoria → Informe → Conocimiento → inyectado en cada arranque. Promover es transformar, nunca copiar.',
 			'web.cortex.home.activeProjects' => 'Proyectos activos',
 			'web.cortex.home.idle' => ({required Object days}) => 'inactivo ${days}d',
 			'web.cortex.home.memory.title' => 'Memoria',
 			'web.cortex.home.memory.description' => 'Hechos episódicos capturados de tus sesiones — recuperados por relevancia, en cuarentena si vienen de terceros.',
 			'web.cortex.home.memory.quarantine' => ({required Object count}) => '${count} en cuarentena',
-			'web.cortex.home.notes.title' => 'Notas',
-			'web.cortex.home.notes.description' => 'El documento oficial de cada proyecto — secciones según su plano, mantenidas por la IA mientras trabajas.',
+			'web.cortex.home.notes.title' => 'Informe',
+			'web.cortex.home.notes.description' => 'El informe vivo de cada proyecto: secciones con forma de plano que la IA mantiene al día mientras trabajas.',
 			'web.cortex.home.notes.projects' => ({required Object count}) => '${count} activos',
 			'web.cortex.home.knowledge.title' => 'Conocimiento',
 			'web.cortex.home.knowledge.description' => 'Experiencia iterable entre proyectos: reglas fundacionales vinculantes + lecciones emergentes, inyectadas en cada arranque.',
 			'web.cortex.home.settings' => 'Ajustes',
 			'web.cortex.home.proposals.title' => ({required Object count}) => 'Propuestas pendientes (${count})',
-			'web.cortex.home.proposals.hint' => 'Actualizaciones propuestas por la IA para notas de proyecto y páginas KB, a la espera de tu veredicto. Aprueba para publicar, rechaza para descartar.',
+			'web.cortex.home.proposals.hint' => 'Actualizaciones propuestas por la IA a los informes de proyecto y páginas del KB, a la espera de tu veredicto. Aprobar publica, rechazar descarta.',
 			'web.cortex.home.proposals.kbLabel' => 'Base de conocimiento',
 			'web.cortex.home.proposals.preview' => 'Vista previa',
 			'web.cortex.home.proposals.hide' => 'Ocultar',
@@ -12312,9 +12310,9 @@ extension on TranslationsEs {
 			'web.database.grid.delete' => 'Eliminar',
 			'web.database.grid.deleted' => 'Fila eliminada',
 			'web.database.grid.confirmDelete' => '¿Eliminar esta fila?',
+			'web.database.grid.loading' => 'Cargando filas…',
 			_ => null,
 		} ?? switch (path) {
-			'web.database.grid.loading' => 'Cargando filas…',
 			'web.database.grid.readOnlyHint' => 'Esta conexión es de solo lectura — no se pueden editar filas.',
 			'web.database.grid.noPkHint' => 'Esta tabla no tiene clave primaria — la edición de filas está deshabilitada.',
 			'web.database.grid.pageInfo' => ({required Object from, required Object to}) => 'Filas ${from}–${to}',
@@ -12469,7 +12467,7 @@ extension on TranslationsEs {
 			'more.items.customTasks.title' => 'Tareas personalizadas',
 			'more.items.customTasks.subtitle' => 'Comandos slash que se muestran en el selector de tareas de la session',
 			'more.items.cortexHub.title' => 'Cortex',
-			'more.items.cortexHub.subtitle' => 'Hub Memoria → Notas → Conocimiento + propuestas pendientes',
+			'more.items.cortexHub.subtitle' => 'Centro Memoria → Informe → Conocimiento + propuestas pendientes',
 			'more.items.projectMemory.title' => 'Objetivo / plan / diario del proyecto',
 			'more.items.projectMemory.subtitle' => 'Capas de memoria 2-4 por cwd + propuestas del agente',
 			'more.items.archived.title' => 'Memorias archivadas',
@@ -12485,7 +12483,7 @@ extension on TranslationsEs {
 			'more.items.about.title' => 'Acerca de',
 			'more.items.about.subtitle' => 'Versión de compilación e información del servidor',
 			'more.items.vault.title' => 'Bóveda',
-			'more.items.vault.subtitle' => 'Notas markdown libres (sincronización Obsidian)',
+			'more.items.vault.subtitle' => 'Documentos markdown libres (carpetas, wiki-links, sync git)',
 			'more.items.roundTable.title' => 'Mesa redonda',
 			'more.items.roundTable.subtitle' => 'Chat grupal de IA multiproveedor',
 			'more.signOut' => 'Cerrar sesión',
@@ -12826,9 +12824,9 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Saltar permisos / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
+			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
 			'sessions.spawnSheet.noProviders.title' => 'No hay proveedores configurados',
 			'sessions.spawnSheet.noProviders.message' => 'El gateway no tiene proveedores de CLI habilitados. Configura uno en Proveedores (admin web) o en [providers] en config.toml, y luego toca Recargar.',
 			'sessions.spawnSheet.noProviders.reload' => 'Recargar',
@@ -13340,9 +13338,9 @@ extension on TranslationsEs {
 			'backups.restore.manifestTitle' => 'Manifiesto',
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
+			'backups.restore.manifestCreatedAt' => 'Creado',
 			_ => null,
 		} ?? switch (path) {
-			'backups.restore.manifestCreatedAt' => 'Creado',
 			'backups.restore.manifestPgVersion' => 'pg_version',
 			'backups.restore.manifestOpendrayVersion' => 'versión de opendray',
 			'backups.restore.fingerprint' => 'Huella de la clave',
@@ -13686,7 +13684,7 @@ extension on TranslationsEs {
 			'customTasks.save' => 'Guardar',
 			'customTasks.create' => 'Crear',
 			'customTasks.failedToLoad' => 'Error al cargar las tareas personalizadas',
-			'notesPage.title' => 'Notas',
+			'notesPage.title' => 'Bóveda',
 			'notesPage.newButton' => 'Nueva',
 			'notesPage.newNoteDialogTitle' => 'Nueva nota',
 			'notesPage.searchHint' => 'Busca en todo el vault…',
@@ -13854,9 +13852,9 @@ extension on TranslationsEs {
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',
+			'memory.reembed.menuItem' => 'Reincrustar todo',
 			_ => null,
 		} ?? switch (path) {
-			'memory.reembed.menuItem' => 'Reincrustar todo',
 			'memory.reembed.confirmTitle' => '¿Reincrustar todas las memorias?',
 			'memory.reembed.confirmBody' => 'Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.',
 			'memory.reembed.confirmButton' => 'Reincrustar',
@@ -14060,15 +14058,15 @@ extension on TranslationsEs {
 			'memoryQuarantine.expires' => ({required Object date}) => 'expira ${date}',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.title' => 'Cortex',
-			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.',
+			'cortexHub.subtitle' => 'El volante de experiencia: Memoria → Informe → Conocimiento, de vuelta a cada sesión.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'inactivo ${days}d',
 			'cortexHub.activeProjectsBadge' => ({required Object count}) => '${count} activos',
 			'cortexHub.activeProjectsTitle' => 'Proyectos activos',
-			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.',
+			'cortexHub.loopHint' => 'Las sesiones alimentan la Memoria → la Memoria se destila en un Informe → los Informes se consolidan en Conocimiento → el Conocimiento guía cada nueva sesión.',
 			'cortexHub.settings' => 'Ajustes',
 			'cortexHub.memory' => 'Memoria',
 			'cortexHub.memoryDesc' => 'Hechos crudos entre sessions que los agentes guardan y recuerdan.',
-			'cortexHub.notes' => 'Notas',
+			'cortexHub.notes' => 'Informe',
 			'cortexHub.notesDesc' => 'El objetivo / plan / diario oficial de cada proyecto.',
 			'cortexHub.knowledge' => 'Conocimiento',
 			'cortexHub.knowledgeDesc' => 'Experiencia destilada entre proyectos.',
@@ -14076,7 +14074,7 @@ extension on TranslationsEs {
 			'cortexHub.pendingBadge' => ({required Object count}) => '${count} pendientes',
 			'cortexHub.disabled' => 'desactivado',
 			'cortexHub.inboxTitle' => ({required Object count}) => 'Propuestas pendientes (${count})',
-			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.',
+			'cortexHub.inboxHint' => 'Actualizaciones propuestas por la IA a los informes de proyecto y páginas del KB. Aprobar publica, rechazar descarta.',
 			'cortexHub.kbLabel' => 'Base de conocimiento',
 			'cortexHub.preview' => 'Vista previa',
 			'cortexHub.hide' => 'Ocultar',

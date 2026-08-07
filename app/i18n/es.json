@@ -30,7 +30,6 @@
   "nav": {
     "sessions": "Sessions",
     "memory": "Memoria",
-    "notes": "Notas",
     "more": "Más",
     "activity": "Actividad",
     "providers": "Proveedores",
@@ -3067,7 +3066,7 @@
         "subtitle": "Un módulo, tres peldaños, un ciclo: la memoria bruta cristaliza en el documento oficial de cada proyecto, se destila en conocimiento entre proyectos y se inyecta en cada nueva sesión.",
         "disabled": "desactivado",
         "pendingProposals": "{count} pendientes",
-        "loopHint": "Memoria → Notas → Conocimiento → inyectado en cada arranque. Ascender es transformar, nunca copiar.",
+        "loopHint": "Memoria → Informe → Conocimiento → inyectado en cada arranque. Promover es transformar, nunca copiar.",
         "activeProjects": "Proyectos activos",
         "idle": "inactivo {days}d",
         "memory": {
@@ -3076,8 +3075,8 @@
           "quarantine": "{count} en cuarentena"
         },
         "notes": {
-          "title": "Notas",
-          "description": "El documento oficial de cada proyecto — secciones según su plano, mantenidas por la IA mientras trabajas.",
+          "title": "Informe",
+          "description": "El informe vivo de cada proyecto: secciones con forma de plano que la IA mantiene al día mientras trabajas.",
           "projects": "{count} activos"
         },
         "knowledge": {
@@ -3087,7 +3086,7 @@
         "settings": "Ajustes",
         "proposals": {
           "title": "Propuestas pendientes ({count})",
-          "hint": "Actualizaciones propuestas por la IA para notas de proyecto y páginas KB, a la espera de tu veredicto. Aprueba para publicar, rechaza para descartar.",
+          "hint": "Actualizaciones propuestas por la IA a los informes de proyecto y páginas del KB, a la espera de tu veredicto. Aprobar publica, rechazar descarta.",
           "kbLabel": "Base de conocimiento",
           "preview": "Vista previa",
           "hide": "Ocultar",
@@ -3449,7 +3448,7 @@
       },
       "cortexHub": {
         "title": "Cortex",
-        "subtitle": "Hub Memoria → Notas → Conocimiento + propuestas pendientes"
+        "subtitle": "Centro Memoria → Informe → Conocimiento + propuestas pendientes"
       },
       "projectMemory": {
         "title": "Objetivo / plan / diario del proyecto",
@@ -3481,7 +3480,7 @@
       },
       "vault": {
         "title": "Bóveda",
-        "subtitle": "Notas markdown libres (sincronización Obsidian)"
+        "subtitle": "Documentos markdown libres (carpetas, wiki-links, sync git)"
       },
       "roundTable": {
         "title": "Mesa redonda",
@@ -4914,7 +4913,7 @@
     "failedToLoad": "Error al cargar las tareas personalizadas"
   },
   "notesPage": {
-    "title": "Notas",
+    "title": "Bóveda",
     "newButton": "Nueva",
     "newNoteDialogTitle": "Nueva nota",
     "searchHint": "Busca en todo el vault…",
@@ -5368,15 +5367,15 @@
   },
   "cortexHub": {
     "title": "Cortex",
-    "subtitle": "El volante de experiencia: Memoria → Notas → Conocimiento, realimentado en cada session.",
+    "subtitle": "El volante de experiencia: Memoria → Informe → Conocimiento, de vuelta a cada sesión.",
     "idleBadge": "inactivo {days}d",
     "activeProjectsBadge": "{count} activos",
     "activeProjectsTitle": "Proyectos activos",
-    "loopHint": "Las sesiones alimentan la Memoria → la Memoria se destila en Notas → las Notas se compilan en Conocimiento → el Conocimiento guía cada nueva sesión.",
+    "loopHint": "Las sesiones alimentan la Memoria → la Memoria se destila en un Informe → los Informes se consolidan en Conocimiento → el Conocimiento guía cada nueva sesión.",
     "settings": "Ajustes",
     "memory": "Memoria",
     "memoryDesc": "Hechos crudos entre sessions que los agentes guardan y recuerdan.",
-    "notes": "Notas",
+    "notes": "Informe",
     "notesDesc": "El objetivo / plan / diario oficial de cada proyecto.",
     "knowledge": "Conocimiento",
     "knowledgeDesc": "Experiencia destilada entre proyectos.",
@@ -5384,7 +5383,7 @@
     "pendingBadge": "{count} pendientes",
     "disabled": "desactivado",
     "inboxTitle": "Propuestas pendientes ({count})",
-    "inboxHint": "Actualizaciones propuestas por la IA para notas y páginas KB. Aprueba para publicar, rechaza para descartar.",
+    "inboxHint": "Actualizaciones propuestas por la IA a los informes de proyecto y páginas del KB. Aprobar publica, rechazar descarta.",
     "kbLabel": "Base de conocimiento",
     "preview": "Vista previa",
     "hide": "Ocultar",
