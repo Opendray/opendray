@@ -6758,6 +6758,13 @@ class _TranslationsSessionsInspectorNotesEs extends TranslationsSessionsInspecto
 	@override String get noProjectMapping2 => '(sin asignación de proyecto)';
 	@override String get clearOverride => 'Borrar anulación';
 	@override String get save => 'Guardar';
+	@override String get renameTitle => 'Renombrar o mover';
+	@override String get move => 'Mover';
+	@override String get renameHelp => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md';
+	@override String get renamed => 'Movido.';
+	@override String renamedWithLinks({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).';
+	@override String renamedWithWarning({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}';
+	@override String renameFailed({required Object error}) => 'Error al mover: ${error}';
 }
 
 // Path: sessions.inspector.canvas
@@ -7463,6 +7470,14 @@ class _TranslationsWebSessionsInspectorVaultPanelEs extends TranslationsWebSessi
 	@override String get boundToast => 'Carpeta de bóveda del proyecto vinculada';
 	@override String get clearedToast => 'Anulación borrada — usando la carpeta por defecto';
 	@override String get saveFailed => 'No se pudo guardar el mapeo';
+	@override String get viewTree => 'Carpetas';
+	@override String get viewRecent => 'Recientes';
+	@override String get renameTitle => 'Renombrar o mover';
+	@override String get move => 'Mover';
+	@override String get renamed => 'Movido.';
+	@override String renamedWithLinks({required Object {count, required Object {notes}) => 'Movido: se actualizaron ${{count}} enlace(s) en ${{notes}} nota(s).';
+	@override String get renamedWithWarning => 'Movido, pero los enlaces podrían no actualizarse';
+	@override String get renameFailed => 'Error al mover';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -9960,6 +9975,14 @@ extension on TranslationsEs {
 			'web.sessions.inspector.vaultPanel.boundToast' => 'Carpeta de bóveda del proyecto vinculada',
 			'web.sessions.inspector.vaultPanel.clearedToast' => 'Anulación borrada — usando la carpeta por defecto',
 			'web.sessions.inspector.vaultPanel.saveFailed' => 'No se pudo guardar el mapeo',
+			'web.sessions.inspector.vaultPanel.viewTree' => 'Carpetas',
+			'web.sessions.inspector.vaultPanel.viewRecent' => 'Recientes',
+			'web.sessions.inspector.vaultPanel.renameTitle' => 'Renombrar o mover',
+			'web.sessions.inspector.vaultPanel.move' => 'Mover',
+			'web.sessions.inspector.vaultPanel.renamed' => 'Movido.',
+			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {count, required Object {notes}) => 'Movido: se actualizaron ${{count}} enlace(s) en ${{notes}} nota(s).',
+			'web.sessions.inspector.vaultPanel.renamedWithWarning' => 'Movido, pero los enlaces podrían no actualizarse',
+			'web.sessions.inspector.vaultPanel.renameFailed' => 'Error al mover',
 			'web.sessions.inspector.cortexPanel.noCwd' => 'La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.',
 			'web.sessions.inspector.cortexPanel.open' => 'Abrir espacio Cortex',
 			'web.sessions.inspector.cortexPanel.docs' => 'Docs',
@@ -10233,6 +10256,8 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'La tarea más frecuente: extracción de hechos — usa el modelo MÁS BARATO que funcione (haiku / local).',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.',
 			'web.memoryWorkers.tasks.blueprint.label' => 'Proponedor de planos',
 			'web.memoryWorkers.tasks.blueprint.description' => 'Clasifica un proyecto y propone su conjunto de secciones. Disparado por el operador.',
@@ -10241,8 +10266,6 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.curation.description' => 'Impulsa el canal conversacional que actualiza secciones y re-redacta páginas de conocimiento.',
 			'web.memoryWorkers.modelLabel' => 'Modelo',
 			'web.memoryWorkers.modelHint' => 'Fija el modelo del CLI para esta tarea (p. ej. haiku para tareas básicas). Vacío = predeterminado del CLI.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.modelCliDefault' => 'Predeterminado del CLI (último)',
 			'web.memoryWorkers.modelCustom' => 'Personalizado…',
 			'web.memoryWorkers.modelCustomPlaceholder' => 'id exacto del modelo',
@@ -10747,6 +10770,8 @@ extension on TranslationsEs {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'no instalado',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => 'actualización disponible → ${version}',
 			'web.providers.detail.upToDate' => 'actualizado',
@@ -10755,8 +10780,6 @@ extension on TranslationsEs {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => 'Actualizado ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => 'Ya está actualizado',
 			'web.providers.detail.updateFailedToast' => 'Error al actualizar',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.updateUnavailable' => 'La actualización dentro de la app no está disponible aquí',
 			'web.providers.configForm.selectPlaceholder' => 'Selecciona…',
 			'web.providers.configForm.defaultOption' => '(predeterminado)',
@@ -11261,6 +11284,8 @@ extension on TranslationsEs {
 			'web.backups.generated.copiedToast' => 'Frase de contraseña copiada al portapapeles',
 			'web.backups.generated.copyFailedToast' => 'Error al copiar, selecciónala y cópiala manualmente',
 			'web.backups.generated.savedTo' => 'Guardada en:',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.generated.ack' => 'He guardado esta frase de contraseña en mi gestor de contraseñas',
 			'web.backups.generated.kContinue' => 'Continuar',
 			'web.backups.status.pgDump' => 'pg_dump',
@@ -11269,8 +11294,6 @@ extension on TranslationsEs {
 			'web.backups.status.pgDumpHint' => 'Las copias de seguridad no pueden ejecutarse hasta que pg_dump esté en PATH (o se haya definido su ruta absoluta en <1>backup.pg_dump_path</1>). Instala <3>postgresql-client</3> de la misma versión mayor que tu servidor y reinicia.',
 			'web.backups.backupsTab.backupNow' => 'Hacer copia ahora',
 			'web.backups.backupsTab.triggering' => 'Lanzando…',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.includeConfig' => 'incluir config.toml',
 			'web.backups.backupsTab.fullInstance' => 'Instancia completa',
 			'web.backups.backupsTab.fullInstanceHint' => 'Incluye también el vault (notes/skills/mcp), secrets.env y config.toml: todo lo necesario para reconstruir una instancia funcional, no solo su base de datos.',
@@ -11775,6 +11798,8 @@ extension on TranslationsEs {
 			'web.settings.system.uptime' => 'Tiempo de actividad',
 			'web.settings.system.database' => 'Base de datos',
 			'web.settings.system.reachable' => 'accesible',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.system.unreachable' => 'no accesible',
 			'web.settings.about.title' => 'Acerca de',
 			'web.settings.about.description' => 'opendray v2: el multiplexor + gateway de integración para CLIs de agentes de IA. Código bajo Apache 2.0.',
@@ -11783,8 +11808,6 @@ extension on TranslationsEs {
 			'web.settings.about.updateAvailable' => ({required Object version}) => 'Actualización disponible: ${version}',
 			'web.settings.about.releaseNotes' => 'Notas de la versión ↗',
 			'web.settings.about.updateNow' => 'Actualizar ahora',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.about.upgradingShort' => 'Actualizando…',
 			'web.settings.about.confirmRestart' => 'Esto reinicia el servicio; las sesiones en ejecución se reconectan.',
 			'web.settings.about.confirmUpgrade' => 'Actualizar y reiniciar',
@@ -12289,6 +12312,8 @@ extension on TranslationsEs {
 			'web.database.grid.delete' => 'Eliminar',
 			'web.database.grid.deleted' => 'Fila eliminada',
 			'web.database.grid.confirmDelete' => '¿Eliminar esta fila?',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.grid.loading' => 'Cargando filas…',
 			'web.database.grid.readOnlyHint' => 'Esta conexión es de solo lectura — no se pueden editar filas.',
 			'web.database.grid.noPkHint' => 'Esta tabla no tiene clave primaria — la edición de filas está deshabilitada.',
@@ -12297,8 +12322,6 @@ extension on TranslationsEs {
 			'web.database.console.run' => 'Ejecutar',
 			'web.database.console.runHint' => 'Cmd/Ctrl+Enter para ejecutar',
 			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} fila(s) · ${ms} ms',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.console.truncated' => 'truncado',
 			'web.database.console.empty' => 'Ejecuta una consulta para ver resultados.',
 			'web.database.console.truncatedNote' => 'resultados truncados',
@@ -12700,6 +12723,13 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
 			'sessions.inspector.notes.save' => 'Guardar',
+			'sessions.inspector.notes.renameTitle' => 'Renombrar o mover',
+			'sessions.inspector.notes.move' => 'Mover',
+			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
+			'sessions.inspector.notes.renamed' => 'Movido.',
+			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
+			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
+			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Error al mover: ${error}',
 			'sessions.inspector.canvas.kindUi' => 'Maqueta UI',
 			'sessions.inspector.canvas.kindFlow' => 'Diagrama de flujo',
 			'sessions.inspector.canvas.kindMindmap' => 'Mapa mental',
@@ -12796,6 +12826,8 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Saltar permisos / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.subtitleOff' => 'Desactivado. Las confirmaciones y los prompts se comportan de forma normal.',
 			'sessions.spawnSheet.noProviders.title' => 'No hay proveedores configurados',
 			'sessions.spawnSheet.noProviders.message' => 'El gateway no tiene proveedores de CLI habilitados. Configura uno en Proveedores (admin web) o en [providers] en config.toml, y luego toca Recargar.',
@@ -12811,8 +12843,6 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => ' (desactivada)',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (sin token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No hay cuentas de Claude configuradas. El gateway usará la ANTHROPIC_API_KEY del sistema. Añade cuentas en Ajustes → Cuentas en el admin web.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'No se pudieron cargar las cuentas de Claude (${error}). La session se creará con el valor predeterminado del gateway.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'Nuevo servidor',
@@ -13310,6 +13340,8 @@ extension on TranslationsEs {
 			'backups.restore.manifestTitle' => 'Manifiesto',
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestCreatedAt' => 'Creado',
 			'backups.restore.manifestPgVersion' => 'pg_version',
 			'backups.restore.manifestOpendrayVersion' => 'versión de opendray',
@@ -13325,8 +13357,6 @@ extension on TranslationsEs {
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} filas · ${tables} tablas',
 			'backups.inventory.description' => 'Recuentos de filas en vivo desde la base de datos Postgres de opendray. Las copias de seguridad capturan todas las filas de abajo; los artefactos binarios en disco no se incluyen.',
 			'backups.inventory.rowsLabel' => 'filas',
-			_ => null,
-		} ?? switch (path) {
 			'backups.inventory.loadFailedToast' => 'Error al cargar el inventario',
 			'backups.inventory.loading' => 'Cargando…',
 			'backups.inventory.tap' => 'Toca para expandir',
@@ -13824,6 +13854,8 @@ extension on TranslationsEs {
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.reembed.menuItem' => 'Reincrustar todo',
 			'memory.reembed.confirmTitle' => '¿Reincrustar todas las memorias?',
 			'memory.reembed.confirmBody' => 'Recodifica cada memoria y página de KB con el modelo de embedding actual. Necesario tras cambiar de modelo, ya que la dimensión del vector cambia. Puede tardar un rato.',
@@ -13839,8 +13871,6 @@ extension on TranslationsEs {
 			'about.fields.app' => 'App',
 			'about.fields.version' => 'Versión',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version} (build ${build})',
-			_ => null,
-		} ?? switch (path) {
 			'about.fields.package' => 'Paquete',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => 'Sesión iniciada como',

@@ -194,6 +194,52 @@ class NotesApi {
       throw toApiException(e);
     }
   }
+
+  /// Move or rename a note, repointing the [[wiki-links]] that pointed
+  /// at it. Without the rewrite a rename silently strands every
+  /// reference, which is why reorganising was previously unsafe.
+  Future<MoveResult> move({required String from, required String to}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/notes/move',
+        data: {'from': from, 'to': to},
+      );
+      return MoveResult.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+}
+
+/// Outcome of a move. [warning] is set when the file moved but the link
+/// rewrite didn't finish — the move still happened, so the UI must not
+/// report it as a failure.
+class MoveResult {
+  const MoveResult({
+    required this.to,
+    required this.linksRewritten,
+    required this.notesRewritten,
+    this.warning,
+  });
+
+  factory MoveResult.fromJson(Map<String, dynamic> json) {
+    // The handler nests the result under `moved` when it also has a
+    // warning to report.
+    final moved = json['moved'];
+    final body = moved is Map<String, dynamic> ? moved : json;
+    final rewritten = body['rewritten_in'];
+    return MoveResult(
+      to: (body['to'] ?? '') as String,
+      linksRewritten: (body['links_rewritten'] ?? 0) as int,
+      notesRewritten: rewritten is List ? rewritten.length : 0,
+      warning: json['warning'] as String?,
+    );
+  }
+
+  final String to;
+  final int linksRewritten;
+  final int notesRewritten;
+  final String? warning;
 }
 
 final notesApiProvider = Provider<NotesApi>((ref) {

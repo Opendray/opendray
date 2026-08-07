@@ -10,6 +10,21 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- **The Vault can hold a folder structure you actually maintain.** Project
+  docs were a flat list: the "New doc" box replaced `/` with `-`, so
+  `features/canvas.md` became `features-canvas.md` and a folder could not
+  be created from the UI at all — while the backend had stored nested
+  paths the whole time and the Notes page already rendered them as a tree.
+  The project-docs lane now renders that tree (rooted at the project, with
+  a Recent toggle for "the one I just edited"), typing a path with slashes
+  files a doc in a folder, and a new **move/rename** repoints the
+  `[[wiki-links]]` that pointed at the old path — without that, filing a
+  doc away silently stranded every reference to it, which is why nobody
+  reorganised. Web and mobile both; the rewrite skips code blocks, so a
+  fenced example of the syntax is never edited.
+
 ## [v2.13.1] — 2026-08-07
 
 Your phone and your browser can reach the gateway again while its Mac

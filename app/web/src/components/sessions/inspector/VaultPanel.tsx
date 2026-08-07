@@ -2,10 +2,13 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowUpRight,
+  Clock,
   FileText,
+  FolderTree,
   Loader2,
   Maximize2,
   NotebookPen,
+  Pencil,
   Plus,
   Sparkles,
   SlidersHorizontal,
@@ -27,13 +30,17 @@ import {
 } from '@/components/ui/dialog'
 import {
   listNotes,
+  moveNote,
   notesProjectMapping,
   personalNotePath,
+  sanitizeNotePath,
   setNotesProjectMapping,
   writeNote,
   type Note,
 } from '@/lib/notes'
+import { cn } from '@/lib/utils'
 import { VaultFolderPicker } from '@/components/notes/VaultFolderPicker'
+import { NotesTreeView } from '@/components/notes/NotesTreeView'
 
 import { NoteEditor } from './NoteEditor'
 import { NoteEditorDialog } from './NoteEditorDialog'
@@ -152,6 +159,11 @@ function ProjectDocsSection({
   const [mappingOpen, setMappingOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
+  // Tree by default — the point of the folders is seeing them. "Recent"
+  // stays available because finding the doc you just edited is a
+  // different question than finding where a doc lives.
+  const [view, setView] = useState<'tree' | 'recent'>('tree')
+  const [renaming, setRenaming] = useState<{ from: string; value: string } | null>(null)
 
   const mappingQ = useQuery({
     queryKey: ['notes-project-mapping', cwd],
@@ -179,12 +191,27 @@ function ProjectDocsSection({
     [docsQ.data, prefix],
   )
 
+  // Paths relative to the bound folder. The tree is rooted at the
+  // project, not the vault, so `features/canvas.md` renders as one
+  // folder rather than projects › <slug> › features › canvas.
+  const relDocs = useMemo(
+    () =>
+      docs.map((d) => ({
+        ...d,
+        path: d.path.startsWith(`${prefix}/`) ? d.path.slice(prefix.length + 1) : d.path,
+      })),
+    [docs, prefix],
+  )
+  const toFullPath = (rel: string) => (prefix ? `${prefix}/${rel}` : rel)
+
   const create = useMutation({
     mutationFn: (filename: string) => {
-      const name = sanitizeFilename(filename)
+      // Slashes are kept: typing `features/canvas.md` files the doc in
+      // a folder, which is the only way to create one from the UI.
+      const name = sanitizeNotePath(filename)
       const dir = prefix.endsWith('/') ? prefix : `${prefix}/`
       const path = `${dir}${name}`
-      return writeNote(path, `# ${stripExt(name)}\n\n`).then(() => path)
+      return writeNote(path, `# ${stripExt(fileBase(name))}\n\n`).then(() => path)
     },
     onSuccess: (path) => {
       setNewName('')
@@ -195,6 +222,34 @@ function ProjectDocsSection({
     },
     onError: (e: Error) =>
       toast.error(t('web.sessions.inspector.vaultPanel.createFailed'), {
+        description: e.message,
+      }),
+  })
+
+  const rename = useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) =>
+      moveNote(from, toFullPath(sanitizeNotePath(to))),
+    onSuccess: (res) => {
+      setRenaming(null)
+      qc.invalidateQueries({ queryKey: ['notes-list', prefix] })
+      qc.invalidateQueries({ queryKey: ['notes-list'] })
+      if (res.warning) {
+        toast.warning(t('web.sessions.inspector.vaultPanel.renamedWithWarning'), {
+          description: res.warning,
+        })
+        return
+      }
+      toast.success(
+        res.links_rewritten > 0
+          ? t('web.sessions.inspector.vaultPanel.renamedWithLinks', {
+              count: res.links_rewritten,
+              notes: res.rewritten_in.length,
+            })
+          : t('web.sessions.inspector.vaultPanel.renamed'),
+      )
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.sessions.inspector.vaultPanel.renameFailed'), {
         description: e.message,
       }),
   })
@@ -281,10 +336,73 @@ function ProjectDocsSection({
           {t('web.sessions.inspector.vaultPanel.noDocs')}
         </p>
       ) : (
-        <div className="flex flex-col">
-          {docs.map((d) => (
-            <DocRow key={d.path} note={d} prefix={prefix} onOpen={() => onOpenDoc(d.path)} />
-          ))}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1 self-end">
+            <ViewToggle value={view} onChange={setView} />
+          </div>
+          {renaming && (
+            <div className="flex gap-1.5">
+              <Input
+                value={renaming.value}
+                autoFocus
+                onChange={(e) =>
+                  setRenaming({ ...renaming, value: e.target.value })
+                }
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setRenaming(null)
+                  if (e.key === 'Enter' && renaming.value.trim()) {
+                    rename.mutate({ from: renaming.from, to: renaming.value.trim() })
+                  }
+                }}
+                className="h-7 font-mono text-[11px]"
+              />
+              <Button
+                size="sm"
+                className="h-7"
+                disabled={!renaming.value.trim() || rename.isPending}
+                onClick={() =>
+                  rename.mutate({ from: renaming.from, to: renaming.value.trim() })
+                }
+              >
+                {rename.isPending ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  t('web.sessions.inspector.vaultPanel.move')
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7"
+                onClick={() => setRenaming(null)}
+              >
+                <X className="size-3" />
+              </Button>
+            </div>
+          )}
+          {view === 'tree' ? (
+            <NotesTreeView
+              notes={relDocs}
+              onSelect={(rel) => onOpenDoc(toFullPath(rel))}
+              initialExpanded={new Set(topFolders(relDocs))}
+              renderFileAction={(rel) => (
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground p-0.5"
+                  title={t('web.sessions.inspector.vaultPanel.renameTitle')}
+                  onClick={() => setRenaming({ from: toFullPath(rel), value: rel })}
+                >
+                  <Pencil className="size-3" />
+                </button>
+              )}
+            />
+          ) : (
+            <div className="flex flex-col">
+              {docs.map((d) => (
+                <DocRow key={d.path} note={d} prefix={prefix} onOpen={() => onOpenDoc(d.path)} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -474,10 +592,56 @@ function cwdBasename(cwd: string): string {
   return parts[parts.length - 1] || 'project'
 }
 
-function sanitizeFilename(input: string): string {
-  const cleaned = input.trim().replace(/[^A-Za-z0-9_.\- ]/g, '-').replace(/\s+/g, '-')
-  const safe = cleaned.replace(/^\.+/, '') || 'untitled'
-  return safe.toLowerCase().endsWith('.md') ? safe : `${safe}.md`
+// ViewToggle switches the project-docs lane between the folder tree and
+// a flat recent-first list.
+function ViewToggle({
+  value,
+  onChange,
+}: {
+  value: 'tree' | 'recent'
+  onChange: (v: 'tree' | 'recent') => void
+}) {
+  const { t } = useTranslation()
+  const opts = [
+    { key: 'tree' as const, icon: FolderTree, label: t('web.sessions.inspector.vaultPanel.viewTree') },
+    { key: 'recent' as const, icon: Clock, label: t('web.sessions.inspector.vaultPanel.viewRecent') },
+  ]
+  return (
+    <div className="inline-flex overflow-hidden rounded border border-border">
+      {opts.map(({ key, icon: Icon, label }) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          title={label}
+          className={cn(
+            'px-1.5 py-0.5',
+            value === key
+              ? 'bg-card text-foreground'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Icon className="size-3" />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// topFolders lists the first-level folders so the tree opens showing
+// its structure rather than a row of closed chevrons.
+function topFolders(notes: Note[]): string[] {
+  const set = new Set<string>()
+  for (const n of notes) {
+    const i = n.path.indexOf('/')
+    if (i > 0) set.add(n.path.slice(0, i))
+  }
+  return Array.from(set)
+}
+
+function fileBase(p: string): string {
+  const i = p.lastIndexOf('/')
+  return i === -1 ? p : p.slice(i + 1)
 }
 
 function stripExt(name: string): string {

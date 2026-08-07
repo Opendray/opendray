@@ -567,20 +567,108 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
             )
           else if (filtered.isEmpty)
             _empty(context, t.sessions.inspector.notes.emptyFilterMatch(query: _query))
-          else
+          // While filtering, a flat list of hits is the right answer —
+          // the question is "which doc", not "where does it live". The
+          // folder tree is for browsing.
+          else if (_query.isNotEmpty)
             for (final d in filtered)
               _DocTile(
                 doc: d,
-                relStripPrefix: widget.projectsRel.endsWith('/')
-                    ? widget.projectsRel
-                    : '${widget.projectsRel}/',
+                relStripPrefix: _stripPrefix,
                 onTap: () => _onDocTap(d),
                 onInsertRef: () =>
                     _pushInput(widget.sessionId, ref, '@${d.path}'),
-              ),
+                onRename: () => _renameDoc(d),
+              )
+          else
+            _DocTree(
+              docs: filtered,
+              stripPrefix: _stripPrefix,
+              onTap: _onDocTap,
+              onInsertRef: (d) =>
+                  _pushInput(widget.sessionId, ref, '@${d.path}'),
+              onRename: _renameDoc,
+            ),
         ],
       ),
     );
+  }
+
+  String get _stripPrefix => widget.projectsRel.endsWith('/')
+      ? widget.projectsRel
+      : '${widget.projectsRel}/';
+
+  /// Rename / re-file a doc. The path is shown relative to the project
+  /// folder so typing `features/canvas.md` files it in a folder — the
+  /// same gesture that creates one.
+  Future<void> _renameDoc(NoteSummary doc) async {
+    final current = doc.path.startsWith(_stripPrefix)
+        ? doc.path.substring(_stripPrefix.length)
+        : doc.path;
+    final ctrl = TextEditingController(text: current);
+    final next = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.sessions.inspector.notes.renameTitle),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          autocorrect: false,
+          decoration: InputDecoration(
+            isDense: true,
+            helperText: t.sessions.inspector.notes.renameHelp,
+            helperMaxLines: 3,
+          ),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(ctrl.text.trim()),
+            child: Text(t.sessions.inspector.notes.move),
+          ),
+        ],
+      ),
+    );
+    if (next == null || next.isEmpty || next == current) return;
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await ref.read(notesApiProvider).move(
+            from: doc.path,
+            to: '$_stripPrefix${_sanitiseFilename(next)}',
+          );
+      await widget.onRefresh();
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            res.warning != null
+                ? t.sessions.inspector.notes
+                    .renamedWithWarning(warning: res.warning!)
+                : res.linksRewritten > 0
+                    ? t.sessions.inspector.notes.renamedWithLinks(
+                        count: res.linksRewritten,
+                        notes: res.notesRewritten,
+                      )
+                    : t.sessions.inspector.notes.renamed,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.sessions.inspector.notes.renameFailed(error: e.message))),
+      );
+    } on Object catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.sessions.inspector.notes.renameFailed(error: e.toString()))),
+      );
+    }
   }
 
   Future<void> _pushInput(String sid, WidgetRef ref, String text) async {
@@ -620,24 +708,40 @@ class _DocTile extends StatelessWidget {
     required this.relStripPrefix,
     required this.onTap,
     required this.onInsertRef,
+    required this.onRename,
+    this.indent = 0,
+    this.showName,
   });
 
   final NoteSummary doc;
   final String relStripPrefix;
   final VoidCallback onTap;
   final VoidCallback onInsertRef;
+  final VoidCallback onRename;
+  /// Extra left padding when rendered inside the folder tree.
+  final double indent;
+  /// Label override — inside a tree the folder is already on screen, so
+  /// the row shows the bare filename instead of the whole path.
+  final String? showName;
 
   @override
   Widget build(BuildContext context) {
-    final shown = doc.path.startsWith(relStripPrefix)
-        ? doc.path.substring(relStripPrefix.length)
-        : doc.path;
+    final shown = showName ??
+        (doc.path.startsWith(relStripPrefix)
+            ? doc.path.substring(relStripPrefix.length)
+            : doc.path);
     final muted = Theme.of(context).textTheme.bodySmall;
     return InkWell(
       onTap: onTap,
+      onLongPress: onRename,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: EdgeInsets.only(
+          left: 8 + indent,
+          right: 8,
+          top: 8,
+          bottom: 8,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -669,6 +773,12 @@ class _DocTile extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.drive_file_rename_outline, size: 16),
+              tooltip: t.sessions.inspector.notes.renameTitle,
+              visualDensity: VisualDensity.compact,
+              onPressed: onRename,
             ),
             IconButton(
               icon: const Icon(Icons.alternate_email, size: 16),
@@ -929,4 +1039,159 @@ String _sanitiseFilename(String input) {
 String _stripExt(String name) {
   final i = name.lastIndexOf('.');
   return i > 0 ? name.substring(0, i) : name;
+}
+
+// ─── Project docs folder tree ──────────────────────────────────────
+
+/// _DocTree renders the project's docs as folders, mirroring the web
+/// NotesTreeView. The paths were always hierarchical — both surfaces
+/// just flattened them, which made a vault of any depth unreadable and
+/// made the folders themselves invisible.
+///
+/// Folders start expanded: a project's doc set is small enough that
+/// hiding it behind chevrons costs more than it saves, and the whole
+/// point of the view is seeing the structure.
+class _DocTree extends StatefulWidget {
+  const _DocTree({
+    required this.docs,
+    required this.stripPrefix,
+    required this.onTap,
+    required this.onInsertRef,
+    required this.onRename,
+  });
+
+  final List<NoteSummary> docs;
+  final String stripPrefix;
+  final void Function(NoteSummary) onTap;
+  final void Function(NoteSummary) onInsertRef;
+  final void Function(NoteSummary) onRename;
+
+  @override
+  State<_DocTree> createState() => _DocTreeState();
+}
+
+class _DocTreeState extends State<_DocTree> {
+  final _collapsed = <String>{};
+
+  @override
+  Widget build(BuildContext context) {
+    final root = _TreeNode(name: '', path: '');
+    for (final d in widget.docs) {
+      final rel = d.path.startsWith(widget.stripPrefix)
+          ? d.path.substring(widget.stripPrefix.length)
+          : d.path;
+      final parts = rel.split('/').where((p) => p.isNotEmpty).toList();
+      var node = root;
+      for (var i = 0; i < parts.length - 1; i++) {
+        final path = node.path.isEmpty ? parts[i] : '${node.path}/${parts[i]}';
+        node = node.children.putIfAbsent(
+          parts[i],
+          () => _TreeNode(name: parts[i], path: path),
+        );
+      }
+      if (parts.isNotEmpty) node.files.add(_TreeFile(parts.last, d));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: _render(context, root, 0),
+    );
+  }
+
+  List<Widget> _render(BuildContext context, _TreeNode node, int depth) {
+    final out = <Widget>[];
+    // Folders before files, each alphabetical — a stable shape beats
+    // recency here, because the tree is how you learn the layout.
+    final dirs = node.children.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    for (final dir in dirs) {
+      final isCollapsed = _collapsed.contains(dir.path);
+      out.add(
+        InkWell(
+          onTap: () => setState(() {
+            if (isCollapsed) {
+              _collapsed.remove(dir.path);
+            } else {
+              _collapsed.add(dir.path);
+            }
+          }),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 8 + depth * 14,
+              right: 8,
+              top: 8,
+              bottom: 8,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isCollapsed ? Icons.chevron_right : Icons.expand_more,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.folder_outlined,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    dir.name,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  '${dir.count}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (!isCollapsed) out.addAll(_render(context, dir, depth + 1));
+    }
+    final files = node.files.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    for (final f in files) {
+      out.add(
+        _DocTile(
+          doc: f.doc,
+          relStripPrefix: widget.stripPrefix,
+          showName: f.name,
+          indent: depth * 14 + 18,
+          onTap: () => widget.onTap(f.doc),
+          onInsertRef: () => widget.onInsertRef(f.doc),
+          onRename: () => widget.onRename(f.doc),
+        ),
+      );
+    }
+    return out;
+  }
+}
+
+class _TreeNode {
+  _TreeNode({required this.name, required this.path});
+  final String name;
+  final String path;
+  final Map<String, _TreeNode> children = {};
+  final List<_TreeFile> files = [];
+
+  /// Total docs beneath this folder, so a collapsed folder still says
+  /// how much it hides.
+  int get count =>
+      files.length + children.values.fold(0, (sum, c) => sum + c.count);
+}
+
+class _TreeFile {
+  _TreeFile(this.name, this.doc);
+  final String name;
+  final NoteSummary doc;
 }

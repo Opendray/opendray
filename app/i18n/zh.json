@@ -263,7 +263,15 @@
           "clearOverride": "清除覆盖",
           "boundToast": "已绑定项目文档库文件夹",
           "clearedToast": "已清除覆盖 —— 使用默认文件夹",
-          "saveFailed": "无法保存映射"
+          "saveFailed": "无法保存映射",
+          "viewTree": "目录",
+          "viewRecent": "最近",
+          "renameTitle": "重命名或移动",
+          "move": "移动",
+          "renamed": "已移动。",
+          "renamedWithLinks": "已移动 —— 更新了 {{notes}} 篇笔记中的 {{count}} 处链接。",
+          "renamedWithWarning": "已移动,但链接可能未更新",
+          "renameFailed": "移动失败"
         },
         "cortexPanel": {
           "noCwd": "会话没有工作目录——心智中枢功能需要工作目录。",
@@ -3780,7 +3788,14 @@
         "pinnedHint": "已固定到 {path}/（覆盖 {defaultPath}）。AI agent 也会在此撰写文档。",
         "noProjectMapping2": "（无项目映射）",
         "clearOverride": "清除覆盖",
-        "save": "保存"
+        "save": "保存",
+        "renameTitle": "重命名或移动",
+        "move": "移动",
+        "renameHelp": "项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md",
+        "renamed": "已移动。",
+        "renamedWithLinks": "已移动 —— 更新了 {notes} 篇笔记中的 {count} 处链接。",
+        "renamedWithWarning": "已移动,但链接可能未更新:{warning}",
+        "renameFailed": "移动失败:{error}"
       },
       "canvas": {
         "kindUi": "UI 稿",
