@@ -114,8 +114,16 @@ provided automatically by Actions — you don't manage it. The other:
   a non-default dist-tag, or you downgrade everyone:
 
   ```sh
-  gh workflow run publish-npm.yml -f tag=v2.13.0 -f dist_tag=previous
+  # Confirm the tag's npm/ tree matches main before overriding the ref:
+  git diff v2.13.0 main -- npm/        # must be empty
+  gh workflow run publish-npm.yml \
+    -f tag=v2.13.0 -f dist_tag=previous -f checkout_ref=main
   ```
+
+  `checkout_ref=main` is needed for any tag older than v2.13.2, because
+  the tooling it ships predates `--dist-tag` and would ignore it. The
+  workflow refuses to run in that combination rather than silently
+  publishing to `latest`; drop `checkout_ref` for anything newer.
 
   `npm publish` does no semver comparison — it points `latest` at
   whatever it just published. Filling a historical hole under the
