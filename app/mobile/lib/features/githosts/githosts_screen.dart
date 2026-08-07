@@ -294,8 +294,10 @@ class _HostTile extends StatelessWidget {
           spacing: 6,
           runSpacing: 2,
           children: [
+            // host/owner, so two credentials on one host are told apart
+            // at a glance — otherwise both rows just read "github.com".
             Text(
-              host.host,
+              host.owner.isEmpty ? host.host : '${host.host}/${host.owner}',
               style: const TextStyle(fontFamily: 'monospace'),
             ),
             Text('· token ${host.tokenMask.isEmpty ? '—' : host.tokenMask}'),

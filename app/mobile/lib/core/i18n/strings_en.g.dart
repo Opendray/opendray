@@ -5170,6 +5170,18 @@ class TranslationsGithostsFormEn {
 
 	/// en: 'Paused — sessions skip this host.'
 	String get pausedSubtitle => 'Paused — sessions skip this host.';
+
+	/// en: 'Owner (optional)'
+	String get ownerLabel => 'Owner (optional)';
+
+	/// en: 'Opendray'
+	String get ownerHint => 'Opendray';
+
+	/// en: 'Empty = host-wide: used for every repo on this host without its own entry.'
+	String get ownerHelperHostWide => 'Empty = host-wide: used for every repo on this host without its own entry.';
+
+	/// en: 'Used only for {host}/{owner}/… Other owners fall back to the host-wide entry.'
+	String ownerHelperScoped({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… Other owners fall back to the host-wide entry.';
 }
 
 // Path: channels.configDialog
@@ -9522,6 +9534,12 @@ class TranslationsWebPluginsGitHostsEn {
 	String get deleteFailedToast => 'Delete failed';
 
 	late final TranslationsWebPluginsGitHostsDialogEn dialog = TranslationsWebPluginsGitHostsDialogEn.internal(_root);
+
+	/// en: 'host-wide fallback'
+	String get scopeHostWide => 'host-wide fallback';
+
+	/// en: 'only for {owner}'
+	String scopeOwner({required Object owner}) => 'only for ${owner}';
 }
 
 // Path: web.backups.tabs
@@ -16164,6 +16182,18 @@ class TranslationsWebPluginsGitHostsDialogEn {
 
 	/// en: 'Update failed'
 	String get updateFailedToast => 'Update failed';
+
+	/// en: 'Owner (optional)'
+	String get ownerLabel => 'Owner (optional)';
+
+	/// en: 'Opendray'
+	String get ownerPlaceholder => 'Opendray';
+
+	/// en: 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.'
+	String get ownerHintHostWide => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.';
+
+	/// en: 'Used only for {host}/{owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.'
+	String ownerHintScoped({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -20049,6 +20079,12 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Git host updated',
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
+			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'Opendray',
+			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.',
+			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.',
+			'web.plugins.gitHosts.scopeHostWide' => 'host-wide fallback',
+			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => 'only for ${owner}',
 			'web.backups.title' => 'Backups',
 			'web.backups.subtitle' => 'Encrypted PostgreSQL dumps written to a pluggable target. Configure schedules + retention, or trigger one-off backups for a quick safety net.',
 			'web.backups.exportData' => 'Export data',
@@ -20079,14 +20115,14 @@ extension on Translations {
 			'web.backups.setup.pasteHint' => 'Recommended: 40+ characters from a password manager.',
 			'web.backups.setup.savesTo' => 'Saves to:',
 			'web.backups.setup.saving' => 'Saving…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.generateAndSave' => 'Generate and save',
 			'web.backups.setup.save' => 'Save',
 			'web.backups.generated.title' => 'Save this passphrase NOW',
 			'web.backups.generated.description' => 'This is shown <1>once</1>. It will not be retrievable from opendray or anywhere else. Copy it into a password manager before continuing.',
 			'web.backups.generated.copy' => 'Copy',
 			'web.backups.generated.copiedToast' => 'Passphrase copied to clipboard',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => 'Copy failed — select and copy manually',
 			'web.backups.generated.savedTo' => 'Saved to:',
 			'web.backups.generated.ack' => 'I have saved this passphrase to my password manager',
@@ -20593,14 +20629,14 @@ extension on Translations {
 			'web.settings.changeCredentials.errorWrongPassword' => 'Current password is wrong.',
 			'web.settings.changeCredentials.cancel' => 'Cancel',
 			'web.settings.changeCredentials.update' => 'Update',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.saving' => 'Saving…',
 			'web.settings.system.title' => 'System status',
 			'web.settings.system.description' => 'Live status from the gateway\'s /health endpoint.',
 			'web.settings.system.status' => 'Status',
 			'web.settings.system.version' => 'Version',
 			'web.settings.system.uptime' => 'Uptime',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.system.database' => 'Database',
 			'web.settings.system.reachable' => 'reachable',
 			'web.settings.system.unreachable' => 'unreachable',
@@ -21107,14 +21143,14 @@ extension on Translations {
 			'web.database.row.setNull' => 'set NULL',
 			'web.database.row.save' => 'Save',
 			'web.database.row.savedInsert' => 'Row inserted',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.row.savedEdit' => 'Row updated',
 			'web.database.row.noChanges' => 'No changes to save',
 			'web.database.grid.insert' => 'Insert',
 			'web.database.grid.refresh' => 'Refresh',
 			'web.database.grid.edit' => 'Edit',
 			'web.database.grid.delete' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.deleted' => 'Row deleted',
 			'web.database.grid.confirmDelete' => 'Delete this row?',
 			'web.database.grid.loading' => 'Loading rows…',
@@ -21621,14 +21657,14 @@ extension on Translations {
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
 			'sessions.spawnSheet.nameHint' => 'e.g. backend-refactor',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.argsLabel' => 'Extra args (optional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => 'Whitespace-separated; blank uses the provider\'s defaults.',
 			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Bypass permissions / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
@@ -22135,14 +22171,14 @@ extension on Translations {
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
 			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.succeededTitle' => 'Restore succeeded',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestTitle' => 'Manifest',
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
@@ -22303,6 +22339,10 @@ extension on Translations {
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Current preview: ${preview}',
 			'githosts.form.tokenPreviewNone' => '(none)',
 			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
+			'githosts.form.ownerLabel' => 'Owner (optional)',
+			'githosts.form.ownerHint' => 'Opendray',
+			'githosts.form.ownerHelperHostWide' => 'Empty = host-wide: used for every repo on this host without its own entry.',
+			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… Other owners fall back to the host-wide entry.',
 			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
 			'githosts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
 			'githosts.enabledSnack' => ({required Object name}) => '${name} enabled.',
@@ -22645,6 +22685,8 @@ extension on Translations {
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Bulk delete failed: ${error}',
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Bulk delete failed: ${error}',
 			'memory.deleteOne.title' => 'Delete memory?',
+			_ => null,
+		} ?? switch (path) {
 			'memory.deleteOne.body' => 'This cannot be undone.',
 			'memory.scope.project' => 'Project',
 			'memory.scope.global' => 'Global',
@@ -22655,8 +22697,6 @@ extension on Translations {
 			'memory.archive' => 'Archive',
 			'memory.quarantine' => 'Quarantine',
 			'memory.archivedToast' => 'Memory archived — restorable from Archived',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',

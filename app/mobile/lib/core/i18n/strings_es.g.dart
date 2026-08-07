@@ -2609,6 +2609,10 @@ class _TranslationsGithostsFormEs extends TranslationsGithostsFormEn {
 	@override String tokenPreviewHint({required Object preview}) => 'Vista previa actual: ${preview}';
 	@override String get tokenPreviewNone => '(ninguno)';
 	@override String get pausedSubtitle => 'En pausa. Las sessions omiten este host.';
+	@override String get ownerLabel => 'Propietario (opcional)';
+	@override String get ownerHint => 'Opendray';
+	@override String get ownerHelperHostWide => 'Vacío = todo el host: se usa en cada repo de este host sin entrada propia.';
+	@override String ownerHelperScoped({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/… Los demás propietarios recurren a la entrada de todo el host.';
 }
 
 // Path: channels.configDialog
@@ -4808,6 +4812,8 @@ class _TranslationsWebPluginsGitHostsEs extends TranslationsWebPluginsGitHostsEn
 	@override String get removedToast => 'Host de git eliminado';
 	@override String get deleteFailedToast => 'Error al eliminar';
 	@override late final _TranslationsWebPluginsGitHostsDialogEs dialog = _TranslationsWebPluginsGitHostsDialogEs._(_root);
+	@override String get scopeHostWide => 'reserva para todo el host';
+	@override String scopeOwner({required Object owner}) => 'solo para ${owner}';
 }
 
 // Path: web.backups.tabs
@@ -8264,6 +8270,10 @@ class _TranslationsWebPluginsGitHostsDialogEs extends TranslationsWebPluginsGitH
 	@override String get updatedToast => 'Host de git actualizado';
 	@override String get addFailedToast => 'Error al añadir';
 	@override String get updateFailedToast => 'Error al actualizar';
+	@override String get ownerLabel => 'Propietario (opcional)';
+	@override String get ownerPlaceholder => 'Opendray';
+	@override String get ownerHintHostWide => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.';
+	@override String ownerHintScoped({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -11251,6 +11261,12 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Host de git actualizado',
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
+			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'Opendray',
+			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.',
+			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.',
+			'web.plugins.gitHosts.scopeHostWide' => 'reserva para todo el host',
+			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => 'solo para ${owner}',
 			'web.backups.title' => 'Copias de seguridad',
 			'web.backups.subtitle' => 'Volcados cifrados de PostgreSQL escritos en un destino conectable. Configura programaciones y retención, o lanza copias puntuales para tener una red de seguridad rápida.',
 			'web.backups.exportData' => 'Exportar datos',
@@ -11281,14 +11297,14 @@ extension on TranslationsEs {
 			'web.backups.setup.pasteHint' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas.',
 			'web.backups.setup.savesTo' => 'Se guarda en:',
 			'web.backups.setup.saving' => 'Guardando…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.generateAndSave' => 'Generar y guardar',
 			'web.backups.setup.save' => 'Guardar',
 			'web.backups.generated.title' => 'Guarda esta frase de contraseña AHORA',
 			'web.backups.generated.description' => 'Esto se muestra <1>una sola vez</1>. No se podrá recuperar desde opendray ni desde ningún otro sitio. Cópiala en un gestor de contraseñas antes de continuar.',
 			'web.backups.generated.copy' => 'Copiar',
 			'web.backups.generated.copiedToast' => 'Frase de contraseña copiada al portapapeles',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => 'Error al copiar, selecciónala y cópiala manualmente',
 			'web.backups.generated.savedTo' => 'Guardada en:',
 			'web.backups.generated.ack' => 'He guardado esta frase de contraseña en mi gestor de contraseñas',
@@ -11795,14 +11811,14 @@ extension on TranslationsEs {
 			'web.settings.changeCredentials.errorWrongPassword' => 'La contraseña actual es incorrecta.',
 			'web.settings.changeCredentials.cancel' => 'Cancelar',
 			'web.settings.changeCredentials.update' => 'Actualizar',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.saving' => 'Guardando…',
 			'web.settings.system.title' => 'Estado del sistema',
 			'web.settings.system.description' => 'Estado en vivo desde el endpoint /health del gateway.',
 			'web.settings.system.status' => 'Estado',
 			'web.settings.system.version' => 'Versión',
 			'web.settings.system.uptime' => 'Tiempo de actividad',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.system.database' => 'Base de datos',
 			'web.settings.system.reachable' => 'accesible',
 			'web.settings.system.unreachable' => 'no accesible',
@@ -12309,14 +12325,14 @@ extension on TranslationsEs {
 			'web.database.row.setNull' => 'poner NULL',
 			'web.database.row.save' => 'Guardar',
 			'web.database.row.savedInsert' => 'Fila insertada',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.row.savedEdit' => 'Fila actualizada',
 			'web.database.row.noChanges' => 'No hay cambios que guardar',
 			'web.database.grid.insert' => 'Insertar',
 			'web.database.grid.refresh' => 'Actualizar',
 			'web.database.grid.edit' => 'Editar',
 			'web.database.grid.delete' => 'Eliminar',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.deleted' => 'Fila eliminada',
 			'web.database.grid.confirmDelete' => '¿Eliminar esta fila?',
 			'web.database.grid.loading' => 'Cargando filas…',
@@ -12823,14 +12839,14 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.browse' => 'Examinar',
 			'sessions.spawnSheet.nameLabel' => 'Nombre (opcional)',
 			'sessions.spawnSheet.nameHint' => 'p. ej. backend-refactor',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.argsLabel' => 'Argumentos adicionales (opcional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => 'Separados por espacios; en blanco usa los valores predeterminados del proveedor.',
 			'sessions.spawnSheet.bypass.labelClaude' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Omitir aprobaciones y sandbox',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Omitir permisos / YOLO',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Omitir permisos',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Saltar permisos / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'Esta session se ejecutará con autonomía elevada.',
@@ -13337,14 +13353,14 @@ extension on TranslationsEs {
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
 			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.succeededTitle' => 'Restauración completada',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
 			'backups.restore.pickFileToast' => 'Primero elige un archivo de paquete.',
 			'backups.restore.outputTitle' => 'Salida de pg_restore',
 			'backups.restore.noPgRestoreOutput' => '(vacío: la restauración se completó sin salida)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestTitle' => 'Manifiesto',
 			'backups.restore.manifestBackupId' => 'ID de copia de seguridad',
 			'backups.restore.manifestVersion' => 'Versión del manifiesto',
@@ -13505,6 +13521,10 @@ extension on TranslationsEs {
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Vista previa actual: ${preview}',
 			'githosts.form.tokenPreviewNone' => '(ninguno)',
 			'githosts.form.pausedSubtitle' => 'En pausa. Las sessions omiten este host.',
+			'githosts.form.ownerLabel' => 'Propietario (opcional)',
+			'githosts.form.ownerHint' => 'Opendray',
+			'githosts.form.ownerHelperHostWide' => 'Vacío = todo el host: se usa en cada repo de este host sin entrada propia.',
+			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/… Los demás propietarios recurren a la entrada de todo el host.',
 			'githosts.deleteBody' => ({required Object host}) => 'Elimina la credencial. Las sessions que intenten listar PRs de ${host} recurrirán a la API sin autenticar.',
 			'githosts.deletedSnack' => ({required Object name}) => '${name} eliminado.',
 			'githosts.enabledSnack' => ({required Object name}) => '${name} habilitado.',
@@ -13847,6 +13867,8 @@ extension on TranslationsEs {
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Error al eliminar en bloque: ${error}',
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Error al eliminar en bloque: ${error}',
 			'memory.deleteOne.title' => '¿Eliminar memoria?',
+			_ => null,
+		} ?? switch (path) {
 			'memory.deleteOne.body' => 'Esto no se puede deshacer.',
 			'memory.scope.project' => 'Proyecto',
 			'memory.scope.global' => 'Global',
@@ -13857,8 +13879,6 @@ extension on TranslationsEs {
 			'memory.archive' => 'Archivar',
 			'memory.quarantine' => 'Cuarentena',
 			'memory.archivedToast' => 'Memoria archivada — restaurable desde Archivado',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantinedToast' => 'Memoria en cuarentena — revísala en Cortex → Cuarentena',
 			'memory.archiveFailed' => ({required Object error}) => 'Error al archivar: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Error al poner en cuarentena: ${error}',

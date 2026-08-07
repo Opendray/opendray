@@ -6,6 +6,12 @@ export interface GitHost {
   id: string
   kind: GitHostKind
   host: string
+  /**
+   * Scopes this credential to one account/org on the host (e.g.
+   * "Opendray"). Empty = host-wide, used when no owner-specific
+   * credential matches. Matched case-insensitively.
+   */
+  owner: string
   name: string
   // The full token is never returned by the server after creation —
   // only this masked preview, e.g. "•••• AbC1".
@@ -18,6 +24,8 @@ export interface GitHost {
 export interface CreateGitHostRequest {
   kind: GitHostKind
   host: string
+  /** Optional. Empty registers the host-wide credential. */
+  owner?: string
   name?: string
   token: string
 }
@@ -25,6 +33,7 @@ export interface CreateGitHostRequest {
 export interface UpdateGitHostRequest {
   kind?: GitHostKind
   host?: string
+  owner?: string
   name?: string
   // Empty / omitted = keep existing token. Send a non-empty string to rotate.
   token?: string

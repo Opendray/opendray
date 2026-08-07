@@ -1806,8 +1806,14 @@
           "addedToast": "Host de git añadido",
           "updatedToast": "Host de git actualizado",
           "addFailedToast": "Error al añadir",
-          "updateFailedToast": "Error al actualizar"
-        }
+          "updateFailedToast": "Error al actualizar",
+          "ownerLabel": "Propietario (opcional)",
+          "ownerPlaceholder": "Opendray",
+          "ownerHintHostWide": "Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.",
+          "ownerHintScoped": "Se usa solo para {host}/{owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización."
+        },
+        "scopeHostWide": "reserva para todo el host",
+        "scopeOwner": "solo para {owner}"
       }
     },
     "backups": {
@@ -4688,7 +4694,11 @@
       "appBarNew": "Añadir host de Git",
       "tokenPreviewHint": "Vista previa actual: {preview}",
       "tokenPreviewNone": "(ninguno)",
-      "pausedSubtitle": "En pausa. Las sessions omiten este host."
+      "pausedSubtitle": "En pausa. Las sessions omiten este host.",
+      "ownerLabel": "Propietario (opcional)",
+      "ownerHint": "Opendray",
+      "ownerHelperHostWide": "Vacío = todo el host: se usa en cada repo de este host sin entrada propia.",
+      "ownerHelperScoped": "Se usa solo para {host}/{owner}/… Los demás propietarios recurren a la entrada de todo el host."
     },
     "deleteBody": "Elimina la credencial. Las sessions que intenten listar PRs de {host} recurrirán a la API sin autenticar.",
     "deletedSnack": "{name} eliminado.",

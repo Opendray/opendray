@@ -59,9 +59,13 @@ const (
 // Host is the row stored in `git_hosts`. Token is exposed in JSON only
 // when the caller is creating/updating; List/Get redact via TokenMask.
 type Host struct {
-	ID        string `json:"id"`
-	Kind      Kind   `json:"kind"`
-	Host      string `json:"host"`
+	ID   string `json:"id"`
+	Kind Kind   `json:"kind"`
+	Host string `json:"host"`
+	// Owner scopes this credential to one account/org on that host
+	// (e.g. "Opendray"). Empty means host-wide: used when no
+	// owner-specific row matches. Case-insensitive.
+	Owner     string `json:"owner"`
 	Name      string `json:"name"`
 	Token     string `json:"token,omitempty"`
 	TokenMask string `json:"token_mask,omitempty"`
@@ -76,8 +80,10 @@ type Host struct {
 
 // CreateRequest / UpdateRequest are the JSON bodies for POST / PUT.
 type CreateRequest struct {
-	Kind  Kind   `json:"kind"`
-	Host  string `json:"host"`
+	Kind Kind   `json:"kind"`
+	Host string `json:"host"`
+	// Owner is optional: empty registers the host-wide credential.
+	Owner string `json:"owner"`
 	Name  string `json:"name"`
 	Token string `json:"token"`
 }
@@ -85,6 +91,7 @@ type CreateRequest struct {
 type UpdateRequest struct {
 	Kind    *Kind   `json:"kind,omitempty"`
 	Host    *string `json:"host,omitempty"`
+	Owner   *string `json:"owner,omitempty"`
 	Name    *string `json:"name,omitempty"`
 	Token   *string `json:"token,omitempty"`
 	Enabled *bool   `json:"enabled,omitempty"`
@@ -184,11 +191,11 @@ func (s *Service) scanHostDecoded(row rowScanner) (Host, error) {
 // ── CRUD ────────────────────────────────────────────────────────
 
 const hostSelect = `
-    SELECT id, kind, host, name, token, enabled, created_at, updated_at
+    SELECT id, kind, host, owner, name, token, enabled, created_at, updated_at
     FROM git_hosts`
 
 func (s *Service) List(ctx context.Context) ([]Host, error) {
-	rows, err := s.pool.Query(ctx, hostSelect+` ORDER BY host`)
+	rows, err := s.pool.Query(ctx, hostSelect+` ORDER BY host, owner`)
 	if err != nil {
 		return nil, fmt.Errorf("list git hosts: %w", err)
 	}
@@ -214,11 +221,42 @@ func (s *Service) Get(ctx context.Context, id string) (Host, error) {
 	return redact(h), err
 }
 
-// GetByHost is used by the PR endpoint to find the matching token for
-// a remote URL's host. Returns the unredacted token because callers
-// need it to authenticate upstream.
+// GetByHost returns the HOST-WIDE credential (owner = ”), the fallback
+// used when no owner-specific row matches. Prefer GetForRepo: a caller
+// that knows which repo it is talking to should say so, or it silently
+// authenticates as the wrong identity.
+//
+// Returns the unredacted token because callers need it upstream.
 func (s *Service) GetByHost(ctx context.Context, host string) (Host, error) {
-	row := s.pool.QueryRow(ctx, hostSelect+` WHERE host=$1`, host)
+	return s.GetForRepo(ctx, host, "")
+}
+
+// GetForRepo resolves the credential for one host+owner: the row scoped
+// to that owner if there is one, else the host-wide row.
+//
+// The fallback is what keeps a single-identity setup working exactly as
+// it did before owners existed — every pre-existing row has owner = ”
+// and therefore answers for everything on its host.
+//
+// Owner comparison is case-insensitive: forges treat Opendray and
+// opendray as the same account, and a credential that resolves only
+// when the remote URL happens to match the stored capitalisation would
+// fail in a way nobody could reproduce on purpose.
+func (s *Service) GetForRepo(ctx context.Context, host, owner string) (Host, error) {
+	host = strings.TrimSpace(host)
+	owner = strings.TrimSpace(owner)
+	if owner != "" {
+		row := s.pool.QueryRow(ctx,
+			hostSelect+` WHERE host=$1 AND lower(owner)=lower($2)`, host, owner)
+		h, err := s.scanHostDecoded(row)
+		if err == nil {
+			return h, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return Host{}, err
+		}
+	}
+	row := s.pool.QueryRow(ctx, hostSelect+` WHERE host=$1 AND owner=''`, host)
 	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
@@ -237,10 +275,11 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Host, error) {
 		return Host{}, errors.New("token is required")
 	}
 	row := s.pool.QueryRow(ctx, `
-        INSERT INTO git_hosts (kind, host, name, token)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
+        INSERT INTO git_hosts (kind, host, owner, name, token)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, kind, host, owner, name, token, enabled, created_at, updated_at`,
 		string(req.Kind), strings.TrimSpace(req.Host),
+		strings.TrimSpace(req.Owner),
 		strings.TrimSpace(req.Name), s.encodeToken(req.Token))
 	h, err := s.scanHostDecoded(row)
 	if err != nil {
@@ -271,6 +310,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 	if req.Host != nil {
 		current.Host = strings.TrimSpace(*req.Host)
 	}
+	if req.Owner != nil {
+		current.Owner = strings.TrimSpace(*req.Owner)
+	}
 	if req.Name != nil {
 		current.Name = strings.TrimSpace(*req.Name)
 	}
@@ -282,11 +324,11 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 	}
 	row := s.pool.QueryRow(ctx, `
         UPDATE git_hosts
-        SET kind=$1, host=$2, name=$3, token=$4, enabled=$5, updated_at=NOW()
-        WHERE id=$6
-        RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
-		string(current.Kind), current.Host, current.Name, storedToken,
-		current.Enabled, id)
+        SET kind=$1, host=$2, owner=$3, name=$4, token=$5, enabled=$6, updated_at=NOW()
+        WHERE id=$7
+        RETURNING id, kind, host, owner, name, token, enabled, created_at, updated_at`,
+		string(current.Kind), current.Host, current.Owner, current.Name,
+		storedToken, current.Enabled, id)
 	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
@@ -337,7 +379,7 @@ type rowScanner interface{ Scan(dest ...any) error }
 func scanHost(row rowScanner) (Host, error) {
 	var h Host
 	var kind string
-	if err := row.Scan(&h.ID, &kind, &h.Host, &h.Name, &h.Token,
+	if err := row.Scan(&h.ID, &kind, &h.Host, &h.Owner, &h.Name, &h.Token,
 		&h.Enabled, &h.CreatedAt, &h.UpdatedAt); err != nil {
 		return Host{}, err
 	}
@@ -385,7 +427,9 @@ func (s *Service) DetectRemote(ctx context.Context, dir string) (Remote, error) 
 		return Remote{}, err
 	}
 	rem := Remote{URL: rawURL, Host: host, Owner: owner, Repo: repo, WebURL: web}
-	hostRow, err := s.GetByHost(ctx, host)
+	// Resolve exactly as the API callers will, so what the UI reports is
+	// the credential that actually gets used.
+	hostRow, err := s.GetForRepo(ctx, host, owner)
 	if err == nil {
 		rem.Kind = hostRow.Kind
 		rem.HasToken = hostRow.Token != ""
@@ -471,7 +515,7 @@ func (s *Service) ListPullRequests(ctx context.Context, dir, state string) (Remo
 	if !rem.HasToken {
 		return rem, nil, ErrNoTokenForHost
 	}
-	hostRow, err := s.GetByHost(ctx, rem.Host)
+	hostRow, err := s.GetForRepo(ctx, rem.Host, rem.Owner)
 	if err != nil {
 		return rem, nil, err
 	}
@@ -676,7 +720,7 @@ func (s *Service) resolveHost(ctx context.Context, dir string) (Remote, Host, er
 	if !rem.HasToken {
 		return rem, Host{}, ErrNoTokenForHost
 	}
-	hostRow, err := s.GetByHost(ctx, rem.Host)
+	hostRow, err := s.GetForRepo(ctx, rem.Host, rem.Owner)
 	if err != nil {
 		return rem, Host{}, err
 	}

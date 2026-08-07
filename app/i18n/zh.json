@@ -1806,8 +1806,14 @@
           "addedToast": "Git 主机已添加",
           "updatedToast": "Git 主机已更新",
           "addFailedToast": "添加失败",
-          "updateFailedToast": "更新失败"
-        }
+          "updateFailedToast": "更新失败",
+          "ownerLabel": "所有者(可选)",
+          "ownerPlaceholder": "Opendray",
+          "ownerHintHostWide": "留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。",
+          "ownerHintScoped": "仅用于 {host}/{owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。"
+        },
+        "scopeHostWide": "全主机兜底",
+        "scopeOwner": "仅用于 {owner}"
       }
     },
     "backups": {
@@ -4688,7 +4694,11 @@
       "appBarNew": "添加 Git 主机",
       "tokenPreviewHint": "当前预览：{preview}",
       "tokenPreviewNone": "（无）",
-      "pausedSubtitle": "已暂停 — 会话跳过此主机。"
+      "pausedSubtitle": "已暂停 — 会话跳过此主机。",
+      "ownerLabel": "所有者(可选)",
+      "ownerHint": "Opendray",
+      "ownerHelperHostWide": "留空 = 全主机凭据:该主机上没有专属条目的仓库都用它。",
+      "ownerHelperScoped": "仅用于 {host}/{owner}/…,其他所有者回退到全主机条目。"
     },
     "deleteBody": "移除该凭据。试图列出 {host} 的 PR 的会话将回退到未认证 API。",
     "deletedSnack": "已删除 {name}。",

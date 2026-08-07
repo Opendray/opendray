@@ -2609,6 +2609,10 @@ class _TranslationsGithostsFormZh extends TranslationsGithostsFormEn {
 	@override String tokenPreviewHint({required Object preview}) => '当前预览：${preview}';
 	@override String get tokenPreviewNone => '（无）';
 	@override String get pausedSubtitle => '已暂停 — 会话跳过此主机。';
+	@override String get ownerLabel => '所有者(可选)';
+	@override String get ownerHint => 'Opendray';
+	@override String get ownerHelperHostWide => '留空 = 全主机凭据:该主机上没有专属条目的仓库都用它。';
+	@override String ownerHelperScoped({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/…,其他所有者回退到全主机条目。';
 }
 
 // Path: channels.configDialog
@@ -4808,6 +4812,8 @@ class _TranslationsWebPluginsGitHostsZh extends TranslationsWebPluginsGitHostsEn
 	@override String get removedToast => 'Git 主机已移除';
 	@override String get deleteFailedToast => '删除失败';
 	@override late final _TranslationsWebPluginsGitHostsDialogZh dialog = _TranslationsWebPluginsGitHostsDialogZh._(_root);
+	@override String get scopeHostWide => '全主机兜底';
+	@override String scopeOwner({required Object owner}) => '仅用于 ${owner}';
 }
 
 // Path: web.backups.tabs
@@ -8264,6 +8270,10 @@ class _TranslationsWebPluginsGitHostsDialogZh extends TranslationsWebPluginsGitH
 	@override String get updatedToast => 'Git 主机已更新';
 	@override String get addFailedToast => '添加失败';
 	@override String get updateFailedToast => '更新失败';
+	@override String get ownerLabel => '所有者(可选)';
+	@override String get ownerPlaceholder => 'Opendray';
+	@override String get ownerHintHostWide => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。';
+	@override String ownerHintScoped({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -11251,6 +11261,12 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Git 主机已更新',
 			'web.plugins.gitHosts.dialog.addFailedToast' => '添加失败',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => '更新失败',
+			'web.plugins.gitHosts.dialog.ownerLabel' => '所有者(可选)',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'Opendray',
+			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
+			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
+			'web.plugins.gitHosts.scopeHostWide' => '全主机兜底',
+			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => '仅用于 ${owner}',
 			'web.backups.title' => '备份',
 			'web.backups.subtitle' => '写入到可插拔目标的加密 PostgreSQL dump。配置计划与保留策略，或触发一次性备份作为快速安全网。',
 			'web.backups.exportData' => '导出数据',
@@ -11281,14 +11297,14 @@ extension on TranslationsZh {
 			'web.backups.setup.pasteHint' => '建议：使用密码管理器生成 40 个以上字符。',
 			'web.backups.setup.savesTo' => '保存到：',
 			'web.backups.setup.saving' => '保存中…',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.generateAndSave' => '生成并保存',
 			'web.backups.setup.save' => '保存',
 			'web.backups.generated.title' => '立即保存此口令',
 			'web.backups.generated.description' => '这是 <1>唯一一次</1> 显示。opendray 与任何其他地方都将无法取回。请在继续前复制到密码管理器。',
 			'web.backups.generated.copy' => '复制',
 			'web.backups.generated.copiedToast' => '口令已复制到剪贴板',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => '复制失败 — 请手动选中并复制',
 			'web.backups.generated.savedTo' => '已保存到：',
 			'web.backups.generated.ack' => '我已将此口令保存到密码管理器',
@@ -11795,14 +11811,14 @@ extension on TranslationsZh {
 			'web.settings.changeCredentials.errorWrongPassword' => '当前密码不正确。',
 			'web.settings.changeCredentials.cancel' => '取消',
 			'web.settings.changeCredentials.update' => '更新',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.saving' => '保存中…',
 			'web.settings.system.title' => '系统状态',
 			'web.settings.system.description' => '来自网关 /health 接口的实时状态。',
 			'web.settings.system.status' => '状态',
 			'web.settings.system.version' => '版本',
 			'web.settings.system.uptime' => '运行时长',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.system.database' => '数据库',
 			'web.settings.system.reachable' => '可达',
 			'web.settings.system.unreachable' => '不可达',
@@ -12309,14 +12325,14 @@ extension on TranslationsZh {
 			'web.database.row.setNull' => '设为 NULL',
 			'web.database.row.save' => '保存',
 			'web.database.row.savedInsert' => '行已插入',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.row.savedEdit' => '行已更新',
 			'web.database.row.noChanges' => '没有需要保存的更改',
 			'web.database.grid.insert' => '插入',
 			'web.database.grid.refresh' => '刷新',
 			'web.database.grid.edit' => '编辑',
 			'web.database.grid.delete' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.deleted' => '行已删除',
 			'web.database.grid.confirmDelete' => '删除此行?',
 			'web.database.grid.loading' => '正在加载数据…',
@@ -12823,14 +12839,14 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
 			'sessions.spawnSheet.nameHint' => '例如：backend-refactor',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.argsLabel' => '额外参数（可选）',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => '以空格分隔；留空使用提供商默认值。',
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.labelGrok' => '跳过权限 / YOLO（--always-approve）',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
@@ -13337,14 +13353,14 @@ extension on TranslationsZh {
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
 			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.succeededTitle' => '恢复成功',
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestTitle' => '清单',
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
@@ -13505,6 +13521,10 @@ extension on TranslationsZh {
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
 			'githosts.form.tokenPreviewNone' => '（无）',
 			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
+			'githosts.form.ownerLabel' => '所有者(可选)',
+			'githosts.form.ownerHint' => 'Opendray',
+			'githosts.form.ownerHelperHostWide' => '留空 = 全主机凭据:该主机上没有专属条目的仓库都用它。',
+			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/…,其他所有者回退到全主机条目。',
 			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
 			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
 			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
@@ -13847,6 +13867,8 @@ extension on TranslationsZh {
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => '批量删除失败：${error}',
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => '批量删除失败：${error}',
 			'memory.deleteOne.title' => '删除该记忆？',
+			_ => null,
+		} ?? switch (path) {
 			'memory.deleteOne.body' => '此操作不可撤销。',
 			'memory.scope.project' => '项目',
 			'memory.scope.global' => '全局',
@@ -13857,8 +13879,6 @@ extension on TranslationsZh {
 			'memory.archive' => '归档',
 			'memory.quarantine' => '隔离',
 			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',

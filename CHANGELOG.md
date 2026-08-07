@@ -12,6 +12,20 @@ for the full rationale and what triggers a major bump.
 
 ### Added
 
+- **Git credentials are scoped per host *and owner*, so one forge can
+  hold several identities.** One row per hostname assumed one identity
+  per forge, which breaks the moment you touch a personal repo and an
+  org repo on the same host: a fine-grained GitHub token is granted per
+  repository, so the token that reaches `github.com/<you>/…` generally
+  cannot reach `github.com/<org>/…` — and there was nowhere to put the
+  second one. Git host entries now take an optional **Owner**;
+  resolution prefers the owner-scoped credential and falls back to the
+  host-wide one, so existing setups keep working untouched. Vault sync
+  resolves the same way, which it previously could not: it only ever
+  looked up by hostname.
+
+### Added
+
 - **Markdown in the Vault is syntax-highlighted while you edit it.** The
   file viewer has always coloured what it shows, so raw markdown in the
   Vault — the one place people actually read and write it — was the last

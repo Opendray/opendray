@@ -1671,12 +1671,18 @@ function GitHostsSection() {
                   className="border-t border-border hover:bg-card/40"
                 >
                   <td className="px-3 py-2">
-                    <div className="font-medium font-mono">{h.host}</div>
-                    {h.name && (
-                      <div className="text-[10px] text-muted-foreground/70">
-                        {h.name}
-                      </div>
-                    )}
+                    <div className="font-medium font-mono">
+                      {h.host}
+                      {h.owner && (
+                        <span className="text-accent">/{h.owner}</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground/70">
+                      {h.name && <span>{h.name} · </span>}
+                      {h.owner
+                        ? t('web.plugins.gitHosts.scopeOwner', { owner: h.owner })
+                        : t('web.plugins.gitHosts.scopeHostWide')}
+                    </div>
                   </td>
                   <td className="px-3 py-2 font-mono">{h.kind}</td>
                   <td className="px-3 py-2 font-mono text-muted-foreground">
@@ -1769,6 +1775,7 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
   const qc = useQueryClient()
   const [kind, setKind] = useState<GitHostKind>(host?.kind ?? 'github')
   const [hostName, setHostName] = useState(host?.host ?? '')
+  const [owner, setOwner] = useState(host?.owner ?? '')
   const [name, setName] = useState(host?.name ?? '')
   const [token, setToken] = useState('')
   const [enabled, setEnabled] = useState(host?.enabled ?? true)
@@ -1778,13 +1785,14 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
   useEffect(() => {
     setKind(host?.kind ?? 'github')
     setHostName(host?.host ?? '')
+    setOwner(host?.owner ?? '')
     setName(host?.name ?? '')
     setToken('')
     setEnabled(host?.enabled ?? true)
   }, [host?.id])
 
   const create = useMutation({
-    mutationFn: () => createGitHost({ kind, host: hostName, name, token }),
+    mutationFn: () => createGitHost({ kind, host: hostName, owner, name, token }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['git-hosts'] })
       toast.success(t('web.plugins.gitHosts.dialog.addedToast'))
@@ -1801,6 +1809,7 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
       updateGitHost(host!.id, {
         kind,
         host: hostName,
+        owner,
         name,
         enabled,
         token: token || undefined,
@@ -1876,6 +1885,26 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
                 autoFocus
               />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="owner">
+              {t('web.plugins.gitHosts.dialog.ownerLabel')}
+            </Label>
+            <Input
+              id="owner"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              placeholder={t('web.plugins.gitHosts.dialog.ownerPlaceholder')}
+              className="font-mono"
+            />
+            <p className="text-[11px] text-muted-foreground/80 leading-snug">
+              {owner
+                ? t('web.plugins.gitHosts.dialog.ownerHintScoped', {
+                    host: hostName || 'host',
+                    owner,
+                  })
+                : t('web.plugins.gitHosts.dialog.ownerHintHostWide')}
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="name">
