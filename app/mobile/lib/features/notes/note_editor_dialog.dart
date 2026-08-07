@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/notes/markdown_highlight_controller.dart';
 import 'package:path/path.dart' as p;
 
 // Full-screen markdown note editor with debounced auto-save.
@@ -34,7 +35,7 @@ class NoteEditorDialog extends ConsumerStatefulWidget {
 }
 
 class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
-  final _ctrl = TextEditingController();
+  final _ctrl = MarkdownHighlightController();
   Timer? _saveDebounce;
   bool _loading = true;
   bool _saving = false;

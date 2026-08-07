@@ -227,8 +227,10 @@ const memoryWorkersRoute = createRoute({
   },
 })
 
-// Vault — the markdown/Obsidian-sync utility, demoted out of the core
-// Memory/Notes/Knowledge triad (Experience Flywheel §7).
+// Vault — the markdown doc library, demoted out of the core
+// Memory/Brief/Knowledge triad (Experience Flywheel §7). It syncs
+// through a plain git remote; any editor pointed at that repo (Obsidian
+// among them) works, but nothing here is Obsidian-specific.
 const vaultRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/vault',

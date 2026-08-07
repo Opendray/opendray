@@ -12,6 +12,7 @@ import { detectWikiLinkContext, getCaretCoords } from '@/lib/caret'
 import { slugify } from '@/lib/outline'
 
 import { BacklinksPane } from './BacklinksPane'
+import { HighlightedSource } from '@/components/notes/HighlightedSource'
 import { WikiLinkSuggestions } from './WikiLinkSuggestions'
 import type { WikiLinkContext } from './WikiLinkSuggestions'
 
@@ -320,13 +321,13 @@ export function NoteEditor({
 
       {mode === 'source' ? (
         <>
-          <textarea
-            ref={textareaRef}
+          <HighlightedSource
             value={body}
-            onChange={(e) => {
-              setBody(e.target.value)
-              recomputeLinkCtx(e.target)
+            onChange={(next) => {
+              setBody(next)
+              if (textareaRef.current) recomputeLinkCtx(textareaRef.current)
             }}
+            textareaRef={textareaRef}
             onKeyUp={(e) => recomputeLinkCtx(e.currentTarget)}
             onClick={(e) => recomputeLinkCtx(e.currentTarget)}
             onBlur={() => {
@@ -335,15 +336,8 @@ export function NoteEditor({
               setTimeout(() => setLinkCtx(null), 80)
             }}
             placeholder={placeholder}
-            style={fillParent ? undefined : { minHeight: `${minHeight}px` }}
-            className={cn(
-              'w-full font-mono text-[12px] leading-snug rounded-md',
-              'border border-border bg-input/40 px-3 py-2 text-foreground',
-              'placeholder:text-muted-foreground/60',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              fillParent ? 'flex-1 min-h-0 resize-none' : 'resize-y',
-            )}
-            spellCheck={false}
+            fillParent={fillParent}
+            minHeight={minHeight}
           />
           <WikiLinkSuggestions
             context={linkCtx}

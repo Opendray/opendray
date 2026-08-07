@@ -51,9 +51,9 @@ interface VaultPanelProps {
   cwd: string
 }
 
-// VaultPanel — the session's window into the markdown Vault (the
-// Obsidian-sync notes utility, demoted out of the core Memory →
-// Notes → Knowledge triad). Two authoring lanes against the same vault:
+// VaultPanel — the session's window into the markdown Vault (a
+// git-synced doc library, demoted out of the core Memory → Brief →
+// Knowledge triad). Two authoring lanes against the same vault:
 //
 //   "My notes"     → personal/<slug>.md — the human's scratchpad. AI
 //                    agents never write here. Inline editor.
@@ -63,8 +63,8 @@ interface VaultPanelProps {
 //                    folder so a project that keeps its notes elsewhere
 //                    in the vault stays connected.
 //
-// The project's official doc / goal / plan / journal / memory hygiene
-// live in Cortex (the sibling tab), not the Vault.
+// The project's Brief / goal / plan / journal / memory hygiene live in
+// Cortex (the sibling tab), not the Vault.
 export function VaultPanel({ cwd }: VaultPanelProps) {
   const { t } = useTranslation()
   const personalPath = useMemo(() => personalNotePath(cwd), [cwd])

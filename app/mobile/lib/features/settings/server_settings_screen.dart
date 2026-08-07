@@ -232,7 +232,7 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         // Defaults to vault.root (or vault.notes when notes is
-        // pinned to a custom Obsidian-style location).
+        // pinned to a custom location).
         placeholder: '~/.opendray/vault',
       ),
       _Field(

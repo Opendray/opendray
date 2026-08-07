@@ -1860,9 +1860,10 @@ func parentOf(p string) string {
 // shared root. Returns absolute paths suitable for filesystem ops.
 //
 // The defaults preserve opendray's original `<root>/notes` +
-// `<root>/skills` layout. Users coming in with an existing Obsidian
-// vault can pin `vault.notes = "~/Documents/MyVault"` (or similar)
-// and opendray's notes API will read straight from that directory.
+// `<root>/skills` layout. Users who already keep a markdown vault
+// elsewhere (an Obsidian folder, a docs repo, anything) can pin
+// `vault.notes = "~/Documents/MyVault"` and opendray's notes API reads
+// straight from that directory — it is a path, not an integration.
 func resolveVaultPaths(c config.VaultConfig) (notes, skills, git string) {
 	root := c.Root
 	if root == "" {
@@ -1887,9 +1888,8 @@ func resolveVaultPaths(c config.VaultConfig) (notes, skills, git string) {
 	git = c.GitRoot
 	if git == "" {
 		// Pick the most natural git working tree: if the user pinned a
-		// custom notes path, that IS their vault repo (Obsidian-style);
-		// otherwise the legacy combined root holds both notes + skills
-		// under one repo.
+		// custom notes path, that IS their vault repo; otherwise the
+		// legacy combined root holds both notes + skills under one repo.
 		if c.Notes != "" {
 			git = notes
 		} else {

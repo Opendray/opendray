@@ -7,6 +7,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/notes/markdown_highlight_controller.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 
 // Notes surface inside the session inspector. Mirrors the web admin
@@ -193,7 +194,7 @@ class _PersonalSection extends ConsumerStatefulWidget {
 }
 
 class _PersonalSectionState extends ConsumerState<_PersonalSection> {
-  final _ctrl = TextEditingController();
+  final _ctrl = MarkdownHighlightController();
   Timer? _saveDebounce;
   bool _loading = true;
   bool _saving = false;
@@ -336,7 +337,11 @@ class _PersonalSectionState extends ConsumerState<_PersonalSection> {
                   minLines: 6,
                   textInputAction: TextInputAction.newline,
                   keyboardType: TextInputType.multiline,
-                  style: const TextStyle(fontSize: 13, height: 1.5),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    fontFamily: 'monospace',
+                  ),
                   decoration: InputDecoration(
                     hintText: t.sessions.inspector.notes.draftHint(project: widget.cwdBase),
                     border: OutlineInputBorder(
