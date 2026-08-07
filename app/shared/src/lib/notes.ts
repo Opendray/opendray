@@ -101,6 +101,55 @@ export async function deleteNote(path: string): Promise<void> {
   })
 }
 
+export interface NoteTemplate {
+  id: string
+  name: string
+  /** "builtin" or "vault" — the latter is one the operator authored. */
+  source: string
+  body: string
+}
+
+export async function listNoteTemplates(): Promise<NoteTemplate[]> {
+  const res = await api<{ templates: NoteTemplate[] }>('/api/v1/notes/templates')
+  return res.templates ?? []
+}
+
+/**
+ * Create a note from a template. Distinct from writeNote: this refuses
+ * to overwrite, and the placeholders (title, date…) are rendered
+ * server-side so web and mobile can't drift on what a new doc looks
+ * like.
+ */
+export async function newNoteFromTemplate(
+  path: string,
+  template: string,
+): Promise<Note> {
+  return api<Note>('/api/v1/notes/new', {
+    method: 'POST',
+    body: { path, template },
+  })
+}
+
+/**
+ * Filenames treated as a folder's index page, in preference order.
+ * Resolved client-side: the caller already holds the folder's listing,
+ * so asking the gateway would re-derive what it can already see.
+ */
+export const INDEX_NAMES = ['README.md', 'index.md', '_index.md']
+
+/** Find `dir`'s index note among paths, or undefined. Paths and dir are
+ * relative to the same root. */
+export function folderIndexPath(
+  dir: string,
+  paths: string[],
+): string | undefined {
+  for (const name of INDEX_NAMES) {
+    const candidate = dir ? `${dir}/${name}` : name
+    if (paths.includes(candidate)) return candidate
+  }
+  return undefined
+}
+
 export interface MoveResult {
   from: string
   to: string

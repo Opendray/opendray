@@ -271,7 +271,10 @@
           "renamed": "Movido.",
           "renamedWithLinks": "Movido: se actualizaron {{count}} enlace(s) en {{notes}} nota(s).",
           "renamedWithWarning": "Movido, pero los enlaces podrían no actualizarse",
-          "renameFailed": "Error al mover"
+          "renameFailed": "Error al mover",
+          "templateLabel": "Plantilla",
+          "templateFromVault": "Desde tu vault (_templates/)",
+          "openFolderIndexTitle": "Abrir la página índice de esta carpeta"
         },
         "cortexPanel": {
           "noCwd": "La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.",
@@ -3795,7 +3798,8 @@
         "renamed": "Movido.",
         "renamedWithLinks": "Movido: se actualizaron {count} enlace(s) en {notes} nota(s).",
         "renamedWithWarning": "Movido, pero los enlaces podrían no actualizarse: {warning}",
-        "renameFailed": "Error al mover: {error}"
+        "renameFailed": "Error al mover: {error}",
+        "openFolderIndex": "Abrir índice de carpeta"
       },
       "canvas": {
         "kindUi": "Maqueta UI",

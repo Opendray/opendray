@@ -402,6 +402,21 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
     await widget.onRefresh();
   }
 
+  /// Selected template for the next new doc. Server-rendered, so this
+  /// only has to carry the id.
+  String _template = 'blank';
+  List<NoteTemplate> _templates = const [];
+
+  Future<void> _loadTemplates() async {
+    try {
+      final list = await ref.read(notesApiProvider).templates();
+      if (mounted) setState(() => _templates = list);
+    } on Object {
+      // A missing template list must not block creating a doc — the
+      // server defaults to blank when none is named.
+    }
+  }
+
   Future<void> _create() async {
     final raw = _newNameCtrl.text.trim();
     if (raw.isEmpty) return;
@@ -412,9 +427,9 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
     final path = '$prefix$name';
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref.read(notesApiProvider).write(
+      await ref.read(notesApiProvider).newFromTemplate(
             path: path,
-            body: '# ${_stripExt(name)}\n\n',
+            template: _template,
           );
       _newNameCtrl.clear();
       setState(() => _creating = false);
@@ -499,10 +514,13 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
           IconButton(
             icon: Icon(_creating ? Icons.close : Icons.add, size: 18),
             tooltip: _creating ? t.sessions.inspector.notes.cancelTooltip : t.sessions.inspector.notes.newDocTooltip,
-            onPressed: () => setState(() {
-              _creating = !_creating;
-              if (!_creating) _newNameCtrl.clear();
-            }),
+            onPressed: () {
+              setState(() {
+                _creating = !_creating;
+                if (!_creating) _newNameCtrl.clear();
+              });
+              if (_creating && _templates.isEmpty) _loadTemplates();
+            },
           ),
         ],
       ),
@@ -510,6 +528,25 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_creating) ...[
+            if (_templates.isNotEmpty) ...[
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  for (final tpl in _templates)
+                    ChoiceChip(
+                      label: Text(
+                        tpl.source == 'vault' ? '${tpl.name} *' : tpl.name,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      selected: _template == tpl.id,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => setState(() => _template = tpl.id),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
             Row(
               children: [
                 Expanded(
@@ -588,6 +625,7 @@ class _ProjectDocsSectionState extends ConsumerState<_ProjectDocsSection> {
               onInsertRef: (d) =>
                   _pushInput(widget.sessionId, ref, '@${d.path}'),
               onRename: _renameDoc,
+              onOpenIndex: _onDocTap,
             ),
         ],
       ),
@@ -1036,10 +1074,6 @@ String _sanitiseFilename(String input) {
   return name;
 }
 
-String _stripExt(String name) {
-  final i = name.lastIndexOf('.');
-  return i > 0 ? name.substring(0, i) : name;
-}
 
 // ─── Project docs folder tree ──────────────────────────────────────
 
@@ -1058,6 +1092,7 @@ class _DocTree extends StatefulWidget {
     required this.onTap,
     required this.onInsertRef,
     required this.onRename,
+    required this.onOpenIndex,
   });
 
   final List<NoteSummary> docs;
@@ -1065,6 +1100,9 @@ class _DocTree extends StatefulWidget {
   final void Function(NoteSummary) onTap;
   final void Function(NoteSummary) onInsertRef;
   final void Function(NoteSummary) onRename;
+  /// Opens a folder's README/index note. A folder that carries one can
+  /// explain what lives in it instead of being a bare row of chevrons.
+  final void Function(NoteSummary) onOpenIndex;
 
   @override
   State<_DocTree> createState() => _DocTreeState();
@@ -1089,7 +1127,12 @@ class _DocTreeState extends State<_DocTree> {
           () => _TreeNode(name: parts[i], path: path),
         );
       }
-      if (parts.isNotEmpty) node.files.add(_TreeFile(parts.last, d));
+      if (parts.isNotEmpty) {
+        node.files.add(_TreeFile(parts.last, d));
+        if (kIndexNames.contains(parts.last) && node.index == null) {
+          node.index = d;
+        }
+      }
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1151,6 +1194,13 @@ class _DocTreeState extends State<_DocTree> {
                   '${dir.count}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (dir.index != null)
+                  IconButton(
+                    icon: const Icon(Icons.menu_book_outlined, size: 16),
+                    tooltip: t.sessions.inspector.notes.openFolderIndex,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => widget.onOpenIndex(dir.index!),
+                  ),
               ],
             ),
           ),
@@ -1183,6 +1233,8 @@ class _TreeNode {
   final String path;
   final Map<String, _TreeNode> children = {};
   final List<_TreeFile> files = [];
+  /// This folder's index note, if it has one.
+  NoteSummary? index;
 
   /// Total docs beneath this folder, so a collapsed folder still says
   /// how much it hides.

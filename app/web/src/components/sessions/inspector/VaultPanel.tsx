@@ -29,13 +29,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  folderIndexPath,
+  listNoteTemplates,
   listNotes,
   moveNote,
+  newNoteFromTemplate,
   notesProjectMapping,
   personalNotePath,
   sanitizeNotePath,
   setNotesProjectMapping,
-  writeNote,
   type Note,
 } from '@/lib/notes'
 import { cn } from '@/lib/utils'
@@ -164,6 +166,7 @@ function ProjectDocsSection({
   // different question than finding where a doc lives.
   const [view, setView] = useState<'tree' | 'recent'>('tree')
   const [renaming, setRenaming] = useState<{ from: string; value: string } | null>(null)
+  const [template, setTemplate] = useState('blank')
 
   const mappingQ = useQuery({
     queryKey: ['notes-project-mapping', cwd],
@@ -204,6 +207,12 @@ function ProjectDocsSection({
   )
   const toFullPath = (rel: string) => (prefix ? `${prefix}/${rel}` : rel)
 
+  const templatesQ = useQuery({
+    queryKey: ['note-templates'],
+    queryFn: listNoteTemplates,
+    staleTime: 5 * 60_000,
+  })
+
   const create = useMutation({
     mutationFn: (filename: string) => {
       // Slashes are kept: typing `features/canvas.md` files the doc in
@@ -211,7 +220,9 @@ function ProjectDocsSection({
       const name = sanitizeNotePath(filename)
       const dir = prefix.endsWith('/') ? prefix : `${prefix}/`
       const path = `${dir}${name}`
-      return writeNote(path, `# ${stripExt(fileBase(name))}\n\n`).then(() => path)
+      // Placeholders render server-side, so a doc created here and one
+      // created from the phone come out identical.
+      return newNoteFromTemplate(path, template).then(() => path)
     },
     onSuccess: (path) => {
       setNewName('')
@@ -301,7 +312,34 @@ function ProjectDocsSection({
       />
 
       {creating && (
-        <div className="flex gap-1.5">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[10px] text-muted-foreground/70 mr-0.5">
+              {t('web.sessions.inspector.vaultPanel.templateLabel')}
+            </span>
+            {(templatesQ.data ?? []).map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => setTemplate(tpl.id)}
+                title={
+                  tpl.source === 'vault'
+                    ? t('web.sessions.inspector.vaultPanel.templateFromVault')
+                    : undefined
+                }
+                className={cn(
+                  'rounded border px-1.5 py-0.5 text-[10.5px]',
+                  template === tpl.id
+                    ? 'border-accent/60 bg-accent/10 text-foreground'
+                    : 'border-border text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {tpl.name}
+                {tpl.source === 'vault' && ' *'}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1.5">
           <Input
             value={newName}
             autoFocus
@@ -324,6 +362,7 @@ function ProjectDocsSection({
               t('web.sessions.inspector.vaultPanel.create')
             )}
           </Button>
+          </div>
         </div>
       )}
 
@@ -385,6 +424,10 @@ function ProjectDocsSection({
               notes={relDocs}
               onSelect={(rel) => onOpenDoc(toFullPath(rel))}
               initialExpanded={new Set(topFolders(relDocs))}
+              folderIndexPath={(dir) =>
+                folderIndexPath(dir, relDocs.map((d) => d.path))
+              }
+              onOpenFolderIndex={(rel) => onOpenDoc(toFullPath(rel))}
               renderFileAction={(rel) => (
                 <button
                   type="button"
@@ -639,11 +682,3 @@ function topFolders(notes: Note[]): string[] {
   return Array.from(set)
 }
 
-function fileBase(p: string): string {
-  const i = p.lastIndexOf('/')
-  return i === -1 ? p : p.slice(i + 1)
-}
-
-function stripExt(name: string): string {
-  return name.toLowerCase().endsWith('.md') ? name.slice(0, -3) : name
-}
