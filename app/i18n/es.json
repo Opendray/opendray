@@ -268,7 +268,7 @@
           "renameTitle": "Renombrar o mover",
           "move": "Mover",
           "renamed": "Movido.",
-          "renamedWithLinks": "Movido: se actualizaron {{count}} enlace(s) en {{notes}} nota(s).",
+          "renamedWithLinks": "Movido: se actualizaron {count} enlace(s) en {notes} nota(s).",
           "renamedWithWarning": "Movido, pero los enlaces podrían no actualizarse",
           "renameFailed": "Error al mover",
           "templateLabel": "Plantilla",
