@@ -110,6 +110,19 @@ provided automatically by Actions — you don't manage it. The other:
   gh workflow run publish-npm.yml -f tag=v2.13.1
   ```
 
+  **Back-filling a version older than the one already published** needs
+  a non-default dist-tag, or you downgrade everyone:
+
+  ```sh
+  gh workflow run publish-npm.yml -f tag=v2.13.0 -f dist_tag=previous
+  ```
+
+  `npm publish` does no semver comparison — it points `latest` at
+  whatever it just published. Filling a historical hole under the
+  default tag would make `npm install opendray` resolve to the older
+  version. The hole is cosmetic; the downgrade is not. Confirm with
+  `npm view opendray dist-tags` afterwards.
+
   `publish-npm.yml` is standalone (`workflow_dispatch`) *and* the
   definition `release.yml` calls, so the recovery path and the release
   path are the same code. It downloads the tarballs from the existing

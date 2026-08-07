@@ -26,10 +26,19 @@ on:
         description: "Release tag to publish (e.g. v2.13.1). The GitHub release must already exist with its tarballs + SHA256SUMS."
         required: true
         type: string
+      dist_tag:
+        description: "npm dist-tag. Keep 'latest' for a normal release. Use 'previous' when back-filling a version OLDER than what is already published — npm does no semver check and would otherwise point 'latest' at the older version, downgrading every install."
+        required: false
+        default: latest
+        type: string
   workflow_call:
     inputs:
       tag:
         required: true
+        type: string
+      dist_tag:
+        required: false
+        default: latest
         type: string
 
 jobs:
@@ -41,6 +50,7 @@ jobs:
       id-token: write # required for `npm publish --provenance`
     env:
       TAG: ${{ inputs.tag }}
+      DIST_TAG: ${{ inputs.dist_tag || 'latest' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -53,4 +63,4 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/publish-npm.mjs --tag "$TAG"
+        run: node scripts/publish-npm.mjs --tag "$TAG" --dist-tag "$DIST_TAG"
