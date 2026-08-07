@@ -10,6 +10,15 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.13.1] — 2026-08-07
+
+Your phone and your browser can reach the gateway again while its Mac
+sits idle. A machine that falls asleep takes its network with it, so the
+gateway simply stops answering — a failure that looks exactly like a
+flaky gateway from every surface that talks to it, and sends people
+reading gateway code instead of `pmset -g log`. opendray now holds the
+host awake while it serves, and lets you choose how far to take that.
+
 ### Added
 
 - **Host power is now a setting you can see, on web and mobile.** The
