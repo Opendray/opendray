@@ -48,6 +48,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/gitactivity"
 	githost "github.com/opendray/opendray-v2/internal/githost"
 	"github.com/opendray/opendray-v2/internal/integration"
+	"github.com/opendray/opendray-v2/internal/keepawake"
 	"github.com/opendray/opendray-v2/internal/knowledge"
 	mcpapi "github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/memconflict"
@@ -85,6 +86,10 @@ type App struct {
 	audit           *audit.Sink
 	intgrCallLogger *integration.CallLogger
 	vaultSync       *vaultgit.Syncer
+	// keepAwake holds a host power assertion for as long as the gateway
+	// serves, so the machine can't idle-sleep and take the network — and
+	// every phone/web client — down with it.
+	keepAwake *keepawake.Keeper
 	// liveBackup owns the backup Service + scheduler. Always non-nil
 	// after New returns, but Service() returns nil when the feature
 	// is off. Disarm on shutdown to stop the scheduler goroutine.
@@ -614,6 +619,17 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	proxyHandlers := integration.NewProxyHandlers(intgrSvc, intgrCallLogger, log)
 	eventsHandler := integration.NewEventsHandler(bus, log)
 	healthCheck := integration.NewHealthChecker(intgrSvc, bus, log)
+
+	// Validated in config.Validate, so a parse failure here can only mean
+	// the config was built in-process rather than loaded; fall back to
+	// the default mode instead of refusing to start over a power setting.
+	awakeMode, err := keepawake.ParseMode(cfg.Host.PreventIdleSleep)
+	if err != nil {
+		log.Warn("host.prevent_idle_sleep is invalid; using the default",
+			"value", cfg.Host.PreventIdleSleep, "err", err)
+		awakeMode = keepawake.ModeAC
+	}
+	keepAwake := keepawake.New(log, awakeMode)
 
 	auditSink := audit.NewSink(st.Pool(), bus, log)
 	auditSvc := audit.NewService(st.Pool())
@@ -1471,6 +1487,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		audit:                auditSink,
 		intgrCallLogger:      intgrCallLogger,
 		vaultSync:            vaultSyncer,
+		keepAwake:            keepAwake,
 		liveBackup:           liveBackup,
 		captureEngine:        captureEngine,
 		journaler:            journaler,
@@ -1545,6 +1562,16 @@ func (a *App) Run(ctx context.Context) error {
 	go func() {
 		a.vaultSync.Run(ctx)
 		close(vaultSyncDone)
+	}()
+
+	// Hold the host awake for as long as we serve. Without this the
+	// machine idle-sleeps, its network goes down, and the gateway is
+	// unreachable from phone and web until someone physically wakes it —
+	// which reads as "opendray is flaky" rather than "the Mac is asleep".
+	keepAwakeDone := make(chan struct{})
+	go func() {
+		a.keepAwake.Run(ctx)
+		close(keepAwakeDone)
 	}()
 
 	// Backup scheduler lifecycle is owned by LiveBackup itself
@@ -1737,6 +1764,12 @@ func (a *App) Run(ctx context.Context) error {
 	case <-vaultSyncDone:
 	case <-time.After(5 * time.Second):
 		a.log.Warn("vault auto-sync shutdown timed out")
+	}
+
+	select {
+	case <-keepAwakeDone:
+	case <-time.After(2 * time.Second):
+		a.log.Warn("keep-awake shutdown timed out")
 	}
 
 	// Disarm idempotently stops the backup scheduler if it's

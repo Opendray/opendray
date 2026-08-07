@@ -103,3 +103,15 @@ default = "project"
 # max_rows = 500            # default result-row cap (requests may raise to 10000)
 # pool_max_conns = 3        # pgx pool cap per external connection
 # pool_idle_ttl = "5m"      # close external pools idle longer than this
+
+# Settings about the machine opendray runs on, rather than the gateway
+# process. A sleeping host takes its network down with it, so the gateway
+# is simply unreachable from phone and web until something wakes the
+# machine — which is why opendray holds a power assertion while serving.
+# macOS only (via caffeinate); accepted and ignored elsewhere. A
+# deliberate sleep — lid close, Apple menu -> Sleep — is never blocked.
+[host]
+# prevent_idle_sleep = "ac"   # "ac" (default) hold awake on wall power only,
+#                             # so a laptop on battery still sleeps;
+#                             # "always" hold awake on any power source;
+#                             # "off" never touch host power state
