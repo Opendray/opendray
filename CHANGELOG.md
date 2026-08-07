@@ -10,6 +10,21 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- **Wake-on-demand: the host may sleep, and phone/web traffic wakes it.**
+  `[host] prevent_idle_sleep = "on_demand"` lets the gateway's Mac sleep
+  whenever things are quiet instead of being held awake around the clock.
+  Incoming traffic dark-wakes the machine (macOS "Wake for network
+  access"); the gateway then seizes a power assertion the moment a
+  request, live stream or mid-turn session shows up, extends the wake for
+  as long as serving actually takes, and lets go after a two-minute
+  linger so the host can sleep again. Running sessions count as activity,
+  so a turn started from a phone survives the phone locking. On-demand
+  warns at startup if `womp` is disabled, since without it a sleeping
+  host can't be woken remotely at all. The existing `"ac"` (default),
+  `"always"` and `"off"` behaviours are unchanged.
+
 ### Fixed
 
 - **The gateway keeps its host awake, so phone and web stay connected.**

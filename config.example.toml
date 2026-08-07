@@ -114,4 +114,11 @@ default = "project"
 # prevent_idle_sleep = "ac"   # "ac" (default) hold awake on wall power only,
 #                             # so a laptop on battery still sleeps;
 #                             # "always" hold awake on any power source;
+#                             # "on_demand" let the host sleep while the
+#                             #   gateway is quiet; incoming traffic wakes it
+#                             #   (requires Wake for network access: sudo
+#                             #   pmset -a womp 1, wired Ethernet is the
+#                             #   reliable path) and the gateway holds it
+#                             #   awake only while requests, live streams or
+#                             #   running sessions need it, +2min linger;
 #                             # "off" never touch host power state

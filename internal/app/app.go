@@ -629,7 +629,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			"value", cfg.Host.PreventIdleSleep, "err", err)
 		awakeMode = keepawake.ModeAC
 	}
-	keepAwake := keepawake.New(log, awakeMode)
+	// Activity = an HTTP request/live stream in flight (awakeTracker
+	// wraps the root handler below) or a session mid-turn with nobody
+	// watching. Only on_demand mode consults it.
+	awakeTracker := keepawake.NewTracker()
+	keepAwake := keepawake.New(log, awakeMode, keepawake.WithActivity(func() bool {
+		return awakeTracker.Active() || sessionMgr.AnyMidTurn()
+	}))
 
 	auditSink := audit.NewSink(st.Pool(), bus, log)
 	auditSvc := audit.NewService(st.Pool())
@@ -1471,7 +1477,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 
 	srv := &http.Server{
 		Addr:              cfg.Listen,
-		Handler:           gw.Handler(),
+		Handler:           awakeTracker.Wrap(gw.Handler()),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
@@ -1564,7 +1570,9 @@ func (a *App) Run(ctx context.Context) error {
 		close(vaultSyncDone)
 	}()
 
-	// Hold the host awake for as long as we serve. Without this the
+	// Hold the host awake while we serve — continuously (ac/always) or
+	// only across activity bursts (on_demand, where the host may sleep
+	// when quiet and is dark-woken by incoming traffic). Without this the
 	// machine idle-sleeps, its network goes down, and the gateway is
 	// unreachable from phone and web until someone physically wakes it —
 	// which reads as "opendray is flaky" rather than "the Mac is asleep".

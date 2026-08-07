@@ -41,6 +41,8 @@ func TestParseMode(t *testing.T) {
 		{"empty defaults to ac", "", ModeAC, false},
 		{"explicit ac", "ac", ModeAC, false},
 		{"always", "always", ModeAlways, false},
+		{"on_demand", "on_demand", ModeOnDemand, false},
+		{"on-demand hyphen spelling", "On-Demand", ModeOnDemand, false},
 		{"off", "off", ModeOff, false},
 		{"case and space insensitive", "  Always ", ModeAlways, false},
 		{"unknown value", "sometimes", "", true},
