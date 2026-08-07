@@ -101,6 +101,65 @@ export async function deleteNote(path: string): Promise<void> {
   })
 }
 
+export interface MoveResult {
+  from: string
+  to: string
+  /** Notes whose wiki-links were repointed at the new path. */
+  rewritten_in: string[]
+  /** Individual link occurrences updated; ≥ rewritten_in.length. */
+  links_rewritten: number
+  note: Note
+}
+
+/**
+ * Move or rename a note, repointing the [[wiki-links]] that referenced
+ * it. The backend may report a warning when the file moved but the link
+ * rewrite didn't finish — the move still happened, so surface it rather
+ * than treating it as a failure.
+ */
+export async function moveNote(
+  from: string,
+  to: string,
+): Promise<MoveResult & { warning?: string }> {
+  const res = await api<MoveResult | { moved: MoveResult; warning: string }>(
+    '/api/v1/notes/move',
+    { method: 'POST', body: { from, to } },
+  )
+  if ('moved' in res) return { ...res.moved, warning: res.warning }
+  return res
+}
+
+/**
+ * Clean a user-typed note path, per segment.
+ *
+ * Slashes are meaningful — they are how someone files a doc under
+ * `features/`. The old single-regex sanitiser replaced every character
+ * outside `[A-Za-z0-9_.- ]` with a dash, which silently turned
+ * `features/canvas.md` into `features-canvas.md`, making it impossible
+ * to create a folder from the UI at all. Each segment is cleaned on its
+ * own instead, and empty / dot-only segments are dropped so `..` can
+ * never survive into the request.
+ */
+export function sanitizeNotePath(input: string): string {
+  const segments = input
+    .trim()
+    .split('/')
+    .map((s) =>
+      s
+        .trim()
+        .replace(/[^A-Za-z0-9_.\- ]/g, '-')
+        .replace(/\s+/g, '-')
+        .replace(/^\.+/, ''),
+    )
+    .filter(Boolean)
+  if (segments.length === 0) return 'untitled.md'
+  const last = segments[segments.length - 1]
+  segments[segments.length - 1] = last.toLowerCase().endsWith('.md')
+    ? last
+    : `${last}.md`
+  return segments.join('/')
+}
+
 export interface Backlink {
   path: string
   title: string

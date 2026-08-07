@@ -6758,6 +6758,13 @@ class _TranslationsSessionsInspectorNotesZh extends TranslationsSessionsInspecto
 	@override String get noProjectMapping2 => '（无项目映射）';
 	@override String get clearOverride => '清除覆盖';
 	@override String get save => '保存';
+	@override String get renameTitle => '重命名或移动';
+	@override String get move => '移动';
+	@override String get renameHelp => '项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md';
+	@override String get renamed => '已移动。';
+	@override String renamedWithLinks({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。';
+	@override String renamedWithWarning({required Object warning}) => '已移动,但链接可能未更新:${warning}';
+	@override String renameFailed({required Object error}) => '移动失败:${error}';
 }
 
 // Path: sessions.inspector.canvas
@@ -7463,6 +7470,14 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 	@override String get boundToast => '已绑定项目文档库文件夹';
 	@override String get clearedToast => '已清除覆盖 —— 使用默认文件夹';
 	@override String get saveFailed => '无法保存映射';
+	@override String get viewTree => '目录';
+	@override String get viewRecent => '最近';
+	@override String get renameTitle => '重命名或移动';
+	@override String get move => '移动';
+	@override String get renamed => '已移动。';
+	@override String renamedWithLinks({required Object {notes, required Object {count}) => '已移动 —— 更新了 ${{notes}} 篇笔记中的 ${{count}} 处链接。';
+	@override String get renamedWithWarning => '已移动,但链接可能未更新';
+	@override String get renameFailed => '移动失败';
 }
 
 // Path: web.sessions.inspector.cortexPanel
@@ -9960,6 +9975,14 @@ extension on TranslationsZh {
 			'web.sessions.inspector.vaultPanel.boundToast' => '已绑定项目文档库文件夹',
 			'web.sessions.inspector.vaultPanel.clearedToast' => '已清除覆盖 —— 使用默认文件夹',
 			'web.sessions.inspector.vaultPanel.saveFailed' => '无法保存映射',
+			'web.sessions.inspector.vaultPanel.viewTree' => '目录',
+			'web.sessions.inspector.vaultPanel.viewRecent' => '最近',
+			'web.sessions.inspector.vaultPanel.renameTitle' => '重命名或移动',
+			'web.sessions.inspector.vaultPanel.move' => '移动',
+			'web.sessions.inspector.vaultPanel.renamed' => '已移动。',
+			'web.sessions.inspector.vaultPanel.renamedWithLinks' => ({required Object {notes, required Object {count}) => '已移动 —— 更新了 ${{notes}} 篇笔记中的 ${{count}} 处链接。',
+			'web.sessions.inspector.vaultPanel.renamedWithWarning' => '已移动,但链接可能未更新',
+			'web.sessions.inspector.vaultPanel.renameFailed' => '移动失败',
 			'web.sessions.inspector.cortexPanel.noCwd' => '会话没有工作目录——心智中枢功能需要工作目录。',
 			'web.sessions.inspector.cortexPanel.open' => '打开心智中枢工作区',
 			'web.sessions.inspector.cortexPanel.docs' => '文档',
@@ -10233,6 +10256,8 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。',
 			'web.memoryWorkers.tasks.blueprint.label' => '蓝图提议器',
 			'web.memoryWorkers.tasks.blueprint.description' => '根据仓库信号识别项目类型并提议文档章节结构。由蓝图编辑器手动触发。',
@@ -10241,8 +10266,6 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.curation.description' => '驱动「与 AI 讨论」通道：更新文档章节、重订知识页；修订遵循锁定状态。',
 			'web.memoryWorkers.modelLabel' => '模型',
 			'web.memoryWorkers.modelHint' => '为该任务固定 CLI 模型（如基础杂活用 haiku）。留空 = CLI 默认。',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.modelCliDefault' => 'CLI 默认（最新）',
 			'web.memoryWorkers.modelCustom' => '自定义…',
 			'web.memoryWorkers.modelCustomPlaceholder' => '精确模型 ID',
@@ -10747,6 +10770,8 @@ extension on TranslationsZh {
 			'web.providers.detail.caps.images' => 'images',
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.brokenCli' => '已安装但无法运行',
 			'web.providers.detail.updateAvailable' => ({required Object version}) => '有可用更新 → ${version}',
 			'web.providers.detail.upToDate' => '已是最新',
@@ -10755,8 +10780,6 @@ extension on TranslationsZh {
 			'web.providers.detail.updatedToast' => ({required Object from, required Object to}) => '已更新 ${from} → ${to}',
 			'web.providers.detail.alreadyLatestToast' => '已是最新',
 			'web.providers.detail.updateFailedToast' => '更新失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.updateUnavailable' => '此处无法在应用内更新',
 			'web.providers.configForm.selectPlaceholder' => '选择…',
 			'web.providers.configForm.defaultOption' => '(默认)',
@@ -11261,6 +11284,8 @@ extension on TranslationsZh {
 			'web.backups.generated.copiedToast' => '口令已复制到剪贴板',
 			'web.backups.generated.copyFailedToast' => '复制失败 — 请手动选中并复制',
 			'web.backups.generated.savedTo' => '已保存到：',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.generated.ack' => '我已将此口令保存到密码管理器',
 			'web.backups.generated.kContinue' => '继续',
 			'web.backups.status.pgDump' => 'pg_dump',
@@ -11269,8 +11294,6 @@ extension on TranslationsZh {
 			'web.backups.status.pgDumpHint' => '备份在 pg_dump 进入 PATH 之前无法运行（也可通过 <1>backup.pg_dump_path</1> 设置绝对路径）。请安装与你的服务器主版本匹配的 <3>postgresql-client</3> 并重启。',
 			'web.backups.backupsTab.backupNow' => '立即备份',
 			'web.backups.backupsTab.triggering' => '触发中…',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.backupsTab.includeConfig' => '包含 config.toml',
 			'web.backups.backupsTab.fullInstance' => '完整实例',
 			'web.backups.backupsTab.fullInstanceHint' => '同时打包 vault（notes/skills/mcp）、secrets.env 和 config.toml —— 重建可用实例所需的一切，而不只是数据库。',
@@ -11775,6 +11798,8 @@ extension on TranslationsZh {
 			'web.settings.system.uptime' => '运行时长',
 			'web.settings.system.database' => '数据库',
 			'web.settings.system.reachable' => '可达',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.system.unreachable' => '不可达',
 			'web.settings.about.title' => '关于',
 			'web.settings.about.description' => 'opendray v2 — 面向 AI agent CLI 的多路复用 + 集成网关。源码采用 Apache 2.0 协议。',
@@ -11783,8 +11808,6 @@ extension on TranslationsZh {
 			'web.settings.about.updateAvailable' => ({required Object version}) => '有可用更新：${version}',
 			'web.settings.about.releaseNotes' => '发行说明 ↗',
 			'web.settings.about.updateNow' => '立即更新',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.about.upgradingShort' => '更新中…',
 			'web.settings.about.confirmRestart' => '这将重启服务，正在运行的会话会重新连接。',
 			'web.settings.about.confirmUpgrade' => '升级并重启',
@@ -12289,6 +12312,8 @@ extension on TranslationsZh {
 			'web.database.grid.delete' => '删除',
 			'web.database.grid.deleted' => '行已删除',
 			'web.database.grid.confirmDelete' => '删除此行?',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.grid.loading' => '正在加载数据…',
 			'web.database.grid.readOnlyHint' => '此连接为只读 —— 无法编辑行。',
 			'web.database.grid.noPkHint' => '此表没有主键 —— 行编辑已禁用。',
@@ -12297,8 +12322,6 @@ extension on TranslationsZh {
 			'web.database.console.run' => '运行',
 			'web.database.console.runHint' => 'Cmd/Ctrl+Enter 运行',
 			'web.database.console.stats' => ({required Object command, required Object rows, required Object ms}) => '${command} · ${rows} 行 · ${ms} 毫秒',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.console.truncated' => '已截断',
 			'web.database.console.empty' => '运行查询以查看结果。',
 			'web.database.console.truncatedNote' => '结果已截断',
@@ -12700,6 +12723,13 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
+			'sessions.inspector.notes.renameTitle' => '重命名或移动',
+			'sessions.inspector.notes.move' => '移动',
+			'sessions.inspector.notes.renameHelp' => '项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md',
+			'sessions.inspector.notes.renamed' => '已移动。',
+			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
+			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
+			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
 			'sessions.inspector.canvas.kindFlow' => '流程图',
 			'sessions.inspector.canvas.kindMindmap' => '思维导图',
@@ -12796,6 +12826,8 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.labelGrok' => '跳过权限 / YOLO（--always-approve）',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.subtitleOff' => '关闭 — 确认和提示按正常方式处理。',
 			'sessions.spawnSheet.noProviders.title' => '未配置任何提供商',
 			'sessions.spawnSheet.noProviders.message' => '网关没有启用任何 CLI 提供商。在 Web 管理端的「提供商」中配置，或编辑 config.toml 的 [providers] 段，然后点击重新加载。',
@@ -12811,8 +12843,6 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.claudeAccount.disabledSuffix' => '（已停用）',
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => '（无令牌）',
 			'sessions.spawnSheet.claudeAccount.noneHint' => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => '新建服务器',
@@ -13310,6 +13340,8 @@ extension on TranslationsZh {
 			'backups.restore.manifestTitle' => '清单',
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.manifestCreatedAt' => '创建时间',
 			'backups.restore.manifestPgVersion' => 'pg_version',
 			'backups.restore.manifestOpendrayVersion' => 'opendray 版本',
@@ -13325,8 +13357,6 @@ extension on TranslationsZh {
 			'backups.inventory.summary' => ({required Object rows, required Object tables}) => '${rows} 行 · ${tables} 表',
 			'backups.inventory.description' => 'opendray Postgres 数据库的实时行数。备份会捕获以下所有行；磁盘上的二进制工件不包含在内。',
 			'backups.inventory.rowsLabel' => '行',
-			_ => null,
-		} ?? switch (path) {
 			'backups.inventory.loadFailedToast' => '加载清单失败',
 			'backups.inventory.loading' => '加载中…',
 			'backups.inventory.tap' => '点击展开',
@@ -13824,6 +13854,8 @@ extension on TranslationsZh {
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'memory.reembed.menuItem' => '全部重嵌',
 			'memory.reembed.confirmTitle' => '重嵌所有记忆？',
 			'memory.reembed.confirmBody' => '用当前 embedding 模型重新编码所有已存记忆和 KB 页面。切换模型后需要执行（向量维度会变）。可能需要一些时间。',
@@ -13839,8 +13871,6 @@ extension on TranslationsZh {
 			'about.fields.app' => '应用',
 			'about.fields.version' => '版本',
 			'about.fields.versionFormat' => ({required Object version, required Object build}) => '${version}（build ${build}）',
-			_ => null,
-		} ?? switch (path) {
 			'about.fields.package' => '包名',
 			'about.fields.url' => 'URL',
 			'about.fields.signedInAs' => '登录账号',

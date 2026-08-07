@@ -18,6 +18,11 @@ interface NotesTreeViewProps {
   // Defaults to "all collapsed" so a vault with hundreds of folders
   // stays scannable. Pass a populated set to override.
   initialExpanded?: Set<string>
+  // renderFileAction adds a trailing control to each file row (rename,
+  // delete…). Optional so the plain read-only tree stays unchanged;
+  // rendered outside the row's own button, since nesting a button in a
+  // button is invalid HTML and swallows the click.
+  renderFileAction?: (path: string) => React.ReactNode
 }
 
 // Imperative handle exposed via ref so the parent's toolbar can drive
@@ -41,7 +46,7 @@ interface TreeNode {
 // needed (the /notes/list endpoint already returns the flat list).
 export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>(
   function NotesTreeView(
-    { notes, selected, onSelect, initialExpanded },
+    { notes, selected, onSelect, initialExpanded, renderFileAction },
     ref,
   ) {
   const { t } = useTranslation()
@@ -104,6 +109,7 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
             setExpanded={setExpanded}
             selected={selected ?? null}
             onSelect={onSelect}
+            renderFileAction={renderFileAction}
           />
         ))
       )}
@@ -118,6 +124,7 @@ function TreeRow({
   setExpanded,
   selected,
   onSelect,
+  renderFileAction,
 }: {
   node: TreeNode
   depth: number
@@ -125,6 +132,7 @@ function TreeRow({
   setExpanded: (s: Set<string>) => void
   selected: string | null
   onSelect: (path: string) => void
+  renderFileAction?: (path: string) => React.ReactNode
 }) {
   const indent = { paddingLeft: `${depth * 12 + 4}px` }
   const isOpen = expanded.has(node.path)
@@ -169,6 +177,7 @@ function TreeRow({
                 setExpanded={setExpanded}
                 selected={selected}
                 onSelect={onSelect}
+                renderFileAction={renderFileAction}
               />
             ))}
           </div>
@@ -178,24 +187,36 @@ function TreeRow({
   }
 
   const isSelected = selected === node.path
+  const action = renderFileAction?.(node.path)
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(node.path)}
-      style={indent}
+    <div
       className={cn(
-        'flex items-center gap-1 py-0.5 pr-1 rounded-sm text-left',
-        'hover:bg-card',
+        'group flex items-center rounded-sm',
         isSelected
-          ? 'bg-card text-foreground border-l-2 border-state-running'
-          : 'text-muted-foreground/90',
+          ? 'bg-card border-l-2 border-state-running'
+          : 'hover:bg-card',
       )}
-      title={node.path}
     >
-      <span className="size-3 shrink-0" />
-      <FileText className="size-3 shrink-0 opacity-60" />
-      <span className="truncate">{node.name}</span>
-    </button>
+      <button
+        type="button"
+        onClick={() => onSelect(node.path)}
+        style={indent}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-1 py-0.5 pr-1 text-left',
+          isSelected ? 'text-foreground' : 'text-muted-foreground/90',
+        )}
+        title={node.path}
+      >
+        <span className="size-3 shrink-0" />
+        <FileText className="size-3 shrink-0 opacity-60" />
+        <span className="truncate">{node.name}</span>
+      </button>
+      {action && (
+        <div className="shrink-0 pr-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          {action}
+        </div>
+      )}
+    </div>
   )
 }
 

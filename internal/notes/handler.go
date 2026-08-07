@@ -32,6 +32,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Put("/write", h.write)
 		r.Post("/append", h.append_)
 		r.Delete("/delete", h.delete)
+		r.Post("/move", h.move)
 		r.Get("/backlinks", h.backlinks)
 		r.Get("/tags", h.tags)
 		r.Get("/project-mapping", h.projectMappingGet)
@@ -116,6 +117,42 @@ func (h *Handlers) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// move renames/relocates a note and repoints the wiki-links that
+// referenced it. Reports which notes were rewritten so the UI can say
+// so — a rename that silently edits other files would be worse than
+// one that doesn't rename at all.
+func (h *Handlers) move(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	from := strings.TrimSpace(req.From)
+	to := strings.TrimSpace(req.To)
+	if from == "" || to == "" {
+		writeError(w, http.StatusBadRequest, errors.New("from and to are required"))
+		return
+	}
+	res, err := h.v.Move(r.Context(), from, to)
+	if err != nil {
+		// The note may have moved even when the link rewrite failed;
+		// saying "move failed" then would send the operator looking for
+		// a file that is no longer where they left it.
+		if res.To != "" {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"moved": res, "warning": err.Error(),
+			})
+			return
+		}
+		respond(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 func (h *Handlers) backlinks(w http.ResponseWriter, r *http.Request) {

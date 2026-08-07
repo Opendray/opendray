@@ -263,7 +263,15 @@
           "clearOverride": "Borrar anulación",
           "boundToast": "Carpeta de bóveda del proyecto vinculada",
           "clearedToast": "Anulación borrada — usando la carpeta por defecto",
-          "saveFailed": "No se pudo guardar el mapeo"
+          "saveFailed": "No se pudo guardar el mapeo",
+          "viewTree": "Carpetas",
+          "viewRecent": "Recientes",
+          "renameTitle": "Renombrar o mover",
+          "move": "Mover",
+          "renamed": "Movido.",
+          "renamedWithLinks": "Movido: se actualizaron {{count}} enlace(s) en {{notes}} nota(s).",
+          "renamedWithWarning": "Movido, pero los enlaces podrían no actualizarse",
+          "renameFailed": "Error al mover"
         },
         "cortexPanel": {
           "noCwd": "La sesión no tiene cwd — las funciones de Cortex necesitan un directorio de trabajo.",
@@ -3780,7 +3788,14 @@
         "pinnedHint": "Fijado a {path}/ (anula {defaultPath}). Los agentes de IA también redactan documentos aquí.",
         "noProjectMapping2": "(sin asignación de proyecto)",
         "clearOverride": "Borrar anulación",
-        "save": "Guardar"
+        "save": "Guardar",
+        "renameTitle": "Renombrar o mover",
+        "move": "Mover",
+        "renameHelp": "Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md",
+        "renamed": "Movido.",
+        "renamedWithLinks": "Movido: se actualizaron {count} enlace(s) en {notes} nota(s).",
+        "renamedWithWarning": "Movido, pero los enlaces podrían no actualizarse: {warning}",
+        "renameFailed": "Error al mover: {error}"
       },
       "canvas": {
         "kindUi": "Maqueta UI",
