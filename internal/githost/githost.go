@@ -2409,3 +2409,34 @@ func writeError(w http.ResponseWriter, code int, err error) {
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 }
+
+// CredentialFor resolves the username/token a git HTTPS operation
+// should authenticate with for one host+owner. It is the seam the
+// git-exec packages use, so that "which credential" is answered in one
+// place rather than re-derived per caller.
+//
+// ok=false means opendray has nothing registered — the caller must
+// still neutralise the host's ambient helpers rather than let an
+// osxkeychain entry answer in its place. A locked token (encrypted,
+// key unavailable) reports ok=false for the same reason: proceeding
+// with SOME other identity is worse than failing.
+func (s *Service) CredentialFor(
+	ctx context.Context, host, owner string,
+) (username, token string, ok bool) {
+	h, err := s.GetForRepo(ctx, host, owner)
+	if err != nil || !h.Enabled || h.Token == "" {
+		return "", "", false
+	}
+	return credentialUsername(h.Kind), h.Token, true
+}
+
+// credentialUsername is the username a forge expects alongside a token
+// over HTTPS basic auth. GitLab requires the literal "oauth2"; GitHub
+// and Gitea ignore it, so a recognisable constant makes the entry
+// obvious if it ever lands in a log.
+func credentialUsername(k Kind) string {
+	if k == KindGitLab {
+		return "oauth2"
+	}
+	return "opendray"
+}

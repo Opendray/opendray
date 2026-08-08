@@ -26,6 +26,16 @@ for the full rationale and what triggers a major bump.
   resolved to, saying plainly when the remote's owner has none of its
   own and the host-wide one is standing in.
 
+- **Git hosts is now the authority for HTTPS git auth.** A session's
+  push went out with whatever the machine offered — Xcode ships
+  `credential.helper = osxkeychain` enabled, so a stale keychain entry
+  answered silently and failed with an error describing a token nobody
+  remembered configuring. Pushes now authenticate with the configured
+  credential, and inherited helpers are blanked for HTTPS remotes **even
+  when opendray has nothing registered**: failing as "no credentials"
+  beats quietly succeeding as an identity you never chose. SSH remotes
+  are untouched — the agent is a deliberate, visible configuration.
+
 ### Added
 
 - **Markdown in the Vault is syntax-highlighted while you edit it.** The

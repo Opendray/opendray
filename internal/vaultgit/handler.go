@@ -617,7 +617,13 @@ func (h *Handlers) argsWithAuth(ctx context.Context, gitArgs ...string) ([]strin
 	}
 	hv, err := h.hosts.GetForRepo(ctx, host, owner)
 	if err != nil || hv.Token == "" {
-		return gitArgs, nil
+		// No credential registered here — but still blank the host's
+		// ambient helpers. Letting an osxkeychain entry or a ~/.netrc
+		// answer instead means the sync authenticates as an identity
+		// the operator never chose in opendray, and fails later with an
+		// error describing a token they don't remember configuring.
+		// Failing as "no credentials" is the honest outcome.
+		return append([]string{"-c", "credential.helper="}, gitArgs...), nil
 	}
 	// Inline credential helper: an embedded `!sh -c '...'` that prints
 	// the username + password git asks for. Quoting carefully because
