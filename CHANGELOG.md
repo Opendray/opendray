@@ -36,6 +36,14 @@ for the full rationale and what triggers a major bump.
   beats quietly succeeding as an identity you never chose. SSH remotes
   are untouched — the agent is a deliberate, visible configuration.
 
+- **Disabling a git host entry now actually disables it.** The toggle
+  changed nothing: credential resolution returned disabled rows and every
+  caller — vault sync, PR and issue listing, remote detection — used the
+  token regardless, so an entry switched off kept authenticating. The
+  check now lives in the resolver, which also makes disabling compose
+  properly: turn off an owner-scoped entry and its host falls back to the
+  host-wide one, exactly as if the row were absent.
+
 - **Git host entries can be verified against the forge.** A stored token
   was a claim nobody checked, and the forges hide the mistake: a GitHub
   fine-grained token keeps "which repositories" and "which permissions"

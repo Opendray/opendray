@@ -28,16 +28,28 @@ import (
 // Verify closes that loop: it asks the forge who the token actually
 // belongs to, and whether it can reach a specific repository. One call
 // turns "why doesn't it work" into a sentence.
+//
+// Reaching a repository takes TWO calls, because one is not enough to
+// tell the truth. `GET /repos/{o}/{r}` answers for a fine-grained token
+// holding only Metadata — which is mandatory and always present — so a
+// single check reports "can read" for a token git will refuse. The
+// contents endpoint is the one that needs Contents permission, the same
+// permission git transport needs. Checking metadata first is still
+// worth it: metadata-denied means the repo is outside the token's
+// repository list, contents-denied means the list is right and the
+// permission is missing. Those are different fixes.
 
 // VerifyResult reports what the forge says about a stored credential.
 type VerifyResult struct {
 	// Login is the account the token authenticates as, per the forge.
 	Login string `json:"login,omitempty"`
-	// OwnerMatches is false when Login differs from the row's Owner —
-	// a mislabelled credential, which resolves for repos it has no
-	// business touching.
+	// OwnerMatches is false when Login differs from the row's Owner.
+	// NOT an error on its own: an organisation entry is reached with a
+	// member's token, so github.com/Opendray legitimately authenticates
+	// as the person who owns that org. Informational only.
 	OwnerMatches bool `json:"owner_matches"`
-	// Reachable reports whether Repo (when given) can be read.
+	// Reachable reports whether Repo's CONTENTS can be read — the
+	// permission git transport needs, not merely repo metadata.
 	Reachable bool   `json:"reachable,omitempty"`
 	Repo      string `json:"repo,omitempty"`
 	// Hint explains a failure in the forge's own terms, since the raw
@@ -63,7 +75,7 @@ func (s *Service) Verify(ctx context.Context, id, repo string) (VerifyResult, er
 		return VerifyResult{Error: "no token stored"}, nil
 	}
 
-	auth, accept, whoami, repoURL := verifyEndpoints(h, repo)
+	auth, accept, whoami, repoURL, contentsURL := verifyEndpoints(h, repo)
 	res := VerifyResult{Repo: repo}
 
 	body, err := s.do(ctx, "GET", whoami, auth, accept, nil)
@@ -81,40 +93,60 @@ func (s *Service) Verify(ctx context.Context, id, repo string) (VerifyResult, er
 	if res.Login == "" {
 		res.Login = who.Username
 	}
-	// An empty Owner is the host-wide credential and matches by design.
-	res.OwnerMatches = h.Owner == "" ||
-		strings.EqualFold(h.Owner, res.Login)
-	if !res.OwnerMatches {
-		res.Hint = fmt.Sprintf(
-			"This entry is scoped to %q but the token belongs to %q, so it "+
-				"will be used for repos it may not cover.", h.Owner, res.Login)
-	}
+	// A login that differs from the entry's owner is NORMAL, not a
+	// mistake: an organisation's repos are reached with a token issued
+	// by a member — someone who owns the org still authenticates as
+	// themselves. Treating that as "mislabelled" (as this did at first)
+	// flags the correct configuration as broken. So it is reported, not
+	// judged; whether the credential actually works is what the repo
+	// check below answers.
+	res.OwnerMatches = h.Owner == "" || strings.EqualFold(h.Owner, res.Login)
 
 	if repoURL == "" {
+		if !res.OwnerMatches {
+			res.Hint = fmt.Sprintf(
+				"Token belongs to %q while this entry is scoped to %q. That is "+
+					"expected when %q is an organisation %q belongs to. Name a "+
+					"repo above to confirm the credential actually reaches it.",
+				res.Login, h.Owner, h.Owner, res.Login)
+		}
 		return res, nil
 	}
+
+	// Step 1 — metadata. Failing here means the repo is not in the
+	// token's repository list at all (or does not exist).
 	if _, err := s.do(ctx, "GET", repoURL, auth, accept, nil); err != nil {
 		res.Reachable = false
-		// The token authenticated but cannot see the repo: on GitHub
-		// that is almost always a fine-grained token whose permissions
-		// block was left at "No access", or whose repository list
-		// excludes this one.
 		res.Hint = fmt.Sprintf(
-			"The token is valid (authenticated as %q) but cannot read %s. "+
-				"For a fine-grained token, check BOTH sections: Repository "+
-				"access must include this repo, AND Permissions → Contents "+
-				"must be Read and write. Permissions default to none, which "+
-				"is why a token can look correct and still fail.",
-			res.Login, repo)
+			"The token is valid (authenticated as %q) but cannot even see %s. "+
+				"Its Repository access does not include that repo — add it, or "+
+				"switch the token to all repositories.", res.Login, repo)
+		return res, nil
+	}
+
+	// Step 2 — contents. This is the permission git transport needs, and
+	// the one that is missing whenever a token "looks right" yet every
+	// clone, pull and push comes back 403.
+	if _, err := s.do(ctx, "GET", contentsURL, auth, accept, nil); err != nil {
+		res.Reachable = false
+		res.Hint = fmt.Sprintf(
+			"The token can SEE %s but not read its contents — so git will "+
+				"refuse every pull and push, reporting \"Write access to "+
+				"repository not granted\" even for a read. Fix: Permissions → "+
+				"Repository permissions → Contents = Read and write. It "+
+				"defaults to no access, which is why the repository list "+
+				"looking correct is not enough.", repo)
 		return res, nil
 	}
 	res.Reachable = true
 	return res, nil
 }
 
-// verifyEndpoints returns the auth header, Accept header, whoami URL
-// and repo URL for a host's forge kind.
-func verifyEndpoints(h Host, repo string) (auth, accept, whoami, repoURL string) {
+// verifyEndpoints returns the auth header, Accept header, whoami URL,
+// repo-metadata URL and repo-contents URL for a host's forge kind.
+func verifyEndpoints(
+	h Host, repo string,
+) (auth, accept, whoami, repoURL, contentsURL string) {
 	switch h.Kind {
 	case KindGitea:
 		auth = "token " + h.Token
@@ -122,6 +154,7 @@ func verifyEndpoints(h Host, repo string) (auth, accept, whoami, repoURL string)
 		whoami = fmt.Sprintf("https://%s/api/v1/user", h.Host)
 		if repo != "" {
 			repoURL = fmt.Sprintf("https://%s/api/v1/repos/%s", h.Host, repo)
+			contentsURL = repoURL + "/contents"
 		}
 	case KindGitLab:
 		auth = "Bearer " + h.Token
@@ -131,6 +164,7 @@ func verifyEndpoints(h Host, repo string) (auth, accept, whoami, repoURL string)
 			// GitLab addresses projects by URL-encoded full path.
 			repoURL = fmt.Sprintf("https://%s/api/v4/projects/%s",
 				h.Host, strings.ReplaceAll(repo, "/", "%2F"))
+			contentsURL = repoURL + "/repository/tree"
 		}
 	default: // GitHub / GitHub Enterprise
 		auth = "Bearer " + h.Token
@@ -139,7 +173,8 @@ func verifyEndpoints(h Host, repo string) (auth, accept, whoami, repoURL string)
 		whoami = base + "/user"
 		if repo != "" {
 			repoURL = base + "/repos/" + repo
+			contentsURL = repoURL + "/contents/"
 		}
 	}
-	return auth, accept, whoami, repoURL
+	return auth, accept, whoami, repoURL, contentsURL
 }

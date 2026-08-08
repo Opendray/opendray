@@ -242,12 +242,22 @@ func (s *Service) GetByHost(ctx context.Context, host string) (Host, error) {
 // opendray as the same account, and a credential that resolves only
 // when the remote URL happens to match the stored capitalisation would
 // fail in a way nobody could reproduce on purpose.
+//
+// DISABLED rows are not candidates. The check belongs here because it
+// was in none of the callers: vault sync, PR listing, issue listing and
+// remote detection each resolved a credential and used its token without
+// ever consulting `enabled`, so switching an entry off changed nothing
+// and the toggle quietly meant something other than what it said.
+// Filtering during resolution also makes disabling compose correctly —
+// turn off an owner-scoped entry and its host falls back to the
+// host-wide one, exactly as if the row were absent.
 func (s *Service) GetForRepo(ctx context.Context, host, owner string) (Host, error) {
 	host = strings.TrimSpace(host)
 	owner = strings.TrimSpace(owner)
 	if owner != "" {
 		row := s.pool.QueryRow(ctx,
-			hostSelect+` WHERE host=$1 AND lower(owner)=lower($2)`, host, owner)
+			hostSelect+` WHERE host=$1 AND lower(owner)=lower($2) AND enabled`,
+			host, owner)
 		h, err := s.scanHostDecoded(row)
 		if err == nil {
 			return h, nil
@@ -256,7 +266,8 @@ func (s *Service) GetForRepo(ctx context.Context, host, owner string) (Host, err
 			return Host{}, err
 		}
 	}
-	row := s.pool.QueryRow(ctx, hostSelect+` WHERE host=$1 AND owner=''`, host)
+	row := s.pool.QueryRow(ctx,
+		hostSelect+` WHERE host=$1 AND owner='' AND enabled`, host)
 	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
