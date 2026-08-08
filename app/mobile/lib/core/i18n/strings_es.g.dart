@@ -1554,6 +1554,7 @@ class _TranslationsWebServerSettingsEs extends TranslationsWebServerSettingsEn {
 	@override String get memoryRuntimeBanner => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).';
 	@override String get memoryRuntimeBannerButton => 'Abrir ajustes de Cortex';
 	@override late final _TranslationsWebServerSettingsHostEs host = _TranslationsWebServerSettingsHostEs._(_root);
+	@override late final _TranslationsWebServerSettingsLayoutEs layout = _TranslationsWebServerSettingsLayoutEs._(_root);
 }
 
 // Path: web.settings
@@ -3153,6 +3154,7 @@ class _TranslationsSettingsServerSettingsEs extends TranslationsSettingsServerSe
 	@override String validateInteger({required Object field}) => '"${field}" debe ser un entero';
 	@override String validateNumber({required Object field}) => '"${field}" debe ser un número';
 	@override late final _TranslationsSettingsServerSettingsEmbedderModelEs embedderModel = _TranslationsSettingsServerSettingsEmbedderModelEs._(_root);
+	@override String get legacyLayout => 'Los directorios propios de opendray siguen dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de abajo cuando puedas.';
 }
 
 // Path: web.sessions.list
@@ -5174,6 +5176,7 @@ class _TranslationsWebServerSettingsSectionsEs extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsClaudeEs claude = _TranslationsWebServerSettingsSectionsClaudeEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexEs codex = _TranslationsWebServerSettingsSectionsCodexEs._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsAntigravityEs antigravity = _TranslationsWebServerSettingsSectionsAntigravityEs._(_root);
+	@override late final _TranslationsWebServerSettingsSectionsSkillsEs skills = _TranslationsWebServerSettingsSectionsSkillsEs._(_root);
 }
 
 // Path: web.serverSettings.restart
@@ -5233,7 +5236,6 @@ class _TranslationsWebServerSettingsFieldsEs extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsIdlePollIntervalEs idlePollInterval = _TranslationsWebServerSettingsFieldsIdlePollIntervalEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsVaultRootEs vaultRoot = _TranslationsWebServerSettingsFieldsVaultRootEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsNotesDirectoryEs notesDirectory = _TranslationsWebServerSettingsFieldsNotesDirectoryEs._(_root);
-	@override late final _TranslationsWebServerSettingsFieldsSkillsDirectoryEs skillsDirectory = _TranslationsWebServerSettingsFieldsSkillsDirectoryEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsGitRootEs gitRoot = _TranslationsWebServerSettingsFieldsGitRootEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsPersonalPrefixEs personalPrefix = _TranslationsWebServerSettingsFieldsPersonalPrefixEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsProjectsPrefixEs projectsPrefix = _TranslationsWebServerSettingsFieldsProjectsPrefixEs._(_root);
@@ -5271,6 +5273,7 @@ class _TranslationsWebServerSettingsFieldsEs extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsClaudeAutoFailoverEs claudeAutoFailover = _TranslationsWebServerSettingsFieldsClaudeAutoFailoverEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsMobileTokenTTLEs mobileTokenTTL = _TranslationsWebServerSettingsFieldsMobileTokenTTLEs._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsDbMaxConnsEs dbMaxConns = _TranslationsWebServerSettingsFieldsDbMaxConnsEs._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsSkillsRootEs skillsRoot = _TranslationsWebServerSettingsFieldsSkillsRootEs._(_root);
 }
 
 // Path: web.serverSettings.liveTail
@@ -5419,6 +5422,21 @@ class _TranslationsWebServerSettingsHostEs extends TranslationsWebServerSettings
 	@override String get intro => 'Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.';
 	@override String get platformNote => 'Solo macOS. En Linux y Windows este ajuste se acepta y se ignora: esos hosts no se suspenden por inactividad en una instalación de servidor normal. Nunca se bloquea una suspensión deliberada (cerrar la tapa, menú Apple → Reposo), y la aserción se libera si opendray termina o es forzado a cerrar.';
 	@override late final _TranslationsWebServerSettingsHostModesEs modes = _TranslationsWebServerSettingsHostModesEs._(_root);
+}
+
+// Path: web.serverSettings.layout
+class _TranslationsWebServerSettingsLayoutEs extends TranslationsWebServerSettingsLayoutEn {
+	_TranslationsWebServerSettingsLayoutEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Se resuelve en';
+	@override String get documents => 'Documentos';
+	@override String get git => 'Repositorio Git';
+	@override String get skills => 'Habilidades';
+	@override String get mcp => 'Registro MCP';
+	@override String get legacyWarning => 'Esta instalación aún mantiene los directorios propios de opendray dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de arriba cuando puedas. Lo ya confirmado requiere git rm --cached; opendray no reescribirá tu repositorio.';
 }
 
 // Path: web.settings.groups
@@ -7303,6 +7321,7 @@ class _TranslationsSettingsServerSettingsSectionsEs extends TranslationsSettings
 	@override String get storageClaude => 'Almacenamiento · Claude';
 	@override String get storageCodex => 'Almacenamiento · Codex';
 	@override String get storageAntigravity => 'Almacenamiento · Antigravity';
+	@override String get skills => 'Habilidades de agente';
 }
 
 // Path: settings.serverSettings.sectionDescriptions
@@ -7316,13 +7335,14 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsEs extends Translati
 	@override String get host => 'Mantén esta máquina accesible mientras está inactiva.';
 	@override String get logging => 'Verbosidad, formato y ruta del log en disco.';
 	@override String get sessions => 'Umbrales de detección de inactividad.';
-	@override String get vault => 'Notas, skills y raíz versionada con git.';
-	@override String get mcpRegistry => 'Rutas del vault para servidores MCP + archivo de secretos.';
+	@override String get vault => 'Tus documentos y el repositorio al que se sincronizan.';
+	@override String get mcpRegistry => 'Registro de servidores y archivo de secretos.';
 	@override String get memory => 'Subsistema de memoria persistente entre CLIs.';
 	@override String get backup => 'Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).';
 	@override String get storageClaude => 'Dónde viven los transcripts de Claude en disco.';
 	@override String get storageCodex => 'Raíz de las sessions de Codex.';
 	@override String get storageAntigravity => 'Almacén SQLite por conversación de agy.';
+	@override String get skills => 'De dónde se cargan las habilidades de agente.';
 }
 
 // Path: settings.serverSettings.fields
@@ -7347,10 +7367,9 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get idleThresholdHelper => 'Periodo de silencio antes de marcar una session como inactiva. Duración de Go.';
 	@override String get idleCheckInterval => 'Intervalo de comprobación de inactividad';
 	@override String get idleCheckHelper => 'Con qué frecuencia se ejecuta el reaper de inactividad.';
-	@override String get root => 'Raíz';
-	@override String get rootHelper => 'Padre de las sub-rutas notes / skills / git_root.';
-	@override String get notesPath => 'Ruta de notas';
-	@override String get skillsPath => 'Ruta de skills';
+	@override String get root => 'Raíz del Vault';
+	@override String get rootHelper => 'El directorio donde viven tus documentos: lo que muestra el Vault y lo que confirma Vault Sync.';
+	@override String get notesPath => 'Ruta de documentos (heredada)';
 	@override String get gitRoot => 'Raíz de git';
 	@override String get personalPrefix => 'Prefijo personal';
 	@override String get projectsPrefix => 'Prefijo de proyectos';
@@ -7402,6 +7421,10 @@ class _TranslationsSettingsServerSettingsFieldsEs extends TranslationsSettingsSe
 	@override String get sleepModeAlways => 'Despierto con cualquier alimentación';
 	@override String get sleepModeOnDemand => 'Dormir, despertar con tráfico';
 	@override String get sleepModeOff => 'No tocar la energía';
+	@override String get notesPathHelper => 'Nombre antiguo de la raíz del Vault, visible porque está definido. Vacíalo para usar la raíz del Vault, o mantenlo apuntando a una carpeta markdown que gestiones en otro sitio.';
+	@override String get skillsRoot => 'Raíz de habilidades';
+	@override String get skillsRootHelper => 'Directorio con las habilidades de agente. Fuera del Vault para que no acaben en el repositorio de tus documentos.';
+	@override String get gitRootHelper => 'Árbol de trabajo que confirma Vault Sync. Por defecto la raíz del Vault, así el repositorio solo contiene documentos.';
 }
 
 // Path: settings.serverSettings.embedderModel
@@ -8530,7 +8553,7 @@ class _TranslationsWebServerSettingsSectionsVaultEs extends TranslationsWebServe
 
 	// Translations
 	@override String get title => 'Vault';
-	@override String get desc => 'Notas, skills y raíz versionada con git.';
+	@override String get desc => 'Tus documentos y el repositorio al que se sincronizan.';
 }
 
 // Path: web.serverSettings.sections.mcp
@@ -8540,8 +8563,8 @@ class _TranslationsWebServerSettingsSectionsMcpEs extends TranslationsWebServerS
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get title => 'Registro de MCP';
-	@override String get desc => 'Registro de servidores + secretos.';
+	@override String get title => 'Registro MCP';
+	@override String get desc => 'Registro de servidores y secretos.';
 }
 
 // Path: web.serverSettings.sections.memory
@@ -8597,6 +8620,17 @@ class _TranslationsWebServerSettingsSectionsAntigravityEs extends TranslationsWe
 	// Translations
 	@override String get title => 'Almacenamiento · Antigravity';
 	@override String get desc => 'Almacén SQLite por conversación de Antigravity (agy).';
+}
+
+// Path: web.serverSettings.sections.skills
+class _TranslationsWebServerSettingsSectionsSkillsEs extends TranslationsWebServerSettingsSectionsSkillsEn {
+	_TranslationsWebServerSettingsSectionsSkillsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Habilidades de agente';
+	@override String get desc => 'De dónde se cargan las habilidades.';
 }
 
 // Path: web.serverSettings.fields.listenAddress
@@ -8708,7 +8742,7 @@ class _TranslationsWebServerSettingsFieldsVaultRootEs extends TranslationsWebSer
 
 	// Translations
 	@override String get label => 'Raíz del Vault';
-	@override String get hint => 'Directorio de nivel superior para notas, skills y el registro de MCP.';
+	@override String get hint => 'El directorio donde viven tus documentos. Es lo que muestra la página Vault y lo que confirma Vault Sync.';
 }
 
 // Path: web.serverSettings.fields.notesDirectory
@@ -8718,19 +8752,8 @@ class _TranslationsWebServerSettingsFieldsNotesDirectoryEs extends TranslationsW
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get label => 'Directorio de notas';
-	@override String get hint => 'Anula la ubicación de las notas. Por defecto <vault root>/notes.';
-}
-
-// Path: web.serverSettings.fields.skillsDirectory
-class _TranslationsWebServerSettingsFieldsSkillsDirectoryEs extends TranslationsWebServerSettingsFieldsSkillsDirectoryEn {
-	_TranslationsWebServerSettingsFieldsSkillsDirectoryEs._(TranslationsEs root) : this._root = root, super.internal(root);
-
-	final TranslationsEs _root; // ignore: unused_field
-
-	// Translations
-	@override String get label => 'Directorio de skills';
-	@override String get hint => 'Anula la ubicación de los skills. Por defecto <vault root>/skills.';
+	@override String get label => 'Directorio de documentos (heredado)';
+	@override String get hint => 'Nombre antiguo de la raíz del Vault, visible porque está definido. Vacíalo para usar la raíz del Vault, o mantenlo apuntando a una carpeta markdown que gestiones en otro sitio.';
 }
 
 // Path: web.serverSettings.fields.gitRoot
@@ -8740,8 +8763,8 @@ class _TranslationsWebServerSettingsFieldsGitRootEs extends TranslationsWebServe
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get label => 'Raíz de git';
-	@override String get hint => 'Árbol de trabajo al que confirma la función Vault Sync.';
+	@override String get label => 'Raíz de Git';
+	@override String get hint => 'Árbol de trabajo que confirma Vault Sync. Por defecto la raíz del Vault, así el repositorio solo contiene documentos.';
 }
 
 // Path: web.serverSettings.fields.personalPrefix
@@ -8774,7 +8797,7 @@ class _TranslationsWebServerSettingsFieldsRegistryRootEs extends TranslationsWeb
 
 	// Translations
 	@override String get label => 'Raíz del registro';
-	@override String get hint => 'Directorio que contiene las definiciones JSON de los servidores MCP. Por defecto <vault>/mcp.';
+	@override String get hint => 'Directorio con las definiciones JSON de servidores MCP. Por defecto ~/.opendray/mcp.';
 }
 
 // Path: web.serverSettings.fields.secretsFile
@@ -9138,6 +9161,17 @@ class _TranslationsWebServerSettingsFieldsDbMaxConnsEs extends TranslationsWebSe
 	// Translations
 	@override String get label => 'Conexiones máx.';
 	@override String get hint => 'Tope del pool de conexiones pgx. 0 = valor por defecto (16).';
+}
+
+// Path: web.serverSettings.fields.skillsRoot
+class _TranslationsWebServerSettingsFieldsSkillsRootEs extends TranslationsWebServerSettingsFieldsSkillsRootEn {
+	_TranslationsWebServerSettingsFieldsSkillsRootEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Raíz de habilidades';
+	@override String get hint => 'Directorio con las habilidades de agente. Fuera del Vault para que no acaben en el repositorio de tus documentos.';
 }
 
 // Path: web.serverSettings.httpHelpers.presetTip
@@ -11564,9 +11598,9 @@ extension on TranslationsEs {
 			'web.serverSettings.sections.sessions.title' => 'Sesiones',
 			'web.serverSettings.sections.sessions.desc' => 'Umbrales de detección de inactividad.',
 			'web.serverSettings.sections.vault.title' => 'Vault',
-			'web.serverSettings.sections.vault.desc' => 'Notas, skills y raíz versionada con git.',
-			'web.serverSettings.sections.mcp.title' => 'Registro de MCP',
-			'web.serverSettings.sections.mcp.desc' => 'Registro de servidores + secretos.',
+			'web.serverSettings.sections.vault.desc' => 'Tus documentos y el repositorio al que se sincronizan.',
+			'web.serverSettings.sections.mcp.title' => 'Registro MCP',
+			'web.serverSettings.sections.mcp.desc' => 'Registro de servidores y secretos.',
 			'web.serverSettings.sections.memory.title' => 'Memoria · almacenamiento y embedder',
 			'web.serverSettings.sections.memory.desc' => 'La mitad de infraestructura del subsistema de memoria: backend de embeddings, ajuste de recuperación y gobernanza de fondo. Reinicia para aplicar. El comportamiento en runtime (workers, captura, inyección) vive en los ajustes de Cortex.',
 			'web.serverSettings.sections.backup.title' => 'Backup',
@@ -11577,6 +11611,8 @@ extension on TranslationsEs {
 			'web.serverSettings.sections.codex.desc' => 'Raíz de sesiones de Codex.',
 			'web.serverSettings.sections.antigravity.title' => 'Almacenamiento · Antigravity',
 			'web.serverSettings.sections.antigravity.desc' => 'Almacén SQLite por conversación de Antigravity (agy).',
+			'web.serverSettings.sections.skills.title' => 'Habilidades de agente',
+			'web.serverSettings.sections.skills.desc' => 'De dónde se cargan las habilidades.',
 			'web.serverSettings.loading' => 'Cargando ajustes del servidor…',
 			'web.serverSettings.loadFailed' => ({required Object message}) => 'Error al cargar: ${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray se inició sin la opción -config. Los ajustes se cargan únicamente desde variables de entorno y no pueden editarse aquí.',
@@ -11635,19 +11671,17 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.idlePollInterval.label' => 'Intervalo de sondeo de inactividad',
 			'web.serverSettings.fields.idlePollInterval.hint' => 'Con qué frecuencia se activa el detector de inactividad. Más bajo = menor latencia, más activaciones. Vacío = 5s.',
 			'web.serverSettings.fields.vaultRoot.label' => 'Raíz del Vault',
-			'web.serverSettings.fields.vaultRoot.hint' => 'Directorio de nivel superior para notas, skills y el registro de MCP.',
-			'web.serverSettings.fields.notesDirectory.label' => 'Directorio de notas',
-			'web.serverSettings.fields.notesDirectory.hint' => 'Anula la ubicación de las notas. Por defecto <vault root>/notes.',
-			'web.serverSettings.fields.skillsDirectory.label' => 'Directorio de skills',
-			'web.serverSettings.fields.skillsDirectory.hint' => 'Anula la ubicación de los skills. Por defecto <vault root>/skills.',
-			'web.serverSettings.fields.gitRoot.label' => 'Raíz de git',
-			'web.serverSettings.fields.gitRoot.hint' => 'Árbol de trabajo al que confirma la función Vault Sync.',
+			'web.serverSettings.fields.vaultRoot.hint' => 'El directorio donde viven tus documentos. Es lo que muestra la página Vault y lo que confirma Vault Sync.',
+			'web.serverSettings.fields.notesDirectory.label' => 'Directorio de documentos (heredado)',
+			'web.serverSettings.fields.notesDirectory.hint' => 'Nombre antiguo de la raíz del Vault, visible porque está definido. Vacíalo para usar la raíz del Vault, o mantenlo apuntando a una carpeta markdown que gestiones en otro sitio.',
+			'web.serverSettings.fields.gitRoot.label' => 'Raíz de Git',
+			'web.serverSettings.fields.gitRoot.hint' => 'Árbol de trabajo que confirma Vault Sync. Por defecto la raíz del Vault, así el repositorio solo contiene documentos.',
 			'web.serverSettings.fields.personalPrefix.label' => 'Prefijo personal',
 			'web.serverSettings.fields.personalPrefix.hint' => 'Nombre de carpeta usado para las notas personales al derivar rutas automáticamente. Por defecto "personal".',
 			'web.serverSettings.fields.projectsPrefix.label' => 'Prefijo de proyectos',
 			'web.serverSettings.fields.projectsPrefix.hint' => 'Nombre de carpeta usado para las notas de proyecto. Por defecto "projects".',
 			'web.serverSettings.fields.registryRoot.label' => 'Raíz del registro',
-			'web.serverSettings.fields.registryRoot.hint' => 'Directorio que contiene las definiciones JSON de los servidores MCP. Por defecto <vault>/mcp.',
+			'web.serverSettings.fields.registryRoot.hint' => 'Directorio con las definiciones JSON de servidores MCP. Por defecto ~/.opendray/mcp.',
 			'web.serverSettings.fields.secretsFile.label' => 'Archivo de secretos',
 			'web.serverSettings.fields.secretsFile.hint' => 'Archivo key=value que se sustituye en los comandos del servidor MCP en el momento del arranque.',
 			'web.serverSettings.fields.memoryBackend.label' => 'Backend del embedder',
@@ -11714,6 +11748,8 @@ extension on TranslationsEs {
 			'web.serverSettings.fields.mobileTokenTTL.hint' => 'Vida de los tokens emitidos a la app móvil. Por defecto 720h (30 días).',
 			'web.serverSettings.fields.dbMaxConns.label' => 'Conexiones máx.',
 			'web.serverSettings.fields.dbMaxConns.hint' => 'Tope del pool de conexiones pgx. 0 = valor por defecto (16).',
+			'web.serverSettings.fields.skillsRoot.label' => 'Raíz de habilidades',
+			'web.serverSettings.fields.skillsRoot.hint' => 'Directorio con las habilidades de agente. Fuera del Vault para que no acaben en el repositorio de tus documentos.',
 			'web.serverSettings.liveTail.heading' => 'Seguimiento en vivo',
 			'web.serverSettings.liveTail.description' => 'Búfer circular en memoria (los últimos ~2.000 registros). Se reinicia al reiniciar.',
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
@@ -11800,6 +11836,12 @@ extension on TranslationsEs {
 			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
 			'web.serverSettings.host.modes.off.desc' => 'opendray no interviene en absoluto en la máquina.',
 			'web.serverSettings.host.modes.off.caveat' => 'La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto.',
+			'web.serverSettings.layout.title' => 'Se resuelve en',
+			'web.serverSettings.layout.documents' => 'Documentos',
+			'web.serverSettings.layout.git' => 'Repositorio Git',
+			'web.serverSettings.layout.skills' => 'Habilidades',
+			'web.serverSettings.layout.mcp' => 'Registro MCP',
+			'web.serverSettings.layout.legacyWarning' => 'Esta instalación aún mantiene los directorios propios de opendray dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de arriba cuando puedas. Lo ya confirmado requiere git rm --cached; opendray no reescribirá tu repositorio.',
 			'web.settings.title' => 'Ajustes',
 			'web.settings.subtitle' => 'Configuración del espacio de trabajo, la cuenta y el gateway.',
 			'web.settings.groups.workspace' => 'Espacio de trabajo',
@@ -11826,6 +11868,8 @@ extension on TranslationsEs {
 			'web.settings.font.description' => 'Escala toda la interfaz. Se guarda por navegador.',
 			'web.settings.font.options.compact' => 'Compacto',
 			'web.settings.font.options.kDefault' => 'Predeterminado',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.font.options.comfy' => 'Cómodo',
 			'web.settings.font.options.large' => 'Grande',
 			'web.settings.account.title' => 'Cuenta',
@@ -11834,8 +11878,6 @@ extension on TranslationsEs {
 			'web.settings.account.tokenExpires' => 'El token caduca',
 			'web.settings.account.changeCredentials' => 'Cambiar credenciales',
 			'web.settings.changeCredentials.title' => 'Cambiar credenciales',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => 'Verifica tu contraseña actual y luego elige nuevas credenciales. Se revocarán todas las demás sesiones con sesión iniciada.',
 			'web.settings.changeCredentials.currentPassword' => 'Contraseña actual',
 			'web.settings.changeCredentials.newUsername' => 'Nuevo nombre de usuario',
@@ -12340,6 +12382,8 @@ extension on TranslationsEs {
 			'web.database.dialog.test' => 'Probar',
 			'web.database.dialog.save' => 'Guardar',
 			'web.database.dialog.testFailed' => 'La prueba de conexión falló',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.testOk' => ({required Object version, required Object ms}) => 'Conectado — ${version} (${ms} ms)',
 			'web.database.dialog.savedCreate' => 'Conexión añadida',
 			'web.database.dialog.savedEdit' => 'Conexión actualizada',
@@ -12348,8 +12392,6 @@ extension on TranslationsEs {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => 'Archivo de base de datos',
 			'web.database.dialog.filePathHint' => 'Ruta a un archivo SQLite, dentro del directorio del proyecto.',
@@ -12854,6 +12896,8 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.themeDarkHint' => 'vacío = hereda claro',
 			'sessions.inspector.canvas.paletteIndigo' => 'Índigo',
 			'sessions.inspector.canvas.paletteSky' => 'Cielo',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.paletteEmerald' => 'Esmeralda',
 			'sessions.inspector.canvas.paletteAmber' => 'Ámbar',
 			'sessions.inspector.canvas.paletteRose' => 'Rosa',
@@ -12862,8 +12906,6 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.extractBtn' => 'Leer del proyecto',
 			'sessions.inspector.canvas.showcaseBtn' => 'Ver como lienzo',
 			'sessions.inspector.canvas.designTaskSent' => 'Enviado al agente: mira la sesión.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -13368,6 +13410,8 @@ extension on TranslationsEs {
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
 			'backups.restore.noFile' => 'Ningún archivo seleccionado',
 			'backups.restore.targetDsnLabel' => 'DSN de Postgres de destino',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.targetDsnHint' => 'Déjalo vacío para restaurar en la propia base de datos de opendray.',
 			'backups.restore.targetDsnPlaceholder' => 'postgres://user:pass@host:5432/dbname',
 			'backups.restore.cleanLabel' => 'pg_restore --clean --if-exists',
@@ -13376,8 +13420,6 @@ extension on TranslationsEs {
 			'backups.restore.auditNotePlaceholder' => 'p. ej. recuperando de #INC-481',
 			'backups.restore.ownDbWarning' => 'Restaurar en la PROPIA base de datos de opendray reescribirá las filas que este gateway está sirviendo actualmente. Escribe "I understand" para confirmar.',
 			'backups.restore.confirmPlaceholder' => 'Escribe "I understand"',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restaurando…',
 			'backups.restore.preview' => 'Vista previa (simulación)',
@@ -13882,6 +13924,8 @@ extension on TranslationsEs {
 			'memory.title' => 'Memoria',
 			'memory.more' => 'Más',
 			'memory.workers' => 'Workers de memoria',
+			_ => null,
+		} ?? switch (path) {
 			'memory.rank.title' => 'Desglose del ranking',
 			'memory.rank.effective' => ({required Object value}) => 'Puntuación efectiva: ${value}',
 			'memory.rank.similarity' => 'Similitud del coseno',
@@ -13890,8 +13934,6 @@ extension on TranslationsEs {
 			'memory.rank.confidenceMultiplier' => 'Multiplicador por confianza',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Cerrar',
-			_ => null,
-		} ?? switch (path) {
 			'memory.kNew' => 'Nuevo',
 			'memory.searchHint' => 'Buscar…',
 			'memory.projectLabel' => 'Proyecto',
@@ -14022,17 +14064,19 @@ extension on TranslationsEs {
 			'settings.serverSettings.sections.storageClaude' => 'Almacenamiento · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Almacenamiento · Codex',
 			'settings.serverSettings.sections.storageAntigravity' => 'Almacenamiento · Antigravity',
+			'settings.serverSettings.sections.skills' => 'Habilidades de agente',
 			'settings.serverSettings.sectionDescriptions.general' => 'Dirección de escucha, cuenta del operador, TTL del token.',
 			'settings.serverSettings.sectionDescriptions.host' => 'Mantén esta máquina accesible mientras está inactiva.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosidad, formato y ruta del log en disco.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Umbrales de detección de inactividad.',
-			'settings.serverSettings.sectionDescriptions.vault' => 'Notas, skills y raíz versionada con git.',
-			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Rutas del vault para servidores MCP + archivo de secretos.',
+			'settings.serverSettings.sectionDescriptions.vault' => 'Tus documentos y el repositorio al que se sincronizan.',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Registro de servidores y archivo de secretos.',
 			'settings.serverSettings.sectionDescriptions.memory' => 'Subsistema de memoria persistente entre CLIs.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Dónde viven los transcripts de Claude en disco.',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Raíz de las sessions de Codex.',
 			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'Almacén SQLite por conversación de agy.',
+			'settings.serverSettings.sectionDescriptions.skills' => 'De dónde se cargan las habilidades de agente.',
 			'settings.serverSettings.fields.listenAddress' => 'Dirección de escucha',
 			'settings.serverSettings.fields.adminUser' => 'Usuario admin',
 			'settings.serverSettings.fields.adminUserHelper' => 'Efectivo cuando no hay keyfile ni variable de entorno configurada. Si no, consulta Ajustes → Cuenta.',
@@ -14048,10 +14092,9 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.idleThresholdHelper' => 'Periodo de silencio antes de marcar una session como inactiva. Duración de Go.',
 			'settings.serverSettings.fields.idleCheckInterval' => 'Intervalo de comprobación de inactividad',
 			'settings.serverSettings.fields.idleCheckHelper' => 'Con qué frecuencia se ejecuta el reaper de inactividad.',
-			'settings.serverSettings.fields.root' => 'Raíz',
-			'settings.serverSettings.fields.rootHelper' => 'Padre de las sub-rutas notes / skills / git_root.',
-			'settings.serverSettings.fields.notesPath' => 'Ruta de notas',
-			'settings.serverSettings.fields.skillsPath' => 'Ruta de skills',
+			'settings.serverSettings.fields.root' => 'Raíz del Vault',
+			'settings.serverSettings.fields.rootHelper' => 'El directorio donde viven tus documentos: lo que muestra el Vault y lo que confirma Vault Sync.',
+			'settings.serverSettings.fields.notesPath' => 'Ruta de documentos (heredada)',
 			'settings.serverSettings.fields.gitRoot' => 'Raíz de git',
 			'settings.serverSettings.fields.personalPrefix' => 'Prefijo personal',
 			'settings.serverSettings.fields.projectsPrefix' => 'Prefijo de proyectos',
@@ -14103,6 +14146,10 @@ extension on TranslationsEs {
 			'settings.serverSettings.fields.sleepModeAlways' => 'Despierto con cualquier alimentación',
 			'settings.serverSettings.fields.sleepModeOnDemand' => 'Dormir, despertar con tráfico',
 			'settings.serverSettings.fields.sleepModeOff' => 'No tocar la energía',
+			'settings.serverSettings.fields.notesPathHelper' => 'Nombre antiguo de la raíz del Vault, visible porque está definido. Vacíalo para usar la raíz del Vault, o mantenlo apuntando a una carpeta markdown que gestiones en otro sitio.',
+			'settings.serverSettings.fields.skillsRoot' => 'Raíz de habilidades',
+			'settings.serverSettings.fields.skillsRootHelper' => 'Directorio con las habilidades de agente. Fuera del Vault para que no acaben en el repositorio de tus documentos.',
+			'settings.serverSettings.fields.gitRootHelper' => 'Árbol de trabajo que confirma Vault Sync. Por defecto la raíz del Vault, así el repositorio solo contiene documentos.',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" debe ser un entero',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" debe ser un número',
 			'settings.serverSettings.embedderModel.reprobe' => 'Volver a comprobar el endpoint',
@@ -14110,6 +14157,7 @@ extension on TranslationsEs {
 			'settings.serverSettings.embedderModel.pickHint' => 'Selecciona un modelo',
 			'settings.serverSettings.embedderModel.manual' => 'Escribir manualmente',
 			'settings.serverSettings.embedderModel.pickFromList' => 'Elegir de la lista',
+			'settings.serverSettings.legacyLayout' => 'Los directorios propios de opendray siguen dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de abajo cuando puedas.',
 			'memoryQuarantine.title' => 'Cuarentena',
 			'memoryQuarantine.subtitle' => 'Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.',
 			'memoryQuarantine.empty' => 'Nada en cuarentena.',

@@ -174,33 +174,36 @@ func runNotes(args []string) int {
 }
 
 func openVault(cfgPath, override string) (*notes.Vault, error) {
+	cfg := loadCLIConfig(cfgPath)
+	paths := cfg.Resolve()
 	root := override
-	opts := notes.Options{}
-	// Try config file (cheap — we only read [vault]); fall through
-	// to env / default if the file doesn't exist.
+	if root == "" {
+		root = paths.Vault
+	}
+	return notes.New(root, notes.Options{
+		PersonalPrefix: cfg.Vault.PersonalPrefix,
+		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
+		HiddenDirs:     paths.NestedInVault(),
+	})
+}
+
+// loadCLIConfig reads the gateway's config so the CLI resolves paths
+// identically. A missing or unreadable file is not fatal: Load("")
+// returns defaults with the environment applied, which is exactly the
+// behaviour the CLI wants when run before the gateway is configured.
+//
+// This exists so that every `opendray notes|skill|mcp` invocation goes
+// through config.Resolve. They each used to derive their own paths
+// with slightly different precedence, which meant the CLI could read
+// and write a different directory than the running gateway.
+func loadCLIConfig(cfgPath string) config.Config {
 	if cfgPath != "" {
 		if cfg, err := config.Load(cfgPath); err == nil {
-			if root == "" {
-				if cfg.Vault.Notes != "" {
-					root = cfg.Vault.Notes
-				} else if cfg.Vault.Root != "" {
-					root = cfg.Vault.Root + "/notes"
-				}
-			}
-			opts.PersonalPrefix = cfg.Vault.PersonalPrefix
-			opts.ProjectsPrefix = cfg.Vault.ProjectsPrefix
+			return cfg
 		}
 	}
-	if root == "" {
-		if v := os.Getenv("OPENDRAY_VAULT_NOTES"); v != "" {
-			root = v
-		} else if v := os.Getenv("OPENDRAY_VAULT_ROOT"); v != "" {
-			root = v + "/notes"
-		} else {
-			root = "~/.opendray/vault/notes"
-		}
-	}
-	return notes.New(root, opts)
+	cfg, _ := config.Load("")
+	return cfg
 }
 
 func reportErr(err error) int {

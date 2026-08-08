@@ -2161,7 +2161,7 @@
         },
         "vault": {
           "title": "Vault",
-          "desc": "笔记、技能与 git 版本化根目录。"
+          "desc": "你的文档,以及它同步到的仓库。"
         },
         "mcp": {
           "title": "MCP 注册表",
@@ -2186,6 +2186,10 @@
         "antigravity": {
           "title": "存储 · Antigravity",
           "desc": "Antigravity (agy) 按会话存储的 SQLite 库。"
+        },
+        "skills": {
+          "title": "Agent skills",
+          "desc": "技能从哪里加载。"
         }
       },
       "loading": "正在加载服务器设置…",
@@ -2270,19 +2274,15 @@
         },
         "vaultRoot": {
           "label": "Vault 根目录",
-          "hint": "笔记、技能和 MCP 注册表的顶层目录。"
+          "hint": "你的文档所在的目录。Vault 页面浏览的就是这里,Vault Sync 提交的也是这里。"
         },
         "notesDirectory": {
-          "label": "笔记目录",
-          "hint": "覆盖笔记位置。默认为 <vault root>/notes。"
-        },
-        "skillsDirectory": {
-          "label": "技能目录",
-          "hint": "覆盖技能位置。默认为 <vault root>/skills。"
+          "label": "文档目录(旧字段)",
+          "hint": "Vault 根目录的旧称,因为已设置才显示。清空即改用 Vault 根目录;也可以继续指向你在别处维护的 markdown 目录。"
         },
         "gitRoot": {
           "label": "Git 根目录",
-          "hint": "Vault Sync 功能提交到的工作树。"
+          "hint": "Vault Sync 提交的工作树。默认为 Vault 根目录,这样仓库里只有文档。"
         },
         "personalPrefix": {
           "label": "个人前缀",
@@ -2294,7 +2294,7 @@
         },
         "registryRoot": {
           "label": "注册表根目录",
-          "hint": "存放 MCP server JSON 定义的目录。默认为 <vault>/mcp。"
+          "hint": "存放 MCP 服务器 JSON 定义的目录。默认 ~/.opendray/mcp。"
         },
         "secretsFile": {
           "label": "密钥文件",
@@ -2427,6 +2427,10 @@
         "dbMaxConns": {
           "label": "最大连接数",
           "hint": "pgx 连接池上限。0 = 默认值（16）。"
+        },
+        "skillsRoot": {
+          "label": "Skills 根目录",
+          "hint": "存放 agent skills 的目录。放在 Vault 之外,避免被提交进你的文档仓库。"
         }
       },
       "liveTail": {
@@ -2546,6 +2550,14 @@
             "caveat": "主机一旦休眠即无法连接,除非另有程序让它保持唤醒。"
           }
         }
+      },
+      "layout": {
+        "title": "实际解析到",
+        "documents": "文档",
+        "git": "Git 仓库",
+        "skills": "Skills",
+        "mcp": "MCP 注册表",
+        "legacyWarning": "此安装仍把 opendray 自己的目录放在你的文档里,所以它们会出现在 Vault 中,也会被同步带走。它们照常工作 —— 方便时把它们移出去,并在上面填好路径。已经提交进仓库的需要你自己 git rm --cached;opendray 不会改写你的仓库。"
       }
     },
     "settings": {
@@ -5277,26 +5289,28 @@
         "host": "主机电源",
         "logging": "日志",
         "sessions": "会话",
-        "vault": "凭据库",
+        "vault": "Vault",
         "mcpRegistry": "MCP 注册表",
         "memory": "记忆",
         "backup": "备份",
         "storageClaude": "存储 · Claude",
         "storageCodex": "存储 · Codex",
-        "storageAntigravity": "存储 · Antigravity"
+        "storageAntigravity": "存储 · Antigravity",
+        "skills": "Agent skills"
       },
       "sectionDescriptions": {
         "general": "监听地址、管理员账号、令牌 TTL。",
         "host": "让这台机器在闲置时仍可被访问。",
         "logging": "详细程度、格式、磁盘日志路径。",
         "sessions": "空闲检测阈值。",
-        "vault": "笔记、技能、git 版本化的根目录。",
-        "mcpRegistry": "MCP 服务器 + 密钥文件的凭据库路径。",
+        "vault": "你的文档,以及它同步到的仓库。",
+        "mcpRegistry": "服务器注册表与密钥文件。",
         "memory": "跨 CLI 的持久记忆子系统。",
         "backup": "加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。",
         "storageClaude": "Claude 会话记录在磁盘的存放位置。",
         "storageCodex": "Codex 会话根目录。",
-        "storageAntigravity": "agy 按会话存储的 SQLite 库。"
+        "storageAntigravity": "agy 按会话存储的 SQLite 库。",
+        "skills": "agent skills 从哪里加载。"
       },
       "fields": {
         "listenAddress": "监听地址",
@@ -5314,10 +5328,9 @@
         "idleThresholdHelper": "会话被标记为空闲前的安静时长。Go duration。",
         "idleCheckInterval": "空闲检查间隔",
         "idleCheckHelper": "空闲回收器运行的频率。",
-        "root": "根目录",
-        "rootHelper": "notes / skills / git_root 子路径的父目录。",
-        "notesPath": "笔记路径",
-        "skillsPath": "技能路径",
+        "root": "Vault 根目录",
+        "rootHelper": "你的文档所在的目录 —— Vault 浏览的就是这里,Vault Sync 提交的也是这里。",
+        "notesPath": "文档路径(旧字段)",
         "gitRoot": "Git 根",
         "personalPrefix": "个人前缀",
         "projectsPrefix": "项目前缀",
@@ -5368,7 +5381,11 @@
         "sleepModeAc": "插电时保持唤醒",
         "sleepModeAlways": "任何供电下保持唤醒",
         "sleepModeOnDemand": "闲时休眠,有请求时唤醒",
-        "sleepModeOff": "不干预电源"
+        "sleepModeOff": "不干预电源",
+        "notesPathHelper": "Vault 根目录的旧称,因为已设置才显示。清空即改用 Vault 根目录;也可以继续指向你在别处维护的 markdown 目录。",
+        "skillsRoot": "Skills 根目录",
+        "skillsRootHelper": "存放 agent skills 的目录。放在 Vault 之外,避免被提交进你的文档仓库。",
+        "gitRootHelper": "Vault Sync 提交的工作树。默认为 Vault 根目录,这样仓库里只有文档。"
       },
       "validateInteger": "「{field}」必须是整数",
       "validateNumber": "「{field}」必须是数字",
@@ -5378,7 +5395,8 @@
         "pickHint": "选择模型",
         "manual": "手动输入",
         "pickFromList": "从列表选择"
-      }
+      },
+      "legacyLayout": "opendray 自己的目录仍在你的文档里,所以它们会出现在 Vault 中,同步时也会被带走。它们照常工作 —— 方便时把它们移出去,并在下面填好路径。"
     }
   },
   "memoryQuarantine": {

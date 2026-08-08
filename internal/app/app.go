@@ -356,7 +356,7 @@ func (a knowledgeLLM) Complete(ctx context.Context, system, user string) (string
 	return resp.Content, nil
 }
 
-// knowledgeSkillSink writes a rendered SKILL.md into the vault skills dir so
+// knowledgeSkillSink writes a rendered SKILL.md into the skills root so
 // the skills loader picks up AI-promoted skills (one-way: knowledge owns the
 // SkillSink interface; the app provides this filesystem impl).
 type knowledgeSkillSink struct{ dir string }
@@ -488,31 +488,40 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	agyacctSvc := agyacct.NewService(st.Pool(), bus, log)
 	agyacctHandlers := agyacct.NewHandlers(agyacctSvc, log)
 
+	// Every on-disk root comes from one resolver (internal/config/
+	// paths.go) so the gateway and the `opendray notes|skill|mcp`
+	// commands can never disagree about where things live.
+	paths := cfg.Resolve()
+	logLayout(log, paths)
+
 	// Vault + skills are needed by the SessionProvider so spawn-time
 	// injection has them available. Constructed here (before the
 	// session manager) so the manager's first Resolve call sees them.
-	notesRoot, skillsRoot, gitRoot := resolveVaultPaths(cfg.Vault)
-	vault, err := notesapi.New(notesRoot, notesapi.Options{
+	vault, err := notesapi.New(paths.Vault, notesapi.Options{
 		PersonalPrefix: cfg.Vault.PersonalPrefix,
 		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
+		// On a pre-split install skills/ and mcp/ sit inside the
+		// documents root. Hide them: they are opendray's own machinery,
+		// not the operator's writing.
+		HiddenDirs: paths.NestedInVault(),
 	})
 	if err != nil {
 		st.Close()
 		return nil, fmt.Errorf("init notes vault: %w", err)
 	}
-	log.Info("notes vault ready", "root", vault.Root())
+	log.Info("vault ready", "documents", vault.Root())
 	notesHandlers := notesapi.NewHandlers(vault, log)
-	skillsLoader := skills.NewLoader(skillsRoot)
+	skillsLoader := skills.NewLoader(paths.Skills)
 	if list, _ := skillsLoader.List(); len(list) > 0 {
 		log.Info("agent skills loaded", "count", len(list),
-			"vault", skillsLoader.VaultRoot())
+			"root", skillsLoader.VaultRoot())
 	}
 
-	mcpRoot, secretsFile := resolveMCPPaths(cfg.MCP, notesRoot, skillsRoot)
-	mcpLoader := mcpapi.NewLoader(mcpRoot)
+	secretsFile := paths.MCPSecrets
+	mcpLoader := mcpapi.NewLoader(paths.MCP)
 	if list, _ := mcpLoader.List(); len(list) > 0 {
 		log.Info("mcp registry loaded", "count", len(list),
-			"vault", mcpLoader.VaultRoot(), "secrets", secretsFile)
+			"root", mcpLoader.VaultRoot(), "secrets", secretsFile)
 	}
 
 	var sessionOpts []session.ManagerOption
@@ -654,17 +663,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	searchHandlers := searchapi.NewHandlers(log)
 	skillsHandlers := skills.NewHandlers(skillsLoader, log)
 	mcpHandlers := mcpapi.NewHandlers(mcpLoader, secretsFile, log)
-	// Vault git ops are scoped to whatever the user told us is the
-	// repo root (defaults: notes root if user pinned `notes` directly,
-	// otherwise the parent that contains both notes/ and skills/).
+	// Vault Sync commits the documents. It defaults to the documents
+	// root itself, so the repo holds writing and nothing else — see
+	// config.Resolve for the one case that keeps an older working tree.
 	// The githost service is passed so private-repo HTTPS push/pull
 	// picks up tokens stored in Plugins → Git hosts.
-	vaultGitHandlers, err := vaultgit.NewHandlers(gitRoot, gitHostSvc, log)
+	vaultGitHandlers, err := vaultgit.NewHandlers(paths.VaultGit, gitHostSvc, log,
+		vaultgit.WithNestedDirs(paths.NestedInGitRoot()))
 	if err != nil {
 		st.Close()
 		return nil, fmt.Errorf("init vault git handlers: %w", err)
 	}
-	log.Info("vault git ready", "root", gitRoot)
+	log.Info("vault git ready", "root", paths.VaultGit)
 	vaultSyncer := vaultgit.NewSyncer(st.Pool(), bus, vaultGitHandlers, log)
 
 	// Settings: read/write the same config.toml the gateway booted
@@ -797,9 +807,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// full_instance bundles capture the vault + MCP secrets so a
 		// restore rebuilds a working instance, not just its DB.
 		VaultSources: []backup.VaultSource{
-			{Logical: "notes", Dir: notesRoot},
-			{Logical: "skills", Dir: skillsRoot},
-			{Logical: "mcp", Dir: mcpRoot},
+			{Logical: "notes", Dir: paths.Vault},
+			{Logical: "skills", Dir: paths.Skills},
+			{Logical: "mcp", Dir: paths.MCP},
 		},
 		SecretsFile: secretsFile,
 	}
@@ -1139,10 +1149,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	var knowledgeConsolidate *knowledge.ConsolidationEngine
 	if cfg.Knowledge.Enabled {
 		knowledgeSvc = knowledge.NewService(st.Pool(), log)
-		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: skillsRoot}) // Phase 4 — render promoted skills
+		knowledgeSvc.WithSkillSink(knowledgeSkillSink{dir: paths.Skills}) // Phase 4 — render promoted skills
 		// Compiled skills (experience compiler) also land as click-runnable
 		// custom tasks pointing at the rendered run.sh.
-		knowledgeSvc.WithTaskSink(knowledgeTaskSink{tasks: customTaskSvc, skillsRoot: skillsRoot})
+		knowledgeSvc.WithTaskSink(knowledgeTaskSink{tasks: customTaskSvc, skillsRoot: paths.Skills})
 		// Skill promotion drafts a full structured SKILL.md via the
 		// curation worker (overview / when-to-use / procedure /
 		// pitfalls / verification) instead of copying the playbook
@@ -1847,100 +1857,25 @@ func (a *App) Close() {
 	}
 }
 
-// parentOf returns the parent directory of an absolute path. Used to
-// derive the vault base from <vault>/notes — skills live next to it
-// at <vault>/skills, so both share one git-able root.
-func parentOf(p string) string {
-	for i := len(p) - 1; i >= 0; i-- {
-		if p[i] == '/' {
-			return p[:i]
-		}
+// logLayout states where every root resolved and, on a pre-split
+// install, says so plainly. A gateway silently reading a directory
+// other than the one the settings page describes is exactly the
+// confusion this split was meant to end, so the resolution is never
+// left implicit.
+func logLayout(log *slog.Logger, p config.Paths) {
+	log.Info("resolved layout",
+		"documents", p.Vault, "git", p.VaultGit,
+		"skills", p.Skills, "mcp", p.MCP)
+	if !p.LegacyLayout() {
+		return
 	}
-	return p
-}
-
-// resolveVaultPaths derives the three vault-related paths (notes root,
-// skills root, git working tree) from VaultConfig. Each can be set
-// explicitly; otherwise we fall back to the legacy layout under the
-// shared root. Returns absolute paths suitable for filesystem ops.
-//
-// The defaults preserve opendray's original `<root>/notes` +
-// `<root>/skills` layout. Users who already keep a markdown vault
-// elsewhere (an Obsidian folder, a docs repo, anything) can pin
-// `vault.notes = "~/Documents/MyVault"` and opendray's notes API reads
-// straight from that directory — it is a path, not an integration.
-func resolveVaultPaths(c config.VaultConfig) (notes, skills, git string) {
-	root := c.Root
-	if root == "" {
-		root = "~/.opendray/vault"
-	}
-	root = expandPath(root)
-
-	notes = c.Notes
-	if notes == "" {
-		notes = filepath.Join(root, "notes")
-	} else {
-		notes = expandPath(notes)
-	}
-
-	skills = c.Skills
-	if skills == "" {
-		skills = filepath.Join(root, "skills")
-	} else {
-		skills = expandPath(skills)
-	}
-
-	git = c.GitRoot
-	if git == "" {
-		// Pick the most natural git working tree: if the user pinned a
-		// custom notes path, that IS their vault repo; otherwise the
-		// legacy combined root holds both notes + skills under one repo.
-		if c.Notes != "" {
-			git = notes
-		} else {
-			git = root
-		}
-	} else {
-		git = expandPath(git)
-	}
-	return notes, skills, git
-}
-
-// resolveMCPPaths picks the registry root + secrets file with the
-// same precedence story as the vault paths above. Defaults:
-//
-//	root         = <vault root>/mcp        (next to notes/, skills/)
-//	secrets_file = ~/.opendray/secrets.env (intentionally OUTSIDE the
-//	               vault so a `git add .` in vault never picks it up)
-//
-// notesRoot / skillsRoot are passed only to derive `<vault root>` —
-// we use parentOf(notes) which is the same dir all the other vault
-// children live under in the default layout.
-func resolveMCPPaths(c config.MCPConfig, notesRoot, skillsRoot string) (root, secrets string) {
-	root = c.Root
-	if root == "" {
-		// Pick the same parent the vault siblings share. notes/ and
-		// skills/ are always under <vault root>; using parentOf(notes)
-		// works regardless of which the user pinned explicitly.
-		base := parentOf(notesRoot)
-		if base == "" || base == "/" {
-			base = parentOf(skillsRoot)
-		}
-		if base == "" || base == "/" {
-			base = expandPath("~/.opendray/vault")
-		}
-		root = filepath.Join(base, "mcp")
-	} else {
-		root = expandPath(root)
-	}
-
-	secrets = c.SecretsFile
-	if secrets == "" {
-		secrets = expandPath("~/.opendray/secrets.env")
-	} else {
-		secrets = expandPath(secrets)
-	}
-	return root, secrets
+	log.Warn("this install still uses the old shared vault layout, where "+
+		"opendray's own directories sit inside your documents. They keep "+
+		"working, but a git sync of the Vault will carry them along. "+
+		"Move them out and set the paths in Server settings when convenient.",
+		"documents", p.Vault,
+		"skills_inside_documents", p.LegacySkills,
+		"mcp_inside_documents", p.LegacyMCP)
 }
 
 // memoryKeyPath is where we cache the plaintext API key for the

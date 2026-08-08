@@ -2161,7 +2161,7 @@
         },
         "vault": {
           "title": "Vault",
-          "desc": "Notes, skills, and git-versioned root."
+          "desc": "Your documents, and the repo they sync to."
         },
         "mcp": {
           "title": "MCP registry",
@@ -2186,6 +2186,10 @@
         "antigravity": {
           "title": "Storage · Antigravity",
           "desc": "Antigravity (agy) per-conversation SQLite store."
+        },
+        "skills": {
+          "title": "Agent skills",
+          "desc": "Where skills are loaded from."
         }
       },
       "loading": "Loading server settings…",
@@ -2270,19 +2274,15 @@
         },
         "vaultRoot": {
           "label": "Vault root",
-          "hint": "Top-level directory for notes, skills, and MCP registry."
+          "hint": "The directory your documents live in. This is what the Vault page browses and what Vault Sync commits."
         },
         "notesDirectory": {
-          "label": "Notes directory",
-          "hint": "Override notes location. Defaults to <vault root>/notes."
-        },
-        "skillsDirectory": {
-          "label": "Skills directory",
-          "hint": "Override skills location. Defaults to <vault root>/skills."
+          "label": "Documents directory (legacy)",
+          "hint": "Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere."
         },
         "gitRoot": {
           "label": "Git root",
-          "hint": "Working tree the Vault Sync feature commits to."
+          "hint": "Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else."
         },
         "personalPrefix": {
           "label": "Personal prefix",
@@ -2294,7 +2294,7 @@
         },
         "registryRoot": {
           "label": "Registry root",
-          "hint": "Directory holding MCP server JSON definitions. Defaults to <vault>/mcp."
+          "hint": "Directory holding MCP server JSON definitions. Defaults to ~/.opendray/mcp."
         },
         "secretsFile": {
           "label": "Secrets file",
@@ -2427,6 +2427,10 @@
         "dbMaxConns": {
           "label": "Max connections",
           "hint": "pgx connection pool cap. 0 = store default (16)."
+        },
+        "skillsRoot": {
+          "label": "Skills root",
+          "hint": "Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo."
         }
       },
       "liveTail": {
@@ -2546,6 +2550,14 @@
             "caveat": "The gateway is unreachable whenever the host sleeps, unless something else keeps it awake."
           }
         }
+      },
+      "layout": {
+        "title": "Resolving to",
+        "documents": "Documents",
+        "git": "Git repo",
+        "skills": "Skills",
+        "mcp": "MCP registry",
+        "legacyWarning": "This install still keeps opendray's own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo."
       }
     },
     "settings": {
@@ -5283,20 +5295,22 @@
         "backup": "Backup",
         "storageClaude": "Storage · Claude",
         "storageCodex": "Storage · Codex",
-        "storageAntigravity": "Storage · Antigravity"
+        "storageAntigravity": "Storage · Antigravity",
+        "skills": "Agent skills"
       },
       "sectionDescriptions": {
         "general": "Listen address, operator account, token TTL.",
         "host": "Keep this machine reachable while it is idle.",
         "logging": "Verbosity, format, and on-disk log path.",
         "sessions": "Idle detection thresholds.",
-        "vault": "Notes, skills, and git-versioned root.",
-        "mcpRegistry": "Vault paths for MCP servers + secrets file.",
+        "vault": "Your documents, and the repo they sync to.",
+        "mcpRegistry": "Server registry + secrets file.",
         "memory": "Cross-CLI persistent memory subsystem.",
         "backup": "Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).",
         "storageClaude": "Where Claude transcripts live on disk.",
         "storageCodex": "Codex sessions root.",
-        "storageAntigravity": "agy per-conversation SQLite store."
+        "storageAntigravity": "agy per-conversation SQLite store.",
+        "skills": "Where agent skills are loaded from."
       },
       "fields": {
         "listenAddress": "Listen address",
@@ -5314,10 +5328,9 @@
         "idleThresholdHelper": "Quiet period before a session is flagged idle. Go duration.",
         "idleCheckInterval": "Idle check interval",
         "idleCheckHelper": "How often the idle reaper runs.",
-        "root": "Root",
-        "rootHelper": "Parent of notes / skills / git_root sub-paths.",
-        "notesPath": "Notes path",
-        "skillsPath": "Skills path",
+        "root": "Vault root",
+        "rootHelper": "The directory your documents live in — what the Vault browses and what Vault Sync commits.",
+        "notesPath": "Documents path (legacy)",
         "gitRoot": "Git root",
         "personalPrefix": "Personal prefix",
         "projectsPrefix": "Projects prefix",
@@ -5368,7 +5381,11 @@
         "sleepModeAc": "Stay awake on wall power",
         "sleepModeAlways": "Stay awake on any power",
         "sleepModeOnDemand": "Sleep, wake on traffic",
-        "sleepModeOff": "Don't touch power"
+        "sleepModeOff": "Don't touch power",
+        "notesPathHelper": "Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.",
+        "skillsRoot": "Skills root",
+        "skillsRootHelper": "Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.",
+        "gitRootHelper": "Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else."
       },
       "validateInteger": "\"{field}\" must be an integer",
       "validateNumber": "\"{field}\" must be a number",
@@ -5378,7 +5395,8 @@
         "pickHint": "Select a model",
         "manual": "Type manually",
         "pickFromList": "Pick from list"
-      }
+      },
+      "legacyLayout": "opendray's own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient."
     }
   },
   "memoryQuarantine": {

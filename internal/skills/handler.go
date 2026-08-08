@@ -15,8 +15,8 @@ import (
 )
 
 // Handlers expose skills as a REST surface for the web Plugins page.
-// Built-in skills are read-only; vault skills (which live under
-// <vault>/skills/<id>/SKILL.md) are full CRUD. The split is enforced
+// Built-in skills are read-only; on-disk skills (which live under
+// <skills root>/<id>/SKILL.md) are full CRUD. The split is enforced
 // here, not by the loader — the UI shows source=builtin and disables
 // edit/delete for those.
 type Handlers struct {

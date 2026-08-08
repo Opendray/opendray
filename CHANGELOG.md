@@ -10,6 +10,38 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Changed
+
+- **The Vault is your documents. Agent skills and the MCP registry moved
+  out.** One root held three tenants with nothing in common — the
+  operator's markdown, the skills opendray injects at spawn, and the MCP
+  registry — which is why the settings page could only describe it as
+  "notes, skills and git-versioned root", a sentence that parses only if
+  you already know the implementation. Opening the Vault showed
+  `skills/` and `mcp/` sitting among your folders, and because Vault
+  Sync commits that same directory, they went to your remote: on one
+  install a private docs repo had picked up opendray's own
+  `skills/secretary/SKILL.md`, and a `git clean -fd` there would have
+  deleted the gateway's skills.
+
+  New installs get `~/.opendray/vault` for documents, `~/.opendray/
+  skills` and `~/.opendray/mcp` beside it, and a Vault repo holding
+  writing and nothing else. **Existing installs are not moved**: any
+  root with content still in the old place keeps being used, the
+  settings page prints where everything actually resolved, and says
+  plainly when it is still the shared layout. `vault.notes` and
+  `vault.skills` keep working; `vault.root` now means the documents
+  directory, and `[skills].root` is the new spelling. Machinery
+  directories that do sit inside the Vault are hidden from the doc
+  library and added to an opendray-managed `.gitignore` block, so
+  nothing new gets carried to your remote. Anything already committed
+  needs `git rm --cached` — opendray will not rewrite your repo.
+
+  Path resolution used to be reimplemented in four places (the gateway
+  plus each of `opendray notes|skill|mcp`) with different precedence in
+  each, so the CLI could read a different directory than the running
+  gateway. There is now exactly one resolver.
+
 ### Added
 
 - **Git credentials are scoped per host *and owner*, so one forge can
