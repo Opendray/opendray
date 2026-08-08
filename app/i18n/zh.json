@@ -1114,13 +1114,22 @@
           "abortTitle": "git {kind} --abort",
           "forceReset": "强制重置到 remote",
           "forceResetTitle": "git fetch && git reset --hard origin/<branch> && git clean -fd",
-          "forceResetConfirm": "破坏性操作：将\n  • 中止进行中的 {kind}\n  • 运行 git fetch origin\n  • reset --hard 到 origin/<branch>\n  • clean -fd（删除未跟踪文件）\n\n任何尚未推送到 origin 的本地提交以及任何未提交修改都将永久丢失。\n\n继续？",
           "abortedToast": "已中止 {kind}",
           "abortedDescription": "工作树已恢复到操作前状态。",
           "abortFailedToast": "中止失败",
           "resetToast": "已重置到 {branch}",
           "resetDescription": "本地更改已丢弃；vault 与 remote 一致。",
-          "resetFailedToast": "重置失败"
+          "resetFailedToast": "重置失败",
+          "resetRescued": "之前的状态已存到分支 {ref},没有丢失。",
+          "lossTitle": "这会删除别处不存在的内容",
+          "lossExplainer": "重置会用远端分支替换整个 vault。以下内容从未推送到远端,远端还不回来:",
+          "lossCommits_other": "{count} 个从未推送的提交",
+          "lossModified_other": "{count} 个已修改的文件",
+          "lossUntracked_other": "{count} 个未跟踪的文件",
+          "lossSample": "例如",
+          "lossRescueNote": "重置前 opendray 会把这些提交存到一个 rescue 分支、并把工作区 stash 起来,所以仍然可以找回。",
+          "lossCancel": "保留我的内容",
+          "lossConfirm": "仍然重置"
         },
         "auth": {
           "title": "认证",
@@ -1817,13 +1826,15 @@
           "ownerHintHostWide": "留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。",
           "ownerHintScoped": "仅用于 {host}/{owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。",
           "verifyLabel": "验证此凭据",
-          "verifyHint": "向 forge 询问这把令牌到底属于谁。可填一个仓库(owner/name)顺便检查是否真的能读取 —— 令牌的权限设置在这里看不见,而 forge 自己的报错指向的又是错的那一项。",
+          "verifyHint": "向 forge 求证这个 token 属于谁。可以填一个仓库(owner/name)来确认凭据既能读取、也能推送 —— 读和写是两个独立的授权,能拉取的 token 照样可能推送全部失败,而 forge 自己的报错指的是另一个权限。",
           "verifyRepoPlaceholder": "owner/repo(可选)",
           "verifyButton": "验证",
           "verifying": "检查中…",
           "verifyLogin": "认证身份:{login}",
-          "verifyRepoOk": "可读取 {repo}",
-          "verifyRepoFail": "无权读取 {repo}"
+          "verifyRepoOk": "可以读取 {repo}",
+          "verifyRepoFail": "无法读取 {repo}",
+          "verifyPushOk": "可以推送",
+          "verifyPushDenied": "不能推送(只读)"
         },
         "scopeHostWide": "全主机兜底",
         "scopeOwner": "仅用于 {owner}"

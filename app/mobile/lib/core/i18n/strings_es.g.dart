@@ -7968,13 +7968,25 @@ class _TranslationsWebNotesVaultSyncConflictEs extends TranslationsWebNotesVault
 	@override String abortTitle({required Object kind}) => 'git ${kind} --abort';
 	@override String get forceReset => 'Forzar reset al remoto';
 	@override String get forceResetTitle => 'git fetch && git reset --hard origin/<branch> && git clean -fd';
-	@override String forceResetConfirm({required Object kind}) => 'DESTRUCTIVO: esto va a\n  • abortar el ${kind} en curso\n  • ejecutar git fetch origin\n  • hacer reset --hard a origin/<branch>\n  • ejecutar clean -fd (descartar archivos sin seguimiento)\n\nCualquier commit local no enviado a origin Y cualquier edición sin confirmar se PERDERÁ DE FORMA PERMANENTE.\n\n¿Continuar?';
 	@override String abortedToast({required Object kind}) => '${kind} abortado';
 	@override String get abortedDescription => 'Árbol de trabajo restaurado al estado anterior a la operación.';
 	@override String get abortFailedToast => 'Error al abortar';
 	@override String resetToast({required Object branch}) => 'Reset a ${branch}';
 	@override String get resetDescription => 'Cambios locales descartados; el vault coincide con el remoto.';
 	@override String get resetFailedToast => 'Error en el reset';
+	@override String resetRescued({required Object ref}) => 'Tu estado anterior quedó guardado en la rama ${ref} — no se ha perdido nada.';
+	@override String get lossTitle => 'Esto elimina trabajo que no existe en ningún otro sitio';
+	@override String get lossExplainer => 'Restablecer sustituye el vault por la rama remota. Esto nunca llegó al remoto, así que el remoto no puede devolverlo:';
+	@override String lossCommits_one({required Object count}) => '${count} commit que nunca se envió';
+	@override String lossCommits_other({required Object count}) => '${count} commits que nunca se enviaron';
+	@override String lossModified_one({required Object count}) => '${count} archivo modificado';
+	@override String lossModified_other({required Object count}) => '${count} archivos modificados';
+	@override String lossUntracked_one({required Object count}) => '${count} archivo sin seguimiento';
+	@override String lossUntracked_other({required Object count}) => '${count} archivos sin seguimiento';
+	@override String get lossSample => 'Por ejemplo';
+	@override String get lossRescueNote => 'Antes de restablecer, opendray guarda los commits en una rama de rescate y hace stash del árbol de trabajo, así que sigue siendo recuperable.';
+	@override String get lossCancel => 'Conservar mi trabajo';
+	@override String get lossConfirm => 'Restablecer de todos modos';
 }
 
 // Path: web.notes.vaultSync.auth
@@ -8290,13 +8302,15 @@ class _TranslationsWebPluginsGitHostsDialogEs extends TranslationsWebPluginsGitH
 	@override String get ownerHintHostWide => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.';
 	@override String ownerHintScoped({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.';
 	@override String get verifyLabel => 'Verificar esta credencial';
-	@override String get verifyHint => 'Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repo (owner/name) para comprobar que se puede leer: los permisos del token son invisibles desde aquí y el error de la forja nombra el permiso equivocado.';
+	@override String get verifyHint => 'Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repositorio (owner/name) para comprobar que la credencial puede leerlo Y hacer push — leer y escribir son permisos separados, así que un token que hace pull sin problemas puede fallar en cada push, y el error de la propia forja nombra el permiso equivocado.';
 	@override String get verifyRepoPlaceholder => 'owner/repo (opcional)';
 	@override String get verifyButton => 'Verificar';
 	@override String get verifying => 'Comprobando…';
 	@override String verifyLogin({required Object login}) => 'Autenticado como ${login}';
 	@override String verifyRepoOk({required Object repo}) => 'puede leer ${repo}';
 	@override String verifyRepoFail({required Object repo}) => 'NO puede leer ${repo}';
+	@override String get verifyPushOk => 'puede hacer push';
+	@override String get verifyPushDenied => 'NO puede hacer push (solo lectura)';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -10695,13 +10709,25 @@ extension on TranslationsEs {
 			'web.notes.vaultSync.conflict.abortTitle' => ({required Object kind}) => 'git ${kind} --abort',
 			'web.notes.vaultSync.conflict.forceReset' => 'Forzar reset al remoto',
 			'web.notes.vaultSync.conflict.forceResetTitle' => 'git fetch && git reset --hard origin/<branch> && git clean -fd',
-			'web.notes.vaultSync.conflict.forceResetConfirm' => ({required Object kind}) => 'DESTRUCTIVO: esto va a\n  • abortar el ${kind} en curso\n  • ejecutar git fetch origin\n  • hacer reset --hard a origin/<branch>\n  • ejecutar clean -fd (descartar archivos sin seguimiento)\n\nCualquier commit local no enviado a origin Y cualquier edición sin confirmar se PERDERÁ DE FORMA PERMANENTE.\n\n¿Continuar?',
 			'web.notes.vaultSync.conflict.abortedToast' => ({required Object kind}) => '${kind} abortado',
 			'web.notes.vaultSync.conflict.abortedDescription' => 'Árbol de trabajo restaurado al estado anterior a la operación.',
 			'web.notes.vaultSync.conflict.abortFailedToast' => 'Error al abortar',
 			'web.notes.vaultSync.conflict.resetToast' => ({required Object branch}) => 'Reset a ${branch}',
 			'web.notes.vaultSync.conflict.resetDescription' => 'Cambios locales descartados; el vault coincide con el remoto.',
 			'web.notes.vaultSync.conflict.resetFailedToast' => 'Error en el reset',
+			'web.notes.vaultSync.conflict.resetRescued' => ({required Object ref}) => 'Tu estado anterior quedó guardado en la rama ${ref} — no se ha perdido nada.',
+			'web.notes.vaultSync.conflict.lossTitle' => 'Esto elimina trabajo que no existe en ningún otro sitio',
+			'web.notes.vaultSync.conflict.lossExplainer' => 'Restablecer sustituye el vault por la rama remota. Esto nunca llegó al remoto, así que el remoto no puede devolverlo:',
+			'web.notes.vaultSync.conflict.lossCommits_one' => ({required Object count}) => '${count} commit que nunca se envió',
+			'web.notes.vaultSync.conflict.lossCommits_other' => ({required Object count}) => '${count} commits que nunca se enviaron',
+			'web.notes.vaultSync.conflict.lossModified_one' => ({required Object count}) => '${count} archivo modificado',
+			'web.notes.vaultSync.conflict.lossModified_other' => ({required Object count}) => '${count} archivos modificados',
+			'web.notes.vaultSync.conflict.lossUntracked_one' => ({required Object count}) => '${count} archivo sin seguimiento',
+			'web.notes.vaultSync.conflict.lossUntracked_other' => ({required Object count}) => '${count} archivos sin seguimiento',
+			'web.notes.vaultSync.conflict.lossSample' => 'Por ejemplo',
+			'web.notes.vaultSync.conflict.lossRescueNote' => 'Antes de restablecer, opendray guarda los commits en una rama de rescate y hace stash del árbol de trabajo, así que sigue siendo recuperable.',
+			'web.notes.vaultSync.conflict.lossCancel' => 'Conservar mi trabajo',
+			'web.notes.vaultSync.conflict.lossConfirm' => 'Restablecer de todos modos',
 			'web.notes.vaultSync.auth.title' => 'Autenticación',
 			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => 'Usará el token guardado para <1>${scope}</1> en Plugins → Git hosts. ✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => 'Remoto HTTPS en <1>${host}</1> sin ningún token de opendray configurado. Es probable que push / pull fallen en repos privados hasta que añadas uno.',
@@ -10794,6 +10820,8 @@ extension on TranslationsEs {
 			'web.providers.list.disabledBadge' => 'deshabilitado',
 			'web.providers.list.noneSelected' => 'Ningún proveedor seleccionado.',
 			'web.providers.detail.enabled' => 'Habilitado',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.disabled' => 'Deshabilitado',
 			'web.providers.detail.toggleAria' => ({required Object name}) => 'Alternar ${name}',
 			'web.providers.detail.configuration' => 'Configuración',
@@ -10806,8 +10834,6 @@ extension on TranslationsEs {
 			'web.providers.detail.savedToast' => 'Configuración del proveedor guardada',
 			'web.providers.detail.saveFailedToast' => 'Error al guardar',
 			'web.providers.detail.toggleFailedToast' => 'Error al alternar',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
@@ -11292,13 +11318,15 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.',
 			'web.plugins.gitHosts.dialog.verifyLabel' => 'Verificar esta credencial',
-			'web.plugins.gitHosts.dialog.verifyHint' => 'Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repo (owner/name) para comprobar que se puede leer: los permisos del token son invisibles desde aquí y el error de la forja nombra el permiso equivocado.',
+			'web.plugins.gitHosts.dialog.verifyHint' => 'Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repositorio (owner/name) para comprobar que la credencial puede leerlo Y hacer push — leer y escribir son permisos separados, así que un token que hace pull sin problemas puede fallar en cada push, y el error de la propia forja nombra el permiso equivocado.',
 			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo (opcional)',
 			'web.plugins.gitHosts.dialog.verifyButton' => 'Verificar',
 			'web.plugins.gitHosts.dialog.verifying' => 'Comprobando…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Autenticado como ${login}',
 			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'puede leer ${repo}',
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'NO puede leer ${repo}',
+			'web.plugins.gitHosts.dialog.verifyPushOk' => 'puede hacer push',
+			'web.plugins.gitHosts.dialog.verifyPushDenied' => 'NO puede hacer push (solo lectura)',
 			'web.plugins.gitHosts.scopeHostWide' => 'reserva para todo el host',
 			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => 'solo para ${owner}',
 			'web.backups.title' => 'Copias de seguridad',
@@ -11306,6 +11334,8 @@ extension on TranslationsEs {
 			'web.backups.exportData' => 'Exportar datos',
 			'web.backups.loading' => 'Cargando…',
 			'web.backups.loadStatusFailedToast' => 'No se pudo cargar el estado de la copia de seguridad',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.tabs.backups' => 'Copias de seguridad',
 			'web.backups.tabs.schedules' => 'Programaciones',
 			'web.backups.tabs.targets' => 'Destinos',
@@ -11320,8 +11350,6 @@ extension on TranslationsEs {
 			'web.backups.restart.configuredVia' => 'Configurado mediante:',
 			'web.backups.restart.envVar' => 'variable de entorno OPENDRAY_BACKUP_KEY',
 			'web.backups.restart.checkAgain' => 'Comprobar de nuevo',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.title' => 'Configurar copias de seguridad',
 			'web.backups.setup.description' => 'Elige una frase de contraseña maestra. opendray la usa para cifrar cada blob de copia de seguridad. <1>Si la pierdes, tus copias de seguridad serán irrecuperables</1>, así que guárdala en un gestor de contraseñas (Vaultwarden, 1Password, …) antes de continuar.',
 			'web.backups.setup.generate' => 'Generar',
@@ -11820,6 +11848,8 @@ extension on TranslationsEs {
 			'web.settings.appearance.options.lightDesc' => 'Siempre claro',
 			'web.settings.appearance.options.dark' => 'Oscuro',
 			'web.settings.appearance.options.darkDesc' => 'Siempre oscuro',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.appearance.options.system' => 'Sistema',
 			'web.settings.appearance.options.systemDesc' => 'Seguir la configuración del SO',
 			'web.settings.font.title' => 'Tamaño de fuente',
@@ -11834,8 +11864,6 @@ extension on TranslationsEs {
 			'web.settings.account.tokenExpires' => 'El token caduca',
 			'web.settings.account.changeCredentials' => 'Cambiar credenciales',
 			'web.settings.changeCredentials.title' => 'Cambiar credenciales',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => 'Verifica tu contraseña actual y luego elige nuevas credenciales. Se revocarán todas las demás sesiones con sesión iniciada.',
 			'web.settings.changeCredentials.currentPassword' => 'Contraseña actual',
 			'web.settings.changeCredentials.newUsername' => 'Nuevo nombre de usuario',
@@ -12334,6 +12362,8 @@ extension on TranslationsEs {
 			'web.database.dialog.username' => 'Usuario',
 			'web.database.dialog.password' => 'Contraseña',
 			'web.database.dialog.passwordKept' => 'sin cambios — déjalo vacío para conservarla',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.sslMode' => 'Modo SSL',
 			'web.database.dialog.readOnly' => 'Solo lectura (bloquear escrituras desde esta conexión)',
 			'web.database.dialog.superuserWarning' => 'Este usuario es superusuario (o el propietario de la base de datos). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.',
@@ -12348,8 +12378,6 @@ extension on TranslationsEs {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => 'Archivo de base de datos',
 			'web.database.dialog.filePathHint' => 'Ruta a un archivo SQLite, dentro del directorio del proyecto.',
@@ -12848,6 +12876,8 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.tokenRadius' => 'Radio',
 			'sessions.inspector.canvas.tokenSpacing' => 'Espaciado',
 			'sessions.inspector.canvas.tokenShadow' => 'Sombra',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.themeLight' => 'Claro',
 			'sessions.inspector.canvas.themeDark' => 'Oscuro',
 			'sessions.inspector.canvas.paletteLabel' => 'Empieza con una paleta',
@@ -12862,8 +12892,6 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.extractBtn' => 'Leer del proyecto',
 			'sessions.inspector.canvas.showcaseBtn' => 'Ver como lienzo',
 			'sessions.inspector.canvas.designTaskSent' => 'Enviado al agente: mira la sesión.',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -13362,6 +13390,8 @@ extension on TranslationsEs {
 			'backups.encryption.passphraseCopied' => 'Passphrase copiada al portapapeles',
 			'backups.restoreFromFile' => 'Restaurar desde archivo',
 			'backups.restore.title' => 'Restaurar desde paquete',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.subtitle' => 'Reproduce un paquete cifrado .tar.gz.enc en una base de datos Postgres. El paquete se sube desde este teléfono: elige un archivo generado por una copia de seguridad anterior.',
 			'backups.restore.bundleLabel' => 'Archivo de paquete (.tar.gz.enc)',
 			'backups.restore.pickFile' => 'Elegir archivo',
@@ -13376,8 +13406,6 @@ extension on TranslationsEs {
 			'backups.restore.auditNotePlaceholder' => 'p. ej. recuperando de #INC-481',
 			'backups.restore.ownDbWarning' => 'Restaurar en la PROPIA base de datos de opendray reescribirá las filas que este gateway está sirviendo actualmente. Escribe "I understand" para confirmar.',
 			'backups.restore.confirmPlaceholder' => 'Escribe "I understand"',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restaurando…',
 			'backups.restore.preview' => 'Vista previa (simulación)',
@@ -13876,6 +13904,8 @@ extension on TranslationsEs {
 			'memory.status.enabled' => 'habilitado',
 			'memory.status.disabled' => 'deshabilitado',
 			'memory.status.floorNoModel' => 'Solo recuperación por palabras clave (BM25) — no hay modelo de embedding configurado. Configura un endpoint denso en Settings para habilitar la memoria semántica.',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configurado ${model} (denso) — reinicia el gateway para activar la memoria semántica y re-embeber las memorias existentes.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configurado ${model} (denso) pero el endpoint está inalcanzable — se usa el piso de palabras clave hasta que responda (se actualiza al reiniciar).',
 			'memory.status.denseDegraded' => 'Embedder denso activo pero su endpoint está inalcanzable ahora — los vectores existentes se conservan; las nuevas escrituras y la búsqueda por similitud se pausan hasta que responda.',
@@ -13890,8 +13920,6 @@ extension on TranslationsEs {
 			'memory.rank.confidenceMultiplier' => 'Multiplicador por confianza',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Cerrar',
-			_ => null,
-		} ?? switch (path) {
 			'memory.kNew' => 'Nuevo',
 			'memory.searchHint' => 'Buscar…',
 			'memory.projectLabel' => 'Proyecto',

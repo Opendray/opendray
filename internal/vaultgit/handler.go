@@ -281,12 +281,48 @@ func (h *Handlers) abort(w http.ResponseWriter, r *http.Request) {
 // loudly before invoking.
 //
 // Body: {remote_branch?: "origin/main"}  defaults to origin/<current>
+// ResetLoss counts what a reset would destroy that exists nowhere
+// else. Every field is work the operator cannot get back from the
+// remote, because the remote never had it.
+type ResetLoss struct {
+	// UnpushedCommits is how far HEAD is ahead of the remote branch.
+	UnpushedCommits int `json:"unpushed_commits"`
+	UntrackedFiles  int `json:"untracked_files"`
+	ModifiedFiles   int `json:"modified_files"`
+	// Sample names a few affected paths so the confirmation is about
+	// recognisable files rather than a number.
+	Sample []string `json:"sample,omitempty"`
+}
+
+func (l ResetLoss) any() bool {
+	return l.UnpushedCommits > 0 || l.UntrackedFiles > 0 || l.ModifiedFiles > 0
+}
+
+// resetToRemote hard-resets the vault onto its remote branch.
+//
+// This is the most destructive thing the Vault can do, and it was
+// silent about it: a plain `git reset --hard` + `git clean -fd`, behind
+// a confirmation that named no quantity. That is survivable when the
+// remote is ahead of you. It is not survivable when the remote is
+// EMPTY — and a vault whose pushes have all been failing is exactly
+// that. One operator lost 354 files this way: a read-only token made
+// every push 403, the local commits piled up unpushed, a pull hit a
+// rebase conflict, and "reset to remote" looked like the way out of
+// the conflict. It was, and it took the documents with it.
+//
+// So this now refuses by default. Anything that exists only locally
+// has to be counted, named, and explicitly confirmed — and even then a
+// recovery point is written first, because a confirmation dialog is
+// not a backup.
 func (h *Handlers) resetToRemote(w http.ResponseWriter, r *http.Request) {
 	if !h.requireRepo(w, r) {
 		return
 	}
 	var req struct {
 		RemoteBranch string `json:"remote_branch"`
+		// Confirm acknowledges the reported loss. Absent means "tell me
+		// what this would cost", which is what the UI asks first.
+		Confirm bool `json:"confirm"`
 	}
 	_ = json.NewDecoder(io.LimitReader(r.Body, 1024)).Decode(&req)
 
@@ -326,6 +362,25 @@ func (h *Handlers) resetToRemote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// What would this destroy that exists nowhere else? Computed after
+	// the fetch, so it is measured against the real remote head.
+	loss := h.resetLoss(ctx, remoteBranch)
+	if loss.any() && !req.Confirm {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": "reset would discard local-only work; " +
+				"re-send with confirm=true to proceed",
+			"loss":          loss,
+			"remote_branch": remoteBranch,
+		})
+		return
+	}
+
+	// A confirmation is not a backup. Write a recovery point before
+	// touching anything, so "yes" is still reversible.
+	rescueRef, rescueStash := h.saveRescuePoint(ctx, loss)
+
 	out, rerr := h.run(ctx, "reset", "--hard", remoteBranch)
 	if rerr != nil {
 		writeError(w, http.StatusInternalServerError,
@@ -335,11 +390,82 @@ func (h *Handlers) resetToRemote(w http.ResponseWriter, r *http.Request) {
 	}
 	// Drop any untracked junk too so the working tree fully matches
 	// the remote — what users expect from a "reset to remote" button.
+	// Safe now: the stash above captured untracked files, which a ref
+	// alone cannot hold.
 	_, _ = h.run(ctx, "clean", "-fd")
-	writeJSON(w, http.StatusOK, map[string]string{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"output":        string(out),
 		"remote_branch": remoteBranch,
+		"rescue_ref":    rescueRef,
+		"rescue_stash":  rescueStash,
 	})
+}
+
+// resetLoss counts local-only work. A count of zero means the reset is
+// a no-op against work the operator cares about, and needs no
+// confirmation — the common case of "my tree is clean, just realign me".
+func (h *Handlers) resetLoss(ctx context.Context, remoteBranch string) ResetLoss {
+	var loss ResetLoss
+	if out, err := h.run(ctx, "rev-list", "--count", remoteBranch+"..HEAD"); err == nil {
+		if n, err := parseN(strings.TrimSpace(string(out))); err == nil {
+			loss.UnpushedCommits = n
+		}
+	}
+	out, err := h.run(ctx, "status", "--porcelain=v1")
+	if err != nil {
+		return loss
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		if len(line) < 4 {
+			continue
+		}
+		xy, path := line[:2], strings.TrimSpace(line[3:])
+		if xy == "??" {
+			loss.UntrackedFiles++
+		} else {
+			loss.ModifiedFiles++
+		}
+		if len(loss.Sample) < 8 {
+			loss.Sample = append(loss.Sample, path)
+		}
+	}
+	return loss
+}
+
+// saveRescuePoint parks whatever is about to be destroyed somewhere it
+// can be found again: a branch for unpushed commits, a stash for
+// modified and untracked files. Both are local and cost nothing; the
+// operator deletes them when they are sure.
+//
+// Failures are logged, not fatal. Refusing to reset because the rescue
+// failed would leave someone stuck in the conflicted state this button
+// exists to escape — but the reset itself is never silent about it,
+// since the returned names are empty and the UI says so.
+func (h *Handlers) saveRescuePoint(ctx context.Context, loss ResetLoss) (ref, stash string) {
+	if !loss.any() {
+		return "", ""
+	}
+	stamp := time.Now().Format("20060102-150405")
+
+	if loss.UnpushedCommits > 0 {
+		ref = "opendray-rescue/" + stamp
+		if _, err := h.run(ctx, "branch", ref, "HEAD"); err != nil {
+			h.log.Warn("could not park unpushed commits before reset",
+				"ref", ref, "err", err)
+			ref = ""
+		}
+	}
+	if loss.UntrackedFiles > 0 || loss.ModifiedFiles > 0 {
+		msg := "opendray: before reset-to-remote " + stamp
+		// --include-untracked is the whole point: `git clean -fd` below
+		// deletes untracked files, and no ref can bring those back.
+		if _, err := h.run(ctx, "stash", "push", "--include-untracked", "-m", msg); err != nil {
+			h.log.Warn("could not stash working tree before reset", "err", err)
+		} else {
+			stash = msg
+		}
+	}
+	return ref, stash
 }
 
 func (h *Handlers) init(w http.ResponseWriter, r *http.Request) {

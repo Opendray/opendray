@@ -10,6 +10,51 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Verifying a git credential now checks that it can *push*, not just
+  read.** A GitHub fine-grained token's Contents permission has three
+  levels — No access, Read-only, Read and write — and every check the
+  verification made passed identically for a Read-only one. So it went
+  green, the Vault pulled happily, and the first push came back
+  `remote: Write access to repository not granted ... 403` — the same
+  message a token with *no* Contents produces on a plain fetch, which
+  sends you looking at everything except the token.
+
+  Verification now also probes git's receive-pack advertisement:
+  literally the first request `git push` makes, asked with the same
+  credential over the same protocol, and a plain GET that changes
+  nothing. If it is refused, push will be refused. Because it is git's
+  wire protocol rather than a forge API, one probe covers GitHub, Gitea
+  and GitLab, and it cannot disagree with what git actually does. A
+  read-only credential now reports "CANNOT push (read-only)" and names
+  the setting to change. A forge answer that is neither a clear yes nor
+  a clear no is reported as nothing at all — telling someone their
+  working token is read-only is the same mistake pointed the other way.
+
+- **"Reset to remote" no longer silently destroys unpushed work.** It
+  ran `git reset --hard` plus `git clean -fd` behind a confirmation
+  that named no quantity — survivable when the remote is ahead of you,
+  and not survivable when the remote is *empty*. A vault whose pushes
+  have all been failing is exactly that, and the two faults compose:
+  one operator lost 354 documents when a read-only token made every
+  push 403, the local commits piled up unpushed, a pull hit a rebase
+  conflict, and "reset to remote" looked like the way out of the
+  conflict.
+
+  The endpoint now counts what exists only locally — unpushed commits,
+  modified files, untracked files — and refuses with a 409 and that
+  breakdown unless the caller explicitly confirms. The dialog quotes
+  the numbers and names example files instead of asking "are you
+  sure?". And confirming is no longer final: opendray parks the
+  unpushed commits on an `opendray-rescue/<timestamp>` branch and
+  stashes the working tree (`--include-untracked`, since `clean -fd`
+  is what destroys untracked files and no ref can hold those) before
+  resetting, then names the rescue branch in the success toast. A tree
+  that is already level with its remote loses nothing and still resets
+  in one click — a confirmation that fires on no-ops is one people
+  learn to dismiss.
+
 ### Added
 
 - **Git credentials are scoped per host *and owner*, so one forge can

@@ -7968,13 +7968,22 @@ class _TranslationsWebNotesVaultSyncConflictZh extends TranslationsWebNotesVault
 	@override String abortTitle({required Object kind}) => 'git ${kind} --abort';
 	@override String get forceReset => '强制重置到 remote';
 	@override String get forceResetTitle => 'git fetch && git reset --hard origin/<branch> && git clean -fd';
-	@override String forceResetConfirm({required Object kind}) => '破坏性操作：将\n  • 中止进行中的 ${kind}\n  • 运行 git fetch origin\n  • reset --hard 到 origin/<branch>\n  • clean -fd（删除未跟踪文件）\n\n任何尚未推送到 origin 的本地提交以及任何未提交修改都将永久丢失。\n\n继续？';
 	@override String abortedToast({required Object kind}) => '已中止 ${kind}';
 	@override String get abortedDescription => '工作树已恢复到操作前状态。';
 	@override String get abortFailedToast => '中止失败';
 	@override String resetToast({required Object branch}) => '已重置到 ${branch}';
 	@override String get resetDescription => '本地更改已丢弃；vault 与 remote 一致。';
 	@override String get resetFailedToast => '重置失败';
+	@override String resetRescued({required Object ref}) => '之前的状态已存到分支 ${ref},没有丢失。';
+	@override String get lossTitle => '这会删除别处不存在的内容';
+	@override String get lossExplainer => '重置会用远端分支替换整个 vault。以下内容从未推送到远端,远端还不回来:';
+	@override String lossCommits_other({required Object count}) => '${count} 个从未推送的提交';
+	@override String lossModified_other({required Object count}) => '${count} 个已修改的文件';
+	@override String lossUntracked_other({required Object count}) => '${count} 个未跟踪的文件';
+	@override String get lossSample => '例如';
+	@override String get lossRescueNote => '重置前 opendray 会把这些提交存到一个 rescue 分支、并把工作区 stash 起来,所以仍然可以找回。';
+	@override String get lossCancel => '保留我的内容';
+	@override String get lossConfirm => '仍然重置';
 }
 
 // Path: web.notes.vaultSync.auth
@@ -8290,13 +8299,15 @@ class _TranslationsWebPluginsGitHostsDialogZh extends TranslationsWebPluginsGitH
 	@override String get ownerHintHostWide => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。';
 	@override String ownerHintScoped({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。';
 	@override String get verifyLabel => '验证此凭据';
-	@override String get verifyHint => '向 forge 询问这把令牌到底属于谁。可填一个仓库(owner/name)顺便检查是否真的能读取 —— 令牌的权限设置在这里看不见,而 forge 自己的报错指向的又是错的那一项。';
+	@override String get verifyHint => '向 forge 求证这个 token 属于谁。可以填一个仓库(owner/name)来确认凭据既能读取、也能推送 —— 读和写是两个独立的授权,能拉取的 token 照样可能推送全部失败,而 forge 自己的报错指的是另一个权限。';
 	@override String get verifyRepoPlaceholder => 'owner/repo(可选)';
 	@override String get verifyButton => '验证';
 	@override String get verifying => '检查中…';
 	@override String verifyLogin({required Object login}) => '认证身份:${login}';
-	@override String verifyRepoOk({required Object repo}) => '可读取 ${repo}';
-	@override String verifyRepoFail({required Object repo}) => '无权读取 ${repo}';
+	@override String verifyRepoOk({required Object repo}) => '可以读取 ${repo}';
+	@override String verifyRepoFail({required Object repo}) => '无法读取 ${repo}';
+	@override String get verifyPushOk => '可以推送';
+	@override String get verifyPushDenied => '不能推送(只读)';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -10695,13 +10706,22 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.conflict.abortTitle' => ({required Object kind}) => 'git ${kind} --abort',
 			'web.notes.vaultSync.conflict.forceReset' => '强制重置到 remote',
 			'web.notes.vaultSync.conflict.forceResetTitle' => 'git fetch && git reset --hard origin/<branch> && git clean -fd',
-			'web.notes.vaultSync.conflict.forceResetConfirm' => ({required Object kind}) => '破坏性操作：将\n  • 中止进行中的 ${kind}\n  • 运行 git fetch origin\n  • reset --hard 到 origin/<branch>\n  • clean -fd（删除未跟踪文件）\n\n任何尚未推送到 origin 的本地提交以及任何未提交修改都将永久丢失。\n\n继续？',
 			'web.notes.vaultSync.conflict.abortedToast' => ({required Object kind}) => '已中止 ${kind}',
 			'web.notes.vaultSync.conflict.abortedDescription' => '工作树已恢复到操作前状态。',
 			'web.notes.vaultSync.conflict.abortFailedToast' => '中止失败',
 			'web.notes.vaultSync.conflict.resetToast' => ({required Object branch}) => '已重置到 ${branch}',
 			'web.notes.vaultSync.conflict.resetDescription' => '本地更改已丢弃；vault 与 remote 一致。',
 			'web.notes.vaultSync.conflict.resetFailedToast' => '重置失败',
+			'web.notes.vaultSync.conflict.resetRescued' => ({required Object ref}) => '之前的状态已存到分支 ${ref},没有丢失。',
+			'web.notes.vaultSync.conflict.lossTitle' => '这会删除别处不存在的内容',
+			'web.notes.vaultSync.conflict.lossExplainer' => '重置会用远端分支替换整个 vault。以下内容从未推送到远端,远端还不回来:',
+			'web.notes.vaultSync.conflict.lossCommits_other' => ({required Object count}) => '${count} 个从未推送的提交',
+			'web.notes.vaultSync.conflict.lossModified_other' => ({required Object count}) => '${count} 个已修改的文件',
+			'web.notes.vaultSync.conflict.lossUntracked_other' => ({required Object count}) => '${count} 个未跟踪的文件',
+			'web.notes.vaultSync.conflict.lossSample' => '例如',
+			'web.notes.vaultSync.conflict.lossRescueNote' => '重置前 opendray 会把这些提交存到一个 rescue 分支、并把工作区 stash 起来,所以仍然可以找回。',
+			'web.notes.vaultSync.conflict.lossCancel' => '保留我的内容',
+			'web.notes.vaultSync.conflict.lossConfirm' => '仍然重置',
 			'web.notes.vaultSync.auth.title' => '认证',
 			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => '将使用 Plugins → Git hosts 中为 <1>${scope}</1> 存的 token。✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => '<1>${host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。',
@@ -10797,6 +10817,8 @@ extension on TranslationsZh {
 			'web.providers.detail.disabled' => '已禁用',
 			'web.providers.detail.toggleAria' => ({required Object name}) => '切换 ${name}',
 			'web.providers.detail.configuration' => '配置',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.noConfig' => '此 Provider 没有可配置字段。',
 			'web.providers.detail.executable' => 'executable:',
 			'web.providers.detail.manifestHash' => 'manifest_hash:',
@@ -10806,8 +10828,6 @@ extension on TranslationsZh {
 			'web.providers.detail.savedToast' => 'Provider 配置已保存',
 			'web.providers.detail.saveFailedToast' => '保存失败',
 			'web.providers.detail.toggleFailedToast' => '切换失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
@@ -11292,13 +11312,15 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
 			'web.plugins.gitHosts.dialog.verifyLabel' => '验证此凭据',
-			'web.plugins.gitHosts.dialog.verifyHint' => '向 forge 询问这把令牌到底属于谁。可填一个仓库(owner/name)顺便检查是否真的能读取 —— 令牌的权限设置在这里看不见,而 forge 自己的报错指向的又是错的那一项。',
+			'web.plugins.gitHosts.dialog.verifyHint' => '向 forge 求证这个 token 属于谁。可以填一个仓库(owner/name)来确认凭据既能读取、也能推送 —— 读和写是两个独立的授权,能拉取的 token 照样可能推送全部失败,而 forge 自己的报错指的是另一个权限。',
 			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo(可选)',
 			'web.plugins.gitHosts.dialog.verifyButton' => '验证',
 			'web.plugins.gitHosts.dialog.verifying' => '检查中…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => '认证身份:${login}',
-			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => '可读取 ${repo}',
-			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => '无权读取 ${repo}',
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => '可以读取 ${repo}',
+			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => '无法读取 ${repo}',
+			'web.plugins.gitHosts.dialog.verifyPushOk' => '可以推送',
+			'web.plugins.gitHosts.dialog.verifyPushDenied' => '不能推送(只读)',
 			'web.plugins.gitHosts.scopeHostWide' => '全主机兜底',
 			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => '仅用于 ${owner}',
 			'web.backups.title' => '备份',
@@ -11309,6 +11331,8 @@ extension on TranslationsZh {
 			'web.backups.tabs.backups' => '备份',
 			'web.backups.tabs.schedules' => '计划',
 			'web.backups.tabs.targets' => '目标',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.inventory.title' => '备份里包含什么？',
 			'web.backups.inventory.summary' => ({required Object tables, required Object rows}) => '${tables} 张表共 ${rows} 行',
 			'web.backups.inventory.description' => '每次备份是一个对下方所有表执行 <1>pg_dump --format=custom</1> 的产物，外加 <3>manifest.json</3> 和（可选的）<5>config.toml</5>。计数是实时的；bundle 捕获的是备份发生那一刻的数据。',
@@ -11320,8 +11344,6 @@ extension on TranslationsZh {
 			'web.backups.restart.configuredVia' => '配置方式：',
 			'web.backups.restart.envVar' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'web.backups.restart.checkAgain' => '再次检查',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.title' => '设置备份',
 			'web.backups.setup.description' => '选择一个主口令。opendray 会用它加密每个备份 blob。<1>丢失它意味着你的备份无法恢复</1>，请在继续之前把它保存到密码管理器（Vaultwarden、1Password 等）。',
 			'web.backups.setup.generate' => '生成',
@@ -11823,6 +11845,8 @@ extension on TranslationsZh {
 			'web.settings.appearance.options.system' => '跟随系统',
 			'web.settings.appearance.options.systemDesc' => '跟随操作系统设置',
 			'web.settings.font.title' => '字号',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.font.description' => '缩放整个界面。按浏览器保存。',
 			'web.settings.font.options.compact' => '紧凑',
 			'web.settings.font.options.kDefault' => '默认',
@@ -11834,8 +11858,6 @@ extension on TranslationsZh {
 			'web.settings.account.tokenExpires' => 'Token 过期',
 			'web.settings.account.changeCredentials' => '修改凭证',
 			'web.settings.changeCredentials.title' => '修改凭证',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => '先验证当前密码，再选择新凭证。所有其它已登录会话都将被吊销。',
 			'web.settings.changeCredentials.currentPassword' => '当前密码',
 			'web.settings.changeCredentials.newUsername' => '新用户名',
@@ -12337,6 +12359,8 @@ extension on TranslationsZh {
 			'web.database.dialog.sslMode' => 'SSL 模式',
 			'web.database.dialog.readOnly' => '只读(禁止此连接写入)',
 			'web.database.dialog.superuserWarning' => '该用户是超级用户(或数据库所有者)。日常工作请优先使用仅 CRUD 权限的项目角色。',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.test' => '测试',
 			'web.database.dialog.save' => '保存',
 			'web.database.dialog.testFailed' => '连接测试失败',
@@ -12348,8 +12372,6 @@ extension on TranslationsZh {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => '数据库文件',
 			'web.database.dialog.filePathHint' => '项目目录内的 SQLite 文件路径。',
@@ -12851,6 +12873,8 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.themeLight' => '浅色',
 			'sessions.inspector.canvas.themeDark' => '深色',
 			'sessions.inspector.canvas.paletteLabel' => '从预设配色开始',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色',
 			'sessions.inspector.canvas.paletteIndigo' => '靛蓝',
 			'sessions.inspector.canvas.paletteSky' => '天蓝',
@@ -12862,8 +12886,6 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.extractBtn' => '读取项目样式',
 			'sessions.inspector.canvas.showcaseBtn' => '生成配色画布',
 			'sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -13365,6 +13387,8 @@ extension on TranslationsZh {
 			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
 			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
 			'backups.restore.pickFile' => '选择文件',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
 			'backups.restore.noFile' => '未选择文件',
 			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
@@ -13376,8 +13400,6 @@ extension on TranslationsZh {
 			'backups.restore.auditNotePlaceholder' => '例如：恢复 #INC-481',
 			'backups.restore.ownDbWarning' => '恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 "I understand" 以确认。',
 			'backups.restore.confirmPlaceholder' => '输入 "I understand"',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => '恢复中…',
 			'backups.restore.preview' => '预览（试运行）',
@@ -13879,6 +13901,8 @@ extension on TranslationsZh {
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
 			'memory.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
+			_ => null,
+		} ?? switch (path) {
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
@@ -13890,8 +13914,6 @@ extension on TranslationsZh {
 			'memory.rank.confidenceMultiplier' => '置信度系数',
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
 			'memory.rank.close' => '关闭',
-			_ => null,
-		} ?? switch (path) {
 			'memory.kNew' => '新建',
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
