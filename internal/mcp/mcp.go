@@ -4,7 +4,7 @@
 //
 // Storage model — same philosophy as the skills + notes vaults:
 //
-//	<vault>/mcp/<id>/mcp.json   # user-defined MCP servers (filesystem)
+//	<registry root>/<id>/mcp.json   # user-defined MCP servers (filesystem)
 //
 // No built-ins are embedded in the binary. Users add servers via the
 // Plugins page or by dropping a directory into the vault by hand.
@@ -61,7 +61,7 @@ type Server struct {
 // Loader walks the vault directory and returns Server entries. Mirrors
 // the skills loader's API surface so the wiring is symmetric.
 type Loader struct {
-	vaultRoot string // absolute path to <vault>/mcp (may not exist)
+	vaultRoot string // absolute path to the registry root (may not exist)
 }
 
 // NewLoader points the loader at a directory that contains one

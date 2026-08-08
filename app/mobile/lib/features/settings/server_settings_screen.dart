@@ -45,6 +45,7 @@ class _Field {
     this.optionLabels,
     this.monospace = false,
     this.placeholder,
+    this.onlyWhenSet = false,
   });
 
   final String label;
@@ -63,6 +64,10 @@ class _Field {
   final Map<String, String>? optionLabels;
   final bool monospace;
   final String? placeholder;
+  // Deprecated fields kept for operators who already rely on them.
+  // Hidden when empty so a superseded setting is not offered to
+  // anyone new, but still editable (and clearable) by whoever set it.
+  final bool onlyWhenSet;
 }
 
 class _Section {
@@ -208,7 +213,7 @@ List<_Section> _buildSections() => <_Section>[
         kind: _FieldKind.text,
         monospace: true,
         helper: t.settings.serverSettings.fields.rootHelper,
-        // resolveVaultPaths falls back to ~/.opendray/vault.
+        // config.Resolve falls back to ~/.opendray/vault.
         placeholder: '~/.opendray/vault',
       ),
       _Field(
@@ -216,23 +221,19 @@ List<_Section> _buildSections() => <_Section>[
         path: 'vault.notes',
         kind: _FieldKind.text,
         monospace: true,
-        // Defaults to <root>/notes when blank.
-        placeholder: '~/.opendray/vault/notes',
-      ),
-      _Field(
-        label: t.settings.serverSettings.fields.skillsPath,
-        path: 'vault.skills',
-        kind: _FieldKind.text,
-        monospace: true,
-        placeholder: '~/.opendray/vault/skills',
+        helper: t.settings.serverSettings.fields.notesPathHelper,
+        // Deprecated: vault.root means the documents dir now. Shown
+        // only when already set — see onlyWhenSet.
+        onlyWhenSet: true,
+        placeholder: '~/.opendray/vault',
       ),
       _Field(
         label: t.settings.serverSettings.fields.gitRoot,
         path: 'vault.git_root',
         kind: _FieldKind.text,
         monospace: true,
-        // Defaults to vault.root (or vault.notes when notes is
-        // pinned to a custom location).
+        helper: t.settings.serverSettings.fields.gitRootHelper,
+        // Defaults to the documents root.
         placeholder: '~/.opendray/vault',
       ),
       _Field(
@@ -251,6 +252,22 @@ List<_Section> _buildSections() => <_Section>[
     ],
   ),
   _Section(
+    id: 'skills',
+    title: t.settings.serverSettings.sections.skills,
+    description: t.settings.serverSettings.sectionDescriptions.skills,
+    restartRequired: true,
+    fields: [
+      _Field(
+        label: t.settings.serverSettings.fields.skillsRoot,
+        path: 'skills.root',
+        kind: _FieldKind.text,
+        monospace: true,
+        helper: t.settings.serverSettings.fields.skillsRootHelper,
+        placeholder: '~/.opendray/skills',
+      ),
+    ],
+  ),
+  _Section(
     id: 'mcp',
     title: t.settings.serverSettings.sections.mcpRegistry,
     description: t.settings.serverSettings.sectionDescriptions.mcpRegistry,
@@ -261,8 +278,8 @@ List<_Section> _buildSections() => <_Section>[
         path: 'mcp.root',
         kind: _FieldKind.text,
         monospace: true,
-        // resolveMCPPaths defaults to <vault root>/mcp.
-        placeholder: '~/.opendray/vault/mcp',
+        // config.Resolve defaults to ~/.opendray/mcp.
+        placeholder: '~/.opendray/mcp',
       ),
       _Field(
         label: t.settings.serverSettings.fields.secretsFile,
@@ -551,7 +568,12 @@ class ServerSettingsScreen extends ConsumerStatefulWidget {
 
 class _ServerSettingsScreenState
     extends ConsumerState<ServerSettingsScreen> {
-  AsyncValue<({Map<String, dynamic> config, String configPath})> _state =
+  AsyncValue<
+      ({
+        Map<String, dynamic> config,
+        String configPath,
+        Map<String, dynamic> layout,
+      })> _state =
       const AsyncValue.loading();
 
   @override
@@ -646,7 +668,15 @@ class _ServerSettingsScreenState
     );
   }
 
-  Widget _buildIndex(({Map<String, dynamic> config, String configPath}) data) {
+  Widget _buildIndex(
+      ({
+        Map<String, dynamic> config,
+        String configPath,
+        Map<String, dynamic> layout,
+      }) data) {
+    final legacy = data.layout['legacy_vault'] == true ||
+        data.layout['legacy_skills'] == true ||
+        data.layout['legacy_mcp'] == true;
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -669,6 +699,26 @@ class _ServerSettingsScreenState
               style: const TextStyle(fontSize: 12),
             ),
           ),
+          // A pre-split install reads directories the form does not
+          // mention. Saying so beats letting the settings page
+          // describe a layout the gateway is not using.
+          if (legacy)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(6),
+                  border:
+                      Border.all(color: Colors.amber.withValues(alpha: 0.35)),
+                ),
+                child: Text(
+                  t.settings.serverSettings.legacyLayout,
+                  style: const TextStyle(fontSize: 12, height: 1.4),
+                ),
+              ),
+            ),
           for (final s in _buildSections())
             ListTile(
               title: Text(s.title),
@@ -759,6 +809,18 @@ class _SectionEditorScreenState
       c.dispose();
     }
     super.dispose();
+  }
+
+  // Deprecated fields are rendered only for operators who already have
+  // them set. Read from the ORIGINAL config, not the draft, so a field
+  // does not vanish mid-edit the moment its box is cleared.
+  List<_Field> _visibleFields() {
+    return [
+      for (final f in widget.section.fields)
+        if (!f.onlyWhenSet ||
+            _stringify(_readPath(widget.initial, f.path)).trim().isNotEmpty)
+          f,
+    ];
   }
 
   static Map<String, dynamic> _deepCopy(Map<String, dynamic> src) {
@@ -904,7 +966,7 @@ class _SectionEditorScreenState
               ),
             ],
             const SizedBox(height: 16),
-            for (final f in widget.section.fields) ...[
+            for (final f in _visibleFields()) ...[
               _renderField(f),
               const SizedBox(height: 14),
             ],

@@ -22,6 +22,7 @@ type Config struct {
 	Log       LogConfig       `toml:"log" json:"log"`
 	Session   SessionConfig   `toml:"session" json:"session"`
 	Vault     VaultConfig     `toml:"vault" json:"vault"`
+	Skills    SkillsConfig    `toml:"skills" json:"skills"`
 	MCP       MCPConfig       `toml:"mcp" json:"mcp"`
 	Providers ProvidersConfig `toml:"providers" json:"providers"`
 	Memory    MemoryConfig    `toml:"memory" json:"memory"`
@@ -326,11 +327,11 @@ type AntigravityProviderConfig struct {
 // MCPConfig points at the MCP server registry directory and the
 // secrets file used to substitute ${KEY} placeholders at spawn time.
 //
-// Defaults (when unset, see resolveMCPPaths in package app):
+// Defaults (when unset, see Resolve in paths.go):
 //
-//	root         = <vault.root>/mcp
-//	secrets_file = ~/.opendray/secrets.env  (intentionally OUTSIDE the
-//	               vault so it never git-syncs along with notes/skills)
+//	root         = ~/.opendray/mcp
+//	secrets_file = ~/.opendray/secrets.env  (intentionally OUTSIDE every
+//	               other root so no `git add .` can pick it up)
 //
 // Override either via env (OPENDRAY_MCP_ROOT, OPENDRAY_MCP_SECRETS_FILE)
 // or by setting the field explicitly.
@@ -339,29 +340,45 @@ type MCPConfig struct {
 	SecretsFile string `toml:"secrets_file" json:"secrets_file"`
 }
 
-// VaultConfig points at the on-disk roots that hold notes + skills.
-// The whole tree is meant to be a self-contained, git-versionable
-// directory the user owns — no DB lock-in.
+// SkillsConfig points at the agent-skills root. Skills are injected
+// into sessions at spawn — configuration the gateway acts on, which is
+// why they no longer live inside the operator's documents.
 //
-// Default layout when only `root` is set:
+// Default: ~/.opendray/skills. Override via env OPENDRAY_SKILLS_ROOT.
+type SkillsConfig struct {
+	Root string `toml:"root" json:"root"`
+}
+
+// VaultConfig points at the operator's documents — and nothing else.
+// The Vault is a self-contained, git-versionable directory of markdown
+// the user owns; no DB lock-in, and no opendray machinery mixed in.
 //
-//	<root>/notes/           ← opendray-managed notes
-//	<root>/skills/          ← agent skills (built-in overlays)
+//	root/                   ← the documents. This IS the doc library.
 //
-// When `notes` is set explicitly it OVERRIDES the `<root>/notes`
-// computation, so users can point opendray at an existing Obsidian
-// vault (or any flat folder of .md files) without restructuring.
-// `skills` works the same way independently.
+// Agent skills and the MCP registry used to live under this root as
+// siblings of a `notes/` subdirectory. They now have their own roots
+// ([skills] and [mcp]) because they are configuration, not documents —
+// see internal/config/paths.go for what that conflation cost.
 //
-// `git_root` controls which directory the Vault Sync feature operates
-// on. Defaults to whichever is the most natural git working tree:
+// `git_root` controls which directory Vault Sync commits. It defaults
+// to `root`, so the repo contains the documents and nothing else.
 //
-//	if `notes` is set explicitly → git_root defaults to `notes`
-//	otherwise                    → git_root defaults to `root`
+// Resolution — including how pre-split layouts stay working — lives in
+// Resolve(). Nothing else should derive these paths.
 type VaultConfig struct {
-	Root    string `toml:"root" json:"root"`         // e.g. "~/.opendray/vault"
-	Notes   string `toml:"notes" json:"notes"`       // override notes root (default <root>/notes)
-	Skills  string `toml:"skills" json:"skills"`     // override skills root (default <root>/skills)
+	Root string `toml:"root" json:"root"` // e.g. "~/.opendray/vault"
+
+	// Notes overrides the documents root. Deprecated in favour of
+	// `root`, which now means the same thing — but still honoured, and
+	// still the way to point opendray at an Obsidian folder kept
+	// somewhere else entirely.
+	Notes string `toml:"notes" json:"notes"`
+	// Skills is the pre-split spelling of [skills].root. Honoured when
+	// that is unset.
+	//
+	// Deprecated: set [skills].root instead.
+	Skills string `toml:"skills" json:"skills"`
+
 	GitRoot string `toml:"git_root" json:"git_root"` // override repo root for vault sync
 
 	// Default prefixes for auto-derived note paths. Useful when the
@@ -600,6 +617,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_VAULT_SKILLS"); v != "" {
 		cfg.Vault.Skills = v
+	}
+	if v := os.Getenv("OPENDRAY_SKILLS_ROOT"); v != "" {
+		cfg.Skills.Root = v
 	}
 	if v := os.Getenv("OPENDRAY_VAULT_GIT_ROOT"); v != "" {
 		cfg.Vault.GitRoot = v

@@ -14,7 +14,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/mcp"
@@ -22,7 +21,7 @@ import (
 
 func runMcp(args []string) int {
 	fs := flag.NewFlagSet("mcp", flag.ContinueOnError)
-	cfgPath := fs.String("config", "", "path to config.toml (only [mcp]/[vault] are read)")
+	cfgPath := fs.String("config", "", "path to config.toml (paths are resolved as the gateway does)")
 	root := fs.String("root", "", "override MCP registry root")
 	asJSON := fs.Bool("json", false, "list/describe: JSON output")
 	fs.Usage = func() { fmt.Fprintln(os.Stderr, mcpUsage) }
@@ -102,51 +101,18 @@ func runMcp(args []string) int {
 	}
 }
 
-// openMcp resolves the MCP registry root and secrets file path using
-// the same precedence as the gateway: explicit override → config →
-// env → default. Centralised here so the CLI behaves the same as the
-// running gateway against the same files.
+// openMcp resolves the MCP registry root and secrets file path through
+// the gateway's own resolver, so the CLI and the running gateway can
+// never operate on different files.
 func openMcp(cfgPath, override string) (*mcp.Loader, string, error) {
+	paths := loadCLIConfig(cfgPath).Resolve()
 	mcpRoot := override
-	secretsPath := ""
-	if cfgPath != "" {
-		if cfg, err := config.Load(cfgPath); err == nil {
-			if mcpRoot == "" && cfg.MCP.Root != "" {
-				mcpRoot = cfg.MCP.Root
-			}
-			if mcpRoot == "" && cfg.Vault.Root != "" {
-				mcpRoot = filepath.Join(cfg.Vault.Root, "mcp")
-			}
-			secretsPath = cfg.MCP.SecretsFile
-		}
-	}
 	if mcpRoot == "" {
-		if v := os.Getenv("OPENDRAY_MCP_ROOT"); v != "" {
-			mcpRoot = v
-		} else {
-			root := os.Getenv("OPENDRAY_VAULT_ROOT")
-			if root == "" {
-				root = "~/.opendray/vault"
-			}
-			mcpRoot = filepath.Join(root, "mcp")
-		}
+		mcpRoot = paths.MCP
+	} else {
+		mcpRoot = config.ExpandPath(mcpRoot)
 	}
-	if expanded, err := expandHome(mcpRoot); err == nil {
-		mcpRoot = expanded
-	}
-
-	if secretsPath == "" {
-		if v := os.Getenv("OPENDRAY_MCP_SECRETS_FILE"); v != "" {
-			secretsPath = v
-		} else {
-			secretsPath = "~/.opendray/secrets.env"
-		}
-	}
-	if expanded, err := expandHome(secretsPath); err == nil {
-		secretsPath = expanded
-	}
-
-	return mcp.NewLoader(mcpRoot), secretsPath, nil
+	return mcp.NewLoader(mcpRoot), paths.MCPSecrets, nil
 }
 
 const mcpUsage = `opendray mcp — MCP server registry
@@ -164,5 +130,5 @@ flags:
   --root PATH             override MCP registry root
   --json                  list/describe: JSON output
 
-servers load from <vault>/mcp/<id>/mcp.json
+servers load from <registry root>/<id>/mcp.json
 secrets file (${KEY} substitution): ~/.opendray/secrets.env (dotenv format)`

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Trans, useTranslation } from 'react-i18next'
@@ -23,8 +23,10 @@ import { Input } from '@/components/ui/input'
 import {
   emptyConfig,
   fetchServerSettings,
+  hasLegacyLayout,
   restartServer,
   updateServerSettings,
+  type ResolvedLayout,
   type ServerConfig,
 } from '@/lib/settings'
 import { cn } from '@/lib/utils'
@@ -60,6 +62,7 @@ export const SERVER_SECTIONS = [
   { id: 'logging' },
   { id: 'sessions' },
   { id: 'vault' },
+  { id: 'skills' },
   { id: 'mcp' },
   { id: 'memory' },
   { id: 'backup' },
@@ -95,6 +98,7 @@ const RESTART_REQUIRED_SECTIONS: Record<ServerSectionId, boolean> = {
   logging: true,
   sessions: true,
   vault: true,
+  skills: true, // the loader is constructed once, at app.New
   mcp: true,
   memory: true, // backend / store wiring is read once at app.New
   backup: true, // pg_dump path + cipher are bound at NewService
@@ -262,6 +266,7 @@ export function ServerSettings({
         active={activeSection}
         draft={draft}
         setDraft={setDraft}
+        layout={data?.layout}
         showPassword={showPassword}
         toggleShowPassword={() => setShowPassword((v) => !v)}
         searchQuery={searchQuery}
@@ -301,6 +306,7 @@ function SectionForm({
   active,
   draft,
   setDraft,
+  layout,
   showPassword,
   toggleShowPassword,
   searchQuery,
@@ -308,6 +314,7 @@ function SectionForm({
   active: ServerSectionId
   draft: ServerConfig
   setDraft: React.Dispatch<React.SetStateAction<ServerConfig>>
+  layout?: ResolvedLayout
   showPassword: boolean
   toggleShowPassword: () => void
   searchQuery: string
@@ -642,86 +649,108 @@ function SectionForm({
 
     case 'vault':
       return (
-        <FormGrid>
-          {F(
-            'vaultRoot',
-            'vault.root',
-            <PathInput
-              value={c.vault.root}
-              onChange={(v) =>
-                setDraft({ ...draft, vault: { ...c.vault, root: v } })
-              }
-              placeholder="~/.opendray/vault"
-              expectDir
-            />,
-          )}
-          {F(
-            'notesDirectory',
-            'vault.notes',
-            <PathInput
-              value={c.vault.notes}
-              onChange={(v) =>
-                setDraft({ ...draft, vault: { ...c.vault, notes: v } })
-              }
-              placeholder="<vault>/notes"
-              expectDir
-            />,
-          )}
-          {F(
-            'skillsDirectory',
-            'vault.skills',
-            <PathInput
-              value={c.vault.skills}
-              onChange={(v) =>
-                setDraft({ ...draft, vault: { ...c.vault, skills: v } })
-              }
-              placeholder="<vault>/skills"
-              expectDir
-            />,
-          )}
-          {F(
-            'gitRoot',
-            'vault.git_root',
-            <PathInput
-              value={c.vault.git_root}
-              onChange={(v) =>
-                setDraft({ ...draft, vault: { ...c.vault, git_root: v } })
-              }
-              placeholder="<vault root>"
-              expectDir
-            />,
-          )}
-          {F(
-            'personalPrefix',
-            'vault.personal_prefix',
-            <Input
-              value={c.vault.personal_prefix}
-              onChange={(e) =>
-                setDraft({
-                  ...draft,
-                  vault: { ...c.vault, personal_prefix: e.target.value },
-                })
-              }
-              placeholder="personal"
-              className="h-9 font-mono w-48"
-            />,
-          )}
-          {F(
-            'projectsPrefix',
-            'vault.projects_prefix',
-            <Input
-              value={c.vault.projects_prefix}
-              onChange={(e) =>
-                setDraft({
-                  ...draft,
-                  vault: { ...c.vault, projects_prefix: e.target.value },
-                })
-              }
-              placeholder="projects"
-              className="h-9 font-mono w-48"
-            />,
-          )}
-        </FormGrid>
+        <div className="flex flex-col gap-6">
+          <LayoutNotice layout={layout} />
+          <FormGrid>
+            {F(
+              'vaultRoot',
+              'vault.root',
+              <PathInput
+                value={c.vault.root}
+                onChange={(v) =>
+                  setDraft({ ...draft, vault: { ...c.vault, root: v } })
+                }
+                placeholder="~/.opendray/vault"
+                expectDir
+              />,
+            )}
+            {/* Deprecated: `root` is the documents directory now. Shown
+                only to operators who already have it set, so it can be
+                inspected or cleared — not offered to anyone else. */}
+            {c.vault.notes.trim() !== '' &&
+              F(
+                'notesDirectory',
+                'vault.notes',
+                <PathInput
+                  value={c.vault.notes}
+                  onChange={(v) =>
+                    setDraft({ ...draft, vault: { ...c.vault, notes: v } })
+                  }
+                  placeholder="<vault root>"
+                  expectDir
+                />,
+              )}
+            {F(
+              'gitRoot',
+              'vault.git_root',
+              <PathInput
+                value={c.vault.git_root}
+                onChange={(v) =>
+                  setDraft({ ...draft, vault: { ...c.vault, git_root: v } })
+                }
+                placeholder="<vault root>"
+                expectDir
+              />,
+            )}
+            {F(
+              'personalPrefix',
+              'vault.personal_prefix',
+              <Input
+                value={c.vault.personal_prefix}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    vault: { ...c.vault, personal_prefix: e.target.value },
+                  })
+                }
+                placeholder="personal"
+                className="h-9 font-mono w-48"
+              />,
+            )}
+            {F(
+              'projectsPrefix',
+              'vault.projects_prefix',
+              <Input
+                value={c.vault.projects_prefix}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    vault: { ...c.vault, projects_prefix: e.target.value },
+                  })
+                }
+                placeholder="projects"
+                className="h-9 font-mono w-48"
+              />,
+            )}
+          </FormGrid>
+        </div>
+      )
+
+    case 'skills':
+      return (
+        <div className="flex flex-col gap-6">
+          <LayoutNotice layout={layout} />
+          <FormGrid>
+            {F(
+              'skillsRoot',
+              'skills.root',
+              <PathInput
+                value={c.skills.root || c.vault.skills}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    skills: { root: v },
+                    // Clear the pre-split spelling on edit so the two
+                    // cannot disagree about where skills live.
+                    vault: { ...c.vault, skills: '' },
+                  })
+                }
+                placeholder="~/.opendray/skills"
+                expectDir
+              />,
+            )}
+          </FormGrid>
+        </div>
       )
 
     case 'mcp':
@@ -735,7 +764,7 @@ function SectionForm({
               onChange={(v) =>
                 setDraft({ ...draft, mcp: { ...c.mcp, root: v } })
               }
-              placeholder="<vault>/mcp"
+              placeholder="~/.opendray/mcp"
               expectDir
             />,
           )}
@@ -1345,6 +1374,56 @@ function FormGroup({
         {heading}
       </h3>
       <FormGrid>{children}</FormGrid>
+    </div>
+  )
+}
+
+// LayoutNotice shows where the Vault settings actually land on disk.
+//
+// Several of these paths are derived, and one of them depends on what
+// is already on the filesystem, so a form full of empty "defaults to…"
+// placeholders does not tell the operator where their documents are.
+// Worse, an install predating the split reads directories the form
+// doesn't mention at all — which is precisely how the Vault came to
+// mean the documents, the agent skills and the MCP registry at once.
+// So the resolution is printed, and a pre-split layout says so.
+function LayoutNotice({ layout }: { layout?: ResolvedLayout }) {
+  const { t } = useTranslation()
+  if (!layout) return null
+  const legacy = hasLegacyLayout(layout)
+  const rows: Array<[string, string]> = [
+    [t('web.serverSettings.layout.documents'), layout.vault],
+    [t('web.serverSettings.layout.git'), layout.vault_git],
+    [t('web.serverSettings.layout.skills'), layout.skills],
+    [t('web.serverSettings.layout.mcp'), layout.mcp],
+  ]
+  return (
+    <div
+      className={cn(
+        'rounded-md border px-3 py-2.5 flex flex-col gap-2',
+        legacy
+          ? 'border-amber-500/30 bg-amber-500/5'
+          : 'border-border/60 bg-muted/20',
+      )}
+    >
+      <div className="text-[11px] font-medium text-muted-foreground">
+        {t('web.serverSettings.layout.title')}
+      </div>
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+        {rows.map(([label, path]) => (
+          <Fragment key={label}>
+            <span className="text-[11px] text-muted-foreground/80">
+              {label}
+            </span>
+            <span className="text-[11px] font-mono break-all">{path}</span>
+          </Fragment>
+        ))}
+      </div>
+      {legacy && (
+        <p className="text-[11px] text-amber-300/90 leading-relaxed">
+          {t('web.serverSettings.layout.legacyWarning')}
+        </p>
+      )}
     </div>
   )
 }
