@@ -45,7 +45,7 @@ type VerifyResult struct {
 	Login string `json:"login,omitempty"`
 	// OwnerMatches is false when Login differs from the row's Owner.
 	// NOT an error on its own: an organisation entry is reached with a
-	// member's token, so github.com/Opendray legitimately authenticates
+	// member's token, so an organisation entry legitimately authenticates
 	// as the person who owns that org. Informational only.
 	OwnerMatches bool `json:"owner_matches"`
 	// Reachable reports whether Repo's CONTENTS can be read — the

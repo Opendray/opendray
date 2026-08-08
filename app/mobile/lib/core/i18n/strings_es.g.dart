@@ -2610,7 +2610,7 @@ class _TranslationsGithostsFormEs extends TranslationsGithostsFormEn {
 	@override String get tokenPreviewNone => '(ninguno)';
 	@override String get pausedSubtitle => 'En pausa. Las sessions omiten este host.';
 	@override String get ownerLabel => 'Propietario (opcional)';
-	@override String get ownerHint => 'Opendray';
+	@override String get ownerHint => 'my-org';
 	@override String get ownerHelperHostWide => 'Vacío = todo el host: se usa en cada repo de este host sin entrada propia.';
 	@override String ownerHelperScoped({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/… Los demás propietarios recurren a la entrada de todo el host.';
 }
@@ -6022,7 +6022,7 @@ class _TranslationsWebDatabaseDialogEs extends TranslationsWebDatabaseDialogEn {
 	@override String get passwordKept => 'sin cambios — déjalo vacío para conservarla';
 	@override String get sslMode => 'Modo SSL';
 	@override String get readOnly => 'Solo lectura (bloquear escrituras desde esta conexión)';
-	@override String get superuserWarning => 'Este usuario es superusuario (o el administrador linivek). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.';
+	@override String get superuserWarning => 'Este usuario es superusuario (o el propietario de la base de datos). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.';
 	@override String get test => 'Probar';
 	@override String get save => 'Guardar';
 	@override String get testFailed => 'La prueba de conexión falló';
@@ -8286,9 +8286,17 @@ class _TranslationsWebPluginsGitHostsDialogEs extends TranslationsWebPluginsGitH
 	@override String get addFailedToast => 'Error al añadir';
 	@override String get updateFailedToast => 'Error al actualizar';
 	@override String get ownerLabel => 'Propietario (opcional)';
-	@override String get ownerPlaceholder => 'Opendray';
+	@override String get ownerPlaceholder => 'my-org';
 	@override String get ownerHintHostWide => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.';
 	@override String ownerHintScoped({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.';
+	@override String get verifyLabel => 'Verificar esta credencial';
+	@override String get verifyHint => 'Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repo (owner/name) para comprobar que se puede leer: los permisos del token son invisibles desde aquí y el error de la forja nombra el permiso equivocado.';
+	@override String get verifyRepoPlaceholder => 'owner/repo (opcional)';
+	@override String get verifyButton => 'Verificar';
+	@override String get verifying => 'Comprobando…';
+	@override String verifyLogin({required Object login}) => 'Autenticado como ${login}';
+	@override String verifyRepoOk({required Object repo}) => 'puede leer ${repo}';
+	@override String verifyRepoFail({required Object repo}) => 'NO puede leer ${repo}';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -11280,9 +11288,17 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
-			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'Opendray',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.',
+			'web.plugins.gitHosts.dialog.verifyLabel' => 'Verificar esta credencial',
+			'web.plugins.gitHosts.dialog.verifyHint' => 'Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repo (owner/name) para comprobar que se puede leer: los permisos del token son invisibles desde aquí y el error de la forja nombra el permiso equivocado.',
+			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo (opcional)',
+			'web.plugins.gitHosts.dialog.verifyButton' => 'Verificar',
+			'web.plugins.gitHosts.dialog.verifying' => 'Comprobando…',
+			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Autenticado como ${login}',
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'puede leer ${repo}',
+			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'NO puede leer ${repo}',
 			'web.plugins.gitHosts.scopeHostWide' => 'reserva para todo el host',
 			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => 'solo para ${owner}',
 			'web.backups.title' => 'Copias de seguridad',
@@ -11304,6 +11320,8 @@ extension on TranslationsEs {
 			'web.backups.restart.configuredVia' => 'Configurado mediante:',
 			'web.backups.restart.envVar' => 'variable de entorno OPENDRAY_BACKUP_KEY',
 			'web.backups.restart.checkAgain' => 'Comprobar de nuevo',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.title' => 'Configurar copias de seguridad',
 			'web.backups.setup.description' => 'Elige una frase de contraseña maestra. opendray la usa para cifrar cada blob de copia de seguridad. <1>Si la pierdes, tus copias de seguridad serán irrecuperables</1>, así que guárdala en un gestor de contraseñas (Vaultwarden, 1Password, …) antes de continuar.',
 			'web.backups.setup.generate' => 'Generar',
@@ -11312,8 +11330,6 @@ extension on TranslationsEs {
 			'web.backups.setup.generateHint' => 'El servidor genera una frase de contraseña criptográficamente aleatoria y la muestra una sola vez. Debes copiarla antes de continuar, no hay forma de recuperarla.',
 			'web.backups.setup.pasteLabel' => 'Tu frase de contraseña',
 			'web.backups.setup.pastePlaceholder' => 'Al menos 20 caracteres',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.pasteHint' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas.',
 			'web.backups.setup.savesTo' => 'Se guarda en:',
 			'web.backups.setup.saving' => 'Guardando…',
@@ -11818,6 +11834,8 @@ extension on TranslationsEs {
 			'web.settings.account.tokenExpires' => 'El token caduca',
 			'web.settings.account.changeCredentials' => 'Cambiar credenciales',
 			'web.settings.changeCredentials.title' => 'Cambiar credenciales',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => 'Verifica tu contraseña actual y luego elige nuevas credenciales. Se revocarán todas las demás sesiones con sesión iniciada.',
 			'web.settings.changeCredentials.currentPassword' => 'Contraseña actual',
 			'web.settings.changeCredentials.newUsername' => 'Nuevo nombre de usuario',
@@ -11826,8 +11844,6 @@ extension on TranslationsEs {
 			'web.settings.changeCredentials.confirm' => 'Confirmar nueva contraseña',
 			'web.settings.changeCredentials.errorTooShort' => 'La nueva contraseña debe tener al menos 8 caracteres.',
 			'web.settings.changeCredentials.errorMismatch' => 'La nueva contraseña y la confirmación no coinciden.',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.errorWrongPassword' => 'La contraseña actual es incorrecta.',
 			'web.settings.changeCredentials.cancel' => 'Cancelar',
 			'web.settings.changeCredentials.update' => 'Actualizar',
@@ -12320,7 +12336,7 @@ extension on TranslationsEs {
 			'web.database.dialog.passwordKept' => 'sin cambios — déjalo vacío para conservarla',
 			'web.database.dialog.sslMode' => 'Modo SSL',
 			'web.database.dialog.readOnly' => 'Solo lectura (bloquear escrituras desde esta conexión)',
-			'web.database.dialog.superuserWarning' => 'Este usuario es superusuario (o el administrador linivek). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.',
+			'web.database.dialog.superuserWarning' => 'Este usuario es superusuario (o el propietario de la base de datos). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.',
 			'web.database.dialog.test' => 'Probar',
 			'web.database.dialog.save' => 'Guardar',
 			'web.database.dialog.testFailed' => 'La prueba de conexión falló',
@@ -12332,6 +12348,8 @@ extension on TranslationsEs {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => 'Archivo de base de datos',
 			'web.database.dialog.filePathHint' => 'Ruta a un archivo SQLite, dentro del directorio del proyecto.',
@@ -12340,8 +12358,6 @@ extension on TranslationsEs {
 			'web.database.tree.noSchemas' => 'No hay esquemas visibles para este usuario',
 			'web.database.row.insertTitle' => 'Insertar fila',
 			'web.database.row.editTitle' => 'Editar fila',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.row.setNull' => 'poner NULL',
 			'web.database.row.save' => 'Guardar',
 			'web.database.row.savedInsert' => 'Fila insertada',
@@ -12846,6 +12862,8 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.extractBtn' => 'Leer del proyecto',
 			'sessions.inspector.canvas.showcaseBtn' => 'Ver como lienzo',
 			'sessions.inspector.canvas.designTaskSent' => 'Enviado al agente: mira la sesión.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.title' => 'Nueva session',
 			'sessions.spawnSheet.errorRequired' => 'El proveedor y el directorio de trabajo son obligatorios',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'No se pudo crear la session: ${error}',
@@ -12854,8 +12872,6 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.providerLabel' => 'Proveedor',
 			'sessions.spawnSheet.disabledSuffix' => ' (desactivado)',
 			'sessions.spawnSheet.cwdLabel' => 'Directorio de trabajo',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => 'Ruta absoluta en el host del gateway.',
 			'sessions.spawnSheet.browse' => 'Examinar',
@@ -13360,6 +13376,8 @@ extension on TranslationsEs {
 			'backups.restore.auditNotePlaceholder' => 'p. ej. recuperando de #INC-481',
 			'backups.restore.ownDbWarning' => 'Restaurar en la PROPIA base de datos de opendray reescribirá las filas que este gateway está sirviendo actualmente. Escribe "I understand" para confirmar.',
 			'backups.restore.confirmPlaceholder' => 'Escribe "I understand"',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restaurando…',
 			'backups.restore.preview' => 'Vista previa (simulación)',
@@ -13368,8 +13386,6 @@ extension on TranslationsEs {
 			'backups.restore.applyRestore' => 'Aplicar restauración',
 			'backups.restore.dryRunToast' => 'Simulación completada — revisa el plan y luego aplícalo',
 			'backups.restore.planTitle' => 'Plan de restauración (simulación — no se cambió nada)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
@@ -13542,7 +13558,7 @@ extension on TranslationsEs {
 			'githosts.form.tokenPreviewNone' => '(ninguno)',
 			'githosts.form.pausedSubtitle' => 'En pausa. Las sessions omiten este host.',
 			'githosts.form.ownerLabel' => 'Propietario (opcional)',
-			'githosts.form.ownerHint' => 'Opendray',
+			'githosts.form.ownerHint' => 'my-org',
 			'githosts.form.ownerHelperHostWide' => 'Vacío = todo el host: se usa en cada repo de este host sin entrada propia.',
 			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/… Los demás propietarios recurren a la entrada de todo el host.',
 			'githosts.deleteBody' => ({required Object host}) => 'Elimina la credencial. Las sessions que intenten listar PRs de ${host} recurrirán a la API sin autenticar.',
@@ -13874,6 +13890,8 @@ extension on TranslationsEs {
 			'memory.rank.confidenceMultiplier' => 'Multiplicador por confianza',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Cerrar',
+			_ => null,
+		} ?? switch (path) {
 			'memory.kNew' => 'Nuevo',
 			'memory.searchHint' => 'Buscar…',
 			'memory.projectLabel' => 'Proyecto',
@@ -13882,8 +13900,6 @@ extension on TranslationsEs {
 			'memory.copyTooltip' => 'Copiar texto',
 			'memory.deleteAllConfirm.title' => '¿Eliminar todas las memorias de este ámbito?',
 			'memory.deleteAllConfirm.deleteAll' => 'Eliminar todas',
-			_ => null,
-		} ?? switch (path) {
 			'memory.deletedSnackOne' => ({required Object n}) => 'Se eliminó ${n} elemento de memoria',
 			'memory.deletedSnackOther' => ({required Object n}) => 'Se eliminaron ${n} elementos de memoria',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Error al eliminar en bloque: ${error}',

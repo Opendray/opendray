@@ -5174,8 +5174,8 @@ class TranslationsGithostsFormEn {
 	/// en: 'Owner (optional)'
 	String get ownerLabel => 'Owner (optional)';
 
-	/// en: 'Opendray'
-	String get ownerHint => 'Opendray';
+	/// en: 'my-org'
+	String get ownerHint => 'my-org';
 
 	/// en: 'Empty = host-wide: used for every repo on this host without its own entry.'
 	String get ownerHelperHostWide => 'Empty = host-wide: used for every repo on this host without its own entry.';
@@ -11836,8 +11836,8 @@ class TranslationsWebDatabaseDialogEn {
 	/// en: 'Read-only (block writes from this connection)'
 	String get readOnly => 'Read-only (block writes from this connection)';
 
-	/// en: 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.'
-	String get superuserWarning => 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.';
+	/// en: 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.'
+	String get superuserWarning => 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.';
 
 	/// en: 'Test'
 	String get test => 'Test';
@@ -16211,14 +16211,38 @@ class TranslationsWebPluginsGitHostsDialogEn {
 	/// en: 'Owner (optional)'
 	String get ownerLabel => 'Owner (optional)';
 
-	/// en: 'Opendray'
-	String get ownerPlaceholder => 'Opendray';
+	/// en: 'my-org'
+	String get ownerPlaceholder => 'my-org';
 
 	/// en: 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.'
 	String get ownerHintHostWide => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.';
 
 	/// en: 'Used only for {host}/{owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.'
 	String ownerHintScoped({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.';
+
+	/// en: 'Verify this credential'
+	String get verifyLabel => 'Verify this credential';
+
+	/// en: 'Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token's permissions are invisible from here, and the forge's own error names the wrong one.'
+	String get verifyHint => 'Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token\'s permissions are invisible from here, and the forge\'s own error names the wrong one.';
+
+	/// en: 'owner/repo (optional)'
+	String get verifyRepoPlaceholder => 'owner/repo (optional)';
+
+	/// en: 'Verify'
+	String get verifyButton => 'Verify';
+
+	/// en: 'Checking…'
+	String get verifying => 'Checking…';
+
+	/// en: 'Authenticated as {login}'
+	String verifyLogin({required Object login}) => 'Authenticated as ${login}';
+
+	/// en: 'can read {repo}'
+	String verifyRepoOk({required Object repo}) => 'can read ${repo}';
+
+	/// en: 'CANNOT read {repo}'
+	String verifyRepoFail({required Object repo}) => 'CANNOT read ${repo}';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -20108,9 +20132,17 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
-			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'Opendray',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.',
+			'web.plugins.gitHosts.dialog.verifyLabel' => 'Verify this credential',
+			'web.plugins.gitHosts.dialog.verifyHint' => 'Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token\'s permissions are invisible from here, and the forge\'s own error names the wrong one.',
+			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo (optional)',
+			'web.plugins.gitHosts.dialog.verifyButton' => 'Verify',
+			'web.plugins.gitHosts.dialog.verifying' => 'Checking…',
+			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Authenticated as ${login}',
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'can read ${repo}',
+			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'CANNOT read ${repo}',
 			'web.plugins.gitHosts.scopeHostWide' => 'host-wide fallback',
 			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => 'only for ${owner}',
 			'web.backups.title' => 'Backups',
@@ -20132,6 +20164,8 @@ extension on Translations {
 			'web.backups.restart.configuredVia' => 'Configured via:',
 			'web.backups.restart.envVar' => 'OPENDRAY_BACKUP_KEY env var',
 			'web.backups.restart.checkAgain' => 'Check again',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.title' => 'Set up backups',
 			'web.backups.setup.description' => 'Choose a master passphrase. opendray uses it to encrypt every backup blob. <1>Lose it and your backups become unrecoverable</1>, so save it in a password manager (Vaultwarden, 1Password, …) before continuing.',
 			'web.backups.setup.generate' => 'Generate',
@@ -20140,8 +20174,6 @@ extension on Translations {
 			'web.backups.setup.generateHint' => 'Server generates a cryptographically random passphrase and shows it once. You must copy it before continuing — there is no recovery path.',
 			'web.backups.setup.pasteLabel' => 'Your passphrase',
 			'web.backups.setup.pastePlaceholder' => 'At least 20 characters',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.pasteHint' => 'Recommended: 40+ characters from a password manager.',
 			'web.backups.setup.savesTo' => 'Saves to:',
 			'web.backups.setup.saving' => 'Saving…',
@@ -20646,6 +20678,8 @@ extension on Translations {
 			'web.settings.account.tokenExpires' => 'Token expires',
 			'web.settings.account.changeCredentials' => 'Change credentials',
 			'web.settings.changeCredentials.title' => 'Change credentials',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.',
 			'web.settings.changeCredentials.currentPassword' => 'Current password',
 			'web.settings.changeCredentials.newUsername' => 'New username',
@@ -20654,8 +20688,6 @@ extension on Translations {
 			'web.settings.changeCredentials.confirm' => 'Confirm new password',
 			'web.settings.changeCredentials.errorTooShort' => 'New password must be at least 8 characters.',
 			'web.settings.changeCredentials.errorMismatch' => 'New password and confirmation don\'t match.',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.errorWrongPassword' => 'Current password is wrong.',
 			'web.settings.changeCredentials.cancel' => 'Cancel',
 			'web.settings.changeCredentials.update' => 'Update',
@@ -21148,7 +21180,7 @@ extension on Translations {
 			'web.database.dialog.passwordKept' => 'unchanged — leave blank to keep',
 			'web.database.dialog.sslMode' => 'SSL mode',
 			'web.database.dialog.readOnly' => 'Read-only (block writes from this connection)',
-			'web.database.dialog.superuserWarning' => 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.',
+			'web.database.dialog.superuserWarning' => 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.',
 			'web.database.dialog.test' => 'Test',
 			'web.database.dialog.save' => 'Save',
 			'web.database.dialog.testFailed' => 'Connection test failed',
@@ -21160,6 +21192,8 @@ extension on Translations {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => 'Database file',
 			'web.database.dialog.filePathHint' => 'Path to a SQLite file, inside the project directory.',
@@ -21168,8 +21202,6 @@ extension on Translations {
 			'web.database.tree.noSchemas' => 'No schemas visible to this user',
 			'web.database.row.insertTitle' => 'Insert row',
 			'web.database.row.editTitle' => 'Edit row',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.row.setNull' => 'set NULL',
 			'web.database.row.save' => 'Save',
 			'web.database.row.savedInsert' => 'Row inserted',
@@ -21674,6 +21706,8 @@ extension on Translations {
 			'sessions.inspector.canvas.extractBtn' => 'Read from project',
 			'sessions.inspector.canvas.showcaseBtn' => 'Show as canvas',
 			'sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -21682,8 +21716,6 @@ extension on Translations {
 			'sessions.spawnSheet.providerLabel' => 'Provider',
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
@@ -22188,6 +22220,8 @@ extension on Translations {
 			'backups.restore.auditNotePlaceholder' => 'e.g. recovering from #INC-481',
 			'backups.restore.ownDbWarning' => 'Restoring into opendray\'s OWN database will rewrite the rows this gateway is currently serving. Type "I understand" to confirm.',
 			'backups.restore.confirmPlaceholder' => 'Type "I understand"',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restoring…',
 			'backups.restore.preview' => 'Preview (dry run)',
@@ -22196,8 +22230,6 @@ extension on Translations {
 			'backups.restore.applyRestore' => 'Apply restore',
 			'backups.restore.dryRunToast' => 'Dry run complete — review the plan, then apply',
 			'backups.restore.planTitle' => 'Restore plan (dry run — nothing changed)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.planDump' => ({required Object size}) => 'Database dump: ${size}',
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
@@ -22370,7 +22402,7 @@ extension on Translations {
 			'githosts.form.tokenPreviewNone' => '(none)',
 			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
 			'githosts.form.ownerLabel' => 'Owner (optional)',
-			'githosts.form.ownerHint' => 'Opendray',
+			'githosts.form.ownerHint' => 'my-org',
 			'githosts.form.ownerHelperHostWide' => 'Empty = host-wide: used for every repo on this host without its own entry.',
 			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… Other owners fall back to the host-wide entry.',
 			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
@@ -22702,6 +22734,8 @@ extension on Translations {
 			'memory.rank.confidenceMultiplier' => 'Confidence multiplier',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Close',
+			_ => null,
+		} ?? switch (path) {
 			'memory.kNew' => 'New',
 			'memory.searchHint' => 'Search…',
 			'memory.projectLabel' => 'Project',
@@ -22710,8 +22744,6 @@ extension on Translations {
 			'memory.copyTooltip' => 'Copy text',
 			'memory.deleteAllConfirm.title' => 'Delete every memory in this scope?',
 			'memory.deleteAllConfirm.deleteAll' => 'Delete all',
-			_ => null,
-		} ?? switch (path) {
 			'memory.deletedSnackOne' => ({required Object n}) => 'Deleted ${n} memory item',
 			'memory.deletedSnackOther' => ({required Object n}) => 'Deleted ${n} memory items',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Bulk delete failed: ${error}',

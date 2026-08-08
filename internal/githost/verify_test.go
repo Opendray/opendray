@@ -18,11 +18,11 @@ func TestVerifyEndpoints(t *testing.T) {
 		{
 			name:         "github.com",
 			host:         Host{Kind: KindGitHub, Host: "github.com", Token: "t"},
-			repo:         "linivek/HomeLabDoc",
+			repo:         "octo-org/handbook",
 			wantAuth:     "Bearer t",
 			wantWhoami:   "https://api.github.com/user",
-			wantRepo:     "https://api.github.com/repos/linivek/HomeLabDoc",
-			wantContents: "https://api.github.com/repos/linivek/HomeLabDoc/contents/",
+			wantRepo:     "https://api.github.com/repos/octo-org/handbook",
+			wantContents: "https://api.github.com/repos/octo-org/handbook/contents/",
 		},
 		{
 			name:         "github enterprise serves /api/v3 from its own host",
@@ -36,11 +36,11 @@ func TestVerifyEndpoints(t *testing.T) {
 		{
 			name:         "gitea uses the token scheme, not Bearer",
 			host:         Host{Kind: KindGitea, Host: "tea.example", Token: "t"},
-			repo:         "linivek/notes",
+			repo:         "octo-org/notes",
 			wantAuth:     "token t",
 			wantWhoami:   "https://tea.example/api/v1/user",
-			wantRepo:     "https://tea.example/api/v1/repos/linivek/notes",
-			wantContents: "https://tea.example/api/v1/repos/linivek/notes/contents",
+			wantRepo:     "https://tea.example/api/v1/repos/octo-org/notes",
+			wantContents: "https://tea.example/api/v1/repos/octo-org/notes/contents",
 		},
 		{
 			name:         "gitlab addresses projects by url-encoded path",

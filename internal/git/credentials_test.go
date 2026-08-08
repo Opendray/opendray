@@ -77,17 +77,17 @@ func TestAuthArgs(t *testing.T) {
 		wantUntouch bool
 	}{
 		{
-			name: "https with a registered credential", remote: "https://github.com/linivek/HomeLabDoc.git",
+			name: "https with a registered credential", remote: "https://github.com/octo-org/handbook.git",
 			resolverOK: true, wantWipe: true, wantHelper: true,
-			wantHost: "github.com", wantOwner: "linivek",
+			wantHost: "github.com", wantOwner: "octo-org",
 		},
 		{
 			name: "https with NO credential still blanks inherited helpers",
 			// Without the wipe, git would fall through to osxkeychain /
 			// ~/.netrc and authenticate as somebody else.
-			remote:     "https://github.com/linivek/HomeLabDoc.git",
+			remote:     "https://github.com/octo-org/handbook.git",
 			resolverOK: false, wantWipe: true, wantHelper: false,
-			wantHost: "github.com", wantOwner: "linivek",
+			wantHost: "github.com", wantOwner: "octo-org",
 		},
 		{
 			name:       "owner is passed through so the right row is chosen",
@@ -97,9 +97,9 @@ func TestAuthArgs(t *testing.T) {
 		},
 		{
 			name:       "self-hosted with a port",
-			remote:     "https://tea.linivek.online:3000/linivek/notes.git",
+			remote:     "https://gitea.example.com:3000/octo-org/notes.git",
 			resolverOK: true, wantWipe: true, wantHelper: true,
-			wantHost: "tea.linivek.online:3000", wantOwner: "linivek",
+			wantHost: "gitea.example.com:3000", wantOwner: "octo-org",
 		},
 		{
 			name:       "ssh remote is left to the agent",
@@ -141,7 +141,7 @@ func TestAuthArgs_NoResolverOrNoRepo(t *testing.T) {
 	base := []string{"push", "origin", "main"}
 
 	// No resolver wired: previous behaviour, untouched.
-	dir := initRepo(t, "https://github.com/linivek/x.git")
+	dir := initRepo(t, "https://github.com/octo-org/x.git")
 	if got := authArgs(context.Background(), nil, dir, base...); !slices.Equal(got, base) {
 		t.Fatalf("nil resolver modified args: %v", got)
 	}

@@ -17,8 +17,8 @@ func TestParseRemote(t *testing.T) {
 	}{
 		{
 			name:       "https with .git",
-			raw:        "https://github.com/linivek/HomeLabDoc.git",
-			wantScheme: "https", wantHost: "github.com", wantOwner: "linivek",
+			raw:        "https://github.com/octo-org/handbook.git",
+			wantScheme: "https", wantHost: "github.com", wantOwner: "octo-org",
 		},
 		{
 			name:       "https without .git",
@@ -27,8 +27,8 @@ func TestParseRemote(t *testing.T) {
 		},
 		{
 			name:       "https with trailing slash",
-			raw:        "https://github.com/linivek/HomeLabDoc.git/",
-			wantScheme: "https", wantHost: "github.com", wantOwner: "linivek",
+			raw:        "https://github.com/octo-org/handbook.git/",
+			wantScheme: "https", wantHost: "github.com", wantOwner: "octo-org",
 		},
 		{
 			name:       "scp-like ssh",
@@ -37,13 +37,13 @@ func TestParseRemote(t *testing.T) {
 		},
 		{
 			name:       "ssh:// url",
-			raw:        "ssh://git@tea.linivek.online:2222/linivek/notes.git",
-			wantScheme: "ssh", wantHost: "tea.linivek.online:2222", wantOwner: "linivek",
+			raw:        "ssh://git@gitea.example.com:2222/octo-org/notes.git",
+			wantScheme: "ssh", wantHost: "gitea.example.com:2222", wantOwner: "octo-org",
 		},
 		{
 			name:       "self-hosted https with port",
-			raw:        "https://tea.linivek.online:3000/linivek/notes.git",
-			wantScheme: "https", wantHost: "tea.linivek.online:3000", wantOwner: "linivek",
+			raw:        "https://gitea.example.com:3000/octo-org/notes.git",
+			wantScheme: "https", wantHost: "gitea.example.com:3000", wantOwner: "octo-org",
 		},
 		{
 			name:       "nested group path takes the FIRST segment",
