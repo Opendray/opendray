@@ -514,12 +514,28 @@ type AuthInfo struct {
 	RemoteURL string `json:"remote_url,omitempty"`
 	Scheme    string `json:"scheme,omitempty"` // "ssh" | "https" | "git" | "http"
 	Host      string `json:"host,omitempty"`
+	// RemoteOwner is the account/org the remote URL points at. Reported
+	// so the panel can say which credential the remote SELECTS, not
+	// merely which host it lives on.
+	RemoteOwner string `json:"remote_owner,omitempty"`
 	// For HTTPS remotes: report whether opendray will inject a token
-	// from the matching git_hosts row, and where it came from.
-	UsingToken   bool   `json:"using_token,omitempty"`
-	TokenSource  string `json:"token_source,omitempty"` // "git_hosts:<host>"
-	TokenMissing bool   `json:"token_missing,omitempty"`
-	HelpfulHint  string `json:"helpful_hint,omitempty"`
+	// from the matching git_hosts row, and WHICH row that is.
+	UsingToken  bool   `json:"using_token,omitempty"`
+	TokenSource string `json:"token_source,omitempty"` // "git_hosts:<host>[/<owner>]"
+	// TokenOwner is the owner the resolved credential is scoped to, ""
+	// for the host-wide one.
+	TokenOwner string `json:"token_owner,omitempty"`
+	// TokenName is that row's display name, so several credentials on
+	// one host are distinguishable in the panel.
+	TokenName string `json:"token_name,omitempty"`
+	// TokenIsFallback is true when the remote's owner has no credential
+	// of its own and the host-wide one is being used instead. That is a
+	// legitimate setup AND the shape of the mistake where a token
+	// silently authenticates as the wrong identity, so it is stated
+	// rather than left for the operator to infer from a 403.
+	TokenIsFallback bool   `json:"token_is_fallback,omitempty"`
+	TokenMissing    bool   `json:"token_missing,omitempty"`
+	HelpfulHint     string `json:"helpful_hint,omitempty"`
 }
 
 func (h *Handlers) auth(w http.ResponseWriter, r *http.Request) {
@@ -534,19 +550,29 @@ func (h *Handlers) auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	urlStr := strings.TrimSpace(string(rawURL))
-	scheme, host := parseRemote(urlStr)
+	scheme, host, owner := parseRemote(urlStr)
 	info := AuthInfo{
-		HasRemote: true,
-		RemoteURL: urlStr,
-		Scheme:    scheme,
-		Host:      host,
+		HasRemote:   true,
+		RemoteURL:   urlStr,
+		Scheme:      scheme,
+		Host:        host,
+		RemoteOwner: owner,
 	}
 	switch scheme {
 	case "https", "http":
 		if h.hosts != nil && host != "" {
-			if hv, err := h.hosts.GetByHost(ctx, host); err == nil && hv.Token != "" {
+			if hv, err := h.hosts.GetForRepo(ctx, host, owner); err == nil && hv.Token != "" {
 				info.UsingToken = true
+				// Name the row that will actually be used, so a wrong
+				// identity is visible here instead of surfacing later
+				// as an unexplained 403.
 				info.TokenSource = "git_hosts:" + host
+				if hv.Owner != "" {
+					info.TokenSource += "/" + hv.Owner
+				}
+				info.TokenOwner = hv.Owner
+				info.TokenName = hv.Name
+				info.TokenIsFallback = hv.Owner == "" && owner != ""
 			} else {
 				info.TokenMissing = true
 				info.HelpfulHint =
@@ -582,16 +608,22 @@ func (h *Handlers) argsWithAuth(ctx context.Context, gitArgs ...string) ([]strin
 		// surface a clearer message.
 		return gitArgs, nil
 	}
-	scheme, host := parseRemote(strings.TrimSpace(string(rawURL)))
+	scheme, host, owner := parseRemote(strings.TrimSpace(string(rawURL)))
 	if scheme != "https" && scheme != "http" {
 		return gitArgs, nil
 	}
 	if host == "" {
 		return gitArgs, nil
 	}
-	hv, err := h.hosts.GetByHost(ctx, host)
+	hv, err := h.hosts.GetForRepo(ctx, host, owner)
 	if err != nil || hv.Token == "" {
-		return gitArgs, nil
+		// No credential registered here — but still blank the host's
+		// ambient helpers. Letting an osxkeychain entry or a ~/.netrc
+		// answer instead means the sync authenticates as an identity
+		// the operator never chose in opendray, and fails later with an
+		// error describing a token they don't remember configuring.
+		// Failing as "no credentials" is the honest outcome.
+		return append([]string{"-c", "credential.helper="}, gitArgs...), nil
 	}
 	// Inline credential helper: an embedded `!sh -c '...'` that prints
 	// the username + password git asks for. Quoting carefully because
@@ -633,26 +665,40 @@ func shellEscape(s string) string {
 // HTTPS (`https://host/...`), HTTP, SSH (`ssh://...`), and the SCP
 // short form (`user@host:path`). Returns empty strings on unknown
 // shapes.
-func parseRemote(raw string) (scheme, host string) {
+// parseRemote splits a remote URL into scheme, host and OWNER — the
+// first path segment. The owner is what selects between several
+// credentials registered for the same host (a personal token and an org
+// token both live under github.com), so resolving without it hands the
+// vault whichever credential happens to be the host-wide fallback.
+func parseRemote(raw string) (scheme, host, owner string) {
 	if raw == "" {
-		return "", ""
+		return "", "", ""
 	}
 	if strings.HasPrefix(raw, "git@") || (strings.Contains(raw, "@") && strings.Contains(raw, ":") && !strings.Contains(raw, "://")) {
-		// scp-like: user@host:path
+		// scp-like: user@host:owner/repo.git
 		rest := raw
 		if i := strings.Index(rest, "@"); i >= 0 {
 			rest = rest[i+1:]
 		}
 		if i := strings.Index(rest, ":"); i >= 0 {
-			return "ssh", rest[:i]
+			return "ssh", rest[:i], firstSegment(rest[i+1:])
 		}
-		return "ssh", ""
+		return "ssh", "", ""
 	}
 	u, err := url.Parse(raw)
 	if err != nil || u.Host == "" {
-		return "", ""
+		return "", "", ""
 	}
-	return u.Scheme, u.Host
+	return u.Scheme, u.Host, firstSegment(u.Path)
+}
+
+// firstSegment returns the leading path element ("" when there is none).
+func firstSegment(path string) string {
+	path = strings.TrimPrefix(path, "/")
+	if i := strings.Index(path, "/"); i >= 0 {
+		return path[:i]
+	}
+	return path
 }
 
 func (h *Handlers) log_(w http.ResponseWriter, r *http.Request) {

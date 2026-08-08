@@ -643,6 +643,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	fsHandlers := fsapi.NewHandlers(log)
 	gitHandlers := gitapi.NewHandlers(log)
 	gitHostSvc := githost.NewService(st.Pool(), log)
+	// opendray's Git-hosts entries decide how an HTTPS push
+	// authenticates — not the host's keychain. See internal/git/
+	// credentials.go for why the inherited helpers are neutralised even
+	// when nothing is registered for the remote.
+	gitHandlers.SetTokenResolver(gitHostSvc)
 	gitHostHandlers := githost.NewHandlers(gitHostSvc, log)
 	customTaskSvc := customtask.NewService(st.Pool(), log)
 	customTaskHandlers := customtask.NewHandlers(customTaskSvc, log)

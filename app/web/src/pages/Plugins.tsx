@@ -41,6 +41,8 @@ import {
   listGitHosts,
   createGitHost,
   updateGitHost,
+  verifyGitHost,
+  type GitHostVerifyResult,
   deleteGitHost,
   type GitHost,
   type GitHostKind,
@@ -1671,12 +1673,18 @@ function GitHostsSection() {
                   className="border-t border-border hover:bg-card/40"
                 >
                   <td className="px-3 py-2">
-                    <div className="font-medium font-mono">{h.host}</div>
-                    {h.name && (
-                      <div className="text-[10px] text-muted-foreground/70">
-                        {h.name}
-                      </div>
-                    )}
+                    <div className="font-medium font-mono">
+                      {h.host}
+                      {h.owner && (
+                        <span className="text-accent">/{h.owner}</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground/70">
+                      {h.name && <span>{h.name} · </span>}
+                      {h.owner
+                        ? t('web.plugins.gitHosts.scopeOwner', { owner: h.owner })
+                        : t('web.plugins.gitHosts.scopeHostWide')}
+                    </div>
                   </td>
                   <td className="px-3 py-2 font-mono">{h.kind}</td>
                   <td className="px-3 py-2 font-mono text-muted-foreground">
@@ -1769,6 +1777,9 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
   const qc = useQueryClient()
   const [kind, setKind] = useState<GitHostKind>(host?.kind ?? 'github')
   const [hostName, setHostName] = useState(host?.host ?? '')
+  const [owner, setOwner] = useState(host?.owner ?? '')
+  const [verifyRepo, setVerifyRepo] = useState('')
+  const [verifyResult, setVerifyResult] = useState<GitHostVerifyResult | null>(null)
   const [name, setName] = useState(host?.name ?? '')
   const [token, setToken] = useState('')
   const [enabled, setEnabled] = useState(host?.enabled ?? true)
@@ -1778,13 +1789,15 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
   useEffect(() => {
     setKind(host?.kind ?? 'github')
     setHostName(host?.host ?? '')
+    setOwner(host?.owner ?? '')
+    setVerifyResult(null)
     setName(host?.name ?? '')
     setToken('')
     setEnabled(host?.enabled ?? true)
   }, [host?.id])
 
   const create = useMutation({
-    mutationFn: () => createGitHost({ kind, host: hostName, name, token }),
+    mutationFn: () => createGitHost({ kind, host: hostName, owner, name, token }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['git-hosts'] })
       toast.success(t('web.plugins.gitHosts.dialog.addedToast'))
@@ -1801,6 +1814,7 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
       updateGitHost(host!.id, {
         kind,
         host: hostName,
+        owner,
         name,
         enabled,
         token: token || undefined,
@@ -1814,6 +1828,14 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
       toast.error(t('web.plugins.gitHosts.dialog.updateFailedToast'), {
         description: err.message,
       }),
+  })
+
+  // Verification asks the forge, so it needs a SAVED row: the token
+  // lives server-side and is never sent back to the browser.
+  const verify = useMutation({
+    mutationFn: () => verifyGitHost(host!.id, verifyRepo.trim() || undefined),
+    onSuccess: (res) => setVerifyResult(res),
+    onError: (err: Error) => setVerifyResult({ owner_matches: true, error: err.message }),
   })
 
   const submit = (e: FormEvent) => {
@@ -1877,6 +1899,95 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
               />
             </div>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="owner">
+              {t('web.plugins.gitHosts.dialog.ownerLabel')}
+            </Label>
+            <Input
+              id="owner"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              placeholder={t('web.plugins.gitHosts.dialog.ownerPlaceholder')}
+              className="font-mono"
+            />
+            <p className="text-[11px] text-muted-foreground/80 leading-snug">
+              {owner
+                ? t('web.plugins.gitHosts.dialog.ownerHintScoped', {
+                    host: hostName || 'host',
+                    owner,
+                  })
+                : t('web.plugins.gitHosts.dialog.ownerHintHostWide')}
+            </p>
+          </div>
+          {mode === 'edit' && host && (
+            <div className="space-y-1.5 rounded-md border border-border bg-card/30 p-2.5">
+              <Label className="text-[11px]">
+                {t('web.plugins.gitHosts.dialog.verifyLabel')}
+              </Label>
+              <p className="text-[11px] text-muted-foreground/80 leading-snug">
+                {t('web.plugins.gitHosts.dialog.verifyHint')}
+              </p>
+              <div className="flex gap-1.5">
+                <Input
+                  value={verifyRepo}
+                  onChange={(e) => setVerifyRepo(e.target.value)}
+                  placeholder={t('web.plugins.gitHosts.dialog.verifyRepoPlaceholder')}
+                  className="h-8 font-mono text-[11px]"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0"
+                  disabled={verify.isPending}
+                  onClick={() => verify.mutate()}
+                >
+                  {verify.isPending
+                    ? t('web.plugins.gitHosts.dialog.verifying')
+                    : t('web.plugins.gitHosts.dialog.verifyButton')}
+                </Button>
+              </div>
+              {verifyResult && (
+                <div
+                  className={cn(
+                    'rounded border px-2 py-1.5 text-[11px] leading-relaxed',
+                    verifyResult.error ||
+                      !verifyResult.owner_matches ||
+                      (verifyResult.repo && !verifyResult.reachable)
+                      ? 'border-state-idle/40 bg-state-idle/5 text-state-idle'
+                      : 'border-state-running/40 bg-state-running/5 text-state-running',
+                  )}
+                >
+                  {verifyResult.error ? (
+                    verifyResult.error
+                  ) : (
+                    <>
+                      {t('web.plugins.gitHosts.dialog.verifyLogin', {
+                        login: verifyResult.login,
+                      })}
+                      {verifyResult.repo && (
+                        <>
+                          {' · '}
+                          {verifyResult.reachable
+                            ? t('web.plugins.gitHosts.dialog.verifyRepoOk', {
+                                repo: verifyResult.repo,
+                              })
+                            : t('web.plugins.gitHosts.dialog.verifyRepoFail', {
+                                repo: verifyResult.repo,
+                              })}
+                        </>
+                      )}
+                    </>
+                  )}
+                  {verifyResult.hint && (
+                    <div className="mt-1 text-muted-foreground/80">
+                      {verifyResult.hint}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="name">
               {t('web.plugins.gitHosts.dialog.displayNameLabel')}

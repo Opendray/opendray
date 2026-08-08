@@ -37,7 +37,16 @@ const (
 
 type Handlers struct {
 	log *slog.Logger
+	// creds resolves the operator-configured credential for a remote.
+	// Optional: nil leaves HTTPS auth to git's own configuration, the
+	// behaviour before opendray's Git hosts became authoritative.
+	creds TokenResolver
 }
+
+// SetTokenResolver makes opendray's Git-hosts entries authoritative for
+// HTTPS network operations. Wired at boot; see credentials.go for why
+// inherited helpers are neutralised even when nothing is registered.
+func (h *Handlers) SetTokenResolver(r TokenResolver) { h.creds = r }
 
 func NewHandlers(log *slog.Logger) *Handlers {
 	if log == nil {

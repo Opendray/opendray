@@ -23,6 +23,7 @@ import {
   listGitIssues,
 } from '@/lib/githost'
 import { cn } from '@/lib/utils'
+import { CredentialNote } from './CredentialNote'
 
 interface IssuesSectionProps {
   cwd: string
@@ -91,6 +92,9 @@ export function IssuesSection({ cwd }: IssuesSectionProps) {
         <div className="text-[11px] text-state-failed px-1 py-1 break-words">
           {data.error}
         </div>
+      )}
+      {data && !data.need_token && (
+        <CredentialNote remote={data.remote} failed={!!data.error} />
       )}
       {data && data.need_token && (
         <NeedTokenHint

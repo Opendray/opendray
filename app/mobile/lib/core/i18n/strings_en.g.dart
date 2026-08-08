@@ -5170,6 +5170,18 @@ class TranslationsGithostsFormEn {
 
 	/// en: 'Paused — sessions skip this host.'
 	String get pausedSubtitle => 'Paused — sessions skip this host.';
+
+	/// en: 'Owner (optional)'
+	String get ownerLabel => 'Owner (optional)';
+
+	/// en: 'my-org'
+	String get ownerHint => 'my-org';
+
+	/// en: 'Empty = host-wide: used for every repo on this host without its own entry.'
+	String get ownerHelperHostWide => 'Empty = host-wide: used for every repo on this host without its own entry.';
+
+	/// en: 'Used only for {host}/{owner}/… Other owners fall back to the host-wide entry.'
+	String ownerHelperScoped({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… Other owners fall back to the host-wide entry.';
 }
 
 // Path: channels.configDialog
@@ -6604,6 +6616,7 @@ class TranslationsWebSessionsInspectorEn {
 	late final TranslationsWebSessionsInspectorVaultPanelEn vaultPanel = TranslationsWebSessionsInspectorVaultPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCortexPanelEn cortexPanel = TranslationsWebSessionsInspectorCortexPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCanvasEn canvas = TranslationsWebSessionsInspectorCanvasEn.internal(_root);
+	late final TranslationsWebSessionsInspectorGitEn git = TranslationsWebSessionsInspectorGitEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -9495,8 +9508,8 @@ class TranslationsWebPluginsGitHostsEn {
 	/// en: 'Git hosts'
 	String get title => 'Git hosts';
 
-	/// en: 'One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.'
-	String get description => 'One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.';
+	/// en: 'Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host's ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.'
+	String get description => 'Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host\'s ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.';
 
 	/// en: 'Add host'
 	String get addHost => 'Add host';
@@ -9522,6 +9535,12 @@ class TranslationsWebPluginsGitHostsEn {
 	String get deleteFailedToast => 'Delete failed';
 
 	late final TranslationsWebPluginsGitHostsDialogEn dialog = TranslationsWebPluginsGitHostsDialogEn.internal(_root);
+
+	/// en: 'host-wide fallback'
+	String get scopeHostWide => 'host-wide fallback';
+
+	/// en: 'only for {owner}'
+	String scopeOwner({required Object owner}) => 'only for ${owner}';
 }
 
 // Path: web.backups.tabs
@@ -11817,8 +11836,8 @@ class TranslationsWebDatabaseDialogEn {
 	/// en: 'Read-only (block writes from this connection)'
 	String get readOnly => 'Read-only (block writes from this connection)';
 
-	/// en: 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.'
-	String get superuserWarning => 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.';
+	/// en: 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.'
+	String get superuserWarning => 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.';
 
 	/// en: 'Test'
 	String get test => 'Test';
@@ -13022,6 +13041,12 @@ class TranslationsSessionsInspectorGitEn {
 
 	/// en: 'Log'
 	String get tabLog => 'Log';
+
+	/// en: 'Authenticated with the {scope} credential.'
+	String credentialUsed({required Object scope}) => 'Authenticated with the ${scope} credential.';
+
+	/// en: 'No credential for {owner} — using the host-wide {scope} one.'
+	String credentialFallback({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.';
 }
 
 // Path: sessions.inspector.tasks
@@ -14959,6 +14984,21 @@ class TranslationsWebSessionsInspectorCanvasEn {
 	String get designTaskFailed => 'Could not send the request';
 }
 
+// Path: web.sessions.inspector.git
+class TranslationsWebSessionsInspectorGitEn {
+	TranslationsWebSessionsInspectorGitEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Authenticated with the {scope} credential.'
+	String credentialUsed({required Object scope}) => 'Authenticated with the ${scope} credential.';
+
+	/// en: 'No credential for {owner} — using the host-wide {scope} one.'
+	String credentialFallback({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	TranslationsWebMemoryWorkersTasksGatekeeperEn.internal(this._root);
@@ -15556,8 +15596,8 @@ class TranslationsWebNotesVaultSyncAuthEn {
 	/// en: 'Authentication'
 	String get title => 'Authentication';
 
-	/// en: 'Will use the token stored for <1>{host}</1> in Plugins → Git hosts. ✓'
-	String httpsTokenOk({required Object host}) => 'Will use the token stored for <1>${host}</1> in Plugins → Git hosts. ✓';
+	/// en: 'Will use the token stored for <1>{scope}</1> in Plugins → Git hosts. ✓'
+	String httpsTokenOk({required Object scope}) => 'Will use the token stored for <1>${scope}</1> in Plugins → Git hosts. ✓';
 
 	/// en: 'HTTPS remote on <1>{host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.'
 	String httpsTokenMissing({required Object host}) => 'HTTPS remote on <1>${host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.';
@@ -15567,6 +15607,9 @@ class TranslationsWebNotesVaultSyncAuthEn {
 
 	/// en: '→ Configure git host token'
 	String get configureTokenLink => '→ Configure git host token';
+
+	/// en: 'No credential for {owner} — falling back to the host-wide one for {host}. Add an entry scoped to {owner} if it needs its own token.'
+	String httpsTokenFallback({required Object owner, required Object host}) => 'No credential for ${owner} — falling back to the host-wide one for ${host}. Add an entry scoped to ${owner} if it needs its own token.';
 }
 
 // Path: web.notes.vaultSync.autoSync
@@ -16164,6 +16207,42 @@ class TranslationsWebPluginsGitHostsDialogEn {
 
 	/// en: 'Update failed'
 	String get updateFailedToast => 'Update failed';
+
+	/// en: 'Owner (optional)'
+	String get ownerLabel => 'Owner (optional)';
+
+	/// en: 'my-org'
+	String get ownerPlaceholder => 'my-org';
+
+	/// en: 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.'
+	String get ownerHintHostWide => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.';
+
+	/// en: 'Used only for {host}/{owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.'
+	String ownerHintScoped({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.';
+
+	/// en: 'Verify this credential'
+	String get verifyLabel => 'Verify this credential';
+
+	/// en: 'Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token's permissions are invisible from here, and the forge's own error names the wrong one.'
+	String get verifyHint => 'Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token\'s permissions are invisible from here, and the forge\'s own error names the wrong one.';
+
+	/// en: 'owner/repo (optional)'
+	String get verifyRepoPlaceholder => 'owner/repo (optional)';
+
+	/// en: 'Verify'
+	String get verifyButton => 'Verify';
+
+	/// en: 'Checking…'
+	String get verifying => 'Checking…';
+
+	/// en: 'Authenticated as {login}'
+	String verifyLogin({required Object login}) => 'Authenticated as ${login}';
+
+	/// en: 'can read {repo}'
+	String verifyRepoOk({required Object repo}) => 'can read ${repo}';
+
+	/// en: 'CANNOT read {repo}'
+	String verifyRepoFail({required Object repo}) => 'CANNOT read ${repo}';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -18890,6 +18969,8 @@ extension on Translations {
 			'web.sessions.inspector.canvas.showcaseHint' => 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens',
 			'web.sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
 			'web.sessions.inspector.canvas.designTaskFailed' => 'Could not send the request',
+			'web.sessions.inspector.git.credentialUsed' => ({required Object scope}) => 'Authenticated with the ${scope} credential.',
+			'web.sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -19055,10 +19136,10 @@ extension on Translations {
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
-			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
-			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.',
@@ -19466,10 +19547,11 @@ extension on Translations {
 			'web.notes.vaultSync.conflict.resetDescription' => 'Local changes discarded; vault matches remote.',
 			'web.notes.vaultSync.conflict.resetFailedToast' => 'Reset failed',
 			'web.notes.vaultSync.auth.title' => 'Authentication',
-			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object host}) => 'Will use the token stored for <1>${host}</1> in Plugins → Git hosts. ✓',
+			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => 'Will use the token stored for <1>${scope}</1> in Plugins → Git hosts. ✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => 'HTTPS remote on <1>${host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.',
 			'web.notes.vaultSync.auth.ssh' => ({required Object host}) => 'SSH remote on <1>${host}</1>. Auth uses the gateway host\'s <3>~/.ssh/</3> (ssh-agent, identity file, host config). Verify with <5>ssh -T git@${host}</5> from the host shell.',
 			'web.notes.vaultSync.auth.configureTokenLink' => '→ Configure git host token',
+			'web.notes.vaultSync.auth.httpsTokenFallback' => ({required Object owner, required Object host}) => 'No credential for ${owner} — falling back to the host-wide one for ${host}. Add an entry scoped to ${owner} if it needs its own token.',
 			'web.notes.vaultSync.autoSync.loading' => 'Loading auto-sync settings…',
 			'web.notes.vaultSync.autoSync.title' => 'Auto-sync',
 			'web.notes.vaultSync.autoSync.on' => 'on',
@@ -19568,11 +19650,11 @@ extension on Translations {
 			'web.providers.detail.savedToast' => 'Provider config saved',
 			'web.providers.detail.saveFailedToast' => 'Save failed',
 			'web.providers.detail.toggleFailedToast' => 'Toggle failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'not installed',
 			'web.providers.detail.brokenCli' => 'Installed but not runnable',
@@ -20016,7 +20098,7 @@ extension on Translations {
 			'web.plugins.customTasks.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.customTasks.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.title' => 'Git hosts',
-			'web.plugins.gitHosts.description' => 'One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.',
+			'web.plugins.gitHosts.description' => 'Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host\'s ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.',
 			'web.plugins.gitHosts.addHost' => 'Add host',
 			'web.plugins.gitHosts.empty' => 'No git hosts configured.\nAdd one to enable the PR list in the inspector\'s Git tab.',
 			'web.plugins.gitHosts.columns.host' => 'Host',
@@ -20049,6 +20131,20 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Git host updated',
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
+			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
+			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.',
+			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.',
+			'web.plugins.gitHosts.dialog.verifyLabel' => 'Verify this credential',
+			'web.plugins.gitHosts.dialog.verifyHint' => 'Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token\'s permissions are invisible from here, and the forge\'s own error names the wrong one.',
+			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo (optional)',
+			'web.plugins.gitHosts.dialog.verifyButton' => 'Verify',
+			'web.plugins.gitHosts.dialog.verifying' => 'Checking…',
+			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Authenticated as ${login}',
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'can read ${repo}',
+			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'CANNOT read ${repo}',
+			'web.plugins.gitHosts.scopeHostWide' => 'host-wide fallback',
+			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => 'only for ${owner}',
 			'web.backups.title' => 'Backups',
 			'web.backups.subtitle' => 'Encrypted PostgreSQL dumps written to a pluggable target. Configure schedules + retention, or trigger one-off backups for a quick safety net.',
 			'web.backups.exportData' => 'Export data',
@@ -20068,6 +20164,8 @@ extension on Translations {
 			'web.backups.restart.configuredVia' => 'Configured via:',
 			'web.backups.restart.envVar' => 'OPENDRAY_BACKUP_KEY env var',
 			'web.backups.restart.checkAgain' => 'Check again',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.title' => 'Set up backups',
 			'web.backups.setup.description' => 'Choose a master passphrase. opendray uses it to encrypt every backup blob. <1>Lose it and your backups become unrecoverable</1>, so save it in a password manager (Vaultwarden, 1Password, …) before continuing.',
 			'web.backups.setup.generate' => 'Generate',
@@ -20085,8 +20183,6 @@ extension on Translations {
 			'web.backups.generated.description' => 'This is shown <1>once</1>. It will not be retrievable from opendray or anywhere else. Copy it into a password manager before continuing.',
 			'web.backups.generated.copy' => 'Copy',
 			'web.backups.generated.copiedToast' => 'Passphrase copied to clipboard',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => 'Copy failed — select and copy manually',
 			'web.backups.generated.savedTo' => 'Saved to:',
 			'web.backups.generated.ack' => 'I have saved this passphrase to my password manager',
@@ -20582,6 +20678,8 @@ extension on Translations {
 			'web.settings.account.tokenExpires' => 'Token expires',
 			'web.settings.account.changeCredentials' => 'Change credentials',
 			'web.settings.changeCredentials.title' => 'Change credentials',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => 'Verify your current password, then pick new credentials. All other signed-in sessions will be revoked.',
 			'web.settings.changeCredentials.currentPassword' => 'Current password',
 			'web.settings.changeCredentials.newUsername' => 'New username',
@@ -20599,8 +20697,6 @@ extension on Translations {
 			'web.settings.system.status' => 'Status',
 			'web.settings.system.version' => 'Version',
 			'web.settings.system.uptime' => 'Uptime',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.system.database' => 'Database',
 			'web.settings.system.reachable' => 'reachable',
 			'web.settings.system.unreachable' => 'unreachable',
@@ -21084,7 +21180,7 @@ extension on Translations {
 			'web.database.dialog.passwordKept' => 'unchanged — leave blank to keep',
 			'web.database.dialog.sslMode' => 'SSL mode',
 			'web.database.dialog.readOnly' => 'Read-only (block writes from this connection)',
-			'web.database.dialog.superuserWarning' => 'This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.',
+			'web.database.dialog.superuserWarning' => 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.',
 			'web.database.dialog.test' => 'Test',
 			'web.database.dialog.save' => 'Save',
 			'web.database.dialog.testFailed' => 'Connection test failed',
@@ -21096,6 +21192,8 @@ extension on Translations {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => 'Database file',
 			'web.database.dialog.filePathHint' => 'Path to a SQLite file, inside the project directory.',
@@ -21113,8 +21211,6 @@ extension on Translations {
 			'web.database.grid.refresh' => 'Refresh',
 			'web.database.grid.edit' => 'Edit',
 			'web.database.grid.delete' => 'Delete',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.deleted' => 'Row deleted',
 			'web.database.grid.confirmDelete' => 'Delete this row?',
 			'web.database.grid.loading' => 'Loading rows…',
@@ -21481,6 +21577,8 @@ extension on Translations {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Status',
 			'sessions.inspector.git.tabLog' => 'Log',
+			'sessions.inspector.git.credentialUsed' => ({required Object scope}) => 'Authenticated with the ${scope} credential.',
+			'sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Runs in a new shell session and switches to it',
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
@@ -21608,6 +21706,8 @@ extension on Translations {
 			'sessions.inspector.canvas.extractBtn' => 'Read from project',
 			'sessions.inspector.canvas.showcaseBtn' => 'Show as canvas',
 			'sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.title' => 'New session',
 			'sessions.spawnSheet.errorRequired' => 'Provider and working directory are required',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => 'Failed to spawn session: ${error}',
@@ -21627,8 +21727,6 @@ extension on Translations {
 			'sessions.spawnSheet.bypass.labelClaude' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelCodex' => 'Bypass approvals & sandbox',
 			'sessions.spawnSheet.bypass.labelAntigravity' => 'Bypass permissions / YOLO',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => 'Bypass permissions',
 			'sessions.spawnSheet.bypass.labelGrok' => 'Bypass permissions / YOLO (--always-approve)',
 			'sessions.spawnSheet.bypass.subtitleOn' => 'This session will run with elevated autonomy.',
@@ -22122,6 +22220,8 @@ extension on Translations {
 			'backups.restore.auditNotePlaceholder' => 'e.g. recovering from #INC-481',
 			'backups.restore.ownDbWarning' => 'Restoring into opendray\'s OWN database will rewrite the rows this gateway is currently serving. Type "I understand" to confirm.',
 			'backups.restore.confirmPlaceholder' => 'Type "I understand"',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => 'Restoring…',
 			'backups.restore.preview' => 'Preview (dry run)',
@@ -22141,8 +22241,6 @@ extension on Translations {
 			'backups.restore.pickFileToast' => 'Pick a bundle file first.',
 			'backups.restore.outputTitle' => 'pg_restore output',
 			'backups.restore.noPgRestoreOutput' => '(empty — restore completed silently)',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestTitle' => 'Manifest',
 			'backups.restore.manifestBackupId' => 'Backup ID',
 			'backups.restore.manifestVersion' => 'Manifest version',
@@ -22303,6 +22401,10 @@ extension on Translations {
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => 'Current preview: ${preview}',
 			'githosts.form.tokenPreviewNone' => '(none)',
 			'githosts.form.pausedSubtitle' => 'Paused — sessions skip this host.',
+			'githosts.form.ownerLabel' => 'Owner (optional)',
+			'githosts.form.ownerHint' => 'my-org',
+			'githosts.form.ownerHelperHostWide' => 'Empty = host-wide: used for every repo on this host without its own entry.',
+			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… Other owners fall back to the host-wide entry.',
 			'githosts.deleteBody' => ({required Object host}) => 'Removes the credential. Sessions trying to list PRs from ${host} will fall back to the unauthenticated API.',
 			'githosts.deletedSnack' => ({required Object name}) => 'Deleted ${name}.',
 			'githosts.enabledSnack' => ({required Object name}) => '${name} enabled.',
@@ -22632,6 +22734,8 @@ extension on Translations {
 			'memory.rank.confidenceMultiplier' => 'Confidence multiplier',
 			'memory.rank.formula' => 'effective = similarity × age × hits × confidence',
 			'memory.rank.close' => 'Close',
+			_ => null,
+		} ?? switch (path) {
 			'memory.kNew' => 'New',
 			'memory.searchHint' => 'Search…',
 			'memory.projectLabel' => 'Project',
@@ -22655,8 +22759,6 @@ extension on Translations {
 			'memory.archive' => 'Archive',
 			'memory.quarantine' => 'Quarantine',
 			'memory.archivedToast' => 'Memory archived — restorable from Archived',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantinedToast' => 'Memory quarantined — review under Cortex → Quarantine',
 			'memory.archiveFailed' => ({required Object error}) => 'Archive failed: ${error}',
 			'memory.quarantineFailed' => ({required Object error}) => 'Quarantine failed: ${error}',

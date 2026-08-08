@@ -28,6 +28,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
       ];
 
   late final TextEditingController _host;
+  late final TextEditingController _owner;
   late final TextEditingController _name;
   final _token = TextEditingController();
   late String _kind;
@@ -42,6 +43,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
     super.initState();
     final ex = widget.existing;
     _host = TextEditingController(text: ex?.host ?? '');
+    _owner = TextEditingController(text: ex?.owner ?? '');
     _name = TextEditingController(text: ex?.name ?? '');
     _kind = ex?.kind ?? 'github';
     _enabled = ex?.enabled ?? true;
@@ -50,6 +52,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
   @override
   void dispose() {
     _host.dispose();
+    _owner.dispose();
     _name.dispose();
     _token.dispose();
     super.dispose();
@@ -58,6 +61,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
   Future<void> _submit() async {
     if (_saving) return;
     final host = _host.text.trim();
+    final owner = _owner.text.trim();
     final name = _name.text.trim();
     final token = _token.text.trim();
     if (host.isEmpty) {
@@ -85,6 +89,10 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
               ex.id,
               kind: _kind != ex.kind ? _kind : null,
               host: host != ex.host ? host : null,
+              // Sent whenever it differs, INCLUDING when cleared —
+              // clearing is how a scoped credential becomes the
+              // host-wide fallback again.
+              owner: owner != ex.owner ? owner : null,
               name: name != ex.name ? name : null,
               // Empty token on edit means "leave it alone" (per API
               // docs). Only send when the operator actually typed a
@@ -96,6 +104,7 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
         await ref.read(gitHostsApiProvider).create(
               kind: _kind,
               host: host,
+              owner: owner,
               name: name,
               token: token,
             );
@@ -170,6 +179,29 @@ class _GitHostFormScreenState extends ConsumerState<GitHostFormScreen> {
               helperText: 'API base or canonical hostname.',
               border: const OutlineInputBorder(),
             ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _owner,
+            autocorrect: false,
+            decoration: InputDecoration(
+              labelText: t.githosts.form.ownerLabel,
+              hintText: t.githosts.form.ownerHint,
+              helperText: _owner.text.trim().isEmpty
+                  ? t.githosts.form.ownerHelperHostWide
+                  : t.githosts.form.ownerHelperScoped(
+                      host: _host.text.trim().isEmpty
+                          ? 'host'
+                          : _host.text.trim(),
+                      owner: _owner.text.trim(),
+                    ),
+              helperMaxLines: 3,
+              border: const OutlineInputBorder(),
+            ),
+            // Rebuild so the helper text tracks what was typed — the
+            // difference between a scoped and a host-wide credential is
+            // the whole point of the field.
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           TextField(

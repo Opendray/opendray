@@ -59,9 +59,13 @@ const (
 // Host is the row stored in `git_hosts`. Token is exposed in JSON only
 // when the caller is creating/updating; List/Get redact via TokenMask.
 type Host struct {
-	ID        string `json:"id"`
-	Kind      Kind   `json:"kind"`
-	Host      string `json:"host"`
+	ID   string `json:"id"`
+	Kind Kind   `json:"kind"`
+	Host string `json:"host"`
+	// Owner scopes this credential to one account/org on that host
+	// (e.g. "Opendray"). Empty means host-wide: used when no
+	// owner-specific row matches. Case-insensitive.
+	Owner     string `json:"owner"`
 	Name      string `json:"name"`
 	Token     string `json:"token,omitempty"`
 	TokenMask string `json:"token_mask,omitempty"`
@@ -76,8 +80,10 @@ type Host struct {
 
 // CreateRequest / UpdateRequest are the JSON bodies for POST / PUT.
 type CreateRequest struct {
-	Kind  Kind   `json:"kind"`
-	Host  string `json:"host"`
+	Kind Kind   `json:"kind"`
+	Host string `json:"host"`
+	// Owner is optional: empty registers the host-wide credential.
+	Owner string `json:"owner"`
 	Name  string `json:"name"`
 	Token string `json:"token"`
 }
@@ -85,6 +91,7 @@ type CreateRequest struct {
 type UpdateRequest struct {
 	Kind    *Kind   `json:"kind,omitempty"`
 	Host    *string `json:"host,omitempty"`
+	Owner   *string `json:"owner,omitempty"`
 	Name    *string `json:"name,omitempty"`
 	Token   *string `json:"token,omitempty"`
 	Enabled *bool   `json:"enabled,omitempty"`
@@ -184,11 +191,11 @@ func (s *Service) scanHostDecoded(row rowScanner) (Host, error) {
 // ── CRUD ────────────────────────────────────────────────────────
 
 const hostSelect = `
-    SELECT id, kind, host, name, token, enabled, created_at, updated_at
+    SELECT id, kind, host, owner, name, token, enabled, created_at, updated_at
     FROM git_hosts`
 
 func (s *Service) List(ctx context.Context) ([]Host, error) {
-	rows, err := s.pool.Query(ctx, hostSelect+` ORDER BY host`)
+	rows, err := s.pool.Query(ctx, hostSelect+` ORDER BY host, owner`)
 	if err != nil {
 		return nil, fmt.Errorf("list git hosts: %w", err)
 	}
@@ -214,11 +221,64 @@ func (s *Service) Get(ctx context.Context, id string) (Host, error) {
 	return redact(h), err
 }
 
-// GetByHost is used by the PR endpoint to find the matching token for
-// a remote URL's host. Returns the unredacted token because callers
-// need it to authenticate upstream.
+// GetByHost returns the HOST-WIDE credential (owner = ”), the fallback
+// used when no owner-specific row matches. Prefer GetForRepo: a caller
+// that knows which repo it is talking to should say so, or it silently
+// authenticates as the wrong identity.
+//
+// Returns the unredacted token because callers need it upstream.
 func (s *Service) GetByHost(ctx context.Context, host string) (Host, error) {
-	row := s.pool.QueryRow(ctx, hostSelect+` WHERE host=$1`, host)
+	return s.GetForRepo(ctx, host, "")
+}
+
+// GetForRepo resolves the credential for one host+owner: the row scoped
+// to that owner if there is one, else the host-wide row.
+//
+// The fallback is what keeps a single-identity setup working exactly as
+// it did before owners existed — every pre-existing row has owner = ”
+// and therefore answers for everything on its host.
+//
+// Owner comparison is case-insensitive: forges treat Opendray and
+// opendray as the same account, and a credential that resolves only
+// when the remote URL happens to match the stored capitalisation would
+// fail in a way nobody could reproduce on purpose.
+//
+// DISABLED rows are not candidates. The check belongs here because it
+// was in none of the callers: vault sync, PR listing, issue listing and
+// remote detection each resolved a credential and used its token without
+// ever consulting `enabled`, so switching an entry off changed nothing
+// and the toggle quietly meant something other than what it said.
+// Filtering during resolution also makes disabling compose correctly —
+// turn off an owner-scoped entry and its host falls back to the
+// host-wide one, exactly as if the row were absent.
+func (s *Service) GetForRepo(ctx context.Context, host, owner string) (Host, error) {
+	host = strings.TrimSpace(host)
+	owner = strings.TrimSpace(owner)
+	if owner != "" {
+		row := s.pool.QueryRow(ctx,
+			hostSelect+` WHERE host=$1 AND lower(owner)=lower($2) AND enabled`,
+			host, owner)
+		h, err := s.scanHostDecoded(row)
+		if err == nil {
+			return h, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return Host{}, err
+		}
+	}
+	row := s.pool.QueryRow(ctx,
+		hostSelect+` WHERE host=$1 AND owner='' AND enabled`, host)
+	h, err := s.scanHostDecoded(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Host{}, ErrNotFound
+	}
+	return h, err
+}
+
+// getWithToken is Get without redaction — for callers that must use the
+// token (verification), never for anything that reaches a response body.
+func (s *Service) getWithToken(ctx context.Context, id string) (Host, error) {
+	row := s.pool.QueryRow(ctx, hostSelect+` WHERE id=$1`, id)
 	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
@@ -237,10 +297,11 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Host, error) {
 		return Host{}, errors.New("token is required")
 	}
 	row := s.pool.QueryRow(ctx, `
-        INSERT INTO git_hosts (kind, host, name, token)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
+        INSERT INTO git_hosts (kind, host, owner, name, token)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, kind, host, owner, name, token, enabled, created_at, updated_at`,
 		string(req.Kind), strings.TrimSpace(req.Host),
+		strings.TrimSpace(req.Owner),
 		strings.TrimSpace(req.Name), s.encodeToken(req.Token))
 	h, err := s.scanHostDecoded(row)
 	if err != nil {
@@ -271,6 +332,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 	if req.Host != nil {
 		current.Host = strings.TrimSpace(*req.Host)
 	}
+	if req.Owner != nil {
+		current.Owner = strings.TrimSpace(*req.Owner)
+	}
 	if req.Name != nil {
 		current.Name = strings.TrimSpace(*req.Name)
 	}
@@ -282,11 +346,11 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Hos
 	}
 	row := s.pool.QueryRow(ctx, `
         UPDATE git_hosts
-        SET kind=$1, host=$2, name=$3, token=$4, enabled=$5, updated_at=NOW()
-        WHERE id=$6
-        RETURNING id, kind, host, name, token, enabled, created_at, updated_at`,
-		string(current.Kind), current.Host, current.Name, storedToken,
-		current.Enabled, id)
+        SET kind=$1, host=$2, owner=$3, name=$4, token=$5, enabled=$6, updated_at=NOW()
+        WHERE id=$7
+        RETURNING id, kind, host, owner, name, token, enabled, created_at, updated_at`,
+		string(current.Kind), current.Host, current.Owner, current.Name,
+		storedToken, current.Enabled, id)
 	h, err := s.scanHostDecoded(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Host{}, ErrNotFound
@@ -337,7 +401,7 @@ type rowScanner interface{ Scan(dest ...any) error }
 func scanHost(row rowScanner) (Host, error) {
 	var h Host
 	var kind string
-	if err := row.Scan(&h.ID, &kind, &h.Host, &h.Name, &h.Token,
+	if err := row.Scan(&h.ID, &kind, &h.Host, &h.Owner, &h.Name, &h.Token,
 		&h.Enabled, &h.CreatedAt, &h.UpdatedAt); err != nil {
 		return Host{}, err
 	}
@@ -361,8 +425,19 @@ type Remote struct {
 	// stored value can't be decrypted (backup key changed). HasToken is
 	// false in that case; the UI uses TokenLocked to prompt a re-entry
 	// rather than a first-time "configure a token".
-	TokenLocked bool   `json:"token_locked,omitempty"`
-	WebURL      string `json:"web_url,omitempty"`
+	TokenLocked bool `json:"token_locked,omitempty"`
+	// TokenOwner / TokenName identify WHICH credential resolved for this
+	// remote — with several per host, "there is a token for github.com"
+	// no longer says which identity is about to be used.
+	TokenOwner string `json:"token_owner,omitempty"`
+	TokenName  string `json:"token_name,omitempty"`
+	// TokenIsFallback: this remote's owner has no credential of its own,
+	// so the host-wide one is standing in. Legitimate, and also the
+	// shape of the mistake where a token authenticates as the wrong
+	// identity — the forge then answers 403/404 with nothing pointing
+	// back at the credential, so it is worth saying out loud.
+	TokenIsFallback bool   `json:"token_is_fallback,omitempty"`
+	WebURL          string `json:"web_url,omitempty"`
 }
 
 // DetectRemote reads `git remote get-url origin` from `dir` and parses
@@ -385,11 +460,16 @@ func (s *Service) DetectRemote(ctx context.Context, dir string) (Remote, error) 
 		return Remote{}, err
 	}
 	rem := Remote{URL: rawURL, Host: host, Owner: owner, Repo: repo, WebURL: web}
-	hostRow, err := s.GetByHost(ctx, host)
+	// Resolve exactly as the API callers will, so what the UI reports is
+	// the credential that actually gets used.
+	hostRow, err := s.GetForRepo(ctx, host, owner)
 	if err == nil {
 		rem.Kind = hostRow.Kind
 		rem.HasToken = hostRow.Token != ""
 		rem.TokenLocked = hostRow.TokenLocked
+		rem.TokenOwner = hostRow.Owner
+		rem.TokenName = hostRow.Name
+		rem.TokenIsFallback = hostRow.Owner == "" && owner != ""
 	}
 	return rem, nil
 }
@@ -471,7 +551,7 @@ func (s *Service) ListPullRequests(ctx context.Context, dir, state string) (Remo
 	if !rem.HasToken {
 		return rem, nil, ErrNoTokenForHost
 	}
-	hostRow, err := s.GetByHost(ctx, rem.Host)
+	hostRow, err := s.GetForRepo(ctx, rem.Host, rem.Owner)
 	if err != nil {
 		return rem, nil, err
 	}
@@ -676,7 +756,7 @@ func (s *Service) resolveHost(ctx context.Context, dir string) (Remote, Host, er
 	if !rem.HasToken {
 		return rem, Host{}, ErrNoTokenForHost
 	}
-	hostRow, err := s.GetByHost(ctx, rem.Host)
+	hostRow, err := s.GetForRepo(ctx, rem.Host, rem.Owner)
 	if err != nil {
 		return rem, Host{}, err
 	}
@@ -2061,6 +2141,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Put("/", h.update)
 			r.Delete("/", h.del)
+			r.Post("/verify", h.verify)
 		})
 	})
 	// Remote detection + PR listing live under /git/* alongside the
@@ -2350,4 +2431,58 @@ func writeError(w http.ResponseWriter, code int, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+}
+
+// CredentialFor resolves the username/token a git HTTPS operation
+// should authenticate with for one host+owner. It is the seam the
+// git-exec packages use, so that "which credential" is answered in one
+// place rather than re-derived per caller.
+//
+// ok=false means opendray has nothing registered — the caller must
+// still neutralise the host's ambient helpers rather than let an
+// osxkeychain entry answer in its place. A locked token (encrypted,
+// key unavailable) reports ok=false for the same reason: proceeding
+// with SOME other identity is worse than failing.
+func (s *Service) CredentialFor(
+	ctx context.Context, host, owner string,
+) (username, token string, ok bool) {
+	h, err := s.GetForRepo(ctx, host, owner)
+	if err != nil || !h.Enabled || h.Token == "" {
+		return "", "", false
+	}
+	return credentialUsername(h.Kind), h.Token, true
+}
+
+// credentialUsername is the username a forge expects alongside a token
+// over HTTPS basic auth. GitLab requires the literal "oauth2"; GitHub
+// and Gitea ignore it, so a recognisable constant makes the entry
+// obvious if it ever lands in a log.
+func credentialUsername(k Kind) string {
+	if k == KindGitLab {
+		return "oauth2"
+	}
+	return "opendray"
+}
+
+// verify asks the forge who the stored token belongs to and, when a
+// `repo` is supplied, whether it can be read. Answering that question
+// inside opendray is the difference between a one-line explanation and
+// an afternoon spent reading a 403 that names the wrong permission.
+func (h *Handlers) verify(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req struct {
+		Repo string `json:"repo"`
+	}
+	// Body is optional: no repo means "just tell me whose token this is".
+	_ = json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&req)
+	res, err := h.svc.Verify(r.Context(), id, strings.TrimSpace(req.Repo))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }

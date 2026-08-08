@@ -496,6 +496,10 @@ func (h *Handlers) push(w http.ResponseWriter, r *http.Request) {
 		args = append(args, "--force-with-lease")
 	}
 	args = append(args, "origin", branch)
+	// The one network operation here, so the one that must authenticate
+	// with the credential the operator configured in opendray — and not
+	// with whatever the host's keychain happens to remember.
+	args = authArgs(r.Context(), h.creds, req.Dir, args...)
 	if out, err := runCombined(r.Context(), req.Dir, args...); err != nil {
 		writeError(w, http.StatusInternalServerError,
 			fmt.Errorf("push: %w (%s)", err, out))

@@ -2609,6 +2609,10 @@ class _TranslationsGithostsFormZh extends TranslationsGithostsFormEn {
 	@override String tokenPreviewHint({required Object preview}) => '当前预览：${preview}';
 	@override String get tokenPreviewNone => '（无）';
 	@override String get pausedSubtitle => '已暂停 — 会话跳过此主机。';
+	@override String get ownerLabel => '所有者(可选)';
+	@override String get ownerHint => 'my-org';
+	@override String get ownerHelperHostWide => '留空 = 全主机凭据:该主机上没有专属条目的仓库都用它。';
+	@override String ownerHelperScoped({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/…,其他所有者回退到全主机条目。';
 }
 
 // Path: channels.configDialog
@@ -3356,6 +3360,7 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorVaultPanelZh vaultPanel = _TranslationsWebSessionsInspectorVaultPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelZh cortexPanel = _TranslationsWebSessionsInspectorCortexPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCanvasZh canvas = _TranslationsWebSessionsInspectorCanvasZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorGitZh git = _TranslationsWebSessionsInspectorGitZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -4798,7 +4803,7 @@ class _TranslationsWebPluginsGitHostsZh extends TranslationsWebPluginsGitHostsEn
 
 	// Translations
 	@override String get title => 'Git 主机';
-	@override String get description => '每个主机一个 token — 被 Git 选项卡用来拉取 pull request，<1>也被 Notes vault sync</1> 使用（当其 remote 通过 HTTPS 指向同一主机上的私有仓库时）。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。';
+	@override String get description => '按主机保存凭据 —— 同一主机有多个身份时可再按所有者细分。用于 HTTPS 的 git 认证(文档库同步、会话推送)以及 forge API 调用(pull request、issue)。解析时优先使用所有者专属条目,没有则回退到全主机条目。<1>SSH remote 不受影响</1> —— 它们通过主机的 ssh-agent 认证。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。';
 	@override String get addHost => '添加主机';
 	@override String get empty => '尚未配置任何 git 主机。\n添加一个以在检查器 Git 选项卡中启用 PR 列表。';
 	@override late final _TranslationsWebPluginsGitHostsColumnsZh columns = _TranslationsWebPluginsGitHostsColumnsZh._(_root);
@@ -4808,6 +4813,8 @@ class _TranslationsWebPluginsGitHostsZh extends TranslationsWebPluginsGitHostsEn
 	@override String get removedToast => 'Git 主机已移除';
 	@override String get deleteFailedToast => '删除失败';
 	@override late final _TranslationsWebPluginsGitHostsDialogZh dialog = _TranslationsWebPluginsGitHostsDialogZh._(_root);
+	@override String get scopeHostWide => '全主机兜底';
+	@override String scopeOwner({required Object owner}) => '仅用于 ${owner}';
 }
 
 // Path: web.backups.tabs
@@ -6015,7 +6022,7 @@ class _TranslationsWebDatabaseDialogZh extends TranslationsWebDatabaseDialogEn {
 	@override String get passwordKept => '保持不变 —— 留空即保留';
 	@override String get sslMode => 'SSL 模式';
 	@override String get readOnly => '只读(禁止此连接写入)';
-	@override String get superuserWarning => '该用户是超级用户(或 linivek 管理员)。日常工作请优先使用仅 CRUD 权限的项目角色。';
+	@override String get superuserWarning => '该用户是超级用户(或数据库所有者)。日常工作请优先使用仅 CRUD 权限的项目角色。';
 	@override String get test => '测试';
 	@override String get save => '保存';
 	@override String get testFailed => '连接测试失败';
@@ -6694,6 +6701,8 @@ class _TranslationsSessionsInspectorGitZh extends TranslationsSessionsInspectorG
 	@override String showFailedGeneric({required Object error}) => '查看失败：${error}';
 	@override String get tabStatus => '状态';
 	@override String get tabLog => '日志';
+	@override String credentialUsed({required Object scope}) => '使用 ${scope} 的凭据认证。';
+	@override String credentialFallback({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。';
 }
 
 // Path: sessions.inspector.tasks
@@ -7605,6 +7614,17 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get designTaskFailed => '发送请求失败';
 }
 
+// Path: web.sessions.inspector.git
+class _TranslationsWebSessionsInspectorGitZh extends TranslationsWebSessionsInspectorGitEn {
+	_TranslationsWebSessionsInspectorGitZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String credentialUsed({required Object scope}) => '使用 ${scope} 的凭据认证。';
+	@override String credentialFallback({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class _TranslationsWebMemoryWorkersTasksGatekeeperZh extends TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	_TranslationsWebMemoryWorkersTasksGatekeeperZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7965,10 +7985,11 @@ class _TranslationsWebNotesVaultSyncAuthZh extends TranslationsWebNotesVaultSync
 
 	// Translations
 	@override String get title => '认证';
-	@override String httpsTokenOk({required Object host}) => '将使用 Plugins → Git hosts 中为 <1>${host}</1> 存的 token。✓';
+	@override String httpsTokenOk({required Object scope}) => '将使用 Plugins → Git hosts 中为 <1>${scope}</1> 存的 token。✓';
 	@override String httpsTokenMissing({required Object host}) => '<1>${host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。';
 	@override String ssh({required Object host}) => '<1>${host}</1> 上的 SSH remote。认证使用网关主机的 <3>~/.ssh/</3>（ssh-agent、identity 文件、host config）。可在主机 shell 用 <5>ssh -T git@${host}</5> 验证。';
 	@override String get configureTokenLink => '→ 配置 git host token';
+	@override String httpsTokenFallback({required Object owner, required Object host}) => '${owner} 没有专属凭据 —— 正在回退使用 ${host} 的全主机凭据。若它需要自己的 token,请为 ${owner} 单独添加一条。';
 }
 
 // Path: web.notes.vaultSync.autoSync
@@ -8264,6 +8285,18 @@ class _TranslationsWebPluginsGitHostsDialogZh extends TranslationsWebPluginsGitH
 	@override String get updatedToast => 'Git 主机已更新';
 	@override String get addFailedToast => '添加失败';
 	@override String get updateFailedToast => '更新失败';
+	@override String get ownerLabel => '所有者(可选)';
+	@override String get ownerPlaceholder => 'my-org';
+	@override String get ownerHintHostWide => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。';
+	@override String ownerHintScoped({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。';
+	@override String get verifyLabel => '验证此凭据';
+	@override String get verifyHint => '向 forge 询问这把令牌到底属于谁。可填一个仓库(owner/name)顺便检查是否真的能读取 —— 令牌的权限设置在这里看不见,而 forge 自己的报错指向的又是错的那一项。';
+	@override String get verifyRepoPlaceholder => 'owner/repo(可选)';
+	@override String get verifyButton => '验证';
+	@override String get verifying => '检查中…';
+	@override String verifyLogin({required Object login}) => '认证身份:${login}';
+	@override String verifyRepoOk({required Object repo}) => '可读取 ${repo}';
+	@override String verifyRepoFail({required Object repo}) => '无权读取 ${repo}';
 }
 
 // Path: web.backups.backupsTab.columns
@@ -10092,6 +10125,8 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.showcaseHint' => '让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成',
 			'web.sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
 			'web.sessions.inspector.canvas.designTaskFailed' => '发送请求失败',
+			'web.sessions.inspector.git.credentialUsed' => ({required Object scope}) => '使用 ${scope} 的凭据认证。',
+			'web.sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -10257,10 +10292,10 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => '改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。',
 			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
-			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
-			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。',
@@ -10668,10 +10703,11 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.conflict.resetDescription' => '本地更改已丢弃；vault 与 remote 一致。',
 			'web.notes.vaultSync.conflict.resetFailedToast' => '重置失败',
 			'web.notes.vaultSync.auth.title' => '认证',
-			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object host}) => '将使用 Plugins → Git hosts 中为 <1>${host}</1> 存的 token。✓',
+			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => '将使用 Plugins → Git hosts 中为 <1>${scope}</1> 存的 token。✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => '<1>${host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。',
 			'web.notes.vaultSync.auth.ssh' => ({required Object host}) => '<1>${host}</1> 上的 SSH remote。认证使用网关主机的 <3>~/.ssh/</3>（ssh-agent、identity 文件、host config）。可在主机 shell 用 <5>ssh -T git@${host}</5> 验证。',
 			'web.notes.vaultSync.auth.configureTokenLink' => '→ 配置 git host token',
+			'web.notes.vaultSync.auth.httpsTokenFallback' => ({required Object owner, required Object host}) => '${owner} 没有专属凭据 —— 正在回退使用 ${host} 的全主机凭据。若它需要自己的 token,请为 ${owner} 单独添加一条。',
 			'web.notes.vaultSync.autoSync.loading' => '加载自动同步设置…',
 			'web.notes.vaultSync.autoSync.title' => '自动同步',
 			'web.notes.vaultSync.autoSync.on' => '开',
@@ -10770,11 +10806,11 @@ extension on TranslationsZh {
 			'web.providers.detail.savedToast' => 'Provider 配置已保存',
 			'web.providers.detail.saveFailedToast' => '保存失败',
 			'web.providers.detail.toggleFailedToast' => '切换失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
 			'web.providers.detail.brokenCli' => '已安装但无法运行',
@@ -11218,7 +11254,7 @@ extension on TranslationsZh {
 			'web.plugins.customTasks.dialog.addFailedToast' => '添加失败',
 			'web.plugins.customTasks.dialog.updateFailedToast' => '更新失败',
 			'web.plugins.gitHosts.title' => 'Git 主机',
-			'web.plugins.gitHosts.description' => '每个主机一个 token — 被 Git 选项卡用来拉取 pull request，<1>也被 Notes vault sync</1> 使用（当其 remote 通过 HTTPS 指向同一主机上的私有仓库时）。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。',
+			'web.plugins.gitHosts.description' => '按主机保存凭据 —— 同一主机有多个身份时可再按所有者细分。用于 HTTPS 的 git 认证(文档库同步、会话推送)以及 forge API 调用(pull request、issue)。解析时优先使用所有者专属条目,没有则回退到全主机条目。<1>SSH remote 不受影响</1> —— 它们通过主机的 ssh-agent 认证。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。',
 			'web.plugins.gitHosts.addHost' => '添加主机',
 			'web.plugins.gitHosts.empty' => '尚未配置任何 git 主机。\n添加一个以在检查器 Git 选项卡中启用 PR 列表。',
 			'web.plugins.gitHosts.columns.host' => '主机',
@@ -11251,6 +11287,20 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Git 主机已更新',
 			'web.plugins.gitHosts.dialog.addFailedToast' => '添加失败',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => '更新失败',
+			'web.plugins.gitHosts.dialog.ownerLabel' => '所有者(可选)',
+			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
+			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
+			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
+			'web.plugins.gitHosts.dialog.verifyLabel' => '验证此凭据',
+			'web.plugins.gitHosts.dialog.verifyHint' => '向 forge 询问这把令牌到底属于谁。可填一个仓库(owner/name)顺便检查是否真的能读取 —— 令牌的权限设置在这里看不见,而 forge 自己的报错指向的又是错的那一项。',
+			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo(可选)',
+			'web.plugins.gitHosts.dialog.verifyButton' => '验证',
+			'web.plugins.gitHosts.dialog.verifying' => '检查中…',
+			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => '认证身份:${login}',
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => '可读取 ${repo}',
+			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => '无权读取 ${repo}',
+			'web.plugins.gitHosts.scopeHostWide' => '全主机兜底',
+			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => '仅用于 ${owner}',
 			'web.backups.title' => '备份',
 			'web.backups.subtitle' => '写入到可插拔目标的加密 PostgreSQL dump。配置计划与保留策略，或触发一次性备份作为快速安全网。',
 			'web.backups.exportData' => '导出数据',
@@ -11270,6 +11320,8 @@ extension on TranslationsZh {
 			'web.backups.restart.configuredVia' => '配置方式：',
 			'web.backups.restart.envVar' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'web.backups.restart.checkAgain' => '再次检查',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.title' => '设置备份',
 			'web.backups.setup.description' => '选择一个主口令。opendray 会用它加密每个备份 blob。<1>丢失它意味着你的备份无法恢复</1>，请在继续之前把它保存到密码管理器（Vaultwarden、1Password 等）。',
 			'web.backups.setup.generate' => '生成',
@@ -11287,8 +11339,6 @@ extension on TranslationsZh {
 			'web.backups.generated.description' => '这是 <1>唯一一次</1> 显示。opendray 与任何其他地方都将无法取回。请在继续前复制到密码管理器。',
 			'web.backups.generated.copy' => '复制',
 			'web.backups.generated.copiedToast' => '口令已复制到剪贴板',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.generated.copyFailedToast' => '复制失败 — 请手动选中并复制',
 			'web.backups.generated.savedTo' => '已保存到：',
 			'web.backups.generated.ack' => '我已将此口令保存到密码管理器',
@@ -11784,6 +11834,8 @@ extension on TranslationsZh {
 			'web.settings.account.tokenExpires' => 'Token 过期',
 			'web.settings.account.changeCredentials' => '修改凭证',
 			'web.settings.changeCredentials.title' => '修改凭证',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.description' => '先验证当前密码，再选择新凭证。所有其它已登录会话都将被吊销。',
 			'web.settings.changeCredentials.currentPassword' => '当前密码',
 			'web.settings.changeCredentials.newUsername' => '新用户名',
@@ -11801,8 +11853,6 @@ extension on TranslationsZh {
 			'web.settings.system.status' => '状态',
 			'web.settings.system.version' => '版本',
 			'web.settings.system.uptime' => '运行时长',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.system.database' => '数据库',
 			'web.settings.system.reachable' => '可达',
 			'web.settings.system.unreachable' => '不可达',
@@ -12286,7 +12336,7 @@ extension on TranslationsZh {
 			'web.database.dialog.passwordKept' => '保持不变 —— 留空即保留',
 			'web.database.dialog.sslMode' => 'SSL 模式',
 			'web.database.dialog.readOnly' => '只读(禁止此连接写入)',
-			'web.database.dialog.superuserWarning' => '该用户是超级用户(或 linivek 管理员)。日常工作请优先使用仅 CRUD 权限的项目角色。',
+			'web.database.dialog.superuserWarning' => '该用户是超级用户(或数据库所有者)。日常工作请优先使用仅 CRUD 权限的项目角色。',
 			'web.database.dialog.test' => '测试',
 			'web.database.dialog.save' => '保存',
 			'web.database.dialog.testFailed' => '连接测试失败',
@@ -12298,6 +12348,8 @@ extension on TranslationsZh {
 			'web.database.dialog.drivers.postgres' => 'PostgreSQL',
 			'web.database.dialog.drivers.mysql' => 'MySQL',
 			'web.database.dialog.drivers.mariadb' => 'MariaDB',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.drivers.sqlite' => 'SQLite',
 			'web.database.dialog.filePath' => '数据库文件',
 			'web.database.dialog.filePathHint' => '项目目录内的 SQLite 文件路径。',
@@ -12315,8 +12367,6 @@ extension on TranslationsZh {
 			'web.database.grid.refresh' => '刷新',
 			'web.database.grid.edit' => '编辑',
 			'web.database.grid.delete' => '删除',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.grid.deleted' => '行已删除',
 			'web.database.grid.confirmDelete' => '删除此行?',
 			'web.database.grid.loading' => '正在加载数据…',
@@ -12683,6 +12733,8 @@ extension on TranslationsZh {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
 			'sessions.inspector.git.tabStatus' => '状态',
 			'sessions.inspector.git.tabLog' => '日志',
+			'sessions.inspector.git.credentialUsed' => ({required Object scope}) => '使用 ${scope} 的凭据认证。',
+			'sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
 			'sessions.inspector.tasks.runCommandSubtitle' => '在新的 shell 会话中运行并切换过去',
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
@@ -12810,6 +12862,8 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.extractBtn' => '读取项目样式',
 			'sessions.inspector.canvas.showcaseBtn' => '生成配色画布',
 			'sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.title' => '新建会话',
 			'sessions.spawnSheet.errorRequired' => '需要指定提供商和工作目录',
 			'sessions.spawnSheet.errorGeneric' => ({required Object error}) => '创建会话失败：${error}',
@@ -12829,8 +12883,6 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.bypass.labelClaude' => '绕过权限',
 			'sessions.spawnSheet.bypass.labelCodex' => '跳过批准与沙盒',
 			'sessions.spawnSheet.bypass.labelAntigravity' => '跳过权限 / YOLO',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.bypass.labelOpencode' => '跳过权限检查',
 			'sessions.spawnSheet.bypass.labelGrok' => '跳过权限 / YOLO（--always-approve）',
 			'sessions.spawnSheet.bypass.subtitleOn' => '此会话将以提升的自主权运行。',
@@ -13324,6 +13376,8 @@ extension on TranslationsZh {
 			'backups.restore.auditNotePlaceholder' => '例如：恢复 #INC-481',
 			'backups.restore.ownDbWarning' => '恢复到 opendray 自身的数据库将覆写本网关当前提供服务的数据。请输入 "I understand" 以确认。',
 			'backups.restore.confirmPlaceholder' => '输入 "I understand"',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.confirmSentinel' => 'I understand',
 			'backups.restore.restoring' => '恢复中…',
 			'backups.restore.preview' => '预览（试运行）',
@@ -13343,8 +13397,6 @@ extension on TranslationsZh {
 			'backups.restore.pickFileToast' => '请先选择一个备份文件。',
 			'backups.restore.outputTitle' => 'pg_restore 输出',
 			'backups.restore.noPgRestoreOutput' => '（空 — 恢复无声完成）',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.manifestTitle' => '清单',
 			'backups.restore.manifestBackupId' => '备份 ID',
 			'backups.restore.manifestVersion' => '清单版本',
@@ -13505,6 +13557,10 @@ extension on TranslationsZh {
 			'githosts.form.tokenPreviewHint' => ({required Object preview}) => '当前预览：${preview}',
 			'githosts.form.tokenPreviewNone' => '（无）',
 			'githosts.form.pausedSubtitle' => '已暂停 — 会话跳过此主机。',
+			'githosts.form.ownerLabel' => '所有者(可选)',
+			'githosts.form.ownerHint' => 'my-org',
+			'githosts.form.ownerHelperHostWide' => '留空 = 全主机凭据:该主机上没有专属条目的仓库都用它。',
+			'githosts.form.ownerHelperScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/…,其他所有者回退到全主机条目。',
 			'githosts.deleteBody' => ({required Object host}) => '移除该凭据。试图列出 ${host} 的 PR 的会话将回退到未认证 API。',
 			'githosts.deletedSnack' => ({required Object name}) => '已删除 ${name}。',
 			'githosts.enabledSnack' => ({required Object name}) => '${name} 已启用。',
@@ -13834,6 +13890,8 @@ extension on TranslationsZh {
 			'memory.rank.confidenceMultiplier' => '置信度系数',
 			'memory.rank.formula' => '有效分 = 相似度 × 时效 × 命中 × 置信度',
 			'memory.rank.close' => '关闭',
+			_ => null,
+		} ?? switch (path) {
 			'memory.kNew' => '新建',
 			'memory.searchHint' => '搜索…',
 			'memory.projectLabel' => '项目',
@@ -13857,8 +13915,6 @@ extension on TranslationsZh {
 			'memory.archive' => '归档',
 			'memory.quarantine' => '隔离',
 			'memory.archivedToast' => '记忆已归档——可在「已归档」中恢复',
-			_ => null,
-		} ?? switch (path) {
 			'memory.quarantinedToast' => '记忆已隔离——请在 Cortex → 隔离区 审查',
 			'memory.archiveFailed' => ({required Object error}) => '归档失败：${error}',
 			'memory.quarantineFailed' => ({required Object error}) => '隔离失败：${error}',

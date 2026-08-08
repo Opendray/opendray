@@ -35,6 +35,7 @@ import {
   mergeGitPR,
 } from '@/lib/githost'
 import { cn } from '@/lib/utils'
+import { CredentialNote } from './CredentialNote'
 
 interface PullRequestsSectionProps {
   cwd: string
@@ -131,6 +132,9 @@ export function PullRequestsSection({ cwd }: PullRequestsSectionProps) {
         <div className="text-[11px] text-state-failed px-1 py-1 break-words">
           {data.error}
         </div>
+      )}
+      {data && !data.need_token && (
+        <CredentialNote remote={data.remote} failed={!!data.error} />
       )}
       {data && data.need_token && (
         <NeedTokenHint

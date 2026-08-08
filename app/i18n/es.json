@@ -382,6 +382,10 @@
           "showcaseHint": "Pide al agente que dibuje el sistema de diseño como un lienzo: muestras, escala tipográfica y componentes, todo hecho con los tokens",
           "designTaskSent": "Enviado al agente: mira la sesión.",
           "designTaskFailed": "No se pudo enviar la solicitud"
+        },
+        "git": {
+          "credentialUsed": "Autenticado con la credencial de {scope}.",
+          "credentialFallback": "Sin credencial para {owner}: se usa la de todo el host {scope}."
         }
       },
       "ended": {
@@ -1120,10 +1124,11 @@
         },
         "auth": {
           "title": "Autenticación",
-          "httpsTokenOk": "Usará el token guardado para <1>{host}</1> en Plugins → Hosts de git. ✓",
+          "httpsTokenOk": "Usará el token guardado para <1>{scope}</1> en Plugins → Git hosts. ✓",
           "httpsTokenMissing": "Remoto HTTPS en <1>{host}</1> sin ningún token de opendray configurado. Es probable que push / pull fallen en repos privados hasta que añadas uno.",
           "ssh": "Remoto SSH en <1>{host}</1>. La autenticación usa el <3>~/.ssh/</3> del host del gateway (ssh-agent, archivo de identidad, configuración de host). Verifícalo con <5>ssh -T git@{host}</5> desde la shell del host.",
-          "configureTokenLink": "→ Configurar token de host de git"
+          "configureTokenLink": "→ Configurar token de host de git",
+          "httpsTokenFallback": "No hay credencial para {owner}: se recurre a la de todo el host {host}. Añade una entrada para {owner} si necesita su propio token."
         },
         "autoSync": {
           "loading": "Cargando ajustes de sincronización automática…",
@@ -1771,7 +1776,7 @@
       },
       "gitHosts": {
         "title": "Hosts de git",
-        "description": "Un token por host, usado por la pestaña Git para obtener los pull requests <1>y por la sincronización del vault de Notas</1> cuando su remoto usa HTTPS hacia un repo privado en el mismo host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.",
+        "description": "Credenciales por host, y por propietario cuando un host alberga varias identidades. Se usan para la autenticación git por HTTPS (sync del vault, push de sesión) y para las llamadas a la API de la forja (pull requests, issues). La resolución prefiere la entrada del propietario y recurre a la de todo el host. <1>Los remotos SSH no se ven afectados</1>: se autentican con el ssh-agent del host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.",
         "addHost": "Añadir host",
         "empty": "No hay hosts de git configurados.\nAñade uno para habilitar la lista de PR en la pestaña Git del inspector.",
         "columns": {
@@ -1806,8 +1811,22 @@
           "addedToast": "Host de git añadido",
           "updatedToast": "Host de git actualizado",
           "addFailedToast": "Error al añadir",
-          "updateFailedToast": "Error al actualizar"
-        }
+          "updateFailedToast": "Error al actualizar",
+          "ownerLabel": "Propietario (opcional)",
+          "ownerPlaceholder": "my-org",
+          "ownerHintHostWide": "Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.",
+          "ownerHintScoped": "Se usa solo para {host}/{owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.",
+          "verifyLabel": "Verificar esta credencial",
+          "verifyHint": "Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repo (owner/name) para comprobar que se puede leer: los permisos del token son invisibles desde aquí y el error de la forja nombra el permiso equivocado.",
+          "verifyRepoPlaceholder": "owner/repo (opcional)",
+          "verifyButton": "Verificar",
+          "verifying": "Comprobando…",
+          "verifyLogin": "Autenticado como {login}",
+          "verifyRepoOk": "puede leer {repo}",
+          "verifyRepoFail": "NO puede leer {repo}"
+        },
+        "scopeHostWide": "reserva para todo el host",
+        "scopeOwner": "solo para {owner}"
       }
     },
     "backups": {
@@ -3207,7 +3226,7 @@
         "passwordKept": "sin cambios — déjalo vacío para conservarla",
         "sslMode": "Modo SSL",
         "readOnly": "Solo lectura (bloquear escrituras desde esta conexión)",
-        "superuserWarning": "Este usuario es superusuario (o el administrador linivek). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.",
+        "superuserWarning": "Este usuario es superusuario (o el propietario de la base de datos). Usa preferiblemente un rol de proyecto con permisos solo CRUD para el trabajo diario.",
         "test": "Probar",
         "save": "Guardar",
         "testFailed": "La prueba de conexión falló",
@@ -3741,7 +3760,9 @@
         "showFailedApi": "Falló al mostrar ({status}): {message}",
         "showFailedGeneric": "Falló al mostrar: {error}",
         "tabStatus": "Estado",
-        "tabLog": "Log"
+        "tabLog": "Log",
+        "credentialUsed": "Autenticado con la credencial de {scope}.",
+        "credentialFallback": "Sin credencial para {owner}: se usa la de todo el host {scope}."
       },
       "tasks": {
         "runCommand": "Ejecutar comando",
@@ -4688,7 +4709,11 @@
       "appBarNew": "Añadir host de Git",
       "tokenPreviewHint": "Vista previa actual: {preview}",
       "tokenPreviewNone": "(ninguno)",
-      "pausedSubtitle": "En pausa. Las sessions omiten este host."
+      "pausedSubtitle": "En pausa. Las sessions omiten este host.",
+      "ownerLabel": "Propietario (opcional)",
+      "ownerHint": "my-org",
+      "ownerHelperHostWide": "Vacío = todo el host: se usa en cada repo de este host sin entrada propia.",
+      "ownerHelperScoped": "Se usa solo para {host}/{owner}/… Los demás propietarios recurren a la entrada de todo el host."
     },
     "deleteBody": "Elimina la credencial. Las sessions que intenten listar PRs de {host} recurrirán a la API sin autenticar.",
     "deletedSnack": "{name} eliminado.",

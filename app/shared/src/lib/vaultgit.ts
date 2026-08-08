@@ -83,8 +83,18 @@ export interface VaultAuthInfo {
   remote_url?: string
   scheme?: 'ssh' | 'https' | 'http' | 'git' | string
   host?: string
+  /** Account/org the remote points at — what selects the credential. */
+  remote_owner?: string
   using_token?: boolean
   token_source?: string
+  /** Owner the resolved credential is scoped to; "" = host-wide. */
+  token_owner?: string
+  /** That credential's display name, so several on one host differ. */
+  token_name?: string
+  /** The remote's owner has no credential of its own; the host-wide
+   * one is being used. Legitimate, but also the shape of the mistake
+   * where a token silently authenticates as the wrong identity. */
+  token_is_fallback?: boolean
   token_missing?: boolean
   helpful_hint?: string
 }

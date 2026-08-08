@@ -14,6 +14,7 @@ class GitHost {
     required this.id,
     required this.kind,
     required this.host,
+    required this.owner,
     required this.name,
     required this.tokenMask,
     required this.enabled,
@@ -26,6 +27,7 @@ class GitHost {
         // github | gitlab | bitbucket | gitea | custom
         kind: json['kind'] as String? ?? '',
         host: json['host'] as String? ?? '',
+        owner: json['owner'] as String? ?? '',
         name: json['name'] as String? ?? '',
         tokenMask: json['token_mask'] as String? ?? '',
         enabled: json['enabled'] as bool? ?? false,
@@ -41,6 +43,10 @@ class GitHost {
   final String kind;
   // Full host URL (e.g. "api.github.com" or self-hosted GitLab base).
   final String host;
+  /// Scopes this credential to one account/org on the host (e.g.
+  /// "Opendray"). Empty = host-wide, used when no owner-specific
+  /// credential matches. Matched case-insensitively.
+  final String owner;
   final String name;
   // Server-redacted preview ("ghp_…abcd"); the raw token is never
   // returned by the API.
@@ -73,6 +79,7 @@ class GitHostsApi {
     required String host,
     required String name,
     required String token,
+    String owner = '',
   }) async {
     try {
       final res = await _dio.post<Map<String, dynamic>>(
@@ -80,6 +87,7 @@ class GitHostsApi {
         data: {
           'kind': kind,
           'host': host,
+          'owner': owner,
           'name': name,
           'token': token,
         },
@@ -97,6 +105,7 @@ class GitHostsApi {
     String id, {
     String? kind,
     String? host,
+    String? owner,
     String? name,
     String? token,
     bool? enabled,
@@ -107,6 +116,7 @@ class GitHostsApi {
         data: {
           if (kind != null) 'kind': kind,
           if (host != null) 'host': host,
+          if (owner != null) 'owner': owner,
           if (name != null) 'name': name,
           if (token != null) 'token': token,
           if (enabled != null) 'enabled': enabled,

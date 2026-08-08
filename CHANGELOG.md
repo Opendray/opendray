@@ -12,6 +12,52 @@ for the full rationale and what triggers a major bump.
 
 ### Added
 
+- **Git credentials are scoped per host *and owner*, so one forge can
+  hold several identities.** One row per hostname assumed one identity
+  per forge, which breaks the moment you touch a personal repo and an
+  org repo on the same host: a fine-grained GitHub token is granted per
+  repository, so the token that reaches `github.com/<you>/…` generally
+  cannot reach `github.com/<org>/…` — and there was nowhere to put the
+  second one. Git host entries now take an optional **Owner**;
+  resolution prefers the owner-scoped credential and falls back to the
+  host-wide one, so existing setups keep working untouched. Vault sync
+  resolves the same way, which it previously could not: it only ever
+  looked up by hostname — and its auth panel now names the credential it
+  resolved to, saying plainly when the remote's owner has none of its
+  own and the host-wide one is standing in.
+
+- **Git hosts is now the authority for HTTPS git auth.** A session's
+  push went out with whatever the machine offered — Xcode ships
+  `credential.helper = osxkeychain` enabled, so a stale keychain entry
+  answered silently and failed with an error describing a token nobody
+  remembered configuring. Pushes now authenticate with the configured
+  credential, and inherited helpers are blanked for HTTPS remotes **even
+  when opendray has nothing registered**: failing as "no credentials"
+  beats quietly succeeding as an identity you never chose. SSH remotes
+  are untouched — the agent is a deliberate, visible configuration.
+
+- **Disabling a git host entry now actually disables it.** The toggle
+  changed nothing: credential resolution returned disabled rows and every
+  caller — vault sync, PR and issue listing, remote detection — used the
+  token regardless, so an entry switched off kept authenticating. The
+  check now lives in the resolver, which also makes disabling compose
+  properly: turn off an owner-scoped entry and its host falls back to the
+  host-wide one, exactly as if the row were absent.
+
+- **Git host entries can be verified against the forge.** A stored token
+  was a claim nobody checked, and the forges hide the mistake: a GitHub
+  fine-grained token keeps "which repositories" and "which permissions"
+  in separate sections of one form, with permissions defaulting to
+  none — so granting all repositories and stopping there produces a
+  token that authenticates perfectly and cannot read a single repo. Git
+  then reports `Write access to repository not granted` on a plain
+  fetch, naming the wrong permission on the wrong operation. **Verify**
+  now asks the forge who the token belongs to, warns when that differs
+  from the entry's owner, and optionally checks a specific repo — with a
+  hint that says where to look.
+
+### Added
+
 - **Markdown in the Vault is syntax-highlighted while you edit it.** The
   file viewer has always coloured what it shows, so raw markdown in the
   Vault — the one place people actually read and write it — was the last

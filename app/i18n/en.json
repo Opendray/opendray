@@ -382,6 +382,10 @@
           "showcaseHint": "Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens",
           "designTaskSent": "Sent to the agent — watch the session.",
           "designTaskFailed": "Could not send the request"
+        },
+        "git": {
+          "credentialUsed": "Authenticated with the {scope} credential.",
+          "credentialFallback": "No credential for {owner} — using the host-wide {scope} one."
         }
       },
       "ended": {
@@ -1120,10 +1124,11 @@
         },
         "auth": {
           "title": "Authentication",
-          "httpsTokenOk": "Will use the token stored for <1>{host}</1> in Plugins → Git hosts. ✓",
+          "httpsTokenOk": "Will use the token stored for <1>{scope}</1> in Plugins → Git hosts. ✓",
           "httpsTokenMissing": "HTTPS remote on <1>{host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.",
           "ssh": "SSH remote on <1>{host}</1>. Auth uses the gateway host's <3>~/.ssh/</3> (ssh-agent, identity file, host config). Verify with <5>ssh -T git@{host}</5> from the host shell.",
-          "configureTokenLink": "→ Configure git host token"
+          "configureTokenLink": "→ Configure git host token",
+          "httpsTokenFallback": "No credential for {owner} — falling back to the host-wide one for {host}. Add an entry scoped to {owner} if it needs its own token."
         },
         "autoSync": {
           "loading": "Loading auto-sync settings…",
@@ -1771,7 +1776,7 @@
       },
       "gitHosts": {
         "title": "Git hosts",
-        "description": "One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.",
+        "description": "Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host's ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.",
         "addHost": "Add host",
         "empty": "No git hosts configured.\nAdd one to enable the PR list in the inspector's Git tab.",
         "columns": {
@@ -1806,8 +1811,22 @@
           "addedToast": "Git host added",
           "updatedToast": "Git host updated",
           "addFailedToast": "Add failed",
-          "updateFailedToast": "Update failed"
-        }
+          "updateFailedToast": "Update failed",
+          "ownerLabel": "Owner (optional)",
+          "ownerPlaceholder": "my-org",
+          "ownerHintHostWide": "Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.",
+          "ownerHintScoped": "Used only for {host}/{owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.",
+          "verifyLabel": "Verify this credential",
+          "verifyHint": "Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token's permissions are invisible from here, and the forge's own error names the wrong one.",
+          "verifyRepoPlaceholder": "owner/repo (optional)",
+          "verifyButton": "Verify",
+          "verifying": "Checking…",
+          "verifyLogin": "Authenticated as {login}",
+          "verifyRepoOk": "can read {repo}",
+          "verifyRepoFail": "CANNOT read {repo}"
+        },
+        "scopeHostWide": "host-wide fallback",
+        "scopeOwner": "only for {owner}"
       }
     },
     "backups": {
@@ -3207,7 +3226,7 @@
         "passwordKept": "unchanged — leave blank to keep",
         "sslMode": "SSL mode",
         "readOnly": "Read-only (block writes from this connection)",
-        "superuserWarning": "This user is a superuser (or the linivek admin). Prefer a CRUD-only project role for day-to-day work.",
+        "superuserWarning": "This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.",
         "test": "Test",
         "save": "Save",
         "testFailed": "Connection test failed",
@@ -3741,7 +3760,9 @@
         "showFailedApi": "Show failed ({status}): {message}",
         "showFailedGeneric": "Show failed: {error}",
         "tabStatus": "Status",
-        "tabLog": "Log"
+        "tabLog": "Log",
+        "credentialUsed": "Authenticated with the {scope} credential.",
+        "credentialFallback": "No credential for {owner} — using the host-wide {scope} one."
       },
       "tasks": {
         "runCommand": "Run command",
@@ -4688,7 +4709,11 @@
       "appBarNew": "Add git host",
       "tokenPreviewHint": "Current preview: {preview}",
       "tokenPreviewNone": "(none)",
-      "pausedSubtitle": "Paused — sessions skip this host."
+      "pausedSubtitle": "Paused — sessions skip this host.",
+      "ownerLabel": "Owner (optional)",
+      "ownerHint": "my-org",
+      "ownerHelperHostWide": "Empty = host-wide: used for every repo on this host without its own entry.",
+      "ownerHelperScoped": "Used only for {host}/{owner}/… Other owners fall back to the host-wide entry."
     },
     "deleteBody": "Removes the credential. Sessions trying to list PRs from {host} will fall back to the unauthenticated API.",
     "deletedSnack": "Deleted {name}.",

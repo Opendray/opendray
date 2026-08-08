@@ -88,7 +88,7 @@ func (s *Service) ListIssues(ctx context.Context, dir, state string) (Remote, []
 	if !rem.HasToken {
 		return rem, nil, ErrNoTokenForHost
 	}
-	hostRow, err := s.GetByHost(ctx, rem.Host)
+	hostRow, err := s.GetForRepo(ctx, rem.Host, rem.Owner)
 	if err != nil {
 		return rem, nil, err
 	}
