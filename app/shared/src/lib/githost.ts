@@ -75,6 +75,13 @@ export interface GitRemote {
    * backup key changed / isn't armed). has_token is false; prompt the
    * operator to re-enter rather than to configure a first token. */
   token_locked?: boolean
+  /** Which credential resolved for this remote — with several per host,
+   * "there is a token for github.com" no longer says which identity. */
+  token_owner?: string
+  token_name?: string
+  /** This remote's owner has no credential of its own; the host-wide
+   * one is standing in. */
+  token_is_fallback?: boolean
   web_url?: string
 }
 

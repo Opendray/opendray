@@ -382,6 +382,10 @@
           "showcaseHint": "Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens",
           "designTaskSent": "Sent to the agent — watch the session.",
           "designTaskFailed": "Could not send the request"
+        },
+        "git": {
+          "credentialUsed": "Authenticated with the {scope} credential.",
+          "credentialFallback": "No credential for {owner} — using the host-wide {scope} one."
         }
       },
       "ended": {
@@ -3748,7 +3752,9 @@
         "showFailedApi": "Show failed ({status}): {message}",
         "showFailedGeneric": "Show failed: {error}",
         "tabStatus": "Status",
-        "tabLog": "Log"
+        "tabLog": "Log",
+        "credentialUsed": "Authenticated with the {scope} credential.",
+        "credentialFallback": "No credential for {owner} — using the host-wide {scope} one."
       },
       "tasks": {
         "runCommand": "Run command",

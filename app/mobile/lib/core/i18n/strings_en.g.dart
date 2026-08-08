@@ -6616,6 +6616,7 @@ class TranslationsWebSessionsInspectorEn {
 	late final TranslationsWebSessionsInspectorVaultPanelEn vaultPanel = TranslationsWebSessionsInspectorVaultPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCortexPanelEn cortexPanel = TranslationsWebSessionsInspectorCortexPanelEn.internal(_root);
 	late final TranslationsWebSessionsInspectorCanvasEn canvas = TranslationsWebSessionsInspectorCanvasEn.internal(_root);
+	late final TranslationsWebSessionsInspectorGitEn git = TranslationsWebSessionsInspectorGitEn.internal(_root);
 }
 
 // Path: web.sessions.ended
@@ -13040,6 +13041,12 @@ class TranslationsSessionsInspectorGitEn {
 
 	/// en: 'Log'
 	String get tabLog => 'Log';
+
+	/// en: 'Authenticated with the {scope} credential.'
+	String credentialUsed({required Object scope}) => 'Authenticated with the ${scope} credential.';
+
+	/// en: 'No credential for {owner} — using the host-wide {scope} one.'
+	String credentialFallback({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.';
 }
 
 // Path: sessions.inspector.tasks
@@ -14977,6 +14984,21 @@ class TranslationsWebSessionsInspectorCanvasEn {
 	String get designTaskFailed => 'Could not send the request';
 }
 
+// Path: web.sessions.inspector.git
+class TranslationsWebSessionsInspectorGitEn {
+	TranslationsWebSessionsInspectorGitEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Authenticated with the {scope} credential.'
+	String credentialUsed({required Object scope}) => 'Authenticated with the ${scope} credential.';
+
+	/// en: 'No credential for {owner} — using the host-wide {scope} one.'
+	String credentialFallback({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	TranslationsWebMemoryWorkersTasksGatekeeperEn.internal(this._root);
@@ -15574,8 +15596,8 @@ class TranslationsWebNotesVaultSyncAuthEn {
 	/// en: 'Authentication'
 	String get title => 'Authentication';
 
-	/// en: 'Will use the token stored for <1>{host}</1> in Plugins → Git hosts. ✓'
-	String httpsTokenOk({required Object host}) => 'Will use the token stored for <1>${host}</1> in Plugins → Git hosts. ✓';
+	/// en: 'Will use the token stored for <1>{scope}</1> in Plugins → Git hosts. ✓'
+	String httpsTokenOk({required Object scope}) => 'Will use the token stored for <1>${scope}</1> in Plugins → Git hosts. ✓';
 
 	/// en: 'HTTPS remote on <1>{host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.'
 	String httpsTokenMissing({required Object host}) => 'HTTPS remote on <1>${host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.';
@@ -15585,6 +15607,9 @@ class TranslationsWebNotesVaultSyncAuthEn {
 
 	/// en: '→ Configure git host token'
 	String get configureTokenLink => '→ Configure git host token';
+
+	/// en: 'No credential for {owner} — falling back to the host-wide one for {host}. Add an entry scoped to {owner} if it needs its own token.'
+	String httpsTokenFallback({required Object owner, required Object host}) => 'No credential for ${owner} — falling back to the host-wide one for ${host}. Add an entry scoped to ${owner} if it needs its own token.';
 }
 
 // Path: web.notes.vaultSync.autoSync
@@ -18920,6 +18945,8 @@ extension on Translations {
 			'web.sessions.inspector.canvas.showcaseHint' => 'Ask the agent to render the design system as a canvas you can look at — swatches, type scale, components, all built from the tokens',
 			'web.sessions.inspector.canvas.designTaskSent' => 'Sent to the agent — watch the session.',
 			'web.sessions.inspector.canvas.designTaskFailed' => 'Could not send the request',
+			'web.sessions.inspector.git.credentialUsed' => ({required Object scope}) => 'Authenticated with the ${scope} credential.',
+			'web.sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.',
 			'web.sessions.ended.bufferUnavailable' => '[buffer unavailable]',
 			'web.sessions.ended.readOnlyBanner' => '[session ended — read-only buffer]',
 			'web.sessions.fileBrowser.title' => 'Choose working directory',
@@ -19085,10 +19112,10 @@ extension on Translations {
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
-			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
-			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'Highest-frequency task: fact extraction every few messages — use the CHEAPEST model that works (haiku / local).',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Occasional, operator-triggered project classification — balanced model; quality matters more than cost here.',
@@ -19496,10 +19523,11 @@ extension on Translations {
 			'web.notes.vaultSync.conflict.resetDescription' => 'Local changes discarded; vault matches remote.',
 			'web.notes.vaultSync.conflict.resetFailedToast' => 'Reset failed',
 			'web.notes.vaultSync.auth.title' => 'Authentication',
-			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object host}) => 'Will use the token stored for <1>${host}</1> in Plugins → Git hosts. ✓',
+			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => 'Will use the token stored for <1>${scope}</1> in Plugins → Git hosts. ✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => 'HTTPS remote on <1>${host}</1> with no opendray token configured. Push / pull will likely fail for private repos until you add one.',
 			'web.notes.vaultSync.auth.ssh' => ({required Object host}) => 'SSH remote on <1>${host}</1>. Auth uses the gateway host\'s <3>~/.ssh/</3> (ssh-agent, identity file, host config). Verify with <5>ssh -T git@${host}</5> from the host shell.',
 			'web.notes.vaultSync.auth.configureTokenLink' => '→ Configure git host token',
+			'web.notes.vaultSync.auth.httpsTokenFallback' => ({required Object owner, required Object host}) => 'No credential for ${owner} — falling back to the host-wide one for ${host}. Add an entry scoped to ${owner} if it needs its own token.',
 			'web.notes.vaultSync.autoSync.loading' => 'Loading auto-sync settings…',
 			'web.notes.vaultSync.autoSync.title' => 'Auto-sync',
 			'web.notes.vaultSync.autoSync.on' => 'on',
@@ -19598,11 +19626,11 @@ extension on Translations {
 			'web.providers.detail.savedToast' => 'Provider config saved',
 			'web.providers.detail.saveFailedToast' => 'Save failed',
 			'web.providers.detail.toggleFailedToast' => 'Toggle failed',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'not installed',
 			'web.providers.detail.brokenCli' => 'Installed but not runnable',
@@ -20112,11 +20140,11 @@ extension on Translations {
 			'web.backups.setup.generateHint' => 'Server generates a cryptographically random passphrase and shows it once. You must copy it before continuing — there is no recovery path.',
 			'web.backups.setup.pasteLabel' => 'Your passphrase',
 			'web.backups.setup.pastePlaceholder' => 'At least 20 characters',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.pasteHint' => 'Recommended: 40+ characters from a password manager.',
 			'web.backups.setup.savesTo' => 'Saves to:',
 			'web.backups.setup.saving' => 'Saving…',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.generateAndSave' => 'Generate and save',
 			'web.backups.setup.save' => 'Save',
 			'web.backups.generated.title' => 'Save this passphrase NOW',
@@ -20626,11 +20654,11 @@ extension on Translations {
 			'web.settings.changeCredentials.confirm' => 'Confirm new password',
 			'web.settings.changeCredentials.errorTooShort' => 'New password must be at least 8 characters.',
 			'web.settings.changeCredentials.errorMismatch' => 'New password and confirmation don\'t match.',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.errorWrongPassword' => 'Current password is wrong.',
 			'web.settings.changeCredentials.cancel' => 'Cancel',
 			'web.settings.changeCredentials.update' => 'Update',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.saving' => 'Saving…',
 			'web.settings.system.title' => 'System status',
 			'web.settings.system.description' => 'Live status from the gateway\'s /health endpoint.',
@@ -21140,11 +21168,11 @@ extension on Translations {
 			'web.database.tree.noSchemas' => 'No schemas visible to this user',
 			'web.database.row.insertTitle' => 'Insert row',
 			'web.database.row.editTitle' => 'Edit row',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.row.setNull' => 'set NULL',
 			'web.database.row.save' => 'Save',
 			'web.database.row.savedInsert' => 'Row inserted',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.row.savedEdit' => 'Row updated',
 			'web.database.row.noChanges' => 'No changes to save',
 			'web.database.grid.insert' => 'Insert',
@@ -21517,6 +21545,8 @@ extension on Translations {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Show failed: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Status',
 			'sessions.inspector.git.tabLog' => 'Log',
+			'sessions.inspector.git.credentialUsed' => ({required Object scope}) => 'Authenticated with the ${scope} credential.',
+			'sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => 'No credential for ${owner} — using the host-wide ${scope} one.',
 			'sessions.inspector.tasks.runCommand' => 'Run command',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Runs in a new shell session and switches to it',
 			'sessions.inspector.tasks.filterHint' => 'Filter tasks…',
@@ -21652,13 +21682,13 @@ extension on Translations {
 			'sessions.spawnSheet.providerLabel' => 'Provider',
 			'sessions.spawnSheet.disabledSuffix' => ' (disabled)',
 			'sessions.spawnSheet.cwdLabel' => 'Working directory',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => 'Absolute path on the gateway host.',
 			'sessions.spawnSheet.browse' => 'Browse',
 			'sessions.spawnSheet.nameLabel' => 'Name (optional)',
 			'sessions.spawnSheet.nameHint' => 'e.g. backend-refactor',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.argsLabel' => 'Extra args (optional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => 'Whitespace-separated; blank uses the provider\'s defaults.',
@@ -22166,13 +22196,13 @@ extension on Translations {
 			'backups.restore.applyRestore' => 'Apply restore',
 			'backups.restore.dryRunToast' => 'Dry run complete — review the plan, then apply',
 			'backups.restore.planTitle' => 'Restore plan (dry run — nothing changed)',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.planDump' => ({required Object size}) => 'Database dump: ${size}',
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} files (${roots})',
 			'backups.restore.planApplyHint' => 'Apply takes a full-instance safety snapshot first, then overwrites the above and runs pg_restore.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.succeededTitle' => 'Restore succeeded',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Replayed ${bytes} from backup ${id}.',
 			'backups.restore.failedTitle' => 'Restore failed',
@@ -22680,13 +22710,13 @@ extension on Translations {
 			'memory.copyTooltip' => 'Copy text',
 			'memory.deleteAllConfirm.title' => 'Delete every memory in this scope?',
 			'memory.deleteAllConfirm.deleteAll' => 'Delete all',
+			_ => null,
+		} ?? switch (path) {
 			'memory.deletedSnackOne' => ({required Object n}) => 'Deleted ${n} memory item',
 			'memory.deletedSnackOther' => ({required Object n}) => 'Deleted ${n} memory items',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Bulk delete failed: ${error}',
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Bulk delete failed: ${error}',
 			'memory.deleteOne.title' => 'Delete memory?',
-			_ => null,
-		} ?? switch (path) {
 			'memory.deleteOne.body' => 'This cannot be undone.',
 			'memory.scope.project' => 'Project',
 			'memory.scope.global' => 'Global',

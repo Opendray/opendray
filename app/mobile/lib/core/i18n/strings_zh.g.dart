@@ -3360,6 +3360,7 @@ class _TranslationsWebSessionsInspectorZh extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorVaultPanelZh vaultPanel = _TranslationsWebSessionsInspectorVaultPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelZh cortexPanel = _TranslationsWebSessionsInspectorCortexPanelZh._(_root);
 	@override late final _TranslationsWebSessionsInspectorCanvasZh canvas = _TranslationsWebSessionsInspectorCanvasZh._(_root);
+	@override late final _TranslationsWebSessionsInspectorGitZh git = _TranslationsWebSessionsInspectorGitZh._(_root);
 }
 
 // Path: web.sessions.ended
@@ -6700,6 +6701,8 @@ class _TranslationsSessionsInspectorGitZh extends TranslationsSessionsInspectorG
 	@override String showFailedGeneric({required Object error}) => '查看失败：${error}';
 	@override String get tabStatus => '状态';
 	@override String get tabLog => '日志';
+	@override String credentialUsed({required Object scope}) => '使用 ${scope} 的凭据认证。';
+	@override String credentialFallback({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。';
 }
 
 // Path: sessions.inspector.tasks
@@ -7611,6 +7614,17 @@ class _TranslationsWebSessionsInspectorCanvasZh extends TranslationsWebSessionsI
 	@override String get designTaskFailed => '发送请求失败';
 }
 
+// Path: web.sessions.inspector.git
+class _TranslationsWebSessionsInspectorGitZh extends TranslationsWebSessionsInspectorGitEn {
+	_TranslationsWebSessionsInspectorGitZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String credentialUsed({required Object scope}) => '使用 ${scope} 的凭据认证。';
+	@override String credentialFallback({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class _TranslationsWebMemoryWorkersTasksGatekeeperZh extends TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	_TranslationsWebMemoryWorkersTasksGatekeeperZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7971,10 +7985,11 @@ class _TranslationsWebNotesVaultSyncAuthZh extends TranslationsWebNotesVaultSync
 
 	// Translations
 	@override String get title => '认证';
-	@override String httpsTokenOk({required Object host}) => '将使用 Plugins → Git hosts 中为 <1>${host}</1> 存的 token。✓';
+	@override String httpsTokenOk({required Object scope}) => '将使用 Plugins → Git hosts 中为 <1>${scope}</1> 存的 token。✓';
 	@override String httpsTokenMissing({required Object host}) => '<1>${host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。';
 	@override String ssh({required Object host}) => '<1>${host}</1> 上的 SSH remote。认证使用网关主机的 <3>~/.ssh/</3>（ssh-agent、identity 文件、host config）。可在主机 shell 用 <5>ssh -T git@${host}</5> 验证。';
 	@override String get configureTokenLink => '→ 配置 git host token';
+	@override String httpsTokenFallback({required Object owner, required Object host}) => '${owner} 没有专属凭据 —— 正在回退使用 ${host} 的全主机凭据。若它需要自己的 token,请为 ${owner} 单独添加一条。';
 }
 
 // Path: web.notes.vaultSync.autoSync
@@ -10102,6 +10117,8 @@ extension on TranslationsZh {
 			'web.sessions.inspector.canvas.showcaseHint' => '让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成',
 			'web.sessions.inspector.canvas.designTaskSent' => '已发送给 agent —— 留意会话。',
 			'web.sessions.inspector.canvas.designTaskFailed' => '发送请求失败',
+			'web.sessions.inspector.git.credentialUsed' => ({required Object scope}) => '使用 ${scope} 的凭据认证。',
+			'web.sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。',
 			'web.sessions.ended.bufferUnavailable' => '[缓冲区不可用]',
 			'web.sessions.ended.readOnlyBanner' => '[会话已结束 — 只读缓冲区]',
 			'web.sessions.fileBrowser.title' => '选择工作目录',
@@ -10267,10 +10284,10 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => '改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。',
 			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
-			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
-			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
+			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => '频率最高的任务：每隔几条消息抽取事实——用能干活的最便宜模型（haiku / 本地）。',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => '偶发、由你手动触发的项目分类——均衡模型；这里质量比成本重要。',
@@ -10678,10 +10695,11 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.conflict.resetDescription' => '本地更改已丢弃；vault 与 remote 一致。',
 			'web.notes.vaultSync.conflict.resetFailedToast' => '重置失败',
 			'web.notes.vaultSync.auth.title' => '认证',
-			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object host}) => '将使用 Plugins → Git hosts 中为 <1>${host}</1> 存的 token。✓',
+			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => '将使用 Plugins → Git hosts 中为 <1>${scope}</1> 存的 token。✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => '<1>${host}</1> 上的 HTTPS remote，opendray 中没有配置 token。在你为其添加 token 之前，私有仓库的 push / pull 很可能失败。',
 			'web.notes.vaultSync.auth.ssh' => ({required Object host}) => '<1>${host}</1> 上的 SSH remote。认证使用网关主机的 <3>~/.ssh/</3>（ssh-agent、identity 文件、host config）。可在主机 shell 用 <5>ssh -T git@${host}</5> 验证。',
 			'web.notes.vaultSync.auth.configureTokenLink' => '→ 配置 git host token',
+			'web.notes.vaultSync.auth.httpsTokenFallback' => ({required Object owner, required Object host}) => '${owner} 没有专属凭据 —— 正在回退使用 ${host} 的全主机凭据。若它需要自己的 token,请为 ${owner} 单独添加一条。',
 			'web.notes.vaultSync.autoSync.loading' => '加载自动同步设置…',
 			'web.notes.vaultSync.autoSync.title' => '自动同步',
 			'web.notes.vaultSync.autoSync.on' => '开',
@@ -10780,11 +10798,11 @@ extension on TranslationsZh {
 			'web.providers.detail.savedToast' => 'Provider 配置已保存',
 			'web.providers.detail.saveFailedToast' => '保存失败',
 			'web.providers.detail.toggleFailedToast' => '切换失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => '未安装',
 			'web.providers.detail.brokenCli' => '已安装但无法运行',
@@ -11294,11 +11312,11 @@ extension on TranslationsZh {
 			'web.backups.setup.generateHint' => '服务端生成一个加密随机的口令并仅显示一次。你必须在继续前复制它 — 没有恢复路径。',
 			'web.backups.setup.pasteLabel' => '你的口令',
 			'web.backups.setup.pastePlaceholder' => '至少 20 个字符',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.pasteHint' => '建议：使用密码管理器生成 40 个以上字符。',
 			'web.backups.setup.savesTo' => '保存到：',
 			'web.backups.setup.saving' => '保存中…',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.generateAndSave' => '生成并保存',
 			'web.backups.setup.save' => '保存',
 			'web.backups.generated.title' => '立即保存此口令',
@@ -11808,11 +11826,11 @@ extension on TranslationsZh {
 			'web.settings.changeCredentials.confirm' => '确认新密码',
 			'web.settings.changeCredentials.errorTooShort' => '新密码至少 8 个字符。',
 			'web.settings.changeCredentials.errorMismatch' => '新密码和确认不一致。',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.errorWrongPassword' => '当前密码不正确。',
 			'web.settings.changeCredentials.cancel' => '取消',
 			'web.settings.changeCredentials.update' => '更新',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.saving' => '保存中…',
 			'web.settings.system.title' => '系统状态',
 			'web.settings.system.description' => '来自网关 /health 接口的实时状态。',
@@ -12322,11 +12340,11 @@ extension on TranslationsZh {
 			'web.database.tree.noSchemas' => '该用户无可见 schema',
 			'web.database.row.insertTitle' => '插入行',
 			'web.database.row.editTitle' => '编辑行',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.row.setNull' => '设为 NULL',
 			'web.database.row.save' => '保存',
 			'web.database.row.savedInsert' => '行已插入',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.row.savedEdit' => '行已更新',
 			'web.database.row.noChanges' => '没有需要保存的更改',
 			'web.database.grid.insert' => '插入',
@@ -12699,6 +12717,8 @@ extension on TranslationsZh {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => '查看失败：${error}',
 			'sessions.inspector.git.tabStatus' => '状态',
 			'sessions.inspector.git.tabLog' => '日志',
+			'sessions.inspector.git.credentialUsed' => ({required Object scope}) => '使用 ${scope} 的凭据认证。',
+			'sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => '${owner} 没有专属凭据 —— 正在使用 ${scope} 的全主机凭据。',
 			'sessions.inspector.tasks.runCommand' => '运行命令',
 			'sessions.inspector.tasks.runCommandSubtitle' => '在新的 shell 会话中运行并切换过去',
 			'sessions.inspector.tasks.filterHint' => '筛选任务…',
@@ -12834,13 +12854,13 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.providerLabel' => '提供商',
 			'sessions.spawnSheet.disabledSuffix' => '（已停用）',
 			'sessions.spawnSheet.cwdLabel' => '工作目录',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => '网关主机上的绝对路径。',
 			'sessions.spawnSheet.browse' => '浏览',
 			'sessions.spawnSheet.nameLabel' => '名称（可选）',
 			'sessions.spawnSheet.nameHint' => '例如：backend-refactor',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.argsLabel' => '额外参数（可选）',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => '以空格分隔；留空使用提供商默认值。',
@@ -13348,13 +13368,13 @@ extension on TranslationsZh {
 			'backups.restore.applyRestore' => '应用恢复',
 			'backups.restore.dryRunToast' => '试运行完成 — 请检查计划后再应用',
 			'backups.restore.planTitle' => '恢复计划（试运行 — 未做任何更改）',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.planDump' => ({required Object size}) => '数据库转储：${size}',
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault：${files} 个文件（${roots}）',
 			'backups.restore.planApplyHint' => '应用前会先做一次全实例安全快照，然后覆盖以上内容并运行 pg_restore。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.succeededTitle' => '恢复成功',
 			'backups.restore.succeededBody' => ({required Object id, required Object bytes}) => '已从备份 ${id} 重放 ${bytes}。',
 			'backups.restore.failedTitle' => '恢复失败',
@@ -13862,13 +13882,13 @@ extension on TranslationsZh {
 			'memory.copyTooltip' => '复制文本',
 			'memory.deleteAllConfirm.title' => '删除此范围内所有记忆？',
 			'memory.deleteAllConfirm.deleteAll' => '全部删除',
+			_ => null,
+		} ?? switch (path) {
 			'memory.deletedSnackOne' => ({required Object n}) => '已删除 ${n} 条记忆',
 			'memory.deletedSnackOther' => ({required Object n}) => '已删除 ${n} 条记忆',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => '批量删除失败：${error}',
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => '批量删除失败：${error}',
 			'memory.deleteOne.title' => '删除该记忆？',
-			_ => null,
-		} ?? switch (path) {
 			'memory.deleteOne.body' => '此操作不可撤销。',
 			'memory.scope.project' => '项目',
 			'memory.scope.global' => '全局',

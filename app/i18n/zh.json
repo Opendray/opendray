@@ -382,6 +382,10 @@
           "showcaseHint": "让 agent 把设计系统渲染成一个可以直接看的画布 —— 色板、字号尺度、组件,全部由 tokens 生成",
           "designTaskSent": "已发送给 agent —— 留意会话。",
           "designTaskFailed": "发送请求失败"
+        },
+        "git": {
+          "credentialUsed": "使用 {scope} 的凭据认证。",
+          "credentialFallback": "{owner} 没有专属凭据 —— 正在使用 {scope} 的全主机凭据。"
         }
       },
       "ended": {
@@ -3748,7 +3752,9 @@
         "showFailedApi": "查看失败（{status}）：{message}",
         "showFailedGeneric": "查看失败：{error}",
         "tabStatus": "状态",
-        "tabLog": "日志"
+        "tabLog": "日志",
+        "credentialUsed": "使用 {scope} 的凭据认证。",
+        "credentialFallback": "{owner} 没有专属凭据 —— 正在使用 {scope} 的全主机凭据。"
       },
       "tasks": {
         "runCommand": "运行命令",

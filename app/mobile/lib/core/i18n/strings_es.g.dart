@@ -3360,6 +3360,7 @@ class _TranslationsWebSessionsInspectorEs extends TranslationsWebSessionsInspect
 	@override late final _TranslationsWebSessionsInspectorVaultPanelEs vaultPanel = _TranslationsWebSessionsInspectorVaultPanelEs._(_root);
 	@override late final _TranslationsWebSessionsInspectorCortexPanelEs cortexPanel = _TranslationsWebSessionsInspectorCortexPanelEs._(_root);
 	@override late final _TranslationsWebSessionsInspectorCanvasEs canvas = _TranslationsWebSessionsInspectorCanvasEs._(_root);
+	@override late final _TranslationsWebSessionsInspectorGitEs git = _TranslationsWebSessionsInspectorGitEs._(_root);
 }
 
 // Path: web.sessions.ended
@@ -6700,6 +6701,8 @@ class _TranslationsSessionsInspectorGitEs extends TranslationsSessionsInspectorG
 	@override String showFailedGeneric({required Object error}) => 'Falló al mostrar: ${error}';
 	@override String get tabStatus => 'Estado';
 	@override String get tabLog => 'Log';
+	@override String credentialUsed({required Object scope}) => 'Autenticado con la credencial de ${scope}.';
+	@override String credentialFallback({required Object owner, required Object scope}) => 'Sin credencial para ${owner}: se usa la de todo el host ${scope}.';
 }
 
 // Path: sessions.inspector.tasks
@@ -7611,6 +7614,17 @@ class _TranslationsWebSessionsInspectorCanvasEs extends TranslationsWebSessionsI
 	@override String get designTaskFailed => 'No se pudo enviar la solicitud';
 }
 
+// Path: web.sessions.inspector.git
+class _TranslationsWebSessionsInspectorGitEs extends TranslationsWebSessionsInspectorGitEn {
+	_TranslationsWebSessionsInspectorGitEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String credentialUsed({required Object scope}) => 'Autenticado con la credencial de ${scope}.';
+	@override String credentialFallback({required Object owner, required Object scope}) => 'Sin credencial para ${owner}: se usa la de todo el host ${scope}.';
+}
+
 // Path: web.memoryWorkers.tasks.gatekeeper
 class _TranslationsWebMemoryWorkersTasksGatekeeperEs extends TranslationsWebMemoryWorkersTasksGatekeeperEn {
 	_TranslationsWebMemoryWorkersTasksGatekeeperEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7971,10 +7985,11 @@ class _TranslationsWebNotesVaultSyncAuthEs extends TranslationsWebNotesVaultSync
 
 	// Translations
 	@override String get title => 'Autenticación';
-	@override String httpsTokenOk({required Object host}) => 'Usará el token guardado para <1>${host}</1> en Plugins → Hosts de git. ✓';
+	@override String httpsTokenOk({required Object scope}) => 'Usará el token guardado para <1>${scope}</1> en Plugins → Git hosts. ✓';
 	@override String httpsTokenMissing({required Object host}) => 'Remoto HTTPS en <1>${host}</1> sin ningún token de opendray configurado. Es probable que push / pull fallen en repos privados hasta que añadas uno.';
 	@override String ssh({required Object host}) => 'Remoto SSH en <1>${host}</1>. La autenticación usa el <3>~/.ssh/</3> del host del gateway (ssh-agent, archivo de identidad, configuración de host). Verifícalo con <5>ssh -T git@${host}</5> desde la shell del host.';
 	@override String get configureTokenLink => '→ Configurar token de host de git';
+	@override String httpsTokenFallback({required Object owner, required Object host}) => 'No hay credencial para ${owner}: se recurre a la de todo el host ${host}. Añade una entrada para ${owner} si necesita su propio token.';
 }
 
 // Path: web.notes.vaultSync.autoSync
@@ -10102,6 +10117,8 @@ extension on TranslationsEs {
 			'web.sessions.inspector.canvas.showcaseHint' => 'Pide al agente que dibuje el sistema de diseño como un lienzo: muestras, escala tipográfica y componentes, todo hecho con los tokens',
 			'web.sessions.inspector.canvas.designTaskSent' => 'Enviado al agente: mira la sesión.',
 			'web.sessions.inspector.canvas.designTaskFailed' => 'No se pudo enviar la solicitud',
+			'web.sessions.inspector.git.credentialUsed' => ({required Object scope}) => 'Autenticado con la credencial de ${scope}.',
+			'web.sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => 'Sin credencial para ${owner}: se usa la de todo el host ${scope}.',
 			'web.sessions.ended.bufferUnavailable' => '[búfer no disponible]',
 			'web.sessions.ended.readOnlyBanner' => '[session finalizada. búfer de solo lectura]',
 			'web.sessions.fileBrowser.title' => 'Elige el directorio de trabajo',
@@ -10267,10 +10284,10 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Reescribe goal/plan/secciones — exige criterio; un modelo fuerte (sonnet/opus) evita malas actualizaciones.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Detector de conflictos entre capas',
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
-			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Escaneo diario de contradicciones — un modelo equilibrado basta.',
-			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Escaneo diario de contradicciones — un modelo equilibrado basta.',
+			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
 			'web.memoryWorkers.tasks.capture.modelAdvice' => 'La tarea más frecuente: extracción de hechos — usa el modelo MÁS BARATO que funcione (haiku / local).',
 			'web.memoryWorkers.tasks.blueprint.modelAdvice' => 'Clasificación ocasional del proyecto — modelo equilibrado; aquí la calidad importa más que el costo.',
@@ -10678,10 +10695,11 @@ extension on TranslationsEs {
 			'web.notes.vaultSync.conflict.resetDescription' => 'Cambios locales descartados; el vault coincide con el remoto.',
 			'web.notes.vaultSync.conflict.resetFailedToast' => 'Error en el reset',
 			'web.notes.vaultSync.auth.title' => 'Autenticación',
-			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object host}) => 'Usará el token guardado para <1>${host}</1> en Plugins → Hosts de git. ✓',
+			'web.notes.vaultSync.auth.httpsTokenOk' => ({required Object scope}) => 'Usará el token guardado para <1>${scope}</1> en Plugins → Git hosts. ✓',
 			'web.notes.vaultSync.auth.httpsTokenMissing' => ({required Object host}) => 'Remoto HTTPS en <1>${host}</1> sin ningún token de opendray configurado. Es probable que push / pull fallen en repos privados hasta que añadas uno.',
 			'web.notes.vaultSync.auth.ssh' => ({required Object host}) => 'Remoto SSH en <1>${host}</1>. La autenticación usa el <3>~/.ssh/</3> del host del gateway (ssh-agent, archivo de identidad, configuración de host). Verifícalo con <5>ssh -T git@${host}</5> desde la shell del host.',
 			'web.notes.vaultSync.auth.configureTokenLink' => '→ Configurar token de host de git',
+			'web.notes.vaultSync.auth.httpsTokenFallback' => ({required Object owner, required Object host}) => 'No hay credencial para ${owner}: se recurre a la de todo el host ${host}. Añade una entrada para ${owner} si necesita su propio token.',
 			'web.notes.vaultSync.autoSync.loading' => 'Cargando ajustes de sincronización automática…',
 			'web.notes.vaultSync.autoSync.title' => 'Sincronización automática',
 			'web.notes.vaultSync.autoSync.on' => 'activada',
@@ -10780,11 +10798,11 @@ extension on TranslationsEs {
 			'web.providers.detail.savedToast' => 'Configuración del proveedor guardada',
 			'web.providers.detail.saveFailedToast' => 'Error al guardar',
 			'web.providers.detail.toggleFailedToast' => 'Error al alternar',
+			_ => null,
+		} ?? switch (path) {
 			'web.providers.detail.caps.resume' => 'resume',
 			'web.providers.detail.caps.stream' => 'stream',
 			'web.providers.detail.caps.images' => 'images',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.caps.mcp' => 'mcp',
 			'web.providers.detail.notInstalled' => 'no instalado',
 			'web.providers.detail.brokenCli' => 'Instalado pero no ejecutable',
@@ -11294,11 +11312,11 @@ extension on TranslationsEs {
 			'web.backups.setup.generateHint' => 'El servidor genera una frase de contraseña criptográficamente aleatoria y la muestra una sola vez. Debes copiarla antes de continuar, no hay forma de recuperarla.',
 			'web.backups.setup.pasteLabel' => 'Tu frase de contraseña',
 			'web.backups.setup.pastePlaceholder' => 'Al menos 20 caracteres',
+			_ => null,
+		} ?? switch (path) {
 			'web.backups.setup.pasteHint' => 'Recomendado: más de 40 caracteres desde un gestor de contraseñas.',
 			'web.backups.setup.savesTo' => 'Se guarda en:',
 			'web.backups.setup.saving' => 'Guardando…',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.setup.generateAndSave' => 'Generar y guardar',
 			'web.backups.setup.save' => 'Guardar',
 			'web.backups.generated.title' => 'Guarda esta frase de contraseña AHORA',
@@ -11808,11 +11826,11 @@ extension on TranslationsEs {
 			'web.settings.changeCredentials.confirm' => 'Confirmar nueva contraseña',
 			'web.settings.changeCredentials.errorTooShort' => 'La nueva contraseña debe tener al menos 8 caracteres.',
 			'web.settings.changeCredentials.errorMismatch' => 'La nueva contraseña y la confirmación no coinciden.',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.changeCredentials.errorWrongPassword' => 'La contraseña actual es incorrecta.',
 			'web.settings.changeCredentials.cancel' => 'Cancelar',
 			'web.settings.changeCredentials.update' => 'Actualizar',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.changeCredentials.saving' => 'Guardando…',
 			'web.settings.system.title' => 'Estado del sistema',
 			'web.settings.system.description' => 'Estado en vivo desde el endpoint /health del gateway.',
@@ -12322,11 +12340,11 @@ extension on TranslationsEs {
 			'web.database.tree.noSchemas' => 'No hay esquemas visibles para este usuario',
 			'web.database.row.insertTitle' => 'Insertar fila',
 			'web.database.row.editTitle' => 'Editar fila',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.row.setNull' => 'poner NULL',
 			'web.database.row.save' => 'Guardar',
 			'web.database.row.savedInsert' => 'Fila insertada',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.row.savedEdit' => 'Fila actualizada',
 			'web.database.row.noChanges' => 'No hay cambios que guardar',
 			'web.database.grid.insert' => 'Insertar',
@@ -12699,6 +12717,8 @@ extension on TranslationsEs {
 			'sessions.inspector.git.showFailedGeneric' => ({required Object error}) => 'Falló al mostrar: ${error}',
 			'sessions.inspector.git.tabStatus' => 'Estado',
 			'sessions.inspector.git.tabLog' => 'Log',
+			'sessions.inspector.git.credentialUsed' => ({required Object scope}) => 'Autenticado con la credencial de ${scope}.',
+			'sessions.inspector.git.credentialFallback' => ({required Object owner, required Object scope}) => 'Sin credencial para ${owner}: se usa la de todo el host ${scope}.',
 			'sessions.inspector.tasks.runCommand' => 'Ejecutar comando',
 			'sessions.inspector.tasks.runCommandSubtitle' => 'Se ejecuta en una nueva session de shell y cambia a ella',
 			'sessions.inspector.tasks.filterHint' => 'Filtrar tareas…',
@@ -12834,13 +12854,13 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.providerLabel' => 'Proveedor',
 			'sessions.spawnSheet.disabledSuffix' => ' (desactivado)',
 			'sessions.spawnSheet.cwdLabel' => 'Directorio de trabajo',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.spawnSheet.cwdHint' => '/Users/you/projects/foo',
 			'sessions.spawnSheet.cwdHelper' => 'Ruta absoluta en el host del gateway.',
 			'sessions.spawnSheet.browse' => 'Examinar',
 			'sessions.spawnSheet.nameLabel' => 'Nombre (opcional)',
 			'sessions.spawnSheet.nameHint' => 'p. ej. backend-refactor',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.spawnSheet.argsLabel' => 'Argumentos adicionales (opcional)',
 			'sessions.spawnSheet.argsHint' => '--continue --verbose',
 			'sessions.spawnSheet.argsHelper' => 'Separados por espacios; en blanco usa los valores predeterminados del proveedor.',
@@ -13348,13 +13368,13 @@ extension on TranslationsEs {
 			'backups.restore.applyRestore' => 'Aplicar restauración',
 			'backups.restore.dryRunToast' => 'Simulación completada — revisa el plan y luego aplícalo',
 			'backups.restore.planTitle' => 'Plan de restauración (simulación — no se cambió nada)',
+			_ => null,
+		} ?? switch (path) {
 			'backups.restore.planDump' => ({required Object size}) => 'Volcado de base de datos: ${size}',
 			'backups.restore.planConfig' => ({required Object path}) => 'config.toml → ${path}',
 			'backups.restore.planSecrets' => ({required Object path}) => 'secrets.env → ${path}',
 			'backups.restore.planVault' => ({required Object files, required Object roots}) => 'vault: ${files} archivos (${roots})',
 			'backups.restore.planApplyHint' => 'Aplicar toma primero una instantánea de seguridad de toda la instancia, luego sobrescribe lo anterior y ejecuta pg_restore.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.succeededTitle' => 'Restauración completada',
 			'backups.restore.succeededBody' => ({required Object bytes, required Object id}) => 'Se reprodujeron ${bytes} de la copia de seguridad ${id}.',
 			'backups.restore.failedTitle' => 'Error en la restauración',
@@ -13862,13 +13882,13 @@ extension on TranslationsEs {
 			'memory.copyTooltip' => 'Copiar texto',
 			'memory.deleteAllConfirm.title' => '¿Eliminar todas las memorias de este ámbito?',
 			'memory.deleteAllConfirm.deleteAll' => 'Eliminar todas',
+			_ => null,
+		} ?? switch (path) {
 			'memory.deletedSnackOne' => ({required Object n}) => 'Se eliminó ${n} elemento de memoria',
 			'memory.deletedSnackOther' => ({required Object n}) => 'Se eliminaron ${n} elementos de memoria',
 			'memory.bulkDeleteFailedApi' => ({required Object error}) => 'Error al eliminar en bloque: ${error}',
 			'memory.bulkDeleteFailedGeneric' => ({required Object error}) => 'Error al eliminar en bloque: ${error}',
 			'memory.deleteOne.title' => '¿Eliminar memoria?',
-			_ => null,
-		} ?? switch (path) {
 			'memory.deleteOne.body' => 'Esto no se puede deshacer.',
 			'memory.scope.project' => 'Proyecto',
 			'memory.scope.global' => 'Global',

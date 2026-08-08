@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/git_api.dart';
+import 'package:opendray/features/sessions/inspector/credential_note.dart';
 import 'package:opendray/features/sessions/inspector/pr_detail_screen.dart';
 
 // GitPRSection sits at the bottom of the status pane and exposes
@@ -157,6 +158,13 @@ class _GitPRSectionState extends ConsumerState<GitPRSection> {
           else
             for (final pr in _list!.prs)
               _PRRow(pr: pr, onTap: () => unawaited(_openDetail(pr))),
+          CredentialNote(
+            scope: _list?.credentialScope ?? '',
+            remoteOwner: _list?.remoteOwner ?? '',
+            isFallback: _list?.tokenIsFallback ?? false,
+            failed: _error != null ||
+                (_list?.errorMessage ?? '').isNotEmpty,
+          ),
         ],
       ),
     );

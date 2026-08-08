@@ -403,8 +403,19 @@ type Remote struct {
 	// stored value can't be decrypted (backup key changed). HasToken is
 	// false in that case; the UI uses TokenLocked to prompt a re-entry
 	// rather than a first-time "configure a token".
-	TokenLocked bool   `json:"token_locked,omitempty"`
-	WebURL      string `json:"web_url,omitempty"`
+	TokenLocked bool `json:"token_locked,omitempty"`
+	// TokenOwner / TokenName identify WHICH credential resolved for this
+	// remote — with several per host, "there is a token for github.com"
+	// no longer says which identity is about to be used.
+	TokenOwner string `json:"token_owner,omitempty"`
+	TokenName  string `json:"token_name,omitempty"`
+	// TokenIsFallback: this remote's owner has no credential of its own,
+	// so the host-wide one is standing in. Legitimate, and also the
+	// shape of the mistake where a token authenticates as the wrong
+	// identity — the forge then answers 403/404 with nothing pointing
+	// back at the credential, so it is worth saying out loud.
+	TokenIsFallback bool   `json:"token_is_fallback,omitempty"`
+	WebURL          string `json:"web_url,omitempty"`
 }
 
 // DetectRemote reads `git remote get-url origin` from `dir` and parses
@@ -434,6 +445,9 @@ func (s *Service) DetectRemote(ctx context.Context, dir string) (Remote, error) 
 		rem.Kind = hostRow.Kind
 		rem.HasToken = hostRow.Token != ""
 		rem.TokenLocked = hostRow.TokenLocked
+		rem.TokenOwner = hostRow.Owner
+		rem.TokenName = hostRow.Name
+		rem.TokenIsFallback = hostRow.Owner == "" && owner != ""
 	}
 	return rem, nil
 }

@@ -382,6 +382,10 @@
           "showcaseHint": "Pide al agente que dibuje el sistema de diseño como un lienzo: muestras, escala tipográfica y componentes, todo hecho con los tokens",
           "designTaskSent": "Enviado al agente: mira la sesión.",
           "designTaskFailed": "No se pudo enviar la solicitud"
+        },
+        "git": {
+          "credentialUsed": "Autenticado con la credencial de {scope}.",
+          "credentialFallback": "Sin credencial para {owner}: se usa la de todo el host {scope}."
         }
       },
       "ended": {
@@ -3748,7 +3752,9 @@
         "showFailedApi": "Falló al mostrar ({status}): {message}",
         "showFailedGeneric": "Falló al mostrar: {error}",
         "tabStatus": "Estado",
-        "tabLog": "Log"
+        "tabLog": "Log",
+        "credentialUsed": "Autenticado con la credencial de {scope}.",
+        "credentialFallback": "Sin credencial para {owner}: se usa la de todo el host {scope}."
       },
       "tasks": {
         "runCommand": "Ejecutar comando",

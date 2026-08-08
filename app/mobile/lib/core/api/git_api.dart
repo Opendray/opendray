@@ -151,6 +151,16 @@ class GitPullRequest {
   final String body;
 }
 
+/// "host" or "host/owner" for whichever credential the gateway resolved.
+/// Empty when the response carries no remote.
+String _credentialScope(Object? remote) {
+  if (remote is! Map<String, dynamic>) return '';
+  final host = remote['host'] as String? ?? '';
+  final owner = remote['token_owner'] as String? ?? '';
+  if (host.isEmpty) return '';
+  return owner.isEmpty ? host : '$host/$owner';
+}
+
 // Container for the /git/prs response: PRs plus repo metadata so
 // callers can render a "configure your token" hint when no host
 // row matches the detected remote.
@@ -160,6 +170,9 @@ class GitPullRequestList {
     required this.needsToken,
     required this.tokenLocked,
     required this.host,
+    required this.credentialScope,
+    required this.remoteOwner,
+    required this.tokenIsFallback,
     required this.errorMessage,
   });
 
@@ -183,6 +196,13 @@ class GitPullRequestList {
       needsToken: json['need_token'] as bool? ?? false,
       tokenLocked: tokenLocked,
       host: host,
+      credentialScope: _credentialScope(remote),
+      remoteOwner: remote is Map<String, dynamic>
+          ? (remote['owner'] as String? ?? '')
+          : '',
+      tokenIsFallback:
+          remote is Map<String, dynamic> &&
+          (remote['token_is_fallback'] as bool? ?? false),
       errorMessage: json['error'] as String? ?? '',
     );
   }
@@ -195,6 +215,14 @@ class GitPullRequestList {
   // changed). UI prompts re-entry instead of first-time config.
   final bool tokenLocked;
   final String host;
+  // Which credential resolved, as "host" or "host/owner". With several
+  // per host, the host alone no longer names an identity.
+  final String credentialScope;
+  // The account/org the remote points at — named in the fallback note.
+  final String remoteOwner;
+  // The remote's owner has no credential of its own; the host-wide one
+  // is standing in.
+  final bool tokenIsFallback;
   // Non-empty when upstream returned a transport error (e.g.
   // rate limit). Distinct from needsToken which is a config gap.
   final String errorMessage;
@@ -441,6 +469,9 @@ class GitIssueList {
     required this.needsToken,
     required this.tokenLocked,
     required this.host,
+    required this.credentialScope,
+    required this.remoteOwner,
+    required this.tokenIsFallback,
     required this.errorMessage,
   });
 
@@ -461,6 +492,13 @@ class GitIssueList {
       needsToken: json['need_token'] as bool? ?? false,
       tokenLocked: tokenLocked,
       host: host,
+      credentialScope: _credentialScope(remote),
+      remoteOwner: remote is Map<String, dynamic>
+          ? (remote['owner'] as String? ?? '')
+          : '',
+      tokenIsFallback:
+          remote is Map<String, dynamic> &&
+          (remote['token_is_fallback'] as bool? ?? false),
       errorMessage: json['error'] as String? ?? '',
     );
   }
@@ -469,6 +507,9 @@ class GitIssueList {
   final bool needsToken;
   final bool tokenLocked;
   final String host;
+  final String credentialScope;
+  final String remoteOwner;
+  final bool tokenIsFallback;
   final String errorMessage;
 }
 

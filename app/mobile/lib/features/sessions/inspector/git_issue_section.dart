@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/git_api.dart';
+import 'package:opendray/features/sessions/inspector/credential_note.dart';
 import 'package:opendray/features/sessions/inspector/issue_detail_screen.dart';
 
 // GitIssueSection sits directly below GitPRSection in the Git tab. It
@@ -127,6 +128,13 @@ class _GitIssueSectionState extends ConsumerState<GitIssueSection> {
           else
             for (final issue in _list!.issues)
               _IssueRow(issue: issue, onTap: () => unawaited(_openDetail(issue))),
+          CredentialNote(
+            scope: _list?.credentialScope ?? '',
+            remoteOwner: _list?.remoteOwner ?? '',
+            isFallback: _list?.tokenIsFallback ?? false,
+            failed: _error != null ||
+                (_list?.errorMessage ?? '').isNotEmpty,
+          ),
         ],
       ),
     );
