@@ -36,6 +36,18 @@ for the full rationale and what triggers a major bump.
   beats quietly succeeding as an identity you never chose. SSH remotes
   are untouched — the agent is a deliberate, visible configuration.
 
+- **Git host entries can be verified against the forge.** A stored token
+  was a claim nobody checked, and the forges hide the mistake: a GitHub
+  fine-grained token keeps "which repositories" and "which permissions"
+  in separate sections of one form, with permissions defaulting to
+  none — so granting all repositories and stopping there produces a
+  token that authenticates perfectly and cannot read a single repo. Git
+  then reports `Write access to repository not granted` on a plain
+  fetch, naming the wrong permission on the wrong operation. **Verify**
+  now asks the forge who the token belongs to, warns when that differs
+  from the entry's owner, and optionally checks a specific repo — with a
+  hint that says where to look.
+
 ### Added
 
 - **Markdown in the Vault is syntax-highlighted while you edit it.** The

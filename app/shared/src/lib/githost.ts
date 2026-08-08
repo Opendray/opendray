@@ -40,6 +40,38 @@ export interface UpdateGitHostRequest {
   enabled?: boolean
 }
 
+export interface GitHostVerifyResult {
+  /** The account the forge says the token belongs to. */
+  login?: string
+  /** False when login differs from the entry's owner — mislabelled. */
+  owner_matches: boolean
+  /** Whether the tested repo could be read. */
+  reachable?: boolean
+  repo?: string
+  /** Explains a failure in terms the forge's own error doesn't. */
+  hint?: string
+  error?: string
+}
+
+/**
+ * Ask the forge who a stored token belongs to, and optionally whether
+ * it can read `repo` ("owner/name").
+ *
+ * Exists because a token's settings are invisible from here: a GitHub
+ * fine-grained token with repositories selected but permissions left at
+ * their default (none) authenticates fine and then fails every git
+ * operation with a 403 naming the wrong permission.
+ */
+export async function verifyGitHost(
+  id: string,
+  repo?: string,
+): Promise<GitHostVerifyResult> {
+  return api<GitHostVerifyResult>(`/api/v1/git-hosts/${id}/verify`, {
+    method: 'POST',
+    body: { repo: repo ?? '' },
+  })
+}
+
 export async function listGitHosts(): Promise<GitHost[]> {
   const res = await api<{ hosts: GitHost[] }>('/api/v1/git-hosts')
   return res.hosts ?? []

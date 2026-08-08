@@ -1815,7 +1815,15 @@
           "ownerLabel": "Owner (optional)",
           "ownerPlaceholder": "Opendray",
           "ownerHintHostWide": "Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.",
-          "ownerHintScoped": "Used only for {host}/{owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org."
+          "ownerHintScoped": "Used only for {host}/{owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.",
+          "verifyLabel": "Verify this credential",
+          "verifyHint": "Asks the forge who this token belongs to. Optionally name a repo (owner/name) to check it can actually be read — a token's permissions are invisible from here, and the forge's own error names the wrong one.",
+          "verifyRepoPlaceholder": "linivek/HomeLabDoc (optional)",
+          "verifyButton": "Verify",
+          "verifying": "Checking…",
+          "verifyLogin": "Authenticated as {login}",
+          "verifyRepoOk": "can read {repo}",
+          "verifyRepoFail": "CANNOT read {repo}"
         },
         "scopeHostWide": "host-wide fallback",
         "scopeOwner": "only for {owner}"

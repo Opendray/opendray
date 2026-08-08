@@ -264,6 +264,17 @@ func (s *Service) GetForRepo(ctx context.Context, host, owner string) (Host, err
 	return h, err
 }
 
+// getWithToken is Get without redaction — for callers that must use the
+// token (verification), never for anything that reaches a response body.
+func (s *Service) getWithToken(ctx context.Context, id string) (Host, error) {
+	row := s.pool.QueryRow(ctx, hostSelect+` WHERE id=$1`, id)
+	h, err := s.scanHostDecoded(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Host{}, ErrNotFound
+	}
+	return h, err
+}
+
 func (s *Service) Create(ctx context.Context, req CreateRequest) (Host, error) {
 	if err := validateKind(req.Kind); err != nil {
 		return Host{}, err
@@ -2119,6 +2130,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Put("/", h.update)
 			r.Delete("/", h.del)
+			r.Post("/verify", h.verify)
 		})
 	})
 	// Remote detection + PR listing live under /git/* alongside the
@@ -2439,4 +2451,27 @@ func credentialUsername(k Kind) string {
 		return "oauth2"
 	}
 	return "opendray"
+}
+
+// verify asks the forge who the stored token belongs to and, when a
+// `repo` is supplied, whether it can be read. Answering that question
+// inside opendray is the difference between a one-line explanation and
+// an afternoon spent reading a 403 that names the wrong permission.
+func (h *Handlers) verify(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req struct {
+		Repo string `json:"repo"`
+	}
+	// Body is optional: no repo means "just tell me whose token this is".
+	_ = json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&req)
+	res, err := h.svc.Verify(r.Context(), id, strings.TrimSpace(req.Repo))
+	if errors.Is(err, ErrNotFound) {
+		writeError(w, http.StatusNotFound, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }

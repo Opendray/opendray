@@ -1815,7 +1815,15 @@
           "ownerLabel": "Propietario (opcional)",
           "ownerPlaceholder": "Opendray",
           "ownerHintHostWide": "Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.",
-          "ownerHintScoped": "Se usa solo para {host}/{owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización."
+          "ownerHintScoped": "Se usa solo para {host}/{owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.",
+          "verifyLabel": "Verificar esta credencial",
+          "verifyHint": "Pregunta a la forja a quién pertenece este token. Opcionalmente indica un repo (owner/name) para comprobar que se puede leer: los permisos del token son invisibles desde aquí y el error de la forja nombra el permiso equivocado.",
+          "verifyRepoPlaceholder": "linivek/HomeLabDoc (opcional)",
+          "verifyButton": "Verificar",
+          "verifying": "Comprobando…",
+          "verifyLogin": "Autenticado como {login}",
+          "verifyRepoOk": "puede leer {repo}",
+          "verifyRepoFail": "NO puede leer {repo}"
         },
         "scopeHostWide": "reserva para todo el host",
         "scopeOwner": "solo para {owner}"
