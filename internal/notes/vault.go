@@ -31,7 +31,7 @@ var (
 	ErrNotFound      = errors.New("note not found")
 	ErrPathEscape    = errors.New("path escapes the vault root")
 	ErrInvalidPath   = errors.New("invalid path")
-	ErrNotMarkdown   = errors.New("path must end in .md")
+	ErrNotDocument   = errors.New("path must be a document (.md, .markdown, .html, .htm)")
 	ErrAlreadyExists = errors.New("note already exists")
 )
 
@@ -192,12 +192,13 @@ func (v *Vault) resolve(rel string) (string, error) {
 	return full, nil
 }
 
-// requireMarkdown enforces the .md extension on writeable paths so
-// the vault doesn't accumulate random files via the API. Reads are
-// less restrictive — anything inside the vault is fair game.
-func requireMarkdown(rel string) error {
-	if !strings.HasSuffix(strings.ToLower(rel), ".md") {
-		return ErrNotMarkdown
+// requireDocument keeps the vault from accumulating arbitrary files
+// through the API: writes must land on a recognised document
+// extension. Reads stay permissive — anything inside the vault is fair
+// game, since the jail already bounds it.
+func requireDocument(rel string) error {
+	if !IsDocument(rel) {
+		return ErrNotDocument
 	}
 	return nil
 }
@@ -233,7 +234,7 @@ func (v *Vault) List(prefix string) ([]Note, error) {
 			}
 			return nil
 		}
-		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+		if !IsDocument(d.Name()) {
 			return nil
 		}
 		rel, err := filepath.Rel(v.root, path)
@@ -303,7 +304,7 @@ func (v *Vault) Read(rel string) (FullNote, error) {
 // directories as needed. mode=0o600 because notes can hold private
 // content and the vault is single-user.
 func (v *Vault) Write(rel string, body string) (Note, error) {
-	if err := requireMarkdown(rel); err != nil {
+	if err := requireDocument(rel); err != nil {
 		return Note{}, err
 	}
 	full, err := v.resolve(rel)
@@ -332,7 +333,7 @@ func (v *Vault) Write(rel string, body string) (Note, error) {
 // A leading newline is inserted when the existing file doesn't end in
 // one, so daily-log style appends always start on their own line.
 func (v *Vault) Append(rel string, body string) (Note, error) {
-	if err := requireMarkdown(rel); err != nil {
+	if err := requireDocument(rel); err != nil {
 		return Note{}, err
 	}
 	full, err := v.resolve(rel)
@@ -462,6 +463,11 @@ func DailyPath(t time.Time) string {
 // PersonalPath returns the personal scratchpad path for `basename`,
 // using the vault's configured prefix. Sanitises basename so weird
 // cwds still produce sane file names.
+//
+// Auto-derived paths stay markdown even though the vault now stores
+// HTML too: these are written by agents and by opendray itself, and
+// generating HTML here would be a strange default. Operators can still
+// create .html by naming it. Same for DailyPath and ProjectPath.
 func (v *Vault) PersonalPath(basename string) string {
 	return v.personalPrefix + "/" + sanitiseBasename(basename) + ".md"
 }

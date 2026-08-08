@@ -38,6 +38,10 @@ type Template struct {
 	// Body is the raw, unrendered content. Exposed so a client can
 	// preview a template without creating a file.
 	Body string `json:"body"`
+	// Kind is the document kind this template produces. Built-ins are
+	// markdown; a vault template's kind comes from its own extension,
+	// so `_templates/report.html` starts an HTML document.
+	Kind Kind `json:"kind"`
 }
 
 // Placeholders substituted at render time. Deliberately few: a template
@@ -60,12 +64,14 @@ var builtinTemplates = []Template{
 		ID:     "blank",
 		Name:   "Blank",
 		Source: "builtin",
+		Kind:   KindMarkdown,
 		Body:   "# {{title}}\n\n",
 	},
 	{
 		ID:     "feature",
 		Name:   "Feature",
 		Source: "builtin",
+		Kind:   KindMarkdown,
 		Body: `---
 type: feature
 status: draft
@@ -91,6 +97,7 @@ created: {{date}}
 		ID:     "decision",
 		Name:   "Decision (ADR)",
 		Source: "builtin",
+		Kind:   KindMarkdown,
 		Body: `---
 type: decision
 status: proposed
@@ -117,6 +124,7 @@ created: {{date}}
 		ID:     "runbook",
 		Name:   "Runbook",
 		Source: "builtin",
+		Kind:   KindMarkdown,
 		Body: `---
 type: runbook
 created: {{date}}
@@ -153,7 +161,7 @@ func (v *Vault) Templates() []Template {
 	entries, err := os.ReadDir(dir)
 	if err == nil {
 		for _, e := range entries {
-			if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
+			if e.IsDir() || !IsDocument(e.Name()) {
 				continue
 			}
 			body, err := os.ReadFile(filepath.Join(dir, e.Name()))
@@ -169,6 +177,7 @@ func (v *Vault) Templates() []Template {
 				Name:   titleCase(id),
 				Source: "vault",
 				Body:   string(body),
+				Kind:   KindOf(e.Name()),
 			}
 		}
 	}
@@ -194,7 +203,7 @@ func (v *Vault) Templates() []Template {
 // overwrite: "new" that silently replaces an existing doc is a data
 // loss bug waiting for someone to retype a filename.
 func (v *Vault) NewFromTemplate(rel, templateID string) (Note, error) {
-	if err := requireMarkdown(rel); err != nil {
+	if err := requireDocument(rel); err != nil {
 		return Note{}, err
 	}
 	full, err := v.resolve(rel)
@@ -220,8 +229,34 @@ func (v *Vault) NewFromTemplate(rel, templateID string) (Note, error) {
 	if tpl == nil {
 		return Note{}, fmt.Errorf("%w: unknown template %q", ErrInvalidPath, templateID)
 	}
-	return v.Write(rel, renderTemplate(tpl.Body, rel))
+
+	body := tpl.Body
+	// A markdown template inside an .html file produces a document that
+	// renders as literal `# Title` in a browser. When the two disagree,
+	// the FILENAME wins — the operator chose the extension, the
+	// template was very likely just the default.
+	if KindOf(rel) == KindHTML && tpl.Kind != KindHTML {
+		body = htmlSkeleton
+	}
+	return v.Write(rel, renderTemplate(body, rel))
 }
+
+// htmlSkeleton is what an HTML document starts from when the chosen
+// template is markdown. Minimal on purpose: an HTML doc in the vault
+// usually arrives from an export tool, and anything opendray adds here
+// is something the operator has to delete.
+const htmlSkeleton = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>` + phTitle + `</title>
+</head>
+<body>
+<h1>` + phTitle + `</h1>
+</body>
+</html>
+`
 
 // renderTemplate substitutes the placeholders for one target path.
 func renderTemplate(body, rel string) string {

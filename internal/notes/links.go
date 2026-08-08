@@ -55,7 +55,7 @@ func (v *Vault) Backlinks(ctx context.Context, targetRel string) ([]Backlink, er
 	if _, err := os.Stat(full); err != nil {
 		return nil, ErrNotFound
 	}
-	target := strings.TrimSuffix(targetRel, ".md")
+	target := TrimDocExt(targetRel)
 	base := filepath.Base(target)
 
 	// Build a single regex matching any of the recognised reference
@@ -84,7 +84,9 @@ func (v *Vault) Backlinks(ctx context.Context, targetRel string) ([]Backlink, er
 			}
 			return nil
 		}
-		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+		// Wiki links live in markdown. HTML uses <a href>, which is a
+		// different rewrite problem — see doc.go.
+		if !IsMarkdown(d.Name()) {
 			return nil
 		}
 		// Skip the target itself — a note's own [[basename]] mention
@@ -146,7 +148,9 @@ func (v *Vault) Tags(ctx context.Context, prefix string) ([]TagCount, error) {
 			}
 			return nil
 		}
-		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+		// Wiki links live in markdown. HTML uses <a href>, which is a
+		// different rewrite problem — see doc.go.
+		if !IsMarkdown(d.Name()) {
 			return nil
 		}
 		rel, _ := filepath.Rel(v.root, path)

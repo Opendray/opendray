@@ -250,7 +250,7 @@
           "newDoc": "Nuevo doc",
           "cancel": "Cancelar",
           "create": "Crear",
-          "filenamePlaceholder": "archivo.md",
+          "filenamePlaceholder": "archivo.md o archivo.html",
           "noDocs": "Aún no hay docs del proyecto en esta carpeta de la bóveda.",
           "createFailed": "No se pudo crear el doc",
           "mappingTitle": "Vincular carpeta de bóveda del proyecto",
@@ -1019,11 +1019,11 @@
         "empty": "No hay encabezados en esta nota. Añade líneas <1>## Título</1> para rellenar el esquema."
       },
       "newNote": {
-        "prompt": "Ruta de la nueva nota (relativa al vault, debe terminar en .md)",
+        "prompt": "Ruta del nuevo documento (relativa al vault, .md o .html)",
         "defaultPath": "library/notes-{date}.md",
-        "errorMustEndMd": "La ruta debe terminar en .md",
         "createdToast": "Nota creada",
-        "createFailedToast": "Error al crear"
+        "createFailedToast": "Error al crear",
+        "errorMustBeDoc": "La ruta debe ser un documento (.md o .html)"
       },
       "empty": {
         "title": "Ninguna nota seleccionada",
@@ -2843,6 +2843,12 @@
         "unsaved": "sin guardar",
         "newNote": "nota nueva",
         "saved": "guardada"
+      },
+      "html": {
+        "scriptsOff": "Scripts desactivados: este documento se renderiza como HTML estático.",
+        "scriptsOn": "Los scripts de este documento se están ejecutando.",
+        "enableScripts": "Activar scripts",
+        "disableScripts": "Desactivar scripts"
       }
     },
     "export": {
@@ -4994,14 +5000,22 @@
     "validatePathDots": "La ruta no puede contener \"..\"",
     "pathHelper": "Añade .md automáticamente si falta.",
     "editor": {
-      "markdownHint": "Markdown…",
+      "markdownHint": "Markdown, o HTML si el archivo termina en .html…",
       "saving": "Guardando…",
       "autosave": "Se guarda automáticamente mientras escribes",
       "loadFailedApi": "Error al cargar: {error}",
       "loadFailedGeneric": "Error al cargar: {error}",
       "saveFailedApi": "Error al guardar: {error}",
       "saveFailedGeneric": "Error al guardar: {error}",
-      "savedAt": "Guardado {time}"
+      "savedAt": "Guardado {time}",
+      "showPreview": "Vista previa",
+      "showSource": "Código"
+    },
+    "html": {
+      "scriptsOff": "Scripts desactivados: este documento se renderiza como HTML estático.",
+      "scriptsOn": "Los scripts de este documento se están ejecutando.",
+      "enableScripts": "Activar scripts",
+      "disableScripts": "Desactivar scripts"
     }
   },
   "dataExport": {

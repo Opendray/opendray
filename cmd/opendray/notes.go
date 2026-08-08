@@ -213,7 +213,7 @@ func reportErr(err error) int {
 		return 4
 	case errors.Is(err, notes.ErrPathEscape),
 		errors.Is(err, notes.ErrInvalidPath),
-		errors.Is(err, notes.ErrNotMarkdown):
+		errors.Is(err, notes.ErrNotDocument):
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	default:

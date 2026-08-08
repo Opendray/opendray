@@ -135,7 +135,45 @@ export async function newNoteFromTemplate(
  * Resolved client-side: the caller already holds the folder's listing,
  * so asking the gateway would re-derive what it can already see.
  */
-export const INDEX_NAMES = ['README.md', 'index.md', '_index.md']
+export const INDEX_NAMES = [
+  'README.md',
+  'index.md',
+  '_index.md',
+  'index.html',
+  'index.htm',
+]
+
+/**
+ * What kind of document a vault path holds. Mirrors notes.KindOf in
+ * internal/notes/doc.go — keep the extension lists in step.
+ *
+ * Clients derive this from the PATH rather than asking the gateway, and
+ * that is deliberate: it means HTML documents never need an endpoint
+ * that serves them with `Content-Type: text/html`. Such an endpoint
+ * would run the document's scripts on opendray's own origin, so a doc
+ * pulled from a git remote could take over the admin session. Rendering
+ * happens from an in-memory string in a sandboxed frame instead.
+ */
+export type DocKind = 'markdown' | 'html' | 'unknown'
+
+const DOC_KINDS: Record<string, DocKind> = {
+  md: 'markdown',
+  markdown: 'markdown',
+  html: 'html',
+  htm: 'html',
+}
+
+export function docKind(path: string): DocKind {
+  const base = path.split('/').pop() ?? ''
+  const dot = base.lastIndexOf('.')
+  // A leading dot is a dotfile, not an extension — `.md` is not a
+  // markdown document with an empty name.
+  if (dot <= 0) return 'unknown'
+  return DOC_KINDS[base.slice(dot + 1).toLowerCase()] ?? 'unknown'
+}
+
+/** Extensions the vault accepts, for "new document" pickers. */
+export const DOC_EXTENSIONS = ['.md', '.html'] as const
 
 /** Find `dir`'s index note among paths, or undefined. Paths and dir are
  * relative to the same root. */
@@ -189,7 +227,7 @@ export async function moveNote(
  * own instead, and empty / dot-only segments are dropped so `..` can
  * never survive into the request.
  */
-export function sanitizeNotePath(input: string): string {
+export function sanitizeNotePath(input: string, defaultExt = '.md'): string {
   const segments = input
     .trim()
     .split('/')
@@ -201,11 +239,13 @@ export function sanitizeNotePath(input: string): string {
         .replace(/^\.+/, ''),
     )
     .filter(Boolean)
-  if (segments.length === 0) return 'untitled.md'
+  if (segments.length === 0) return `untitled${defaultExt}`
   const last = segments[segments.length - 1]
-  segments[segments.length - 1] = last.toLowerCase().endsWith('.md')
-    ? last
-    : `${last}.md`
+  // Only append an extension when the name doesn't already carry a
+  // recognised one, so `guide.html` stays HTML instead of becoming
+  // `guide.html.md`.
+  segments[segments.length - 1] =
+    docKind(last) === 'unknown' ? `${last}${defaultExt}` : last
   return segments.join('/')
 }
 

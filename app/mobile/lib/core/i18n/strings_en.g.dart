@@ -1958,6 +1958,7 @@ class TranslationsNotesPageEn {
 	String get pathHelper => 'Auto-appends .md if missing.';
 
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
+	late final TranslationsNotesPageHtmlEn html = TranslationsNotesPageHtmlEn.internal(_root);
 }
 
 // Path: dataExport
@@ -3353,6 +3354,7 @@ class TranslationsWebNoteEditorEn {
 	String get saveFailedToast => 'Save failed';
 
 	late final TranslationsWebNoteEditorStatusEn status = TranslationsWebNoteEditorStatusEn.internal(_root);
+	late final TranslationsWebNoteEditorHtmlEn html = TranslationsWebNoteEditorHtmlEn.internal(_root);
 }
 
 // Path: web.export
@@ -5372,8 +5374,8 @@ class TranslationsNotesPageEditorEn {
 
 	// Translations
 
-	/// en: 'Markdown…'
-	String get markdownHint => 'Markdown…';
+	/// en: 'Markdown, or HTML if the file ends .html…'
+	String get markdownHint => 'Markdown, or HTML if the file ends .html…';
 
 	/// en: 'Saving…'
 	String get saving => 'Saving…';
@@ -5395,6 +5397,33 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Saved {time}'
 	String savedAt({required Object time}) => 'Saved ${time}';
+
+	/// en: 'Preview'
+	String get showPreview => 'Preview';
+
+	/// en: 'Source'
+	String get showSource => 'Source';
+}
+
+// Path: notesPage.html
+class TranslationsNotesPageHtmlEn {
+	TranslationsNotesPageHtmlEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scripts are off — this document is rendered as static HTML.'
+	String get scriptsOff => 'Scripts are off — this document is rendered as static HTML.';
+
+	/// en: 'Scripts are running for this document.'
+	String get scriptsOn => 'Scripts are running for this document.';
+
+	/// en: 'Enable scripts'
+	String get enableScripts => 'Enable scripts';
+
+	/// en: 'Disable scripts'
+	String get disableScripts => 'Disable scripts';
 }
 
 // Path: dataExport.sections
@@ -7915,20 +7944,20 @@ class TranslationsWebNotesNewNoteEn {
 
 	// Translations
 
-	/// en: 'New note path (vault-relative, must end .md)'
-	String get prompt => 'New note path (vault-relative, must end .md)';
+	/// en: 'New document path (vault-relative, .md or .html)'
+	String get prompt => 'New document path (vault-relative, .md or .html)';
 
 	/// en: 'library/notes-{date}.md'
 	String defaultPath({required Object date}) => 'library/notes-${date}.md';
-
-	/// en: 'Path must end in .md'
-	String get errorMustEndMd => 'Path must end in .md';
 
 	/// en: 'Note created'
 	String get createdToast => 'Note created';
 
 	/// en: 'Create failed'
 	String get createFailedToast => 'Create failed';
+
+	/// en: 'Path must be a document (.md or .html)'
+	String get errorMustBeDoc => 'Path must be a document (.md or .html)';
 }
 
 // Path: web.notes.empty
@@ -11086,6 +11115,27 @@ class TranslationsWebNoteEditorStatusEn {
 
 	/// en: 'saved'
 	String get saved => 'saved';
+}
+
+// Path: web.noteEditor.html
+class TranslationsWebNoteEditorHtmlEn {
+	TranslationsWebNoteEditorHtmlEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Scripts are off — this document is rendered as static HTML.'
+	String get scriptsOff => 'Scripts are off — this document is rendered as static HTML.';
+
+	/// en: 'Scripts are running for this document.'
+	String get scriptsOn => 'Scripts are running for this document.';
+
+	/// en: 'Enable scripts'
+	String get enableScripts => 'Enable scripts';
+
+	/// en: 'Disable scripts'
+	String get disableScripts => 'Disable scripts';
 }
 
 // Path: web.export.sections
@@ -14628,8 +14678,8 @@ class TranslationsWebSessionsInspectorVaultPanelEn {
 	/// en: 'Create'
 	String get create => 'Create';
 
-	/// en: 'filename.md'
-	String get filenamePlaceholder => 'filename.md';
+	/// en: 'filename.md or filename.html'
+	String get filenamePlaceholder => 'filename.md or filename.html';
 
 	/// en: 'No project docs in this vault folder yet.'
 	String get noDocs => 'No project docs in this vault folder yet.';
@@ -18945,7 +18995,7 @@ extension on Translations {
 			'web.sessions.inspector.vaultPanel.newDoc' => 'New doc',
 			'web.sessions.inspector.vaultPanel.cancel' => 'Cancel',
 			'web.sessions.inspector.vaultPanel.create' => 'Create',
-			'web.sessions.inspector.vaultPanel.filenamePlaceholder' => 'filename.md',
+			'web.sessions.inspector.vaultPanel.filenamePlaceholder' => 'filename.md or filename.html',
 			'web.sessions.inspector.vaultPanel.noDocs' => 'No project docs in this vault folder yet.',
 			'web.sessions.inspector.vaultPanel.createFailed' => 'Could not create doc',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => 'Bind project vault folder',
@@ -19571,11 +19621,11 @@ extension on Translations {
 			'web.notes.tree.empty' => 'Vault is empty.',
 			'web.notes.outline.label' => 'Outline',
 			'web.notes.outline.empty' => 'No headings in this note. Add <1>## Title</1> lines to populate the outline.',
-			'web.notes.newNote.prompt' => 'New note path (vault-relative, must end .md)',
+			'web.notes.newNote.prompt' => 'New document path (vault-relative, .md or .html)',
 			'web.notes.newNote.defaultPath' => ({required Object date}) => 'library/notes-${date}.md',
-			'web.notes.newNote.errorMustEndMd' => 'Path must end in .md',
 			'web.notes.newNote.createdToast' => 'Note created',
 			'web.notes.newNote.createFailedToast' => 'Create failed',
+			'web.notes.newNote.errorMustBeDoc' => 'Path must be a document (.md or .html)',
 			'web.notes.empty.title' => 'No note selected',
 			'web.notes.empty.hint' => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. AI-written project docs live under <1>projects/</1>; your personal scratchpads under <3>personal/</3>.',
 			'web.notes.empty.today' => 'Today\'s daily note',
@@ -20979,6 +21029,10 @@ extension on Translations {
 			'web.noteEditor.status.unsaved' => 'unsaved',
 			'web.noteEditor.status.newNote' => 'new note',
 			'web.noteEditor.status.saved' => 'saved',
+			'web.noteEditor.html.scriptsOff' => 'Scripts are off — this document is rendered as static HTML.',
+			'web.noteEditor.html.scriptsOn' => 'Scripts are running for this document.',
+			'web.noteEditor.html.enableScripts' => 'Enable scripts',
+			'web.noteEditor.html.disableScripts' => 'Disable scripts',
 			'web.export.title' => 'Export data',
 			'web.export.subtitle' => 'Take a one-shot zip bundle of selected logical entities. Bundles are kept on the server for 24 hours, then automatically reaped.',
 			'web.export.backToBackups' => '← Backups',
@@ -21292,12 +21346,12 @@ extension on Translations {
 			'web.cortex.settings.injection.mode.full.label' => 'Full — inject everything',
 			'web.cortex.settings.injection.mode.full.description' => 'Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window.',
 			'web.cortex.settings.injection.savedToast' => 'Injection mode saved — new sessions use it immediately (no backend restart)',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.settings.injection.saveFailed' => 'Save failed',
 			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
 			'web.database.dialog.createTitle' => 'Add database connection',
 			'web.database.dialog.editTitle' => 'Edit connection',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.description' => 'Connect to this project\'s database to browse and edit its data. Credentials are stored encrypted.',
 			'web.database.dialog.name' => 'Name',
 			'web.database.dialog.host' => 'Host',
@@ -21806,12 +21860,12 @@ extension on Translations {
 			'sessions.inspector.canvas.designSaved' => 'Design system saved.',
 			'sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.',
 			'sessions.inspector.canvas.tokenPrimary' => 'Primary',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenSecondary' => 'Secondary',
 			'sessions.inspector.canvas.tokenBackground' => 'Background',
 			'sessions.inspector.canvas.tokenSurface' => 'Surface',
 			'sessions.inspector.canvas.tokenText' => 'Text',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenMuted' => 'Muted',
 			'sessions.inspector.canvas.tokenBorder' => 'Border',
 			'sessions.inspector.canvas.tokenFont' => 'Body font',
@@ -22320,12 +22374,12 @@ extension on Translations {
 			'backups.health.tiles.overdue' => 'Overdue',
 			'backups.health.tiles.schedules' => 'Schedules',
 			'backups.failedToLoad' => 'Failed to load backups',
+			_ => null,
+		} ?? switch (path) {
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
 			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
 			'backups.pgDumpMissing' => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.',
 			'backups.encryption.checkAgain' => 'Check again',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.generate' => 'Generate',
 			'backups.encryption.paste' => 'Paste',
 			'backups.encryption.random256bit' => '256-bit random key',
@@ -22743,7 +22797,7 @@ extension on Translations {
 			'notesPage.validatePath' => 'Path is required',
 			'notesPage.validatePathDots' => 'Path cannot contain ".."',
 			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
-			'notesPage.editor.markdownHint' => 'Markdown…',
+			'notesPage.editor.markdownHint' => 'Markdown, or HTML if the file ends .html…',
 			'notesPage.editor.saving' => 'Saving…',
 			'notesPage.editor.autosave' => 'Auto-saves as you type',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
@@ -22751,6 +22805,12 @@ extension on Translations {
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
+			'notesPage.editor.showPreview' => 'Preview',
+			'notesPage.editor.showSource' => 'Source',
+			'notesPage.html.scriptsOff' => 'Scripts are off — this document is rendered as static HTML.',
+			'notesPage.html.scriptsOn' => 'Scripts are running for this document.',
+			'notesPage.html.enableScripts' => 'Enable scripts',
+			'notesPage.html.disableScripts' => 'Disable scripts',
 			'dataExport.title' => 'Data export & import',
 			'dataExport.subtitle' => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).',
 			'dataExport.sections.export' => 'Export',
@@ -22828,6 +22888,8 @@ extension on Translations {
 			'dataExport.imports.columns.source' => 'Source',
 			'dataExport.imports.columns.counts' => 'Counts',
 			'dataExport.imports.columns.when' => 'When',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'in ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'in ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'in ${n}h',
@@ -22838,8 +22900,6 @@ extension on Translations {
 			'dataExport.status.pending' => 'pending',
 			'dataExport.status.running' => 'running',
 			'dataExport.status.ready' => 'ready',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.status.failed' => 'failed',
 			'dataExport.status.expired' => 'expired',
 			'dataExport.status.succeeded' => 'succeeded',

@@ -17,6 +17,7 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import {
+  docKind,
   listNotes,
   notesInfo,
   notesTags,
@@ -190,8 +191,8 @@ export function VaultPage() {
       .split('/')
       .filter((seg) => seg !== '' && seg !== '..' && seg !== '.')
       .join('/')
-    if (!cleaned.toLowerCase().endsWith('.md')) {
-      toast.error(t('web.notes.newNote.errorMustEndMd'))
+    if (docKind(cleaned) === 'unknown') {
+      toast.error(t('web.notes.newNote.errorMustBeDoc'))
       return
     }
     create.mutate(cleaned)

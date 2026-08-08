@@ -7,12 +7,13 @@ import remarkGfm from 'remark-gfm'
 import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
-import { listNotes, readNote, writeNote } from '@/lib/notes'
+import { docKind, listNotes, readNote, writeNote } from '@/lib/notes'
 import { detectWikiLinkContext, getCaretCoords } from '@/lib/caret'
 import { slugify } from '@/lib/outline'
 
 import { BacklinksPane } from './BacklinksPane'
 import { HighlightedSource } from '@/components/notes/HighlightedSource'
+import { HtmlPreview } from '@/components/notes/HtmlPreview'
 import { WikiLinkSuggestions } from './WikiLinkSuggestions'
 import type { WikiLinkContext } from './WikiLinkSuggestions'
 
@@ -81,6 +82,10 @@ export function NoteEditor({
   const [body, setBody] = useState('')
   const [lastSaved, setLastSaved] = useState('')
   const [mode, setMode] = useState<'source' | 'preview'>(initialMode)
+  // Which renderer preview reaches for. Derived from the path, never
+  // from the body: sniffing content would let a markdown note that
+  // happens to open with a tag be executed as HTML.
+  const kind = docKind(path)
   const [error, setError] = useState<string | null>(null)
   const dirty = body !== lastSaved
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -322,6 +327,7 @@ export function NoteEditor({
       {mode === 'source' ? (
         <>
           <HighlightedSource
+            language={kind === 'html' ? 'xml' : 'markdown'}
             value={body}
             onChange={(next) => {
               setBody(next)
@@ -347,6 +353,16 @@ export function NoteEditor({
             onDismiss={() => setLinkCtx(null)}
           />
         </>
+      ) : kind === 'html' ? (
+        // HTML gets a sandboxed frame rather than the markdown
+        // pipeline. It deliberately does NOT share the prose container
+        // above: the document brings its own stylesheet, and wrapping
+        // it in the app's typography would fight it.
+        <HtmlPreview
+          html={body}
+          path={path}
+          className={cn(fillParent ? 'flex-1 min-h-0' : '')}
+        />
       ) : (
         <div
           ref={(el) => {
