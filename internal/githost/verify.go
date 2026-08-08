@@ -222,11 +222,10 @@ func (s *Service) probePush(ctx context.Context, h Host, repo string) (bool, err
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 8<<10))
 
-	switch {
-	case resp.StatusCode == http.StatusOK:
+	switch resp.StatusCode {
+	case http.StatusOK:
 		return true, nil
-	case resp.StatusCode == http.StatusUnauthorized,
-		resp.StatusCode == http.StatusForbidden:
+	case http.StatusUnauthorized, http.StatusForbidden:
 		return false, nil
 	default:
 		return false, fmt.Errorf("receive-pack advertisement: unexpected status %d",
