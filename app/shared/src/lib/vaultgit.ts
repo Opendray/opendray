@@ -111,15 +111,43 @@ export async function vaultAbort(
   return api('/api/v1/vault/git/abort', { method: 'POST', body: { kind } })
 }
 
-// vaultResetToRemote is destructive — wipes any local commits AND
-// uncommitted changes by hard-resetting to the remote branch and
-// `git clean -fd`-ing untracked junk. UI must confirm before calling.
+/** What a reset would destroy that exists nowhere else. */
+export interface VaultResetLoss {
+  unpushed_commits: number
+  untracked_files: number
+  modified_files: number
+  /** A few affected paths, so the warning names real files. */
+  sample?: string[]
+}
+
+export interface VaultResetResponse {
+  output: string
+  remote_branch: string
+  /** Branch holding the unpushed commits, if any were parked. */
+  rescue_ref?: string
+  /** Stash message holding the working tree, if any was parked. */
+  rescue_stash?: string
+}
+
+// vaultResetToRemote hard-resets the vault onto its remote branch and
+// `git clean -fd`s the rest.
+//
+// Call it WITHOUT confirm first. When anything would be lost the server
+// answers 409 with a `loss` breakdown; show those numbers and call
+// again with confirm: true. This two-step exists because the old
+// one-step version, behind a confirmation that named no quantity,
+// destroyed 354 unpushed files on a vault whose remote was empty — the
+// remote was empty precisely because every push had been failing.
+//
+// Confirming is still safe: the server parks the unpushed commits on a
+// branch and stashes the working tree before resetting.
 export async function vaultResetToRemote(
   remoteBranch?: string,
-): Promise<{ output: string; remote_branch: string }> {
+  confirm = false,
+): Promise<VaultResetResponse> {
   return api('/api/v1/vault/git/reset-to-remote', {
     method: 'POST',
-    body: { remote_branch: remoteBranch ?? '' },
+    body: { remote_branch: remoteBranch ?? '', confirm },
   })
 }
 

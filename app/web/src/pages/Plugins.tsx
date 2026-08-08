@@ -1953,7 +1953,10 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
                     'rounded border px-2 py-1.5 text-[11px] leading-relaxed',
                     verifyResult.error ||
                       !verifyResult.owner_matches ||
-                      (verifyResult.repo && !verifyResult.reachable)
+                      (verifyResult.repo && !verifyResult.reachable) ||
+                      // Read-only is a warning, not a pass: pulls work,
+                      // so nothing looks wrong until the first push.
+                      verifyResult.can_push === false
                       ? 'border-state-idle/40 bg-state-idle/5 text-state-idle'
                       : 'border-state-running/40 bg-state-running/5 text-state-running',
                   )}
@@ -1975,6 +1978,17 @@ function GitHostDialog({ open, onOpenChange, mode, host }: GitHostDialogProps) {
                             : t('web.plugins.gitHosts.dialog.verifyRepoFail', {
                                 repo: verifyResult.repo,
                               })}
+                        </>
+                      )}
+                      {/* Read and write are separate grants. Reporting
+                          only "can read" is what let a read-only token
+                          pass verification and then fail every push. */}
+                      {verifyResult.can_push !== undefined && (
+                        <>
+                          {' · '}
+                          {verifyResult.can_push
+                            ? t('web.plugins.gitHosts.dialog.verifyPushOk')
+                            : t('web.plugins.gitHosts.dialog.verifyPushDenied')}
                         </>
                       )}
                     </>

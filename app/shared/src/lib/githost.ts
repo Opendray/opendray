@@ -48,6 +48,15 @@ export interface GitHostVerifyResult {
   /** Whether the tested repo could be read. */
   reachable?: boolean
   repo?: string
+  /** Whether the credential may PUSH to the tested repo, probed against
+   * git's own receive-pack advertisement.
+   *
+   * Undefined means "not established" — no repo was named, or the forge
+   * answered something with no clear verdict. Never render undefined as
+   * read-only: a GitHub fine-grained token with Contents = Read-only
+   * pulls fine and 403s on push, and telling someone their working
+   * token is read-only sends them to fix a setting that was correct. */
+  can_push?: boolean
   /** Explains a failure in terms the forge's own error doesn't. */
   hint?: string
   error?: string

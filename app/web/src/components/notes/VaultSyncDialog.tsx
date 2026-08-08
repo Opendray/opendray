@@ -52,9 +52,11 @@ import type {
   VaultStatusFile,
   VaultAuthInfo,
   VaultGitState,
+  VaultResetLoss,
   VaultSyncConfig,
   VaultSyncConfigUpdate,
 } from '@/lib/vaultgit'
+import { APIError } from '@/lib/api'
 
 interface VaultSyncDialogProps {
   open: boolean
@@ -193,19 +195,40 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
       toast.error(t('web.notes.vaultSync.conflict.abortFailedToast'), { description: e.message }),
   })
 
+  // Pending loss report from a refused reset. Its presence opens the
+  // confirmation — which quotes real numbers, because the version that
+  // asked "are you sure?" without them cost someone 354 files.
+  const [resetLoss, setResetLoss] = useState<VaultResetLoss | null>(null)
+
   const resetToRemote = useMutation({
-    mutationFn: () => vaultResetToRemote(),
+    mutationFn: (confirm: boolean) => vaultResetToRemote(undefined, confirm),
     onSuccess: (res) => {
+      setResetLoss(null)
       toast.success(t('web.notes.vaultSync.conflict.resetToast', { branch: res.remote_branch }), {
-        description: t('web.notes.vaultSync.conflict.resetDescription'),
+        // Name where the old state was parked. A reset the operator
+        // regrets is only recoverable if they know the ref exists.
+        description: res.rescue_ref
+          ? t('web.notes.vaultSync.conflict.resetRescued', { ref: res.rescue_ref })
+          : t('web.notes.vaultSync.conflict.resetDescription'),
       })
       qc.invalidateQueries({ queryKey: ['vault-status'] })
       qc.invalidateQueries({ queryKey: ['vault-log'] })
       qc.invalidateQueries({ queryKey: ['notes-list'] })
       qc.invalidateQueries({ queryKey: ['notes-list-all'] })
     },
-    onError: (e: Error) =>
-      toast.error(t('web.notes.vaultSync.conflict.resetFailedToast'), { description: e.message }),
+    onError: (e: Error) => {
+      // 409 is not a failure — it is the server refusing to destroy
+      // local-only work until it has been shown and acknowledged.
+      const loss =
+        e instanceof APIError && e.status === 409
+          ? (e.body as { loss?: VaultResetLoss } | null)?.loss
+          : undefined
+      if (loss) {
+        setResetLoss(loss)
+        return
+      }
+      toast.error(t('web.notes.vaultSync.conflict.resetFailedToast'), { description: e.message })
+    },
   })
 
   const summary = useMemo(() => {
@@ -258,9 +281,7 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
                   aborting={abort.isPending}
                   resetting={resetToRemote.isPending}
                   onAbort={() => abort.mutate()}
-                  onReset={() =>
-                    resetToRemote.mutate(undefined as never)
-                  }
+                  onReset={() => resetToRemote.mutate(false)}
                 />
               )}
               <BranchBar
@@ -316,6 +337,104 @@ export function VaultSyncDialog({ open, onOpenChange }: VaultSyncDialogProps) {
               <CommitHistory commits={log.data ?? []} loading={log.isLoading} />
             </>
           )}
+        </div>
+      </DialogContent>
+
+      <ResetConfirmDialog
+        loss={resetLoss}
+        busy={resetToRemote.isPending}
+        onCancel={() => setResetLoss(null)}
+        onConfirm={() => resetToRemote.mutate(true)}
+      />
+    </Dialog>
+  )
+}
+
+// ResetConfirmDialog states the cost in files and commits before
+// discarding anything.
+//
+// Its predecessor was a window.confirm reading "this discards local
+// changes" — true, and useless: on a vault whose pushes had all been
+// failing, "local changes" meant every document in it, and the remote
+// it reset to was an empty repo. Naming the quantity is the difference
+// between a routine confirmation and a stop sign.
+function ResetConfirmDialog({
+  loss,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  loss: VaultResetLoss | null
+  busy: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const { t } = useTranslation()
+  if (!loss) return null
+  const lines = [
+    loss.unpushed_commits > 0 &&
+      t('web.notes.vaultSync.conflict.lossCommits', {
+        count: loss.unpushed_commits,
+      }),
+    loss.modified_files > 0 &&
+      t('web.notes.vaultSync.conflict.lossModified', {
+        count: loss.modified_files,
+      }),
+    loss.untracked_files > 0 &&
+      t('web.notes.vaultSync.conflict.lossUntracked', {
+        count: loss.untracked_files,
+      }),
+  ].filter(Boolean) as string[]
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onCancel()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-1.5 text-state-failed">
+            <AlertCircle className="size-4" />
+            {t('web.notes.vaultSync.conflict.lossTitle')}
+          </DialogTitle>
+          <DialogDescription>
+            {t('web.notes.vaultSync.conflict.lossExplainer')}
+          </DialogDescription>
+        </DialogHeader>
+
+        <ul className="flex flex-col gap-1 text-[12px]">
+          {lines.map((line) => (
+            <li key={line} className="flex items-center gap-1.5">
+              <span className="text-state-failed">•</span>
+              {line}
+            </li>
+          ))}
+        </ul>
+
+        {(loss.sample?.length ?? 0) > 0 && (
+          <div className="rounded border border-border/60 bg-muted/20 px-2 py-1.5">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-1">
+              {t('web.notes.vaultSync.conflict.lossSample')}
+            </div>
+            <ul className="font-mono text-[11px] text-muted-foreground/90 flex flex-col gap-0.5">
+              {loss.sample!.map((p) => (
+                <li key={p} className="truncate">
+                  {p}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          {t('web.notes.vaultSync.conflict.lossRescueNote')}
+        </p>
+
+        <div className="flex items-center gap-2 justify-end">
+          <Button size="sm" variant="outline" onClick={onCancel} disabled={busy}>
+            {t('web.notes.vaultSync.conflict.lossCancel')}
+          </Button>
+          <Button size="sm" variant="destructive" onClick={onConfirm} disabled={busy}>
+            {busy && <Loader2 className="size-3 mr-1.5 animate-spin" />}
+            {t('web.notes.vaultSync.conflict.lossConfirm')}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -817,11 +936,7 @@ function ConflictBanner({
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => {
-            if (confirm(t('web.notes.vaultSync.conflict.forceResetConfirm', { kind }))) {
-              onReset()
-            }
-          }}
+          onClick={onReset}
           disabled={aborting || resetting}
           className="gap-1.5 text-destructive hover:text-destructive border-destructive/40 hover:border-destructive/60"
           title={t('web.notes.vaultSync.conflict.forceResetTitle')}
