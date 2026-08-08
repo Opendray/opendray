@@ -4,7 +4,7 @@
 //
 // Storage model — same philosophy as the notes vault:
 //
-//	<vault>/skills/<id>/SKILL.md     # user / shared skills (filesystem)
+//	<skills root>/<id>/SKILL.md      # user / shared skills (filesystem)
 //	//go:embed builtin/<id>/SKILL.md # built-in skills shipped in the binary
 //
 // Vault entries override built-ins of the same id, so users can customise
@@ -46,7 +46,7 @@ type Skill struct {
 // by id. Vault wins on conflict so users can override shipped skills
 // without editing the binary.
 type Loader struct {
-	vaultRoot string // absolute path to <vault>/skills (may not exist)
+	vaultRoot string // absolute path to the skills root (may not exist)
 }
 
 // NewLoader points the loader at a directory that contains one

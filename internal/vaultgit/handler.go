@@ -41,9 +41,26 @@ type Handlers struct {
 	root  string           // absolute path to the vault root
 	hosts *githost.Service // optional; nil disables HTTPS token injection
 	log   *slog.Logger
+
+	// nested are opendray's own roots that fall inside this working
+	// tree — nothing on a split install, skills/ and/or mcp/ on an
+	// older one. Kept out of the repo via the managed .gitignore.
+	nested []string
 }
 
-func NewHandlers(vaultRoot string, hosts *githost.Service, log *slog.Logger) (*Handlers, error) {
+// Option customises Handlers.
+type Option func(*Handlers)
+
+// WithNestedDirs names opendray's machinery roots that sit inside the
+// repo, so they can be ignored rather than pushed to the operator's
+// remote. Pass config.Paths.NestedInGitRoot().
+func WithNestedDirs(dirs []string) Option {
+	return func(h *Handlers) { h.nested = dirs }
+}
+
+func NewHandlers(
+	vaultRoot string, hosts *githost.Service, log *slog.Logger, opts ...Option,
+) (*Handlers, error) {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -57,11 +74,15 @@ func NewHandlers(vaultRoot string, hosts *githost.Service, log *slog.Logger) (*H
 	if _, err := os.Stat(abs); err != nil {
 		return nil, fmt.Errorf("vault root: %w", err)
 	}
-	return &Handlers{
+	h := &Handlers{
 		root:  abs,
 		hosts: hosts,
 		log:   log.With("component", "vaultgit.http"),
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h, nil
 }
 
 func (h *Handlers) Mount(r chi.Router) {
@@ -481,11 +502,8 @@ func (h *Handlers) init(w http.ResponseWriter, r *http.Request) {
 			fmt.Errorf("git init: %w", err))
 		return
 	}
-	// Drop a sane default .gitignore if missing — keeps macOS .DS_Store
-	// out of the repo, plus any future opendray runtime artefacts.
-	gi := filepath.Join(h.root, ".gitignore")
-	if _, err := os.Stat(gi); errors.Is(err, os.ErrNotExist) {
-		_ = os.WriteFile(gi, []byte(".DS_Store\n.cache/\n"), 0o600)
+	if err := ensureManagedIgnore(h.root, h.nested); err != nil {
+		h.log.Warn("could not write the managed .gitignore", "err", err)
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"output": string(out)})
 }
@@ -506,6 +524,13 @@ func (h *Handlers) commit(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), gitTimeout)
 	defer cancel()
+
+	// Refresh the managed block before staging, so a repo created
+	// before this existed — or one whose layout has since changed —
+	// picks up the rules on its next sync rather than never.
+	if err := ensureManagedIgnore(h.root, h.nested); err != nil {
+		h.log.Warn("could not write the managed .gitignore", "err", err)
+	}
 
 	addArgs := []string{"add"}
 	if len(req.Files) == 0 {

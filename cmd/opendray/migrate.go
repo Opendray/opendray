@@ -93,9 +93,7 @@ func runMigrate(args []string) int {
 func premigrateDir(configured string) string {
 	base := configured
 	if base != "" {
-		if expanded, err := expandHome(base); err == nil {
-			base = expanded
-		}
+		base = config.ExpandPath(base)
 	} else if home, err := os.UserHomeDir(); err == nil {
 		base = filepath.Join(home, ".opendray", "backups")
 	} else {

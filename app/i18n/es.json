@@ -2175,11 +2175,11 @@
         },
         "vault": {
           "title": "Vault",
-          "desc": "Notas, skills y raíz versionada con git."
+          "desc": "Tus documentos y el repositorio al que se sincronizan."
         },
         "mcp": {
-          "title": "Registro de MCP",
-          "desc": "Registro de servidores + secretos."
+          "title": "Registro MCP",
+          "desc": "Registro de servidores y secretos."
         },
         "memory": {
           "title": "Memoria · almacenamiento y embedder",
@@ -2200,6 +2200,10 @@
         "antigravity": {
           "title": "Almacenamiento · Antigravity",
           "desc": "Almacén SQLite por conversación de Antigravity (agy)."
+        },
+        "skills": {
+          "title": "Habilidades de agente",
+          "desc": "De dónde se cargan las habilidades."
         }
       },
       "loading": "Cargando ajustes del servidor…",
@@ -2284,19 +2288,15 @@
         },
         "vaultRoot": {
           "label": "Raíz del Vault",
-          "hint": "Directorio de nivel superior para notas, skills y el registro de MCP."
+          "hint": "El directorio donde viven tus documentos. Es lo que muestra la página Vault y lo que confirma Vault Sync."
         },
         "notesDirectory": {
-          "label": "Directorio de notas",
-          "hint": "Anula la ubicación de las notas. Por defecto <vault root>/notes."
-        },
-        "skillsDirectory": {
-          "label": "Directorio de skills",
-          "hint": "Anula la ubicación de los skills. Por defecto <vault root>/skills."
+          "label": "Directorio de documentos (heredado)",
+          "hint": "Nombre antiguo de la raíz del Vault, visible porque está definido. Vacíalo para usar la raíz del Vault, o mantenlo apuntando a una carpeta markdown que gestiones en otro sitio."
         },
         "gitRoot": {
-          "label": "Raíz de git",
-          "hint": "Árbol de trabajo al que confirma la función Vault Sync."
+          "label": "Raíz de Git",
+          "hint": "Árbol de trabajo que confirma Vault Sync. Por defecto la raíz del Vault, así el repositorio solo contiene documentos."
         },
         "personalPrefix": {
           "label": "Prefijo personal",
@@ -2308,7 +2308,7 @@
         },
         "registryRoot": {
           "label": "Raíz del registro",
-          "hint": "Directorio que contiene las definiciones JSON de los servidores MCP. Por defecto <vault>/mcp."
+          "hint": "Directorio con las definiciones JSON de servidores MCP. Por defecto ~/.opendray/mcp."
         },
         "secretsFile": {
           "label": "Archivo de secretos",
@@ -2441,6 +2441,10 @@
         "dbMaxConns": {
           "label": "Conexiones máx.",
           "hint": "Tope del pool de conexiones pgx. 0 = valor por defecto (16)."
+        },
+        "skillsRoot": {
+          "label": "Raíz de habilidades",
+          "hint": "Directorio con las habilidades de agente. Fuera del Vault para que no acaben en el repositorio de tus documentos."
         }
       },
       "liveTail": {
@@ -2560,6 +2564,14 @@
             "caveat": "La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto."
           }
         }
+      },
+      "layout": {
+        "title": "Se resuelve en",
+        "documents": "Documentos",
+        "git": "Repositorio Git",
+        "skills": "Habilidades",
+        "mcp": "Registro MCP",
+        "legacyWarning": "Esta instalación aún mantiene los directorios propios de opendray dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de arriba cuando puedas. Lo ya confirmado requiere git rm --cached; opendray no reescribirá tu repositorio."
       }
     },
     "settings": {
@@ -5297,20 +5309,22 @@
         "backup": "Copia de seguridad",
         "storageClaude": "Almacenamiento · Claude",
         "storageCodex": "Almacenamiento · Codex",
-        "storageAntigravity": "Almacenamiento · Antigravity"
+        "storageAntigravity": "Almacenamiento · Antigravity",
+        "skills": "Habilidades de agente"
       },
       "sectionDescriptions": {
         "general": "Dirección de escucha, cuenta del operador, TTL del token.",
         "host": "Mantén esta máquina accesible mientras está inactiva.",
         "logging": "Verbosidad, formato y ruta del log en disco.",
         "sessions": "Umbrales de detección de inactividad.",
-        "vault": "Notas, skills y raíz versionada con git.",
-        "mcpRegistry": "Rutas del vault para servidores MCP + archivo de secretos.",
+        "vault": "Tus documentos y el repositorio al que se sincronizan.",
+        "mcpRegistry": "Registro de servidores y archivo de secretos.",
         "memory": "Subsistema de memoria persistente entre CLIs.",
         "backup": "Copias de seguridad cifradas de la BD + exportaciones de datos de admin. La frase de contraseña vive en el keyfile (Ajustes → Copias de seguridad).",
         "storageClaude": "Dónde viven los transcripts de Claude en disco.",
         "storageCodex": "Raíz de las sessions de Codex.",
-        "storageAntigravity": "Almacén SQLite por conversación de agy."
+        "storageAntigravity": "Almacén SQLite por conversación de agy.",
+        "skills": "De dónde se cargan las habilidades de agente."
       },
       "fields": {
         "listenAddress": "Dirección de escucha",
@@ -5328,10 +5342,9 @@
         "idleThresholdHelper": "Periodo de silencio antes de marcar una session como inactiva. Duración de Go.",
         "idleCheckInterval": "Intervalo de comprobación de inactividad",
         "idleCheckHelper": "Con qué frecuencia se ejecuta el reaper de inactividad.",
-        "root": "Raíz",
-        "rootHelper": "Padre de las sub-rutas notes / skills / git_root.",
-        "notesPath": "Ruta de notas",
-        "skillsPath": "Ruta de skills",
+        "root": "Raíz del Vault",
+        "rootHelper": "El directorio donde viven tus documentos: lo que muestra el Vault y lo que confirma Vault Sync.",
+        "notesPath": "Ruta de documentos (heredada)",
         "gitRoot": "Raíz de git",
         "personalPrefix": "Prefijo personal",
         "projectsPrefix": "Prefijo de proyectos",
@@ -5382,7 +5395,11 @@
         "sleepModeAc": "Despierto con corriente",
         "sleepModeAlways": "Despierto con cualquier alimentación",
         "sleepModeOnDemand": "Dormir, despertar con tráfico",
-        "sleepModeOff": "No tocar la energía"
+        "sleepModeOff": "No tocar la energía",
+        "notesPathHelper": "Nombre antiguo de la raíz del Vault, visible porque está definido. Vacíalo para usar la raíz del Vault, o mantenlo apuntando a una carpeta markdown que gestiones en otro sitio.",
+        "skillsRoot": "Raíz de habilidades",
+        "skillsRootHelper": "Directorio con las habilidades de agente. Fuera del Vault para que no acaben en el repositorio de tus documentos.",
+        "gitRootHelper": "Árbol de trabajo que confirma Vault Sync. Por defecto la raíz del Vault, así el repositorio solo contiene documentos."
       },
       "validateInteger": "\"{field}\" debe ser un entero",
       "validateNumber": "\"{field}\" debe ser un número",
@@ -5392,7 +5409,8 @@
         "pickHint": "Selecciona un modelo",
         "manual": "Escribir manualmente",
         "pickFromList": "Elegir de la lista"
-      }
+      },
+      "legacyLayout": "Los directorios propios de opendray siguen dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de abajo cuando puedas."
     }
   },
   "memoryQuarantine": {

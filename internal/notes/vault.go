@@ -2,11 +2,13 @@
 // powers the Inspector's Notes tab and is exposed to AI agents via
 // the `opendray notes` CLI subcommand.
 //
-// Storage model: a configurable root (default ~/.opendray/vault/notes)
-// holding a tree of .md files. Conventional subdirectories (daily/,
-// projects/, library/) are auto-created on first write but the layout
-// is otherwise free-form — users can drop their existing Obsidian
-// vault here and it'll work without changes.
+// Storage model: a configurable root (default ~/.opendray/vault)
+// holding a tree of .md files — the operator's documents and nothing
+// else. Conventional subdirectories (daily/, projects/, library/) are
+// auto-created on first write but the layout is otherwise free-form —
+// users can drop their existing Obsidian vault here and it'll work
+// without changes. Resolution of that root, including the pre-split
+// <root>/notes layout, lives in config.Resolve.
 //
 // All operations go through Vault, which enforces a strict path jail
 // against the resolved root. The HTTP layer and CLI both wrap Vault.
@@ -53,9 +55,10 @@ type FullNote struct {
 // being independent FS calls (no shared in-memory state in this phase
 // — index lands in Phase 4).
 type Vault struct {
-	root           string // canonical absolute path to the notes root
-	personalPrefix string // default subfolder for personal scratchpads
-	projectsPrefix string // default subfolder for AI project docs
+	root           string   // canonical absolute path to the notes root
+	personalPrefix string   // default subfolder for personal scratchpads
+	projectsPrefix string   // default subfolder for AI project docs
+	hidden         []string // vault-relative dirs excluded from listings
 
 	projectMapMu sync.Mutex // guards reads/writes of projectMapFilename
 }
@@ -66,6 +69,14 @@ type Vault struct {
 type Options struct {
 	PersonalPrefix string
 	ProjectsPrefix string
+
+	// HiddenDirs are absolute paths that must not appear in listings
+	// even though they sit inside the vault. Pre-split installs keep
+	// opendray's skills/ and mcp/ directories inside the documents
+	// root; showing them as folders presents the gateway's own
+	// configuration as the operator's writing. Paths outside the vault
+	// are ignored, so callers can pass them unconditionally.
+	HiddenDirs []string
 }
 
 // New resolves and creates the notes root directory. Pass the
@@ -102,11 +113,48 @@ func New(notesRoot string, opts Options) (*Vault, error) {
 	if projects == "" {
 		projects = "projects"
 	}
+	root := filepath.Clean(abs)
 	return &Vault{
-		root:           filepath.Clean(abs),
+		root:           root,
 		personalPrefix: personal,
 		projectsPrefix: projects,
+		hidden:         relativeHidden(root, opts.HiddenDirs),
 	}, nil
+}
+
+// relativeHidden turns absolute hidden paths into vault-relative ones,
+// dropping anything that is not actually inside the vault (the common
+// case once an install has been split) and the vault root itself (which
+// would hide everything).
+func relativeHidden(root string, dirs []string) []string {
+	var out []string
+	for _, dir := range dirs {
+		abs, err := filepath.Abs(strings.TrimSpace(dir))
+		if err != nil || abs == "" {
+			continue
+		}
+		if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+			abs = resolved
+		}
+		rel, err := filepath.Rel(root, filepath.Clean(abs))
+		if err != nil || rel == "." || rel == ".." ||
+			strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			continue
+		}
+		out = append(out, filepath.ToSlash(rel))
+	}
+	return out
+}
+
+// isHidden reports whether a vault-relative directory path is one of
+// the excluded machinery roots.
+func (v *Vault) isHidden(rel string) bool {
+	for _, h := range v.hidden {
+		if rel == h {
+			return true
+		}
+	}
+	return false
 }
 
 // PersonalPrefix / ProjectsPrefix expose the configured defaults so
@@ -170,9 +218,17 @@ func (v *Vault) List(prefix string) ([]Note, error) {
 			return walkErr
 		}
 		if d.IsDir() {
+			if path == v.root {
+				return nil
+			}
 			// Skip hidden subdirs (e.g. .git, .obsidian) — they're not
 			// part of the notes themselves.
-			if path != v.root && strings.HasPrefix(d.Name(), ".") {
+			if strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir
+			}
+			// Skip opendray's own roots when they sit inside the vault.
+			if rel, err := filepath.Rel(v.root, path); err == nil &&
+				v.isHidden(filepath.ToSlash(rel)) {
 				return filepath.SkipDir
 			}
 			return nil

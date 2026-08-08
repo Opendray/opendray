@@ -22,13 +22,22 @@ export interface ServerConfig {
     idle_threshold: string
     idle_interval: string
   }
+  /** The operator's documents — and nothing else. Agent skills and the
+   * MCP registry used to share this root; they now have their own. */
   vault: {
     root: string
+    /** @deprecated `root` means the documents directory now. Still
+     * honoured, and still the way to point opendray at a markdown
+     * folder kept somewhere else entirely. */
     notes: string
+    /** @deprecated set `skills.root` instead. */
     skills: string
     git_root: string
     personal_prefix: string
     projects_prefix: string
+  }
+  skills: {
+    root: string
   }
   mcp: {
     root: string
@@ -113,9 +122,31 @@ export interface ServerConfig {
   }
 }
 
+/** Where the settings above actually land on disk. Read-only: several
+ * of these are only knowable by looking at the filesystem, and showing
+ * them is how the settings page stops describing a layout the gateway
+ * is not using. */
+export interface ResolvedLayout {
+  vault: string
+  vault_git: string
+  skills: string
+  mcp: string
+  mcp_secrets: string
+  /** True when a root still falls inside the pre-split shared vault,
+   * because content is already there. Honoured, but worth saying. */
+  legacy_vault: boolean
+  legacy_skills: boolean
+  legacy_mcp: boolean
+}
+
+export function hasLegacyLayout(l: ResolvedLayout | undefined): boolean {
+  return !!l && (l.legacy_vault || l.legacy_skills || l.legacy_mcp)
+}
+
 export interface SettingsResponse {
   config: ServerConfig
   config_path: string
+  layout?: ResolvedLayout
 }
 
 export interface TestPathResponse {
@@ -160,6 +191,7 @@ export function emptyConfig(): ServerConfig {
       personal_prefix: '',
       projects_prefix: '',
     },
+    skills: { root: '' },
     mcp: { root: '', secrets_file: '' },
     providers: {
       claude: {

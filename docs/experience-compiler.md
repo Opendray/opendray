@@ -42,7 +42,7 @@ artifact**.
                           │
             ④ COMPILATION (strong LLM + operator review)
                 pick target form, best first:
-                  a. script (.sh/.mjs) with --dry-run     → vault/skills/<slug>/run.sh
+                  a. script (.sh/.mjs) with --dry-run     → <skills root>/<slug>/run.sh
                   b. opendray custom task                  → one-click from UI
                   c. SKILL.md instructions (fallback)      → as today
                           │

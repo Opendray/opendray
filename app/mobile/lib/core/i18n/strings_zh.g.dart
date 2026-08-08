@@ -1554,6 +1554,7 @@ class _TranslationsWebServerSettingsZh extends TranslationsWebServerSettingsEn {
 	@override String get memoryRuntimeBanner => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。';
 	@override String get memoryRuntimeBannerButton => '打开 Cortex 设置';
 	@override late final _TranslationsWebServerSettingsHostZh host = _TranslationsWebServerSettingsHostZh._(_root);
+	@override late final _TranslationsWebServerSettingsLayoutZh layout = _TranslationsWebServerSettingsLayoutZh._(_root);
 }
 
 // Path: web.settings
@@ -3153,6 +3154,7 @@ class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSe
 	@override String validateInteger({required Object field}) => '「${field}」必须是整数';
 	@override String validateNumber({required Object field}) => '「${field}」必须是数字';
 	@override late final _TranslationsSettingsServerSettingsEmbedderModelZh embedderModel = _TranslationsSettingsServerSettingsEmbedderModelZh._(_root);
+	@override String get legacyLayout => 'opendray 自己的目录仍在你的文档里,所以它们会出现在 Vault 中,同步时也会被带走。它们照常工作 —— 方便时把它们移出去,并在下面填好路径。';
 }
 
 // Path: web.sessions.list
@@ -5174,6 +5176,7 @@ class _TranslationsWebServerSettingsSectionsZh extends TranslationsWebServerSett
 	@override late final _TranslationsWebServerSettingsSectionsClaudeZh claude = _TranslationsWebServerSettingsSectionsClaudeZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsCodexZh codex = _TranslationsWebServerSettingsSectionsCodexZh._(_root);
 	@override late final _TranslationsWebServerSettingsSectionsAntigravityZh antigravity = _TranslationsWebServerSettingsSectionsAntigravityZh._(_root);
+	@override late final _TranslationsWebServerSettingsSectionsSkillsZh skills = _TranslationsWebServerSettingsSectionsSkillsZh._(_root);
 }
 
 // Path: web.serverSettings.restart
@@ -5233,7 +5236,6 @@ class _TranslationsWebServerSettingsFieldsZh extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsIdlePollIntervalZh idlePollInterval = _TranslationsWebServerSettingsFieldsIdlePollIntervalZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsVaultRootZh vaultRoot = _TranslationsWebServerSettingsFieldsVaultRootZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsNotesDirectoryZh notesDirectory = _TranslationsWebServerSettingsFieldsNotesDirectoryZh._(_root);
-	@override late final _TranslationsWebServerSettingsFieldsSkillsDirectoryZh skillsDirectory = _TranslationsWebServerSettingsFieldsSkillsDirectoryZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsGitRootZh gitRoot = _TranslationsWebServerSettingsFieldsGitRootZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsPersonalPrefixZh personalPrefix = _TranslationsWebServerSettingsFieldsPersonalPrefixZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsProjectsPrefixZh projectsPrefix = _TranslationsWebServerSettingsFieldsProjectsPrefixZh._(_root);
@@ -5271,6 +5273,7 @@ class _TranslationsWebServerSettingsFieldsZh extends TranslationsWebServerSettin
 	@override late final _TranslationsWebServerSettingsFieldsClaudeAutoFailoverZh claudeAutoFailover = _TranslationsWebServerSettingsFieldsClaudeAutoFailoverZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsMobileTokenTTLZh mobileTokenTTL = _TranslationsWebServerSettingsFieldsMobileTokenTTLZh._(_root);
 	@override late final _TranslationsWebServerSettingsFieldsDbMaxConnsZh dbMaxConns = _TranslationsWebServerSettingsFieldsDbMaxConnsZh._(_root);
+	@override late final _TranslationsWebServerSettingsFieldsSkillsRootZh skillsRoot = _TranslationsWebServerSettingsFieldsSkillsRootZh._(_root);
 }
 
 // Path: web.serverSettings.liveTail
@@ -5419,6 +5422,21 @@ class _TranslationsWebServerSettingsHostZh extends TranslationsWebServerSettings
 	@override String get intro => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。';
 	@override String get platformNote => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。';
 	@override late final _TranslationsWebServerSettingsHostModesZh modes = _TranslationsWebServerSettingsHostModesZh._(_root);
+}
+
+// Path: web.serverSettings.layout
+class _TranslationsWebServerSettingsLayoutZh extends TranslationsWebServerSettingsLayoutEn {
+	_TranslationsWebServerSettingsLayoutZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '实际解析到';
+	@override String get documents => '文档';
+	@override String get git => 'Git 仓库';
+	@override String get skills => 'Skills';
+	@override String get mcp => 'MCP 注册表';
+	@override String get legacyWarning => '此安装仍把 opendray 自己的目录放在你的文档里,所以它们会出现在 Vault 中,也会被同步带走。它们照常工作 —— 方便时把它们移出去,并在上面填好路径。已经提交进仓库的需要你自己 git rm --cached;opendray 不会改写你的仓库。';
 }
 
 // Path: web.settings.groups
@@ -7296,13 +7314,14 @@ class _TranslationsSettingsServerSettingsSectionsZh extends TranslationsSettings
 	@override String get host => '主机电源';
 	@override String get logging => '日志';
 	@override String get sessions => '会话';
-	@override String get vault => '凭据库';
+	@override String get vault => 'Vault';
 	@override String get mcpRegistry => 'MCP 注册表';
 	@override String get memory => '记忆';
 	@override String get backup => '备份';
 	@override String get storageClaude => '存储 · Claude';
 	@override String get storageCodex => '存储 · Codex';
 	@override String get storageAntigravity => '存储 · Antigravity';
+	@override String get skills => 'Agent skills';
 }
 
 // Path: settings.serverSettings.sectionDescriptions
@@ -7316,13 +7335,14 @@ class _TranslationsSettingsServerSettingsSectionDescriptionsZh extends Translati
 	@override String get host => '让这台机器在闲置时仍可被访问。';
 	@override String get logging => '详细程度、格式、磁盘日志路径。';
 	@override String get sessions => '空闲检测阈值。';
-	@override String get vault => '笔记、技能、git 版本化的根目录。';
-	@override String get mcpRegistry => 'MCP 服务器 + 密钥文件的凭据库路径。';
+	@override String get vault => '你的文档,以及它同步到的仓库。';
+	@override String get mcpRegistry => '服务器注册表与密钥文件。';
 	@override String get memory => '跨 CLI 的持久记忆子系统。';
 	@override String get backup => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。';
 	@override String get storageClaude => 'Claude 会话记录在磁盘的存放位置。';
 	@override String get storageCodex => 'Codex 会话根目录。';
 	@override String get storageAntigravity => 'agy 按会话存储的 SQLite 库。';
+	@override String get skills => 'agent skills 从哪里加载。';
 }
 
 // Path: settings.serverSettings.fields
@@ -7347,10 +7367,9 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get idleThresholdHelper => '会话被标记为空闲前的安静时长。Go duration。';
 	@override String get idleCheckInterval => '空闲检查间隔';
 	@override String get idleCheckHelper => '空闲回收器运行的频率。';
-	@override String get root => '根目录';
-	@override String get rootHelper => 'notes / skills / git_root 子路径的父目录。';
-	@override String get notesPath => '笔记路径';
-	@override String get skillsPath => '技能路径';
+	@override String get root => 'Vault 根目录';
+	@override String get rootHelper => '你的文档所在的目录 —— Vault 浏览的就是这里,Vault Sync 提交的也是这里。';
+	@override String get notesPath => '文档路径(旧字段)';
 	@override String get gitRoot => 'Git 根';
 	@override String get personalPrefix => '个人前缀';
 	@override String get projectsPrefix => '项目前缀';
@@ -7402,6 +7421,10 @@ class _TranslationsSettingsServerSettingsFieldsZh extends TranslationsSettingsSe
 	@override String get sleepModeAlways => '任何供电下保持唤醒';
 	@override String get sleepModeOnDemand => '闲时休眠,有请求时唤醒';
 	@override String get sleepModeOff => '不干预电源';
+	@override String get notesPathHelper => 'Vault 根目录的旧称,因为已设置才显示。清空即改用 Vault 根目录;也可以继续指向你在别处维护的 markdown 目录。';
+	@override String get skillsRoot => 'Skills 根目录';
+	@override String get skillsRootHelper => '存放 agent skills 的目录。放在 Vault 之外,避免被提交进你的文档仓库。';
+	@override String get gitRootHelper => 'Vault Sync 提交的工作树。默认为 Vault 根目录,这样仓库里只有文档。';
 }
 
 // Path: settings.serverSettings.embedderModel
@@ -8541,7 +8564,7 @@ class _TranslationsWebServerSettingsSectionsVaultZh extends TranslationsWebServe
 
 	// Translations
 	@override String get title => 'Vault';
-	@override String get desc => '笔记、技能与 git 版本化根目录。';
+	@override String get desc => '你的文档,以及它同步到的仓库。';
 }
 
 // Path: web.serverSettings.sections.mcp
@@ -8608,6 +8631,17 @@ class _TranslationsWebServerSettingsSectionsAntigravityZh extends TranslationsWe
 	// Translations
 	@override String get title => '存储 · Antigravity';
 	@override String get desc => 'Antigravity (agy) 按会话存储的 SQLite 库。';
+}
+
+// Path: web.serverSettings.sections.skills
+class _TranslationsWebServerSettingsSectionsSkillsZh extends TranslationsWebServerSettingsSectionsSkillsEn {
+	_TranslationsWebServerSettingsSectionsSkillsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Agent skills';
+	@override String get desc => '技能从哪里加载。';
 }
 
 // Path: web.serverSettings.fields.listenAddress
@@ -8719,7 +8753,7 @@ class _TranslationsWebServerSettingsFieldsVaultRootZh extends TranslationsWebSer
 
 	// Translations
 	@override String get label => 'Vault 根目录';
-	@override String get hint => '笔记、技能和 MCP 注册表的顶层目录。';
+	@override String get hint => '你的文档所在的目录。Vault 页面浏览的就是这里,Vault Sync 提交的也是这里。';
 }
 
 // Path: web.serverSettings.fields.notesDirectory
@@ -8729,19 +8763,8 @@ class _TranslationsWebServerSettingsFieldsNotesDirectoryZh extends TranslationsW
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get label => '笔记目录';
-	@override String get hint => '覆盖笔记位置。默认为 <vault root>/notes。';
-}
-
-// Path: web.serverSettings.fields.skillsDirectory
-class _TranslationsWebServerSettingsFieldsSkillsDirectoryZh extends TranslationsWebServerSettingsFieldsSkillsDirectoryEn {
-	_TranslationsWebServerSettingsFieldsSkillsDirectoryZh._(TranslationsZh root) : this._root = root, super.internal(root);
-
-	final TranslationsZh _root; // ignore: unused_field
-
-	// Translations
-	@override String get label => '技能目录';
-	@override String get hint => '覆盖技能位置。默认为 <vault root>/skills。';
+	@override String get label => '文档目录(旧字段)';
+	@override String get hint => 'Vault 根目录的旧称,因为已设置才显示。清空即改用 Vault 根目录;也可以继续指向你在别处维护的 markdown 目录。';
 }
 
 // Path: web.serverSettings.fields.gitRoot
@@ -8752,7 +8775,7 @@ class _TranslationsWebServerSettingsFieldsGitRootZh extends TranslationsWebServe
 
 	// Translations
 	@override String get label => 'Git 根目录';
-	@override String get hint => 'Vault Sync 功能提交到的工作树。';
+	@override String get hint => 'Vault Sync 提交的工作树。默认为 Vault 根目录,这样仓库里只有文档。';
 }
 
 // Path: web.serverSettings.fields.personalPrefix
@@ -8785,7 +8808,7 @@ class _TranslationsWebServerSettingsFieldsRegistryRootZh extends TranslationsWeb
 
 	// Translations
 	@override String get label => '注册表根目录';
-	@override String get hint => '存放 MCP server JSON 定义的目录。默认为 <vault>/mcp。';
+	@override String get hint => '存放 MCP 服务器 JSON 定义的目录。默认 ~/.opendray/mcp。';
 }
 
 // Path: web.serverSettings.fields.secretsFile
@@ -9149,6 +9172,17 @@ class _TranslationsWebServerSettingsFieldsDbMaxConnsZh extends TranslationsWebSe
 	// Translations
 	@override String get label => '最大连接数';
 	@override String get hint => 'pgx 连接池上限。0 = 默认值（16）。';
+}
+
+// Path: web.serverSettings.fields.skillsRoot
+class _TranslationsWebServerSettingsFieldsSkillsRootZh extends TranslationsWebServerSettingsFieldsSkillsRootEn {
+	_TranslationsWebServerSettingsFieldsSkillsRootZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Skills 根目录';
+	@override String get hint => '存放 agent skills 的目录。放在 Vault 之外,避免被提交进你的文档仓库。';
 }
 
 // Path: web.serverSettings.httpHelpers.presetTip
@@ -11586,7 +11620,7 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.sessions.title' => '会话',
 			'web.serverSettings.sections.sessions.desc' => '空闲检测阈值。',
 			'web.serverSettings.sections.vault.title' => 'Vault',
-			'web.serverSettings.sections.vault.desc' => '笔记、技能与 git 版本化根目录。',
+			'web.serverSettings.sections.vault.desc' => '你的文档,以及它同步到的仓库。',
 			'web.serverSettings.sections.mcp.title' => 'MCP 注册表',
 			'web.serverSettings.sections.mcp.desc' => '服务器注册表与密钥。',
 			'web.serverSettings.sections.memory.title' => '记忆 · 存储与嵌入',
@@ -11599,6 +11633,8 @@ extension on TranslationsZh {
 			'web.serverSettings.sections.codex.desc' => 'Codex 会话根目录。',
 			'web.serverSettings.sections.antigravity.title' => '存储 · Antigravity',
 			'web.serverSettings.sections.antigravity.desc' => 'Antigravity (agy) 按会话存储的 SQLite 库。',
+			'web.serverSettings.sections.skills.title' => 'Agent skills',
+			'web.serverSettings.sections.skills.desc' => '技能从哪里加载。',
 			'web.serverSettings.loading' => '正在加载服务器设置…',
 			'web.serverSettings.loadFailed' => ({required Object message}) => '加载失败：${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray 启动时未指定 -config，设置仅从环境变量加载，无法在此编辑。',
@@ -11657,19 +11693,17 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.idlePollInterval.label' => '空闲轮询间隔',
 			'web.serverSettings.fields.idlePollInterval.hint' => '空闲检测器的唤醒频率。越低 = 延迟越低、唤醒越多。留空 = 5s。',
 			'web.serverSettings.fields.vaultRoot.label' => 'Vault 根目录',
-			'web.serverSettings.fields.vaultRoot.hint' => '笔记、技能和 MCP 注册表的顶层目录。',
-			'web.serverSettings.fields.notesDirectory.label' => '笔记目录',
-			'web.serverSettings.fields.notesDirectory.hint' => '覆盖笔记位置。默认为 <vault root>/notes。',
-			'web.serverSettings.fields.skillsDirectory.label' => '技能目录',
-			'web.serverSettings.fields.skillsDirectory.hint' => '覆盖技能位置。默认为 <vault root>/skills。',
+			'web.serverSettings.fields.vaultRoot.hint' => '你的文档所在的目录。Vault 页面浏览的就是这里,Vault Sync 提交的也是这里。',
+			'web.serverSettings.fields.notesDirectory.label' => '文档目录(旧字段)',
+			'web.serverSettings.fields.notesDirectory.hint' => 'Vault 根目录的旧称,因为已设置才显示。清空即改用 Vault 根目录;也可以继续指向你在别处维护的 markdown 目录。',
 			'web.serverSettings.fields.gitRoot.label' => 'Git 根目录',
-			'web.serverSettings.fields.gitRoot.hint' => 'Vault Sync 功能提交到的工作树。',
+			'web.serverSettings.fields.gitRoot.hint' => 'Vault Sync 提交的工作树。默认为 Vault 根目录,这样仓库里只有文档。',
 			'web.serverSettings.fields.personalPrefix.label' => '个人前缀',
 			'web.serverSettings.fields.personalPrefix.hint' => '自动派生路径时用于个人笔记的文件夹名。默认 "personal"。',
 			'web.serverSettings.fields.projectsPrefix.label' => '项目前缀',
 			'web.serverSettings.fields.projectsPrefix.hint' => '项目笔记的文件夹名。默认 "projects"。',
 			'web.serverSettings.fields.registryRoot.label' => '注册表根目录',
-			'web.serverSettings.fields.registryRoot.hint' => '存放 MCP server JSON 定义的目录。默认为 <vault>/mcp。',
+			'web.serverSettings.fields.registryRoot.hint' => '存放 MCP 服务器 JSON 定义的目录。默认 ~/.opendray/mcp。',
 			'web.serverSettings.fields.secretsFile.label' => '密钥文件',
 			'web.serverSettings.fields.secretsFile.hint' => 'spawn 时替换进 MCP server 命令的 key=value 文件。',
 			'web.serverSettings.fields.memoryBackend.label' => '嵌入器后端',
@@ -11736,6 +11770,8 @@ extension on TranslationsZh {
 			'web.serverSettings.fields.mobileTokenTTL.hint' => '签发给移动 App 的 bearer token 的有效期。默认 720h（30 天）。',
 			'web.serverSettings.fields.dbMaxConns.label' => '最大连接数',
 			'web.serverSettings.fields.dbMaxConns.hint' => 'pgx 连接池上限。0 = 默认值（16）。',
+			'web.serverSettings.fields.skillsRoot.label' => 'Skills 根目录',
+			'web.serverSettings.fields.skillsRoot.hint' => '存放 agent skills 的目录。放在 Vault 之外,避免被提交进你的文档仓库。',
 			'web.serverSettings.liveTail.heading' => '实时日志',
 			'web.serverSettings.liveTail.description' => '内存中的环形缓冲区（最近约 2,000 条）。重启后清空。',
 			'web.serverSettings.memoryInspectorCard.heading' => '检查器',
@@ -11822,6 +11858,12 @@ extension on TranslationsZh {
 			'web.serverSettings.host.modes.off.label' => '完全不干预电源',
 			'web.serverSettings.host.modes.off.desc' => 'opendray 不对机器电源做任何操作。',
 			'web.serverSettings.host.modes.off.caveat' => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。',
+			'web.serverSettings.layout.title' => '实际解析到',
+			'web.serverSettings.layout.documents' => '文档',
+			'web.serverSettings.layout.git' => 'Git 仓库',
+			'web.serverSettings.layout.skills' => 'Skills',
+			'web.serverSettings.layout.mcp' => 'MCP 注册表',
+			'web.serverSettings.layout.legacyWarning' => '此安装仍把 opendray 自己的目录放在你的文档里,所以它们会出现在 Vault 中,也会被同步带走。它们照常工作 —— 方便时把它们移出去,并在上面填好路径。已经提交进仓库的需要你自己 git rm --cached;opendray 不会改写你的仓库。',
 			'web.settings.title' => '设置',
 			'web.settings.subtitle' => '工作区、账号与网关配置。',
 			'web.settings.groups.workspace' => '工作区',
@@ -11837,6 +11879,8 @@ extension on TranslationsZh {
 			'web.settings.health.dbDown' => 'db 异常',
 			'web.settings.breadcrumb.server' => '服务器',
 			'web.settings.appearance.title' => '外观',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.appearance.description' => '选择 opendray 的外观风格。',
 			'web.settings.appearance.options.light' => '浅色',
 			'web.settings.appearance.options.lightDesc' => '始终浅色',
@@ -11845,8 +11889,6 @@ extension on TranslationsZh {
 			'web.settings.appearance.options.system' => '跟随系统',
 			'web.settings.appearance.options.systemDesc' => '跟随操作系统设置',
 			'web.settings.font.title' => '字号',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.font.description' => '缩放整个界面。按浏览器保存。',
 			'web.settings.font.options.compact' => '紧凑',
 			'web.settings.font.options.kDefault' => '默认',
@@ -12351,6 +12393,8 @@ extension on TranslationsZh {
 			'web.database.dialog.description' => '连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。',
 			'web.database.dialog.name' => '名称',
 			'web.database.dialog.host' => '主机',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.port' => '端口',
 			'web.database.dialog.database' => '数据库',
 			'web.database.dialog.username' => '用户名',
@@ -12359,8 +12403,6 @@ extension on TranslationsZh {
 			'web.database.dialog.sslMode' => 'SSL 模式',
 			'web.database.dialog.readOnly' => '只读(禁止此连接写入)',
 			'web.database.dialog.superuserWarning' => '该用户是超级用户(或数据库所有者)。日常工作请优先使用仅 CRUD 权限的项目角色。',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.test' => '测试',
 			'web.database.dialog.save' => '保存',
 			'web.database.dialog.testFailed' => '连接测试失败',
@@ -12865,6 +12907,8 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.tokenMuted' => '次要文字',
 			'sessions.inspector.canvas.tokenBorder' => '描边',
 			'sessions.inspector.canvas.tokenFont' => '正文字体',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenHeadingFont' => '标题字体',
 			'sessions.inspector.canvas.tokenBaseSize' => '基准字号',
 			'sessions.inspector.canvas.tokenRadius' => '圆角',
@@ -12873,8 +12917,6 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.themeLight' => '浅色',
 			'sessions.inspector.canvas.themeDark' => '深色',
 			'sessions.inspector.canvas.paletteLabel' => '从预设配色开始',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.themeDarkHint' => '留空 = 沿用浅色',
 			'sessions.inspector.canvas.paletteIndigo' => '靛蓝',
 			'sessions.inspector.canvas.paletteSky' => '天蓝',
@@ -13379,6 +13421,8 @@ extension on TranslationsZh {
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
 			'backups.encryption.random256bit' => '256 位随机密钥',
+			_ => null,
+		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
@@ -13387,8 +13431,6 @@ extension on TranslationsZh {
 			'backups.restore.subtitle' => '将加密的 .tar.gz.enc 备份包重放到 Postgres 数据库。备份包将从本机上传 — 请选择此前生成的文件。',
 			'backups.restore.bundleLabel' => '备份文件（.tar.gz.enc）',
 			'backups.restore.pickFile' => '选择文件',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.fileSelected' => ({required Object name, required Object size}) => '${name} · ${size}',
 			'backups.restore.noFile' => '未选择文件',
 			'backups.restore.targetDsnLabel' => '目标 Postgres DSN',
@@ -13893,6 +13935,8 @@ extension on TranslationsZh {
 			'dataExport.status.failed' => '失败',
 			'dataExport.status.expired' => '过期',
 			'dataExport.status.succeeded' => '成功',
+			_ => null,
+		} ?? switch (path) {
 			'memory.status.label' => '当前生效 embedder',
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'memory.status.enabled' => '已启用',
@@ -13901,8 +13945,6 @@ extension on TranslationsZh {
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => '已配置 ${model}（dense）— 重启网关即启用语义记忆并自动重嵌历史记忆。',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => '已配置 ${model}（dense）但端点当前不可达 — 暂用关键词 floor，端点恢复后重启会自动升级。',
 			'memory.status.denseDegraded' => 'dense embedder 已激活，但其端点当前不可达 — 现有向量已保留；新写入与相似度检索暂停，直到端点恢复。',
-			_ => null,
-		} ?? switch (path) {
 			'memory.title' => '记忆',
 			'memory.more' => '更多',
 			'memory.workers' => '记忆工作器',
@@ -14037,24 +14079,26 @@ extension on TranslationsZh {
 			'settings.serverSettings.sections.host' => '主机电源',
 			'settings.serverSettings.sections.logging' => '日志',
 			'settings.serverSettings.sections.sessions' => '会话',
-			'settings.serverSettings.sections.vault' => '凭据库',
+			'settings.serverSettings.sections.vault' => 'Vault',
 			'settings.serverSettings.sections.mcpRegistry' => 'MCP 注册表',
 			'settings.serverSettings.sections.memory' => '记忆',
 			'settings.serverSettings.sections.backup' => '备份',
 			'settings.serverSettings.sections.storageClaude' => '存储 · Claude',
 			'settings.serverSettings.sections.storageCodex' => '存储 · Codex',
 			'settings.serverSettings.sections.storageAntigravity' => '存储 · Antigravity',
+			'settings.serverSettings.sections.skills' => 'Agent skills',
 			'settings.serverSettings.sectionDescriptions.general' => '监听地址、管理员账号、令牌 TTL。',
 			'settings.serverSettings.sectionDescriptions.host' => '让这台机器在闲置时仍可被访问。',
 			'settings.serverSettings.sectionDescriptions.logging' => '详细程度、格式、磁盘日志路径。',
 			'settings.serverSettings.sectionDescriptions.sessions' => '空闲检测阈值。',
-			'settings.serverSettings.sectionDescriptions.vault' => '笔记、技能、git 版本化的根目录。',
-			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'MCP 服务器 + 密钥文件的凭据库路径。',
+			'settings.serverSettings.sectionDescriptions.vault' => '你的文档,以及它同步到的仓库。',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => '服务器注册表与密钥文件。',
 			'settings.serverSettings.sectionDescriptions.memory' => '跨 CLI 的持久记忆子系统。',
 			'settings.serverSettings.sectionDescriptions.backup' => '加密的数据库备份 + 管理数据导出。密语保存在密钥文件（设置 → 备份）。',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Claude 会话记录在磁盘的存放位置。',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex 会话根目录。',
 			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'agy 按会话存储的 SQLite 库。',
+			'settings.serverSettings.sectionDescriptions.skills' => 'agent skills 从哪里加载。',
 			'settings.serverSettings.fields.listenAddress' => '监听地址',
 			'settings.serverSettings.fields.adminUser' => '管理员用户',
 			'settings.serverSettings.fields.adminUserHelper' => '当未设置密钥文件或环境变量时生效。否则参见 设置 → 账户。',
@@ -14070,10 +14114,9 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.idleThresholdHelper' => '会话被标记为空闲前的安静时长。Go duration。',
 			'settings.serverSettings.fields.idleCheckInterval' => '空闲检查间隔',
 			'settings.serverSettings.fields.idleCheckHelper' => '空闲回收器运行的频率。',
-			'settings.serverSettings.fields.root' => '根目录',
-			'settings.serverSettings.fields.rootHelper' => 'notes / skills / git_root 子路径的父目录。',
-			'settings.serverSettings.fields.notesPath' => '笔记路径',
-			'settings.serverSettings.fields.skillsPath' => '技能路径',
+			'settings.serverSettings.fields.root' => 'Vault 根目录',
+			'settings.serverSettings.fields.rootHelper' => '你的文档所在的目录 —— Vault 浏览的就是这里,Vault Sync 提交的也是这里。',
+			'settings.serverSettings.fields.notesPath' => '文档路径(旧字段)',
 			'settings.serverSettings.fields.gitRoot' => 'Git 根',
 			'settings.serverSettings.fields.personalPrefix' => '个人前缀',
 			'settings.serverSettings.fields.projectsPrefix' => '项目前缀',
@@ -14125,6 +14168,10 @@ extension on TranslationsZh {
 			'settings.serverSettings.fields.sleepModeAlways' => '任何供电下保持唤醒',
 			'settings.serverSettings.fields.sleepModeOnDemand' => '闲时休眠,有请求时唤醒',
 			'settings.serverSettings.fields.sleepModeOff' => '不干预电源',
+			'settings.serverSettings.fields.notesPathHelper' => 'Vault 根目录的旧称,因为已设置才显示。清空即改用 Vault 根目录;也可以继续指向你在别处维护的 markdown 目录。',
+			'settings.serverSettings.fields.skillsRoot' => 'Skills 根目录',
+			'settings.serverSettings.fields.skillsRootHelper' => '存放 agent skills 的目录。放在 Vault 之外,避免被提交进你的文档仓库。',
+			'settings.serverSettings.fields.gitRootHelper' => 'Vault Sync 提交的工作树。默认为 Vault 根目录,这样仓库里只有文档。',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '「${field}」必须是整数',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '「${field}」必须是数字',
 			'settings.serverSettings.embedderModel.reprobe' => '重新检测端点',
@@ -14132,6 +14179,7 @@ extension on TranslationsZh {
 			'settings.serverSettings.embedderModel.pickHint' => '选择模型',
 			'settings.serverSettings.embedderModel.manual' => '手动输入',
 			'settings.serverSettings.embedderModel.pickFromList' => '从列表选择',
+			'settings.serverSettings.legacyLayout' => 'opendray 自己的目录仍在你的文档里,所以它们会出现在 Vault 中,同步时也会被带走。它们照常工作 —— 方便时把它们移出去,并在下面填好路径。',
 			'memoryQuarantine.title' => '隔离区',
 			'memoryQuarantine.subtitle' => '在被采信为持久记忆前需要审查的事实：integration 捕获按策略落到这里，你也可以手动隔离任何记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
 			'memoryQuarantine.empty' => '隔离区为空。',

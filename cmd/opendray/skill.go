@@ -14,8 +14,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/skills"
@@ -23,7 +21,7 @@ import (
 
 func runSkill(args []string) int {
 	fs := flag.NewFlagSet("skill", flag.ContinueOnError)
-	cfgPath := fs.String("config", "", "path to config.toml (only [vault] is read)")
+	cfgPath := fs.String("config", "", "path to config.toml (paths are resolved as the gateway does)")
 	root := fs.String("root", "", "override vault root (else config / env / default)")
 	asJSON := fs.Bool("json", false, "list/describe: JSON output")
 	fs.Usage = func() { fmt.Fprintln(os.Stderr, skillUsage) }
@@ -90,54 +88,20 @@ func runSkill(args []string) int {
 	}
 }
 
-// openLoader resolves the vault root the same way the notes CLI does.
-// Skills live at <vault>/skills/ — using the same root keeps the user's
-// vault one self-contained git-able directory.
+// openLoader resolves the skills root through the same resolver the
+// gateway uses, so `opendray skill` always operates on the directory
+// the running gateway actually injects from.
 func openLoader(cfgPath, override string) (*skills.Loader, error) {
-	// Resolve skills directory using the same precedence as the
-	// gateway: explicit override → config.toml [vault].skills →
-	// env OPENDRAY_VAULT_SKILLS → derive from [vault].root.
 	skillsDir := override
-	if skillsDir == "" && cfgPath != "" {
-		if cfg, err := config.Load(cfgPath); err == nil {
-			if cfg.Vault.Skills != "" {
-				skillsDir = cfg.Vault.Skills
-			} else if cfg.Vault.Root != "" {
-				skillsDir = filepath.Join(cfg.Vault.Root, "skills")
-			}
-		}
-	}
 	if skillsDir == "" {
-		skillsDir = os.Getenv("OPENDRAY_VAULT_SKILLS")
+		skillsDir = loadCLIConfig(cfgPath).Resolve().Skills
+	} else {
+		skillsDir = config.ExpandPath(skillsDir)
 	}
-	if skillsDir == "" {
-		root := os.Getenv("OPENDRAY_VAULT_ROOT")
-		if root == "" {
-			root = "~/.opendray/vault"
-		}
-		skillsDir = filepath.Join(root, "skills")
-	}
-	if expanded, err := expandHome(skillsDir); err == nil {
-		skillsDir = expanded
-	}
-	// Don't use notes.New here — we don't want to create a notes dir
-	// just for `skill` operations. Loader gracefully handles missing
-	// vault dirs (only built-ins return).
+	// Don't use notes.New here — we don't want to create a directory
+	// just for `skill` operations. Loader gracefully handles a missing
+	// root (only built-ins return).
 	return skills.NewLoader(skillsDir), nil
-}
-
-func expandHome(p string) (string, error) {
-	if p == "~" || strings.HasPrefix(p, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return p, err
-		}
-		if p == "~" {
-			return home, nil
-		}
-		return filepath.Join(home, p[2:]), nil
-	}
-	return filepath.Abs(p)
 }
 
 const skillUsage = `opendray skill — agent skills loader
@@ -146,7 +110,7 @@ usage:
   opendray skill [flags] <command> [args]
 
 commands:
-  path                    print the skills directory (vault/skills)
+  path                    print the skills directory
   list                    list all skills (built-in + vault); cols: id source description
   describe <id>           print SKILL.md for one skill
 
@@ -157,4 +121,4 @@ flags:
 
 skills load from (vault overrides built-in on conflict):
   - <opendray binary>/builtin/<id>/SKILL.md   (shipped)
-  - <vault>/skills/<id>/SKILL.md              (user / git-versioned)`
+  - <skills root>/<id>/SKILL.md               (user / git-versioned)`

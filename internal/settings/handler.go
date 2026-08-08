@@ -65,6 +65,13 @@ func (h *Handler) Mount(r chi.Router) {
 type getResponse struct {
 	Config     *config.Config `json:"config"`
 	ConfigPath string         `json:"config_path"`
+	// Layout is where these settings actually resolve to on disk,
+	// including whether anything still falls in the pre-split shared
+	// vault. Read-only: the paths are derived, and several of them are
+	// only knowable by looking at the filesystem. Showing them is the
+	// point — a settings page that describes a layout the gateway is
+	// not using is how the Vault came to mean three different things.
+	Layout config.Paths `json:"layout"`
 }
 
 func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +80,11 @@ func (h *Handler) get(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, getResponse{Config: c, ConfigPath: h.svc.ConfigPath()})
+	writeJSON(w, http.StatusOK, getResponse{
+		Config:     c,
+		ConfigPath: h.svc.ConfigPath(),
+		Layout:     c.Resolve(),
+	})
 }
 
 func (h *Handler) put(w http.ResponseWriter, r *http.Request) {

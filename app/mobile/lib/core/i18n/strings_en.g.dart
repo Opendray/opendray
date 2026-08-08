@@ -3201,6 +3201,7 @@ class TranslationsWebServerSettingsEn {
 	String get memoryRuntimeBannerButton => 'Open Cortex settings';
 
 	late final TranslationsWebServerSettingsHostEn host = TranslationsWebServerSettingsHostEn.internal(_root);
+	late final TranslationsWebServerSettingsLayoutEn layout = TranslationsWebServerSettingsLayoutEn.internal(_root);
 }
 
 // Path: web.settings
@@ -6166,6 +6167,9 @@ class TranslationsSettingsServerSettingsEn {
 	String validateNumber({required Object field}) => '"${field}" must be a number';
 
 	late final TranslationsSettingsServerSettingsEmbedderModelEn embedderModel = TranslationsSettingsServerSettingsEmbedderModelEn.internal(_root);
+
+	/// en: 'opendray's own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient.'
+	String get legacyLayout => 'opendray\'s own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient.';
 }
 
 // Path: web.sessions.list
@@ -10221,6 +10225,7 @@ class TranslationsWebServerSettingsSectionsEn {
 	late final TranslationsWebServerSettingsSectionsClaudeEn claude = TranslationsWebServerSettingsSectionsClaudeEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsCodexEn codex = TranslationsWebServerSettingsSectionsCodexEn.internal(_root);
 	late final TranslationsWebServerSettingsSectionsAntigravityEn antigravity = TranslationsWebServerSettingsSectionsAntigravityEn.internal(_root);
+	late final TranslationsWebServerSettingsSectionsSkillsEn skills = TranslationsWebServerSettingsSectionsSkillsEn.internal(_root);
 }
 
 // Path: web.serverSettings.restart
@@ -10322,7 +10327,6 @@ class TranslationsWebServerSettingsFieldsEn {
 	late final TranslationsWebServerSettingsFieldsIdlePollIntervalEn idlePollInterval = TranslationsWebServerSettingsFieldsIdlePollIntervalEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsVaultRootEn vaultRoot = TranslationsWebServerSettingsFieldsVaultRootEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsNotesDirectoryEn notesDirectory = TranslationsWebServerSettingsFieldsNotesDirectoryEn.internal(_root);
-	late final TranslationsWebServerSettingsFieldsSkillsDirectoryEn skillsDirectory = TranslationsWebServerSettingsFieldsSkillsDirectoryEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsGitRootEn gitRoot = TranslationsWebServerSettingsFieldsGitRootEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsPersonalPrefixEn personalPrefix = TranslationsWebServerSettingsFieldsPersonalPrefixEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsProjectsPrefixEn projectsPrefix = TranslationsWebServerSettingsFieldsProjectsPrefixEn.internal(_root);
@@ -10360,6 +10364,7 @@ class TranslationsWebServerSettingsFieldsEn {
 	late final TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn claudeAutoFailover = TranslationsWebServerSettingsFieldsClaudeAutoFailoverEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsMobileTokenTTLEn mobileTokenTTL = TranslationsWebServerSettingsFieldsMobileTokenTTLEn.internal(_root);
 	late final TranslationsWebServerSettingsFieldsDbMaxConnsEn dbMaxConns = TranslationsWebServerSettingsFieldsDbMaxConnsEn.internal(_root);
+	late final TranslationsWebServerSettingsFieldsSkillsRootEn skillsRoot = TranslationsWebServerSettingsFieldsSkillsRootEn.internal(_root);
 }
 
 // Path: web.serverSettings.liveTail
@@ -10639,6 +10644,33 @@ class TranslationsWebServerSettingsHostEn {
 	String get platformNote => 'macOS only. On Linux and Windows this setting is accepted and ignored — those hosts do not idle-suspend under a normal server install. A deliberate sleep (lid close, Apple menu → Sleep) is never blocked, and the assertion is released if opendray exits or is killed.';
 
 	late final TranslationsWebServerSettingsHostModesEn modes = TranslationsWebServerSettingsHostModesEn.internal(_root);
+}
+
+// Path: web.serverSettings.layout
+class TranslationsWebServerSettingsLayoutEn {
+	TranslationsWebServerSettingsLayoutEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Resolving to'
+	String get title => 'Resolving to';
+
+	/// en: 'Documents'
+	String get documents => 'Documents';
+
+	/// en: 'Git repo'
+	String get git => 'Git repo';
+
+	/// en: 'Skills'
+	String get skills => 'Skills';
+
+	/// en: 'MCP registry'
+	String get mcp => 'MCP registry';
+
+	/// en: 'This install still keeps opendray's own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo.'
+	String get legacyWarning => 'This install still keeps opendray\'s own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo.';
 }
 
 // Path: web.settings.groups
@@ -14199,6 +14231,9 @@ class TranslationsSettingsServerSettingsSectionsEn {
 
 	/// en: 'Storage · Antigravity'
 	String get storageAntigravity => 'Storage · Antigravity';
+
+	/// en: 'Agent skills'
+	String get skills => 'Agent skills';
 }
 
 // Path: settings.serverSettings.sectionDescriptions
@@ -14221,11 +14256,11 @@ class TranslationsSettingsServerSettingsSectionDescriptionsEn {
 	/// en: 'Idle detection thresholds.'
 	String get sessions => 'Idle detection thresholds.';
 
-	/// en: 'Notes, skills, and git-versioned root.'
-	String get vault => 'Notes, skills, and git-versioned root.';
+	/// en: 'Your documents, and the repo they sync to.'
+	String get vault => 'Your documents, and the repo they sync to.';
 
-	/// en: 'Vault paths for MCP servers + secrets file.'
-	String get mcpRegistry => 'Vault paths for MCP servers + secrets file.';
+	/// en: 'Server registry + secrets file.'
+	String get mcpRegistry => 'Server registry + secrets file.';
 
 	/// en: 'Cross-CLI persistent memory subsystem.'
 	String get memory => 'Cross-CLI persistent memory subsystem.';
@@ -14241,6 +14276,9 @@ class TranslationsSettingsServerSettingsSectionDescriptionsEn {
 
 	/// en: 'agy per-conversation SQLite store.'
 	String get storageAntigravity => 'agy per-conversation SQLite store.';
+
+	/// en: 'Where agent skills are loaded from.'
+	String get skills => 'Where agent skills are loaded from.';
 }
 
 // Path: settings.serverSettings.fields
@@ -14296,17 +14334,14 @@ class TranslationsSettingsServerSettingsFieldsEn {
 	/// en: 'How often the idle reaper runs.'
 	String get idleCheckHelper => 'How often the idle reaper runs.';
 
-	/// en: 'Root'
-	String get root => 'Root';
+	/// en: 'Vault root'
+	String get root => 'Vault root';
 
-	/// en: 'Parent of notes / skills / git_root sub-paths.'
-	String get rootHelper => 'Parent of notes / skills / git_root sub-paths.';
+	/// en: 'The directory your documents live in — what the Vault browses and what Vault Sync commits.'
+	String get rootHelper => 'The directory your documents live in — what the Vault browses and what Vault Sync commits.';
 
-	/// en: 'Notes path'
-	String get notesPath => 'Notes path';
-
-	/// en: 'Skills path'
-	String get skillsPath => 'Skills path';
+	/// en: 'Documents path (legacy)'
+	String get notesPath => 'Documents path (legacy)';
 
 	/// en: 'Git root'
 	String get gitRoot => 'Git root';
@@ -14460,6 +14495,18 @@ class TranslationsSettingsServerSettingsFieldsEn {
 
 	/// en: 'Don't touch power'
 	String get sleepModeOff => 'Don\'t touch power';
+
+	/// en: 'Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.'
+	String get notesPathHelper => 'Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.';
+
+	/// en: 'Skills root'
+	String get skillsRoot => 'Skills root';
+
+	/// en: 'Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.'
+	String get skillsRootHelper => 'Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.';
+
+	/// en: 'Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else.'
+	String get gitRootHelper => 'Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else.';
 }
 
 // Path: settings.serverSettings.embedderModel
@@ -16715,8 +16762,8 @@ class TranslationsWebServerSettingsSectionsVaultEn {
 	/// en: 'Vault'
 	String get title => 'Vault';
 
-	/// en: 'Notes, skills, and git-versioned root.'
-	String get desc => 'Notes, skills, and git-versioned root.';
+	/// en: 'Your documents, and the repo they sync to.'
+	String get desc => 'Your documents, and the repo they sync to.';
 }
 
 // Path: web.serverSettings.sections.mcp
@@ -16807,6 +16854,21 @@ class TranslationsWebServerSettingsSectionsAntigravityEn {
 
 	/// en: 'Antigravity (agy) per-conversation SQLite store.'
 	String get desc => 'Antigravity (agy) per-conversation SQLite store.';
+}
+
+// Path: web.serverSettings.sections.skills
+class TranslationsWebServerSettingsSectionsSkillsEn {
+	TranslationsWebServerSettingsSectionsSkillsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Agent skills'
+	String get title => 'Agent skills';
+
+	/// en: 'Where skills are loaded from.'
+	String get desc => 'Where skills are loaded from.';
 }
 
 // Path: web.serverSettings.fields.listenAddress
@@ -16961,8 +17023,8 @@ class TranslationsWebServerSettingsFieldsVaultRootEn {
 	/// en: 'Vault root'
 	String get label => 'Vault root';
 
-	/// en: 'Top-level directory for notes, skills, and MCP registry.'
-	String get hint => 'Top-level directory for notes, skills, and MCP registry.';
+	/// en: 'The directory your documents live in. This is what the Vault page browses and what Vault Sync commits.'
+	String get hint => 'The directory your documents live in. This is what the Vault page browses and what Vault Sync commits.';
 }
 
 // Path: web.serverSettings.fields.notesDirectory
@@ -16973,26 +17035,11 @@ class TranslationsWebServerSettingsFieldsNotesDirectoryEn {
 
 	// Translations
 
-	/// en: 'Notes directory'
-	String get label => 'Notes directory';
+	/// en: 'Documents directory (legacy)'
+	String get label => 'Documents directory (legacy)';
 
-	/// en: 'Override notes location. Defaults to <vault root>/notes.'
-	String get hint => 'Override notes location. Defaults to <vault root>/notes.';
-}
-
-// Path: web.serverSettings.fields.skillsDirectory
-class TranslationsWebServerSettingsFieldsSkillsDirectoryEn {
-	TranslationsWebServerSettingsFieldsSkillsDirectoryEn.internal(this._root);
-
-	final Translations _root; // ignore: unused_field
-
-	// Translations
-
-	/// en: 'Skills directory'
-	String get label => 'Skills directory';
-
-	/// en: 'Override skills location. Defaults to <vault root>/skills.'
-	String get hint => 'Override skills location. Defaults to <vault root>/skills.';
+	/// en: 'Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.'
+	String get hint => 'Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.';
 }
 
 // Path: web.serverSettings.fields.gitRoot
@@ -17006,8 +17053,8 @@ class TranslationsWebServerSettingsFieldsGitRootEn {
 	/// en: 'Git root'
 	String get label => 'Git root';
 
-	/// en: 'Working tree the Vault Sync feature commits to.'
-	String get hint => 'Working tree the Vault Sync feature commits to.';
+	/// en: 'Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else.'
+	String get hint => 'Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else.';
 }
 
 // Path: web.serverSettings.fields.personalPrefix
@@ -17051,8 +17098,8 @@ class TranslationsWebServerSettingsFieldsRegistryRootEn {
 	/// en: 'Registry root'
 	String get label => 'Registry root';
 
-	/// en: 'Directory holding MCP server JSON definitions. Defaults to <vault>/mcp.'
-	String get hint => 'Directory holding MCP server JSON definitions. Defaults to <vault>/mcp.';
+	/// en: 'Directory holding MCP server JSON definitions. Defaults to ~/.opendray/mcp.'
+	String get hint => 'Directory holding MCP server JSON definitions. Defaults to ~/.opendray/mcp.';
 }
 
 // Path: web.serverSettings.fields.secretsFile
@@ -17548,6 +17595,21 @@ class TranslationsWebServerSettingsFieldsDbMaxConnsEn {
 
 	/// en: 'pgx connection pool cap. 0 = store default (16).'
 	String get hint => 'pgx connection pool cap. 0 = store default (16).';
+}
+
+// Path: web.serverSettings.fields.skillsRoot
+class TranslationsWebServerSettingsFieldsSkillsRootEn {
+	TranslationsWebServerSettingsFieldsSkillsRootEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Skills root'
+	String get label => 'Skills root';
+
+	/// en: 'Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.'
+	String get hint => 'Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.';
 }
 
 // Path: web.serverSettings.httpHelpers.presetTip
@@ -20464,7 +20526,7 @@ extension on Translations {
 			'web.serverSettings.sections.sessions.title' => 'Sessions',
 			'web.serverSettings.sections.sessions.desc' => 'Idle detection thresholds.',
 			'web.serverSettings.sections.vault.title' => 'Vault',
-			'web.serverSettings.sections.vault.desc' => 'Notes, skills, and git-versioned root.',
+			'web.serverSettings.sections.vault.desc' => 'Your documents, and the repo they sync to.',
 			'web.serverSettings.sections.mcp.title' => 'MCP registry',
 			'web.serverSettings.sections.mcp.desc' => 'Server registry + secrets.',
 			'web.serverSettings.sections.memory.title' => 'Memory · storage & embedder',
@@ -20477,6 +20539,8 @@ extension on Translations {
 			'web.serverSettings.sections.codex.desc' => 'Codex sessions root.',
 			'web.serverSettings.sections.antigravity.title' => 'Storage · Antigravity',
 			'web.serverSettings.sections.antigravity.desc' => 'Antigravity (agy) per-conversation SQLite store.',
+			'web.serverSettings.sections.skills.title' => 'Agent skills',
+			'web.serverSettings.sections.skills.desc' => 'Where skills are loaded from.',
 			'web.serverSettings.loading' => 'Loading server settings…',
 			'web.serverSettings.loadFailed' => ({required Object message}) => 'Failed to load: ${message}',
 			'web.serverSettings.noConfigFlag' => 'opendray was started without a -config flag. Settings are loaded from environment variables only and cannot be edited here.',
@@ -20535,19 +20599,17 @@ extension on Translations {
 			'web.serverSettings.fields.idlePollInterval.label' => 'Idle poll interval',
 			'web.serverSettings.fields.idlePollInterval.hint' => 'How often the idle detector wakes up. Lower = lower latency, more wakeups. Empty = 5s.',
 			'web.serverSettings.fields.vaultRoot.label' => 'Vault root',
-			'web.serverSettings.fields.vaultRoot.hint' => 'Top-level directory for notes, skills, and MCP registry.',
-			'web.serverSettings.fields.notesDirectory.label' => 'Notes directory',
-			'web.serverSettings.fields.notesDirectory.hint' => 'Override notes location. Defaults to <vault root>/notes.',
-			'web.serverSettings.fields.skillsDirectory.label' => 'Skills directory',
-			'web.serverSettings.fields.skillsDirectory.hint' => 'Override skills location. Defaults to <vault root>/skills.',
+			'web.serverSettings.fields.vaultRoot.hint' => 'The directory your documents live in. This is what the Vault page browses and what Vault Sync commits.',
+			'web.serverSettings.fields.notesDirectory.label' => 'Documents directory (legacy)',
+			'web.serverSettings.fields.notesDirectory.hint' => 'Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.',
 			'web.serverSettings.fields.gitRoot.label' => 'Git root',
-			'web.serverSettings.fields.gitRoot.hint' => 'Working tree the Vault Sync feature commits to.',
+			'web.serverSettings.fields.gitRoot.hint' => 'Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else.',
 			'web.serverSettings.fields.personalPrefix.label' => 'Personal prefix',
 			'web.serverSettings.fields.personalPrefix.hint' => 'Folder name used for personal notes when auto-deriving paths. Default "personal".',
 			'web.serverSettings.fields.projectsPrefix.label' => 'Projects prefix',
 			'web.serverSettings.fields.projectsPrefix.hint' => 'Folder name used for project notes. Default "projects".',
 			'web.serverSettings.fields.registryRoot.label' => 'Registry root',
-			'web.serverSettings.fields.registryRoot.hint' => 'Directory holding MCP server JSON definitions. Defaults to <vault>/mcp.',
+			'web.serverSettings.fields.registryRoot.hint' => 'Directory holding MCP server JSON definitions. Defaults to ~/.opendray/mcp.',
 			'web.serverSettings.fields.secretsFile.label' => 'Secrets file',
 			'web.serverSettings.fields.secretsFile.hint' => 'key=value file substituted into MCP server commands at spawn time.',
 			'web.serverSettings.fields.memoryBackend.label' => 'Embedder backend',
@@ -20614,6 +20676,8 @@ extension on Translations {
 			'web.serverSettings.fields.mobileTokenTTL.hint' => 'Lifetime of bearer tokens issued to the mobile app. Default 720h (30 days).',
 			'web.serverSettings.fields.dbMaxConns.label' => 'Max connections',
 			'web.serverSettings.fields.dbMaxConns.hint' => 'pgx connection pool cap. 0 = store default (16).',
+			'web.serverSettings.fields.skillsRoot.label' => 'Skills root',
+			'web.serverSettings.fields.skillsRoot.hint' => 'Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.',
 			'web.serverSettings.liveTail.heading' => 'Live tail',
 			'web.serverSettings.liveTail.description' => 'In-memory ring buffer (last ~2,000 records). Resets on restart.',
 			'web.serverSettings.memoryInspectorCard.heading' => 'Inspector',
@@ -20700,6 +20764,12 @@ extension on Translations {
 			'web.serverSettings.host.modes.off.label' => 'Never touch power settings',
 			'web.serverSettings.host.modes.off.desc' => 'opendray leaves the machine alone entirely.',
 			'web.serverSettings.host.modes.off.caveat' => 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.',
+			'web.serverSettings.layout.title' => 'Resolving to',
+			'web.serverSettings.layout.documents' => 'Documents',
+			'web.serverSettings.layout.git' => 'Git repo',
+			'web.serverSettings.layout.skills' => 'Skills',
+			'web.serverSettings.layout.mcp' => 'MCP registry',
+			'web.serverSettings.layout.legacyWarning' => 'This install still keeps opendray\'s own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo.',
 			'web.settings.title' => 'Settings',
 			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
 			'web.settings.groups.workspace' => 'Workspace',
@@ -20712,6 +20782,8 @@ extension on Translations {
 			'web.settings.items.about' => 'About',
 			'web.settings.health.connecting' => 'connecting…',
 			'web.settings.health.dbOk' => 'db ok',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.health.dbDown' => 'db down',
 			'web.settings.breadcrumb.server' => 'Server',
 			'web.settings.appearance.title' => 'Appearance',
@@ -20720,8 +20792,6 @@ extension on Translations {
 			'web.settings.appearance.options.lightDesc' => 'Always light',
 			'web.settings.appearance.options.dark' => 'Dark',
 			'web.settings.appearance.options.darkDesc' => 'Always dark',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.appearance.options.system' => 'System',
 			'web.settings.appearance.options.systemDesc' => 'Follow the OS setting',
 			'web.settings.font.title' => 'Font size',
@@ -21226,6 +21296,8 @@ extension on Translations {
 			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
 			'web.database.dialog.createTitle' => 'Add database connection',
 			'web.database.dialog.editTitle' => 'Edit connection',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.description' => 'Connect to this project\'s database to browse and edit its data. Credentials are stored encrypted.',
 			'web.database.dialog.name' => 'Name',
 			'web.database.dialog.host' => 'Host',
@@ -21234,8 +21306,6 @@ extension on Translations {
 			'web.database.dialog.username' => 'Username',
 			'web.database.dialog.password' => 'Password',
 			'web.database.dialog.passwordKept' => 'unchanged — leave blank to keep',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.sslMode' => 'SSL mode',
 			'web.database.dialog.readOnly' => 'Read-only (block writes from this connection)',
 			'web.database.dialog.superuserWarning' => 'This user is a superuser (or the database owner). Prefer a CRUD-only project role for day-to-day work.',
@@ -21740,6 +21810,8 @@ extension on Translations {
 			'sessions.inspector.canvas.tokenBackground' => 'Background',
 			'sessions.inspector.canvas.tokenSurface' => 'Surface',
 			'sessions.inspector.canvas.tokenText' => 'Text',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenMuted' => 'Muted',
 			'sessions.inspector.canvas.tokenBorder' => 'Border',
 			'sessions.inspector.canvas.tokenFont' => 'Body font',
@@ -21748,8 +21820,6 @@ extension on Translations {
 			'sessions.inspector.canvas.tokenRadius' => 'Radius',
 			'sessions.inspector.canvas.tokenSpacing' => 'Spacing',
 			'sessions.inspector.canvas.tokenShadow' => 'Shadow',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.themeLight' => 'Light',
 			'sessions.inspector.canvas.themeDark' => 'Dark',
 			'sessions.inspector.canvas.paletteLabel' => 'Start from a palette',
@@ -22254,6 +22324,8 @@ extension on Translations {
 			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
 			'backups.pgDumpMissing' => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.',
 			'backups.encryption.checkAgain' => 'Check again',
+			_ => null,
+		} ?? switch (path) {
 			'backups.encryption.generate' => 'Generate',
 			'backups.encryption.paste' => 'Paste',
 			'backups.encryption.random256bit' => '256-bit random key',
@@ -22262,8 +22334,6 @@ extension on Translations {
 			'backups.encryption.passphraseCopied' => 'Passphrase copied to clipboard',
 			'backups.restoreFromFile' => 'Restore from file',
 			'backups.restore.title' => 'Restore from bundle',
-			_ => null,
-		} ?? switch (path) {
 			'backups.restore.subtitle' => 'Replay an encrypted .tar.gz.enc bundle into a Postgres database. The bundle is uploaded from this phone — pick a file produced by a prior backup.',
 			'backups.restore.bundleLabel' => 'Bundle file (.tar.gz.enc)',
 			'backups.restore.pickFile' => 'Pick file',
@@ -22768,6 +22838,8 @@ extension on Translations {
 			'dataExport.status.pending' => 'pending',
 			'dataExport.status.running' => 'running',
 			'dataExport.status.ready' => 'ready',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.status.failed' => 'failed',
 			'dataExport.status.expired' => 'expired',
 			'dataExport.status.succeeded' => 'succeeded',
@@ -22776,8 +22848,6 @@ extension on Translations {
 			'memory.status.enabled' => 'enabled',
 			'memory.status.disabled' => 'disabled',
 			'memory.status.floorNoModel' => 'Keyword (BM25) retrieval only — no embedding model configured. Configure a dense endpoint in Settings to enable semantic memory.',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.denseConfiguredPendingRestart' => ({required Object model}) => 'Configured ${model} (dense) — restart the gateway to activate semantic memory and re-embed existing memories.',
 			'memory.status.denseUnreachableFloor' => ({required Object model}) => 'Configured ${model} (dense) but the endpoint is unreachable — using the keyword floor until it responds (auto-upgrades on restart).',
 			'memory.status.denseDegraded' => 'Dense embedder active but its endpoint is unreachable right now — existing vectors are preserved; new writes and similarity search pause until it responds.',
@@ -22922,17 +22992,19 @@ extension on Translations {
 			'settings.serverSettings.sections.storageClaude' => 'Storage · Claude',
 			'settings.serverSettings.sections.storageCodex' => 'Storage · Codex',
 			'settings.serverSettings.sections.storageAntigravity' => 'Storage · Antigravity',
+			'settings.serverSettings.sections.skills' => 'Agent skills',
 			'settings.serverSettings.sectionDescriptions.general' => 'Listen address, operator account, token TTL.',
 			'settings.serverSettings.sectionDescriptions.host' => 'Keep this machine reachable while it is idle.',
 			'settings.serverSettings.sectionDescriptions.logging' => 'Verbosity, format, and on-disk log path.',
 			'settings.serverSettings.sectionDescriptions.sessions' => 'Idle detection thresholds.',
-			'settings.serverSettings.sectionDescriptions.vault' => 'Notes, skills, and git-versioned root.',
-			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Vault paths for MCP servers + secrets file.',
+			'settings.serverSettings.sectionDescriptions.vault' => 'Your documents, and the repo they sync to.',
+			'settings.serverSettings.sectionDescriptions.mcpRegistry' => 'Server registry + secrets file.',
 			'settings.serverSettings.sectionDescriptions.memory' => 'Cross-CLI persistent memory subsystem.',
 			'settings.serverSettings.sectionDescriptions.backup' => 'Encrypted DB backups + admin data exports. Passphrase lives in the keyfile (Settings → Backups).',
 			'settings.serverSettings.sectionDescriptions.storageClaude' => 'Where Claude transcripts live on disk.',
 			'settings.serverSettings.sectionDescriptions.storageCodex' => 'Codex sessions root.',
 			'settings.serverSettings.sectionDescriptions.storageAntigravity' => 'agy per-conversation SQLite store.',
+			'settings.serverSettings.sectionDescriptions.skills' => 'Where agent skills are loaded from.',
 			'settings.serverSettings.fields.listenAddress' => 'Listen address',
 			'settings.serverSettings.fields.adminUser' => 'Admin user',
 			'settings.serverSettings.fields.adminUserHelper' => 'Effective when no keyfile or env var is set. Otherwise see Settings → Account.',
@@ -22948,10 +23020,9 @@ extension on Translations {
 			'settings.serverSettings.fields.idleThresholdHelper' => 'Quiet period before a session is flagged idle. Go duration.',
 			'settings.serverSettings.fields.idleCheckInterval' => 'Idle check interval',
 			'settings.serverSettings.fields.idleCheckHelper' => 'How often the idle reaper runs.',
-			'settings.serverSettings.fields.root' => 'Root',
-			'settings.serverSettings.fields.rootHelper' => 'Parent of notes / skills / git_root sub-paths.',
-			'settings.serverSettings.fields.notesPath' => 'Notes path',
-			'settings.serverSettings.fields.skillsPath' => 'Skills path',
+			'settings.serverSettings.fields.root' => 'Vault root',
+			'settings.serverSettings.fields.rootHelper' => 'The directory your documents live in — what the Vault browses and what Vault Sync commits.',
+			'settings.serverSettings.fields.notesPath' => 'Documents path (legacy)',
 			'settings.serverSettings.fields.gitRoot' => 'Git root',
 			'settings.serverSettings.fields.personalPrefix' => 'Personal prefix',
 			'settings.serverSettings.fields.projectsPrefix' => 'Projects prefix',
@@ -23003,6 +23074,10 @@ extension on Translations {
 			'settings.serverSettings.fields.sleepModeAlways' => 'Stay awake on any power',
 			'settings.serverSettings.fields.sleepModeOnDemand' => 'Sleep, wake on traffic',
 			'settings.serverSettings.fields.sleepModeOff' => 'Don\'t touch power',
+			'settings.serverSettings.fields.notesPathHelper' => 'Older name for the Vault root, kept because it is set. Clear it to use Vault root, or keep it pointed at a markdown folder you maintain elsewhere.',
+			'settings.serverSettings.fields.skillsRoot' => 'Skills root',
+			'settings.serverSettings.fields.skillsRootHelper' => 'Directory holding agent skills. Kept outside the Vault so they are not committed to your documents repo.',
+			'settings.serverSettings.fields.gitRootHelper' => 'Working tree Vault Sync commits. Defaults to the Vault root, so the repo holds documents and nothing else.',
 			'settings.serverSettings.validateInteger' => ({required Object field}) => '"${field}" must be an integer',
 			'settings.serverSettings.validateNumber' => ({required Object field}) => '"${field}" must be a number',
 			'settings.serverSettings.embedderModel.reprobe' => 'Re-check endpoint',
@@ -23010,6 +23085,7 @@ extension on Translations {
 			'settings.serverSettings.embedderModel.pickHint' => 'Select a model',
 			'settings.serverSettings.embedderModel.manual' => 'Type manually',
 			'settings.serverSettings.embedderModel.pickFromList' => 'Pick from list',
+			'settings.serverSettings.legacyLayout' => 'opendray\'s own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient.',
 			'memoryQuarantine.title' => 'Quarantine',
 			'memoryQuarantine.subtitle' => 'Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.',
 			'memoryQuarantine.empty' => 'Nothing in quarantine.',

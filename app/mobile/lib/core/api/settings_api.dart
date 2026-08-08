@@ -20,18 +20,29 @@ class SettingsApi {
   SettingsApi(this._dio);
   final Dio _dio;
 
-  // GET /admin/settings — returns the full Config + the path of the
-  // toml file the server loaded it from. The toml path is shown to
-  // the operator so they know which file would change on a PUT.
-  Future<({Map<String, dynamic> config, String configPath})> get() async {
+  // GET /admin/settings — returns the full Config, the path of the
+  // toml file the server loaded it from, and where those settings
+  // actually resolve to on disk. The toml path is shown to the
+  // operator so they know which file would change on a PUT; `layout`
+  // is read-only and exists because several paths are derived — a
+  // form full of empty "defaults to…" boxes does not tell anyone
+  // where their documents are.
+  Future<
+      ({
+        Map<String, dynamic> config,
+        String configPath,
+        Map<String, dynamic> layout,
+      })> get() async {
     try {
       final res =
           await _dio.get<Map<String, dynamic>>('/api/v1/admin/settings');
       final data = res.data ?? const <String, dynamic>{};
       final cfg = data['config'];
+      final layout = data['layout'];
       return (
         config: cfg is Map<String, dynamic> ? cfg : <String, dynamic>{},
         configPath: data['config_path'] as String? ?? '',
+        layout: layout is Map<String, dynamic> ? layout : <String, dynamic>{},
       );
     } on Object catch (e) {
       throw toApiException(e);
