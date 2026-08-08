@@ -1776,7 +1776,7 @@
       },
       "gitHosts": {
         "title": "Hosts de git",
-        "description": "Un token por host, usado por la pestaña Git para obtener los pull requests <1>y por la sincronización del vault de Notas</1> cuando su remoto usa HTTPS hacia un repo privado en el mismo host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.",
+        "description": "Credenciales por host, y por propietario cuando un host alberga varias identidades. Se usan para la autenticación git por HTTPS (sync del vault, push de sesión) y para las llamadas a la API de la forja (pull requests, issues). La resolución prefiere la entrada del propietario y recurre a la de todo el host. <1>Los remotos SSH no se ven afectados</1>: se autentican con el ssh-agent del host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.",
         "addHost": "Añadir host",
         "empty": "No hay hosts de git configurados.\nAñade uno para habilitar la lista de PR en la pestaña Git del inspector.",
         "columns": {

@@ -4803,7 +4803,7 @@ class _TranslationsWebPluginsGitHostsEs extends TranslationsWebPluginsGitHostsEn
 
 	// Translations
 	@override String get title => 'Hosts de git';
-	@override String get description => 'Un token por host, usado por la pestaña Git para obtener los pull requests <1>y por la sincronización del vault de Notas</1> cuando su remoto usa HTTPS hacia un repo privado en el mismo host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.';
+	@override String get description => 'Credenciales por host, y por propietario cuando un host alberga varias identidades. Se usan para la autenticación git por HTTPS (sync del vault, push de sesión) y para las llamadas a la API de la forja (pull requests, issues). La resolución prefiere la entrada del propietario y recurre a la de todo el host. <1>Los remotos SSH no se ven afectados</1>: se autentican con el ssh-agent del host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.';
 	@override String get addHost => 'Añadir host';
 	@override String get empty => 'No hay hosts de git configurados.\nAñade uno para habilitar la lista de PR en la pestaña Git del inspector.';
 	@override late final _TranslationsWebPluginsGitHostsColumnsEs columns = _TranslationsWebPluginsGitHostsColumnsEs._(_root);
@@ -11254,7 +11254,7 @@ extension on TranslationsEs {
 			'web.plugins.customTasks.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.customTasks.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.title' => 'Hosts de git',
-			'web.plugins.gitHosts.description' => 'Un token por host, usado por la pestaña Git para obtener los pull requests <1>y por la sincronización del vault de Notas</1> cuando su remoto usa HTTPS hacia un repo privado en el mismo host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.',
+			'web.plugins.gitHosts.description' => 'Credenciales por host, y por propietario cuando un host alberga varias identidades. Se usan para la autenticación git por HTTPS (sync del vault, push de sesión) y para las llamadas a la API de la forja (pull requests, issues). La resolución prefiere la entrada del propietario y recurre a la de todo el host. <1>Los remotos SSH no se ven afectados</1>: se autentican con el ssh-agent del host. Se admiten GitHub.com, GitHub Enterprise autoalojado, Gitea y GitLab.',
 			'web.plugins.gitHosts.addHost' => 'Añadir host',
 			'web.plugins.gitHosts.empty' => 'No hay hosts de git configurados.\nAñade uno para habilitar la lista de PR en la pestaña Git del inspector.',
 			'web.plugins.gitHosts.columns.host' => 'Host',

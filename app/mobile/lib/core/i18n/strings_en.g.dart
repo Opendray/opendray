@@ -9508,8 +9508,8 @@ class TranslationsWebPluginsGitHostsEn {
 	/// en: 'Git hosts'
 	String get title => 'Git hosts';
 
-	/// en: 'One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.'
-	String get description => 'One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.';
+	/// en: 'Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host's ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.'
+	String get description => 'Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host\'s ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.';
 
 	/// en: 'Add host'
 	String get addHost => 'Add host';
@@ -20098,7 +20098,7 @@ extension on Translations {
 			'web.plugins.customTasks.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.customTasks.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.title' => 'Git hosts',
-			'web.plugins.gitHosts.description' => 'One token per host — used by the Git tab to fetch pull requests <1>and by the Notes vault sync</1> when its remote uses HTTPS to a private repo on the same host. GitHub.com, self-hosted GitHub Enterprise, Gitea, and GitLab are supported.',
+			'web.plugins.gitHosts.description' => 'Credentials per host — and per owner when one host holds several identities. Used for HTTPS git auth (vault sync, session push) and for forge API calls (pull requests, issues). Resolution prefers the owner-scoped entry and falls back to the host-wide one. <1>SSH remotes are not affected</1> — those authenticate through the host\'s ssh-agent. GitHub.com, self-hosted GitHub Enterprise, Gitea and GitLab are supported.',
 			'web.plugins.gitHosts.addHost' => 'Add host',
 			'web.plugins.gitHosts.empty' => 'No git hosts configured.\nAdd one to enable the PR list in the inspector\'s Git tab.',
 			'web.plugins.gitHosts.columns.host' => 'Host',

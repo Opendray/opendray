@@ -4803,7 +4803,7 @@ class _TranslationsWebPluginsGitHostsZh extends TranslationsWebPluginsGitHostsEn
 
 	// Translations
 	@override String get title => 'Git 主机';
-	@override String get description => '每个主机一个 token — 被 Git 选项卡用来拉取 pull request，<1>也被 Notes vault sync</1> 使用（当其 remote 通过 HTTPS 指向同一主机上的私有仓库时）。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。';
+	@override String get description => '按主机保存凭据 —— 同一主机有多个身份时可再按所有者细分。用于 HTTPS 的 git 认证(文档库同步、会话推送)以及 forge API 调用(pull request、issue)。解析时优先使用所有者专属条目,没有则回退到全主机条目。<1>SSH remote 不受影响</1> —— 它们通过主机的 ssh-agent 认证。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。';
 	@override String get addHost => '添加主机';
 	@override String get empty => '尚未配置任何 git 主机。\n添加一个以在检查器 Git 选项卡中启用 PR 列表。';
 	@override late final _TranslationsWebPluginsGitHostsColumnsZh columns = _TranslationsWebPluginsGitHostsColumnsZh._(_root);
@@ -11254,7 +11254,7 @@ extension on TranslationsZh {
 			'web.plugins.customTasks.dialog.addFailedToast' => '添加失败',
 			'web.plugins.customTasks.dialog.updateFailedToast' => '更新失败',
 			'web.plugins.gitHosts.title' => 'Git 主机',
-			'web.plugins.gitHosts.description' => '每个主机一个 token — 被 Git 选项卡用来拉取 pull request，<1>也被 Notes vault sync</1> 使用（当其 remote 通过 HTTPS 指向同一主机上的私有仓库时）。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。',
+			'web.plugins.gitHosts.description' => '按主机保存凭据 —— 同一主机有多个身份时可再按所有者细分。用于 HTTPS 的 git 认证(文档库同步、会话推送)以及 forge API 调用(pull request、issue)。解析时优先使用所有者专属条目,没有则回退到全主机条目。<1>SSH remote 不受影响</1> —— 它们通过主机的 ssh-agent 认证。支持 GitHub.com、自托管 GitHub Enterprise、Gitea 与 GitLab。',
 			'web.plugins.gitHosts.addHost' => '添加主机',
 			'web.plugins.gitHosts.empty' => '尚未配置任何 git 主机。\n添加一个以在检查器 Git 选项卡中启用 PR 列表。',
 			'web.plugins.gitHosts.columns.host' => '主机',
