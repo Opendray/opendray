@@ -2870,7 +2870,11 @@
         "scriptsOn": "这篇文档的脚本正在运行。",
         "enableScripts": "启用脚本",
         "disableScripts": "禁用脚本"
-      }
+      },
+      "save": "保存",
+      "saveTitle": "保存此文档（⌘S / Ctrl+S）",
+      "lineNumbers": "行号",
+      "lineNumbersTitle": "显示行号。开启时长行不再折行。"
     },
     "export": {
       "title": "导出数据",
@@ -5023,14 +5027,16 @@
     "editor": {
       "markdownHint": "Markdown;文件名以 .html 结尾则写 HTML…",
       "saving": "保存中…",
-      "autosave": "随输入自动保存",
+      "autosave": "已保存",
       "loadFailedApi": "加载失败：{error}",
       "loadFailedGeneric": "加载失败：{error}",
       "saveFailedApi": "保存失败：{error}",
       "saveFailedGeneric": "保存失败：{error}",
       "savedAt": "{time} 已保存",
       "showPreview": "预览",
-      "showSource": "源码"
+      "showSource": "源码",
+      "save": "保存",
+      "unsaved": "有未保存的修改"
     },
     "html": {
       "scriptsOff": "脚本已禁用 —— 这篇文档按静态 HTML 渲染。",

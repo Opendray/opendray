@@ -2873,7 +2873,11 @@
         "scriptsOn": "Los scripts de este documento se están ejecutando.",
         "enableScripts": "Activar scripts",
         "disableScripts": "Desactivar scripts"
-      }
+      },
+      "save": "Guardar",
+      "saveTitle": "Guardar este documento (⌘S / Ctrl+S)",
+      "lineNumbers": "Líneas",
+      "lineNumbersTitle": "Mostrar números de línea. Con esto activo las líneas largas dejan de ajustarse."
     },
     "export": {
       "title": "Exportar datos",
@@ -5026,14 +5030,16 @@
     "editor": {
       "markdownHint": "Markdown, o HTML si el archivo termina en .html…",
       "saving": "Guardando…",
-      "autosave": "Se guarda automáticamente mientras escribes",
+      "autosave": "Guardado",
       "loadFailedApi": "Error al cargar: {error}",
       "loadFailedGeneric": "Error al cargar: {error}",
       "saveFailedApi": "Error al guardar: {error}",
       "saveFailedGeneric": "Error al guardar: {error}",
       "savedAt": "Guardado {time}",
       "showPreview": "Vista previa",
-      "showSource": "Código"
+      "showSource": "Código",
+      "save": "Guardar",
+      "unsaved": "Cambios sin guardar"
     },
     "html": {
       "scriptsOff": "Scripts desactivados: este documento se renderiza como HTML estático.",

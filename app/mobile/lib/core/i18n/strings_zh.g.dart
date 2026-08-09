@@ -1651,6 +1651,10 @@ class _TranslationsWebNoteEditorZh extends TranslationsWebNoteEditorEn {
 	@override String get saveFailedToast => '保存失败';
 	@override late final _TranslationsWebNoteEditorStatusZh status = _TranslationsWebNoteEditorStatusZh._(_root);
 	@override late final _TranslationsWebNoteEditorHtmlZh html = _TranslationsWebNoteEditorHtmlZh._(_root);
+	@override String get save => '保存';
+	@override String get saveTitle => '保存此文档（⌘S / Ctrl+S）';
+	@override String get lineNumbers => '行号';
+	@override String get lineNumbersTitle => '显示行号。开启时长行不再折行。';
 }
 
 // Path: web.export
@@ -2743,7 +2747,7 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	// Translations
 	@override String get markdownHint => 'Markdown;文件名以 .html 结尾则写 HTML…';
 	@override String get saving => '保存中…';
-	@override String get autosave => '随输入自动保存';
+	@override String get autosave => '已保存';
 	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
 	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
 	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
@@ -2751,6 +2755,8 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String savedAt({required Object time}) => '${time} 已保存';
 	@override String get showPreview => '预览';
 	@override String get showSource => '源码';
+	@override String get save => '保存';
+	@override String get unsaved => '有未保存的修改';
 }
 
 // Path: notesPage.html
@@ -12202,6 +12208,10 @@ extension on TranslationsZh {
 			'web.noteEditor.html.scriptsOn' => '这篇文档的脚本正在运行。',
 			'web.noteEditor.html.enableScripts' => '启用脚本',
 			'web.noteEditor.html.disableScripts' => '禁用脚本',
+			'web.noteEditor.save' => '保存',
+			'web.noteEditor.saveTitle' => '保存此文档（⌘S / Ctrl+S）',
+			'web.noteEditor.lineNumbers' => '行号',
+			'web.noteEditor.lineNumbersTitle' => '显示行号。开启时长行不再折行。',
 			'web.export.title' => '导出数据',
 			'web.export.subtitle' => '把选中的逻辑实体打成一份一次性 zip 包。服务器上保留 24 小时后自动回收。',
 			'web.export.backToBackups' => '← 备份',
@@ -12494,12 +12504,12 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.apply' => '应用蓝图',
 			'web.cortex.blueprint.applyFailed' => '应用失败',
 			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.direct' => '直接写入',
 			'web.cortex.blueprint.writePolicy.proposal' => '提案',
 			'web.cortex.blueprint.writePolicy.hint' => '直接写入：会话中的 AI 在文档未锁定时直接更新实时文档。提案：AI 的写入需先经你批准。',
 			'web.cortex.quarantine.title' => '隔离区',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.quarantine.subtitle' => '在被采信为持久记忆之前需要审查的事实：第三方 integration 的捕获会按策略落到这里，你也可以在记忆检查器中手动隔离任何一条记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
 			'web.cortex.quarantine.empty' => '隔离区为空。条目来源：integration 来源会话（记忆策略为 “quarantine”），或你在记忆检查器中手动隔离的记忆。',
 			'web.cortex.quarantine.promote' => '升格',
@@ -13008,12 +13018,12 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
 			'sessions.inspector.canvas.openFull' => '全屏打开',
 			'sessions.inspector.canvas.confirm' => '确认',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.captured' => ({required Object what}) => '已捕获:${what}',
 			'sessions.inspector.canvas.notes' => '备注',
 			'sessions.inspector.canvas.clear' => '清除标记',
 			'sessions.inspector.canvas.done' => '完成',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.hintPin' => '点一下目标位置,再拖动微调 —— 确认命中正确元素后点「确认」。',
 			'sessions.inspector.canvas.hintRegion' => '拖出一个框覆盖你要指的区域,然后确认。',
 			'sessions.inspector.canvas.newCanvas' => '新建',
@@ -13522,12 +13532,12 @@ extension on TranslationsZh {
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.intro' => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。',
 			'backups.wizard.saving' => '保存中…',
 			'backups.wizard.generateAndSave' => '生成并保存',
 			'backups.wizard.savePassphrase' => '保存密语',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.generateHint' => '服务器生成密码学级别随机密语，你复制到密码管理器，然后确认。',
 			'backups.wizard.helperRecommended' => '建议：从密码管理器生成 40+ 字符',
 			'backups.wizard.saveNowHeader' => '立即保存这个密语',
@@ -13968,7 +13978,7 @@ extension on TranslationsZh {
 			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown;文件名以 .html 结尾则写 HTML…',
 			'notesPage.editor.saving' => '保存中…',
-			'notesPage.editor.autosave' => '随输入自动保存',
+			'notesPage.editor.autosave' => '已保存',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
@@ -13976,6 +13986,8 @@ extension on TranslationsZh {
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'notesPage.editor.showPreview' => '预览',
 			'notesPage.editor.showSource' => '源码',
+			'notesPage.editor.save' => '保存',
+			'notesPage.editor.unsaved' => '有未保存的修改',
 			'notesPage.html.scriptsOff' => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。',
 			'notesPage.html.scriptsOn' => '这篇文档的脚本正在运行。',
 			'notesPage.html.enableScripts' => '启用脚本',
@@ -14034,14 +14046,14 @@ extension on TranslationsZh {
 			'dataExport.history.delete' => '删除',
 			'dataExport.history.downloadCopiedToast' => '下载 URL 已复制到剪贴板。在浏览器中粘贴以获取（单次使用）。',
 			'dataExport.history.columns.scope' => '范围',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.columns.size' => '大小',
 			'dataExport.history.columns.expires' => '过期',
 			'dataExport.history.columns.actions' => '操作',
 			'dataExport.history.scopeEmpty' => '（空）',
 			'dataExport.history.scopeMemories' => '记忆',
 			'dataExport.history.scopeIntegrations' => ({required Object mode}) => '集成(${mode})',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.history.scopeCustomTasks' => '自定义任务',
 			'dataExport.import.intro' => '重放此前由「导出」生成的数据包。仅勾选的实体会被导入；数据包中其余内容会被忽略。',
 			'dataExport.import.bundleLabel' => '数据包文件（.zip）',

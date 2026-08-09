@@ -1651,6 +1651,10 @@ class _TranslationsWebNoteEditorEs extends TranslationsWebNoteEditorEn {
 	@override String get saveFailedToast => 'Error al guardar';
 	@override late final _TranslationsWebNoteEditorStatusEs status = _TranslationsWebNoteEditorStatusEs._(_root);
 	@override late final _TranslationsWebNoteEditorHtmlEs html = _TranslationsWebNoteEditorHtmlEs._(_root);
+	@override String get save => 'Guardar';
+	@override String get saveTitle => 'Guardar este documento (⌘S / Ctrl+S)';
+	@override String get lineNumbers => 'Líneas';
+	@override String get lineNumbersTitle => 'Mostrar números de línea. Con esto activo las líneas largas dejan de ajustarse.';
 }
 
 // Path: web.export
@@ -2743,7 +2747,7 @@ class _TranslationsNotesPageEditorEs extends TranslationsNotesPageEditorEn {
 	// Translations
 	@override String get markdownHint => 'Markdown, o HTML si el archivo termina en .html…';
 	@override String get saving => 'Guardando…';
-	@override String get autosave => 'Se guarda automáticamente mientras escribes';
+	@override String get autosave => 'Guardado';
 	@override String loadFailedApi({required Object error}) => 'Error al cargar: ${error}';
 	@override String loadFailedGeneric({required Object error}) => 'Error al cargar: ${error}';
 	@override String saveFailedApi({required Object error}) => 'Error al guardar: ${error}';
@@ -2751,6 +2755,8 @@ class _TranslationsNotesPageEditorEs extends TranslationsNotesPageEditorEn {
 	@override String savedAt({required Object time}) => 'Guardado ${time}';
 	@override String get showPreview => 'Vista previa';
 	@override String get showSource => 'Código';
+	@override String get save => 'Guardar';
+	@override String get unsaved => 'Cambios sin guardar';
 }
 
 // Path: notesPage.html
@@ -12208,6 +12214,10 @@ extension on TranslationsEs {
 			'web.noteEditor.html.scriptsOn' => 'Los scripts de este documento se están ejecutando.',
 			'web.noteEditor.html.enableScripts' => 'Activar scripts',
 			'web.noteEditor.html.disableScripts' => 'Desactivar scripts',
+			'web.noteEditor.save' => 'Guardar',
+			'web.noteEditor.saveTitle' => 'Guardar este documento (⌘S / Ctrl+S)',
+			'web.noteEditor.lineNumbers' => 'Líneas',
+			'web.noteEditor.lineNumbersTitle' => 'Mostrar números de línea. Con esto activo las líneas largas dejan de ajustarse.',
 			'web.export.title' => 'Exportar datos',
 			'web.export.subtitle' => 'Genera un paquete zip puntual de las entidades lógicas seleccionadas. Los paquetes se conservan en el servidor durante 24 horas y luego se eliminan automáticamente.',
 			'web.export.backToBackups' => '← Backups',
@@ -12497,12 +12507,12 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.reserved' => 'reservada',
 			'web.cortex.blueprint.deleteNote' => 'Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.',
 			'web.cortex.blueprint.cancel' => 'Cancelar',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => 'Aplicar plano',
 			'web.cortex.blueprint.applyFailed' => 'Error al aplicar',
 			'web.cortex.blueprint.appliedToast' => 'Plano aplicado',
 			'web.cortex.blueprint.writePolicy.direct' => 'Escritura directa',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.proposal' => 'Propuesta',
 			'web.cortex.blueprint.writePolicy.hint' => 'Directa: el agente escribe el documento en vivo cuando está desbloqueado. Propuesta: las escrituras del agente requieren tu aprobación primero.',
 			'web.cortex.quarantine.title' => 'Cuarentena',
@@ -13011,12 +13021,12 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
 			'sessions.inspector.canvas.viewportPhone' => 'Ancho de móvil',
 			'sessions.inspector.canvas.viewportTablet' => 'Ancho de tablet',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => 'Ancho de escritorio',
 			'sessions.inspector.canvas.openFull' => 'Pantalla completa',
 			'sessions.inspector.canvas.confirm' => 'Confirmar',
 			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Capturado: ${what}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.notes' => 'Notas',
 			'sessions.inspector.canvas.clear' => 'Borrar marcas',
 			'sessions.inspector.canvas.done' => 'Listo',
@@ -13525,12 +13535,12 @@ extension on TranslationsEs {
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Archivo de clave',
 			'backups.configuredViaLabel' => 'Configurado mediante',
 			'backups.wizard.title' => 'Configurar copias de seguridad',
 			'backups.wizard.intro' => 'Elige una passphrase maestra. opendray la usa para cifrar cada blob de copia de seguridad con AES-256-GCM. Si pierdes la passphrase, pierdes los datos: no hay forma de recuperarlos.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saving' => 'Guardando…',
 			'backups.wizard.generateAndSave' => 'Generar y guardar',
 			'backups.wizard.savePassphrase' => 'Guardar passphrase',
@@ -13974,7 +13984,7 @@ extension on TranslationsEs {
 			'notesPage.pathHelper' => 'Añade .md automáticamente si falta.',
 			'notesPage.editor.markdownHint' => 'Markdown, o HTML si el archivo termina en .html…',
 			'notesPage.editor.saving' => 'Guardando…',
-			'notesPage.editor.autosave' => 'Se guarda automáticamente mientras escribes',
+			'notesPage.editor.autosave' => 'Guardado',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Error al guardar: ${error}',
@@ -13982,6 +13992,8 @@ extension on TranslationsEs {
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Guardado ${time}',
 			'notesPage.editor.showPreview' => 'Vista previa',
 			'notesPage.editor.showSource' => 'Código',
+			'notesPage.editor.save' => 'Guardar',
+			'notesPage.editor.unsaved' => 'Cambios sin guardar',
 			'notesPage.html.scriptsOff' => 'Scripts desactivados: este documento se renderiza como HTML estático.',
 			'notesPage.html.scriptsOn' => 'Los scripts de este documento se están ejecutando.',
 			'notesPage.html.enableScripts' => 'Activar scripts',
@@ -14037,14 +14049,14 @@ extension on TranslationsEs {
 			'dataExport.history.deleteConfirmTitle' => '¿Eliminar la exportación?',
 			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Elimina el paquete y revoca el token de descarga. ${id}',
 			'dataExport.history.download' => 'Descargar',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.delete' => 'Eliminar',
 			'dataExport.history.downloadCopiedToast' => 'URL de descarga copiada al portapapeles. Pégala en un navegador para obtenerla (un solo uso).',
 			'dataExport.history.columns.scope' => 'Alcance',
 			'dataExport.history.columns.size' => 'Tamaño',
 			'dataExport.history.columns.expires' => 'Caduca',
 			'dataExport.history.columns.actions' => 'Acciones',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.history.scopeEmpty' => '(vacío)',
 			'dataExport.history.scopeMemories' => 'memorias',
 			'dataExport.history.scopeIntegrations' => ({required Object mode}) => 'integraciones(${mode})',

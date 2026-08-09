@@ -2873,7 +2873,11 @@
         "scriptsOn": "Scripts are running for this document.",
         "enableScripts": "Enable scripts",
         "disableScripts": "Disable scripts"
-      }
+      },
+      "save": "Save",
+      "saveTitle": "Save this document (⌘S / Ctrl+S)",
+      "lineNumbers": "Lines",
+      "lineNumbersTitle": "Show line numbers. Long lines stop wrapping while this is on."
     },
     "export": {
       "title": "Export data",
@@ -5026,14 +5030,16 @@
     "editor": {
       "markdownHint": "Markdown, or HTML if the file ends .html…",
       "saving": "Saving…",
-      "autosave": "Auto-saves as you type",
+      "autosave": "Saved",
       "loadFailedApi": "Load failed: {error}",
       "loadFailedGeneric": "Load failed: {error}",
       "saveFailedApi": "Save failed: {error}",
       "saveFailedGeneric": "Save failed: {error}",
       "savedAt": "Saved {time}",
       "showPreview": "Preview",
-      "showSource": "Source"
+      "showSource": "Source",
+      "save": "Save",
+      "unsaved": "Unsaved changes"
     },
     "html": {
       "scriptsOff": "Scripts are off — this document is rendered as static HTML.",

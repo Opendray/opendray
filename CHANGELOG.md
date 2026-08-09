@@ -130,6 +130,26 @@ for the full rationale and what triggers a major bump.
   directories the migration empties are removed; one still holding
   anything is left exactly where it is.
 
+- **Documents save when you say so, not on a timer.** The editor wrote
+  after every pause in typing, so a long document rewrote itself to
+  disk over and over while it was being worked on. Saving is now a
+  button, or ⌘S / Ctrl+S, on web and on mobile. Leaving a document
+  still flushes unsaved text — that safety net costs nothing while
+  typing — and closing the browser tab with unsaved work asks first.
+
+  Autosave was not the whole story behind the typing lag, so two things
+  that were: the editor streamed **every keystroke** to the page, which
+  re-rendered the whole vault tree and recomputed the outline per
+  character; and the tree re-rendered along with it. The stream is now
+  paced to what a sidebar can use, and the tree only re-renders when
+  the note list or the selection changes.
+
+- **Line numbers in the source view.** On by default for HTML, off for
+  markdown, and toggleable either way. Numbers turn wrapping off, the
+  way every code editor does it: a wrapped line covers several rows, so
+  a gutter counting 1..N drifts on exactly the long lines an HTML
+  document is full of.
+
 - **The doc library can rename and delete a document.** It could create
   and edit one, and that was all — a daily note, or anything not bound
   to a project, could be made but never moved or removed from the one

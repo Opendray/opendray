@@ -3359,6 +3359,18 @@ class TranslationsWebNoteEditorEn {
 
 	late final TranslationsWebNoteEditorStatusEn status = TranslationsWebNoteEditorStatusEn.internal(_root);
 	late final TranslationsWebNoteEditorHtmlEn html = TranslationsWebNoteEditorHtmlEn.internal(_root);
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Save this document (⌘S / Ctrl+S)'
+	String get saveTitle => 'Save this document (⌘S / Ctrl+S)';
+
+	/// en: 'Lines'
+	String get lineNumbers => 'Lines';
+
+	/// en: 'Show line numbers. Long lines stop wrapping while this is on.'
+	String get lineNumbersTitle => 'Show line numbers. Long lines stop wrapping while this is on.';
 }
 
 // Path: web.export
@@ -5384,8 +5396,8 @@ class TranslationsNotesPageEditorEn {
 	/// en: 'Saving…'
 	String get saving => 'Saving…';
 
-	/// en: 'Auto-saves as you type'
-	String get autosave => 'Auto-saves as you type';
+	/// en: 'Saved'
+	String get autosave => 'Saved';
 
 	/// en: 'Load failed: {error}'
 	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
@@ -5407,6 +5419,12 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Source'
 	String get showSource => 'Source';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Unsaved changes'
+	String get unsaved => 'Unsaved changes';
 }
 
 // Path: notesPage.html
@@ -21198,6 +21216,10 @@ extension on Translations {
 			'web.noteEditor.html.scriptsOn' => 'Scripts are running for this document.',
 			'web.noteEditor.html.enableScripts' => 'Enable scripts',
 			'web.noteEditor.html.disableScripts' => 'Disable scripts',
+			'web.noteEditor.save' => 'Save',
+			'web.noteEditor.saveTitle' => 'Save this document (⌘S / Ctrl+S)',
+			'web.noteEditor.lineNumbers' => 'Lines',
+			'web.noteEditor.lineNumbersTitle' => 'Show line numbers. Long lines stop wrapping while this is on.',
 			'web.export.title' => 'Export data',
 			'web.export.subtitle' => 'Take a one-shot zip bundle of selected logical entities. Bundles are kept on the server for 24 hours, then automatically reaped.',
 			'web.export.backToBackups' => '← Backups',
@@ -21487,12 +21509,12 @@ extension on Translations {
 			'web.cortex.blueprint.reserved' => 'reserved',
 			'web.cortex.blueprint.deleteNote' => 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.',
 			'web.cortex.blueprint.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => 'Apply blueprint',
 			'web.cortex.blueprint.applyFailed' => 'Apply failed',
 			'web.cortex.blueprint.appliedToast' => 'Blueprint applied',
 			'web.cortex.blueprint.writePolicy.direct' => 'Direct write',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.proposal' => 'Proposal',
 			'web.cortex.blueprint.writePolicy.hint' => 'Direct: the in-session agent writes the live doc when unlocked. Proposal: the agent\'s writes file an approval request first.',
 			'web.cortex.quarantine.title' => 'Quarantine',
@@ -22001,12 +22023,12 @@ extension on Translations {
 			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
 			'sessions.inspector.canvas.viewportPhone' => 'Phone width',
 			'sessions.inspector.canvas.viewportTablet' => 'Tablet width',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => 'Desktop width',
 			'sessions.inspector.canvas.openFull' => 'Open full screen',
 			'sessions.inspector.canvas.confirm' => 'Confirm',
 			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Captured: ${what}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.notes' => 'Notes',
 			'sessions.inspector.canvas.clear' => 'Clear marks',
 			'sessions.inspector.canvas.done' => 'Done',
@@ -22515,12 +22537,12 @@ extension on Translations {
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
 			'backups.restartToActivate' => 'Restart opendray to activate backups',
 			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Key file',
 			'backups.configuredViaLabel' => 'Configured via',
 			'backups.wizard.title' => 'Set up backups',
 			'backups.wizard.intro' => 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.saving' => 'Saving…',
 			'backups.wizard.generateAndSave' => 'Generate and save',
 			'backups.wizard.savePassphrase' => 'Save passphrase',
@@ -22964,7 +22986,7 @@ extension on Translations {
 			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
 			'notesPage.editor.markdownHint' => 'Markdown, or HTML if the file ends .html…',
 			'notesPage.editor.saving' => 'Saving…',
-			'notesPage.editor.autosave' => 'Auto-saves as you type',
+			'notesPage.editor.autosave' => 'Saved',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
@@ -22972,6 +22994,8 @@ extension on Translations {
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'notesPage.editor.showPreview' => 'Preview',
 			'notesPage.editor.showSource' => 'Source',
+			'notesPage.editor.save' => 'Save',
+			'notesPage.editor.unsaved' => 'Unsaved changes',
 			'notesPage.html.scriptsOff' => 'Scripts are off — this document is rendered as static HTML.',
 			'notesPage.html.scriptsOn' => 'Scripts are running for this document.',
 			'notesPage.html.enableScripts' => 'Enable scripts',
@@ -23027,14 +23051,14 @@ extension on Translations {
 			'dataExport.history.deleteConfirmTitle' => 'Delete export?',
 			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Removes the bundle and revokes the download token. ${id}',
 			'dataExport.history.download' => 'Download',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.delete' => 'Delete',
 			'dataExport.history.downloadCopiedToast' => 'Download URL copied to clipboard. Paste into a browser to fetch (single-use).',
 			'dataExport.history.columns.scope' => 'Scope',
 			'dataExport.history.columns.size' => 'Size',
 			'dataExport.history.columns.expires' => 'Expires',
 			'dataExport.history.columns.actions' => 'Actions',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.history.scopeEmpty' => '(empty)',
 			'dataExport.history.scopeMemories' => 'memories',
 			'dataExport.history.scopeIntegrations' => ({required Object mode}) => 'integrations(${mode})',

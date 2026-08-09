@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  memo,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -57,7 +58,12 @@ interface TreeNode {
 // the vault. Built by chunking each note's path into segments and
 // merging into a tree on the fly — no recursive backend listing
 // needed (the /notes/list endpoint already returns the flat list).
-export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>(
+// memo, because the page that hosts this re-renders on every edit to
+// the open document. Re-walking and re-rendering every row of a vault
+// for each keystroke is work nobody asked for: the tree only changes
+// when the note list or the selection does.
+export const NotesTreeView = memo(
+  forwardRef<NotesTreeViewHandle, NotesTreeViewProps>(
   function NotesTreeView(
     {
       notes,
@@ -147,7 +153,8 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
       )}
     </div>
   )
-})
+}),
+)
 
 function TreeRow({
   node,
