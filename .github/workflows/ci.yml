@@ -1,8 +1,17 @@
 name: CI
 
 on:
+  # push is deliberately main-only. A `feat/**` branch with an open PR
+  # matches BOTH triggers, and because the concurrency group keys on
+  # github.ref — refs/heads/feat/x for push vs refs/pull/N/merge for
+  # pull_request — the two runs don't cancel each other. Every commit
+  # therefore built the web bundle, ran `go test -race`, linted and
+  # checked i18n parity twice over. `pull_request` already covers branch
+  # work (its `branches:` filter matches the BASE, so feat/x -> main is
+  # covered by `main`, and the `feat/**` entry covers stacked PRs); push
+  # is what verifies main after a merge.
   push:
-    branches: [main, "feat/**"]
+    branches: [main]
   pull_request:
     branches: [main, "feat/**"]
 
