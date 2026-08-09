@@ -40,6 +40,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/project-mapping", h.projectMappingGet)
 		r.Put("/project-mapping", h.projectMappingPut)
 		r.Get("/project-mappings", h.projectMappingsList)
+		r.Post("/flatten", h.flatten)
 	})
 }
 
@@ -48,13 +49,38 @@ type writeRequest struct {
 	Body string `json:"body"`
 }
 
+// flatten previews or performs the nested → flat conversion.
+//
+// A dry run is the default and `apply` must be sent explicitly. This
+// renames every project document in the vault, so the request that only
+// looks and the request that rewrites the library must not be the same
+// shape with one field forgotten.
+func (h *Handlers) flatten(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Apply bool `json:"apply"`
+	}
+	// An absent body is a dry run — the safe reading of "no opinion".
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+	res, err := h.v.Flatten(r.Context(), !req.Apply)
+	if err != nil {
+		writeError(w, http.StatusConflict, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
 func (h *Handlers) info(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"root": h.v.Root(),
 		// Clients render from this rather than deriving paths of their
 		// own. Three implementations guessing where a project's notes
 		// live is three chances to disagree with the gateway.
-		"layout":          string(h.v.Layout()),
+		"layout": string(h.v.Layout()),
+		// Drives the offer to convert. Without it the migration would
+		// only ever be found by someone reading release notes.
+		"flattenable":     h.v.Flattenable(),
 		"personal_prefix": h.v.PersonalPrefix(),
 		"projects_prefix": h.v.ProjectsPrefix(),
 	})

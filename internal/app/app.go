@@ -511,7 +511,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, fmt.Errorf("init notes vault: %w", err)
 	}
-	log.Info("vault ready", "documents", vault.Root())
+	log.Info("vault ready", "documents", vault.Root(),
+		"layout", string(vault.Layout()))
+	if vault.Flattenable() {
+		// Said once, at info, because an operator who is happy with the
+		// nested layout should not be nagged on every restart — but one
+		// who has never heard of the flat layout would otherwise never
+		// find out their vault could stop wrapping every project in a
+		// folder named after the library itself.
+		log.Info("this vault files projects under a `projects/` folder. " +
+			"`opendray notes flatten` previews filing them under their own " +
+			"names instead (dry run unless --apply); the doc library offers " +
+			"the same conversion.")
+	}
 	notesHandlers := notesapi.NewHandlers(vault, log)
 	skillsLoader := skills.NewLoader(paths.Skills)
 	if list, _ := skillsLoader.List(); len(list) > 0 {

@@ -55,6 +55,26 @@ type FlattenResult struct {
 	DryRun bool `json:"dry_run"`
 }
 
+// Flattenable reports whether this vault has documents the flat layout
+// would file differently. It exists so the UI can OFFER the conversion:
+// a migration that only ships as a CLI command is one that only the
+// people who wrote it ever run, which would leave every existing vault
+// on the old shape forever without its owner ever learning there was a
+// choice.
+//
+// Deliberately cheap — this is called whenever someone opens the doc
+// library. It answers "is there anything to talk about", not "what
+// exactly would move"; the dry run answers that, and only when asked.
+func (v *Vault) Flattenable() bool {
+	if v.layout != LayoutNested {
+		return false
+	}
+	projects := strings.Trim(v.projectsPrefix, "/")
+	personal := strings.Trim(v.personalPrefix, "/")
+	return dirHasChildren(filepath.Join(v.root, projects)) ||
+		dirHasChildren(filepath.Join(v.root, personal))
+}
+
 // Flatten converts a nested vault (`projects/<name>/…` plus
 // `personal/<name>.md`) to the flat layout (`<name>/…` with
 // `<name>/personal.md` inside it).

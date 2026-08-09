@@ -39,6 +39,7 @@ import {
   VaultSyncBadge,
   VaultSyncDialog,
 } from '@/components/notes/VaultSyncDialog'
+import { FlattenNotice } from '@/components/notes/FlattenNotice'
 
 // localStorage keys persist the last selection / left-pane mode so
 // reopening the page lands you back where you left off.
@@ -275,6 +276,8 @@ export function VaultPage() {
           {t('web.notes.header.new')}
         </button>
       </header>
+
+      {info?.flattenable && <FlattenNotice />}
 
       <div className="flex-1 flex min-h-0">
         {/* Left pane: tree / tags + filter */}

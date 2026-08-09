@@ -1185,6 +1185,18 @@
         "tooltipAutoOn": " · sincronización automática activada",
         "tooltipLastError": " · último error: {error}",
         "branchPlaceholder": "—"
+      },
+      "flatten": {
+        "notice": "Cada proyecto de esta bóveda está dentro de una carpeta llamada projects/. Pueden archivarse con su propio nombre.",
+        "preview": "Vista previa",
+        "dismiss": "Ahora no",
+        "title": "Archivar los proyectos con su propio nombre",
+        "description": "Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.",
+        "nothingToMove": "No hay nada que mover.",
+        "skipped": "Sin tocar ({count}):",
+        "convert": "Convertir {count} documento(s)",
+        "done": "Se movieron {count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.",
+        "restartHint": "Reinicia la pasarela después."
       }
     },
     "activity": {
@@ -5016,6 +5028,18 @@
       "scriptsOn": "Los scripts de este documento se están ejecutando.",
       "enableScripts": "Activar scripts",
       "disableScripts": "Desactivar scripts"
+    },
+    "flatten": {
+      "notice": "Cada proyecto está dentro de una carpeta llamada projects/.",
+      "preview": "Vista previa",
+      "dismiss": "Ahora no",
+      "title": "Archivar los proyectos con su propio nombre",
+      "description": "Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.",
+      "nothingToMove": "No hay nada que mover.",
+      "skipped": "Sin tocar ({count}):",
+      "convert": "Convertir {count}",
+      "done": "Se movieron {count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.",
+      "restartHint": "Reinicia la pasarela después."
     }
   },
   "dataExport": {

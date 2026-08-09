@@ -1182,6 +1182,18 @@
         "tooltipAutoOn": " · 自动同步已开启",
         "tooltipLastError": " · 上次错误：{error}",
         "branchPlaceholder": "—"
+      },
+      "flatten": {
+        "notice": "这个文档库里的每个项目都装在一个叫 projects/ 的目录里。它们可以直接用项目名归档。",
+        "preview": "预览",
+        "dismiss": "暂不",
+        "title": "用项目名归档项目文档",
+        "description": "文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。",
+        "nothingToMove": "没有需要移动的文件。",
+        "skipped": "未处理({count}):",
+        "convert": "转换 {count} 个文档",
+        "done": "已移动 {count} 个文档。重启网关后生效。",
+        "restartHint": "完成后请重启网关。"
       }
     },
     "activity": {
@@ -5013,6 +5025,18 @@
       "scriptsOn": "这篇文档的脚本正在运行。",
       "enableScripts": "启用脚本",
       "disableScripts": "禁用脚本"
+    },
+    "flatten": {
+      "notice": "这里每个项目都装在一个叫 projects/ 的目录里。",
+      "preview": "预览",
+      "dismiss": "暂不",
+      "title": "用项目名归档项目文档",
+      "description": "文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。",
+      "nothingToMove": "没有需要移动的文件。",
+      "skipped": "未处理({count}):",
+      "convert": "转换 {count} 个",
+      "done": "已移动 {count} 个文档。重启网关后生效。",
+      "restartHint": "完成后请重启网关。"
     }
   },
   "dataExport": {

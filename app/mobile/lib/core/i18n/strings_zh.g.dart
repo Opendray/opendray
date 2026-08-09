@@ -892,6 +892,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 	@override late final _TranslationsNotesPageHtmlZh html = _TranslationsNotesPageHtmlZh._(_root);
+	@override late final _TranslationsNotesPageFlattenZh flatten = _TranslationsNotesPageFlattenZh._(_root);
 }
 
 // Path: dataExport
@@ -1386,6 +1387,7 @@ class _TranslationsWebNotesZh extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerZh picker = _TranslationsWebNotesPickerZh._(_root);
 	@override late final _TranslationsWebNotesVaultSyncZh vaultSync = _TranslationsWebNotesVaultSyncZh._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeZh syncBadge = _TranslationsWebNotesSyncBadgeZh._(_root);
+	@override late final _TranslationsWebNotesFlattenZh flatten = _TranslationsWebNotesFlattenZh._(_root);
 }
 
 // Path: web.activity
@@ -2760,6 +2762,25 @@ class _TranslationsNotesPageHtmlZh extends TranslationsNotesPageHtmlEn {
 	@override String get scriptsOn => '这篇文档的脚本正在运行。';
 	@override String get enableScripts => '启用脚本';
 	@override String get disableScripts => '禁用脚本';
+}
+
+// Path: notesPage.flatten
+class _TranslationsNotesPageFlattenZh extends TranslationsNotesPageFlattenEn {
+	_TranslationsNotesPageFlattenZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get notice => '这里每个项目都装在一个叫 projects/ 的目录里。';
+	@override String get preview => '预览';
+	@override String get dismiss => '暂不';
+	@override String get title => '用项目名归档项目文档';
+	@override String get description => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。';
+	@override String get nothingToMove => '没有需要移动的文件。';
+	@override String skipped({required Object count}) => '未处理(${count}):';
+	@override String convert({required Object count}) => '转换 ${count} 个';
+	@override String done({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。';
+	@override String get restartHint => '完成后请重启网关。';
 }
 
 // Path: dataExport.sections
@@ -4142,6 +4163,25 @@ class _TranslationsWebNotesSyncBadgeZh extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · 自动同步已开启';
 	@override String tooltipLastError({required Object error}) => ' · 上次错误：${error}';
 	@override String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.flatten
+class _TranslationsWebNotesFlattenZh extends TranslationsWebNotesFlattenEn {
+	_TranslationsWebNotesFlattenZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get notice => '这个文档库里的每个项目都装在一个叫 projects/ 的目录里。它们可以直接用项目名归档。';
+	@override String get preview => '预览';
+	@override String get dismiss => '暂不';
+	@override String get title => '用项目名归档项目文档';
+	@override String get description => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。';
+	@override String get nothingToMove => '没有需要移动的文件。';
+	@override String skipped({required Object count}) => '未处理(${count}):';
+	@override String convert({required Object count}) => '转换 ${count} 个文档';
+	@override String done({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。';
+	@override String get restartHint => '完成后请重启网关。';
 }
 
 // Path: web.activity.filters
@@ -10831,6 +10871,16 @@ extension on TranslationsZh {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · 自动同步已开启',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · 上次错误：${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.flatten.notice' => '这个文档库里的每个项目都装在一个叫 projects/ 的目录里。它们可以直接用项目名归档。',
+			'web.notes.flatten.preview' => '预览',
+			'web.notes.flatten.dismiss' => '暂不',
+			'web.notes.flatten.title' => '用项目名归档项目文档',
+			'web.notes.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
+			'web.notes.flatten.nothingToMove' => '没有需要移动的文件。',
+			'web.notes.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
+			'web.notes.flatten.convert' => ({required Object count}) => '转换 ${count} 个文档',
+			'web.notes.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
+			'web.notes.flatten.restartHint' => '完成后请重启网关。',
 			'web.activity.title' => '活动',
 			'web.activity.subtitle' => '按调用维度审计每个由注册集成发起的 API 请求。包括入站调用（第三方应用以集成 API key 调用 opendray）和出站代理调用（admin → opendray 代理 → 集成）。本管理端 UI 直接发起的调用不会被记录。',
 			'web.activity.refresh' => '刷新',
@@ -10871,6 +10921,8 @@ extension on TranslationsZh {
 			'web.activity.events.empty' => '尚无事件。',
 			'web.activity.events.emptyFiltered' => '没有匹配的事件。',
 			'web.activity.events.loadOlder' => '加载更早的事件',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.events.today' => '今天',
 			'web.activity.events.yesterday' => '昨天',
 			'web.providers.list.title' => 'Providers',
@@ -10881,8 +10933,6 @@ extension on TranslationsZh {
 			'web.providers.detail.disabled' => '已禁用',
 			'web.providers.detail.toggleAria' => ({required Object name}) => '切换 ${name}',
 			'web.providers.detail.configuration' => '配置',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.noConfig' => '此 Provider 没有可配置字段。',
 			'web.providers.detail.executable' => 'executable:',
 			'web.providers.detail.manifestHash' => 'manifest_hash:',
@@ -11385,6 +11435,8 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => '无法读取 ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => '可以推送',
 			'web.plugins.gitHosts.dialog.verifyPushDenied' => '不能推送(只读)',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.scopeHostWide' => '全主机兜底',
 			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => '仅用于 ${owner}',
 			'web.backups.title' => '备份',
@@ -11395,8 +11447,6 @@ extension on TranslationsZh {
 			'web.backups.tabs.backups' => '备份',
 			'web.backups.tabs.schedules' => '计划',
 			'web.backups.tabs.targets' => '目标',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.inventory.title' => '备份里包含什么？',
 			'web.backups.inventory.summary' => ({required Object tables, required Object rows}) => '${tables} 张表共 ${rows} 行',
 			'web.backups.inventory.description' => '每次备份是一个对下方所有表执行 <1>pg_dump --format=custom</1> 的产物，外加 <3>manifest.json</3> 和（可选的）<5>config.toml</5>。计数是实时的；bundle 捕获的是备份发生那一刻的数据。',
@@ -11899,6 +11949,8 @@ extension on TranslationsZh {
 			'web.settings.groups.workspace' => '工作区',
 			'web.settings.groups.server' => '服务器',
 			'web.settings.groups.system' => '系统',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.items.appearance' => '外观',
 			'web.settings.items.font' => '字号',
 			'web.settings.items.account' => '账号',
@@ -11909,8 +11961,6 @@ extension on TranslationsZh {
 			'web.settings.health.dbDown' => 'db 异常',
 			'web.settings.breadcrumb.server' => '服务器',
 			'web.settings.appearance.title' => '外观',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.appearance.description' => '选择 opendray 的外观风格。',
 			'web.settings.appearance.options.light' => '浅色',
 			'web.settings.appearance.options.lightDesc' => '始终浅色',
@@ -12413,6 +12463,8 @@ extension on TranslationsZh {
 			'web.cortex.quarantine.actionFailed' => '操作失败',
 			'web.cortex.quarantine.expires' => ({required Object date}) => '${date} 到期',
 			'web.cortex.settings.injection.title' => '启动注入',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.settings.injection.hint' => '每个【新建会话】预先加载多少心智中枢上下文。切换立即生效（影响之后新建的会话）——后端无需重启。',
 			'web.cortex.settings.injection.active' => '当前',
 			'web.cortex.settings.injection.mode.lean.label' => '精简——索引 + 按需取用（推荐）',
@@ -12423,8 +12475,6 @@ extension on TranslationsZh {
 			'web.cortex.settings.injection.saveFailed' => '保存失败',
 			'web.cortex.settings.injection.note' => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。',
 			'web.database.dialog.createTitle' => '添加数据库连接',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.editTitle' => '编辑连接',
 			'web.database.dialog.description' => '连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。',
 			'web.database.dialog.name' => '名称',
@@ -12927,6 +12977,8 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
 			'sessions.inspector.canvas.designTitle' => '设计系统',
 			'sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
 			'sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变;按钮只用实心/描边',
 			'sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。',
@@ -12937,8 +12989,6 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.tokenSecondary' => '辅助色',
 			'sessions.inspector.canvas.tokenBackground' => '背景',
 			'sessions.inspector.canvas.tokenSurface' => '表面/卡片',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenText' => '正文色',
 			'sessions.inspector.canvas.tokenMuted' => '次要文字',
 			'sessions.inspector.canvas.tokenBorder' => '描边',
@@ -13441,6 +13491,8 @@ extension on TranslationsZh {
 			'backups.health.headlineHealthy' => '备份正常',
 			'backups.health.headlineAttention' => '需要关注',
 			'backups.health.headlineNever' => '尚无备份',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.lastSuccess' => '最近成功备份',
 			'backups.health.never' => '从未',
 			'backups.health.tiles.recentFailures' => '近期失败',
@@ -13451,8 +13503,6 @@ extension on TranslationsZh {
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
 			'backups.pgDumpMissing' => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.checkAgain' => '重新检查',
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
@@ -13885,6 +13935,16 @@ extension on TranslationsZh {
 			'notesPage.html.scriptsOn' => '这篇文档的脚本正在运行。',
 			'notesPage.html.enableScripts' => '启用脚本',
 			'notesPage.html.disableScripts' => '禁用脚本',
+			'notesPage.flatten.notice' => '这里每个项目都装在一个叫 projects/ 的目录里。',
+			'notesPage.flatten.preview' => '预览',
+			'notesPage.flatten.dismiss' => '暂不',
+			'notesPage.flatten.title' => '用项目名归档项目文档',
+			'notesPage.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
+			'notesPage.flatten.nothingToMove' => '没有需要移动的文件。',
+			'notesPage.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
+			'notesPage.flatten.convert' => ({required Object count}) => '转换 ${count} 个',
+			'notesPage.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
+			'notesPage.flatten.restartHint' => '完成后请重启网关。',
 			'dataExport.title' => '数据导出与导入',
 			'dataExport.subtitle' => '面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。',
 			'dataExport.sections.export' => '导出',
@@ -13945,6 +14005,8 @@ extension on TranslationsZh {
 			'dataExport.import.doneToast' => '导入完成',
 			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
 			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.summaryCard.memories' => '记忆',
 			'dataExport.import.summaryCard.integrations' => '集成',
 			'dataExport.import.summaryCard.customTasks' => '自定义任务',
@@ -13965,8 +14027,6 @@ extension on TranslationsZh {
 			'dataExport.relative.inSeconds' => ({required Object n}) => '${n} 秒后',
 			'dataExport.relative.inMinutes' => ({required Object n}) => '${n} 分钟后',
 			'dataExport.relative.inHours' => ({required Object n}) => '${n} 小时后',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inDays' => ({required Object n}) => '${n} 天后',
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',

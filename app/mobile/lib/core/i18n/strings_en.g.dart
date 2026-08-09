@@ -1959,6 +1959,7 @@ class TranslationsNotesPageEn {
 
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 	late final TranslationsNotesPageHtmlEn html = TranslationsNotesPageHtmlEn.internal(_root);
+	late final TranslationsNotesPageFlattenEn flatten = TranslationsNotesPageFlattenEn.internal(_root);
 }
 
 // Path: dataExport
@@ -2937,6 +2938,7 @@ class TranslationsWebNotesEn {
 	late final TranslationsWebNotesPickerEn picker = TranslationsWebNotesPickerEn.internal(_root);
 	late final TranslationsWebNotesVaultSyncEn vaultSync = TranslationsWebNotesVaultSyncEn.internal(_root);
 	late final TranslationsWebNotesSyncBadgeEn syncBadge = TranslationsWebNotesSyncBadgeEn.internal(_root);
+	late final TranslationsWebNotesFlattenEn flatten = TranslationsWebNotesFlattenEn.internal(_root);
 }
 
 // Path: web.activity
@@ -5424,6 +5426,45 @@ class TranslationsNotesPageHtmlEn {
 
 	/// en: 'Disable scripts'
 	String get disableScripts => 'Disable scripts';
+}
+
+// Path: notesPage.flatten
+class TranslationsNotesPageFlattenEn {
+	TranslationsNotesPageFlattenEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Every project here sits inside a folder called projects/.'
+	String get notice => 'Every project here sits inside a folder called projects/.';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Not now'
+	String get dismiss => 'Not now';
+
+	/// en: 'File projects under their own names'
+	String get title => 'File projects under their own names';
+
+	/// en: 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.'
+	String get description => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.';
+
+	/// en: 'Nothing to move.'
+	String get nothingToMove => 'Nothing to move.';
+
+	/// en: 'Left alone ({count}):'
+	String skipped({required Object count}) => 'Left alone (${count}):';
+
+	/// en: 'Convert {count}'
+	String convert({required Object count}) => 'Convert ${count}';
+
+	/// en: 'Moved {count} document(s). Restart the gateway to pick up the new layout.'
+	String done({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.';
+
+	/// en: 'Restart the gateway afterwards.'
+	String get restartHint => 'Restart the gateway afterwards.';
 }
 
 // Path: dataExport.sections
@@ -8074,6 +8115,45 @@ class TranslationsWebNotesSyncBadgeEn {
 
 	/// en: '—'
 	String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.flatten
+class TranslationsWebNotesFlattenEn {
+	TranslationsWebNotesFlattenEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.'
+	String get notice => 'Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Not now'
+	String get dismiss => 'Not now';
+
+	/// en: 'File projects under their own names'
+	String get title => 'File projects under their own names';
+
+	/// en: 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.'
+	String get description => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.';
+
+	/// en: 'Nothing to move.'
+	String get nothingToMove => 'Nothing to move.';
+
+	/// en: 'Left alone ({count}):'
+	String skipped({required Object count}) => 'Left alone (${count}):';
+
+	/// en: 'Convert {count} document(s)'
+	String convert({required Object count}) => 'Convert ${count} document(s)';
+
+	/// en: 'Moved {count} document(s). Restart the gateway to pick up the new layout.'
+	String done({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.';
+
+	/// en: 'Restart the gateway afterwards.'
+	String get restartHint => 'Restart the gateway afterwards.';
 }
 
 // Path: web.activity.filters
@@ -19757,6 +19837,16 @@ extension on Translations {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · auto-sync on',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · last error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.flatten.notice' => 'Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.',
+			'web.notes.flatten.preview' => 'Preview',
+			'web.notes.flatten.dismiss' => 'Not now',
+			'web.notes.flatten.title' => 'File projects under their own names',
+			'web.notes.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
+			'web.notes.flatten.nothingToMove' => 'Nothing to move.',
+			'web.notes.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',
+			'web.notes.flatten.convert' => ({required Object count}) => 'Convert ${count} document(s)',
+			'web.notes.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
+			'web.notes.flatten.restartHint' => 'Restart the gateway afterwards.',
 			'web.activity.title' => 'Activity',
 			'web.activity.subtitle' => 'Per-call audit of API requests made by registered integrations. Includes both inbound calls (a third-party app calling opendray with its API key) and outbound proxied calls (admin → opendray proxy → integration). Calls made directly by this admin UI are not recorded.',
 			'web.activity.refresh' => 'Refresh',
@@ -19794,6 +19884,8 @@ extension on Translations {
 			'web.activity.empty.stepAppears' => 'Calls appear here within seconds',
 			'web.activity.empty.footnote' => 'Calls you make from this admin UI are not logged — only integration-attributed traffic is recorded.',
 			'web.activity.events.loading' => 'Loading events…',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.events.empty' => 'No events yet.',
 			'web.activity.events.emptyFiltered' => 'No matching events.',
 			'web.activity.events.loadOlder' => 'Load older events',
@@ -19804,8 +19896,6 @@ extension on Translations {
 			'web.providers.list.disabledBadge' => 'disabled',
 			'web.providers.list.noneSelected' => 'No provider selected.',
 			'web.providers.detail.enabled' => 'Enabled',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.disabled' => 'Disabled',
 			'web.providers.detail.toggleAria' => ({required Object name}) => 'Toggle ${name}',
 			'web.providers.detail.configuration' => 'Configuration',
@@ -20308,6 +20398,8 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.verifying' => 'Checking…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Authenticated as ${login}',
 			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'can read ${repo}',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'CANNOT read ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => 'can push',
 			'web.plugins.gitHosts.dialog.verifyPushDenied' => 'CANNOT push (read-only)',
@@ -20318,8 +20410,6 @@ extension on Translations {
 			'web.backups.exportData' => 'Export data',
 			'web.backups.loading' => 'Loading…',
 			'web.backups.loadStatusFailedToast' => 'Failed to load backup status',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.tabs.backups' => 'Backups',
 			'web.backups.tabs.schedules' => 'Schedules',
 			'web.backups.tabs.targets' => 'Targets',
@@ -20822,6 +20912,8 @@ extension on Translations {
 			'web.serverSettings.layout.legacyWarning' => 'This install still keeps opendray\'s own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo.',
 			'web.settings.title' => 'Settings',
 			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
+			_ => null,
+		} ?? switch (path) {
 			'web.settings.groups.workspace' => 'Workspace',
 			'web.settings.groups.server' => 'Server',
 			'web.settings.groups.system' => 'System',
@@ -20832,8 +20924,6 @@ extension on Translations {
 			'web.settings.items.about' => 'About',
 			'web.settings.health.connecting' => 'connecting…',
 			'web.settings.health.dbOk' => 'db ok',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.health.dbDown' => 'db down',
 			'web.settings.breadcrumb.server' => 'Server',
 			'web.settings.appearance.title' => 'Appearance',
@@ -21336,6 +21426,8 @@ extension on Translations {
 			'web.cortex.quarantine.discard' => 'Discard',
 			'web.cortex.quarantine.promotedToast' => 'Promoted to durable memory',
 			'web.cortex.quarantine.discardedToast' => 'Discarded',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.quarantine.actionFailed' => 'Action failed',
 			'web.cortex.quarantine.expires' => ({required Object date}) => 'expires ${date}',
 			'web.cortex.settings.injection.title' => 'Spawn injection',
@@ -21346,8 +21438,6 @@ extension on Translations {
 			'web.cortex.settings.injection.mode.full.label' => 'Full — inject everything',
 			'web.cortex.settings.injection.mode.full.description' => 'Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window.',
 			'web.cortex.settings.injection.savedToast' => 'Injection mode saved — new sessions use it immediately (no backend restart)',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.settings.injection.saveFailed' => 'Save failed',
 			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
 			'web.database.dialog.createTitle' => 'Add database connection',
@@ -21850,6 +21940,8 @@ extension on Translations {
 			'sessions.inspector.canvas.newCanvasBlurb' => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.',
 			'sessions.inspector.canvas.setWorkspace' => 'Work on this',
 			'sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — tap "Work on this" to point the agent at it.',
 			'sessions.inspector.canvas.designTitle' => 'Design system',
 			'sessions.inspector.canvas.designBlurb' => 'Tokens + rules every canvas follows',
@@ -21860,8 +21952,6 @@ extension on Translations {
 			'sessions.inspector.canvas.designSaved' => 'Design system saved.',
 			'sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.',
 			'sessions.inspector.canvas.tokenPrimary' => 'Primary',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenSecondary' => 'Secondary',
 			'sessions.inspector.canvas.tokenBackground' => 'Background',
 			'sessions.inspector.canvas.tokenSurface' => 'Surface',
@@ -22364,6 +22454,8 @@ extension on Translations {
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
 			'backups.overviewBackups' => 'Backups',
+			_ => null,
+		} ?? switch (path) {
 			'backups.health.headlineHealthy' => 'Backups healthy',
 			'backups.health.headlineAttention' => 'Needs attention',
 			'backups.health.headlineNever' => 'No backups yet',
@@ -22374,8 +22466,6 @@ extension on Translations {
 			'backups.health.tiles.overdue' => 'Overdue',
 			'backups.health.tiles.schedules' => 'Schedules',
 			'backups.failedToLoad' => 'Failed to load backups',
-			_ => null,
-		} ?? switch (path) {
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
 			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
 			'backups.pgDumpMissing' => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.',
@@ -22811,6 +22901,16 @@ extension on Translations {
 			'notesPage.html.scriptsOn' => 'Scripts are running for this document.',
 			'notesPage.html.enableScripts' => 'Enable scripts',
 			'notesPage.html.disableScripts' => 'Disable scripts',
+			'notesPage.flatten.notice' => 'Every project here sits inside a folder called projects/.',
+			'notesPage.flatten.preview' => 'Preview',
+			'notesPage.flatten.dismiss' => 'Not now',
+			'notesPage.flatten.title' => 'File projects under their own names',
+			'notesPage.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
+			'notesPage.flatten.nothingToMove' => 'Nothing to move.',
+			'notesPage.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',
+			'notesPage.flatten.convert' => ({required Object count}) => 'Convert ${count}',
+			'notesPage.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
+			'notesPage.flatten.restartHint' => 'Restart the gateway afterwards.',
 			'dataExport.title' => 'Data export & import',
 			'dataExport.subtitle' => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).',
 			'dataExport.sections.export' => 'Export',
@@ -22868,6 +22968,8 @@ extension on Translations {
 			'dataExport.import.importBundle' => 'Import bundle',
 			'dataExport.import.importing' => 'Importing…',
 			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.import.doneToast' => 'Import done',
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',
@@ -22888,8 +22990,6 @@ extension on Translations {
 			'dataExport.imports.columns.source' => 'Source',
 			'dataExport.imports.columns.counts' => 'Counts',
 			'dataExport.imports.columns.when' => 'When',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'in ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'in ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'in ${n}h',

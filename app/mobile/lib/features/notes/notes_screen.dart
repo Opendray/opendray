@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/notes/flatten_notice.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
@@ -45,6 +48,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   // the vault root. Never has a trailing slash.
   String _currentPath = '';
   String _query = '';
+  bool _flattenable = false;
   final _searchCtrl = TextEditingController();
 
   @override
@@ -62,7 +66,17 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   Future<void> _load() async {
     setState(() => _state = const AsyncValue.loading());
     try {
-      final notes = await ref.read(notesApiProvider).list();
+      final api = ref.read(notesApiProvider);
+      // Fetched alongside the listing so the layout offer can appear
+      // with the tree rather than popping in a moment later. A failure
+      // here must not cost the listing — the notice is optional, the
+      // documents are not.
+      unawaited(
+        api.info().then((i) {
+          if (mounted) setState(() => _flattenable = i.flattenable);
+        }).catchError((Object _) {}),
+      );
+      final notes = await api.list();
       if (!mounted) return;
       notes.sort((a, b) => b.modified.compareTo(a.modified));
       setState(() => _state = AsyncValue.data(notes));
@@ -334,6 +348,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
       ),
       body: Column(
         children: [
+          if (_flattenable) FlattenNotice(onConverted: _load),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: TextField(

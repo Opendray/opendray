@@ -23,10 +23,50 @@ export interface VaultInfo {
    * nested, which is what those gateways do.
    */
   layout?: VaultLayout
+  /**
+   * True when this vault still files projects under `projects/` AND has
+   * something the conversion would move. Drives the offer to convert:
+   * a migration nobody is told about is one nobody runs.
+   */
+  flattenable?: boolean
   /** Nested layout only. */
   personal_prefix?: string
   /** Nested layout only. */
   projects_prefix?: string
+}
+
+export interface FlattenMove {
+  from: string
+  to: string
+  /** `[[wiki links]]` repointed at the new path. Zero on a dry run. */
+  links_rewritten: number
+}
+
+export interface FlattenSkip {
+  path: string
+  /** Stated in plain terms — surface it, don't summarise it away. */
+  reason: string
+}
+
+export interface FlattenResult {
+  moves: FlattenMove[] | null
+  skips: FlattenSkip[] | null
+  mappings_rewritten: number
+  dry_run: boolean
+}
+
+/**
+ * Preview or perform the nested → flat conversion.
+ *
+ * `apply` defaults to false and must be passed explicitly to move
+ * anything: this renames every project document in the vault, so
+ * looking and rewriting must not be one field apart.
+ */
+export async function flattenVault(apply = false): Promise<FlattenResult> {
+  return api<FlattenResult>('/api/v1/notes/flatten', {
+    method: 'POST',
+    body: { apply },
+  })
 }
 
 export async function notesInfo(): Promise<VaultInfo> {

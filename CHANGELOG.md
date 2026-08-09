@@ -95,7 +95,19 @@ for the full rationale and what triggers a major bump.
   because a probe asking "does this folder have content?" changes its
   answer the moment someone puts content there.
 
-  `opendray notes flatten` converts a vault deliberately. It defaults
+  **The doc library offers the conversion**, on web and on mobile, to
+  any vault that still nests projects. A migration that ships only as a
+  CLI command is one that only the people who wrote it ever run — every
+  existing vault would have stayed nested with its owner never learning
+  there was a choice. The offer is dismissible and never appears for a
+  vault that is already flat or has nothing to move, and the gateway
+  says the same thing once in the startup log for anyone who never
+  opens the UI.
+
+  Nothing moves without a preview. Web and mobile both run the
+  migration as a dry run and show the real list — including what it
+  refuses to touch and why — before anything is renamed.
+  `opendray notes flatten` does the same from a terminal. It defaults
   to a dry run, drives the same rename the UI uses so `[[wiki links]]`
   are repointed as it goes, repoints per-cwd project overrides, and
   **never overwrites**: a destination that already exists is reported

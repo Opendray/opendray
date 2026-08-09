@@ -93,18 +93,85 @@ class NotesInfo {
     required this.root,
     required this.personalPrefix,
     required this.projectsPrefix,
+    this.layout = '',
+    this.flattenable = false,
   });
 
   factory NotesInfo.fromJson(Map<String, dynamic> json) => NotesInfo(
         root: json['root'] as String? ?? '',
         personalPrefix: json['personal_prefix'] as String? ?? '',
         projectsPrefix: json['projects_prefix'] as String? ?? '',
+        layout: json['layout'] as String? ?? '',
+        flattenable: json['flattenable'] as bool? ?? false,
       );
 
   // Absolute filesystem path of the vault root.
   final String root;
   final String personalPrefix;
   final String projectsPrefix;
+
+  /// "flat" files each project at the vault root under its own name;
+  /// "nested" uses the prefixes above. Empty on an older gateway.
+  final String layout;
+
+  /// True when this vault still nests projects AND has something the
+  /// conversion would move — the phone offers it rather than leaving
+  /// the migration to whoever happens to read the release notes.
+  final bool flattenable;
+}
+
+/// One document the flatten migration would move, or did.
+class FlattenMove {
+  FlattenMove({required this.from, required this.to, this.linksRewritten = 0});
+
+  factory FlattenMove.fromJson(Map<String, dynamic> json) => FlattenMove(
+        from: json['from'] as String? ?? '',
+        to: json['to'] as String? ?? '',
+        linksRewritten: json['links_rewritten'] as int? ?? 0,
+      );
+
+  final String from;
+  final String to;
+  final int linksRewritten;
+}
+
+/// A document the migration refused to touch, with the reason stated
+/// in the operator's terms. Surface it — do not summarise it away.
+class FlattenSkip {
+  FlattenSkip({required this.path, required this.reason});
+
+  factory FlattenSkip.fromJson(Map<String, dynamic> json) => FlattenSkip(
+        path: json['path'] as String? ?? '',
+        reason: json['reason'] as String? ?? '',
+      );
+
+  final String path;
+  final String reason;
+}
+
+class FlattenResult {
+  FlattenResult({
+    required this.moves,
+    required this.skips,
+    required this.dryRun,
+    this.mappingsRewritten = 0,
+  });
+
+  factory FlattenResult.fromJson(Map<String, dynamic> json) => FlattenResult(
+        moves: (json['moves'] as List<dynamic>? ?? [])
+            .map((e) => FlattenMove.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        skips: (json['skips'] as List<dynamic>? ?? [])
+            .map((e) => FlattenSkip.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        dryRun: json['dry_run'] as bool? ?? true,
+        mappingsRewritten: json['mappings_rewritten'] as int? ?? 0,
+      );
+
+  final List<FlattenMove> moves;
+  final List<FlattenSkip> skips;
+  final bool dryRun;
+  final int mappingsRewritten;
 }
 
 class NotesApi {
@@ -156,6 +223,22 @@ class NotesApi {
         queryParameters: {'cwd': cwd},
       );
       return ProjectMapping.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /api/v1/notes/flatten — preview or perform the nested → flat
+  // conversion. `apply` defaults to false and must be passed
+  // explicitly: this renames every project document in the vault, so
+  // looking and rewriting are not one field apart.
+  Future<FlattenResult> flatten({bool apply = false}) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/notes/flatten',
+        data: {'apply': apply},
+      );
+      return FlattenResult.fromJson(res.data ?? {});
     } on Object catch (e) {
       throw toApiException(e);
     }
