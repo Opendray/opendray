@@ -157,7 +157,6 @@
         "uploadFailedToast": "上传失败",
         "uploadInvalidTypeToast": "仅支持图片文件",
         "dropToAttach": "释放以附加图片",
-        "attachInsert": "插入",
         "attachClear": "全部清除",
         "attachRemove": "移除 {name}",
         "copiedToast": "已复制到剪贴板",
@@ -173,7 +172,8 @@
         "transcriptLoading": "正在加载完整记录…",
         "transcriptEmpty": "暂无输出。",
         "transcriptFetchFailed": "无法加载完整记录",
-        "transcriptRefresh": "刷新"
+        "transcriptRefresh": "刷新",
+        "attachOnSend": "发送时自动附加"
       },
       "spawn": {
         "title": "创建会话",
@@ -3710,9 +3710,9 @@
         "selectText": "选择文本"
       },
       "attachments": {
-        "insert": "插入",
         "clear": "全部清除",
-        "remove": "移除 {name}"
+        "remove": "移除 {name}",
+        "onSend": "发送时附加"
       },
       "connection": {
         "connecting": "连接中…",

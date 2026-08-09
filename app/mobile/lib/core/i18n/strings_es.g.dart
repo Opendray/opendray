@@ -3325,7 +3325,6 @@ class _TranslationsWebSessionsTerminalEs extends TranslationsWebSessionsTerminal
 	@override String get uploadFailedToast => 'Error al subir';
 	@override String get uploadInvalidTypeToast => 'Solo se pueden adjuntar archivos de imagen';
 	@override String get dropToAttach => 'Suelta la imagen para adjuntarla';
-	@override String get attachInsert => 'Insertar';
 	@override String get attachClear => 'Quitar todo';
 	@override String attachRemove({required Object name}) => 'Quitar ${name}';
 	@override String get copiedToast => 'Copiado al portapapeles';
@@ -3342,6 +3341,7 @@ class _TranslationsWebSessionsTerminalEs extends TranslationsWebSessionsTerminal
 	@override String get transcriptEmpty => 'Aún no hay salida.';
 	@override String get transcriptFetchFailed => 'No se pudo cargar la transcripción';
 	@override String get transcriptRefresh => 'Recargar';
+	@override String get attachOnSend => 'Se adjuntan al enviar';
 }
 
 // Path: web.sessions.spawn
@@ -6683,9 +6683,9 @@ class _TranslationsSessionsTerminalAttachmentsEs extends TranslationsSessionsTer
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get insert => 'Insertar';
 	@override String get clear => 'Quitar todo';
 	@override String remove({required Object name}) => 'Quitar ${name}';
+	@override String get onSend => 'Se adjuntan al enviar';
 }
 
 // Path: sessions.terminal.connection
@@ -10072,7 +10072,6 @@ extension on TranslationsEs {
 			'web.sessions.terminal.uploadFailedToast' => 'Error al subir',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Solo se pueden adjuntar archivos de imagen',
 			'web.sessions.terminal.dropToAttach' => 'Suelta la imagen para adjuntarla',
-			'web.sessions.terminal.attachInsert' => 'Insertar',
 			'web.sessions.terminal.attachClear' => 'Quitar todo',
 			'web.sessions.terminal.attachRemove' => ({required Object name}) => 'Quitar ${name}',
 			'web.sessions.terminal.copiedToast' => 'Copiado al portapapeles',
@@ -10089,6 +10088,7 @@ extension on TranslationsEs {
 			'web.sessions.terminal.transcriptEmpty' => 'Aún no hay salida.',
 			'web.sessions.terminal.transcriptFetchFailed' => 'No se pudo cargar la transcripción',
 			'web.sessions.terminal.transcriptRefresh' => 'Recargar',
+			'web.sessions.terminal.attachOnSend' => 'Se adjuntan al enviar',
 			'web.sessions.spawn.title' => 'Crear session',
 			'web.sessions.spawn.description' => 'Inicia una session de la CLI con un proveedor registrado.',
 			'web.sessions.spawn.provider' => 'Proveedor',
@@ -12862,9 +12862,9 @@ extension on TranslationsEs {
 			'sessions.terminal.keyboard.attachImage' => 'Adjuntar imagen',
 			'sessions.terminal.keyboard.enter' => 'Intro',
 			'sessions.terminal.keyboard.selectText' => 'Seleccionar texto',
-			'sessions.terminal.attachments.insert' => 'Insertar',
 			'sessions.terminal.attachments.clear' => 'Quitar todo',
 			'sessions.terminal.attachments.remove' => ({required Object name}) => 'Quitar ${name}',
+			'sessions.terminal.attachments.onSend' => 'Se adjuntan al enviar',
 			'sessions.terminal.connection.connecting' => 'Conectando…',
 			'sessions.terminal.connection.connected' => 'Conectado',
 			'sessions.terminal.connection.reconnecting' => 'Reconectando…',

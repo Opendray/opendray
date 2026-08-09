@@ -6506,9 +6506,6 @@ class TranslationsWebSessionsTerminalEn {
 	/// en: 'Drop image to attach'
 	String get dropToAttach => 'Drop image to attach';
 
-	/// en: 'Insert'
-	String get attachInsert => 'Insert';
-
 	/// en: 'Clear all'
 	String get attachClear => 'Clear all';
 
@@ -6556,6 +6553,9 @@ class TranslationsWebSessionsTerminalEn {
 
 	/// en: 'Refresh'
 	String get transcriptRefresh => 'Refresh';
+
+	/// en: 'Attached when you send'
+	String get attachOnSend => 'Attached when you send';
 }
 
 // Path: web.sessions.spawn
@@ -13027,14 +13027,14 @@ class TranslationsSessionsTerminalAttachmentsEn {
 
 	// Translations
 
-	/// en: 'Insert'
-	String get insert => 'Insert';
-
 	/// en: 'Clear all'
 	String get clear => 'Clear all';
 
 	/// en: 'Remove {name}'
 	String remove({required Object name}) => 'Remove ${name}';
+
+	/// en: 'Attached on send'
+	String get onSend => 'Attached on send';
 }
 
 // Path: sessions.terminal.connection
@@ -19074,7 +19074,6 @@ extension on Translations {
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Only image files can be attached',
 			'web.sessions.terminal.dropToAttach' => 'Drop image to attach',
-			'web.sessions.terminal.attachInsert' => 'Insert',
 			'web.sessions.terminal.attachClear' => 'Clear all',
 			'web.sessions.terminal.attachRemove' => ({required Object name}) => 'Remove ${name}',
 			'web.sessions.terminal.copiedToast' => 'Copied to clipboard',
@@ -19091,6 +19090,7 @@ extension on Translations {
 			'web.sessions.terminal.transcriptEmpty' => 'No output yet.',
 			'web.sessions.terminal.transcriptFetchFailed' => 'Couldn\'t load transcript',
 			'web.sessions.terminal.transcriptRefresh' => 'Refresh',
+			'web.sessions.terminal.attachOnSend' => 'Attached when you send',
 			'web.sessions.spawn.title' => 'Spawn session',
 			'web.sessions.spawn.description' => 'Start a CLI session under a registered provider.',
 			'web.sessions.spawn.provider' => 'Provider',
@@ -21864,9 +21864,9 @@ extension on Translations {
 			'sessions.terminal.keyboard.attachImage' => 'Attach image',
 			'sessions.terminal.keyboard.enter' => 'Enter',
 			'sessions.terminal.keyboard.selectText' => 'Select text',
-			'sessions.terminal.attachments.insert' => 'Insert',
 			'sessions.terminal.attachments.clear' => 'Clear all',
 			'sessions.terminal.attachments.remove' => ({required Object name}) => 'Remove ${name}',
+			'sessions.terminal.attachments.onSend' => 'Attached on send',
 			'sessions.terminal.connection.connecting' => 'Connecting…',
 			'sessions.terminal.connection.connected' => 'Connected',
 			'sessions.terminal.connection.reconnecting' => 'Reconnecting…',

@@ -157,7 +157,6 @@
         "uploadFailedToast": "Error al subir",
         "uploadInvalidTypeToast": "Solo se pueden adjuntar archivos de imagen",
         "dropToAttach": "Suelta la imagen para adjuntarla",
-        "attachInsert": "Insertar",
         "attachClear": "Quitar todo",
         "attachRemove": "Quitar {name}",
         "copiedToast": "Copiado al portapapeles",
@@ -173,7 +172,8 @@
         "transcriptLoading": "Cargando transcripción…",
         "transcriptEmpty": "Aún no hay salida.",
         "transcriptFetchFailed": "No se pudo cargar la transcripción",
-        "transcriptRefresh": "Recargar"
+        "transcriptRefresh": "Recargar",
+        "attachOnSend": "Se adjuntan al enviar"
       },
       "spawn": {
         "title": "Crear session",
@@ -3713,9 +3713,9 @@
         "selectText": "Seleccionar texto"
       },
       "attachments": {
-        "insert": "Insertar",
         "clear": "Quitar todo",
-        "remove": "Quitar {name}"
+        "remove": "Quitar {name}",
+        "onSend": "Se adjuntan al enviar"
       },
       "connection": {
         "connecting": "Conectando…",

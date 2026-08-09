@@ -253,6 +253,14 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
   void _onTerminalOutput(String data) {
     final channel = _channel;
     if (channel == null) return;
+    // A bare Enter is the submit. Staged images go in a moment before
+    // it, rather than being typed into the line while it is being
+    // composed — a full server path there says nothing to the reader
+    // and takes sixty backspaces to remove, because the line editor
+    // belongs to the CLI and cannot know they arrived as a unit.
+    if (data == '\r' && _pending.isNotEmpty) {
+      _flushAttachments();
+    }
     try {
       channel.sink.add(Uint8List.fromList(utf8.encode(data)));
     } on Object {
@@ -385,10 +393,21 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
     }
   }
 
-  void _insertAttachments() {
+  void _flushAttachments() {
     if (_pending.isEmpty) return;
-    _terminal.paste('${_pending.map((a) => a.path).join(' ')} ');
-    setState(_pending.clear);
+    final paths = _pending.map((a) => a.path).join(' ');
+    _pending.clear();
+    // Straight to the socket, not through _terminal.paste: paste would
+    // re-enter _onTerminalOutput and recurse through the guard above.
+    final channel = _channel;
+    if (channel != null) {
+      try {
+        channel.sink.add(Uint8List.fromList(utf8.encode(' $paths ')));
+      } on Object {
+        // A dead socket is reported by the connection state, not here.
+      }
+    }
+    if (mounted) setState(() {});
   }
 
   void _clearAttachments() => setState(_pending.clear);
@@ -498,7 +517,6 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
         _AttachmentTray(
           items: _pending,
           onRemove: _removeAttachment,
-          onInsert: _insertAttachments,
           onClear: _clearAttachments,
         ),
         _MobileKeyboardBar(
@@ -518,12 +536,10 @@ class _AttachmentTray extends StatelessWidget {
   const _AttachmentTray({
     required this.items,
     required this.onRemove,
-    required this.onInsert,
     required this.onClear,
   });
   final List<_PendingAttachment> items;
   final void Function(int index) onRemove;
-  final VoidCallback onInsert;
   final VoidCallback onClear;
 
   @override
@@ -545,9 +561,16 @@ class _AttachmentTray extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 6),
                       child: Chip(
                         avatar: const Icon(Icons.attach_file, size: 14),
-                        label: Text(
-                          items[i].name,
-                          overflow: TextOverflow.ellipsis,
+                        // The position, not the filename: this is what
+                        // the agent's input line will carry, and a chip
+                        // reading the original name is no more use than
+                        // the path was.
+                        label: Tooltip(
+                          message: items[i].name,
+                          child: Text(
+                            '[image${i + 1}]',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         deleteIcon: const Icon(Icons.close, size: 14),
                         deleteButtonTooltipMessage: t
@@ -560,14 +583,16 @@ class _AttachmentTray extends StatelessWidget {
               ),
             ),
           ),
+          // No "insert" any more — the paths go in with the message,
+          // and saying so is the whole affordance.
+          Text(
+            t.sessions.terminal.attachments.onSend,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(width: 4),
           TextButton(
             onPressed: onClear,
             child: Text(t.sessions.terminal.attachments.clear),
-          ),
-          const SizedBox(width: 4),
-          FilledButton(
-            onPressed: onInsert,
-            child: Text(t.sessions.terminal.attachments.insert),
           ),
         ],
       ),

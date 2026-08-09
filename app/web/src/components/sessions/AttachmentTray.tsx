@@ -1,7 +1,6 @@
 import { Paperclip, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { cn } from '@/lib/utils'
 
 export interface AttachmentItem {
   path: string
@@ -14,12 +13,10 @@ export interface AttachmentItem {
 export function AttachmentTray({
   items,
   onRemove,
-  onInsert,
   onClear,
 }: {
   items: AttachmentItem[]
   onRemove: (index: number) => void
-  onInsert: () => void
   onClear: () => void
 }) {
   const { t } = useTranslation()
@@ -33,7 +30,13 @@ export function AttachmentTray({
             className="flex max-w-[180px] items-center gap-1 rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px]"
           >
             <Paperclip className="size-3 shrink-0 text-muted-foreground" />
-            <span className="truncate">{item.name}</span>
+            {/* The position, not the filename: this is the label the
+                agent's input line will carry, and a chip reading
+                `screenshot 2026-08-09 at 14.03.11.png` is no more use
+                than the path was. The real name stays in the tooltip. */}
+            <span className="truncate font-mono" title={item.name}>
+              [image{i + 1}]
+            </span>
             <button
               type="button"
               onClick={() => onRemove(i)}
@@ -47,23 +50,18 @@ export function AttachmentTray({
           </span>
         ))}
       </div>
-      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        {/* There is no "insert" any more — the paths go in with the
+            message. Saying so is the whole affordance. */}
+        <span className="text-[11px] text-muted-foreground/70">
+          {t('web.sessions.terminal.attachOnSend')}
+        </span>
         <button
           type="button"
           onClick={onClear}
           className="rounded-md px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-background hover:text-foreground"
         >
           {t('web.sessions.terminal.attachClear')}
-        </button>
-        <button
-          type="button"
-          onClick={onInsert}
-          className={cn(
-            'rounded-md bg-primary px-2.5 py-0.5 text-[11px] font-medium text-primary-foreground',
-            'hover:opacity-95',
-          )}
-        >
-          {t('web.sessions.terminal.attachInsert')}
         </button>
       </div>
     </div>

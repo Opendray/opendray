@@ -157,7 +157,6 @@
         "uploadFailedToast": "Upload failed",
         "uploadInvalidTypeToast": "Only image files can be attached",
         "dropToAttach": "Drop image to attach",
-        "attachInsert": "Insert",
         "attachClear": "Clear all",
         "attachRemove": "Remove {name}",
         "copiedToast": "Copied to clipboard",
@@ -173,7 +172,8 @@
         "transcriptLoading": "Loading transcript…",
         "transcriptEmpty": "No output yet.",
         "transcriptFetchFailed": "Couldn't load transcript",
-        "transcriptRefresh": "Refresh"
+        "transcriptRefresh": "Refresh",
+        "attachOnSend": "Attached when you send"
       },
       "spawn": {
         "title": "Spawn session",
@@ -3713,9 +3713,9 @@
         "selectText": "Select text"
       },
       "attachments": {
-        "insert": "Insert",
         "clear": "Clear all",
-        "remove": "Remove {name}"
+        "remove": "Remove {name}",
+        "onSend": "Attached on send"
       },
       "connection": {
         "connecting": "Connecting…",

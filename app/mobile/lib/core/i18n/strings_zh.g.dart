@@ -3325,7 +3325,6 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get uploadFailedToast => '上传失败';
 	@override String get uploadInvalidTypeToast => '仅支持图片文件';
 	@override String get dropToAttach => '释放以附加图片';
-	@override String get attachInsert => '插入';
 	@override String get attachClear => '全部清除';
 	@override String attachRemove({required Object name}) => '移除 ${name}';
 	@override String get copiedToast => '已复制到剪贴板';
@@ -3342,6 +3341,7 @@ class _TranslationsWebSessionsTerminalZh extends TranslationsWebSessionsTerminal
 	@override String get transcriptEmpty => '暂无输出。';
 	@override String get transcriptFetchFailed => '无法加载完整记录';
 	@override String get transcriptRefresh => '刷新';
+	@override String get attachOnSend => '发送时自动附加';
 }
 
 // Path: web.sessions.spawn
@@ -6683,9 +6683,9 @@ class _TranslationsSessionsTerminalAttachmentsZh extends TranslationsSessionsTer
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get insert => '插入';
 	@override String get clear => '全部清除';
 	@override String remove({required Object name}) => '移除 ${name}';
+	@override String get onSend => '发送时附加';
 }
 
 // Path: sessions.terminal.connection
@@ -10069,7 +10069,6 @@ extension on TranslationsZh {
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
 			'web.sessions.terminal.uploadInvalidTypeToast' => '仅支持图片文件',
 			'web.sessions.terminal.dropToAttach' => '释放以附加图片',
-			'web.sessions.terminal.attachInsert' => '插入',
 			'web.sessions.terminal.attachClear' => '全部清除',
 			'web.sessions.terminal.attachRemove' => ({required Object name}) => '移除 ${name}',
 			'web.sessions.terminal.copiedToast' => '已复制到剪贴板',
@@ -10086,6 +10085,7 @@ extension on TranslationsZh {
 			'web.sessions.terminal.transcriptEmpty' => '暂无输出。',
 			'web.sessions.terminal.transcriptFetchFailed' => '无法加载完整记录',
 			'web.sessions.terminal.transcriptRefresh' => '刷新',
+			'web.sessions.terminal.attachOnSend' => '发送时自动附加',
 			'web.sessions.spawn.title' => '创建会话',
 			'web.sessions.spawn.description' => '在已注册的 Provider 下启动一个 CLI 会话。',
 			'web.sessions.spawn.provider' => 'Provider',
@@ -12856,9 +12856,9 @@ extension on TranslationsZh {
 			'sessions.terminal.keyboard.attachImage' => '附加图片',
 			'sessions.terminal.keyboard.enter' => '回车',
 			'sessions.terminal.keyboard.selectText' => '选择文本',
-			'sessions.terminal.attachments.insert' => '插入',
 			'sessions.terminal.attachments.clear' => '全部清除',
 			'sessions.terminal.attachments.remove' => ({required Object name}) => '移除 ${name}',
+			'sessions.terminal.attachments.onSend' => '发送时附加',
 			'sessions.terminal.connection.connecting' => '连接中…',
 			'sessions.terminal.connection.connected' => '已连接',
 			'sessions.terminal.connection.reconnecting' => '重连中…',

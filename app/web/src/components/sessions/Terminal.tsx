@@ -114,6 +114,10 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
   const { t } = useTranslation()
   const [dragActive, setDragActive] = useState(false)
   const [pendingAttachments, setPendingAttachments] = useState<AttachmentItem[]>([])
+  // Read by the PTY data handler, which is wired once per session and
+  // would otherwise close over an empty list forever.
+  const attachmentsRef = useRef<AttachmentItem[]>([])
+  attachmentsRef.current = pendingAttachments
   const rootRef = useRef<HTMLDivElement>(null)
 
   const sendInput = useCallback((data: string) => {
@@ -156,11 +160,25 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     [sessionId, t],
   )
 
-  const insertAttachments = useCallback(() => {
-    if (pendingAttachments.length === 0) return
-    sendInput(pendingAttachments.map((a) => a.path).join(' ') + ' ')
+  // Attachments are appended at SUBMIT, not while composing.
+  //
+  // They used to be typed into the line the moment you asked for them,
+  // which put a full server path — `/var/folders/.../a7b61d09.png` —
+  // into the CLI's own input line. That path is the CLI's business, not
+  // the reader's: it says nothing, it pushes the actual message off
+  // screen, and taking it back out means holding backspace through
+  // sixty characters, because the line editor belongs to the CLI and
+  // has no idea those characters arrived as a unit.
+  //
+  // Now the tray holds them, the composer stays clean, and the paths go
+  // in a moment before the newline that submits them.
+  const flushAttachments = useCallback(() => {
+    const pending = attachmentsRef.current
+    if (pending.length === 0) return
+    sendInput(' ' + pending.map((a) => a.path).join(' ') + ' ')
+    attachmentsRef.current = []
     setPendingAttachments([])
-  }, [pendingAttachments, sendInput])
+  }, [sendInput])
 
   const removeAttachment = useCallback((index: number) => {
     setPendingAttachments((a) => a.filter((_, i) => i !== index))
@@ -241,6 +259,13 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     ws.start()
 
     term.onData((d) => {
+      // A bare Enter is the submit. Anything longer is a paste or an
+      // escape sequence, and injecting paths into either would corrupt
+      // it — a menu selection is also a bare Enter, but a menu is not
+      // somewhere anyone has staged an image.
+      if (d === '\r' && attachmentsRef.current.length > 0) {
+        flushAttachments()
+      }
       const enc = new TextEncoder().encode(d)
       ws.send(enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer)
     })
@@ -553,7 +578,6 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       <AttachmentTray
         items={pendingAttachments}
         onRemove={removeAttachment}
-        onInsert={insertAttachments}
         onClear={clearAttachments}
       />
     </div>

@@ -10,6 +10,21 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Changed
+
+- **A staged image reads as `[image1]`, and no longer lands in the
+  input line.** Attaching one used to type the server path — sixty-odd
+  characters of `/var/folders/…/a7b61d09.png` — straight into the CLI's
+  own prompt. It said nothing to whoever was reading, it pushed the
+  actual message off screen, and taking it back out meant holding
+  backspace through every character, because the line editor belongs to
+  the CLI and cannot know they arrived as a unit.
+
+  The tray now holds staged images as `[image1]`, `[image2]` (the
+  filename moves to the tooltip), and the paths go in a moment before
+  the newline that submits them. Removing one is the × on its chip. Web
+  and mobile both.
+
 ### Added
 
 - **The Vault stores and renders HTML documents, not just markdown.**
