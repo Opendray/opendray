@@ -58,7 +58,7 @@ export function LoginPage() {
 
   return (
     <div className="h-svh flex items-center justify-center bg-background p-6">
-      <div className="w-[360px] flex flex-col gap-6">
+      <div className="w-full max-w-[360px] flex flex-col gap-6">
         <div className="flex items-center gap-2 mb-2">
           <TerminalIcon className="size-5 text-accent" strokeWidth={2.5} />
           <span className="text-[15px] font-semibold tracking-tight">

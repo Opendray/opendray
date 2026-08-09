@@ -10,7 +10,7 @@ export function RoundTablePage() {
   const { t } = useTranslation()
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <header className="px-6 py-4 border-b border-border bg-card/30">
+      <header className="px-3 py-3 sm:px-6 sm:py-4 border-b border-border bg-card/30">
         <h1 className="text-base font-medium flex items-center gap-2">
           <Users className="size-4 text-accent" />
           {t('web.roundTable.title')}
@@ -22,7 +22,7 @@ export function RoundTablePage() {
           {t('web.roundTable.subtitle')}
         </p>
       </header>
-      <div className="flex-1 min-h-0 overflow-hidden px-6 py-5">
+      <div className="flex-1 min-h-0 overflow-hidden px-3 py-4 sm:px-6 sm:py-5">
         <RoundTablePanel />
       </div>
     </div>

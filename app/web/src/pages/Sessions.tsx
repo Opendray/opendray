@@ -14,7 +14,7 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
-  ChevronLeft,
+  MoreHorizontal,
   TextCursorInput,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -22,6 +22,13 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import { SessionList } from '@/components/sessions/SessionList'
 import { SessionTabs } from '@/components/sessions/SessionTabs'
@@ -50,7 +57,8 @@ import {
 } from '@/lib/sessions'
 import { useSessionTabs } from '@/stores/sessionTabs'
 import { useLayout } from '@/stores/layout'
-import { useIsMobile } from '../lib/useIsMobile'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 import { cn } from '@/lib/utils'
 import { isTerminalSessionState, type Session } from '@/lib/types'
 
@@ -175,6 +183,8 @@ export function SessionsPage() {
 
   const handleOpen = (s: Session) => {
     open({ id: s.id, name: s.name || s.provider_id })
+    // Opening a session is the only reason the list drawer is up.
+    if (isMobile) setListCollapsed(true)
   }
 
   const { confirm: confirmDialog, dialog: confirmDialogEl } = useConfirmDialog()
@@ -206,14 +216,29 @@ export function SessionsPage() {
   const setInspectorOpen = useLayout((s) => s.setInspectorOpen)
 
   const isMobile = useIsMobile()
-  // On phones the list + inspector are slide-overs; collapse both on
-  // entry so the terminal/workbench gets the full, usable width.
+  const isCompact = useIsCompact()
+  // Narrow viewports can't hold three columns. A tablet keeps two — the
+  // session list and the terminal — and pushes the inspector into a
+  // slide-over; a phone has room for the terminal alone, so the list
+  // becomes a slide-over too.
+  //
+  // The overlay's open state is deliberately LOCAL rather than the
+  // persisted layout store: an overlay must default to closed (nobody
+  // asked for a panel on top of the terminal they just opened), and
+  // writing "closed" back to the shared store would silently collapse
+  // the inspector on the desktop just because the operator glanced at
+  // the session from a phone.
+  const [inspectorOverlayOpen, setInspectorOverlayOpen] = useState(false)
+  const inspectorShown = isCompact ? inspectorOverlayOpen : inspectorOpen
+  const setInspectorShown = isCompact
+    ? setInspectorOverlayOpen
+    : setInspectorOpen
+  const toggleInspectorShown = isCompact
+    ? () => setInspectorOverlayOpen((v) => !v)
+    : toggleInspector
   useEffect(() => {
-    if (isMobile) {
-      setListCollapsed(true)
-      setInspectorOpen(false)
-    }
-  }, [isMobile, setListCollapsed, setInspectorOpen])
+    if (isMobile) setListCollapsed(true)
+  }, [isMobile, setListCollapsed])
 
   const termRef = useRef<TerminalHandle>(null)
   const endedRef = useRef<EndedSessionHandle>(null)
@@ -255,14 +280,43 @@ export function SessionsPage() {
   // the list when there's nothing currently selected, so empty
   // state stays navigable.
   const showList = !listCollapsed || !currentId
+  // With no session open there is no workbench to overlay, so on a phone
+  // the list stops being a drawer and simply becomes the page. Keeping
+  // it a drawer would dim an empty background behind it and leave the
+  // backdrop as a dead tap target — it can't be dismissed to anything.
+  const listIsDrawer = isMobile && !!currentId
 
   return (
-    <div className="h-full flex">
-      {showList && (
-        <SessionList onSpawn={() => setSpawnOpen(true)} onOpen={handleOpen} />
-      )}
+    // `relative` is the positioning context the slide-over panels below
+    // anchor to — without it they would escape to the viewport and cover
+    // the app topbar.
+    <div className="h-full flex relative">
+      <SlideOverAside
+        side="left"
+        compact={listIsDrawer}
+        open={showList}
+        onOpenChange={(v) => setListCollapsed(!v)}
+        label={t('web.sessions.header.showList')}
+      >
+        <SessionList
+          onSpawn={() => setSpawnOpen(true)}
+          onOpen={handleOpen}
+          // As the whole page it must fill the width, not sit in a
+          // 288px column with dead space beside it.
+          fullWidth={isMobile && !currentId}
+        />
+      </SlideOverAside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* With the list acting as the page on a phone, the empty
+          workbench beside it would be squeezed to a ~60px slice of
+          unreadable text — and it has nothing to say the list doesn't
+          already offer via its own "+". */}
+      <div
+        className={cn(
+          'flex-1 flex flex-col min-w-0',
+          isMobile && !currentId && 'hidden',
+        )}
+      >
         <SessionTabs onCloseTab={handleCloseTab} />
 
         {!currentId ? (
@@ -303,8 +357,8 @@ export function SessionsPage() {
               onAttachImage={handlePickImage}
               onSelectText={openSelectCopy}
               onShowTranscript={() => setTranscriptOpen(true)}
-              inspectorOpen={inspectorOpen}
-              onToggleInspector={toggleInspector}
+              inspectorOpen={inspectorShown}
+              onToggleInspector={toggleInspectorShown}
             />
             {/* pb-3 reserves a small breathing strip so Claude's
                 prompt+footer never sit flush against the browser bottom
@@ -339,39 +393,19 @@ export function SessionsPage() {
         )}
       </div>
 
-      {/* Inspector: inline column on desktop, slide-over drawer on mobile. */}
-      {currentSession &&
-        (isMobile ? (
-          <>
-            <div
-              className={cn(
-                'fixed inset-y-0 right-0 z-50 flex transition-transform duration-200 ease-out',
-                inspectorOpen ? 'translate-x-0' : 'translate-x-full',
-              )}
-            >
-              <InspectorPanel session={currentSession} />
-            </div>
-            {inspectorOpen && (
-              <div
-                className="fixed inset-0 z-40 bg-black/50"
-                onClick={() => setInspectorOpen(false)}
-                aria-hidden
-              />
-            )}
-            {!inspectorOpen && (
-              <button
-                type="button"
-                onClick={() => setInspectorOpen(true)}
-                aria-label="Open inspector"
-                className="fixed right-0 top-1/2 -translate-y-1/2 z-30 h-12 w-5 rounded-l-md border border-r-0 border-border bg-card/90 text-muted-foreground flex items-center justify-center shadow-sm active:bg-card"
-              >
-                <ChevronLeft className="size-3.5" />
-              </button>
-            )}
-          </>
-        ) : (
-          inspectorOpen && <InspectorPanel session={currentSession} />
-        ))}
+      {/* Inspector: inline third column on desktop, slide-over from the
+          right on tablets and phones. */}
+      {currentSession && (
+        <SlideOverAside
+          side="right"
+          compact={isCompact}
+          open={inspectorShown}
+          onOpenChange={setInspectorShown}
+          label={t('web.sessions.header.showInspector')}
+        >
+          <InspectorPanel session={currentSession} />
+        </SlideOverAside>
+      )}
 
       <input
         ref={fileInputRef}
@@ -463,6 +497,9 @@ function WorkbenchHeader({
   onToggleInspector: () => void
 }) {
   const { t } = useTranslation()
+  // A phone fits the two pane toggles and the title, nothing more —
+  // everything else folds into an overflow menu.
+  const isMobile = useIsMobile()
   if (!session) {
     return (
       <div className="h-11 border-b border-border flex items-center px-3 text-[12px] text-muted-foreground">
@@ -484,8 +521,9 @@ function WorkbenchHeader({
   const selectTooltip = t('web.sessions.header.selectTextTooltip')
   const transcriptLabel = t('web.sessions.header.transcript')
   const transcriptTooltip = t('web.sessions.header.transcriptTooltip')
+  const ended = isTerminalSessionState(session.state)
   return (
-    <div className="h-11 border-b border-border flex items-center px-3 gap-3">
+    <div className="h-11 border-b border-border flex items-center px-2 sm:px-3 gap-2 sm:gap-3">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -529,49 +567,53 @@ function WorkbenchHeader({
         !isTerminalSessionState(session.state) && (
           <AccountSwitcher session={session} />
         )}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onAttachImage}
-            disabled={!attachImageEnabled}
-            aria-label={attachLabel}
-            className="size-7 shrink-0"
-          >
-            <ImagePlus className="size-3.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{attachTooltip}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onSelectText}
-            aria-label={selectLabel}
-            className="size-7 shrink-0"
-          >
-            <TextCursorInput className="size-3.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{selectTooltip}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onShowTranscript}
-            aria-label={transcriptLabel}
-            className="size-7 shrink-0"
-          >
-            <ScrollText className="size-3.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>{transcriptTooltip}</TooltipContent>
-      </Tooltip>
+      {!isMobile && (
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onAttachImage}
+                disabled={!attachImageEnabled}
+                aria-label={attachLabel}
+                className="size-7 shrink-0"
+              >
+                <ImagePlus className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{attachTooltip}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onSelectText}
+                aria-label={selectLabel}
+                className="size-7 shrink-0"
+              >
+                <TextCursorInput className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{selectTooltip}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onShowTranscript}
+                aria-label={transcriptLabel}
+                className="size-7 shrink-0"
+              >
+                <ScrollText className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{transcriptTooltip}</TooltipContent>
+          </Tooltip>
+        </>
+      )}
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -593,7 +635,58 @@ function WorkbenchHeader({
         </TooltipTrigger>
         <TooltipContent>{inspectorLabel}</TooltipContent>
       </Tooltip>
-      {isTerminalSessionState(session.state) ? (
+      {isMobile ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t('web.sessions.header.moreActions')}
+              className="size-7 shrink-0"
+            >
+              <MoreHorizontal className="size-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" avoidCollisions={false}>
+            <DropdownMenuItem
+              onSelect={onAttachImage}
+              disabled={!attachImageEnabled}
+            >
+              <ImagePlus /> {attachLabel}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onSelectText}>
+              <TextCursorInput /> {selectLabel}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onShowTranscript}>
+              <ScrollText /> {transcriptLabel}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {ended ? (
+              <>
+                <DropdownMenuItem onSelect={onStart} disabled={starting}>
+                  <RotateCcw />
+                  {starting
+                    ? t('web.sessions.header.restarting')
+                    : t('web.sessions.header.restart')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onRemove} disabled={removing}>
+                  <Trash2 />
+                  {removing
+                    ? t('web.sessions.header.removing')
+                    : t('web.sessions.header.remove')}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem onSelect={onStop} disabled={stopping}>
+                <Power />
+                {stopping
+                  ? t('web.sessions.header.stopping')
+                  : t('web.sessions.header.stop')}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : ended ? (
         <>
           <Button
             variant="ghost"
@@ -625,20 +718,18 @@ function WorkbenchHeader({
           </Button>
         </>
       ) : (
-        <>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onStop}
-            disabled={stopping}
-            className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
-          >
-            <Power className="size-3" />
-            {stopping
-              ? t('web.sessions.header.stopping')
-              : t('web.sessions.header.stop')}
-          </Button>
-        </>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onStop}
+          disabled={stopping}
+          className="text-[11px] gap-1 text-muted-foreground hover:text-destructive"
+        >
+          <Power className="size-3" />
+          {stopping
+            ? t('web.sessions.header.stopping')
+            : t('web.sessions.header.stop')}
+        </Button>
       )}
     </div>
   )

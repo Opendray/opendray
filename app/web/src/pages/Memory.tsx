@@ -29,9 +29,11 @@ export function MemoryPage() {
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
-      <header className="border-border bg-card/30 border-b px-6 py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+      <header className="border-border bg-card/30 border-b px-3 py-3 sm:px-6 sm:py-4">
+        {/* Five nav buttons plus a sentence of copy don't share a row on
+            a phone: stack them, and let the button group wrap. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-base font-medium">
               <Brain className="text-accent size-4" />
               {t('web.memory.title')}
@@ -40,7 +42,7 @@ export function MemoryPage() {
               {t('web.memory.subtitle')}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               asChild
               variant="outline"
@@ -103,7 +105,7 @@ export function MemoryPage() {
           </div>
         </div>
       </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
         <div className="max-w-4xl">
           <MemoryInspector />
         </div>

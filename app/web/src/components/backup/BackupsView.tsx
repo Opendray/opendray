@@ -1064,8 +1064,8 @@ function BackupTable({
     )
   }
   return (
-    <div className="rounded-md border border-border overflow-hidden">
-      <table className="w-full text-[12px]">
+    <div className="rounded-md border border-border overflow-x-auto">
+      <table className="w-full min-w-[560px] text-[12px]">
         <thead className="bg-card/50 text-muted-foreground">
           <tr className="text-left">
             <th className="px-3 py-2 font-medium">{t('web.backups.backupsTab.columns.id')}</th>
@@ -1399,8 +1399,8 @@ function SchedulesTab() {
           {t('web.backups.schedulesTab.empty')}
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-hidden">
-          <table className="w-full text-[12px]">
+        <div className="rounded-md border border-border overflow-x-auto">
+          <table className="w-full min-w-[560px] text-[12px]">
             <thead className="bg-card/50 text-muted-foreground">
               <tr className="text-left">
                 <th className="px-3 py-2 font-medium">{t('web.backups.schedulesTab.columns.id')}</th>
@@ -1659,8 +1659,8 @@ function TargetsTab() {
       {rows === null ? (
         <div className="text-muted-foreground text-sm">{t('web.backups.loading')}</div>
       ) : (
-        <div className="rounded-md border border-border overflow-hidden">
-          <table className="w-full text-[12px]">
+        <div className="rounded-md border border-border overflow-x-auto">
+          <table className="w-full min-w-[560px] text-[12px]">
             <thead className="bg-card/50 text-muted-foreground">
               <tr className="text-left">
                 <th className="px-3 py-2 font-medium">{t('web.backups.targetsTab.columns.id')}</th>

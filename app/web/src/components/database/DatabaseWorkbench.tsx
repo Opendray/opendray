@@ -23,6 +23,8 @@ import { ConnectionDialog } from './ConnectionDialog'
 import { SchemaTree, type TableRef } from './SchemaTree'
 import { DataGrid } from './DataGrid'
 import { SQLConsole } from './SQLConsole'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsMobile } from '../../lib/useIsMobile'
 
 type RightView = { kind: 'table'; ref: TableRef } | { kind: 'console' }
 
@@ -54,6 +56,10 @@ export function DatabaseWorkbench({
   const [view, setView] = useState<RightView>(
     initialTable ? { kind: 'table', ref: initialTable } : { kind: 'console' },
   )
+  // On a phone the schema tree and the grid can't share the dialog, so
+  // the tree becomes a slide-over over the grid.
+  const isMobile = useIsMobile()
+  const [schemaOpen, setSchemaOpen] = useState(false)
 
   const connQuery = useQuery({
     queryKey: ['db-connections', cwd],
@@ -77,7 +83,10 @@ export function DatabaseWorkbench({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b px-3 py-2">
+      {/* flex-wrap: on a phone the connection picker alone is as wide as
+          the dialog, so the toolbar has to be allowed a second row
+          instead of pushing its buttons off the edge. */}
+      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <DialogTitle className="mr-1 flex items-center gap-1.5">
           <Database className="h-4 w-4" />
           {t('web.database.workbench.title')}
@@ -90,7 +99,7 @@ export function DatabaseWorkbench({
               setView({ kind: 'console' })
             }}
           >
-            <SelectTrigger className="h-8 w-56">
+            <SelectTrigger className="h-8 w-full min-w-0 sm:w-56">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -163,14 +172,25 @@ export function DatabaseWorkbench({
           </Button>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1">
-          <div className="w-64 flex-none overflow-auto border-r p-2">
-            <SchemaTree
-              connectionId={active.id}
-              selected={view.kind === 'table' ? view.ref : null}
-              onSelect={(ref) => setView({ kind: 'table', ref })}
-            />
-          </div>
+        <div className="relative flex min-h-0 flex-1">
+          <SlideOverAside
+            side="left"
+            compact={isMobile}
+            open={isMobile ? schemaOpen : true}
+            onOpenChange={setSchemaOpen}
+            label={t('web.database.workbench.title')}
+          >
+            <div className="bg-background w-64 flex-none overflow-auto border-r p-2">
+              <SchemaTree
+                connectionId={active.id}
+                selected={view.kind === 'table' ? view.ref : null}
+                onSelect={(ref) => {
+                  setView({ kind: 'table', ref })
+                  setSchemaOpen(false)
+                }}
+              />
+            </div>
+          </SlideOverAside>
           <div className="min-w-0 flex-1">
             {view.kind === 'table' ? (
               <DataGrid

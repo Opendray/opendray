@@ -103,11 +103,14 @@ export function Topbar({ onOpenPalette }: TopbarProps) {
               variant="outline"
               size="sm"
               onClick={onOpenPalette}
-              className="h-7 gap-2 text-muted-foreground bg-card/50 hover:bg-card font-normal text-[12px]"
+              // Narrow viewports have no keyboard to press ⌘K on and no
+              // room for the label, so the trigger degrades to a plain
+              // icon button rather than eating the whole topbar.
+              className="size-7 p-0 sm:size-auto sm:h-7 sm:px-3 sm:gap-2 text-muted-foreground bg-card/50 hover:bg-card font-normal text-[12px]"
             >
               <Search className="size-3" />
-              <span>{t('web.topbar.search')}</span>
-              <kbd className="ml-1">⌘K</kbd>
+              <span className="hidden sm:inline">{t('web.topbar.search')}</span>
+              <kbd className="ml-1 hidden sm:inline">⌘K</kbd>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t('web.topbar.openPalette')}</TooltipContent>
@@ -173,10 +176,14 @@ export function Topbar({ onOpenPalette }: TopbarProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-[12px] font-normal text-muted-foreground gap-1.5"
+              className="h-7 px-2 text-[12px] font-normal text-muted-foreground gap-1.5 min-w-0"
             >
-              <span className="size-1.5 rounded-full bg-state-running" />
-              {username}
+              <span className="size-1.5 rounded-full bg-state-running shrink-0" />
+              {/* A long account name must not push the topbar wide enough
+                  to scroll on a phone; the full value is in the menu. */}
+              <span className="truncate max-w-[80px] sm:max-w-[160px]">
+                {username}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent

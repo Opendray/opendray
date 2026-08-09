@@ -12,12 +12,16 @@ import {
   Trash2,
   PanelRightClose,
   PanelRightOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 import {
   deleteNote,
   docKind,
@@ -86,11 +90,33 @@ export function VaultPage() {
   const [filter, setFilter] = useState('')
   const [activeTag, setActiveTag] = useState<string | null>(null)
 
+  // Three panes don't fit under 1024px. A tablet keeps the tree and the
+  // editor and pushes the outline into a slide-over; a phone has room
+  // for the editor alone, so the tree becomes a slide-over too.
+  const isMobile = useIsMobile()
+  const isCompact = useIsCompact()
+  const [treeOpen, setTreeOpen] = useState(false)
+  // Opening a note is the only reason the tree drawer is up — dismiss it
+  // so the note the user just picked is what they actually see.
+  const selectNote = (path: string | null) => {
+    setSelected(path)
+    setTreeOpen(false)
+  }
+
   const [outlineOpen, setOutlineOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true
     const stored = localStorage.getItem(LS_OUTLINE_OPEN)
     return stored == null ? true : stored === '1'
   })
+  // On desktop the outline is a persisted preference — a column that
+  // stays where you left it. Below 1024px it is an overlay instead, and
+  // an overlay must be ephemeral and default to closed: reusing the
+  // persisted value pops the outline open on top of the note you just
+  // tapped, and writing to it from a phone would silently close the
+  // outline on the desktop too.
+  const [outlineOverlayOpen, setOutlineOverlayOpen] = useState(false)
+  const outlineShown = isCompact ? outlineOverlayOpen : outlineOpen
+  const setOutlineShown = isCompact ? setOutlineOverlayOpen : setOutlineOpen
 
   // Vault git status for the header badge — slow poll is fine, the
   // dialog has its own faster poll while open.
@@ -116,6 +142,13 @@ export function VaultPage() {
     if (selected) localStorage.setItem(LS_LAST_PATH, selected)
     else localStorage.removeItem(LS_LAST_PATH)
   }, [selected])
+
+  // With no note open there is nothing for the tree to overlay, so on a
+  // phone it stops being a drawer and becomes the page. Otherwise
+  // landing on /vault shows an empty editor with the file tree parked
+  // off-canvas behind a 20px handle — the vault looks empty and
+  // unnavigable, which is exactly how it was reported.
+  const treeIsDrawer = isMobile && !!selected
 
   // If the persisted selection no longer exists in the vault, drop it.
   useEffect(() => {
@@ -285,9 +318,31 @@ export function VaultPage() {
 
   return (
     <div className="h-full flex flex-col">
-      <header className="h-12 border-b border-border flex items-center px-3 gap-2 shrink-0">
-        <NotebookPen className="size-4 text-muted-foreground" />
-        <h1 className="text-[14px] font-semibold tracking-tight">
+      <header className="h-12 border-b border-border flex items-center px-2 sm:px-3 gap-1.5 sm:gap-2 shrink-0">
+        {/* Tree toggle, phones only. On wider screens the tree is a
+            permanent column so no toggle was ever needed — which left
+            the phone drawer reachable ONLY via the thin edge handle,
+            i.e. effectively unreachable. */}
+        {treeIsDrawer && (
+          <button
+            type="button"
+            onClick={() => setTreeOpen((v) => !v)}
+            aria-label={
+              treeOpen
+                ? t('web.notes.left.closeTree')
+                : t('web.notes.left.openTree')
+            }
+            className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-card hover:text-foreground"
+          >
+            {treeOpen ? (
+              <PanelLeftClose className="size-4" />
+            ) : (
+              <PanelLeftOpen className="size-4" />
+            )}
+          </button>
+        )}
+        <NotebookPen className="size-4 text-muted-foreground shrink-0" />
+        <h1 className="text-[14px] font-semibold tracking-tight shrink-0">
           {t('web.notes.title')}
         </h1>
         {info && (
@@ -297,7 +352,7 @@ export function VaultPage() {
           // right edge — which is how "New" and "Today" became
           // reachable only from the empty state.
           <span
-            className="text-[10.5px] text-muted-foreground/60 font-mono truncate min-w-0"
+            className="hidden sm:inline text-[10.5px] text-muted-foreground/60 font-mono truncate min-w-0"
             title={info.root}
           >
             · {info.root}
@@ -307,25 +362,27 @@ export function VaultPage() {
         <VaultSyncBadge status={vault} onClick={() => setSyncOpen(true)} />
         <button
           type="button"
-          onClick={() => setOutlineOpen((v) => !v)}
+          onClick={() => setOutlineShown((v) => !v)}
           className={cn(
             'inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md transition-colors',
-            outlineOpen
+            outlineShown
               ? 'text-foreground bg-card'
               : 'text-muted-foreground hover:text-foreground',
           )}
           title={
-            outlineOpen
+            outlineShown
               ? t('web.notes.header.hideOutline')
               : t('web.notes.header.showOutline')
           }
         >
-          {outlineOpen ? (
+          {outlineShown ? (
             <PanelRightClose className="size-3" />
           ) : (
             <PanelRightOpen className="size-3" />
           )}
-          {t('web.notes.header.outline')}
+          <span className="hidden sm:inline">
+            {t('web.notes.header.outline')}
+          </span>
         </button>
         <button
           type="button"
@@ -334,7 +391,9 @@ export function VaultPage() {
           title={t('web.notes.header.todayTooltip')}
         >
           <Calendar className="size-3" />
-          {t('web.notes.header.today')}
+          <span className="hidden sm:inline">
+            {t('web.notes.header.today')}
+          </span>
         </button>
         <button
           type="button"
@@ -342,15 +401,28 @@ export function VaultPage() {
           className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-accent text-accent-foreground hover:bg-accent/90"
         >
           <Plus className="size-3" />
-          {t('web.notes.header.new')}
+          <span className="hidden sm:inline">{t('web.notes.header.new')}</span>
         </button>
       </header>
 
       {info?.flattenable && <FlattenNotice />}
 
-      <div className="flex-1 flex min-h-0">
-        {/* Left pane: tree / tags + filter */}
-        <aside className="w-72 shrink-0 border-r border-border flex flex-col bg-background">
+      {/* `relative` anchors the slide-over panes below. */}
+      <div className="flex-1 flex min-h-0 relative">
+        {/* Left pane: tree / tags + filter. Slide-over on phones. */}
+        <SlideOverAside
+          side="left"
+          compact={treeIsDrawer}
+          open={treeIsDrawer ? treeOpen : true}
+          onOpenChange={setTreeOpen}
+          label={t('web.notes.left.openTree')}
+        >
+        <aside
+          className={cn(
+            'border-r border-border flex flex-col bg-background',
+            isMobile && !selected ? 'w-full flex-1' : 'w-72 shrink-0',
+          )}
+        >
           <div className="px-2 py-2 border-b border-border shrink-0 flex flex-col gap-1.5">
             <div className="flex gap-0.5">
               <button
@@ -449,7 +521,7 @@ export function VaultPage() {
                 ref={treeRef}
                 notes={visibleNotes}
                 selected={selected}
-                onSelect={setSelected}
+                onSelect={selectNote}
               />
             ) : (
               <TagsList
@@ -471,9 +543,17 @@ export function VaultPage() {
             })}
           </div>
         </aside>
+        </SlideOverAside>
 
         {/* Center pane: editor */}
-        <main className="flex-1 flex flex-col min-w-0 bg-background">
+        <main
+          className={cn(
+            'flex-1 flex flex-col min-w-0 bg-background',
+            // Squeezed to ~60px beside the tree-as-page, and it has
+            // nothing to say the tree doesn't already offer.
+            isMobile && !selected && 'hidden',
+          )}
+        >
           {selected ? (
             <div className="flex-1 flex flex-col min-h-0 px-4 py-3 gap-2">
               <div className="flex items-baseline gap-2 shrink-0">
@@ -533,8 +613,19 @@ export function VaultPage() {
         </main>
 
         {/* Right pane: outline (toggleable). Only renders when a note
-            is open — empty state doesn't need an outline. */}
-        {outlineOpen && selected && (
+            is open — empty state doesn't need an outline. Slide-over
+            from tablet down: it is the third column. */}
+        {selected && (
+          <SlideOverAside
+            side="right"
+            compact={isCompact}
+            open={outlineShown}
+            onOpenChange={setOutlineShown}
+            label={t('web.notes.header.showOutline')}
+            // The header already carries an Outline toggle; a floating
+            // edge handle on top of the editor would just be clutter.
+            hideHandle
+          >
           <aside className="w-60 shrink-0 border-l border-border flex flex-col bg-background">
             <OutlineHeader count={outline.length} />
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -552,6 +643,7 @@ export function VaultPage() {
               />
             </div>
           </aside>
+          </SlideOverAside>
         )}
       </div>
 

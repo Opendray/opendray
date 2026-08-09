@@ -88,7 +88,7 @@ export function ActivityPage() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <header className="border-b border-border px-6 py-4 flex flex-wrap items-start gap-3">
+      <header className="border-b border-border px-3 py-3 sm:px-6 sm:py-4 flex flex-wrap items-start gap-3">
         <div className="flex-1 min-w-[260px]">
           <h1 className="text-[16px] font-semibold tracking-tight flex items-center gap-2">
             <ActivityIcon className="size-4 text-muted-foreground" />
@@ -245,7 +245,7 @@ function CallsTable({
 }) {
   const { t } = useTranslation()
   return (
-    <table className="w-full text-[12px] border-collapse">
+    <table className="w-full min-w-[720px] text-[12px] border-collapse">
       <thead>
         <tr className="border-b border-border bg-card/40">
           <Th>{t('web.activity.table.time')}</Th>

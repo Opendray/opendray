@@ -19,6 +19,11 @@ import { SessionRow } from './SessionRow'
 interface SessionListProps {
   onSpawn: () => void
   onOpen: (session: Session) => void
+  /**
+   * Render as the full page rather than a fixed-width column — used on
+   * phones when no session is open and the list *is* the screen.
+   */
+  fullWidth?: boolean
 }
 
 // orderBy ranks sessions most-recently-used first: by last-opened time
@@ -61,7 +66,7 @@ function buildTree(sessions: Session[]) {
   return { tops, childrenOf }
 }
 
-export function SessionList({ onSpawn, onOpen }: SessionListProps) {
+export function SessionList({ onSpawn, onOpen, fullWidth }: SessionListProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: sessions, isLoading } = useQuery({
@@ -158,7 +163,12 @@ export function SessionList({ onSpawn, onOpen }: SessionListProps) {
   }
 
   return (
-    <aside className="w-72 shrink-0 border-r border-border flex flex-col bg-background">
+    <aside
+      className={cn(
+        'border-r border-border flex flex-col bg-background',
+        fullWidth ? 'w-full flex-1' : 'w-72 shrink-0',
+      )}
+    >
       <div className="h-14 px-3 flex items-center justify-between border-b border-border">
         <div className="flex items-baseline gap-1.5">
           <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">

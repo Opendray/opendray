@@ -30,6 +30,8 @@ import { useTheme, type ThemeMode } from '@/stores/theme'
 import { useAuth } from '@/stores/auth'
 import { useLayout } from '@/stores/layout'
 import { cn } from '@/lib/utils'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsMobile } from '../lib/useIsMobile'
 import {
   ServerSettings,
   SettingsSearchInput,
@@ -102,6 +104,16 @@ export function SettingsPage() {
   const [active, setActive] = useState<TopSection>(initialSection)
   const [search, setSearch] = useState('')
 
+  // On a phone the section list is a slide-over. Picking a section is
+  // the one and only reason it is open, so close it on select — leaving
+  // it up would hide the very content the user just asked for.
+  const isMobile = useIsMobile()
+  const [navOpen, setNavOpen] = useState(false)
+  const selectSection = (s: TopSection) => {
+    setActive(s)
+    setNavOpen(false)
+  }
+
   useEffect(() => {
     if (isValidTopSection(sp.section) && sp.section !== active) {
       setActive(sp.section)
@@ -123,8 +135,16 @@ export function SettingsPage() {
   })
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
-      {/* Sidebar */}
+    // `relative` anchors the phone slide-over below.
+    <div className="flex h-full min-h-0 overflow-hidden relative">
+      {/* Sidebar: inline column from tablet up, slide-over on phones. */}
+      <SlideOverAside
+        side="left"
+        compact={isMobile}
+        open={isMobile ? navOpen : true}
+        onOpenChange={setNavOpen}
+        label={t('web.settings.title')}
+      >
       <aside className="w-60 shrink-0 border-r border-border bg-background flex flex-col">
         <div className="px-5 pt-6 pb-3">
           <h1 className="text-[15px] font-semibold tracking-tight">
@@ -144,7 +164,7 @@ export function SettingsPage() {
                   icon={item.icon}
                   label={t(item.labelKey)}
                   active={active === item.key}
-                  onClick={() => setActive(item.key)}
+                  onClick={() => selectSection(item.key)}
                 />
               ))}
             </SidebarGroup>
@@ -159,7 +179,7 @@ export function SettingsPage() {
                   icon={Settings2}
                   label={serverSectionLabel(s.id).title}
                   active={active === key}
-                  onClick={() => setActive(key)}
+                  onClick={() => selectSection(key)}
                 />
               )
             })}
@@ -170,13 +190,13 @@ export function SettingsPage() {
               icon={Activity}
               label={t('web.settings.items.status')}
               active={active === 'system'}
-              onClick={() => setActive('system')}
+              onClick={() => selectSection('system')}
             />
             <SidebarItem
               icon={Info}
               label={t('web.settings.items.about')}
               active={active === 'about'}
-              onClick={() => setActive('about')}
+              onClick={() => selectSection('about')}
             />
           </SidebarGroup>
         </nav>
@@ -201,10 +221,11 @@ export function SettingsPage() {
           </span>
         </div>
       </aside>
+      </SlideOverAside>
 
       {/* Content */}
       <div className="flex-1 min-w-0 overflow-y-auto">
-        <div className="max-w-[860px] mx-auto px-8 py-8">
+        <div className="max-w-[860px] mx-auto px-4 py-6 sm:px-8 sm:py-8">
           {/* Sticky search row, only shown when a server section is active */}
           {active.startsWith('server.') && (
             <div className="flex items-center gap-3 mb-6">

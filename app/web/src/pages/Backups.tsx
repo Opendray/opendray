@@ -15,9 +15,9 @@ export function BackupsPage() {
   const { t } = useTranslation()
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <header className="px-6 py-4 border-b border-border bg-card/30">
+      <header className="px-3 py-3 sm:px-6 sm:py-4 border-b border-border bg-card/30">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-base font-medium flex items-center gap-2">
               <Archive className="size-4 text-accent" />
               {t('web.backups.title')}
@@ -34,7 +34,7 @@ export function BackupsPage() {
           </Button>
         </div>
       </header>
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
         <div className="max-w-5xl">
           <BackupsView />
         </div>
