@@ -37,9 +37,9 @@ export function ExportPage() {
   const { t } = useTranslation()
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      <header className="px-6 py-4 border-b border-border bg-card/30">
+      <header className="px-3 py-3 sm:px-6 sm:py-4 border-b border-border bg-card/30">
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-base font-medium flex items-center gap-2">
               <Package className="size-4 text-accent" />
               {t('web.export.title')}
@@ -53,7 +53,7 @@ export function ExportPage() {
           </Button>
         </div>
       </header>
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 sm:px-6 sm:py-5">
         <div className="max-w-3xl flex flex-col gap-6">
           <SectionHeader>{t('web.export.sections.export')}</SectionHeader>
           <ExportForm />
@@ -319,8 +319,8 @@ function ExportHistory() {
       <div className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
         {t('web.export.history.title')}
       </div>
-      <div className="rounded-md border border-border overflow-hidden">
-        <table className="w-full text-[12px]">
+      <div className="rounded-md border border-border overflow-x-auto">
+        <table className="w-full min-w-[560px] text-[12px]">
           <thead className="bg-card/50 text-muted-foreground">
             <tr className="text-left">
               <th className="px-3 py-2 font-medium">{t('web.export.history.columns.id')}</th>
@@ -652,8 +652,8 @@ function ImportHistory() {
       <div className="text-[11px] font-medium text-muted-foreground tracking-wider uppercase">
         {t('web.export.imports.title')}
       </div>
-      <div className="rounded-md border border-border overflow-hidden">
-        <table className="w-full text-[12px]">
+      <div className="rounded-md border border-border overflow-x-auto">
+        <table className="w-full min-w-[560px] text-[12px]">
           <thead className="bg-card/50 text-muted-foreground">
             <tr className="text-left">
               <th className="px-3 py-2 font-medium">{t('web.export.imports.columns.id')}</th>

@@ -150,7 +150,8 @@
         "selectText": "Seleccionar y copiar",
         "selectTextTooltip": "Abre una vista de texto seleccionable para copiar cualquier parte de la salida",
         "transcript": "Transcripción",
-        "transcriptTooltip": "Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)"
+        "transcriptTooltip": "Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)",
+        "moreActions": "Más acciones"
       },
       "terminal": {
         "uploadingToast": "Subiendo imagen…",
@@ -1005,7 +1006,9 @@
         "collapseAll": "Contraer todo",
         "collapseAllTooltip": "Contraer todas las carpetas",
         "loading": "Cargando…",
-        "footer": "{visible} / {total} notas"
+        "footer": "{visible} / {total} notas",
+        "openTree": "Abrir árbol de notas",
+        "closeTree": "Cerrar árbol de notas"
       },
       "tags": {
         "emptyVault": "Aún no hay etiquetas en el vault.",

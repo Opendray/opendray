@@ -214,11 +214,19 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b px-4 py-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-muted-foreground font-mono text-xs">{cwd}</div>
-            <div className="mt-1 flex items-center gap-3 text-xs">
+      <div className="border-b px-3 py-3 sm:px-4">
+        {/* flex-wrap + min-w-0: the cwd is an unbreakable mono path, so
+            without a shrinkable track it shoves the action buttons off
+            the right edge of a phone. */}
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div
+              className="text-muted-foreground truncate font-mono text-xs"
+              title={cwd}
+            >
+              {cwd}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
               <span>
                 {t('web.project.header.docsCount', { count: docsCount })}
               </span>
@@ -279,7 +287,7 @@ export function ProjectScreen({ cwd }: ProjectScreenProps) {
         onValueChange={setActiveTab}
         className="flex flex-1 flex-col overflow-hidden"
       >
-        <TabsList className="bg-muted/30 mx-4 mt-3 w-fit max-w-[calc(100%-2rem)] flex-wrap">
+        <TabsList className="bg-muted/30 mx-3 mt-3 w-fit max-w-[calc(100%-1.5rem)] flex-wrap sm:mx-4 sm:max-w-[calc(100%-2rem)]">
           {sections.map((sec) => (
             <TabsTrigger key={sec.slug} value={sec.slug}>
               {sectionTabLabel(sec, t)}

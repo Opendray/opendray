@@ -39,19 +39,19 @@ export function ProjectCwdPicker({
   const knownCwds = (projectsQuery.data ?? []).map((p) => p.cwd)
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6">
+    <div className="mx-auto max-w-2xl space-y-4 p-3 sm:p-6">
       <h1 className="text-xl font-semibold">
         {title ?? t('web.project.picker.title')}
       </h1>
       <p className="text-muted-foreground text-sm">
         {subtitle ?? t('web.project.picker.subtitle')}
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           placeholder={t('web.project.picker.pathPlaceholder')}
           value={picker}
           onChange={(e) => setPicker(e.target.value)}
-          className="font-mono"
+          className="w-full min-w-0 font-mono sm:w-auto sm:flex-1"
         />
         <Button
           variant="outline"
@@ -100,7 +100,17 @@ export function ProjectCwdPicker({
                 ) : (
                   <Folder className="text-muted-foreground h-4 w-4 flex-none" />
                 )}
-                <span className="truncate font-mono text-xs">{cwd}</span>
+                {/* dir=rtl clips the HEAD of the path instead of the
+                    tail: every project here shares a long common prefix,
+                    so the project name at the end is the only part that
+                    tells them apart. The bdi keeps the text itself
+                    rendering left-to-right. */}
+                <span
+                  dir="rtl"
+                  className="min-w-0 flex-1 truncate text-left font-mono text-xs"
+                >
+                  <bdi>{cwd}</bdi>
+                </span>
                 {orphan && (
                   <span className="text-muted-foreground ml-auto text-[10px]">
                     {t('web.project.picker.orphanBadge')}

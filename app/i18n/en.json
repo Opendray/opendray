@@ -150,7 +150,8 @@
         "selectText": "Select & copy",
         "selectTextTooltip": "Open a selectable text view to copy any part of the output",
         "transcript": "Transcript",
-        "transcriptTooltip": "Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)"
+        "transcriptTooltip": "Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)",
+        "moreActions": "More actions"
       },
       "terminal": {
         "uploadingToast": "Uploading image…",
@@ -1005,7 +1006,9 @@
         "collapseAll": "Collapse all",
         "collapseAllTooltip": "Collapse every folder",
         "loading": "Loading…",
-        "footer": "{visible} / {total} notes"
+        "footer": "{visible} / {total} notes",
+        "openTree": "Open note tree",
+        "closeTree": "Close note tree"
       },
       "tags": {
         "emptyVault": "No tags in vault yet.",

@@ -133,7 +133,9 @@ export function FilesPanel({ cwd, onPreviewHtml }: FilesPanelProps) {
 
   return (
     <>
-      <div className="flex items-center gap-1 px-1 pb-1">
+      {/* flex-wrap: the inspector is a ~350px drawer on a phone, and
+          three labelled buttons don't fit on one line there. */}
+      <div className="flex flex-wrap items-center gap-1 px-1 pb-1">
         <Button variant="ghost" size="sm" onClick={handleNewFolder}>
           <FolderPlus className="size-3.5" />
           New folder

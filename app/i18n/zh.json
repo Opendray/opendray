@@ -150,7 +150,8 @@
         "selectText": "选择并复制",
         "selectTextTooltip": "打开可选择文本视图,复制输出中的任意部分",
         "transcript": "完整记录",
-        "transcriptTooltip": "打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）"
+        "transcriptTooltip": "打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）",
+        "moreActions": "更多操作"
       },
       "terminal": {
         "uploadingToast": "正在上传图片…",
@@ -1005,7 +1006,9 @@
         "collapseAll": "全部收起",
         "collapseAllTooltip": "收起全部文件夹",
         "loading": "加载中…",
-        "footer": "{visible} / {total} 条笔记"
+        "footer": "{visible} / {total} 条笔记",
+        "openTree": "打开笔记树",
+        "closeTree": "收起笔记树"
       },
       "tags": {
         "emptyVault": "vault 中暂无标签。",

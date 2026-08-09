@@ -84,7 +84,7 @@ import { cn } from '@/lib/utils'
 export function PluginsPage() {
   const { t } = useTranslation()
   return (
-    <div className="h-full flex flex-col p-6 gap-4 overflow-y-auto">
+    <div className="h-full flex flex-col p-3 sm:p-6 gap-4 overflow-y-auto">
       <header className="flex flex-col gap-1">
         <h1 className="text-[18px] font-semibold tracking-tight">
           {t('web.plugins.title')}
@@ -261,7 +261,7 @@ function McpSection() {
         </Button>
       }
     >
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="rounded-md border border-border overflow-x-auto">
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
@@ -272,7 +272,7 @@ function McpSection() {
             {t('web.plugins.mcp.empty')}
           </div>
         ) : (
-          <table className="w-full text-[12px]">
+          <table className="w-full min-w-[720px] text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">
@@ -757,7 +757,7 @@ function McpSecretsSection() {
         </Button>
       }
     >
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="rounded-md border border-border overflow-x-auto">
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
@@ -771,7 +771,7 @@ function McpSecretsSection() {
             />
           </div>
         ) : (
-          <table className="w-full text-[12px]">
+          <table className="w-full min-w-[720px] text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">
@@ -1082,7 +1082,7 @@ function SkillsSection() {
     >
       <div
         className={cn(
-          'relative rounded-md border border-border overflow-hidden',
+          'relative rounded-md border border-border overflow-x-auto',
           dragActive && 'ring-2 ring-accent/70',
         )}
         onDragEnter={(e) => {
@@ -1126,7 +1126,7 @@ function SkillsSection() {
             </div>
           </div>
         ) : (
-          <table className="w-full text-[12px]">
+          <table className="w-full min-w-[720px] text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">
@@ -1481,7 +1481,7 @@ function CustomTasksSection() {
         </Button>
       }
     >
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="rounded-md border border-border overflow-x-auto">
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
@@ -1492,7 +1492,7 @@ function CustomTasksSection() {
             {t('web.plugins.customTasks.empty')}
           </div>
         ) : (
-          <table className="w-full text-[12px]">
+          <table className="w-full min-w-[720px] text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">
@@ -1637,7 +1637,7 @@ function GitHostsSection() {
         </Button>
       }
     >
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="rounded-md border border-border overflow-x-auto">
         {isLoading ? (
           <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
             <Loader2 className="size-3 animate-spin" />
@@ -1648,7 +1648,7 @@ function GitHostsSection() {
             {t('web.plugins.gitHosts.empty')}
           </div>
         ) : (
-          <table className="w-full text-[12px]">
+          <table className="w-full min-w-[720px] text-[12px]">
             <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">

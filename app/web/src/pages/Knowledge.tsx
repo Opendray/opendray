@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ComponentProps } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -38,6 +38,8 @@ import {
   type DocProposal,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 import { Switch } from '@/components/ui/switch'
 import { Loader2, Plus, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -99,15 +101,33 @@ const MD = {
     <h2 className="mt-4 mb-1.5 text-base font-semibold border-b border-border pb-1" {...p} />
   ),
   h3: (p: any) => <h3 className="mt-3 mb-1 text-sm font-semibold" {...p} />,
-  p: (p: any) => <p className="my-1.5 text-sm leading-relaxed" {...p} />,
+  p: (p: any) => (
+    <p className="my-1.5 text-sm leading-relaxed break-words" {...p} />
+  ),
   ul: (p: any) => <ul className="my-1.5 ml-5 list-disc space-y-0.5 text-sm" {...p} />,
   ol: (p: any) => <ol className="my-1.5 ml-5 list-decimal space-y-0.5 text-sm" {...p} />,
-  li: (p: any) => <li className="leading-relaxed" {...p} />,
+  li: (p: any) => <li className="leading-relaxed break-words" {...p} />,
   code: (p: any) => (
-    <code className="rounded bg-muted px-1 py-0.5 text-[12px] font-mono" {...p} />
+    <code
+      className="rounded bg-muted px-1 py-0.5 text-[12px] font-mono break-words whitespace-pre-wrap"
+      {...p}
+    />
+  ),
+  // Fenced blocks scroll rather than wrap — breaking a command across
+  // lines would misrepresent it.
+  pre: (p: ComponentProps<'pre'>) => (
+    <pre
+      className="my-2 overflow-x-auto rounded-md bg-muted p-2 text-[12px]"
+      {...p}
+    />
+  ),
+  table: (p: ComponentProps<'table'>) => (
+    <div className="my-2 overflow-x-auto">
+      <table className="w-full border-collapse text-[12px]" {...p} />
+    </div>
   ),
   strong: (p: any) => <strong className="font-semibold" {...p} />,
-  a: (p: any) => <a className="text-primary underline" {...p} />,
+  a: (p: any) => <a className="text-primary underline break-words" {...p} />,
   hr: () => <hr className="my-3 border-border" />,
 }
 
@@ -342,6 +362,11 @@ function KnowledgeBaseView() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [librarianOpen, setLibrarianOpen] = useState(false)
 
+  // On a phone the page list is a slide-over; picking a page is its only
+  // purpose, so dismiss it on select.
+  const isMobile = useIsMobile()
+  const [navOpen, setNavOpen] = useState(false)
+
   // The knowledge blueprint: the page set is data, not a constant.
   const blueprint = useQuery({
     queryKey: ['kb-blueprint'],
@@ -436,6 +461,7 @@ function KnowledgeBaseView() {
     setEditing(false)
     setShowProposal(false)
     setChatOpen(false)
+    setNavOpen(false)
   }
 
   const content = stripSig(doc.data?.content ?? '')
@@ -444,9 +470,18 @@ function KnowledgeBaseView() {
   const foundational = selSection?.nature === 'foundational'
 
   return (
-    <div className="border-border flex min-h-0 flex-1 rounded-b-md rounded-tr-md border">
-      {/* nav — two natures, page set from the knowledge blueprint */}
-      <div className="border-border flex w-64 shrink-0 flex-col overflow-auto border-r p-2">
+    // `relative` anchors the phone slide-over below.
+    <div className="border-border relative flex min-h-0 flex-1 rounded-b-md rounded-tr-md border">
+      {/* nav — two natures, page set from the knowledge blueprint.
+          Inline column from tablet up, slide-over on phones. */}
+      <SlideOverAside
+        side="left"
+        compact={isMobile}
+        open={isMobile ? navOpen : true}
+        onOpenChange={setNavOpen}
+        label={t('web.knowledge.kb.tab')}
+      >
+      <div className="border-border bg-background flex w-64 shrink-0 flex-col overflow-auto border-r p-2">
         <NavSection
           label={t('web.knowledge.kb.foundational')}
           hint={t('web.knowledge.kb.foundationalHint')}
@@ -479,11 +514,12 @@ function KnowledgeBaseView() {
           {t('web.knowledge.kb.librarian.button')}
         </button>
       </div>
+      </SlideOverAside>
 
       {/* content */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="border-border flex items-center gap-2 border-b px-4 py-2">
-          <h2 className="text-sm font-medium">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="border-border flex flex-wrap items-center gap-2 border-b px-3 py-2 sm:px-4">
+          <h2 className="min-w-0 truncate text-sm font-medium">
             {selSection ? kbPageLabel(selSection, t) : sel}
           </h2>
           <span
@@ -633,7 +669,7 @@ function KnowledgeBaseView() {
           </div>
         )}
 
-        <div className="flex-1 overflow-auto p-4">
+        <div className="min-w-0 flex-1 overflow-auto p-3 sm:p-4">
           {editing ? (
             <div className="flex h-full flex-col gap-2">
               <textarea
@@ -1266,6 +1302,7 @@ function GraphCanvas({
 function GraphView() {
   const { t } = useTranslation()
   const [selId, setSelId] = useState<string | null>(null)
+  const isCompact = useIsCompact()
 
   const graphQuery = useQuery({
     queryKey: ['knowledge-graph-all'],
@@ -1293,7 +1330,7 @@ function GraphView() {
       <p className="text-muted-foreground border-border border-b px-3 py-2 text-[11px] leading-snug">
         {t('web.knowledge.graph.intro')}
       </p>
-      <div className="flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1">
         <div className="relative min-h-0 flex-1 overflow-hidden">
           {graphQuery.isLoading ? (
             <Loader2 className="m-4 h-4 w-4 animate-spin" />
@@ -1332,9 +1369,18 @@ function GraphView() {
           )}
         </div>
 
-        {/* side panel — the selected node's neighborhood, grouped by kind */}
+        {/* side panel — the selected node's neighborhood, grouped by kind.
+            Overlays the canvas from tablet down: it is the third column,
+            and the graph itself needs the room. */}
         {selId && (
-          <div className="border-border flex w-80 shrink-0 flex-col border-l">
+          <SlideOverAside
+            side="right"
+            compact={isCompact}
+            open
+            onOpenChange={(v) => !v && setSelId(null)}
+            label={t('web.knowledge.graph.tab')}
+          >
+          <div className="border-border bg-background flex w-80 shrink-0 flex-col border-l">
             <div className="border-border flex items-center gap-2 border-b px-3 py-2">
               <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">
                 {selNode ? nodeDisplayTitle(selNode) : '…'}
@@ -1399,6 +1445,7 @@ function GraphView() {
               )}
             </div>
           </div>
+          </SlideOverAside>
         )}
       </div>
     </div>
@@ -1411,7 +1458,7 @@ export function KnowledgePage() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="px-4 pt-3">
+      <header className="px-3 pt-3 sm:px-4">
         <h1 className="text-lg font-semibold">{t('web.knowledge.title')}</h1>
         <p className="text-sm text-muted-foreground">
           {t('web.knowledge.subtitle')}
@@ -1428,7 +1475,7 @@ export function KnowledgePage() {
           </TabBtn>
         </div>
       </header>
-      <div className="flex flex-1 flex-col min-h-0 px-4 pb-4">
+      <div className="flex flex-1 flex-col min-h-0 px-2 pb-2 sm:px-4 sm:pb-4">
         {tab === 'kb' ? (
           <KnowledgeBaseView />
         ) : tab === 'distill' ? (

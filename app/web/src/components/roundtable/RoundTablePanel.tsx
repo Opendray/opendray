@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 import { listRoundTables, type RoundTableStatus } from '@/lib/roundtable'
 import { CreateRoundTableDialog } from './CreateRoundTableDialog'
 import { RoundTableDetail } from './RoundTableDetail'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsMobile } from '../../lib/useIsMobile'
 
 const STATUS_VARIANT: Record<RoundTableStatus, 'success' | 'outline'> = {
   active: 'success',
@@ -19,6 +21,16 @@ export function RoundTablePanel() {
   const { t } = useTranslation()
   const [selected, setSelected] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  // On a phone the table list is a slide-over over the transcript —
+  // but with nothing selected there is no transcript to overlay, so the
+  // list simply becomes the page (same rule as the session list).
+  const isMobile = useIsMobile()
+  const [listOpen, setListOpen] = useState(false)
+  const selectTable = (id: string) => {
+    setSelected(id)
+    setListOpen(false)
+  }
 
   const list = useQuery({
     queryKey: ['round-tables'],
@@ -31,9 +43,27 @@ export function RoundTablePanel() {
   const tables = list.data ?? []
 
   return (
-    <div className="flex h-full min-h-0 gap-4">
+    // `relative` anchors the phone slide-over below.
+    <div className="relative flex h-full min-h-0 gap-4">
       {/* List column */}
-      <div className="flex w-72 shrink-0 flex-col gap-2">
+      <SlideOverAside
+        side="left"
+        compact={isMobile && !!selected}
+        open={isMobile && selected ? listOpen : true}
+        onOpenChange={setListOpen}
+        label={t('web.roundTable.title')}
+      >
+      <div
+        className={cn(
+          'flex flex-col gap-2',
+          isMobile && !selected ? 'w-full flex-1' : 'w-72 shrink-0',
+          // As an overlay the column needs its own surface — inline it
+          // sits on the page background and needs neither.
+          isMobile &&
+            selected &&
+            'border-border bg-background overflow-y-auto border-r p-3',
+        )}
+      >
         <Button size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="size-3.5" />
           {t('web.roundTable.new')}
@@ -57,7 +87,7 @@ export function RoundTablePanel() {
               <button
                 key={rt.id}
                 type="button"
-                onClick={() => setSelected(rt.id)}
+                onClick={() => selectTable(rt.id)}
                 className={cn(
                   'flex flex-col gap-1 rounded-md border px-3 py-2 text-left transition-colors',
                   selected === rt.id
@@ -81,9 +111,15 @@ export function RoundTablePanel() {
           </div>
         )}
       </div>
+      </SlideOverAside>
 
       {/* Detail column */}
-      <div className="min-w-0 flex-1 overflow-y-auto">
+      <div
+        className={cn(
+          'min-w-0 flex-1 overflow-y-auto',
+          isMobile && !selected && 'hidden',
+        )}
+      >
         {selected ? (
           <RoundTableDetail id={selected} onDeleted={() => setSelected(null)} />
         ) : (

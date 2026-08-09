@@ -2206,8 +2206,8 @@ function BackupSection({
               />
             </div>
           ) : (
-            <div className="rounded-md border border-border bg-card/30 overflow-hidden">
-              <table className="w-full text-[12px]">
+            <div className="rounded-md border border-border bg-card/30 overflow-x-auto">
+              <table className="w-full min-w-[560px] text-[12px]">
                 <thead className="bg-card/50 text-muted-foreground">
                   <tr className="text-left">
                     <th className="px-3 py-2 font-medium">

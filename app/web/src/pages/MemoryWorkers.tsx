@@ -137,7 +137,7 @@ export function MemoryWorkersPage() {
   // what went wrong.
   if (workersQuery.isError) {
     return (
-      <div className="mx-auto max-w-2xl space-y-3 p-6 text-sm">
+      <div className="mx-auto max-w-2xl space-y-3 p-3 sm:p-6 text-sm">
         <h1 className="text-xl font-semibold">
           {t('web.memoryWorkers.title')}
         </h1>
@@ -162,7 +162,7 @@ export function MemoryWorkersPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-3xl space-y-10 p-6">
+    <div className="mx-auto max-w-3xl space-y-10 p-3 sm:p-6">
       <header>
         <h1 className="text-xl font-semibold">
           {t('web.memoryConfig.title')}

@@ -1110,8 +1110,8 @@ export function CostBlock() {
           {t('web.memoryAmbient.cost.empty')}
         </div>
       ) : (
-        <div className="rounded-md border border-border overflow-hidden">
-          <table className="w-full text-[11.5px]">
+        <div className="rounded-md border border-border overflow-x-auto">
+          <table className="w-full min-w-[560px] text-[11.5px]">
             <thead className="bg-card/50 text-[11px] text-muted-foreground">
               <tr>
                 <th className="px-3 py-1.5 text-left font-medium">{t('web.memoryAmbient.cost.columns.provider')}</th>

@@ -1,30 +1,35 @@
 import { Suspense, useEffect, useState } from 'react'
 import { Outlet } from '@tanstack/react-router'
-import { Loader2, ChevronRight } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SidebarNav } from './SidebarNav'
 import { Topbar } from './Topbar'
+import { SlideOverAside } from './SlideOverAside'
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette'
 import { HealthBanner } from './HealthBanner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useLayout } from '@/stores/layout'
-import { useIsMobile } from '../lib/useIsMobile'
-import { cn } from '@/lib/utils'
+import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 
 export function AppShell() {
+  const { t } = useTranslation()
   const [paletteOpen, setPaletteOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
 
   const isMobile = useIsMobile()
+  const isCompact = useIsCompact()
   const sidebarCollapsed = useLayout((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useLayout((s) => s.setSidebarCollapsed)
 
-  // Entering mobile collapses the nav so the workbench gets full width;
-  // the user re-opens it as a slide-over via the edge arrow / topbar.
+  // Entering a narrow viewport collapses the nav so the workbench gets
+  // the width. What "collapsed" means differs by size: on a tablet the
+  // nav stays inline as a 48px icon rail (still one tap from anywhere),
+  // on a phone there is no room even for that, so it becomes a
+  // slide-over the user pulls in from the edge or the topbar toggle.
   useEffect(() => {
-    if (isMobile) setSidebarCollapsed(true)
-  }, [isMobile, setSidebarCollapsed])
+    if (isCompact) setSidebarCollapsed(true)
+  }, [isCompact, setSidebarCollapsed])
 
   const navOpen = !sidebarCollapsed
 
@@ -40,40 +45,19 @@ export function AppShell() {
         <Topbar onOpenPalette={() => setPaletteOpen(true)} />
         <HealthBanner />
         <div className="flex-1 flex overflow-hidden min-h-0 relative">
-          {isMobile ? (
-            <>
-              {/* Slide-over nav drawer */}
-              <div
-                className={cn(
-                  'fixed inset-y-0 left-0 z-50 flex transition-transform duration-200 ease-out',
-                  navOpen ? 'translate-x-0' : '-translate-x-full',
-                )}
-              >
-                <SidebarNav />
-              </div>
-              {/* Backdrop (tap to close) */}
-              {navOpen && (
-                <div
-                  className="fixed inset-0 z-40 bg-black/50"
-                  onClick={() => setSidebarCollapsed(true)}
-                  aria-hidden
-                />
-              )}
-              {/* Edge handle to pull the nav in when closed */}
-              {!navOpen && (
-                <button
-                  type="button"
-                  onClick={() => setSidebarCollapsed(false)}
-                  aria-label="Open navigation"
-                  className="fixed left-0 top-1/2 -translate-y-1/2 z-30 h-12 w-5 rounded-r-md border border-l-0 border-border bg-card/90 text-muted-foreground flex items-center justify-center shadow-sm active:bg-card"
-                >
-                  <ChevronRight className="size-3.5" />
-                </button>
-              )}
-            </>
-          ) : (
+          <SlideOverAside
+            side="left"
+            compact={isMobile}
+            open={isMobile ? navOpen : true}
+            onOpenChange={(v) => setSidebarCollapsed(!v)}
+            label={t('web.topbar.expandSidebar')}
+            // No edge handle: the topbar's sidebar toggle is always
+            // visible, and a second handle here lands on top of the
+            // page's own left-edge handle (session list, note tree, …).
+            hideHandle
+          >
             <SidebarNav />
-          )}
+          </SlideOverAside>
           <main className="flex-1 overflow-auto min-w-0">
             <Suspense fallback={<RouteFallback />}>
               <Outlet />

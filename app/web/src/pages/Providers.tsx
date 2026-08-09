@@ -26,6 +26,8 @@ import {
 import type { APIError } from '@/lib/api'
 import type { Provider } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { SlideOverAside } from '@/components/SlideOverAside'
+import { useIsMobile } from '../lib/useIsMobile'
 
 export function ProvidersPage() {
   const { t } = useTranslation()
@@ -37,6 +39,15 @@ export function ProvidersPage() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState<Record<string, unknown>>({})
+
+  // On a phone the provider list is a slide-over; picking one is its
+  // only purpose, so dismiss it on select to reveal the detail pane.
+  const isMobile = useIsMobile()
+  const [listOpen, setListOpen] = useState(false)
+  const selectProvider = (id: string) => {
+    setSelectedId(id)
+    setListOpen(false)
+  }
 
   // Default to first provider.
   useEffect(() => {
@@ -76,8 +87,16 @@ export function ProvidersPage() {
   })
 
   return (
-    <div className="h-full flex">
-      {/* Provider list */}
+    // `relative` anchors the phone slide-over below.
+    <div className="h-full flex relative">
+      {/* Provider list: inline column from tablet up, slide-over on phones. */}
+      <SlideOverAside
+        side="left"
+        compact={isMobile}
+        open={isMobile ? listOpen : true}
+        onOpenChange={setListOpen}
+        label={t('web.providers.list.title')}
+      >
       <aside className="w-64 shrink-0 border-r border-border flex flex-col bg-background">
         <div className="h-9 px-3 flex items-center border-b border-border">
           <span className="text-[11px] font-semibold uppercase tracking-tight text-muted-foreground">
@@ -99,7 +118,7 @@ export function ProvidersPage() {
               <button
                 key={p.manifest.id}
                 type="button"
-                onClick={() => setSelectedId(p.manifest.id)}
+                onClick={() => selectProvider(p.manifest.id)}
                 className={cn(
                   'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-colors border border-transparent',
                   selectedId === p.manifest.id
@@ -133,6 +152,7 @@ export function ProvidersPage() {
           </div>
         </ScrollArea>
       </aside>
+      </SlideOverAside>
 
       {/* Detail */}
       {selected ? (
@@ -244,7 +264,7 @@ function ProviderDetail({
   ]
   return (
     <main className="flex-1 flex flex-col min-w-0 bg-background">
-      <div className="border-b border-border px-6 py-4 flex items-start gap-4">
+      <div className="border-b border-border px-3 py-3 sm:px-6 sm:py-4 flex items-start gap-4">
         <BrandAvatar
           iconKey={providerIconKey(m.id)}
           fallbackLetter={m.displayName?.charAt(0) ?? '?'}
@@ -358,7 +378,7 @@ function ProviderDetail({
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="px-6 py-6 max-w-[640px]">
+        <div className="px-4 py-5 sm:px-6 sm:py-6 max-w-[640px]">
           <h2 className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground/80 mb-4">
             {t('web.providers.detail.configuration')}
           </h2>

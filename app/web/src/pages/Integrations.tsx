@@ -85,7 +85,7 @@ export function IntegrationsPage() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <header className="border-b border-border px-6 py-4 flex items-center gap-3">
+      <header className="border-b border-border px-3 py-3 sm:px-6 sm:py-4 flex items-center gap-3">
         <div className="flex-1">
           <h1 className="text-[16px] font-semibold tracking-tight">
             {t('web.integrations.title')}
@@ -123,7 +123,7 @@ export function IntegrationsPage() {
           className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
         >
           <ScrollArea className="h-full">
-            <div className="p-6 max-w-[960px] flex flex-col gap-3">
+            <div className="p-3 sm:p-6 max-w-[960px] flex flex-col gap-3">
               {isLoading && (
                 <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
                   <Loader2 className="size-3.5 animate-spin" />
@@ -221,7 +221,7 @@ export function IntegrationsPage() {
           value="console"
           className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden"
         >
-          <div className="px-6 py-4 h-full">
+          <div className="px-3 py-3 sm:px-6 sm:py-4 h-full">
             <ProxyConsole />
           </div>
         </TabsContent>

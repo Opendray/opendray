@@ -51,9 +51,9 @@ export function CortexPage() {
   )
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
+    <div className="mx-auto max-w-4xl space-y-6 p-3 sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="flex items-center gap-2 text-xl font-semibold">
             <RefreshCcwDot className="h-5 w-5" />
             {t('web.cortex.home.title')}

@@ -94,7 +94,7 @@ export function ChannelsPage() {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <header className="border-b border-border px-6 py-4 flex items-center gap-3">
+      <header className="border-b border-border px-3 py-3 sm:px-6 sm:py-4 flex items-center gap-3">
         <div className="flex-1">
           <h1 className="text-[16px] font-semibold tracking-tight">
             {t('web.channels.title')}
@@ -113,7 +113,7 @@ export function ChannelsPage() {
       </header>
 
       <ScrollArea className="flex-1">
-        <div className="p-6 max-w-[960px] flex flex-col gap-3">
+        <div className="p-3 sm:p-6 max-w-[960px] flex flex-col gap-3">
           {isLoading && (
             <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
@@ -273,8 +273,11 @@ function ChannelCard({
   const webhookURL = def?.webhookBased ? buildWebhookURL(channel.id) : ''
 
   return (
-    <div className="border border-border rounded-md p-4 bg-card/30 flex flex-col gap-3">
-      <div className="flex items-start gap-3">
+    <div className="border border-border rounded-md p-3 sm:p-4 bg-card/30 flex flex-col gap-3">
+      {/* flex-wrap + a full-width action group below `sm`: six controls
+          pinned beside the metadata leave it about 120px on a phone,
+          which wraps the token preview mid-token. */}
+      <div className="flex flex-wrap items-start gap-3">
         <BrandAvatar
           iconKey={def?.iconKey}
           fallbackLetter={(def?.label ?? channel.kind).charAt(0)}
@@ -345,7 +348,7 @@ function ChannelCard({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
           <Switch checked={channel.enabled} onCheckedChange={onToggle} />
           {isBridge && (
             <Button
