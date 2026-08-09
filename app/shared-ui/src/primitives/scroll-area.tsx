@@ -12,10 +12,23 @@ const ScrollArea = React.forwardRef<
     className={cn('relative overflow-hidden', className)}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    {/* Radix styles the viewport's inner wrapper `display:table;
+        min-width:100%` inline, which shrink-wraps to the content's
+        min-content width. On a narrow screen that means prose stops
+        wrapping and the pane scrolls sideways instead — measured at
+        567px of content inside a 412px viewport. Forcing the wrapper
+        back to a block restores normal wrapping; anything that really
+        is wider than the pane (a table with a min-width) still
+        overflows and still scrolls. */}
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] [&>div]:!block [&>div]:!min-w-0">
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar />
+    {/* Radix's viewport already scrolls on both axes, but with no
+        horizontal bar rendered the overflow was invisible — on a phone,
+        a wide table simply looked truncated. The bar only materialises
+        when the content actually overflows sideways. */}
+    <ScrollBar orientation="horizontal" />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ))
