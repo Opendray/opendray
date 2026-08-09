@@ -51,6 +51,17 @@ func runNotes(args []string) int {
 		return 2
 	}
 
+	// Flags are accepted AFTER the subcommand too. Go's flag package
+	// stops parsing at the first non-flag argument, so `notes flatten
+	// --apply` would leave apply false and quietly perform a dry run —
+	// answering "re-run with --apply" to someone who just did. Parsing
+	// the remainder as flags makes both orders mean the same thing.
+	command := rest[0]
+	if err := fs.Parse(rest[1:]); err != nil {
+		return 2
+	}
+	rest = append([]string{command}, fs.Args()...)
+
 	vault, err := openVault(*cfgPath, *root)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -356,7 +367,7 @@ commands:
   flatten                       convert a nested vault to the flat layout
                                 (dry run unless --apply)
 
-flags (must come BEFORE the command):
+flags (either before or after the command):
   -config FILE                  config.toml (only [vault] is consulted)
   --root PATH                   vault root override
   --prefix STRING               list filter (e.g. projects/)

@@ -123,6 +123,20 @@ for the full rationale and what triggers a major bump.
   `daily` files under `daily-docs`, since `daily/YYYY-MM-DD.md` belongs
   to the whole vault. `_`- and `.`-prefixed names are reserved too.
 
+  The conversion records the resulting layout itself and applies it to
+  the running gateway, rather than leaving both to the next restart —
+  otherwise a converted vault keeps deriving `projects/<name>` and
+  `personal/<name>.md` against the directories it just emptied. The
+  directories the migration empties are removed; one still holding
+  anything is left exactly where it is.
+
+- **`opendray notes` accepts flags after the subcommand.** Go's `flag`
+  package stops parsing at the first non-flag argument, so `notes
+  flatten --apply` left `apply` false, performed a dry run, and advised
+  re-running with `--apply` — which is what had just been typed.
+  `notes list --prefix=x` silently listed everything for the same
+  reason. Both orders now mean the same thing.
+
 - **The Vault is your documents. Agent skills and the MCP registry moved
   out.** One root held three tenants with nothing in common — the
   operator's markdown, the skills opendray injects at spawn, and the MCP
