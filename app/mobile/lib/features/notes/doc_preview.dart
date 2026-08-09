@@ -136,8 +136,16 @@ class _DocPreviewState extends State<DocPreview> {
     await ctl.loadData(data: _document(), mimeType: 'text/html');
   }
 
+  // No <base href> is injected here, and that is a real difference from
+  // the web viewer rather than an oversight. The web renders through
+  // `srcdoc`, whose document URL (`about:srcdoc`) differs from the base
+  // it inherits from the parent page — so a `href="#x"` click resolves
+  // somewhere else and navigates away. loadData has no such split: both
+  // plugins default baseUrl to "about:blank", which is also the
+  // document's own URL, so fragments already resolve in place. Pinning
+  // `about:srcdoc` here would CREATE that bug.
   String _document() {
-    if (_kind == DocKind.html) return _withBaseTarget(widget.body);
+    if (_kind == DocKind.html) return retargetLinks(widget.body);
     return _markdownDocument(widget.body);
   }
 
@@ -217,14 +225,41 @@ class _DocPreviewState extends State<DocPreview> {
   }
 }
 
-/// Makes in-document links open outside the frame rather than
-/// navigating a viewer that has no way back.
-String _withBaseTarget(String html) {
-  const base = '<base target="_blank">';
-  final head = RegExp('<head[^>]*>', caseSensitive: false);
-  final m = head.firstMatch(html);
-  if (m == null) return base + html;
-  return html.replaceRange(m.end, m.end, base);
+/// Opens links that LEAVE the document in a new tab, while leaving
+/// links to a fragment of THIS document alone.
+///
+/// That distinction is the whole point, and it is why
+/// `<base target="_blank">` — the obvious one-line version — is wrong:
+/// `base` retargets every link including `href="#install"`, so a
+/// table-of-contents entry opened a blank page instead of scrolling.
+/// Generated documentation is exactly where this bites; Sphinx,
+/// typedoc, asciidoc and Notion exports all ship a fragment TOC, and
+/// footnotes are fragment links too.
+///
+/// Mirrors retargetLinks() in
+/// app/web/src/components/notes/HtmlPreview.tsx.
+final _anchorTag = RegExp(r'<a\b([^>]*)>', caseSensitive: false);
+final _hrefAttr = RegExp(
+  r'''\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>=`]+))''',
+  caseSensitive: false,
+);
+final _targetAttr = RegExp(r'\btarget\s*=', caseSensitive: false);
+final _selfClosing = RegExp(r'/\s*$');
+
+String retargetLinks(String html) {
+  return html.replaceAllMapped(_anchorTag, (m) {
+    final attrs = m.group(1) ?? '';
+    // An explicit target is the author's decision; don't second-guess it.
+    if (_targetAttr.hasMatch(attrs)) return m.group(0)!;
+    final h = _hrefAttr.firstMatch(attrs);
+    final href = (h?.group(1) ?? h?.group(2) ?? h?.group(3) ?? '').trim();
+    // No href is not a link. A leading '#' points inside this document.
+    if (href.isEmpty || href.startsWith('#')) return m.group(0)!;
+    // Drop a self-closing slash so the injected attributes don't land
+    // after it and break the tag.
+    final clean = attrs.replaceFirst(_selfClosing, '');
+    return '<a$clean target="_blank" rel="noopener noreferrer">';
+  });
 }
 
 /// Wraps rendered markdown in a document that follows the phone's
@@ -232,18 +267,22 @@ String _withBaseTarget(String html) {
 /// webview has no network access to a stylesheet and should not want
 /// one.
 String _markdownDocument(String source) {
-  final body = md.markdownToHtml(
-    source,
-    extensionSet: md.ExtensionSet.gitHubWeb,
-    // The vault's [[wiki links]] are not markdown; leaving them as
-    // literal text is honest. Resolving them would need the note list,
-    // which this widget deliberately does not take.
+  final body = retargetLinks(
+    md.markdownToHtml(
+      source,
+      extensionSet: md.ExtensionSet.gitHubWeb,
+      // The vault's [[wiki links]] are not markdown; leaving them as
+      // literal text is honest. Resolving them would need the note list,
+      // which this widget deliberately does not take.
+    ),
+    // Markdown needs the same treatment as HTML, and for the same
+    // reason: gitHubWeb renders footnotes as fragment links, which a
+    // blanket <base target="_blank"> would send to a blank page.
   );
   return '''
 <!doctype html>
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<base target="_blank">
 <style>
   :root { color-scheme: light dark; }
   body {

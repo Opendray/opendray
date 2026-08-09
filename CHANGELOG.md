@@ -44,6 +44,36 @@ for the full rationale and what triggers a major bump.
   from the markdown Blank template — the **filename wins**, since the
   operator chose the extension and the template was probably a default.
 
+  In-document links work: clicking a table-of-contents entry scrolls to
+  that heading, and only links that actually leave the document open a
+  new tab. This needed more than it sounds like — see *Fixed* below.
+
+### Fixed
+
+- **A table-of-contents link no longer loses the document.** In the web
+  viewer, clicking an in-document `#anchor` navigated the frame away
+  and rendered the opendray app *inside* the document view. A `srcdoc`
+  frame's document URL is `about:srcdoc` while its base URL is
+  inherited from the parent page, so `href="#install"` resolved against
+  the gateway and became a real navigation. The base is now pinned to
+  the frame's own document, which also stops a pulled document's
+  relative URLs from resolving against the gateway's origin.
+
+  The first attempt at "external links should open a new tab" used
+  `<base target="_blank">`, which retargets *every* link — so a
+  contents entry opened a blank tab instead of scrolling. Anchors are
+  now rewritten individually: fragment links are left in place, an
+  author's explicit `target` is respected, and only links leaving the
+  document get `target="_blank"`. Generated documentation is precisely
+  where this mattered — Sphinx, typedoc, asciidoc and Notion exports
+  all ship a fragment contents list, and markdown footnotes render as
+  fragment links too.
+
+  Mobile deliberately does **not** pin a base: `loadData` makes the
+  document's own URL and its base both `about:blank`, so fragments
+  already resolve in place, and pinning would have introduced the bug
+  rather than fixed it.
+
 ### Changed
 
 - **The Vault is your documents. Agent skills and the MCP registry moved

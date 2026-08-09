@@ -85,7 +85,7 @@ export function HtmlPreview({ html, path, className }: HtmlPreviewProps) {
   // would linger until something else remounted it.
   const frameKey = `${path}:${sandbox}`
 
-  const doc = useMemo(() => withBaseTarget(html), [html])
+  const doc = useMemo(() => anchorBase(retargetLinks(html)), [html])
 
   return (
     <div className={cn('flex flex-col gap-1.5 min-h-0', className)}>
@@ -124,13 +124,65 @@ export function HtmlPreview({ html, path, className }: HtmlPreviewProps) {
   )
 }
 
-// withBaseTarget makes in-document links open in a new tab instead of
-// navigating the frame to a page that then has no way back — the frame
-// has no address bar and no history UI.
-function withBaseTarget(html: string): string {
-  const base = '<base target="_blank">'
+// Links that LEAVE the document open in a new tab: the frame has no
+// address bar and no history UI, so navigating it away strands the
+// reader on a page with no way back.
+//
+// Links to a fragment of THIS document must NOT be retargeted, and that
+// distinction is why `<base target="_blank">` — the obvious one-line
+// version of this — is wrong. <base> retargets every link in the
+// document, including `href="#install"`. Verified in Chromium: clicking
+// a table-of-contents entry opened a blank tab at `about:blank#install`
+// instead of scrolling. Generated documentation is exactly where this
+// bites — Sphinx, typedoc, asciidoc and Notion exports all ship a
+// fragment TOC, and footnotes are fragment links too.
+//
+// Rewriting the anchors individually is more code than a <base>, but it
+// is the only version that can tell the two cases apart.
+// A srcdoc frame's document URL is `about:srcdoc`, but it inherits its
+// BASE url from the parent page. Those disagreeing is what turns a
+// `href="#install"` click into a real navigation: the link resolves
+// against the parent, so the frame leaves `about:srcdoc` and loads
+// `http://<gateway>/notes#install` — the opendray app renders inside
+// the document viewer and the document is gone. Measured in both
+// Chromium and WebKit; with the base pinned, the same click scrolls.
+//
+// Pinning it also stops a document's relative URLs from resolving
+// against the gateway's origin, which is not somewhere a pulled
+// document should be aiming requests.
+//
+// A document that declares its own <base href> is left alone: that is
+// an explicit statement by whoever exported it, and the assets it
+// points at keep working. Fragment links in such a document still
+// navigate — the cost of respecting the declaration.
+//
+// MOBILE DOES NOT DO THIS, and must not: loadData gives the webview
+// the document URL `about:blank`, which is also its base, so fragments
+// already resolve to the same document. Pinning `about:srcdoc` there
+// would introduce the very bug this removes.
+function anchorBase(html: string): string {
+  if (/<base\b[^>]*\bhref\s*=/i.test(html)) return html
+  const base = '<base href="about:srcdoc">'
   const head = /<head[^>]*>/i
-  // Prepend when there is no <head>: a fragment (which plenty of
-  // exported docs are) still parses, and the browser hoists it.
+  // Prepend when there is no <head>: plenty of exported docs are bare
+  // fragments, and the parser hoists a leading <base> into one.
   return head.test(html) ? html.replace(head, (m) => m + base) : base + html
+}
+
+const ANCHOR_TAG = /<a\b([^>]*)>/gi
+const HREF_ATTR = /\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>=`]+))/i
+const TARGET_ATTR = /\btarget\s*=/i
+
+function retargetLinks(html: string): string {
+  return html.replace(ANCHOR_TAG, (tag, attrs: string) => {
+    // An explicit target is the author's decision; don't second-guess it.
+    if (TARGET_ATTR.test(attrs)) return tag
+    const m = HREF_ATTR.exec(attrs)
+    const href = (m?.[1] ?? m?.[2] ?? m?.[3] ?? '').trim()
+    // No href is not a link. A leading '#' points inside this document.
+    if (!href || href.startsWith('#')) return tag
+    // Drop a self-closing slash so the injected attributes don't land
+    // after it and break the tag.
+    return `<a${attrs.replace(/\/\s*$/, '')} target="_blank" rel="noopener noreferrer">`
+  })
 }
