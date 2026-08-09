@@ -155,6 +155,10 @@ HOME=~/.antigravity-accounts/<name> agy   # complete Google sign-in, then exit`}
         <p className="text-[12px] text-muted-foreground italic">
           <Trans
             i18nKey="web.providers.antigravityAccounts.empty"
+            // Trans parses the string as HTML before rendering it, so the copy
+            // has to escape its <angle-bracket> placeholders or the parser eats
+            // them; shouldUnescape turns the entities back into literal text.
+            shouldUnescape
             components={{ 1: <span className="font-mono" /> }}
           />
         </p>

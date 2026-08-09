@@ -93,6 +93,10 @@ export function IntegrationsPage() {
           <p className="text-[12px] text-muted-foreground">
             <Trans
               i18nKey="web.integrations.subtitle"
+              // Trans parses the string as HTML before rendering it, so the copy
+              // has to escape its <angle-bracket> placeholders or the parser eats
+              // them; shouldUnescape turns the entities back into literal text.
+              shouldUnescape
               components={{ 1: <code className="mx-1" /> }}
             />
           </p>
