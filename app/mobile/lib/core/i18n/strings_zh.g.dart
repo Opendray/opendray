@@ -880,7 +880,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String createFailedApi({required Object error}) => '创建失败：${error}';
 	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
 	@override String get pathLabel => '相对仓库的路径';
-	@override String get pathHint => 'personal/scratch.md';
+	@override String get pathHint => '我的项目/草稿.md';
 	@override String get create => '创建';
 	@override String get popupDelete => '删除';
 	@override String get deleteBody => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。';
@@ -4107,6 +4107,7 @@ class _TranslationsWebNotesEmptyZh extends TranslationsWebNotesEmptyEn {
 	@override String get hint => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。';
 	@override String get today => '今天的日志笔记';
 	@override String get kNew => '新建笔记';
+	@override String get hintFlat => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。每个项目的文档都在以它命名的文件夹里，你自己的草稿是其中的 <1>personal.md</1>。';
 }
 
 // Path: web.notes.picker
@@ -7563,7 +7564,7 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 	@override String get noDocs => '该文档库文件夹下暂无项目文档。';
 	@override String get createFailed => '无法创建文档';
 	@override String get mappingTitle => '绑定项目文档库文件夹';
-	@override String get mappingHelp => '选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。';
+	@override String get mappingHelp => '选择存放本项目笔记的文档库文件夹。文档库相对路径。留空则使用输入框中显示的默认值。';
 	@override String get sessionCwd => '会话工作目录';
 	@override String get folderLabel => '文档库文件夹';
 	@override String get mappingStoredHint => '保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。';
@@ -10116,7 +10117,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.vaultPanel.noDocs' => '该文档库文件夹下暂无项目文档。',
 			'web.sessions.inspector.vaultPanel.createFailed' => '无法创建文档',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => '绑定项目文档库文件夹',
-			'web.sessions.inspector.vaultPanel.mappingHelp' => '选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => '选择存放本项目笔记的文档库文件夹。文档库相对路径。留空则使用输入框中显示的默认值。',
 			'web.sessions.inspector.vaultPanel.sessionCwd' => '会话工作目录',
 			'web.sessions.inspector.vaultPanel.folderLabel' => '文档库文件夹',
 			'web.sessions.inspector.vaultPanel.mappingStoredHint' => '保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。',
@@ -10747,6 +10748,7 @@ extension on TranslationsZh {
 			'web.notes.empty.hint' => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。',
 			'web.notes.empty.today' => '今天的日志笔记',
 			'web.notes.empty.kNew' => '新建笔记',
+			'web.notes.empty.hintFlat' => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。每个项目的文档都在以它命名的文件夹里，你自己的草稿是其中的 <1>personal.md</1>。',
 			'web.notes.picker.browseAria' => '浏览文件夹',
 			'web.notes.picker.matches_one' => ({required Object count}) => '${count} 个匹配',
 			'web.notes.picker.matches_other' => ({required Object count}) => '${count} 个匹配',
@@ -10920,9 +10922,9 @@ extension on TranslationsZh {
 			'web.activity.events.loading' => '正在加载事件…',
 			'web.activity.events.empty' => '尚无事件。',
 			'web.activity.events.emptyFiltered' => '没有匹配的事件。',
-			'web.activity.events.loadOlder' => '加载更早的事件',
 			_ => null,
 		} ?? switch (path) {
+			'web.activity.events.loadOlder' => '加载更早的事件',
 			'web.activity.events.today' => '今天',
 			'web.activity.events.yesterday' => '昨天',
 			'web.providers.list.title' => 'Providers',
@@ -11434,9 +11436,9 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => '可以读取 ${repo}',
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => '无法读取 ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => '可以推送',
-			'web.plugins.gitHosts.dialog.verifyPushDenied' => '不能推送(只读)',
 			_ => null,
 		} ?? switch (path) {
+			'web.plugins.gitHosts.dialog.verifyPushDenied' => '不能推送(只读)',
 			'web.plugins.gitHosts.scopeHostWide' => '全主机兜底',
 			'web.plugins.gitHosts.scopeOwner' => ({required Object owner}) => '仅用于 ${owner}',
 			'web.backups.title' => '备份',
@@ -11948,9 +11950,9 @@ extension on TranslationsZh {
 			'web.settings.subtitle' => '工作区、账号与网关配置。',
 			'web.settings.groups.workspace' => '工作区',
 			'web.settings.groups.server' => '服务器',
-			'web.settings.groups.system' => '系统',
 			_ => null,
 		} ?? switch (path) {
+			'web.settings.groups.system' => '系统',
 			'web.settings.items.appearance' => '外观',
 			'web.settings.items.font' => '字号',
 			'web.settings.items.account' => '账号',
@@ -12462,9 +12464,9 @@ extension on TranslationsZh {
 			'web.cortex.quarantine.discardedToast' => '已丢弃',
 			'web.cortex.quarantine.actionFailed' => '操作失败',
 			'web.cortex.quarantine.expires' => ({required Object date}) => '${date} 到期',
-			'web.cortex.settings.injection.title' => '启动注入',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.settings.injection.title' => '启动注入',
 			'web.cortex.settings.injection.hint' => '每个【新建会话】预先加载多少心智中枢上下文。切换立即生效（影响之后新建的会话）——后端无需重启。',
 			'web.cortex.settings.injection.active' => '当前',
 			'web.cortex.settings.injection.mode.lean.label' => '精简——索引 + 按需取用（推荐）',
@@ -12976,9 +12978,9 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.workspaceSet' => 'agent 现在在这个画布上工作。',
 			'sessions.inspector.canvas.previewOnlyHint' => '仅预览 —— 点「在这上面工作」才会让 agent 指向它。',
 			'sessions.inspector.canvas.designTitle' => '设计系统',
-			'sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.canvas.designBlurb' => '每个画布都遵循的 tokens + 规范',
 			'sessions.inspector.canvas.designNotesLabel' => '风格说明(tokens 表达不了的部分)',
 			'sessions.inspector.canvas.designNotesPlaceholder' => '例如:克制、信息密度高;不用渐变;按钮只用实心/描边',
 			'sessions.inspector.canvas.designAgentHint' => 'tokens 会以 CSS 变量注入每个画布,并随每次请求发送,且已要求模型使用 var(--od-…) 而非硬编码值。提示:直接让 agent 根据项目真实主题来配置。',
@@ -13490,9 +13492,9 @@ extension on TranslationsZh {
 			'backups.overviewBackups' => '备份',
 			'backups.health.headlineHealthy' => '备份正常',
 			'backups.health.headlineAttention' => '需要关注',
-			'backups.health.headlineNever' => '尚无备份',
 			_ => null,
 		} ?? switch (path) {
+			'backups.health.headlineNever' => '尚无备份',
 			'backups.health.lastSuccess' => '最近成功备份',
 			'backups.health.never' => '从未',
 			'backups.health.tiles.recentFailures' => '近期失败',
@@ -13911,7 +13913,7 @@ extension on TranslationsZh {
 			'notesPage.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.pathLabel' => '相对仓库的路径',
-			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.pathHint' => '我的项目/草稿.md',
 			'notesPage.create' => '创建',
 			'notesPage.popupDelete' => '删除',
 			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
@@ -14004,9 +14006,9 @@ extension on TranslationsZh {
 			'dataExport.import.pickFileToast' => '请先选择数据包文件。',
 			'dataExport.import.doneToast' => '导入完成',
 			'dataExport.import.finishedWithErrors' => '导入完成但有错误',
-			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
 			_ => null,
 		} ?? switch (path) {
+			'dataExport.import.failedToast' => ({required Object error}) => '导入失败：${error}',
 			'dataExport.import.summaryCard.memories' => '记忆',
 			'dataExport.import.summaryCard.integrations' => '集成',
 			'dataExport.import.summaryCard.customTasks' => '自定义任务',

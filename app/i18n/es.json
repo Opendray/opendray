@@ -254,7 +254,7 @@
           "noDocs": "Aún no hay docs del proyecto en esta carpeta de la bóveda.",
           "createFailed": "No se pudo crear el doc",
           "mappingTitle": "Vincular carpeta de bóveda del proyecto",
-          "mappingHelp": "Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.",
+          "mappingHelp": "Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda. Déjalo vacío para usar el valor por defecto que se muestra en el campo.",
           "sessionCwd": "cwd de la sesión",
           "folderLabel": "Carpeta de la bóveda",
           "mappingStoredHint": "Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.",
@@ -1029,7 +1029,8 @@
         "title": "Ninguna nota seleccionada",
         "hint": "Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de proyecto escritos por la IA viven en <1>projects/</1>; tus borradores personales en <3>personal/</3>.",
         "today": "Nota diaria de hoy",
-        "new": "Nueva nota"
+        "new": "Nueva nota",
+        "hintFlat": "Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de cada proyecto viven en una carpeta con su nombre, y tu borrador personal es <1>personal.md</1> dentro de ella."
       },
       "picker": {
         "browseAria": "Explorar carpetas",
@@ -5001,7 +5002,7 @@
     "createFailedApi": "Error al crear: {error}",
     "createFailedGeneric": "Error al crear: {error}",
     "pathLabel": "Ruta relativa al vault",
-    "pathHint": "personal/scratch.md",
+    "pathHint": "mi-proyecto/borrador.md",
     "create": "Crear",
     "popupDelete": "Eliminar",
     "deleteBody": "Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.",

@@ -880,7 +880,7 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String createFailedApi({required Object error}) => 'Error al crear: ${error}';
 	@override String createFailedGeneric({required Object error}) => 'Error al crear: ${error}';
 	@override String get pathLabel => 'Ruta relativa al vault';
-	@override String get pathHint => 'personal/scratch.md';
+	@override String get pathHint => 'mi-proyecto/borrador.md';
 	@override String get create => 'Crear';
 	@override String get popupDelete => 'Eliminar';
 	@override String get deleteBody => 'Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.';
@@ -4107,6 +4107,7 @@ class _TranslationsWebNotesEmptyEs extends TranslationsWebNotesEmptyEn {
 	@override String get hint => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de proyecto escritos por la IA viven en <1>projects/</1>; tus borradores personales en <3>personal/</3>.';
 	@override String get today => 'Nota diaria de hoy';
 	@override String get kNew => 'Nueva nota';
+	@override String get hintFlat => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de cada proyecto viven en una carpeta con su nombre, y tu borrador personal es <1>personal.md</1> dentro de ella.';
 }
 
 // Path: web.notes.picker
@@ -7563,7 +7564,7 @@ class _TranslationsWebSessionsInspectorVaultPanelEs extends TranslationsWebSessi
 	@override String get noDocs => 'Aún no hay docs del proyecto en esta carpeta de la bóveda.';
 	@override String get createFailed => 'No se pudo crear el doc';
 	@override String get mappingTitle => 'Vincular carpeta de bóveda del proyecto';
-	@override String get mappingHelp => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.';
+	@override String get mappingHelp => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda. Déjalo vacío para usar el valor por defecto que se muestra en el campo.';
 	@override String get sessionCwd => 'cwd de la sesión';
 	@override String get folderLabel => 'Carpeta de la bóveda';
 	@override String get mappingStoredHint => 'Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.';
@@ -10119,7 +10120,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.vaultPanel.noDocs' => 'Aún no hay docs del proyecto en esta carpeta de la bóveda.',
 			'web.sessions.inspector.vaultPanel.createFailed' => 'No se pudo crear el doc',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => 'Vincular carpeta de bóveda del proyecto',
-			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda. Déjalo vacío para usar el valor por defecto que se muestra en el campo.',
 			'web.sessions.inspector.vaultPanel.sessionCwd' => 'cwd de la sesión',
 			'web.sessions.inspector.vaultPanel.folderLabel' => 'Carpeta de la bóveda',
 			'web.sessions.inspector.vaultPanel.mappingStoredHint' => 'Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.',
@@ -10750,6 +10751,7 @@ extension on TranslationsEs {
 			'web.notes.empty.hint' => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de proyecto escritos por la IA viven en <1>projects/</1>; tus borradores personales en <3>personal/</3>.',
 			'web.notes.empty.today' => 'Nota diaria de hoy',
 			'web.notes.empty.kNew' => 'Nueva nota',
+			'web.notes.empty.hintFlat' => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de cada proyecto viven en una carpeta con su nombre, y tu borrador personal es <1>personal.md</1> dentro de ella.',
 			'web.notes.picker.browseAria' => 'Explorar carpetas',
 			'web.notes.picker.matches_one' => ({required Object count}) => '${count} coincidencia',
 			'web.notes.picker.matches_other' => ({required Object count}) => '${count} coincidencias',
@@ -10923,9 +10925,9 @@ extension on TranslationsEs {
 			'web.activity.empty.stepCallEndpoint' => 'Llama a cualquier endpoint, p. ej. <1>POST /api/v1/sessions</1>',
 			'web.activity.empty.stepAppears' => 'Las llamadas aparecen aquí en cuestión de segundos',
 			'web.activity.empty.footnote' => 'Las llamadas que haces desde esta UI de administración no se registran; solo se registra el tráfico atribuido a integraciones.',
-			'web.activity.events.loading' => 'Cargando eventos…',
 			_ => null,
 		} ?? switch (path) {
+			'web.activity.events.loading' => 'Cargando eventos…',
 			'web.activity.events.empty' => 'Aún no hay eventos.',
 			'web.activity.events.emptyFiltered' => 'No hay eventos coincidentes.',
 			'web.activity.events.loadOlder' => 'Cargar eventos anteriores',
@@ -11437,9 +11439,9 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.verifyButton' => 'Verificar',
 			'web.plugins.gitHosts.dialog.verifying' => 'Comprobando…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Autenticado como ${login}',
-			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'puede leer ${repo}',
 			_ => null,
 		} ?? switch (path) {
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'puede leer ${repo}',
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'NO puede leer ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => 'puede hacer push',
 			'web.plugins.gitHosts.dialog.verifyPushDenied' => 'NO puede hacer push (solo lectura)',
@@ -11951,9 +11953,9 @@ extension on TranslationsEs {
 			'web.serverSettings.layout.mcp' => 'Registro MCP',
 			'web.serverSettings.layout.legacyWarning' => 'Esta instalación aún mantiene los directorios propios de opendray dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de arriba cuando puedas. Lo ya confirmado requiere git rm --cached; opendray no reescribirá tu repositorio.',
 			'web.settings.title' => 'Ajustes',
-			'web.settings.subtitle' => 'Configuración del espacio de trabajo, la cuenta y el gateway.',
 			_ => null,
 		} ?? switch (path) {
+			'web.settings.subtitle' => 'Configuración del espacio de trabajo, la cuenta y el gateway.',
 			'web.settings.groups.workspace' => 'Espacio de trabajo',
 			'web.settings.groups.server' => 'Servidor',
 			'web.settings.groups.system' => 'Sistema',
@@ -12465,9 +12467,9 @@ extension on TranslationsEs {
 			'web.cortex.quarantine.promoteHint' => 'Mover a memoria duradera (entra en la recuperación y consolidación)',
 			'web.cortex.quarantine.discard' => 'Descartar',
 			'web.cortex.quarantine.promotedToast' => 'Promocionada a memoria duradera',
-			'web.cortex.quarantine.discardedToast' => 'Descartada',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.quarantine.discardedToast' => 'Descartada',
 			'web.cortex.quarantine.actionFailed' => 'Acción fallida',
 			'web.cortex.quarantine.expires' => ({required Object date}) => 'expira ${date}',
 			'web.cortex.settings.injection.title' => 'Inyección al arranque',
@@ -12979,9 +12981,9 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.newCanvasTitle' => 'Nuevo lienzo',
 			'sessions.inspector.canvas.newCanvasBlurb' => 'Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.',
 			'sessions.inspector.canvas.setWorkspace' => 'Trabajar aquí',
-			'sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
 			'sessions.inspector.canvas.previewOnlyHint' => 'Solo vista previa: pulsa «Trabajar aquí» para apuntarlo.',
 			'sessions.inspector.canvas.designTitle' => 'Sistema de diseño',
 			'sessions.inspector.canvas.designBlurb' => 'Tokens y reglas que sigue cada lienzo',
@@ -13493,9 +13495,9 @@ extension on TranslationsEs {
 			'backups.wizard.saveNowBody' => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.',
 			'backups.overviewTargets' => 'Destinos',
 			'backups.overviewSchedules' => 'Programaciones',
-			'backups.overviewBackups' => 'Copias de seguridad',
 			_ => null,
 		} ?? switch (path) {
+			'backups.overviewBackups' => 'Copias de seguridad',
 			'backups.health.headlineHealthy' => 'Copias correctas',
 			'backups.health.headlineAttention' => 'Requiere atención',
 			'backups.health.headlineNever' => 'Aún sin copias',
@@ -13917,7 +13919,7 @@ extension on TranslationsEs {
 			'notesPage.createFailedApi' => ({required Object error}) => 'Error al crear: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Error al crear: ${error}',
 			'notesPage.pathLabel' => 'Ruta relativa al vault',
-			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.pathHint' => 'mi-proyecto/borrador.md',
 			'notesPage.create' => 'Crear',
 			'notesPage.popupDelete' => 'Eliminar',
 			'notesPage.deleteBody' => 'Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.',
@@ -14007,9 +14009,9 @@ extension on TranslationsEs {
 			'dataExport.import.customTasksLabel' => 'Tareas personalizadas',
 			'dataExport.import.importBundle' => 'Importar paquete',
 			'dataExport.import.importing' => 'Importando…',
-			'dataExport.import.pickFileToast' => 'Elige primero un archivo de paquete.',
 			_ => null,
 		} ?? switch (path) {
+			'dataExport.import.pickFileToast' => 'Elige primero un archivo de paquete.',
 			'dataExport.import.doneToast' => 'Importación completada',
 			'dataExport.import.finishedWithErrors' => 'Importación finalizada con errores',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Error en la importación: ${error}',

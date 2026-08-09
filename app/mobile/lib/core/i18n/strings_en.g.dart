@@ -1927,8 +1927,8 @@ class TranslationsNotesPageEn {
 	/// en: 'Vault-relative path'
 	String get pathLabel => 'Vault-relative path';
 
-	/// en: 'personal/scratch.md'
-	String get pathHint => 'personal/scratch.md';
+	/// en: 'my-project/scratch.md'
+	String get pathHint => 'my-project/scratch.md';
 
 	/// en: 'Create'
 	String get create => 'Create';
@@ -8020,6 +8020,9 @@ class TranslationsWebNotesEmptyEn {
 
 	/// en: 'New note'
 	String get kNew => 'New note';
+
+	/// en: 'Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. Each project's docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it.'
+	String get hintFlat => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. Each project\'s docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it.';
 }
 
 // Path: web.notes.picker
@@ -14770,8 +14773,8 @@ class TranslationsWebSessionsInspectorVaultPanelEn {
 	/// en: 'Bind project vault folder'
 	String get mappingTitle => 'Bind project vault folder';
 
-	/// en: 'Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.'
-	String get mappingHelp => 'Pick the vault folder that holds this project\'s notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.';
+	/// en: 'Pick the vault folder that holds this project's notes. Vault-relative. Leave empty to use the default shown in the field.'
+	String get mappingHelp => 'Pick the vault folder that holds this project\'s notes. Vault-relative. Leave empty to use the default shown in the field.';
 
 	/// en: 'Session cwd'
 	String get sessionCwd => 'Session cwd';
@@ -19079,7 +19082,7 @@ extension on Translations {
 			'web.sessions.inspector.vaultPanel.noDocs' => 'No project docs in this vault folder yet.',
 			'web.sessions.inspector.vaultPanel.createFailed' => 'Could not create doc',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => 'Bind project vault folder',
-			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Pick the vault folder that holds this project\'s notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Pick the vault folder that holds this project\'s notes. Vault-relative. Leave empty to use the default shown in the field.',
 			'web.sessions.inspector.vaultPanel.sessionCwd' => 'Session cwd',
 			'web.sessions.inspector.vaultPanel.folderLabel' => 'Vault folder',
 			'web.sessions.inspector.vaultPanel.mappingStoredHint' => 'Stored in the vault at .opendray-projects.json, so it syncs with your notes.',
@@ -19710,6 +19713,7 @@ extension on Translations {
 			'web.notes.empty.hint' => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. AI-written project docs live under <1>projects/</1>; your personal scratchpads under <3>personal/</3>.',
 			'web.notes.empty.today' => 'Today\'s daily note',
 			'web.notes.empty.kNew' => 'New note',
+			'web.notes.empty.hintFlat' => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. Each project\'s docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it.',
 			'web.notes.picker.browseAria' => 'Browse folders',
 			'web.notes.picker.matches_one' => ({required Object count}) => '${count} match',
 			'web.notes.picker.matches_other' => ({required Object count}) => '${count} matches',
@@ -19883,9 +19887,9 @@ extension on Translations {
 			'web.activity.empty.stepCallEndpoint' => 'Call any endpoint, e.g. <1>POST /api/v1/sessions</1>',
 			'web.activity.empty.stepAppears' => 'Calls appear here within seconds',
 			'web.activity.empty.footnote' => 'Calls you make from this admin UI are not logged — only integration-attributed traffic is recorded.',
-			'web.activity.events.loading' => 'Loading events…',
 			_ => null,
 		} ?? switch (path) {
+			'web.activity.events.loading' => 'Loading events…',
 			'web.activity.events.empty' => 'No events yet.',
 			'web.activity.events.emptyFiltered' => 'No matching events.',
 			'web.activity.events.loadOlder' => 'Load older events',
@@ -20397,9 +20401,9 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.verifyButton' => 'Verify',
 			'web.plugins.gitHosts.dialog.verifying' => 'Checking…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Authenticated as ${login}',
-			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'can read ${repo}',
 			_ => null,
 		} ?? switch (path) {
+			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'can read ${repo}',
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'CANNOT read ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => 'can push',
 			'web.plugins.gitHosts.dialog.verifyPushDenied' => 'CANNOT push (read-only)',
@@ -20911,9 +20915,9 @@ extension on Translations {
 			'web.serverSettings.layout.mcp' => 'MCP registry',
 			'web.serverSettings.layout.legacyWarning' => 'This install still keeps opendray\'s own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo.',
 			'web.settings.title' => 'Settings',
-			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
 			_ => null,
 		} ?? switch (path) {
+			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
 			'web.settings.groups.workspace' => 'Workspace',
 			'web.settings.groups.server' => 'Server',
 			'web.settings.groups.system' => 'System',
@@ -21425,9 +21429,9 @@ extension on Translations {
 			'web.cortex.quarantine.promoteHint' => 'Move into durable memory (joins recall + consolidation)',
 			'web.cortex.quarantine.discard' => 'Discard',
 			'web.cortex.quarantine.promotedToast' => 'Promoted to durable memory',
-			'web.cortex.quarantine.discardedToast' => 'Discarded',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.quarantine.discardedToast' => 'Discarded',
 			'web.cortex.quarantine.actionFailed' => 'Action failed',
 			'web.cortex.quarantine.expires' => ({required Object date}) => 'expires ${date}',
 			'web.cortex.settings.injection.title' => 'Spawn injection',
@@ -21939,9 +21943,9 @@ extension on Translations {
 			'sessions.inspector.canvas.newCanvasTitle' => 'New canvas',
 			'sessions.inspector.canvas.newCanvasBlurb' => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.',
 			'sessions.inspector.canvas.setWorkspace' => 'Work on this',
-			'sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
 			'sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — tap "Work on this" to point the agent at it.',
 			'sessions.inspector.canvas.designTitle' => 'Design system',
 			'sessions.inspector.canvas.designBlurb' => 'Tokens + rules every canvas follows',
@@ -22453,9 +22457,9 @@ extension on Translations {
 			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
-			'backups.overviewBackups' => 'Backups',
 			_ => null,
 		} ?? switch (path) {
+			'backups.overviewBackups' => 'Backups',
 			'backups.health.headlineHealthy' => 'Backups healthy',
 			'backups.health.headlineAttention' => 'Needs attention',
 			'backups.health.headlineNever' => 'No backups yet',
@@ -22877,7 +22881,7 @@ extension on Translations {
 			'notesPage.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.pathLabel' => 'Vault-relative path',
-			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.pathHint' => 'my-project/scratch.md',
 			'notesPage.create' => 'Create',
 			'notesPage.popupDelete' => 'Delete',
 			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
@@ -22967,9 +22971,9 @@ extension on Translations {
 			'dataExport.import.customTasksLabel' => 'Custom tasks',
 			'dataExport.import.importBundle' => 'Import bundle',
 			'dataExport.import.importing' => 'Importing…',
-			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
 			_ => null,
 		} ?? switch (path) {
+			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
 			'dataExport.import.doneToast' => 'Import done',
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',
 			'dataExport.import.failedToast' => ({required Object error}) => 'Import failed: ${error}',

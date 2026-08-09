@@ -23,7 +23,7 @@ import {
   notesTags,
   writeNote,
 } from '@/lib/notes'
-import type { Note } from '@/lib/notes'
+import type { Note, VaultLayout } from '@/lib/notes'
 import { extractOutline } from '@/lib/outline'
 import { vaultStatus } from '@/lib/vaultgit'
 import { NoteEditor } from '@/components/sessions/inspector/NoteEditor'
@@ -430,7 +430,11 @@ export function VaultPage() {
               />
             </div>
           ) : (
-            <EmptyState onNew={handleNewNote} onDaily={handleNewDaily} />
+            <EmptyState
+              onNew={handleNewNote}
+              onDaily={handleNewDaily}
+              layout={info?.layout}
+            />
           )}
         </main>
 
@@ -523,21 +527,26 @@ function TagsList({
 function EmptyState({
   onNew,
   onDaily,
+  layout,
 }: {
   onNew: () => void
   onDaily: () => void
+  /** Undefined while /notes/info is in flight, or on an older gateway. */
+  layout?: VaultLayout
 }) {
   const { t } = useTranslation()
+  // Naming `projects/` and `personal/` to someone whose vault has
+  // neither is worse than saying nothing: it sends them looking for
+  // directories the flat layout does not have.
+  const hintKey =
+    layout === 'flat' ? 'web.notes.empty.hintFlat' : 'web.notes.empty.hint'
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
       <NotebookPen className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
       <div className="space-y-1">
         <h2 className="text-[14px] font-semibold">{t('web.notes.empty.title')}</h2>
         <p className="text-[12px] text-muted-foreground max-w-[420px]">
-          <Trans
-            i18nKey="web.notes.empty.hint"
-            components={{ 1: <code />, 3: <code /> }}
-          />
+          <Trans i18nKey={hintKey} components={{ 1: <code />, 3: <code /> }} />
         </p>
       </div>
       <div className="flex items-center gap-2">

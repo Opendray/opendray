@@ -254,7 +254,7 @@
           "noDocs": "No project docs in this vault folder yet.",
           "createFailed": "Could not create doc",
           "mappingTitle": "Bind project vault folder",
-          "mappingHelp": "Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.",
+          "mappingHelp": "Pick the vault folder that holds this project's notes. Vault-relative. Leave empty to use the default shown in the field.",
           "sessionCwd": "Session cwd",
           "folderLabel": "Vault folder",
           "mappingStoredHint": "Stored in the vault at .opendray-projects.json, so it syncs with your notes.",
@@ -1029,7 +1029,8 @@
         "title": "No note selected",
         "hint": "Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. AI-written project docs live under <1>projects/</1>; your personal scratchpads under <3>personal/</3>.",
         "today": "Today's daily note",
-        "new": "New note"
+        "new": "New note",
+        "hintFlat": "Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. Each project's docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it."
       },
       "picker": {
         "browseAria": "Browse folders",
@@ -5001,7 +5002,7 @@
     "createFailedApi": "Create failed: {error}",
     "createFailedGeneric": "Create failed: {error}",
     "pathLabel": "Vault-relative path",
-    "pathHint": "personal/scratch.md",
+    "pathHint": "my-project/scratch.md",
     "create": "Create",
     "popupDelete": "Delete",
     "deleteBody": "This is irreversible. Vault git sync will remove the file on the gateway host too.",
