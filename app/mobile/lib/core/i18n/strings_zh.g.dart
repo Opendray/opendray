@@ -891,6 +891,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get validatePathDots => '路径不能包含「..」';
 	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
+	@override late final _TranslationsNotesPageHtmlZh html = _TranslationsNotesPageHtmlZh._(_root);
 }
 
 // Path: dataExport
@@ -1645,6 +1646,7 @@ class _TranslationsWebNoteEditorZh extends TranslationsWebNoteEditorEn {
 	@override String get emptyNote => '空白笔记。切换到源码标签开始书写。';
 	@override String get saveFailedToast => '保存失败';
 	@override late final _TranslationsWebNoteEditorStatusZh status = _TranslationsWebNoteEditorStatusZh._(_root);
+	@override late final _TranslationsWebNoteEditorHtmlZh html = _TranslationsWebNoteEditorHtmlZh._(_root);
 }
 
 // Path: web.export
@@ -2735,7 +2737,7 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get markdownHint => 'Markdown…';
+	@override String get markdownHint => 'Markdown;文件名以 .html 结尾则写 HTML…';
 	@override String get saving => '保存中…';
 	@override String get autosave => '随输入自动保存';
 	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
@@ -2743,6 +2745,21 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
 	@override String saveFailedGeneric({required Object error}) => '保存失败：${error}';
 	@override String savedAt({required Object time}) => '${time} 已保存';
+	@override String get showPreview => '预览';
+	@override String get showSource => '源码';
+}
+
+// Path: notesPage.html
+class _TranslationsNotesPageHtmlZh extends TranslationsNotesPageHtmlEn {
+	_TranslationsNotesPageHtmlZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get scriptsOff => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。';
+	@override String get scriptsOn => '这篇文档的脚本正在运行。';
+	@override String get enableScripts => '启用脚本';
+	@override String get disableScripts => '禁用脚本';
 }
 
 // Path: dataExport.sections
@@ -4051,11 +4068,11 @@ class _TranslationsWebNotesNewNoteZh extends TranslationsWebNotesNewNoteEn {
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get prompt => '新笔记路径（相对 vault，必须以 .md 结尾）';
+	@override String get prompt => '新文档路径(相对 vault,.md 或 .html)';
 	@override String defaultPath({required Object date}) => 'library/notes-${date}.md';
-	@override String get errorMustEndMd => '路径必须以 .md 结尾';
 	@override String get createdToast => '笔记已创建';
 	@override String get createFailedToast => '创建失败';
+	@override String get errorMustBeDoc => '路径必须是文档(.md 或 .html)';
 }
 
 // Path: web.notes.empty
@@ -5676,6 +5693,19 @@ class _TranslationsWebNoteEditorStatusZh extends TranslationsWebNoteEditorStatus
 	@override String get unsaved => '未保存';
 	@override String get newNote => '新笔记';
 	@override String get saved => '已保存';
+}
+
+// Path: web.noteEditor.html
+class _TranslationsWebNoteEditorHtmlZh extends TranslationsWebNoteEditorHtmlEn {
+	_TranslationsWebNoteEditorHtmlZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get scriptsOff => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。';
+	@override String get scriptsOn => '这篇文档的脚本正在运行。';
+	@override String get enableScripts => '启用脚本';
+	@override String get disableScripts => '禁用脚本';
 }
 
 // Path: web.export.sections
@@ -7489,7 +7519,7 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 	@override String get newDoc => '新建文档';
 	@override String get cancel => '取消';
 	@override String get create => '创建';
-	@override String get filenamePlaceholder => '文件名.md';
+	@override String get filenamePlaceholder => 'filename.md 或 filename.html';
 	@override String get noDocs => '该文档库文件夹下暂无项目文档。';
 	@override String get createFailed => '无法创建文档';
 	@override String get mappingTitle => '绑定项目文档库文件夹';
@@ -10042,7 +10072,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.vaultPanel.newDoc' => '新建文档',
 			'web.sessions.inspector.vaultPanel.cancel' => '取消',
 			'web.sessions.inspector.vaultPanel.create' => '创建',
-			'web.sessions.inspector.vaultPanel.filenamePlaceholder' => '文件名.md',
+			'web.sessions.inspector.vaultPanel.filenamePlaceholder' => 'filename.md 或 filename.html',
 			'web.sessions.inspector.vaultPanel.noDocs' => '该文档库文件夹下暂无项目文档。',
 			'web.sessions.inspector.vaultPanel.createFailed' => '无法创建文档',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => '绑定项目文档库文件夹',
@@ -10668,11 +10698,11 @@ extension on TranslationsZh {
 			'web.notes.tree.empty' => 'vault 为空。',
 			'web.notes.outline.label' => '大纲',
 			'web.notes.outline.empty' => '此笔记没有标题。添加 <1>## 标题</1> 行以填充大纲。',
-			'web.notes.newNote.prompt' => '新笔记路径（相对 vault，必须以 .md 结尾）',
+			'web.notes.newNote.prompt' => '新文档路径(相对 vault,.md 或 .html)',
 			'web.notes.newNote.defaultPath' => ({required Object date}) => 'library/notes-${date}.md',
-			'web.notes.newNote.errorMustEndMd' => '路径必须以 .md 结尾',
 			'web.notes.newNote.createdToast' => '笔记已创建',
 			'web.notes.newNote.createFailedToast' => '创建失败',
+			'web.notes.newNote.errorMustBeDoc' => '路径必须是文档(.md 或 .html)',
 			'web.notes.empty.title' => '未选择笔记',
 			'web.notes.empty.hint' => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。',
 			'web.notes.empty.today' => '今天的日志笔记',
@@ -12073,6 +12103,10 @@ extension on TranslationsZh {
 			'web.noteEditor.status.unsaved' => '未保存',
 			'web.noteEditor.status.newNote' => '新笔记',
 			'web.noteEditor.status.saved' => '已保存',
+			'web.noteEditor.html.scriptsOff' => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。',
+			'web.noteEditor.html.scriptsOn' => '这篇文档的脚本正在运行。',
+			'web.noteEditor.html.enableScripts' => '启用脚本',
+			'web.noteEditor.html.disableScripts' => '禁用脚本',
 			'web.export.title' => '导出数据',
 			'web.export.subtitle' => '把选中的逻辑实体打成一份一次性 zip 包。服务器上保留 24 小时后自动回收。',
 			'web.export.backToBackups' => '← 备份',
@@ -12389,12 +12423,12 @@ extension on TranslationsZh {
 			'web.cortex.settings.injection.saveFailed' => '保存失败',
 			'web.cortex.settings.injection.note' => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。',
 			'web.database.dialog.createTitle' => '添加数据库连接',
+			_ => null,
+		} ?? switch (path) {
 			'web.database.dialog.editTitle' => '编辑连接',
 			'web.database.dialog.description' => '连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。',
 			'web.database.dialog.name' => '名称',
 			'web.database.dialog.host' => '主机',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.port' => '端口',
 			'web.database.dialog.database' => '数据库',
 			'web.database.dialog.username' => '用户名',
@@ -12903,12 +12937,12 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.tokenSecondary' => '辅助色',
 			'sessions.inspector.canvas.tokenBackground' => '背景',
 			'sessions.inspector.canvas.tokenSurface' => '表面/卡片',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenText' => '正文色',
 			'sessions.inspector.canvas.tokenMuted' => '次要文字',
 			'sessions.inspector.canvas.tokenBorder' => '描边',
 			'sessions.inspector.canvas.tokenFont' => '正文字体',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenHeadingFont' => '标题字体',
 			'sessions.inspector.canvas.tokenBaseSize' => '基准字号',
 			'sessions.inspector.canvas.tokenRadius' => '圆角',
@@ -13417,12 +13451,12 @@ extension on TranslationsZh {
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
 			'backups.pgDumpMissing' => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.encryption.checkAgain' => '重新检查',
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
 			'backups.encryption.random256bit' => '256 位随机密钥',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.passphraseLabel' => '你的密语',
 			'backups.encryption.passphraseHint' => '至少 20 个字符',
 			'backups.encryption.passphraseCopied' => '密语已复制到剪贴板',
@@ -13837,7 +13871,7 @@ extension on TranslationsZh {
 			'notesPage.validatePath' => '必须填写路径',
 			'notesPage.validatePathDots' => '路径不能包含「..」',
 			'notesPage.pathHelper' => '缺失时自动追加 .md。',
-			'notesPage.editor.markdownHint' => 'Markdown…',
+			'notesPage.editor.markdownHint' => 'Markdown;文件名以 .html 结尾则写 HTML…',
 			'notesPage.editor.saving' => '保存中…',
 			'notesPage.editor.autosave' => '随输入自动保存',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
@@ -13845,6 +13879,12 @@ extension on TranslationsZh {
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
+			'notesPage.editor.showPreview' => '预览',
+			'notesPage.editor.showSource' => '源码',
+			'notesPage.html.scriptsOff' => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。',
+			'notesPage.html.scriptsOn' => '这篇文档的脚本正在运行。',
+			'notesPage.html.enableScripts' => '启用脚本',
+			'notesPage.html.disableScripts' => '禁用脚本',
 			'dataExport.title' => '数据导出与导入',
 			'dataExport.subtitle' => '面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。',
 			'dataExport.sections.export' => '导出',
@@ -13925,6 +13965,8 @@ extension on TranslationsZh {
 			'dataExport.relative.inSeconds' => ({required Object n}) => '${n} 秒后',
 			'dataExport.relative.inMinutes' => ({required Object n}) => '${n} 分钟后',
 			'dataExport.relative.inHours' => ({required Object n}) => '${n} 小时后',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.relative.inDays' => ({required Object n}) => '${n} 天后',
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',
@@ -13935,8 +13977,6 @@ extension on TranslationsZh {
 			'dataExport.status.failed' => '失败',
 			'dataExport.status.expired' => '过期',
 			'dataExport.status.succeeded' => '成功',
-			_ => null,
-		} ?? switch (path) {
 			'memory.status.label' => '当前生效 embedder',
 			'memory.status.dimensions' => ({required Object dim, required Object state}) => '${dim} 维 · ${state}',
 			'memory.status.enabled' => '已启用',

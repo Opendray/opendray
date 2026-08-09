@@ -25,6 +25,10 @@ const SHARED_BOX =
 interface HighlightedSourceProps {
   value: string
   onChange: (next: string) => void
+  /** highlight.js language for the backdrop. Follows the document's
+   * extension — highlighting an HTML doc as markdown produced a wall
+   * of undifferentiated text. */
+  language?: string
   /** Forwarded to the textarea so callers keep caret/selection access. */
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   placeholder?: string
@@ -39,6 +43,7 @@ interface HighlightedSourceProps {
 export function HighlightedSource({
   value,
   onChange,
+  language = 'markdown',
   textareaRef,
   placeholder,
   fillParent,
@@ -57,7 +62,7 @@ export function HighlightedSource({
   useEffect(() => {
     let cancelled = false
     const timer = setTimeout(() => {
-      highlightCode(value, 'markdown')
+      highlightCode(value, language)
         .then((out) => {
           if (!cancelled) setHtml(out)
         })
@@ -69,7 +74,7 @@ export function HighlightedSource({
       cancelled = true
       clearTimeout(timer)
     }
-  }, [value])
+  }, [value, language])
 
   // The backdrop does not scroll on its own; it follows the textarea.
   const syncScroll = () => {

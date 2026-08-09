@@ -142,7 +142,7 @@ func TestNewFromTemplate_Rejects(t *testing.T) {
 			name:     "non markdown",
 			path:     "a.txt",
 			template: "blank",
-			wantErr:  ErrNotMarkdown,
+			wantErr:  ErrNotDocument,
 		},
 	}
 	for _, tt := range tests {

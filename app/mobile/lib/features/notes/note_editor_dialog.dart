@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/notes/doc_preview.dart';
 import 'package:opendray/features/notes/markdown_highlight_controller.dart';
 import 'package:path/path.dart' as p;
 
@@ -42,6 +43,10 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
   String? _error;
   String _initial = '';
   DateTime? _lastSaved;
+  // The phone had no rendered view of a document at all — only source.
+  // HTML made that untenable (a page of tags), so preview now covers
+  // BOTH kinds rather than leaving markdown as the poor relation.
+  bool _preview = false;
 
   @override
   void initState() {
@@ -156,6 +161,22 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
                       ],
                     ),
                   ),
+                  IconButton(
+                    tooltip: _preview
+                        ? t.notesPage.editor.showSource
+                        : t.notesPage.editor.showPreview,
+                    icon: Icon(
+                      _preview ? Icons.code : Icons.visibility_outlined,
+                    ),
+                    onPressed: () {
+                      // Flush before switching: preview renders the
+                      // SAVED body, so an unsaved keystroke would
+                      // otherwise render stale.
+                      _saveDebounce?.cancel();
+                      unawaited(_save());
+                      setState(() => _preview = !_preview);
+                    },
+                  ),
                   Builder(
                     builder: (innerCtx) => IconButton(
                       icon: const Icon(Icons.close),
@@ -177,6 +198,8 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
+                  : _preview
+                  ? DocPreview(path: widget.path, body: _ctrl.text)
                   : Padding(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
                       child: TextField(

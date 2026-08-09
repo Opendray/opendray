@@ -269,7 +269,7 @@ func respond(w http.ResponseWriter, err error) {
 	case errors.Is(err, ErrNotFound):
 		writeError(w, http.StatusNotFound, err)
 	case errors.Is(err, ErrPathEscape), errors.Is(err, ErrInvalidPath),
-		errors.Is(err, ErrNotMarkdown), errors.Is(err, ErrAlreadyExists):
+		errors.Is(err, ErrNotDocument), errors.Is(err, ErrAlreadyExists):
 		writeError(w, http.StatusBadRequest, err)
 	default:
 		writeError(w, http.StatusInternalServerError, err)

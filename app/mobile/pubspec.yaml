@@ -30,6 +30,11 @@ dependencies:
   intl: ^0.20.2
   json_annotation: ^4.9.0
   local_auth: ^2.3.0
+  # markdown renders notes to HTML so BOTH document kinds go through
+  # one webview on mobile. flutter_markdown would draw native widgets
+  # instead, which means markdown and HTML docs would not look like
+  # the same product. Pure Dart, no native deps.
+  markdown: ^7.2.2
   package_info_plus: ^8.1.1
   path: ^1.9.1
   pretty_dio_logger: ^1.4.0

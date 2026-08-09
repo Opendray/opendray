@@ -250,7 +250,7 @@
           "newDoc": "New doc",
           "cancel": "Cancel",
           "create": "Create",
-          "filenamePlaceholder": "filename.md",
+          "filenamePlaceholder": "filename.md or filename.html",
           "noDocs": "No project docs in this vault folder yet.",
           "createFailed": "Could not create doc",
           "mappingTitle": "Bind project vault folder",
@@ -1019,11 +1019,11 @@
         "empty": "No headings in this note. Add <1>## Title</1> lines to populate the outline."
       },
       "newNote": {
-        "prompt": "New note path (vault-relative, must end .md)",
+        "prompt": "New document path (vault-relative, .md or .html)",
         "defaultPath": "library/notes-{date}.md",
-        "errorMustEndMd": "Path must end in .md",
         "createdToast": "Note created",
-        "createFailedToast": "Create failed"
+        "createFailedToast": "Create failed",
+        "errorMustBeDoc": "Path must be a document (.md or .html)"
       },
       "empty": {
         "title": "No note selected",
@@ -2843,6 +2843,12 @@
         "unsaved": "unsaved",
         "newNote": "new note",
         "saved": "saved"
+      },
+      "html": {
+        "scriptsOff": "Scripts are off — this document is rendered as static HTML.",
+        "scriptsOn": "Scripts are running for this document.",
+        "enableScripts": "Enable scripts",
+        "disableScripts": "Disable scripts"
       }
     },
     "export": {
@@ -4994,14 +5000,22 @@
     "validatePathDots": "Path cannot contain \"..\"",
     "pathHelper": "Auto-appends .md if missing.",
     "editor": {
-      "markdownHint": "Markdown…",
+      "markdownHint": "Markdown, or HTML if the file ends .html…",
       "saving": "Saving…",
       "autosave": "Auto-saves as you type",
       "loadFailedApi": "Load failed: {error}",
       "loadFailedGeneric": "Load failed: {error}",
       "saveFailedApi": "Save failed: {error}",
       "saveFailedGeneric": "Save failed: {error}",
-      "savedAt": "Saved {time}"
+      "savedAt": "Saved {time}",
+      "showPreview": "Preview",
+      "showSource": "Source"
+    },
+    "html": {
+      "scriptsOff": "Scripts are off — this document is rendered as static HTML.",
+      "scriptsOn": "Scripts are running for this document.",
+      "enableScripts": "Enable scripts",
+      "disableScripts": "Disable scripts"
     }
   },
   "dataExport": {

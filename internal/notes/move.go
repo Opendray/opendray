@@ -43,10 +43,10 @@ type MoveResult struct {
 // overwriting move is indistinguishable from data loss and there is no
 // undo here.
 func (v *Vault) Move(ctx context.Context, fromRel, toRel string) (MoveResult, error) {
-	if err := requireMarkdown(fromRel); err != nil {
+	if err := requireDocument(fromRel); err != nil {
 		return MoveResult{}, err
 	}
-	if err := requireMarkdown(toRel); err != nil {
+	if err := requireDocument(toRel); err != nil {
 		return MoveResult{}, err
 	}
 	fromFull, err := v.resolve(fromRel)
@@ -111,9 +111,9 @@ func (v *Vault) Move(ctx context.Context, fromRel, toRel string) (MoveResult, er
 func (v *Vault) rewriteLinks(ctx context.Context, fromRel, toRel string) (MoveResult, error) {
 	out := MoveResult{RewrittenIn: []string{}}
 
-	fromTarget := strings.TrimSuffix(fromRel, ".md")
+	fromTarget := TrimDocExt(fromRel)
 	fromBase := filepath.Base(fromTarget)
-	toTarget := strings.TrimSuffix(toRel, ".md")
+	toTarget := TrimDocExt(toRel)
 	toBase := filepath.Base(toTarget)
 
 	// Capture the alias so [[old|display text]] keeps its display text.
@@ -142,7 +142,7 @@ func (v *Vault) rewriteLinks(ctx context.Context, fromRel, toRel string) (MoveRe
 			}
 			return nil
 		}
-		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+		if !IsMarkdown(d.Name()) {
 			return nil
 		}
 		st, err := d.Info()

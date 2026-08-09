@@ -183,7 +183,7 @@ func TestMove_Rejects(t *testing.T) {
 			setup:   func(v *Vault) { writeFixture(nil, v, "a.md", "a") },
 			from:    "a.md",
 			to:      "a.txt",
-			wantErr: ErrNotMarkdown,
+			wantErr: ErrNotDocument,
 		},
 		{
 			name:    "same path",
