@@ -880,7 +880,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String createFailedApi({required Object error}) => '创建失败：${error}';
 	@override String createFailedGeneric({required Object error}) => '创建失败：${error}';
 	@override String get pathLabel => '相对仓库的路径';
-	@override String get pathHint => 'personal/scratch.md';
+	@override String get pathHint => '我的项目/草稿.md';
 	@override String get create => '创建';
 	@override String get popupDelete => '删除';
 	@override String get deleteBody => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。';
@@ -892,6 +892,8 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get pathHelper => '缺失时自动追加 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 	@override late final _TranslationsNotesPageHtmlZh html = _TranslationsNotesPageHtmlZh._(_root);
+	@override late final _TranslationsNotesPageFlattenZh flatten = _TranslationsNotesPageFlattenZh._(_root);
+	@override late final _TranslationsNotesPageRenameZh rename = _TranslationsNotesPageRenameZh._(_root);
 }
 
 // Path: dataExport
@@ -1386,6 +1388,8 @@ class _TranslationsWebNotesZh extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerZh picker = _TranslationsWebNotesPickerZh._(_root);
 	@override late final _TranslationsWebNotesVaultSyncZh vaultSync = _TranslationsWebNotesVaultSyncZh._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeZh syncBadge = _TranslationsWebNotesSyncBadgeZh._(_root);
+	@override late final _TranslationsWebNotesFlattenZh flatten = _TranslationsWebNotesFlattenZh._(_root);
+	@override late final _TranslationsWebNotesDocZh doc = _TranslationsWebNotesDocZh._(_root);
 }
 
 // Path: web.activity
@@ -1647,6 +1651,10 @@ class _TranslationsWebNoteEditorZh extends TranslationsWebNoteEditorEn {
 	@override String get saveFailedToast => '保存失败';
 	@override late final _TranslationsWebNoteEditorStatusZh status = _TranslationsWebNoteEditorStatusZh._(_root);
 	@override late final _TranslationsWebNoteEditorHtmlZh html = _TranslationsWebNoteEditorHtmlZh._(_root);
+	@override String get save => '保存';
+	@override String get saveTitle => '保存此文档（⌘S / Ctrl+S）';
+	@override String get lineNumbers => '行号';
+	@override String get lineNumbersTitle => '显示行号。开启时长行不再折行。';
 }
 
 // Path: web.export
@@ -2739,7 +2747,7 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	// Translations
 	@override String get markdownHint => 'Markdown;文件名以 .html 结尾则写 HTML…';
 	@override String get saving => '保存中…';
-	@override String get autosave => '随输入自动保存';
+	@override String get autosave => '已保存';
 	@override String loadFailedApi({required Object error}) => '加载失败：${error}';
 	@override String loadFailedGeneric({required Object error}) => '加载失败：${error}';
 	@override String saveFailedApi({required Object error}) => '保存失败：${error}';
@@ -2747,6 +2755,8 @@ class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	@override String savedAt({required Object time}) => '${time} 已保存';
 	@override String get showPreview => '预览';
 	@override String get showSource => '源码';
+	@override String get save => '保存';
+	@override String get unsaved => '有未保存的修改';
 }
 
 // Path: notesPage.html
@@ -2760,6 +2770,39 @@ class _TranslationsNotesPageHtmlZh extends TranslationsNotesPageHtmlEn {
 	@override String get scriptsOn => '这篇文档的脚本正在运行。';
 	@override String get enableScripts => '启用脚本';
 	@override String get disableScripts => '禁用脚本';
+}
+
+// Path: notesPage.flatten
+class _TranslationsNotesPageFlattenZh extends TranslationsNotesPageFlattenEn {
+	_TranslationsNotesPageFlattenZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get notice => '这里每个项目都装在一个叫 projects/ 的目录里。';
+	@override String get preview => '预览';
+	@override String get dismiss => '暂不';
+	@override String get title => '用项目名归档项目文档';
+	@override String get description => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。';
+	@override String get nothingToMove => '没有需要移动的文件。';
+	@override String skipped({required Object count}) => '未处理(${count}):';
+	@override String convert({required Object count}) => '转换 ${count} 个';
+	@override String done({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。';
+	@override String get restartHint => '完成后请重启网关。';
+}
+
+// Path: notesPage.rename
+class _TranslationsNotesPageRenameZh extends TranslationsNotesPageRenameEn {
+	_TranslationsNotesPageRenameZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => '重命名';
+	@override String get title => '重命名文档';
+	@override String get helper => '文档库相对路径。目录会自动创建。';
+	@override String doneSnack({required Object count}) => '已重命名，${count} 个链接已改写。';
+	@override String get doneWithWarning => '已重命名，但链接没有全部更新';
 }
 
 // Path: dataExport.sections
@@ -4086,6 +4129,7 @@ class _TranslationsWebNotesEmptyZh extends TranslationsWebNotesEmptyEn {
 	@override String get hint => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。';
 	@override String get today => '今天的日志笔记';
 	@override String get kNew => '新建笔记';
+	@override String get hintFlat => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。每个项目的文档都在以它命名的文件夹里，你自己的草稿是其中的 <1>personal.md</1>。';
 }
 
 // Path: web.notes.picker
@@ -4142,6 +4186,43 @@ class _TranslationsWebNotesSyncBadgeZh extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · 自动同步已开启';
 	@override String tooltipLastError({required Object error}) => ' · 上次错误：${error}';
 	@override String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.flatten
+class _TranslationsWebNotesFlattenZh extends TranslationsWebNotesFlattenEn {
+	_TranslationsWebNotesFlattenZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get notice => '这个文档库里的每个项目都装在一个叫 projects/ 的目录里。它们可以直接用项目名归档。';
+	@override String get preview => '预览';
+	@override String get dismiss => '暂不';
+	@override String get title => '用项目名归档项目文档';
+	@override String get description => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。';
+	@override String get nothingToMove => '没有需要移动的文件。';
+	@override String skipped({required Object count}) => '未处理(${count}):';
+	@override String convert({required Object count}) => '转换 ${count} 个文档';
+	@override String done({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。';
+	@override String get restartHint => '完成后请重启网关。';
+}
+
+// Path: web.notes.doc
+class _TranslationsWebNotesDocZh extends TranslationsWebNotesDocEn {
+	_TranslationsWebNotesDocZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get rename => '重命名';
+	@override String get renamePrompt => '这个文档的新路径（目录会自动创建）：';
+	@override String renamed({required Object count}) => '已重命名，${count} 个链接已改写。';
+	@override String get renamedWithWarning => '已重命名，但链接没有全部更新';
+	@override String get renameFailed => '重命名失败';
+	@override String get delete => '删除';
+	@override String deleteConfirm({required Object path}) => '删除 ${path}？此处无法撤销。';
+	@override String get deleted => '文档已删除';
+	@override String get deleteFailed => '删除失败';
 }
 
 // Path: web.activity.filters
@@ -7523,7 +7604,7 @@ class _TranslationsWebSessionsInspectorVaultPanelZh extends TranslationsWebSessi
 	@override String get noDocs => '该文档库文件夹下暂无项目文档。';
 	@override String get createFailed => '无法创建文档';
 	@override String get mappingTitle => '绑定项目文档库文件夹';
-	@override String get mappingHelp => '选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。';
+	@override String get mappingHelp => '选择存放本项目笔记的文档库文件夹。文档库相对路径。留空则使用输入框中显示的默认值。';
 	@override String get sessionCwd => '会话工作目录';
 	@override String get folderLabel => '文档库文件夹';
 	@override String get mappingStoredHint => '保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。';
@@ -10076,7 +10157,7 @@ extension on TranslationsZh {
 			'web.sessions.inspector.vaultPanel.noDocs' => '该文档库文件夹下暂无项目文档。',
 			'web.sessions.inspector.vaultPanel.createFailed' => '无法创建文档',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => '绑定项目文档库文件夹',
-			'web.sessions.inspector.vaultPanel.mappingHelp' => '选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => '选择存放本项目笔记的文档库文件夹。文档库相对路径。留空则使用输入框中显示的默认值。',
 			'web.sessions.inspector.vaultPanel.sessionCwd' => '会话工作目录',
 			'web.sessions.inspector.vaultPanel.folderLabel' => '文档库文件夹',
 			'web.sessions.inspector.vaultPanel.mappingStoredHint' => '保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。',
@@ -10707,6 +10788,7 @@ extension on TranslationsZh {
 			'web.notes.empty.hint' => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。',
 			'web.notes.empty.today' => '今天的日志笔记',
 			'web.notes.empty.kNew' => '新建笔记',
+			'web.notes.empty.hintFlat' => '从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。每个项目的文档都在以它命名的文件夹里，你自己的草稿是其中的 <1>personal.md</1>。',
 			'web.notes.picker.browseAria' => '浏览文件夹',
 			'web.notes.picker.matches_one' => ({required Object count}) => '${count} 个匹配',
 			'web.notes.picker.matches_other' => ({required Object count}) => '${count} 个匹配',
@@ -10831,6 +10913,25 @@ extension on TranslationsZh {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · 自动同步已开启',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · 上次错误：${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.flatten.notice' => '这个文档库里的每个项目都装在一个叫 projects/ 的目录里。它们可以直接用项目名归档。',
+			'web.notes.flatten.preview' => '预览',
+			'web.notes.flatten.dismiss' => '暂不',
+			'web.notes.flatten.title' => '用项目名归档项目文档',
+			'web.notes.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
+			'web.notes.flatten.nothingToMove' => '没有需要移动的文件。',
+			'web.notes.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
+			'web.notes.flatten.convert' => ({required Object count}) => '转换 ${count} 个文档',
+			'web.notes.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
+			'web.notes.flatten.restartHint' => '完成后请重启网关。',
+			'web.notes.doc.rename' => '重命名',
+			'web.notes.doc.renamePrompt' => '这个文档的新路径（目录会自动创建）：',
+			'web.notes.doc.renamed' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
+			'web.notes.doc.renamedWithWarning' => '已重命名，但链接没有全部更新',
+			'web.notes.doc.renameFailed' => '重命名失败',
+			'web.notes.doc.delete' => '删除',
+			'web.notes.doc.deleteConfirm' => ({required Object path}) => '删除 ${path}？此处无法撤销。',
+			'web.notes.doc.deleted' => '文档已删除',
+			'web.notes.doc.deleteFailed' => '删除失败',
 			'web.activity.title' => '活动',
 			'web.activity.subtitle' => '按调用维度审计每个由注册集成发起的 API 请求。包括入站调用（第三方应用以集成 API key 调用 opendray）和出站代理调用（admin → opendray 代理 → 集成）。本管理端 UI 直接发起的调用不会被记录。',
 			'web.activity.refresh' => '刷新',
@@ -10861,6 +10962,8 @@ extension on TranslationsZh {
 			'web.activity.table.outboundAria' => '出站',
 			'web.activity.empty.filtered' => '没有调用符合当前筛选条件。',
 			'web.activity.empty.title' => '尚未记录任何 API 调用',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.empty.description' => '当第三方应用以其集成 API key 调用 opendray 时，每次请求都会被记录在这里。',
 			'web.activity.empty.stepWithIntegrations' => '在你的第三方应用中使用已有集成的 API key',
 			'web.activity.empty.stepRegister' => '在 集成 → 新建 中注册一个集成',
@@ -10881,8 +10984,6 @@ extension on TranslationsZh {
 			'web.providers.detail.disabled' => '已禁用',
 			'web.providers.detail.toggleAria' => ({required Object name}) => '切换 ${name}',
 			'web.providers.detail.configuration' => '配置',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.noConfig' => '此 Provider 没有可配置字段。',
 			'web.providers.detail.executable' => 'executable:',
 			'web.providers.detail.manifestHash' => 'manifest_hash:',
@@ -11375,6 +11476,8 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.verifyLabel' => '验证此凭据',
 			'web.plugins.gitHosts.dialog.verifyHint' => '向 forge 求证这个 token 属于谁。可以填一个仓库(owner/name)来确认凭据既能读取、也能推送 —— 读和写是两个独立的授权,能拉取的 token 照样可能推送全部失败,而 forge 自己的报错指的是另一个权限。',
 			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo(可选)',
@@ -11395,8 +11498,6 @@ extension on TranslationsZh {
 			'web.backups.tabs.backups' => '备份',
 			'web.backups.tabs.schedules' => '计划',
 			'web.backups.tabs.targets' => '目标',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.inventory.title' => '备份里包含什么？',
 			'web.backups.inventory.summary' => ({required Object tables, required Object rows}) => '${tables} 张表共 ${rows} 行',
 			'web.backups.inventory.description' => '每次备份是一个对下方所有表执行 <1>pg_dump --format=custom</1> 的产物，外加 <3>manifest.json</3> 和（可选的）<5>config.toml</5>。计数是实时的；bundle 捕获的是备份发生那一刻的数据。',
@@ -11889,6 +11990,8 @@ extension on TranslationsZh {
 			'web.serverSettings.host.modes.off.desc' => 'opendray 不对机器电源做任何操作。',
 			'web.serverSettings.host.modes.off.caveat' => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。',
 			'web.serverSettings.layout.title' => '实际解析到',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.layout.documents' => '文档',
 			'web.serverSettings.layout.git' => 'Git 仓库',
 			'web.serverSettings.layout.skills' => 'Skills',
@@ -11909,8 +12012,6 @@ extension on TranslationsZh {
 			'web.settings.health.dbDown' => 'db 异常',
 			'web.settings.breadcrumb.server' => '服务器',
 			'web.settings.appearance.title' => '外观',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.appearance.description' => '选择 opendray 的外观风格。',
 			'web.settings.appearance.options.light' => '浅色',
 			'web.settings.appearance.options.lightDesc' => '始终浅色',
@@ -12107,6 +12208,10 @@ extension on TranslationsZh {
 			'web.noteEditor.html.scriptsOn' => '这篇文档的脚本正在运行。',
 			'web.noteEditor.html.enableScripts' => '启用脚本',
 			'web.noteEditor.html.disableScripts' => '禁用脚本',
+			'web.noteEditor.save' => '保存',
+			'web.noteEditor.saveTitle' => '保存此文档（⌘S / Ctrl+S）',
+			'web.noteEditor.lineNumbers' => '行号',
+			'web.noteEditor.lineNumbersTitle' => '显示行号。开启时长行不再折行。',
 			'web.export.title' => '导出数据',
 			'web.export.subtitle' => '把选中的逻辑实体打成一份一次性 zip 包。服务器上保留 24 小时后自动回收。',
 			'web.export.backToBackups' => '← 备份',
@@ -12399,6 +12504,8 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.apply' => '应用蓝图',
 			'web.cortex.blueprint.applyFailed' => '应用失败',
 			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.direct' => '直接写入',
 			'web.cortex.blueprint.writePolicy.proposal' => '提案',
 			'web.cortex.blueprint.writePolicy.hint' => '直接写入：会话中的 AI 在文档未锁定时直接更新实时文档。提案：AI 的写入需先经你批准。',
@@ -12423,8 +12530,6 @@ extension on TranslationsZh {
 			'web.cortex.settings.injection.saveFailed' => '保存失败',
 			'web.cortex.settings.injection.note' => '完整模式下章节/知识页各自的注入开关（蓝图编辑器 / 知识页）仍然生效；精简模式下基础方针始终注入，其余一律走索引。',
 			'web.database.dialog.createTitle' => '添加数据库连接',
-			_ => null,
-		} ?? switch (path) {
 			'web.database.dialog.editTitle' => '编辑连接',
 			'web.database.dialog.description' => '连接到此项目的数据库以浏览和编辑数据。凭据将加密存储。',
 			'web.database.dialog.name' => '名称',
@@ -12913,6 +13018,8 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
 			'sessions.inspector.canvas.openFull' => '全屏打开',
 			'sessions.inspector.canvas.confirm' => '确认',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.captured' => ({required Object what}) => '已捕获:${what}',
 			'sessions.inspector.canvas.notes' => '备注',
 			'sessions.inspector.canvas.clear' => '清除标记',
@@ -12937,8 +13044,6 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.tokenSecondary' => '辅助色',
 			'sessions.inspector.canvas.tokenBackground' => '背景',
 			'sessions.inspector.canvas.tokenSurface' => '表面/卡片',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenText' => '正文色',
 			'sessions.inspector.canvas.tokenMuted' => '次要文字',
 			'sessions.inspector.canvas.tokenBorder' => '描边',
@@ -13427,6 +13532,8 @@ extension on TranslationsZh {
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.intro' => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。',
 			'backups.wizard.saving' => '保存中…',
 			'backups.wizard.generateAndSave' => '生成并保存',
@@ -13451,8 +13558,6 @@ extension on TranslationsZh {
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY 环境变量',
 			'backups.savedConfirmCheckbox' => '我已将密语保存到密码管理器',
 			'backups.pgDumpMissing' => 'pg_dump 不在 PATH 中。请安装 postgresql-client 并重启 opendray。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.encryption.checkAgain' => '重新检查',
 			'backups.encryption.generate' => '生成',
 			'backups.encryption.paste' => '粘贴',
@@ -13861,7 +13966,7 @@ extension on TranslationsZh {
 			'notesPage.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
 			'notesPage.pathLabel' => '相对仓库的路径',
-			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.pathHint' => '我的项目/草稿.md',
 			'notesPage.create' => '创建',
 			'notesPage.popupDelete' => '删除',
 			'notesPage.deleteBody' => '此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。',
@@ -13873,7 +13978,7 @@ extension on TranslationsZh {
 			'notesPage.pathHelper' => '缺失时自动追加 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown;文件名以 .html 结尾则写 HTML…',
 			'notesPage.editor.saving' => '保存中…',
-			'notesPage.editor.autosave' => '随输入自动保存',
+			'notesPage.editor.autosave' => '已保存',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => '加载失败：${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => '加载失败：${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => '保存失败：${error}',
@@ -13881,10 +13986,27 @@ extension on TranslationsZh {
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'notesPage.editor.showPreview' => '预览',
 			'notesPage.editor.showSource' => '源码',
+			'notesPage.editor.save' => '保存',
+			'notesPage.editor.unsaved' => '有未保存的修改',
 			'notesPage.html.scriptsOff' => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。',
 			'notesPage.html.scriptsOn' => '这篇文档的脚本正在运行。',
 			'notesPage.html.enableScripts' => '启用脚本',
 			'notesPage.html.disableScripts' => '禁用脚本',
+			'notesPage.flatten.notice' => '这里每个项目都装在一个叫 projects/ 的目录里。',
+			'notesPage.flatten.preview' => '预览',
+			'notesPage.flatten.dismiss' => '暂不',
+			'notesPage.flatten.title' => '用项目名归档项目文档',
+			'notesPage.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
+			'notesPage.flatten.nothingToMove' => '没有需要移动的文件。',
+			'notesPage.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
+			'notesPage.flatten.convert' => ({required Object count}) => '转换 ${count} 个',
+			'notesPage.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
+			'notesPage.flatten.restartHint' => '完成后请重启网关。',
+			'notesPage.rename.action' => '重命名',
+			'notesPage.rename.title' => '重命名文档',
+			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
+			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
+			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
 			'dataExport.title' => '数据导出与导入',
 			'dataExport.subtitle' => '面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。',
 			'dataExport.sections.export' => '导出',
@@ -13924,6 +14046,8 @@ extension on TranslationsZh {
 			'dataExport.history.delete' => '删除',
 			'dataExport.history.downloadCopiedToast' => '下载 URL 已复制到剪贴板。在浏览器中粘贴以获取（单次使用）。',
 			'dataExport.history.columns.scope' => '范围',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.columns.size' => '大小',
 			'dataExport.history.columns.expires' => '过期',
 			'dataExport.history.columns.actions' => '操作',
@@ -13965,8 +14089,6 @@ extension on TranslationsZh {
 			'dataExport.relative.inSeconds' => ({required Object n}) => '${n} 秒后',
 			'dataExport.relative.inMinutes' => ({required Object n}) => '${n} 分钟后',
 			'dataExport.relative.inHours' => ({required Object n}) => '${n} 小时后',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inDays' => ({required Object n}) => '${n} 天后',
 			'dataExport.relative.secondsAgo' => ({required Object n}) => '${n} 秒前',
 			'dataExport.relative.minutesAgo' => ({required Object n}) => '${n} 分钟前',

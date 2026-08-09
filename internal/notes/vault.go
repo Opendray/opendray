@@ -55,9 +55,17 @@ type FullNote struct {
 // being independent FS calls (no shared in-memory state in this phase
 // — index lands in Phase 4).
 type Vault struct {
-	root           string   // canonical absolute path to the notes root
-	personalPrefix string   // default subfolder for personal scratchpads
-	projectsPrefix string   // default subfolder for AI project docs
+	root string // canonical absolute path to the notes root
+
+	// layout can change under a running gateway: the flatten migration
+	// rewrites the shape on disk, and every path derived after that
+	// must follow immediately rather than at the next restart.
+	layoutMu       sync.RWMutex
+	layout         Layout // flat or nested — see layout.go
+	onLayoutChange func(Layout) error
+
+	personalPrefix string   // nested only: subfolder for personal scratchpads
+	projectsPrefix string   // nested only: subfolder for AI project docs
 	hidden         []string // vault-relative dirs excluded from listings
 
 	projectMapMu sync.Mutex // guards reads/writes of projectMapFilename
@@ -67,6 +75,23 @@ type Vault struct {
 // (PersonalPath, ProjectDir). Empty fields fall back to opendray's
 // classic conventions (`personal`, `projects`).
 type Options struct {
+	// Layout selects flat or nested filing. An empty value means the
+	// caller has not resolved one yet and the vault falls back to
+	// nested — the shape every pre-existing install already has, so a
+	// caller that forgets cannot relocate anyone's documents.
+	Layout Layout
+
+	// OnLayoutChange persists a layout the vault decided for itself —
+	// today, only the flatten migration. Wiring it is not optional in a
+	// long-lived process: startup detection runs ONLY when the setting
+	// is empty, so a vault recorded as nested and then flattened would
+	// come back nested on the next restart, deriving paths for
+	// directories that no longer exist.
+	OnLayoutChange func(Layout) error
+
+	// PersonalPrefix / ProjectsPrefix apply to the NESTED layout only.
+	// The flat layout has no prefixes to configure: a project is its
+	// own name and its personal notes live inside it.
 	PersonalPrefix string
 	ProjectsPrefix string
 
@@ -113,9 +138,18 @@ func New(notesRoot string, opts Options) (*Vault, error) {
 	if projects == "" {
 		projects = "projects"
 	}
+	layout := opts.Layout
+	if !layout.Valid() {
+		// Fall back to the shape every existing vault already has.
+		// Defaulting to flat would silently move a live install's
+		// documents; defaulting to nested is at worst a no-op.
+		layout = LayoutNested
+	}
 	root := filepath.Clean(abs)
 	return &Vault{
 		root:           root,
+		layout:         layout,
+		onLayoutChange: opts.OnLayoutChange,
 		personalPrefix: personal,
 		projectsPrefix: projects,
 		hidden:         relativeHidden(root, opts.HiddenDirs),
@@ -162,6 +196,22 @@ func (v *Vault) isHidden(rel string) bool {
 // "default location" hint of the per-cwd override UI.
 func (v *Vault) PersonalPrefix() string { return v.personalPrefix }
 func (v *Vault) ProjectsPrefix() string { return v.projectsPrefix }
+
+// Layout reports how this vault files projects. Clients read it from
+// /api/v1/notes/info rather than deriving paths themselves — which is
+// what keeps the layout a server-side concern and stops web, mobile
+// and the CLI drifting apart on where a project's notes live.
+func (v *Vault) Layout() Layout {
+	v.layoutMu.RLock()
+	defer v.layoutMu.RUnlock()
+	return v.layout
+}
+
+func (v *Vault) setLayout(l Layout) {
+	v.layoutMu.Lock()
+	v.layout = l
+	v.layoutMu.Unlock()
+}
 
 // Root returns the canonical absolute path to the notes directory.
 // Useful for surfacing in /api/v1/notes/info and the CLI describe.
@@ -469,7 +519,11 @@ func DailyPath(t time.Time) string {
 // generating HTML here would be a strange default. Operators can still
 // create .html by naming it. Same for DailyPath and ProjectPath.
 func (v *Vault) PersonalPath(basename string) string {
-	return v.personalPrefix + "/" + sanitiseBasename(basename) + ".md"
+	slug := sanitiseBasename(basename)
+	if v.Layout() == LayoutFlat {
+		return flatRoot(slug) + "/personal.md"
+	}
+	return v.personalPrefix + "/" + slug + ".md"
 }
 
 // ProjectDir returns the directory for a project's notes using the
@@ -477,7 +531,11 @@ func (v *Vault) PersonalPath(basename string) string {
 // mapping store) take precedence — call ResolvedProjectDir(cwd) for
 // that behaviour. This is the "default location" used as a fallback.
 func (v *Vault) ProjectDir(basename string) string {
-	return v.projectsPrefix + "/" + sanitiseBasename(basename)
+	slug := sanitiseBasename(basename)
+	if v.Layout() == LayoutFlat {
+		return flatRoot(slug)
+	}
+	return v.projectsPrefix + "/" + slug
 }
 
 // ProjectPath returns the conventional README inside ProjectDir.

@@ -254,7 +254,7 @@
           "noDocs": "该文档库文件夹下暂无项目文档。",
           "createFailed": "无法创建文档",
           "mappingTitle": "绑定项目文档库文件夹",
-          "mappingHelp": "选择存放本项目笔记的文档库文件夹。文档库相对路径，例如 projects/my-app。留空则使用自动推导的默认值。",
+          "mappingHelp": "选择存放本项目笔记的文档库文件夹。文档库相对路径。留空则使用输入框中显示的默认值。",
           "sessionCwd": "会话工作目录",
           "folderLabel": "文档库文件夹",
           "mappingStoredHint": "保存在文档库的 .opendray-projects.json 中，会随笔记一起同步。",
@@ -1029,7 +1029,8 @@
         "title": "未选择笔记",
         "hint": "从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。AI 生成的项目文档位于 <1>projects/</1>；个人草稿位于 <3>personal/</3>。",
         "today": "今天的日志笔记",
-        "new": "新建笔记"
+        "new": "新建笔记",
+        "hintFlat": "从左侧目录树挑选一条笔记，直接跳到今天的日志，或新建一条。每个项目的文档都在以它命名的文件夹里，你自己的草稿是其中的 <1>personal.md</1>。"
       },
       "picker": {
         "browseAria": "浏览文件夹",
@@ -1182,6 +1183,29 @@
         "tooltipAutoOn": " · 自动同步已开启",
         "tooltipLastError": " · 上次错误：{error}",
         "branchPlaceholder": "—"
+      },
+      "flatten": {
+        "notice": "这个文档库里的每个项目都装在一个叫 projects/ 的目录里。它们可以直接用项目名归档。",
+        "preview": "预览",
+        "dismiss": "暂不",
+        "title": "用项目名归档项目文档",
+        "description": "文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。",
+        "nothingToMove": "没有需要移动的文件。",
+        "skipped": "未处理({count}):",
+        "convert": "转换 {count} 个文档",
+        "done": "已移动 {count} 个文档。重启网关后生效。",
+        "restartHint": "完成后请重启网关。"
+      },
+      "doc": {
+        "rename": "重命名",
+        "renamePrompt": "这个文档的新路径（目录会自动创建）：",
+        "renamed": "已重命名，{count} 个链接已改写。",
+        "renamedWithWarning": "已重命名，但链接没有全部更新",
+        "renameFailed": "重命名失败",
+        "delete": "删除",
+        "deleteConfirm": "删除 {path}？此处无法撤销。",
+        "deleted": "文档已删除",
+        "deleteFailed": "删除失败"
       }
     },
     "activity": {
@@ -2846,7 +2870,11 @@
         "scriptsOn": "这篇文档的脚本正在运行。",
         "enableScripts": "启用脚本",
         "disableScripts": "禁用脚本"
-      }
+      },
+      "save": "保存",
+      "saveTitle": "保存此文档（⌘S / Ctrl+S）",
+      "lineNumbers": "行号",
+      "lineNumbersTitle": "显示行号。开启时长行不再折行。"
     },
     "export": {
       "title": "导出数据",
@@ -4986,7 +5014,7 @@
     "createFailedApi": "创建失败：{error}",
     "createFailedGeneric": "创建失败：{error}",
     "pathLabel": "相对仓库的路径",
-    "pathHint": "personal/scratch.md",
+    "pathHint": "我的项目/草稿.md",
     "create": "创建",
     "popupDelete": "删除",
     "deleteBody": "此操作不可撤销。仓库的 git 同步会同时移除网关主机上的文件。",
@@ -4999,20 +5027,41 @@
     "editor": {
       "markdownHint": "Markdown;文件名以 .html 结尾则写 HTML…",
       "saving": "保存中…",
-      "autosave": "随输入自动保存",
+      "autosave": "已保存",
       "loadFailedApi": "加载失败：{error}",
       "loadFailedGeneric": "加载失败：{error}",
       "saveFailedApi": "保存失败：{error}",
       "saveFailedGeneric": "保存失败：{error}",
       "savedAt": "{time} 已保存",
       "showPreview": "预览",
-      "showSource": "源码"
+      "showSource": "源码",
+      "save": "保存",
+      "unsaved": "有未保存的修改"
     },
     "html": {
       "scriptsOff": "脚本已禁用 —— 这篇文档按静态 HTML 渲染。",
       "scriptsOn": "这篇文档的脚本正在运行。",
       "enableScripts": "启用脚本",
       "disableScripts": "禁用脚本"
+    },
+    "flatten": {
+      "notice": "这里每个项目都装在一个叫 projects/ 的目录里。",
+      "preview": "预览",
+      "dismiss": "暂不",
+      "title": "用项目名归档项目文档",
+      "description": "文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。",
+      "nothingToMove": "没有需要移动的文件。",
+      "skipped": "未处理({count}):",
+      "convert": "转换 {count} 个",
+      "done": "已移动 {count} 个文档。重启网关后生效。",
+      "restartHint": "完成后请重启网关。"
+    },
+    "rename": {
+      "action": "重命名",
+      "title": "重命名文档",
+      "helper": "文档库相对路径。目录会自动创建。",
+      "doneSnack": "已重命名，{count} 个链接已改写。",
+      "doneWithWarning": "已重命名，但链接没有全部更新"
     }
   },
   "dataExport": {

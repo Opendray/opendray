@@ -254,7 +254,7 @@
           "noDocs": "Aún no hay docs del proyecto en esta carpeta de la bóveda.",
           "createFailed": "No se pudo crear el doc",
           "mappingTitle": "Vincular carpeta de bóveda del proyecto",
-          "mappingHelp": "Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.",
+          "mappingHelp": "Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda. Déjalo vacío para usar el valor por defecto que se muestra en el campo.",
           "sessionCwd": "cwd de la sesión",
           "folderLabel": "Carpeta de la bóveda",
           "mappingStoredHint": "Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.",
@@ -1029,7 +1029,8 @@
         "title": "Ninguna nota seleccionada",
         "hint": "Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de proyecto escritos por la IA viven en <1>projects/</1>; tus borradores personales en <3>personal/</3>.",
         "today": "Nota diaria de hoy",
-        "new": "Nueva nota"
+        "new": "Nueva nota",
+        "hintFlat": "Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de cada proyecto viven en una carpeta con su nombre, y tu borrador personal es <1>personal.md</1> dentro de ella."
       },
       "picker": {
         "browseAria": "Explorar carpetas",
@@ -1185,6 +1186,29 @@
         "tooltipAutoOn": " · sincronización automática activada",
         "tooltipLastError": " · último error: {error}",
         "branchPlaceholder": "—"
+      },
+      "flatten": {
+        "notice": "Cada proyecto de esta bóveda está dentro de una carpeta llamada projects/. Pueden archivarse con su propio nombre.",
+        "preview": "Vista previa",
+        "dismiss": "Ahora no",
+        "title": "Archivar los proyectos con su propio nombre",
+        "description": "Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.",
+        "nothingToMove": "No hay nada que mover.",
+        "skipped": "Sin tocar ({count}):",
+        "convert": "Convertir {count} documento(s)",
+        "done": "Se movieron {count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.",
+        "restartHint": "Reinicia la pasarela después."
+      },
+      "doc": {
+        "rename": "Renombrar",
+        "renamePrompt": "Nueva ruta para este documento (las carpetas se crean solas):",
+        "renamed": "Renombrado. {count} enlace(s) actualizados.",
+        "renamedWithWarning": "Renombrado, pero no se actualizaron todos los enlaces",
+        "renameFailed": "No se pudo renombrar",
+        "delete": "Eliminar",
+        "deleteConfirm": "¿Eliminar {path}? Esto no se puede deshacer desde aquí.",
+        "deleted": "Documento eliminado",
+        "deleteFailed": "No se pudo eliminar"
       }
     },
     "activity": {
@@ -2849,7 +2873,11 @@
         "scriptsOn": "Los scripts de este documento se están ejecutando.",
         "enableScripts": "Activar scripts",
         "disableScripts": "Desactivar scripts"
-      }
+      },
+      "save": "Guardar",
+      "saveTitle": "Guardar este documento (⌘S / Ctrl+S)",
+      "lineNumbers": "Líneas",
+      "lineNumbersTitle": "Mostrar números de línea. Con esto activo las líneas largas dejan de ajustarse."
     },
     "export": {
       "title": "Exportar datos",
@@ -4989,7 +5017,7 @@
     "createFailedApi": "Error al crear: {error}",
     "createFailedGeneric": "Error al crear: {error}",
     "pathLabel": "Ruta relativa al vault",
-    "pathHint": "personal/scratch.md",
+    "pathHint": "mi-proyecto/borrador.md",
     "create": "Crear",
     "popupDelete": "Eliminar",
     "deleteBody": "Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.",
@@ -5002,20 +5030,41 @@
     "editor": {
       "markdownHint": "Markdown, o HTML si el archivo termina en .html…",
       "saving": "Guardando…",
-      "autosave": "Se guarda automáticamente mientras escribes",
+      "autosave": "Guardado",
       "loadFailedApi": "Error al cargar: {error}",
       "loadFailedGeneric": "Error al cargar: {error}",
       "saveFailedApi": "Error al guardar: {error}",
       "saveFailedGeneric": "Error al guardar: {error}",
       "savedAt": "Guardado {time}",
       "showPreview": "Vista previa",
-      "showSource": "Código"
+      "showSource": "Código",
+      "save": "Guardar",
+      "unsaved": "Cambios sin guardar"
     },
     "html": {
       "scriptsOff": "Scripts desactivados: este documento se renderiza como HTML estático.",
       "scriptsOn": "Los scripts de este documento se están ejecutando.",
       "enableScripts": "Activar scripts",
       "disableScripts": "Desactivar scripts"
+    },
+    "flatten": {
+      "notice": "Cada proyecto está dentro de una carpeta llamada projects/.",
+      "preview": "Vista previa",
+      "dismiss": "Ahora no",
+      "title": "Archivar los proyectos con su propio nombre",
+      "description": "Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.",
+      "nothingToMove": "No hay nada que mover.",
+      "skipped": "Sin tocar ({count}):",
+      "convert": "Convertir {count}",
+      "done": "Se movieron {count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.",
+      "restartHint": "Reinicia la pasarela después."
+    },
+    "rename": {
+      "action": "Renombrar",
+      "title": "Renombrar documento",
+      "helper": "Ruta relativa a la bóveda. Las carpetas se crean solas.",
+      "doneSnack": "Renombrado. {count} enlace(s) actualizados.",
+      "doneWithWarning": "Renombrado, pero no se actualizaron todos los enlaces"
     }
   },
   "dataExport": {

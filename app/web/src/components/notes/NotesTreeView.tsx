@@ -1,4 +1,11 @@
-import { useImperativeHandle, useMemo, useState, forwardRef } from 'react'
+import {
+  forwardRef,
+  memo,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from 'react'
 import {
   BookOpen,
   ChevronRight,
@@ -51,7 +58,12 @@ interface TreeNode {
 // the vault. Built by chunking each note's path into segments and
 // merging into a tree on the fly — no recursive backend listing
 // needed (the /notes/list endpoint already returns the flat list).
-export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>(
+// memo, because the page that hosts this re-renders on every edit to
+// the open document. Re-walking and re-rendering every row of a vault
+// for each keystroke is work nobody asked for: the tree only changes
+// when the note list or the selection does.
+export const NotesTreeView = memo(
+  forwardRef<NotesTreeViewHandle, NotesTreeViewProps>(
   function NotesTreeView(
     {
       notes,
@@ -67,27 +79,36 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
   const { t } = useTranslation()
   const tree = useMemo(() => buildTree(notes), [notes])
 
-  // Auto-expand the path leading to the selected note so it stays
-  // visible across re-renders / search clears. Other folders default
-  // to whatever caller passed (or empty = collapsed).
-  const autoExpand = useMemo(() => {
-    const set = new Set<string>(initialExpanded ?? new Set<string>())
-    if (selected) {
-      const parts = selected.split('/').slice(0, -1)
+  const [expanded, setExpanded] = useState<Set<string>>(
+    () => new Set(initialExpanded ?? []),
+  )
+
+  // Reveal the selected note by opening its ancestors — ONCE per
+  // selection, in an effect.
+  //
+  // This used to re-merge on every render, which made the folder
+  // holding the selected note impossible to close: the collapse landed,
+  // the next render put it straight back, and "Collapse all" left that
+  // one branch open. Auto-expand is a response to the selection
+  // changing, not a rule about what must stay open.
+  useEffect(() => {
+    if (!selected) return
+    const parts = selected.split('/').slice(0, -1)
+    if (parts.length === 0) return
+    setExpanded((prev) => {
+      const next = new Set(prev)
       let cur = ''
+      let changed = false
       for (const p of parts) {
         cur = cur ? `${cur}/${p}` : p
-        set.add(cur)
+        if (!next.has(cur)) {
+          next.add(cur)
+          changed = true
+        }
       }
-    }
-    return set
-  }, [tree, selected, initialExpanded])
-
-  const [expanded, setExpanded] = useState<Set<string>>(autoExpand)
-
-  // Re-merge when autoExpand changes (e.g. selected note in a fresh
-  // folder branch). Preserves user's explicit toggles.
-  useMemoSync(autoExpand, expanded, setExpanded)
+      return changed ? next : prev
+    })
+  }, [selected])
 
   // Expose imperative expand/collapse-all so the parent toolbar can
   // hit them without us lifting the expanded state up.
@@ -132,7 +153,8 @@ export const NotesTreeView = forwardRef<NotesTreeViewHandle, NotesTreeViewProps>
       )}
     </div>
   )
-})
+}),
+)
 
 function TreeRow({
   node,
@@ -310,31 +332,3 @@ function walkSort(node: TreeNode) {
   for (const [, child] of node.children) walkSort(child)
 }
 
-// useMemoSync merges newly-required expansions into the existing user
-// state without dropping toggles the user made. React doesn't expose
-// a clean "merge into setState if value changed" so we compare via
-// JSON serialisation of the sorted paths — cheap for sets of <100.
-function useMemoSync(
-  next: Set<string>,
-  current: Set<string>,
-  set: (s: Set<string>) => void,
-) {
-  const nextKey = JSON.stringify([...next].sort())
-  const currentKey = JSON.stringify([...current].sort())
-  // Effect-less sync: only fire when next has additions current doesn't.
-  // Avoids infinite loops while still picking up auto-expand.
-  if (nextKey !== currentKey) {
-    let changed = false
-    const merged = new Set(current)
-    for (const p of next) {
-      if (!merged.has(p)) {
-        merged.add(p)
-        changed = true
-      }
-    }
-    if (changed) {
-      // queueMicrotask defers to after render so React doesn't warn.
-      queueMicrotask(() => set(merged))
-    }
-  }
-}

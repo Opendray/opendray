@@ -11,10 +11,62 @@ export interface FullNote extends Note {
   body: string
 }
 
+/** How the vault files projects. Mirrors notes.Layout in Go. */
+export type VaultLayout = 'flat' | 'nested'
+
 export interface VaultInfo {
   root: string
+  /**
+   * "flat" files each project at the vault root under its own name,
+   * with its personal notes inside it; "nested" uses the prefixes
+   * below. Absent on a gateway older than this field — treat that as
+   * nested, which is what those gateways do.
+   */
+  layout?: VaultLayout
+  /**
+   * True when this vault still files projects under `projects/` AND has
+   * something the conversion would move. Drives the offer to convert:
+   * a migration nobody is told about is one nobody runs.
+   */
+  flattenable?: boolean
+  /** Nested layout only. */
   personal_prefix?: string
+  /** Nested layout only. */
   projects_prefix?: string
+}
+
+export interface FlattenMove {
+  from: string
+  to: string
+  /** `[[wiki links]]` repointed at the new path. Zero on a dry run. */
+  links_rewritten: number
+}
+
+export interface FlattenSkip {
+  path: string
+  /** Stated in plain terms — surface it, don't summarise it away. */
+  reason: string
+}
+
+export interface FlattenResult {
+  moves: FlattenMove[] | null
+  skips: FlattenSkip[] | null
+  mappings_rewritten: number
+  dry_run: boolean
+}
+
+/**
+ * Preview or perform the nested → flat conversion.
+ *
+ * `apply` defaults to false and must be passed explicitly to move
+ * anything: this renames every project document in the vault, so
+ * looking and rewriting must not be one field apart.
+ */
+export async function flattenVault(apply = false): Promise<FlattenResult> {
+  return api<FlattenResult>('/api/v1/notes/flatten', {
+    method: 'POST',
+    body: { apply },
+  })
 }
 
 export async function notesInfo(): Promise<VaultInfo> {
@@ -27,6 +79,14 @@ export interface ProjectMappingResolved {
   path: string         // resolved path (override OR default)
   default_path: string // what auto-derivation would produce
   custom: boolean      // true when path != default_path
+  /**
+   * Where this cwd's personal scratchpad belongs. Served rather than
+   * derived here because it depends on the vault's layout: the flat
+   * layout keeps it inside the project directory (so a per-cwd override
+   * moves it too), while the nested layout files it in its own tree.
+   * Use personalNotePath() only as a fallback before this arrives.
+   */
+  personal_path?: string
 }
 
 export interface ProjectMapping {
@@ -291,9 +351,13 @@ export function projectNotePath(cwd: string): string {
 }
 
 // personalNotePath is the user's personal scratchpad for this project.
-// One file per cwd basename, edited inline in the Notes panel. AI
-// agents do NOT write here — the convention keeps human and agent
-// authoring lanes clean.
+// One file per cwd, edited inline in the Notes panel. AI agents do NOT
+// write here — the convention keeps human and agent authoring lanes
+// clean, and under the flat layout that rule is the ONLY thing keeping
+// them apart, since the file now sits inside the project's directory.
+//
+// This returns the NESTED path and is a fallback only: ask the gateway
+// via notesProjectMapping(cwd).personal_path, which knows the layout.
 export function personalNotePath(cwd: string): string {
   return `personal/${cwdSlug(cwd)}.md`
 }

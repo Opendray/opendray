@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { highlightCode } from '@/lib/highlight'
 import { cn } from '@/lib/utils'
@@ -18,9 +18,25 @@ import { cn } from '@/lib/utils'
 // glyphs the further down you type. Both layers therefore take their
 // box and type styling from the same SHARED constant below. Change it
 // in one place or not at all.
+// Line numbers force one more agreement: WRAPPING.
+//
+// A wrapped logical line occupies several visual rows, so a gutter
+// counting 1..N drifts the moment any line is longer than the box —
+// and in an HTML document, most are. Every code editor answers this
+// the same way, by not wrapping. So the gutter and `whitespace-pre`
+// travel together; without numbers the view keeps wrapping, which is
+// what prose wants.
 const SHARED_BOX =
-  'w-full px-3 py-2 font-mono text-[12px] leading-snug border ' +
-  'whitespace-pre-wrap break-words'
+  'w-full py-2 font-mono text-[12px] leading-snug border'
+const WRAP_BOX = 'whitespace-pre-wrap break-words'
+const NOWRAP_BOX = 'whitespace-pre overflow-auto'
+
+// Width of the gutter, in ch, for a given line count. Both layers pad
+// left by exactly this much — a disagreement here is the caret drift
+// this file exists to avoid.
+function gutterCh(lines: number): number {
+  return String(Math.max(lines, 1)).length + 2
+}
 
 interface HighlightedSourceProps {
   value: string
@@ -38,6 +54,8 @@ interface HighlightedSourceProps {
   onKeyUp?: React.KeyboardEventHandler<HTMLTextAreaElement>
   onClick?: React.MouseEventHandler<HTMLTextAreaElement>
   onBlur?: React.FocusEventHandler<HTMLTextAreaElement>
+  /** Show a line-number gutter. Implies no wrapping — see SHARED_BOX. */
+  showLineNumbers?: boolean
 }
 
 export function HighlightedSource({
@@ -52,9 +70,15 @@ export function HighlightedSource({
   onKeyUp,
   onClick,
   onBlur,
+  showLineNumbers = false,
 }: HighlightedSourceProps) {
   const preRef = useRef<HTMLPreElement>(null)
+  const gutterRef = useRef<HTMLDivElement>(null)
   const [html, setHtml] = useState<string | null>(null)
+
+  const lineCount = useMemo(() => value.split('\n').length, [value])
+  const gutterWidth = showLineNumbers ? gutterCh(lineCount) : 0
+  const padLeft = showLineNumbers ? `${gutterWidth + 1}ch` : undefined
 
   // hljs loads lazily, and highlighting a long note on every keystroke
   // would make typing feel heavy. Debounce, and render plain text until
@@ -76,13 +100,19 @@ export function HighlightedSource({
     }
   }, [value, language])
 
-  // The backdrop does not scroll on its own; it follows the textarea.
+  // Neither the backdrop nor the gutter scrolls on its own; both
+  // follow the textarea. The gutter tracks vertical only — it must
+  // stay put while the code scrolls sideways.
   const syncScroll = () => {
     const ta = textareaRef.current
-    const pre = preRef.current
-    if (!ta || !pre) return
-    pre.scrollTop = ta.scrollTop
-    pre.scrollLeft = ta.scrollLeft
+    if (!ta) return
+    if (preRef.current) {
+      preRef.current.scrollTop = ta.scrollTop
+      preRef.current.scrollLeft = ta.scrollLeft
+    }
+    if (gutterRef.current) {
+      gutterRef.current.scrollTop = ta.scrollTop
+    }
   }
 
   const sizing = fillParent
@@ -92,11 +122,32 @@ export function HighlightedSource({
 
   return (
     <div className={cn('relative', sizing, className)} style={style}>
+      {showLineNumbers && (
+        <div
+          ref={gutterRef}
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none absolute left-0 top-0 bottom-0 z-10 overflow-hidden',
+            'py-2 pr-2 font-mono text-[12px] leading-snug text-right',
+            'select-none rounded-l-md border-y border-l border-border',
+            'bg-input/60 text-muted-foreground/50',
+          )}
+          style={{ width: `${gutterWidth}ch` }}
+        >
+          {Array.from({ length: lineCount }, (_, i) => (
+            <div key={i}>{i + 1}</div>
+          ))}
+        </div>
+      )}
       <pre
         ref={preRef}
         aria-hidden="true"
+        style={{ paddingLeft: padLeft }}
         className={cn(
           SHARED_BOX,
+          showLineNumbers ? NOWRAP_BOX : WRAP_BOX,
+          !showLineNumbers && 'px-3',
+          showLineNumbers && 'pr-3',
           'hljs pointer-events-none absolute inset-0 m-0 overflow-hidden',
           'rounded-md border-border bg-input/40 text-foreground',
         )}
@@ -119,8 +170,12 @@ export function HighlightedSource({
         onBlur={onBlur}
         placeholder={placeholder}
         spellCheck={false}
+        style={{ paddingLeft: padLeft }}
         className={cn(
           SHARED_BOX,
+          showLineNumbers ? NOWRAP_BOX : WRAP_BOX,
+          !showLineNumbers && 'px-3',
+          showLineNumbers && 'pr-3',
           'absolute inset-0 h-full resize-none rounded-md border-border',
           // The glyphs come from the backdrop; only the caret and the
           // selection highlight belong to the textarea.

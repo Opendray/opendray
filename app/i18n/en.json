@@ -254,7 +254,7 @@
           "noDocs": "No project docs in this vault folder yet.",
           "createFailed": "Could not create doc",
           "mappingTitle": "Bind project vault folder",
-          "mappingHelp": "Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.",
+          "mappingHelp": "Pick the vault folder that holds this project's notes. Vault-relative. Leave empty to use the default shown in the field.",
           "sessionCwd": "Session cwd",
           "folderLabel": "Vault folder",
           "mappingStoredHint": "Stored in the vault at .opendray-projects.json, so it syncs with your notes.",
@@ -1029,7 +1029,8 @@
         "title": "No note selected",
         "hint": "Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. AI-written project docs live under <1>projects/</1>; your personal scratchpads under <3>personal/</3>.",
         "today": "Today's daily note",
-        "new": "New note"
+        "new": "New note",
+        "hintFlat": "Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. Each project's docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it."
       },
       "picker": {
         "browseAria": "Browse folders",
@@ -1185,6 +1186,29 @@
         "tooltipAutoOn": " · auto-sync on",
         "tooltipLastError": " · last error: {error}",
         "branchPlaceholder": "—"
+      },
+      "flatten": {
+        "notice": "Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.",
+        "preview": "Preview",
+        "dismiss": "Not now",
+        "title": "File projects under their own names",
+        "description": "Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.",
+        "nothingToMove": "Nothing to move.",
+        "skipped": "Left alone ({count}):",
+        "convert": "Convert {count} document(s)",
+        "done": "Moved {count} document(s). Restart the gateway to pick up the new layout.",
+        "restartHint": "Restart the gateway afterwards."
+      },
+      "doc": {
+        "rename": "Rename",
+        "renamePrompt": "New path for this document (folders are created as needed):",
+        "renamed": "Renamed. {count} link(s) repointed.",
+        "renamedWithWarning": "Renamed, but the links were not all updated",
+        "renameFailed": "Rename failed",
+        "delete": "Delete",
+        "deleteConfirm": "Delete {path}? This cannot be undone from here.",
+        "deleted": "Document deleted",
+        "deleteFailed": "Delete failed"
       }
     },
     "activity": {
@@ -2849,7 +2873,11 @@
         "scriptsOn": "Scripts are running for this document.",
         "enableScripts": "Enable scripts",
         "disableScripts": "Disable scripts"
-      }
+      },
+      "save": "Save",
+      "saveTitle": "Save this document (⌘S / Ctrl+S)",
+      "lineNumbers": "Lines",
+      "lineNumbersTitle": "Show line numbers. Long lines stop wrapping while this is on."
     },
     "export": {
       "title": "Export data",
@@ -4989,7 +5017,7 @@
     "createFailedApi": "Create failed: {error}",
     "createFailedGeneric": "Create failed: {error}",
     "pathLabel": "Vault-relative path",
-    "pathHint": "personal/scratch.md",
+    "pathHint": "my-project/scratch.md",
     "create": "Create",
     "popupDelete": "Delete",
     "deleteBody": "This is irreversible. Vault git sync will remove the file on the gateway host too.",
@@ -5002,20 +5030,41 @@
     "editor": {
       "markdownHint": "Markdown, or HTML if the file ends .html…",
       "saving": "Saving…",
-      "autosave": "Auto-saves as you type",
+      "autosave": "Saved",
       "loadFailedApi": "Load failed: {error}",
       "loadFailedGeneric": "Load failed: {error}",
       "saveFailedApi": "Save failed: {error}",
       "saveFailedGeneric": "Save failed: {error}",
       "savedAt": "Saved {time}",
       "showPreview": "Preview",
-      "showSource": "Source"
+      "showSource": "Source",
+      "save": "Save",
+      "unsaved": "Unsaved changes"
     },
     "html": {
       "scriptsOff": "Scripts are off — this document is rendered as static HTML.",
       "scriptsOn": "Scripts are running for this document.",
       "enableScripts": "Enable scripts",
       "disableScripts": "Disable scripts"
+    },
+    "flatten": {
+      "notice": "Every project here sits inside a folder called projects/.",
+      "preview": "Preview",
+      "dismiss": "Not now",
+      "title": "File projects under their own names",
+      "description": "Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.",
+      "nothingToMove": "Nothing to move.",
+      "skipped": "Left alone ({count}):",
+      "convert": "Convert {count}",
+      "done": "Moved {count} document(s). Restart the gateway to pick up the new layout.",
+      "restartHint": "Restart the gateway afterwards."
+    },
+    "rename": {
+      "action": "Rename",
+      "title": "Rename document",
+      "helper": "Vault-relative path. Folders are created as needed.",
+      "doneSnack": "Renamed. {count} link(s) repointed.",
+      "doneWithWarning": "Renamed, but the links were not all updated"
     }
   },
   "dataExport": {

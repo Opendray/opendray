@@ -497,7 +497,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// Vault + skills are needed by the SessionProvider so spawn-time
 	// injection has them available. Constructed here (before the
 	// session manager) so the manager's first Resolve call sees them.
+	vaultLayout := resolveVaultLayout(cfg, paths.Vault, log)
 	vault, err := notesapi.New(paths.Vault, notesapi.Options{
+		Layout: vaultLayout,
+		// The flatten migration changes the shape on disk; without this
+		// the change would survive on disk but not in config, and the
+		// next start would derive paths for the old directories.
+		OnLayoutChange: func(l notesapi.Layout) error {
+			return settings.RecordVaultLayout(cfg.FilePath, string(l), log)
+		},
 		PersonalPrefix: cfg.Vault.PersonalPrefix,
 		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
 		// On a pre-split install skills/ and mcp/ sit inside the
@@ -509,7 +517,19 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		st.Close()
 		return nil, fmt.Errorf("init notes vault: %w", err)
 	}
-	log.Info("vault ready", "documents", vault.Root())
+	log.Info("vault ready", "documents", vault.Root(),
+		"layout", string(vault.Layout()))
+	if vault.Flattenable() {
+		// Said once, at info, because an operator who is happy with the
+		// nested layout should not be nagged on every restart — but one
+		// who has never heard of the flat layout would otherwise never
+		// find out their vault could stop wrapping every project in a
+		// folder named after the library itself.
+		log.Info("this vault files projects under a `projects/` folder. " +
+			"`opendray notes flatten` previews filing them under their own " +
+			"names instead (dry run unless --apply); the doc library offers " +
+			"the same conversion.")
+	}
 	notesHandlers := notesapi.NewHandlers(vault, log)
 	skillsLoader := skills.NewLoader(paths.Skills)
 	if list, _ := skillsLoader.List(); len(list) > 0 {
@@ -1876,6 +1896,39 @@ func logLayout(log *slog.Logger, p config.Paths) {
 		"documents", p.Vault,
 		"skills_inside_documents", p.LegacySkills,
 		"mcp_inside_documents", p.LegacyMCP)
+}
+
+// resolveVaultLayout returns the vault layout, deciding it exactly
+// once for installs that predate the setting and writing the answer
+// into config.toml.
+//
+// Recording it is the point. The obvious alternative — work the layout
+// out from what is on disk every time — is the bug that put this
+// install's whole document library behind a `notes/` directory: a probe
+// that asks "does this folder have content?" flips the moment someone
+// puts content there. A vault's shape must not depend on the order
+// files arrived in.
+//
+// A failed write is logged, not fatal. The gateway can serve a correct
+// layout this run; what it loses is the guarantee for the next one, and
+// refusing to start over a config write would be a worse trade.
+func resolveVaultLayout(cfg config.Config, docRoot string, log *slog.Logger) notesapi.Layout {
+	if l := notesapi.Layout(cfg.Vault.Layout); l.Valid() {
+		return l
+	}
+	layout := notesapi.DetectLayout(docRoot)
+	log.Info("vault layout decided", "layout", string(layout), "documents", docRoot)
+
+	if cfg.FilePath == "" {
+		log.Warn("no config file to record the vault layout in; it will be " +
+			"detected again next start")
+		return layout
+	}
+	if err := settings.RecordVaultLayout(cfg.FilePath, string(layout), log); err != nil {
+		log.Warn("could not record the vault layout in config",
+			"error", err, "layout", string(layout))
+	}
+	return layout
 }
 
 // memoryKeyPath is where we cache the plaintext API key for the

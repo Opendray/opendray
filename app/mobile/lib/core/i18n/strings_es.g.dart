@@ -880,7 +880,7 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String createFailedApi({required Object error}) => 'Error al crear: ${error}';
 	@override String createFailedGeneric({required Object error}) => 'Error al crear: ${error}';
 	@override String get pathLabel => 'Ruta relativa al vault';
-	@override String get pathHint => 'personal/scratch.md';
+	@override String get pathHint => 'mi-proyecto/borrador.md';
 	@override String get create => 'Crear';
 	@override String get popupDelete => 'Eliminar';
 	@override String get deleteBody => 'Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.';
@@ -892,6 +892,8 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String get pathHelper => 'Añade .md automáticamente si falta.';
 	@override late final _TranslationsNotesPageEditorEs editor = _TranslationsNotesPageEditorEs._(_root);
 	@override late final _TranslationsNotesPageHtmlEs html = _TranslationsNotesPageHtmlEs._(_root);
+	@override late final _TranslationsNotesPageFlattenEs flatten = _TranslationsNotesPageFlattenEs._(_root);
+	@override late final _TranslationsNotesPageRenameEs rename = _TranslationsNotesPageRenameEs._(_root);
 }
 
 // Path: dataExport
@@ -1386,6 +1388,8 @@ class _TranslationsWebNotesEs extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesPickerEs picker = _TranslationsWebNotesPickerEs._(_root);
 	@override late final _TranslationsWebNotesVaultSyncEs vaultSync = _TranslationsWebNotesVaultSyncEs._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeEs syncBadge = _TranslationsWebNotesSyncBadgeEs._(_root);
+	@override late final _TranslationsWebNotesFlattenEs flatten = _TranslationsWebNotesFlattenEs._(_root);
+	@override late final _TranslationsWebNotesDocEs doc = _TranslationsWebNotesDocEs._(_root);
 }
 
 // Path: web.activity
@@ -1647,6 +1651,10 @@ class _TranslationsWebNoteEditorEs extends TranslationsWebNoteEditorEn {
 	@override String get saveFailedToast => 'Error al guardar';
 	@override late final _TranslationsWebNoteEditorStatusEs status = _TranslationsWebNoteEditorStatusEs._(_root);
 	@override late final _TranslationsWebNoteEditorHtmlEs html = _TranslationsWebNoteEditorHtmlEs._(_root);
+	@override String get save => 'Guardar';
+	@override String get saveTitle => 'Guardar este documento (⌘S / Ctrl+S)';
+	@override String get lineNumbers => 'Líneas';
+	@override String get lineNumbersTitle => 'Mostrar números de línea. Con esto activo las líneas largas dejan de ajustarse.';
 }
 
 // Path: web.export
@@ -2739,7 +2747,7 @@ class _TranslationsNotesPageEditorEs extends TranslationsNotesPageEditorEn {
 	// Translations
 	@override String get markdownHint => 'Markdown, o HTML si el archivo termina en .html…';
 	@override String get saving => 'Guardando…';
-	@override String get autosave => 'Se guarda automáticamente mientras escribes';
+	@override String get autosave => 'Guardado';
 	@override String loadFailedApi({required Object error}) => 'Error al cargar: ${error}';
 	@override String loadFailedGeneric({required Object error}) => 'Error al cargar: ${error}';
 	@override String saveFailedApi({required Object error}) => 'Error al guardar: ${error}';
@@ -2747,6 +2755,8 @@ class _TranslationsNotesPageEditorEs extends TranslationsNotesPageEditorEn {
 	@override String savedAt({required Object time}) => 'Guardado ${time}';
 	@override String get showPreview => 'Vista previa';
 	@override String get showSource => 'Código';
+	@override String get save => 'Guardar';
+	@override String get unsaved => 'Cambios sin guardar';
 }
 
 // Path: notesPage.html
@@ -2760,6 +2770,39 @@ class _TranslationsNotesPageHtmlEs extends TranslationsNotesPageHtmlEn {
 	@override String get scriptsOn => 'Los scripts de este documento se están ejecutando.';
 	@override String get enableScripts => 'Activar scripts';
 	@override String get disableScripts => 'Desactivar scripts';
+}
+
+// Path: notesPage.flatten
+class _TranslationsNotesPageFlattenEs extends TranslationsNotesPageFlattenEn {
+	_TranslationsNotesPageFlattenEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get notice => 'Cada proyecto está dentro de una carpeta llamada projects/.';
+	@override String get preview => 'Vista previa';
+	@override String get dismiss => 'Ahora no';
+	@override String get title => 'Archivar los proyectos con su propio nombre';
+	@override String get description => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.';
+	@override String get nothingToMove => 'No hay nada que mover.';
+	@override String skipped({required Object count}) => 'Sin tocar (${count}):';
+	@override String convert({required Object count}) => 'Convertir ${count}';
+	@override String done({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.';
+	@override String get restartHint => 'Reinicia la pasarela después.';
+}
+
+// Path: notesPage.rename
+class _TranslationsNotesPageRenameEs extends TranslationsNotesPageRenameEn {
+	_TranslationsNotesPageRenameEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => 'Renombrar';
+	@override String get title => 'Renombrar documento';
+	@override String get helper => 'Ruta relativa a la bóveda. Las carpetas se crean solas.';
+	@override String doneSnack({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.';
+	@override String get doneWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
 }
 
 // Path: dataExport.sections
@@ -4086,6 +4129,7 @@ class _TranslationsWebNotesEmptyEs extends TranslationsWebNotesEmptyEn {
 	@override String get hint => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de proyecto escritos por la IA viven en <1>projects/</1>; tus borradores personales en <3>personal/</3>.';
 	@override String get today => 'Nota diaria de hoy';
 	@override String get kNew => 'Nueva nota';
+	@override String get hintFlat => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de cada proyecto viven en una carpeta con su nombre, y tu borrador personal es <1>personal.md</1> dentro de ella.';
 }
 
 // Path: web.notes.picker
@@ -4142,6 +4186,43 @@ class _TranslationsWebNotesSyncBadgeEs extends TranslationsWebNotesSyncBadgeEn {
 	@override String get tooltipAutoOn => ' · sincronización automática activada';
 	@override String tooltipLastError({required Object error}) => ' · último error: ${error}';
 	@override String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.flatten
+class _TranslationsWebNotesFlattenEs extends TranslationsWebNotesFlattenEn {
+	_TranslationsWebNotesFlattenEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get notice => 'Cada proyecto de esta bóveda está dentro de una carpeta llamada projects/. Pueden archivarse con su propio nombre.';
+	@override String get preview => 'Vista previa';
+	@override String get dismiss => 'Ahora no';
+	@override String get title => 'Archivar los proyectos con su propio nombre';
+	@override String get description => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.';
+	@override String get nothingToMove => 'No hay nada que mover.';
+	@override String skipped({required Object count}) => 'Sin tocar (${count}):';
+	@override String convert({required Object count}) => 'Convertir ${count} documento(s)';
+	@override String done({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.';
+	@override String get restartHint => 'Reinicia la pasarela después.';
+}
+
+// Path: web.notes.doc
+class _TranslationsWebNotesDocEs extends TranslationsWebNotesDocEn {
+	_TranslationsWebNotesDocEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get rename => 'Renombrar';
+	@override String get renamePrompt => 'Nueva ruta para este documento (las carpetas se crean solas):';
+	@override String renamed({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.';
+	@override String get renamedWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
+	@override String get renameFailed => 'No se pudo renombrar';
+	@override String get delete => 'Eliminar';
+	@override String deleteConfirm({required Object path}) => '¿Eliminar ${path}? Esto no se puede deshacer desde aquí.';
+	@override String get deleted => 'Documento eliminado';
+	@override String get deleteFailed => 'No se pudo eliminar';
 }
 
 // Path: web.activity.filters
@@ -7523,7 +7604,7 @@ class _TranslationsWebSessionsInspectorVaultPanelEs extends TranslationsWebSessi
 	@override String get noDocs => 'Aún no hay docs del proyecto en esta carpeta de la bóveda.';
 	@override String get createFailed => 'No se pudo crear el doc';
 	@override String get mappingTitle => 'Vincular carpeta de bóveda del proyecto';
-	@override String get mappingHelp => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.';
+	@override String get mappingHelp => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda. Déjalo vacío para usar el valor por defecto que se muestra en el campo.';
 	@override String get sessionCwd => 'cwd de la sesión';
 	@override String get folderLabel => 'Carpeta de la bóveda';
 	@override String get mappingStoredHint => 'Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.';
@@ -10079,7 +10160,7 @@ extension on TranslationsEs {
 			'web.sessions.inspector.vaultPanel.noDocs' => 'Aún no hay docs del proyecto en esta carpeta de la bóveda.',
 			'web.sessions.inspector.vaultPanel.createFailed' => 'No se pudo crear el doc',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => 'Vincular carpeta de bóveda del proyecto',
-			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda, p. ej. projects/my-app. Déjalo vacío para usar el valor por defecto.',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Elige la carpeta de la bóveda que contiene las notas de este proyecto. Relativa a la bóveda. Déjalo vacío para usar el valor por defecto que se muestra en el campo.',
 			'web.sessions.inspector.vaultPanel.sessionCwd' => 'cwd de la sesión',
 			'web.sessions.inspector.vaultPanel.folderLabel' => 'Carpeta de la bóveda',
 			'web.sessions.inspector.vaultPanel.mappingStoredHint' => 'Se guarda en la bóveda en .opendray-projects.json, así se sincroniza con tus notas.',
@@ -10710,6 +10791,7 @@ extension on TranslationsEs {
 			'web.notes.empty.hint' => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de proyecto escritos por la IA viven en <1>projects/</1>; tus borradores personales en <3>personal/</3>.',
 			'web.notes.empty.today' => 'Nota diaria de hoy',
 			'web.notes.empty.kNew' => 'Nueva nota',
+			'web.notes.empty.hintFlat' => 'Elige una nota del árbol de la izquierda, ve directo al registro diario de hoy o crea una nueva. Los docs de cada proyecto viven en una carpeta con su nombre, y tu borrador personal es <1>personal.md</1> dentro de ella.',
 			'web.notes.picker.browseAria' => 'Explorar carpetas',
 			'web.notes.picker.matches_one' => ({required Object count}) => '${count} coincidencia',
 			'web.notes.picker.matches_other' => ({required Object count}) => '${count} coincidencias',
@@ -10837,6 +10919,25 @@ extension on TranslationsEs {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · sincronización automática activada',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · último error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.flatten.notice' => 'Cada proyecto de esta bóveda está dentro de una carpeta llamada projects/. Pueden archivarse con su propio nombre.',
+			'web.notes.flatten.preview' => 'Vista previa',
+			'web.notes.flatten.dismiss' => 'Ahora no',
+			'web.notes.flatten.title' => 'Archivar los proyectos con su propio nombre',
+			'web.notes.flatten.description' => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.',
+			'web.notes.flatten.nothingToMove' => 'No hay nada que mover.',
+			'web.notes.flatten.skipped' => ({required Object count}) => 'Sin tocar (${count}):',
+			'web.notes.flatten.convert' => ({required Object count}) => 'Convertir ${count} documento(s)',
+			'web.notes.flatten.done' => ({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.',
+			'web.notes.flatten.restartHint' => 'Reinicia la pasarela después.',
+			'web.notes.doc.rename' => 'Renombrar',
+			'web.notes.doc.renamePrompt' => 'Nueva ruta para este documento (las carpetas se crean solas):',
+			'web.notes.doc.renamed' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
+			'web.notes.doc.renamedWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
+			'web.notes.doc.renameFailed' => 'No se pudo renombrar',
+			'web.notes.doc.delete' => 'Eliminar',
+			'web.notes.doc.deleteConfirm' => ({required Object path}) => '¿Eliminar ${path}? Esto no se puede deshacer desde aquí.',
+			'web.notes.doc.deleted' => 'Documento eliminado',
+			'web.notes.doc.deleteFailed' => 'No se pudo eliminar',
 			'web.activity.title' => 'Actividad',
 			'web.activity.subtitle' => 'Auditoría por llamada de las solicitudes API realizadas por las integraciones registradas. Incluye tanto las llamadas entrantes (una app de terceros que llama a opendray con su clave de API) como las llamadas salientes a través del proxy (admin → proxy de opendray → integración). Las llamadas hechas directamente por esta UI de administración no se registran.',
 			'web.activity.refresh' => 'Actualizar',
@@ -10864,6 +10965,8 @@ extension on TranslationsEs {
 			'web.activity.table.status' => 'Estado',
 			'web.activity.table.duration' => 'Duración',
 			'web.activity.table.inboundAria' => 'entrante',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.outboundAria' => 'saliente',
 			'web.activity.empty.filtered' => 'Ninguna llamada coincide con estos filtros.',
 			'web.activity.empty.title' => 'Aún no se ha registrado ninguna llamada API',
@@ -10884,8 +10987,6 @@ extension on TranslationsEs {
 			'web.providers.list.disabledBadge' => 'deshabilitado',
 			'web.providers.list.noneSelected' => 'Ningún proveedor seleccionado.',
 			'web.providers.detail.enabled' => 'Habilitado',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.disabled' => 'Deshabilitado',
 			'web.providers.detail.toggleAria' => ({required Object name}) => 'Alternar ${name}',
 			'web.providers.detail.configuration' => 'Configuración',
@@ -11378,6 +11479,8 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.',
@@ -11398,8 +11501,6 @@ extension on TranslationsEs {
 			'web.backups.exportData' => 'Exportar datos',
 			'web.backups.loading' => 'Cargando…',
 			'web.backups.loadStatusFailedToast' => 'No se pudo cargar el estado de la copia de seguridad',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.tabs.backups' => 'Copias de seguridad',
 			'web.backups.tabs.schedules' => 'Programaciones',
 			'web.backups.tabs.targets' => 'Destinos',
@@ -11892,6 +11993,8 @@ extension on TranslationsEs {
 			'web.serverSettings.host.modes.on_demand.desc' => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.',
 			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray no interviene en absoluto en la máquina.',
 			'web.serverSettings.host.modes.off.caveat' => 'La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto.',
 			'web.serverSettings.layout.title' => 'Se resuelve en',
@@ -11912,8 +12015,6 @@ extension on TranslationsEs {
 			'web.settings.items.about' => 'Acerca de',
 			'web.settings.health.connecting' => 'conectando…',
 			'web.settings.health.dbOk' => 'db ok',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.health.dbDown' => 'db caída',
 			'web.settings.breadcrumb.server' => 'Servidor',
 			'web.settings.appearance.title' => 'Apariencia',
@@ -12113,6 +12214,10 @@ extension on TranslationsEs {
 			'web.noteEditor.html.scriptsOn' => 'Los scripts de este documento se están ejecutando.',
 			'web.noteEditor.html.enableScripts' => 'Activar scripts',
 			'web.noteEditor.html.disableScripts' => 'Desactivar scripts',
+			'web.noteEditor.save' => 'Guardar',
+			'web.noteEditor.saveTitle' => 'Guardar este documento (⌘S / Ctrl+S)',
+			'web.noteEditor.lineNumbers' => 'Líneas',
+			'web.noteEditor.lineNumbersTitle' => 'Mostrar números de línea. Con esto activo las líneas largas dejan de ajustarse.',
 			'web.export.title' => 'Exportar datos',
 			'web.export.subtitle' => 'Genera un paquete zip puntual de las entidades lógicas seleccionadas. Los paquetes se conservan en el servidor durante 24 horas y luego se eliminan automáticamente.',
 			'web.export.backToBackups' => '← Backups',
@@ -12402,6 +12507,8 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.reserved' => 'reservada',
 			'web.cortex.blueprint.deleteNote' => 'Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.',
 			'web.cortex.blueprint.cancel' => 'Cancelar',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => 'Aplicar plano',
 			'web.cortex.blueprint.applyFailed' => 'Error al aplicar',
 			'web.cortex.blueprint.appliedToast' => 'Plano aplicado',
@@ -12426,8 +12533,6 @@ extension on TranslationsEs {
 			'web.cortex.settings.injection.mode.full.label' => 'Completo — inyectar todo',
 			'web.cortex.settings.injection.mode.full.description' => 'Inyecta al arranque cada sección y página marcada para inyección, completa (comportamiento clásico). Simple, pero cuesta tokens en cada sesión y satura la ventana de contexto.',
 			'web.cortex.settings.injection.savedToast' => 'Modo guardado — las sesiones nuevas lo usan de inmediato (sin reiniciar el backend)',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.settings.injection.saveFailed' => 'Error al guardar',
 			'web.cortex.settings.injection.note' => 'En modo completo siguen aplicando los flags de inyección por sección/página; en modo ligero las reglas fundacionales siempre se inyectan y el resto va al índice.',
 			'web.database.dialog.createTitle' => 'Añadir conexión de base de datos',
@@ -12916,6 +13021,8 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
 			'sessions.inspector.canvas.viewportPhone' => 'Ancho de móvil',
 			'sessions.inspector.canvas.viewportTablet' => 'Ancho de tablet',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => 'Ancho de escritorio',
 			'sessions.inspector.canvas.openFull' => 'Pantalla completa',
 			'sessions.inspector.canvas.confirm' => 'Confirmar',
@@ -12940,8 +13047,6 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.designSaved' => 'Sistema de diseño guardado.',
 			'sessions.inspector.canvas.designWarningAchromatic' => 'Todos los colores resuelven a un gris: los lienzos no tendrán color de marca. Si el proyecto usa shadcn/ui, su --primary es una tinta; pon el tono de marca (normalmente --accent) en Principal.',
 			'sessions.inspector.canvas.tokenPrimary' => 'Primario',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenSecondary' => 'Secundario',
 			'sessions.inspector.canvas.tokenBackground' => 'Fondo',
 			'sessions.inspector.canvas.tokenSurface' => 'Superficie',
@@ -13430,6 +13535,8 @@ extension on TranslationsEs {
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Archivo de clave',
 			'backups.configuredViaLabel' => 'Configurado mediante',
 			'backups.wizard.title' => 'Configurar copias de seguridad',
@@ -13454,8 +13561,6 @@ extension on TranslationsEs {
 			'backups.health.tiles.overdue' => 'Atrasadas',
 			'backups.health.tiles.schedules' => 'Programaciones',
 			'backups.failedToLoad' => 'Error al cargar las copias de seguridad',
-			_ => null,
-		} ?? switch (path) {
 			'backups.envVarConfigured' => 'variable de entorno OPENDRAY_BACKUP_KEY',
 			'backups.savedConfirmCheckbox' => 'He guardado esta passphrase en mi gestor de contraseñas',
 			'backups.pgDumpMissing' => 'pg_dump no está en el PATH. Instala postgresql-client y reinicia opendray.',
@@ -13867,7 +13972,7 @@ extension on TranslationsEs {
 			'notesPage.createFailedApi' => ({required Object error}) => 'Error al crear: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Error al crear: ${error}',
 			'notesPage.pathLabel' => 'Ruta relativa al vault',
-			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.pathHint' => 'mi-proyecto/borrador.md',
 			'notesPage.create' => 'Crear',
 			'notesPage.popupDelete' => 'Eliminar',
 			'notesPage.deleteBody' => 'Esto es irreversible. La sincronización git del vault también eliminará el archivo en el host del gateway.',
@@ -13879,7 +13984,7 @@ extension on TranslationsEs {
 			'notesPage.pathHelper' => 'Añade .md automáticamente si falta.',
 			'notesPage.editor.markdownHint' => 'Markdown, o HTML si el archivo termina en .html…',
 			'notesPage.editor.saving' => 'Guardando…',
-			'notesPage.editor.autosave' => 'Se guarda automáticamente mientras escribes',
+			'notesPage.editor.autosave' => 'Guardado',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Error al guardar: ${error}',
@@ -13887,10 +13992,27 @@ extension on TranslationsEs {
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Guardado ${time}',
 			'notesPage.editor.showPreview' => 'Vista previa',
 			'notesPage.editor.showSource' => 'Código',
+			'notesPage.editor.save' => 'Guardar',
+			'notesPage.editor.unsaved' => 'Cambios sin guardar',
 			'notesPage.html.scriptsOff' => 'Scripts desactivados: este documento se renderiza como HTML estático.',
 			'notesPage.html.scriptsOn' => 'Los scripts de este documento se están ejecutando.',
 			'notesPage.html.enableScripts' => 'Activar scripts',
 			'notesPage.html.disableScripts' => 'Desactivar scripts',
+			'notesPage.flatten.notice' => 'Cada proyecto está dentro de una carpeta llamada projects/.',
+			'notesPage.flatten.preview' => 'Vista previa',
+			'notesPage.flatten.dismiss' => 'Ahora no',
+			'notesPage.flatten.title' => 'Archivar los proyectos con su propio nombre',
+			'notesPage.flatten.description' => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.',
+			'notesPage.flatten.nothingToMove' => 'No hay nada que mover.',
+			'notesPage.flatten.skipped' => ({required Object count}) => 'Sin tocar (${count}):',
+			'notesPage.flatten.convert' => ({required Object count}) => 'Convertir ${count}',
+			'notesPage.flatten.done' => ({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.',
+			'notesPage.flatten.restartHint' => 'Reinicia la pasarela después.',
+			'notesPage.rename.action' => 'Renombrar',
+			'notesPage.rename.title' => 'Renombrar documento',
+			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
+			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
+			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
 			'dataExport.title' => 'Exportación e importación de datos',
 			'dataExport.subtitle' => 'Paquetes a nivel de usuario para migración o verificación, independientes de /backups (recuperación ante desastres).',
 			'dataExport.sections.export' => 'Exportar',
@@ -13927,6 +14049,8 @@ extension on TranslationsEs {
 			'dataExport.history.deleteConfirmTitle' => '¿Eliminar la exportación?',
 			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Elimina el paquete y revoca el token de descarga. ${id}',
 			'dataExport.history.download' => 'Descargar',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.delete' => 'Eliminar',
 			'dataExport.history.downloadCopiedToast' => 'URL de descarga copiada al portapapeles. Pégala en un navegador para obtenerla (un solo uso).',
 			'dataExport.history.columns.scope' => 'Alcance',
@@ -13968,8 +14092,6 @@ extension on TranslationsEs {
 			'dataExport.imports.columns.source' => 'Origen',
 			'dataExport.imports.columns.counts' => 'Recuentos',
 			'dataExport.imports.columns.when' => 'Cuándo',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'en ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'en ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'en ${n}h',

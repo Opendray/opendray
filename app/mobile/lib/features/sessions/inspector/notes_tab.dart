@@ -150,7 +150,14 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final personalPath = _personalNotePath(cwd);
+    // Resolved by the gateway: under the flat layout the personal note
+    // lives inside the project directory and follows a per-cwd
+    // override, so deriving it here would point the phone at a
+    // different file than the one everything else reads. The local
+    // derivation is the fallback for an older gateway.
+    final personalPath = view.mapping.personalPath.isNotEmpty
+        ? view.mapping.personalPath
+        : _personalNotePath(cwd);
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
@@ -1060,6 +1067,8 @@ class _ErrorView extends StatelessWidget {
 
 // ─── Path conventions (mirror app/shared/src/lib/notes.ts) ─────────
 
+// Nested-layout path, kept as a fallback for gateways that do not yet
+// send personal_path. The gateway's answer wins wherever it is present.
 String _personalNotePath(String cwd) => 'personal/${_cwdSlug(cwd)}.md';
 
 String _cwdBasename(String cwd) {

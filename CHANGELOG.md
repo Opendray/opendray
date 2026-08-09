@@ -76,6 +76,110 @@ for the full rationale and what triggers a major bump.
 
 ### Changed
 
+- **A project's documents are filed under the project's name.** The
+  Vault is a project documentation library, and it filed every project
+  under `projects/` — a folder naming what the whole library already
+  is. One level of nesting that told the reader nothing, on every path,
+  in every listing, and at the top of the git repository the Vault syncs
+  to. The operator's own notes were split off further still: agent docs
+  at `projects/<name>/…`, the human scratchpad at `personal/<name>.md` —
+  the same project's material in two distant places, sorted by *who
+  wrote it* rather than by what it is about.
+
+  New vaults now use `<name>/…` with that project's `personal.md`
+  inside it. **Existing vaults are not rearranged.** The layout is
+  decided once, at first start, and written into `config.toml` as
+  `[vault] layout`. Recording it is the point: the alternative — work
+  the shape out from what is on disk each time — is the bug that put
+  one install's entire document library behind a `notes/` directory,
+  because a probe asking "does this folder have content?" changes its
+  answer the moment someone puts content there.
+
+  **The doc library offers the conversion**, on web and on mobile, to
+  any vault that still nests projects. A migration that ships only as a
+  CLI command is one that only the people who wrote it ever run — every
+  existing vault would have stayed nested with its owner never learning
+  there was a choice. The offer is dismissible and never appears for a
+  vault that is already flat or has nothing to move, and the gateway
+  says the same thing once in the startup log for anyone who never
+  opens the UI.
+
+  Nothing moves without a preview. Web and mobile both run the
+  migration as a dry run and show the real list — including what it
+  refuses to touch and why — before anything is renamed.
+  `opendray notes flatten` does the same from a terminal. It defaults
+  to a dry run, drives the same rename the UI uses so `[[wiki links]]`
+  are repointed as it goes, repoints per-cwd project overrides, and
+  **never overwrites**: a destination that already exists is reported
+  and skipped, leaving both copies for you to reconcile.
+
+  Where a project's notes live is now answered by the gateway —
+  `/notes/info` reports the layout and the project mapping carries
+  `personal_path` — instead of being re-derived by web, mobile and the
+  CLI. Three implementations guessing is three chances to disagree, and
+  the CLI's `notes project` was already guessing wrong.
+
+  Reserved names step aside rather than collide: a project called
+  `daily` files under `daily-docs`, since `daily/YYYY-MM-DD.md` belongs
+  to the whole vault. `_`- and `.`-prefixed names are reserved too.
+
+  The conversion records the resulting layout itself and applies it to
+  the running gateway, rather than leaving both to the next restart —
+  otherwise a converted vault keeps deriving `projects/<name>` and
+  `personal/<name>.md` against the directories it just emptied. The
+  directories the migration empties are removed; one still holding
+  anything is left exactly where it is.
+
+- **Documents save when you say so, not on a timer.** The editor wrote
+  after every pause in typing, so a long document rewrote itself to
+  disk over and over while it was being worked on. Saving is now a
+  button, or ⌘S / Ctrl+S, on web and on mobile. Leaving a document
+  still flushes unsaved text — that safety net costs nothing while
+  typing — and closing the browser tab with unsaved work asks first.
+
+  Autosave was not the whole story behind the typing lag, so two things
+  that were: the editor streamed **every keystroke** to the page, which
+  re-rendered the whole vault tree and recomputed the outline per
+  character; and the tree re-rendered along with it. The stream is now
+  paced to what a sidebar can use, and the tree only re-renders when
+  the note list or the selection changes.
+
+- **Line numbers in the source view.** On by default for HTML, off for
+  markdown, and toggleable either way. Numbers turn wrapping off, the
+  way every code editor does it: a wrapped line covers several rows, so
+  a gutter counting 1..N drifts on exactly the long lines an HTML
+  document is full of.
+
+- **The doc library can rename and delete a document.** It could create
+  and edit one, and that was all — a daily note, or anything not bound
+  to a project, could be made but never moved or removed from the one
+  surface that lists everything. Rename goes through the move endpoint,
+  so the `[[wiki links]]` pointing at the old path are repointed rather
+  than left dangling, and a partial rewrite is reported instead of
+  being folded into a plain "renamed". Mobile gains rename too; it
+  already had delete.
+
+- **"New" and "Today" are reachable once a document is open.** They
+  were in the header the whole time, pushed off the right edge by the
+  vault path: a `truncate` element in a flex row still needs
+  `min-width: 0`, or it refuses to shrink below its content. Anyone
+  with a long vault path could only reach the two actions from the
+  empty state, which is exactly when they had no documents to leave.
+
+- **A folder holding the selected document can be collapsed again.**
+  The tree re-applied "open the ancestors of the selection" on every
+  render, so the collapse landed and the next render undid it — and
+  "Collapse all" left that one branch open. Revealing the selection is
+  a response to the selection changing, not a rule about what must stay
+  open, so it now runs once per selection.
+
+- **`opendray notes` accepts flags after the subcommand.** Go's `flag`
+  package stops parsing at the first non-flag argument, so `notes
+  flatten --apply` left `apply` false, performed a dry run, and advised
+  re-running with `--apply` — which is what had just been typed.
+  `notes list --prefix=x` silently listed everything for the same
+  reason. Both orders now mean the same thing.
+
 - **The Vault is your documents. Agent skills and the MCP registry moved
   out.** One root held three tenants with nothing in common — the
   operator's markdown, the skills opendray injects at spawn, and the MCP

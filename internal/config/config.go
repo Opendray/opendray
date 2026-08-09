@@ -388,6 +388,16 @@ type VaultConfig struct {
 	// file managed via the API; these are just the templates.
 	PersonalPrefix string `toml:"personal_prefix" json:"personal_prefix"` // default "personal"
 	ProjectsPrefix string `toml:"projects_prefix" json:"projects_prefix"` // default "projects"
+
+	// Layout is "flat" (each project at the vault root, personal notes
+	// inside it) or "nested" (projects/<name>/ plus personal/<name>.md).
+	// Empty means undecided: the gateway detects it once at startup and
+	// WRITES THE ANSWER BACK HERE. It is recorded rather than re-derived
+	// because a layout inferred from directory contents changes when
+	// someone adds a directory — the failure that once relocated a live
+	// install's whole doc library. The two prefixes above apply to the
+	// nested layout only.
+	Layout string `toml:"layout" json:"layout"`
 }
 
 type DatabaseConfig struct {
@@ -689,6 +699,14 @@ func (c Config) Validate() error {
 		if _, err := time.ParseDuration(c.Session.IdleInterval); err != nil {
 			return fmt.Errorf("config: session.idle_interval: %w", err)
 		}
+	}
+	switch c.Vault.Layout {
+	case "", "flat", "nested":
+	default:
+		return fmt.Errorf(
+			"config: vault.layout: %q is not a layout (use \"flat\", \"nested\", "+
+				"or leave it empty to have opendray decide once and record it)",
+			c.Vault.Layout)
 	}
 	if c.Admin.TokenTTL != "" {
 		if _, err := time.ParseDuration(c.Admin.TokenTTL); err != nil {

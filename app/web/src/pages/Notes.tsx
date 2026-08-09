@@ -8,6 +8,8 @@ import {
   Calendar,
   NotebookPen,
   FolderOpen,
+  Pencil,
+  Trash2,
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react'
@@ -17,13 +19,16 @@ import { Trans, useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import {
+  deleteNote,
   docKind,
   listNotes,
+  moveNote,
   notesInfo,
   notesTags,
+  sanitizeNotePath,
   writeNote,
 } from '@/lib/notes'
-import type { Note } from '@/lib/notes'
+import type { Note, VaultLayout } from '@/lib/notes'
 import { extractOutline } from '@/lib/outline'
 import { vaultStatus } from '@/lib/vaultgit'
 import { NoteEditor } from '@/components/sessions/inspector/NoteEditor'
@@ -39,6 +44,7 @@ import {
   VaultSyncBadge,
   VaultSyncDialog,
 } from '@/components/notes/VaultSyncDialog'
+import { FlattenNotice } from '@/components/notes/FlattenNotice'
 
 // localStorage keys persist the last selection / left-pane mode so
 // reopening the page lands you back where you left off.
@@ -198,6 +204,65 @@ export function VaultPage() {
     create.mutate(cleaned)
   }
 
+  // Rename goes through moveNote, which repoints the [[wiki links]]
+  // that referenced the old path. A plain write-and-delete would leave
+  // every link in the vault pointing at a document that no longer
+  // exists, which is the failure a doc library can least afford.
+  const rename = useMutation({
+    mutationFn: ({ from, to }: { from: string; to: string }) =>
+      moveNote(from, to),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['notes-list'] })
+      setSelected(res.to)
+      if (res.warning) {
+        // The move happened; the link rewrite did not finish. Saying
+        // "renamed" alone would hide a vault full of stale links.
+        toast.warning(t('web.notes.doc.renamedWithWarning'), {
+          description: res.warning,
+        })
+        return
+      }
+      toast.success(
+        t('web.notes.doc.renamed', { count: res.links_rewritten ?? 0 }),
+        { description: res.to },
+      )
+    },
+    onError: (err: Error) =>
+      toast.error(t('web.notes.doc.renameFailed'), {
+        description: err.message,
+      }),
+  })
+
+  const remove = useMutation({
+    mutationFn: (path: string) => deleteNote(path),
+    onSuccess: (_res, path) => {
+      qc.invalidateQueries({ queryKey: ['notes-list'] })
+      setSelected(null)
+      toast.success(t('web.notes.doc.deleted'), { description: path })
+    },
+    onError: (err: Error) =>
+      toast.error(t('web.notes.doc.deleteFailed'), {
+        description: err.message,
+      }),
+  })
+
+  const handleRename = (path: string) => {
+    const input = prompt(t('web.notes.doc.renamePrompt'), path)
+    if (!input) return
+    const to = sanitizeNotePath(input)
+    if (to === path) return
+    if (docKind(to) === 'unknown') {
+      toast.error(t('web.notes.newNote.errorMustBeDoc'))
+      return
+    }
+    rename.mutate({ from: path, to })
+  }
+
+  const handleDelete = (path: string) => {
+    if (!confirm(t('web.notes.doc.deleteConfirm', { path }))) return
+    remove.mutate(path)
+  }
+
   const handleNewDaily = () => {
     const today = format(new Date(), 'yyyy-MM-dd')
     const path = `daily/${today}.md`
@@ -226,8 +291,13 @@ export function VaultPage() {
           {t('web.notes.title')}
         </h1>
         {info && (
+          // min-w-0 is what makes `truncate` actually truncate here. A
+          // flex item defaults to min-width:auto, so a nowrap path this
+          // long refuses to shrink and pushes the actions past the
+          // right edge — which is how "New" and "Today" became
+          // reachable only from the empty state.
           <span
-            className="text-[10.5px] text-muted-foreground/60 font-mono truncate"
+            className="text-[10.5px] text-muted-foreground/60 font-mono truncate min-w-0"
             title={info.root}
           >
             · {info.root}
@@ -275,6 +345,8 @@ export function VaultPage() {
           {t('web.notes.header.new')}
         </button>
       </header>
+
+      {info?.flattenable && <FlattenNotice />}
 
       <div className="flex-1 flex min-h-0">
         {/* Left pane: tree / tags + filter */}
@@ -409,11 +481,36 @@ export function VaultPage() {
                   {pathTitle(selected)}
                 </h2>
                 <span
-                  className="text-[11px] text-muted-foreground/70 font-mono truncate"
+                  className="text-[11px] text-muted-foreground/70 font-mono truncate min-w-0"
                   title={selected}
                 >
                   {selected}
                 </span>
+                <div className="flex-1" />
+                {/* Rename and delete live here because this is the only
+                    surface that shows every document. Without them a
+                    daily note, or anything not bound to a project, could
+                    be created and edited but never moved or removed. */}
+                <button
+                  type="button"
+                  onClick={() => handleRename(selected)}
+                  disabled={rename.isPending}
+                  className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-card shrink-0"
+                  title={t('web.notes.doc.rename')}
+                >
+                  <Pencil className="size-3" />
+                  {t('web.notes.doc.rename')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(selected)}
+                  disabled={remove.isPending}
+                  className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-card shrink-0"
+                  title={t('web.notes.doc.delete')}
+                >
+                  <Trash2 className="size-3" />
+                  {t('web.notes.doc.delete')}
+                </button>
               </div>
               <NoteEditor
                 key={selected}
@@ -427,7 +524,11 @@ export function VaultPage() {
               />
             </div>
           ) : (
-            <EmptyState onNew={handleNewNote} onDaily={handleNewDaily} />
+            <EmptyState
+              onNew={handleNewNote}
+              onDaily={handleNewDaily}
+              layout={info?.layout}
+            />
           )}
         </main>
 
@@ -520,21 +621,26 @@ function TagsList({
 function EmptyState({
   onNew,
   onDaily,
+  layout,
 }: {
   onNew: () => void
   onDaily: () => void
+  /** Undefined while /notes/info is in flight, or on an older gateway. */
+  layout?: VaultLayout
 }) {
   const { t } = useTranslation()
+  // Naming `projects/` and `personal/` to someone whose vault has
+  // neither is worse than saying nothing: it sends them looking for
+  // directories the flat layout does not have.
+  const hintKey =
+    layout === 'flat' ? 'web.notes.empty.hintFlat' : 'web.notes.empty.hint'
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
       <NotebookPen className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
       <div className="space-y-1">
         <h2 className="text-[14px] font-semibold">{t('web.notes.empty.title')}</h2>
         <p className="text-[12px] text-muted-foreground max-w-[420px]">
-          <Trans
-            i18nKey="web.notes.empty.hint"
-            components={{ 1: <code />, 3: <code /> }}
-          />
+          <Trans i18nKey={hintKey} components={{ 1: <code />, 3: <code /> }} />
         </p>
       </div>
       <div className="flex items-center gap-2">

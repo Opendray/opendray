@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/notes/flatten_notice.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
@@ -45,6 +48,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   // the vault root. Never has a trailing slash.
   String _currentPath = '';
   String _query = '';
+  bool _flattenable = false;
   final _searchCtrl = TextEditingController();
 
   @override
@@ -62,7 +66,17 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   Future<void> _load() async {
     setState(() => _state = const AsyncValue.loading());
     try {
-      final notes = await ref.read(notesApiProvider).list();
+      final api = ref.read(notesApiProvider);
+      // Fetched alongside the listing so the layout offer can appear
+      // with the tree rather than popping in a moment later. A failure
+      // here must not cost the listing — the notice is optional, the
+      // documents are not.
+      unawaited(
+        api.info().then((i) {
+          if (mounted) setState(() => _flattenable = i.flattenable);
+        }).catchError((Object _) {}),
+      );
+      final notes = await api.list();
       if (!mounted) return;
       notes.sort((a, b) => b.modified.compareTo(a.modified));
       setState(() => _state = AsyncValue.data(notes));
@@ -129,6 +143,11 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.open),
             ),
             ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: Text(t.notesPage.rename.action),
+              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.rename),
+            ),
+            ListTile(
               leading: const Icon(Icons.copy),
               title: Text(t.notesPage.copyPath),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyPath),
@@ -153,6 +172,8 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     switch (action) {
       case _RowAction.open:
         await _openNote(note);
+      case _RowAction.rename:
+        await _promptRename(note);
       case _RowAction.copyPath:
         await Clipboard.setData(ClipboardData(text: note.path));
         if (!mounted) return;
@@ -165,6 +186,63 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
         );
       case _RowAction.delete:
         await _confirmAndDelete(note);
+    }
+  }
+
+  // Rename goes through the move endpoint, which repoints the
+  // [[wiki links]] that referenced the old path. Writing a copy and
+  // deleting the original would leave every one of them pointing at a
+  // document that no longer exists.
+  Future<void> _promptRename(NoteSummary note) async {
+    final ctrl = TextEditingController(text: note.path);
+    final to = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(t.notesPage.rename.title),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            helperText: t.notesPage.rename.helper,
+            hintText: t.notesPage.pathHint,
+          ),
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(ctrl.text.trim()),
+            child: Text(t.notesPage.rename.action),
+          ),
+        ],
+      ),
+    );
+    if (to == null || to.isEmpty || to == note.path || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await ref.read(notesApiProvider).move(from: note.path, to: to);
+      // A warning means the file moved but the link rewrite did not
+      // finish. Reporting only "renamed" would hide a vault full of
+      // references to a path that no longer exists.
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            res.warning?.isNotEmpty ?? false
+                ? '${t.notesPage.rename.doneWithWarning}: ${res.warning}'
+                : t.notesPage.rename.doneSnack(count: res.linksRewritten),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
+      );
     }
   }
 
@@ -334,6 +412,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
       ),
       body: Column(
         children: [
+          if (_flattenable) FlattenNotice(onConverted: _load),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: TextField(
@@ -437,7 +516,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   }
 }
 
-enum _RowAction { open, copyPath, delete }
+enum _RowAction { open, rename, copyPath, delete }
 
 class _LevelView {
   _LevelView({required this.folders, required this.notes});
@@ -585,7 +664,11 @@ class _NoteRow extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       leading: Icon(
-        note.path.startsWith('personal/')
+        // The operator's own note carries a different icon from the
+        // agent-written docs. Both layouts have to be recognised: the
+        // nested one files it under personal/, the flat one puts
+        // personal.md inside the project's own directory.
+        _isPersonalNote(note.path)
             ? Icons.edit_note_outlined
             : Icons.description_outlined,
         color: Theme.of(context).colorScheme.primary,
@@ -758,3 +841,11 @@ String _relTime(DateTime ts) {
   if (diff.inDays < 7) return '${diff.inDays}d ago';
   return DateFormat.yMMMd().format(ts.toLocal());
 }
+
+// _isPersonalNote recognises the operator's own scratchpad in either
+// vault layout: `personal/<project>.md` when projects are nested, and
+// `<project>/personal.md` when they are flat.
+bool _isPersonalNote(String path) =>
+    path.startsWith('personal/') ||
+    path == 'personal.md' ||
+    path.endsWith('/personal.md');

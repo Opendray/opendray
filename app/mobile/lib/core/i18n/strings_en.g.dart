@@ -1927,8 +1927,8 @@ class TranslationsNotesPageEn {
 	/// en: 'Vault-relative path'
 	String get pathLabel => 'Vault-relative path';
 
-	/// en: 'personal/scratch.md'
-	String get pathHint => 'personal/scratch.md';
+	/// en: 'my-project/scratch.md'
+	String get pathHint => 'my-project/scratch.md';
 
 	/// en: 'Create'
 	String get create => 'Create';
@@ -1959,6 +1959,8 @@ class TranslationsNotesPageEn {
 
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 	late final TranslationsNotesPageHtmlEn html = TranslationsNotesPageHtmlEn.internal(_root);
+	late final TranslationsNotesPageFlattenEn flatten = TranslationsNotesPageFlattenEn.internal(_root);
+	late final TranslationsNotesPageRenameEn rename = TranslationsNotesPageRenameEn.internal(_root);
 }
 
 // Path: dataExport
@@ -2937,6 +2939,8 @@ class TranslationsWebNotesEn {
 	late final TranslationsWebNotesPickerEn picker = TranslationsWebNotesPickerEn.internal(_root);
 	late final TranslationsWebNotesVaultSyncEn vaultSync = TranslationsWebNotesVaultSyncEn.internal(_root);
 	late final TranslationsWebNotesSyncBadgeEn syncBadge = TranslationsWebNotesSyncBadgeEn.internal(_root);
+	late final TranslationsWebNotesFlattenEn flatten = TranslationsWebNotesFlattenEn.internal(_root);
+	late final TranslationsWebNotesDocEn doc = TranslationsWebNotesDocEn.internal(_root);
 }
 
 // Path: web.activity
@@ -3355,6 +3359,18 @@ class TranslationsWebNoteEditorEn {
 
 	late final TranslationsWebNoteEditorStatusEn status = TranslationsWebNoteEditorStatusEn.internal(_root);
 	late final TranslationsWebNoteEditorHtmlEn html = TranslationsWebNoteEditorHtmlEn.internal(_root);
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Save this document (⌘S / Ctrl+S)'
+	String get saveTitle => 'Save this document (⌘S / Ctrl+S)';
+
+	/// en: 'Lines'
+	String get lineNumbers => 'Lines';
+
+	/// en: 'Show line numbers. Long lines stop wrapping while this is on.'
+	String get lineNumbersTitle => 'Show line numbers. Long lines stop wrapping while this is on.';
 }
 
 // Path: web.export
@@ -5380,8 +5396,8 @@ class TranslationsNotesPageEditorEn {
 	/// en: 'Saving…'
 	String get saving => 'Saving…';
 
-	/// en: 'Auto-saves as you type'
-	String get autosave => 'Auto-saves as you type';
+	/// en: 'Saved'
+	String get autosave => 'Saved';
 
 	/// en: 'Load failed: {error}'
 	String loadFailedApi({required Object error}) => 'Load failed: ${error}';
@@ -5403,6 +5419,12 @@ class TranslationsNotesPageEditorEn {
 
 	/// en: 'Source'
 	String get showSource => 'Source';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Unsaved changes'
+	String get unsaved => 'Unsaved changes';
 }
 
 // Path: notesPage.html
@@ -5424,6 +5446,69 @@ class TranslationsNotesPageHtmlEn {
 
 	/// en: 'Disable scripts'
 	String get disableScripts => 'Disable scripts';
+}
+
+// Path: notesPage.flatten
+class TranslationsNotesPageFlattenEn {
+	TranslationsNotesPageFlattenEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Every project here sits inside a folder called projects/.'
+	String get notice => 'Every project here sits inside a folder called projects/.';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Not now'
+	String get dismiss => 'Not now';
+
+	/// en: 'File projects under their own names'
+	String get title => 'File projects under their own names';
+
+	/// en: 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.'
+	String get description => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.';
+
+	/// en: 'Nothing to move.'
+	String get nothingToMove => 'Nothing to move.';
+
+	/// en: 'Left alone ({count}):'
+	String skipped({required Object count}) => 'Left alone (${count}):';
+
+	/// en: 'Convert {count}'
+	String convert({required Object count}) => 'Convert ${count}';
+
+	/// en: 'Moved {count} document(s). Restart the gateway to pick up the new layout.'
+	String done({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.';
+
+	/// en: 'Restart the gateway afterwards.'
+	String get restartHint => 'Restart the gateway afterwards.';
+}
+
+// Path: notesPage.rename
+class TranslationsNotesPageRenameEn {
+	TranslationsNotesPageRenameEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rename'
+	String get action => 'Rename';
+
+	/// en: 'Rename document'
+	String get title => 'Rename document';
+
+	/// en: 'Vault-relative path. Folders are created as needed.'
+	String get helper => 'Vault-relative path. Folders are created as needed.';
+
+	/// en: 'Renamed. {count} link(s) repointed.'
+	String doneSnack({required Object count}) => 'Renamed. ${count} link(s) repointed.';
+
+	/// en: 'Renamed, but the links were not all updated'
+	String get doneWithWarning => 'Renamed, but the links were not all updated';
 }
 
 // Path: dataExport.sections
@@ -7979,6 +8064,9 @@ class TranslationsWebNotesEmptyEn {
 
 	/// en: 'New note'
 	String get kNew => 'New note';
+
+	/// en: 'Pick a note from the tree on the left, jump straight to today's daily log, or create a fresh one. Each project's docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it.'
+	String get hintFlat => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. Each project\'s docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it.';
 }
 
 // Path: web.notes.picker
@@ -8074,6 +8162,81 @@ class TranslationsWebNotesSyncBadgeEn {
 
 	/// en: '—'
 	String get branchPlaceholder => '—';
+}
+
+// Path: web.notes.flatten
+class TranslationsWebNotesFlattenEn {
+	TranslationsWebNotesFlattenEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.'
+	String get notice => 'Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.';
+
+	/// en: 'Preview'
+	String get preview => 'Preview';
+
+	/// en: 'Not now'
+	String get dismiss => 'Not now';
+
+	/// en: 'File projects under their own names'
+	String get title => 'File projects under their own names';
+
+	/// en: 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.'
+	String get description => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.';
+
+	/// en: 'Nothing to move.'
+	String get nothingToMove => 'Nothing to move.';
+
+	/// en: 'Left alone ({count}):'
+	String skipped({required Object count}) => 'Left alone (${count}):';
+
+	/// en: 'Convert {count} document(s)'
+	String convert({required Object count}) => 'Convert ${count} document(s)';
+
+	/// en: 'Moved {count} document(s). Restart the gateway to pick up the new layout.'
+	String done({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.';
+
+	/// en: 'Restart the gateway afterwards.'
+	String get restartHint => 'Restart the gateway afterwards.';
+}
+
+// Path: web.notes.doc
+class TranslationsWebNotesDocEn {
+	TranslationsWebNotesDocEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rename'
+	String get rename => 'Rename';
+
+	/// en: 'New path for this document (folders are created as needed):'
+	String get renamePrompt => 'New path for this document (folders are created as needed):';
+
+	/// en: 'Renamed. {count} link(s) repointed.'
+	String renamed({required Object count}) => 'Renamed. ${count} link(s) repointed.';
+
+	/// en: 'Renamed, but the links were not all updated'
+	String get renamedWithWarning => 'Renamed, but the links were not all updated';
+
+	/// en: 'Rename failed'
+	String get renameFailed => 'Rename failed';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Delete {path}? This cannot be undone from here.'
+	String deleteConfirm({required Object path}) => 'Delete ${path}? This cannot be undone from here.';
+
+	/// en: 'Document deleted'
+	String get deleted => 'Document deleted';
+
+	/// en: 'Delete failed'
+	String get deleteFailed => 'Delete failed';
 }
 
 // Path: web.activity.filters
@@ -14690,8 +14853,8 @@ class TranslationsWebSessionsInspectorVaultPanelEn {
 	/// en: 'Bind project vault folder'
 	String get mappingTitle => 'Bind project vault folder';
 
-	/// en: 'Pick the vault folder that holds this project's notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.'
-	String get mappingHelp => 'Pick the vault folder that holds this project\'s notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.';
+	/// en: 'Pick the vault folder that holds this project's notes. Vault-relative. Leave empty to use the default shown in the field.'
+	String get mappingHelp => 'Pick the vault folder that holds this project\'s notes. Vault-relative. Leave empty to use the default shown in the field.';
 
 	/// en: 'Session cwd'
 	String get sessionCwd => 'Session cwd';
@@ -18999,7 +19162,7 @@ extension on Translations {
 			'web.sessions.inspector.vaultPanel.noDocs' => 'No project docs in this vault folder yet.',
 			'web.sessions.inspector.vaultPanel.createFailed' => 'Could not create doc',
 			'web.sessions.inspector.vaultPanel.mappingTitle' => 'Bind project vault folder',
-			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Pick the vault folder that holds this project\'s notes. Vault-relative, e.g. projects/my-app. Leave empty to use the auto-derived default.',
+			'web.sessions.inspector.vaultPanel.mappingHelp' => 'Pick the vault folder that holds this project\'s notes. Vault-relative. Leave empty to use the default shown in the field.',
 			'web.sessions.inspector.vaultPanel.sessionCwd' => 'Session cwd',
 			'web.sessions.inspector.vaultPanel.folderLabel' => 'Vault folder',
 			'web.sessions.inspector.vaultPanel.mappingStoredHint' => 'Stored in the vault at .opendray-projects.json, so it syncs with your notes.',
@@ -19630,6 +19793,7 @@ extension on Translations {
 			'web.notes.empty.hint' => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. AI-written project docs live under <1>projects/</1>; your personal scratchpads under <3>personal/</3>.',
 			'web.notes.empty.today' => 'Today\'s daily note',
 			'web.notes.empty.kNew' => 'New note',
+			'web.notes.empty.hintFlat' => 'Pick a note from the tree on the left, jump straight to today\'s daily log, or create a fresh one. Each project\'s docs live in a folder named after it, with your own scratchpad as <1>personal.md</1> inside it.',
 			'web.notes.picker.browseAria' => 'Browse folders',
 			'web.notes.picker.matches_one' => ({required Object count}) => '${count} match',
 			'web.notes.picker.matches_other' => ({required Object count}) => '${count} matches',
@@ -19757,6 +19921,25 @@ extension on Translations {
 			'web.notes.syncBadge.tooltipAutoOn' => ' · auto-sync on',
 			'web.notes.syncBadge.tooltipLastError' => ({required Object error}) => ' · last error: ${error}',
 			'web.notes.syncBadge.branchPlaceholder' => '—',
+			'web.notes.flatten.notice' => 'Every project in this vault sits inside a folder called projects/. They can be filed under their own names instead.',
+			'web.notes.flatten.preview' => 'Preview',
+			'web.notes.flatten.dismiss' => 'Not now',
+			'web.notes.flatten.title' => 'File projects under their own names',
+			'web.notes.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
+			'web.notes.flatten.nothingToMove' => 'Nothing to move.',
+			'web.notes.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',
+			'web.notes.flatten.convert' => ({required Object count}) => 'Convert ${count} document(s)',
+			'web.notes.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
+			'web.notes.flatten.restartHint' => 'Restart the gateway afterwards.',
+			'web.notes.doc.rename' => 'Rename',
+			'web.notes.doc.renamePrompt' => 'New path for this document (folders are created as needed):',
+			'web.notes.doc.renamed' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
+			'web.notes.doc.renamedWithWarning' => 'Renamed, but the links were not all updated',
+			'web.notes.doc.renameFailed' => 'Rename failed',
+			'web.notes.doc.delete' => 'Delete',
+			'web.notes.doc.deleteConfirm' => ({required Object path}) => 'Delete ${path}? This cannot be undone from here.',
+			'web.notes.doc.deleted' => 'Document deleted',
+			'web.notes.doc.deleteFailed' => 'Delete failed',
 			'web.activity.title' => 'Activity',
 			'web.activity.subtitle' => 'Per-call audit of API requests made by registered integrations. Includes both inbound calls (a third-party app calling opendray with its API key) and outbound proxied calls (admin → opendray proxy → integration). Calls made directly by this admin UI are not recorded.',
 			'web.activity.refresh' => 'Refresh',
@@ -19784,6 +19967,8 @@ extension on Translations {
 			'web.activity.table.status' => 'Status',
 			'web.activity.table.duration' => 'Duration',
 			'web.activity.table.inboundAria' => 'inbound',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.outboundAria' => 'outbound',
 			'web.activity.empty.filtered' => 'No calls match these filters.',
 			'web.activity.empty.title' => 'No API calls recorded yet',
@@ -19804,8 +19989,6 @@ extension on Translations {
 			'web.providers.list.disabledBadge' => 'disabled',
 			'web.providers.list.noneSelected' => 'No provider selected.',
 			'web.providers.detail.enabled' => 'Enabled',
-			_ => null,
-		} ?? switch (path) {
 			'web.providers.detail.disabled' => 'Disabled',
 			'web.providers.detail.toggleAria' => ({required Object name}) => 'Toggle ${name}',
 			'web.providers.detail.configuration' => 'Configuration',
@@ -20298,6 +20481,8 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.',
@@ -20318,8 +20503,6 @@ extension on Translations {
 			'web.backups.exportData' => 'Export data',
 			'web.backups.loading' => 'Loading…',
 			'web.backups.loadStatusFailedToast' => 'Failed to load backup status',
-			_ => null,
-		} ?? switch (path) {
 			'web.backups.tabs.backups' => 'Backups',
 			'web.backups.tabs.schedules' => 'Schedules',
 			'web.backups.tabs.targets' => 'Targets',
@@ -20812,6 +20995,8 @@ extension on Translations {
 			'web.serverSettings.host.modes.on_demand.desc' => 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.',
 			'web.serverSettings.host.modes.off.label' => 'Never touch power settings',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray leaves the machine alone entirely.',
 			'web.serverSettings.host.modes.off.caveat' => 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.',
 			'web.serverSettings.layout.title' => 'Resolving to',
@@ -20832,8 +21017,6 @@ extension on Translations {
 			'web.settings.items.about' => 'About',
 			'web.settings.health.connecting' => 'connecting…',
 			'web.settings.health.dbOk' => 'db ok',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.health.dbDown' => 'db down',
 			'web.settings.breadcrumb.server' => 'Server',
 			'web.settings.appearance.title' => 'Appearance',
@@ -21033,6 +21216,10 @@ extension on Translations {
 			'web.noteEditor.html.scriptsOn' => 'Scripts are running for this document.',
 			'web.noteEditor.html.enableScripts' => 'Enable scripts',
 			'web.noteEditor.html.disableScripts' => 'Disable scripts',
+			'web.noteEditor.save' => 'Save',
+			'web.noteEditor.saveTitle' => 'Save this document (⌘S / Ctrl+S)',
+			'web.noteEditor.lineNumbers' => 'Lines',
+			'web.noteEditor.lineNumbersTitle' => 'Show line numbers. Long lines stop wrapping while this is on.',
 			'web.export.title' => 'Export data',
 			'web.export.subtitle' => 'Take a one-shot zip bundle of selected logical entities. Bundles are kept on the server for 24 hours, then automatically reaped.',
 			'web.export.backToBackups' => '← Backups',
@@ -21322,6 +21509,8 @@ extension on Translations {
 			'web.cortex.blueprint.reserved' => 'reserved',
 			'web.cortex.blueprint.deleteNote' => 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.',
 			'web.cortex.blueprint.cancel' => 'Cancel',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => 'Apply blueprint',
 			'web.cortex.blueprint.applyFailed' => 'Apply failed',
 			'web.cortex.blueprint.appliedToast' => 'Blueprint applied',
@@ -21346,8 +21535,6 @@ extension on Translations {
 			'web.cortex.settings.injection.mode.full.label' => 'Full — inject everything',
 			'web.cortex.settings.injection.mode.full.description' => 'Inject every inject-flagged section and knowledge page in full at spawn (legacy behaviour). Simple, but costs tokens on every session and crowds the context window.',
 			'web.cortex.settings.injection.savedToast' => 'Injection mode saved — new sessions use it immediately (no backend restart)',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.settings.injection.saveFailed' => 'Save failed',
 			'web.cortex.settings.injection.note' => 'Per-section and per-page inject flags (blueprint editor / knowledge pages) still apply in full mode; in lean mode foundational rules always inject and everything else is indexed.',
 			'web.database.dialog.createTitle' => 'Add database connection',
@@ -21836,6 +22023,8 @@ extension on Translations {
 			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
 			'sessions.inspector.canvas.viewportPhone' => 'Phone width',
 			'sessions.inspector.canvas.viewportTablet' => 'Tablet width',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => 'Desktop width',
 			'sessions.inspector.canvas.openFull' => 'Open full screen',
 			'sessions.inspector.canvas.confirm' => 'Confirm',
@@ -21860,8 +22049,6 @@ extension on Translations {
 			'sessions.inspector.canvas.designSaved' => 'Design system saved.',
 			'sessions.inspector.canvas.designWarningAchromatic' => 'Every colour here resolves to a grey — canvases will have no brand colour. If this project uses shadcn/ui, its --primary is an ink; put the brand hue (usually --accent) in Primary.',
 			'sessions.inspector.canvas.tokenPrimary' => 'Primary',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.tokenSecondary' => 'Secondary',
 			'sessions.inspector.canvas.tokenBackground' => 'Background',
 			'sessions.inspector.canvas.tokenSurface' => 'Surface',
@@ -22350,6 +22537,8 @@ extension on Translations {
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
 			'backups.restartToActivate' => 'Restart opendray to activate backups',
 			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Key file',
 			'backups.configuredViaLabel' => 'Configured via',
 			'backups.wizard.title' => 'Set up backups',
@@ -22374,8 +22563,6 @@ extension on Translations {
 			'backups.health.tiles.overdue' => 'Overdue',
 			'backups.health.tiles.schedules' => 'Schedules',
 			'backups.failedToLoad' => 'Failed to load backups',
-			_ => null,
-		} ?? switch (path) {
 			'backups.envVarConfigured' => 'OPENDRAY_BACKUP_KEY env var',
 			'backups.savedConfirmCheckbox' => 'I have saved this passphrase to my password manager',
 			'backups.pgDumpMissing' => 'pg_dump is not on PATH. Install postgresql-client and restart opendray.',
@@ -22787,7 +22974,7 @@ extension on Translations {
 			'notesPage.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
 			'notesPage.pathLabel' => 'Vault-relative path',
-			'notesPage.pathHint' => 'personal/scratch.md',
+			'notesPage.pathHint' => 'my-project/scratch.md',
 			'notesPage.create' => 'Create',
 			'notesPage.popupDelete' => 'Delete',
 			'notesPage.deleteBody' => 'This is irreversible. Vault git sync will remove the file on the gateway host too.',
@@ -22799,7 +22986,7 @@ extension on Translations {
 			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
 			'notesPage.editor.markdownHint' => 'Markdown, or HTML if the file ends .html…',
 			'notesPage.editor.saving' => 'Saving…',
-			'notesPage.editor.autosave' => 'Auto-saves as you type',
+			'notesPage.editor.autosave' => 'Saved',
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
@@ -22807,10 +22994,27 @@ extension on Translations {
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'notesPage.editor.showPreview' => 'Preview',
 			'notesPage.editor.showSource' => 'Source',
+			'notesPage.editor.save' => 'Save',
+			'notesPage.editor.unsaved' => 'Unsaved changes',
 			'notesPage.html.scriptsOff' => 'Scripts are off — this document is rendered as static HTML.',
 			'notesPage.html.scriptsOn' => 'Scripts are running for this document.',
 			'notesPage.html.enableScripts' => 'Enable scripts',
 			'notesPage.html.disableScripts' => 'Disable scripts',
+			'notesPage.flatten.notice' => 'Every project here sits inside a folder called projects/.',
+			'notesPage.flatten.preview' => 'Preview',
+			'notesPage.flatten.dismiss' => 'Not now',
+			'notesPage.flatten.title' => 'File projects under their own names',
+			'notesPage.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
+			'notesPage.flatten.nothingToMove' => 'Nothing to move.',
+			'notesPage.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',
+			'notesPage.flatten.convert' => ({required Object count}) => 'Convert ${count}',
+			'notesPage.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
+			'notesPage.flatten.restartHint' => 'Restart the gateway afterwards.',
+			'notesPage.rename.action' => 'Rename',
+			'notesPage.rename.title' => 'Rename document',
+			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
+			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
+			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
 			'dataExport.title' => 'Data export & import',
 			'dataExport.subtitle' => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).',
 			'dataExport.sections.export' => 'Export',
@@ -22847,6 +23051,8 @@ extension on Translations {
 			'dataExport.history.deleteConfirmTitle' => 'Delete export?',
 			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Removes the bundle and revokes the download token. ${id}',
 			'dataExport.history.download' => 'Download',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.delete' => 'Delete',
 			'dataExport.history.downloadCopiedToast' => 'Download URL copied to clipboard. Paste into a browser to fetch (single-use).',
 			'dataExport.history.columns.scope' => 'Scope',
@@ -22888,8 +23094,6 @@ extension on Translations {
 			'dataExport.imports.columns.source' => 'Source',
 			'dataExport.imports.columns.counts' => 'Counts',
 			'dataExport.imports.columns.when' => 'When',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.relative.inSeconds' => ({required Object n}) => 'in ${n}s',
 			'dataExport.relative.inMinutes' => ({required Object n}) => 'in ${n}m',
 			'dataExport.relative.inHours' => ({required Object n}) => 'in ${n}h',

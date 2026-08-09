@@ -37,7 +37,7 @@ class NoteEditorDialog extends ConsumerStatefulWidget {
 
 class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
   final _ctrl = MarkdownHighlightController();
-  Timer? _saveDebounce;
+  bool _dirty = false;
   bool _loading = true;
   bool _saving = false;
   String? _error;
@@ -56,7 +56,6 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
 
   @override
   void dispose() {
-    _saveDebounce?.cancel();
     _ctrl.dispose();
     super.dispose();
   }
@@ -92,9 +91,14 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
     }
   }
 
+  // Saving is explicit here too — a timer that wrote after every pause
+  // in typing kept rewriting a long document while it was being worked
+  // on. The dirty flag drives the Save action's enabled state; the
+  // flushes on preview-toggle and close below are the safety net, not
+  // the timer returning.
   void _onChanged(String _) {
-    _saveDebounce?.cancel();
-    _saveDebounce = Timer(const Duration(milliseconds: 800), _save);
+    final nowDirty = _ctrl.text != _initial;
+    if (nowDirty != _dirty) setState(() => _dirty = nowDirty);
   }
 
   Future<void> _save() async {
@@ -109,6 +113,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
       if (!mounted) return;
       _initial = body;
       setState(() {
+        _dirty = false;
         _saving = false;
         _lastSaved = DateTime.now();
       });
@@ -162,6 +167,15 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
                     ),
                   ),
                   IconButton(
+                    tooltip: t.notesPage.editor.save,
+                    icon: const Icon(Icons.save_outlined),
+                    // Disabled with nothing to save, so the control
+                    // doubles as the answer to "did that go through?".
+                    onPressed: _dirty && !_saving
+                        ? () => unawaited(_save())
+                        : null,
+                  ),
+                  IconButton(
                     tooltip: _preview
                         ? t.notesPage.editor.showSource
                         : t.notesPage.editor.showPreview,
@@ -172,8 +186,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
                       // Flush before switching: preview renders the
                       // SAVED body, so an unsaved keystroke would
                       // otherwise render stale.
-                      _saveDebounce?.cancel();
-                      unawaited(_save());
+                                        unawaited(_save());
                       setState(() => _preview = !_preview);
                     },
                   ),
@@ -184,8 +197,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
                         // Flush pending save before dismissing — drops
                         // the last few keystrokes otherwise if the
                         // 800ms timer hasn't fired.
-                        _saveDebounce?.cancel();
-                        await _save();
+                                            await _save();
                         if (!innerCtx.mounted) return;
                         Navigator.of(innerCtx).pop();
                       },
@@ -228,6 +240,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
               child: NoteSaveStatus(
                 saving: _saving,
                 lastSaved: _lastSaved,
+                dirty: _dirty,
                 error: _error,
               ),
             ),
@@ -245,12 +258,16 @@ class NoteSaveStatus extends StatelessWidget {
   const NoteSaveStatus({
     required this.saving,
     required this.lastSaved,
+    this.dirty = false,
     this.error,
     super.key,
   });
 
   final bool saving;
   final DateTime? lastSaved;
+  /// Unsaved edits are pending. Saving is explicit, so this is the only
+  /// thing telling someone their last keystrokes are not on disk yet.
+  final bool dirty;
   final String? error;
 
   @override
@@ -280,12 +297,19 @@ class NoteSaveStatus extends StatelessWidget {
         ],
       );
     }
+    // Unsaved wins over "saved at 14:03": the older fact is true and
+    // the newer one is what matters.
+    if (dirty) {
+      return Text(t.notesPage.editor.unsaved, style: muted);
+    }
     if (lastSaved != null) {
       return Text(
         t.notesPage.editor.savedAt(time: DateFormat.Hm().format(lastSaved!.toLocal())),
         style: muted,
       );
     }
+    // This label used to read "auto-saves as you type", which stopped
+    // being true when saving became explicit.
     return Text(t.notesPage.editor.autosave, style: muted);
   }
 }

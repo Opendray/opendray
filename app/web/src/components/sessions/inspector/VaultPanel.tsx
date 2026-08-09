@@ -67,7 +67,19 @@ interface VaultPanelProps {
 // Cortex (the sibling tab), not the Vault.
 export function VaultPanel({ cwd }: VaultPanelProps) {
   const { t } = useTranslation()
-  const personalPath = useMemo(() => personalNotePath(cwd), [cwd])
+  // The gateway resolves this: where the personal note lives depends on
+  // the vault layout, and under the flat layout it follows a per-cwd
+  // project override. Deriving it here would make the panel disagree
+  // with the file the agent tooling actually reads. Same query key as
+  // ProjectDocsSection, so this shares one request.
+  const mappingQ = useQuery({
+    queryKey: ['notes-project-mapping', cwd],
+    queryFn: () => notesProjectMapping(cwd),
+    enabled: !!cwd,
+    staleTime: 30_000,
+  })
+  const fallbackPersonal = useMemo(() => personalNotePath(cwd), [cwd])
+  const personalPath = mappingQ.data?.personal_path || fallbackPersonal
   const cwdBase = useMemo(() => cwdBasename(cwd), [cwd])
   const [opening, setOpening] = useState<string | null>(null)
 

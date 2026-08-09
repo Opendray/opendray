@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Eye, Pencil, Check, AlertCircle, Hash } from 'lucide-react'
+import {
+  AlertCircle,
+  Check,
+  Eye,
+  Hash,
+  ListOrdered,
+  Loader2,
+  Pencil,
+  Save,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -52,12 +61,14 @@ interface NoteEditorProps {
   previewScrollRef?: React.MutableRefObject<HTMLDivElement | null>
 }
 
-const SAVE_DEBOUNCE_MS = 800
-
-// NoteEditor is the reusable note source/preview editor with debounced
-// auto-save. Used both inline in the Notes panel (personal scratchpad)
-// and inside a dialog (project docs). All variants speak to the same
+// NoteEditor is the reusable note source/preview editor. Used both
+// inline in the Notes panel (personal scratchpad) and inside a dialog
+// (project docs). All variants speak to the same
 // /api/v1/notes/{read,write} endpoints.
+//
+// Saving is EXPLICIT — a button or ⌘S. It used to run on a timer after
+// every pause in typing, which meant a long document rewrote itself to
+// disk continuously while being worked on.
 export function NoteEditor({
   path,
   initialMode = 'source',
@@ -82,13 +93,17 @@ export function NoteEditor({
   const [body, setBody] = useState('')
   const [lastSaved, setLastSaved] = useState('')
   const [mode, setMode] = useState<'source' | 'preview'>(initialMode)
+  // Defaults on for HTML and off for markdown: numbers are for finding
+  // your way around code, and they cost wrapping, which prose wants.
+  const [lineNumbers, setLineNumbers] = useState(
+    () => docKind(path) === 'html',
+  )
   // Which renderer preview reaches for. Derived from the path, never
   // from the body: sniffing content would let a markdown note that
   // happens to open with a tag be executed as HTML.
   const kind = docKind(path)
   const [error, setError] = useState<string | null>(null)
   const dirty = body !== lastSaved
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Wiki-link autocomplete state. Active when the caret is inside an
   // open `[[...` span; stays in sync via re-detection on every input
@@ -106,11 +121,14 @@ export function NoteEditor({
     setError(null)
   }, [path, data])
 
-  // Stream body changes to the parent (used for outline + future
-  // word-count / live-render features). Fires after every state
-  // commit, so debounced enough that callers don't get hammered.
+  // Stream body changes to the parent (outline, word count…), but not
+  // on every keystroke. The parent re-renders its entire page from
+  // this — tree, sidebar and all — and recomputes the outline, which
+  // is a lot of work to repeat per character for a panel that only has
+  // to keep up with reading speed.
   useEffect(() => {
-    onBodyChange?.(body)
+    const timer = setTimeout(() => onBodyChange?.(body), 200)
+    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [body])
 
@@ -130,22 +148,46 @@ export function NoteEditor({
     },
   })
 
+  // Saving is explicit: a button, or ⌘S / Ctrl+S.
+  //
+  // It used to fire on a timer after every pause in typing, which made
+  // a long document write itself to disk over and over while it was
+  // being worked on. The editor now writes when someone says to.
+  //
+  // The one exception is below: leaving the document flushes unsaved
+  // text. That is not the timer coming back — it costs nothing while
+  // typing, and the alternative is losing work to a click on another
+  // note.
+  const saveNow = () => {
+    if (!dirty || save.isPending) return
+    save.mutate(body)
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 's') return
+      // The browser's "save page" is never what someone wants while
+      // typing into an editor.
+      e.preventDefault()
+      saveNow()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [body, dirty, save.isPending])
+
+  // Closing the tab with unsaved text should cost a prompt, not the
+  // text. Only armed while there is something to lose.
   useEffect(() => {
     if (!dirty) return
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      save.mutate(body)
-    }, SAVE_DEBOUNCE_MS)
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [body, dirty])
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
 
   // Flush on unmount so tab switches / dialog close don't lose edits.
   useEffect(() => {
     return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current)
       if (body !== lastSaved) {
         void writeNote(path, body).catch(() => {})
       }
@@ -305,8 +347,39 @@ export function NoteEditor({
           <Eye className="size-3" />
           {t('web.noteEditor.preview')}
         </button>
+        {mode === 'source' && (
+          <button
+            type="button"
+            onClick={() => setLineNumbers((v) => !v)}
+            className={cn(
+              'inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors',
+              lineNumbers
+                ? 'bg-card border border-border text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={t('web.noteEditor.lineNumbersTitle')}
+          >
+            <ListOrdered className="size-3" />
+            {t('web.noteEditor.lineNumbers')}
+          </button>
+        )}
         <div className="flex-1" />
         {showStatus && <SaveStatus status={status} />}
+        <button
+          type="button"
+          onClick={saveNow}
+          disabled={!dirty || save.isPending}
+          className={cn(
+            'inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors',
+            dirty
+              ? 'bg-accent text-accent-foreground hover:bg-accent/90'
+              : 'text-muted-foreground/50',
+          )}
+          title={t('web.noteEditor.saveTitle')}
+        >
+          <Save className="size-3" />
+          {t('web.noteEditor.save')}
+        </button>
       </div>
 
       {tags.length > 0 && (
@@ -344,6 +417,7 @@ export function NoteEditor({
             placeholder={placeholder}
             fillParent={fillParent}
             minHeight={minHeight}
+            showLineNumbers={lineNumbers}
           />
           <WikiLinkSuggestions
             context={linkCtx}
