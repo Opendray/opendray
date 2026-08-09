@@ -1960,6 +1960,7 @@ class TranslationsNotesPageEn {
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 	late final TranslationsNotesPageHtmlEn html = TranslationsNotesPageHtmlEn.internal(_root);
 	late final TranslationsNotesPageFlattenEn flatten = TranslationsNotesPageFlattenEn.internal(_root);
+	late final TranslationsNotesPageRenameEn rename = TranslationsNotesPageRenameEn.internal(_root);
 }
 
 // Path: dataExport
@@ -2939,6 +2940,7 @@ class TranslationsWebNotesEn {
 	late final TranslationsWebNotesVaultSyncEn vaultSync = TranslationsWebNotesVaultSyncEn.internal(_root);
 	late final TranslationsWebNotesSyncBadgeEn syncBadge = TranslationsWebNotesSyncBadgeEn.internal(_root);
 	late final TranslationsWebNotesFlattenEn flatten = TranslationsWebNotesFlattenEn.internal(_root);
+	late final TranslationsWebNotesDocEn doc = TranslationsWebNotesDocEn.internal(_root);
 }
 
 // Path: web.activity
@@ -5465,6 +5467,30 @@ class TranslationsNotesPageFlattenEn {
 
 	/// en: 'Restart the gateway afterwards.'
 	String get restartHint => 'Restart the gateway afterwards.';
+}
+
+// Path: notesPage.rename
+class TranslationsNotesPageRenameEn {
+	TranslationsNotesPageRenameEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rename'
+	String get action => 'Rename';
+
+	/// en: 'Rename document'
+	String get title => 'Rename document';
+
+	/// en: 'Vault-relative path. Folders are created as needed.'
+	String get helper => 'Vault-relative path. Folders are created as needed.';
+
+	/// en: 'Renamed. {count} link(s) repointed.'
+	String doneSnack({required Object count}) => 'Renamed. ${count} link(s) repointed.';
+
+	/// en: 'Renamed, but the links were not all updated'
+	String get doneWithWarning => 'Renamed, but the links were not all updated';
 }
 
 // Path: dataExport.sections
@@ -8157,6 +8183,42 @@ class TranslationsWebNotesFlattenEn {
 
 	/// en: 'Restart the gateway afterwards.'
 	String get restartHint => 'Restart the gateway afterwards.';
+}
+
+// Path: web.notes.doc
+class TranslationsWebNotesDocEn {
+	TranslationsWebNotesDocEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Rename'
+	String get rename => 'Rename';
+
+	/// en: 'New path for this document (folders are created as needed):'
+	String get renamePrompt => 'New path for this document (folders are created as needed):';
+
+	/// en: 'Renamed. {count} link(s) repointed.'
+	String renamed({required Object count}) => 'Renamed. ${count} link(s) repointed.';
+
+	/// en: 'Renamed, but the links were not all updated'
+	String get renamedWithWarning => 'Renamed, but the links were not all updated';
+
+	/// en: 'Rename failed'
+	String get renameFailed => 'Rename failed';
+
+	/// en: 'Delete'
+	String get delete => 'Delete';
+
+	/// en: 'Delete {path}? This cannot be undone from here.'
+	String deleteConfirm({required Object path}) => 'Delete ${path}? This cannot be undone from here.';
+
+	/// en: 'Document deleted'
+	String get deleted => 'Document deleted';
+
+	/// en: 'Delete failed'
+	String get deleteFailed => 'Delete failed';
 }
 
 // Path: web.activity.filters
@@ -19851,6 +19913,15 @@ extension on Translations {
 			'web.notes.flatten.convert' => ({required Object count}) => 'Convert ${count} document(s)',
 			'web.notes.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
 			'web.notes.flatten.restartHint' => 'Restart the gateway afterwards.',
+			'web.notes.doc.rename' => 'Rename',
+			'web.notes.doc.renamePrompt' => 'New path for this document (folders are created as needed):',
+			'web.notes.doc.renamed' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
+			'web.notes.doc.renamedWithWarning' => 'Renamed, but the links were not all updated',
+			'web.notes.doc.renameFailed' => 'Rename failed',
+			'web.notes.doc.delete' => 'Delete',
+			'web.notes.doc.deleteConfirm' => ({required Object path}) => 'Delete ${path}? This cannot be undone from here.',
+			'web.notes.doc.deleted' => 'Document deleted',
+			'web.notes.doc.deleteFailed' => 'Delete failed',
 			'web.activity.title' => 'Activity',
 			'web.activity.subtitle' => 'Per-call audit of API requests made by registered integrations. Includes both inbound calls (a third-party app calling opendray with its API key) and outbound proxied calls (admin → opendray proxy → integration). Calls made directly by this admin UI are not recorded.',
 			'web.activity.refresh' => 'Refresh',
@@ -19878,6 +19949,8 @@ extension on Translations {
 			'web.activity.table.status' => 'Status',
 			'web.activity.table.duration' => 'Duration',
 			'web.activity.table.inboundAria' => 'inbound',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.outboundAria' => 'outbound',
 			'web.activity.empty.filtered' => 'No calls match these filters.',
 			'web.activity.empty.title' => 'No API calls recorded yet',
@@ -19887,8 +19960,6 @@ extension on Translations {
 			'web.activity.empty.stepCallEndpoint' => 'Call any endpoint, e.g. <1>POST /api/v1/sessions</1>',
 			'web.activity.empty.stepAppears' => 'Calls appear here within seconds',
 			'web.activity.empty.footnote' => 'Calls you make from this admin UI are not logged — only integration-attributed traffic is recorded.',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.events.loading' => 'Loading events…',
 			'web.activity.events.empty' => 'No events yet.',
 			'web.activity.events.emptyFiltered' => 'No matching events.',
@@ -20392,6 +20463,8 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.',
@@ -20401,8 +20474,6 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.verifyButton' => 'Verify',
 			'web.plugins.gitHosts.dialog.verifying' => 'Checking…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Authenticated as ${login}',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'can read ${repo}',
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'CANNOT read ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => 'can push',
@@ -20906,6 +20977,8 @@ extension on Translations {
 			'web.serverSettings.host.modes.on_demand.desc' => 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.',
 			'web.serverSettings.host.modes.off.label' => 'Never touch power settings',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray leaves the machine alone entirely.',
 			'web.serverSettings.host.modes.off.caveat' => 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.',
 			'web.serverSettings.layout.title' => 'Resolving to',
@@ -20915,8 +20988,6 @@ extension on Translations {
 			'web.serverSettings.layout.mcp' => 'MCP registry',
 			'web.serverSettings.layout.legacyWarning' => 'This install still keeps opendray\'s own directories inside your documents, so they show up in the Vault and get carried along by a sync. They keep working — move them out and set the paths above when convenient. Anything already committed needs git rm --cached; opendray will not rewrite your repo.',
 			'web.settings.title' => 'Settings',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.subtitle' => 'Workspace, account, and gateway config.',
 			'web.settings.groups.workspace' => 'Workspace',
 			'web.settings.groups.server' => 'Server',
@@ -21420,6 +21491,8 @@ extension on Translations {
 			'web.cortex.blueprint.applyFailed' => 'Apply failed',
 			'web.cortex.blueprint.appliedToast' => 'Blueprint applied',
 			'web.cortex.blueprint.writePolicy.direct' => 'Direct write',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.proposal' => 'Proposal',
 			'web.cortex.blueprint.writePolicy.hint' => 'Direct: the in-session agent writes the live doc when unlocked. Proposal: the agent\'s writes file an approval request first.',
 			'web.cortex.quarantine.title' => 'Quarantine',
@@ -21429,8 +21502,6 @@ extension on Translations {
 			'web.cortex.quarantine.promoteHint' => 'Move into durable memory (joins recall + consolidation)',
 			'web.cortex.quarantine.discard' => 'Discard',
 			'web.cortex.quarantine.promotedToast' => 'Promoted to durable memory',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.quarantine.discardedToast' => 'Discarded',
 			'web.cortex.quarantine.actionFailed' => 'Action failed',
 			'web.cortex.quarantine.expires' => ({required Object date}) => 'expires ${date}',
@@ -21934,6 +22005,8 @@ extension on Translations {
 			'sessions.inspector.canvas.openFull' => 'Open full screen',
 			'sessions.inspector.canvas.confirm' => 'Confirm',
 			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Captured: ${what}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.notes' => 'Notes',
 			'sessions.inspector.canvas.clear' => 'Clear marks',
 			'sessions.inspector.canvas.done' => 'Done',
@@ -21943,8 +22016,6 @@ extension on Translations {
 			'sessions.inspector.canvas.newCanvasTitle' => 'New canvas',
 			'sessions.inspector.canvas.newCanvasBlurb' => 'Pick what to draw above, then describe it below — the agent renders the new canvas here.',
 			'sessions.inspector.canvas.setWorkspace' => 'Work on this',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.workspaceSet' => 'The agent is now working on this canvas.',
 			'sessions.inspector.canvas.previewOnlyHint' => 'Previewing only — tap "Work on this" to point the agent at it.',
 			'sessions.inspector.canvas.designTitle' => 'Design system',
@@ -22448,6 +22519,8 @@ extension on Translations {
 			'backups.configuredViaLabel' => 'Configured via',
 			'backups.wizard.title' => 'Set up backups',
 			'backups.wizard.intro' => 'Choose a master passphrase. opendray uses it to encrypt every backup blob with AES-256-GCM. Lose the passphrase and you lose the data — there is no recovery.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saving' => 'Saving…',
 			'backups.wizard.generateAndSave' => 'Generate and save',
 			'backups.wizard.savePassphrase' => 'Save passphrase',
@@ -22457,8 +22530,6 @@ extension on Translations {
 			'backups.wizard.saveNowBody' => 'This is shown ONCE. It will not be retrievable from opendray afterwards.',
 			'backups.overviewTargets' => 'Targets',
 			'backups.overviewSchedules' => 'Schedules',
-			_ => null,
-		} ?? switch (path) {
 			'backups.overviewBackups' => 'Backups',
 			'backups.health.headlineHealthy' => 'Backups healthy',
 			'backups.health.headlineAttention' => 'Needs attention',
@@ -22915,6 +22986,11 @@ extension on Translations {
 			'notesPage.flatten.convert' => ({required Object count}) => 'Convert ${count}',
 			'notesPage.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
 			'notesPage.flatten.restartHint' => 'Restart the gateway afterwards.',
+			'notesPage.rename.action' => 'Rename',
+			'notesPage.rename.title' => 'Rename document',
+			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
+			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
+			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
 			'dataExport.title' => 'Data export & import',
 			'dataExport.subtitle' => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).',
 			'dataExport.sections.export' => 'Export',
@@ -22957,6 +23033,8 @@ extension on Translations {
 			'dataExport.history.columns.size' => 'Size',
 			'dataExport.history.columns.expires' => 'Expires',
 			'dataExport.history.columns.actions' => 'Actions',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.scopeEmpty' => '(empty)',
 			'dataExport.history.scopeMemories' => 'memories',
 			'dataExport.history.scopeIntegrations' => ({required Object mode}) => 'integrations(${mode})',
@@ -22971,8 +23049,6 @@ extension on Translations {
 			'dataExport.import.customTasksLabel' => 'Custom tasks',
 			'dataExport.import.importBundle' => 'Import bundle',
 			'dataExport.import.importing' => 'Importing…',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.pickFileToast' => 'Pick a bundle file first.',
 			'dataExport.import.doneToast' => 'Import done',
 			'dataExport.import.finishedWithErrors' => 'Import finished with errors',

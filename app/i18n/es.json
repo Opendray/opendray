@@ -1198,6 +1198,17 @@
         "convert": "Convertir {count} documento(s)",
         "done": "Se movieron {count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.",
         "restartHint": "Reinicia la pasarela después."
+      },
+      "doc": {
+        "rename": "Renombrar",
+        "renamePrompt": "Nueva ruta para este documento (las carpetas se crean solas):",
+        "renamed": "Renombrado. {count} enlace(s) actualizados.",
+        "renamedWithWarning": "Renombrado, pero no se actualizaron todos los enlaces",
+        "renameFailed": "No se pudo renombrar",
+        "delete": "Eliminar",
+        "deleteConfirm": "¿Eliminar {path}? Esto no se puede deshacer desde aquí.",
+        "deleted": "Documento eliminado",
+        "deleteFailed": "No se pudo eliminar"
       }
     },
     "activity": {
@@ -5041,6 +5052,13 @@
       "convert": "Convertir {count}",
       "done": "Se movieron {count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.",
       "restartHint": "Reinicia la pasarela después."
+    },
+    "rename": {
+      "action": "Renombrar",
+      "title": "Renombrar documento",
+      "helper": "Ruta relativa a la bóveda. Las carpetas se crean solas.",
+      "doneSnack": "Renombrado. {count} enlace(s) actualizados.",
+      "doneWithWarning": "Renombrado, pero no se actualizaron todos los enlaces"
     }
   },
   "dataExport": {

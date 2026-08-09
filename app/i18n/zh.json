@@ -1195,6 +1195,17 @@
         "convert": "转换 {count} 个文档",
         "done": "已移动 {count} 个文档。重启网关后生效。",
         "restartHint": "完成后请重启网关。"
+      },
+      "doc": {
+        "rename": "重命名",
+        "renamePrompt": "这个文档的新路径（目录会自动创建）：",
+        "renamed": "已重命名，{count} 个链接已改写。",
+        "renamedWithWarning": "已重命名，但链接没有全部更新",
+        "renameFailed": "重命名失败",
+        "delete": "删除",
+        "deleteConfirm": "删除 {path}？此处无法撤销。",
+        "deleted": "文档已删除",
+        "deleteFailed": "删除失败"
       }
     },
     "activity": {
@@ -5038,6 +5049,13 @@
       "convert": "转换 {count} 个",
       "done": "已移动 {count} 个文档。重启网关后生效。",
       "restartHint": "完成后请重启网关。"
+    },
+    "rename": {
+      "action": "重命名",
+      "title": "重命名文档",
+      "helper": "文档库相对路径。目录会自动创建。",
+      "doneSnack": "已重命名，{count} 个链接已改写。",
+      "doneWithWarning": "已重命名，但链接没有全部更新"
     }
   },
   "dataExport": {

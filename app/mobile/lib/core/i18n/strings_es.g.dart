@@ -893,6 +893,7 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override late final _TranslationsNotesPageEditorEs editor = _TranslationsNotesPageEditorEs._(_root);
 	@override late final _TranslationsNotesPageHtmlEs html = _TranslationsNotesPageHtmlEs._(_root);
 	@override late final _TranslationsNotesPageFlattenEs flatten = _TranslationsNotesPageFlattenEs._(_root);
+	@override late final _TranslationsNotesPageRenameEs rename = _TranslationsNotesPageRenameEs._(_root);
 }
 
 // Path: dataExport
@@ -1388,6 +1389,7 @@ class _TranslationsWebNotesEs extends TranslationsWebNotesEn {
 	@override late final _TranslationsWebNotesVaultSyncEs vaultSync = _TranslationsWebNotesVaultSyncEs._(_root);
 	@override late final _TranslationsWebNotesSyncBadgeEs syncBadge = _TranslationsWebNotesSyncBadgeEs._(_root);
 	@override late final _TranslationsWebNotesFlattenEs flatten = _TranslationsWebNotesFlattenEs._(_root);
+	@override late final _TranslationsWebNotesDocEs doc = _TranslationsWebNotesDocEs._(_root);
 }
 
 // Path: web.activity
@@ -2781,6 +2783,20 @@ class _TranslationsNotesPageFlattenEs extends TranslationsNotesPageFlattenEn {
 	@override String convert({required Object count}) => 'Convertir ${count}';
 	@override String done({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.';
 	@override String get restartHint => 'Reinicia la pasarela después.';
+}
+
+// Path: notesPage.rename
+class _TranslationsNotesPageRenameEs extends TranslationsNotesPageRenameEn {
+	_TranslationsNotesPageRenameEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => 'Renombrar';
+	@override String get title => 'Renombrar documento';
+	@override String get helper => 'Ruta relativa a la bóveda. Las carpetas se crean solas.';
+	@override String doneSnack({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.';
+	@override String get doneWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
 }
 
 // Path: dataExport.sections
@@ -4183,6 +4199,24 @@ class _TranslationsWebNotesFlattenEs extends TranslationsWebNotesFlattenEn {
 	@override String convert({required Object count}) => 'Convertir ${count} documento(s)';
 	@override String done({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.';
 	@override String get restartHint => 'Reinicia la pasarela después.';
+}
+
+// Path: web.notes.doc
+class _TranslationsWebNotesDocEs extends TranslationsWebNotesDocEn {
+	_TranslationsWebNotesDocEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get rename => 'Renombrar';
+	@override String get renamePrompt => 'Nueva ruta para este documento (las carpetas se crean solas):';
+	@override String renamed({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.';
+	@override String get renamedWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
+	@override String get renameFailed => 'No se pudo renombrar';
+	@override String get delete => 'Eliminar';
+	@override String deleteConfirm({required Object path}) => '¿Eliminar ${path}? Esto no se puede deshacer desde aquí.';
+	@override String get deleted => 'Documento eliminado';
+	@override String get deleteFailed => 'No se pudo eliminar';
 }
 
 // Path: web.activity.filters
@@ -10889,6 +10923,15 @@ extension on TranslationsEs {
 			'web.notes.flatten.convert' => ({required Object count}) => 'Convertir ${count} documento(s)',
 			'web.notes.flatten.done' => ({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.',
 			'web.notes.flatten.restartHint' => 'Reinicia la pasarela después.',
+			'web.notes.doc.rename' => 'Renombrar',
+			'web.notes.doc.renamePrompt' => 'Nueva ruta para este documento (las carpetas se crean solas):',
+			'web.notes.doc.renamed' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
+			'web.notes.doc.renamedWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
+			'web.notes.doc.renameFailed' => 'No se pudo renombrar',
+			'web.notes.doc.delete' => 'Eliminar',
+			'web.notes.doc.deleteConfirm' => ({required Object path}) => '¿Eliminar ${path}? Esto no se puede deshacer desde aquí.',
+			'web.notes.doc.deleted' => 'Documento eliminado',
+			'web.notes.doc.deleteFailed' => 'No se pudo eliminar',
 			'web.activity.title' => 'Actividad',
 			'web.activity.subtitle' => 'Auditoría por llamada de las solicitudes API realizadas por las integraciones registradas. Incluye tanto las llamadas entrantes (una app de terceros que llama a opendray con su clave de API) como las llamadas salientes a través del proxy (admin → proxy de opendray → integración). Las llamadas hechas directamente por esta UI de administración no se registran.',
 			'web.activity.refresh' => 'Actualizar',
@@ -10916,6 +10959,8 @@ extension on TranslationsEs {
 			'web.activity.table.status' => 'Estado',
 			'web.activity.table.duration' => 'Duración',
 			'web.activity.table.inboundAria' => 'entrante',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.outboundAria' => 'saliente',
 			'web.activity.empty.filtered' => 'Ninguna llamada coincide con estos filtros.',
 			'web.activity.empty.title' => 'Aún no se ha registrado ninguna llamada API',
@@ -10925,8 +10970,6 @@ extension on TranslationsEs {
 			'web.activity.empty.stepCallEndpoint' => 'Llama a cualquier endpoint, p. ej. <1>POST /api/v1/sessions</1>',
 			'web.activity.empty.stepAppears' => 'Las llamadas aparecen aquí en cuestión de segundos',
 			'web.activity.empty.footnote' => 'Las llamadas que haces desde esta UI de administración no se registran; solo se registra el tráfico atribuido a integraciones.',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.events.loading' => 'Cargando eventos…',
 			'web.activity.events.empty' => 'Aún no hay eventos.',
 			'web.activity.events.emptyFiltered' => 'No hay eventos coincidentes.',
@@ -11430,6 +11473,8 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.',
@@ -11439,8 +11484,6 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.verifyButton' => 'Verificar',
 			'web.plugins.gitHosts.dialog.verifying' => 'Comprobando…',
 			'web.plugins.gitHosts.dialog.verifyLogin' => ({required Object login}) => 'Autenticado como ${login}',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.verifyRepoOk' => ({required Object repo}) => 'puede leer ${repo}',
 			'web.plugins.gitHosts.dialog.verifyRepoFail' => ({required Object repo}) => 'NO puede leer ${repo}',
 			'web.plugins.gitHosts.dialog.verifyPushOk' => 'puede hacer push',
@@ -11944,6 +11987,8 @@ extension on TranslationsEs {
 			'web.serverSettings.host.modes.on_demand.desc' => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.',
 			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray no interviene en absoluto en la máquina.',
 			'web.serverSettings.host.modes.off.caveat' => 'La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto.',
 			'web.serverSettings.layout.title' => 'Se resuelve en',
@@ -11953,8 +11998,6 @@ extension on TranslationsEs {
 			'web.serverSettings.layout.mcp' => 'Registro MCP',
 			'web.serverSettings.layout.legacyWarning' => 'Esta instalación aún mantiene los directorios propios de opendray dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de arriba cuando puedas. Lo ya confirmado requiere git rm --cached; opendray no reescribirá tu repositorio.',
 			'web.settings.title' => 'Ajustes',
-			_ => null,
-		} ?? switch (path) {
 			'web.settings.subtitle' => 'Configuración del espacio de trabajo, la cuenta y el gateway.',
 			'web.settings.groups.workspace' => 'Espacio de trabajo',
 			'web.settings.groups.server' => 'Servidor',
@@ -12458,6 +12501,8 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.applyFailed' => 'Error al aplicar',
 			'web.cortex.blueprint.appliedToast' => 'Plano aplicado',
 			'web.cortex.blueprint.writePolicy.direct' => 'Escritura directa',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.proposal' => 'Propuesta',
 			'web.cortex.blueprint.writePolicy.hint' => 'Directa: el agente escribe el documento en vivo cuando está desbloqueado. Propuesta: las escrituras del agente requieren tu aprobación primero.',
 			'web.cortex.quarantine.title' => 'Cuarentena',
@@ -12467,8 +12512,6 @@ extension on TranslationsEs {
 			'web.cortex.quarantine.promoteHint' => 'Mover a memoria duradera (entra en la recuperación y consolidación)',
 			'web.cortex.quarantine.discard' => 'Descartar',
 			'web.cortex.quarantine.promotedToast' => 'Promocionada a memoria duradera',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.quarantine.discardedToast' => 'Descartada',
 			'web.cortex.quarantine.actionFailed' => 'Acción fallida',
 			'web.cortex.quarantine.expires' => ({required Object date}) => 'expira ${date}',
@@ -12972,6 +13015,8 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.openFull' => 'Pantalla completa',
 			'sessions.inspector.canvas.confirm' => 'Confirmar',
 			'sessions.inspector.canvas.captured' => ({required Object what}) => 'Capturado: ${what}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.notes' => 'Notas',
 			'sessions.inspector.canvas.clear' => 'Borrar marcas',
 			'sessions.inspector.canvas.done' => 'Listo',
@@ -12981,8 +13026,6 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.newCanvasTitle' => 'Nuevo lienzo',
 			'sessions.inspector.canvas.newCanvasBlurb' => 'Elige arriba qué dibujar y descríbelo abajo: el agente renderizará el nuevo lienzo aquí.',
 			'sessions.inspector.canvas.setWorkspace' => 'Trabajar aquí',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.workspaceSet' => 'El agente ya trabaja en este lienzo.',
 			'sessions.inspector.canvas.previewOnlyHint' => 'Solo vista previa: pulsa «Trabajar aquí» para apuntarlo.',
 			'sessions.inspector.canvas.designTitle' => 'Sistema de diseño',
@@ -13486,6 +13529,8 @@ extension on TranslationsEs {
 			'backups.configuredViaLabel' => 'Configurado mediante',
 			'backups.wizard.title' => 'Configurar copias de seguridad',
 			'backups.wizard.intro' => 'Elige una passphrase maestra. opendray la usa para cifrar cada blob de copia de seguridad con AES-256-GCM. Si pierdes la passphrase, pierdes los datos: no hay forma de recuperarlos.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.wizard.saving' => 'Guardando…',
 			'backups.wizard.generateAndSave' => 'Generar y guardar',
 			'backups.wizard.savePassphrase' => 'Guardar passphrase',
@@ -13495,8 +13540,6 @@ extension on TranslationsEs {
 			'backups.wizard.saveNowBody' => 'Se muestra UNA SOLA VEZ. Después no podrás recuperarla desde opendray.',
 			'backups.overviewTargets' => 'Destinos',
 			'backups.overviewSchedules' => 'Programaciones',
-			_ => null,
-		} ?? switch (path) {
 			'backups.overviewBackups' => 'Copias de seguridad',
 			'backups.health.headlineHealthy' => 'Copias correctas',
 			'backups.health.headlineAttention' => 'Requiere atención',
@@ -13953,6 +13996,11 @@ extension on TranslationsEs {
 			'notesPage.flatten.convert' => ({required Object count}) => 'Convertir ${count}',
 			'notesPage.flatten.done' => ({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.',
 			'notesPage.flatten.restartHint' => 'Reinicia la pasarela después.',
+			'notesPage.rename.action' => 'Renombrar',
+			'notesPage.rename.title' => 'Renombrar documento',
+			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
+			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
+			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
 			'dataExport.title' => 'Exportación e importación de datos',
 			'dataExport.subtitle' => 'Paquetes a nivel de usuario para migración o verificación, independientes de /backups (recuperación ante desastres).',
 			'dataExport.sections.export' => 'Exportar',
@@ -13995,6 +14043,8 @@ extension on TranslationsEs {
 			'dataExport.history.columns.size' => 'Tamaño',
 			'dataExport.history.columns.expires' => 'Caduca',
 			'dataExport.history.columns.actions' => 'Acciones',
+			_ => null,
+		} ?? switch (path) {
 			'dataExport.history.scopeEmpty' => '(vacío)',
 			'dataExport.history.scopeMemories' => 'memorias',
 			'dataExport.history.scopeIntegrations' => ({required Object mode}) => 'integraciones(${mode})',
@@ -14009,8 +14059,6 @@ extension on TranslationsEs {
 			'dataExport.import.customTasksLabel' => 'Tareas personalizadas',
 			'dataExport.import.importBundle' => 'Importar paquete',
 			'dataExport.import.importing' => 'Importando…',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.import.pickFileToast' => 'Elige primero un archivo de paquete.',
 			'dataExport.import.doneToast' => 'Importación completada',
 			'dataExport.import.finishedWithErrors' => 'Importación finalizada con errores',

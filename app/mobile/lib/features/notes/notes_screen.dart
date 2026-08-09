@@ -143,6 +143,11 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.open),
             ),
             ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: Text(t.notesPage.rename.action),
+              onTap: () => Navigator.of(sheetCtx).pop(_RowAction.rename),
+            ),
+            ListTile(
               leading: const Icon(Icons.copy),
               title: Text(t.notesPage.copyPath),
               onTap: () => Navigator.of(sheetCtx).pop(_RowAction.copyPath),
@@ -167,6 +172,8 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     switch (action) {
       case _RowAction.open:
         await _openNote(note);
+      case _RowAction.rename:
+        await _promptRename(note);
       case _RowAction.copyPath:
         await Clipboard.setData(ClipboardData(text: note.path));
         if (!mounted) return;
@@ -179,6 +186,63 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
         );
       case _RowAction.delete:
         await _confirmAndDelete(note);
+    }
+  }
+
+  // Rename goes through the move endpoint, which repoints the
+  // [[wiki links]] that referenced the old path. Writing a copy and
+  // deleting the original would leave every one of them pointing at a
+  // document that no longer exists.
+  Future<void> _promptRename(NoteSummary note) async {
+    final ctrl = TextEditingController(text: note.path);
+    final to = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(t.notesPage.rename.title),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            helperText: t.notesPage.rename.helper,
+            hintText: t.notesPage.pathHint,
+          ),
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(ctrl.text.trim()),
+            child: Text(t.notesPage.rename.action),
+          ),
+        ],
+      ),
+    );
+    if (to == null || to.isEmpty || to == note.path || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final res = await ref.read(notesApiProvider).move(from: note.path, to: to);
+      // A warning means the file moved but the link rewrite did not
+      // finish. Reporting only "renamed" would hide a vault full of
+      // references to a path that no longer exists.
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            res.warning?.isNotEmpty ?? false
+                ? '${t.notesPage.rename.doneWithWarning}: ${res.warning}'
+                : t.notesPage.rename.doneSnack(count: res.linksRewritten),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
+      );
     }
   }
 
@@ -452,7 +516,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   }
 }
 
-enum _RowAction { open, copyPath, delete }
+enum _RowAction { open, rename, copyPath, delete }
 
 class _LevelView {
   _LevelView({required this.folders, required this.notes});

@@ -130,6 +130,29 @@ for the full rationale and what triggers a major bump.
   directories the migration empties are removed; one still holding
   anything is left exactly where it is.
 
+- **The doc library can rename and delete a document.** It could create
+  and edit one, and that was all — a daily note, or anything not bound
+  to a project, could be made but never moved or removed from the one
+  surface that lists everything. Rename goes through the move endpoint,
+  so the `[[wiki links]]` pointing at the old path are repointed rather
+  than left dangling, and a partial rewrite is reported instead of
+  being folded into a plain "renamed". Mobile gains rename too; it
+  already had delete.
+
+- **"New" and "Today" are reachable once a document is open.** They
+  were in the header the whole time, pushed off the right edge by the
+  vault path: a `truncate` element in a flex row still needs
+  `min-width: 0`, or it refuses to shrink below its content. Anyone
+  with a long vault path could only reach the two actions from the
+  empty state, which is exactly when they had no documents to leave.
+
+- **A folder holding the selected document can be collapsed again.**
+  The tree re-applied "open the ancestors of the selection" on every
+  render, so the collapse landed and the next render undid it — and
+  "Collapse all" left that one branch open. Revealing the selection is
+  a response to the selection changing, not a rule about what must stay
+  open, so it now runs once per selection.
+
 - **`opendray notes` accepts flags after the subcommand.** Go's `flag`
   package stops parsing at the first non-flag argument, so `notes
   flatten --apply` left `apply` false, performed a dry run, and advised
