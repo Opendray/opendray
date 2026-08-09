@@ -18,6 +18,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -36,6 +37,7 @@ func runNotes(args []string) int {
 	root := fs.String("root", "", "override vault root (else config / env / default)")
 	prefix := fs.String("prefix", "", "list: filter by path prefix (e.g. projects/)")
 	asJSON := fs.Bool("json", false, "list/read: emit JSON instead of plain text")
+	apply := fs.Bool("apply", false, "flatten: perform the moves (default is a dry run)")
 	fs.Usage = func() {
 		fmt.Fprintln(os.Stderr, notesUsage)
 	}
@@ -155,7 +157,10 @@ func runNotes(args []string) int {
 			fmt.Fprintln(os.Stderr, "project: missing <basename>")
 			return 2
 		}
-		path := notes.ProjectPath(rest[1])
+		// The vault's own derivation, not the package-level shim: the
+		// shim hardcodes `projects/` and would file this outside the
+		// configured layout.
+		path := vault.ProjectPath(rest[1])
 		if _, err := vault.Read(path); errors.Is(err, notes.ErrNotFound) {
 			template := projectTemplate(rest[1])
 			if _, err := vault.Write(path, template); err != nil {
@@ -166,11 +171,64 @@ func runNotes(args []string) int {
 		fmt.Println(path)
 		return 0
 
+	case "flatten":
+		return runFlatten(vault, *cfgPath, *apply, *asJSON)
+
 	default:
 		fmt.Fprintf(os.Stderr, "unknown notes command: %s\n", rest[0])
 		fs.Usage()
 		return 2
 	}
+}
+
+// runFlatten converts a nested vault to the flat layout. It defaults
+// to a dry run: this rewrites every project document's path, and a
+// migration that starts moving files because someone typed the command
+// to see what it would do is not one anybody should trust.
+//
+// The config is left alone even on success. Recording `layout = "flat"`
+// belongs to the gateway's startup detection, which sees a vault with
+// no `projects/` directory and reaches the same conclusion — one place
+// deciding, rather than two that can disagree if this run half-fails.
+func runFlatten(vault *notes.Vault, cfgPath string, apply, asJSON bool) int {
+	res, err := vault.Flatten(context.Background(), !apply)
+	if err != nil {
+		return reportErr(err)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(res)
+		return 0
+	}
+
+	for _, m := range res.Moves {
+		if m.LinksRewritten > 0 {
+			fmt.Printf("%s -> %s (%d links repointed)\n",
+				m.From, m.To, m.LinksRewritten)
+			continue
+		}
+		fmt.Printf("%s -> %s\n", m.From, m.To)
+	}
+	for _, s := range res.Skips {
+		fmt.Fprintf(os.Stderr, "skipped %s: %s\n", s.Path, s.Reason)
+	}
+
+	switch {
+	case res.DryRun && len(res.Moves) == 0:
+		fmt.Fprintln(os.Stderr, "nothing to move")
+	case res.DryRun:
+		fmt.Fprintf(os.Stderr,
+			"\ndry run: %d document(s) would move. Re-run with --apply.\n",
+			len(res.Moves))
+	default:
+		fmt.Fprintf(os.Stderr, "\nmoved %d document(s)", len(res.Moves))
+		if res.MappingsRewritten > 0 {
+			fmt.Fprintf(os.Stderr, ", repointed %d project override(s)",
+				res.MappingsRewritten)
+		}
+		fmt.Fprintf(os.Stderr, ".\nRestart the gateway so it picks up the "+
+			"new layout.\n")
+	}
+	return 0
 }
 
 func openVault(cfgPath, override string) (*notes.Vault, error) {
@@ -180,7 +238,13 @@ func openVault(cfgPath, override string) (*notes.Vault, error) {
 	if root == "" {
 		root = paths.Vault
 	}
+	// The CLI reads the layout the gateway recorded rather than
+	// detecting one of its own: two components disagreeing about where
+	// a project's notes live is precisely what the recorded setting
+	// exists to prevent. An unset value means no gateway has started
+	// yet, and Options falls back to the nested shape.
 	return notes.New(root, notes.Options{
+		Layout:         notes.Layout(cfg.Vault.Layout),
 		PersonalPrefix: cfg.Vault.PersonalPrefix,
 		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
 		HiddenDirs:     paths.NestedInVault(),
@@ -276,12 +340,15 @@ commands:
   delete <path>                 delete a note
   daily                         create or print today's daily note path
   project <basename>            create or print a project note's path
+  flatten                       convert a nested vault to the flat layout
+                                (dry run unless --apply)
 
-flags:
+flags (must come BEFORE the command):
   -config FILE                  config.toml (only [vault] is consulted)
   --root PATH                   vault root override
   --prefix STRING               list filter (e.g. projects/)
-  --json                        list/read JSON output
+  --json                        list/read/flatten JSON output
+  --apply                       flatten: perform the moves
 
-paths are relative to <vault>/notes and must end in .md.
+paths are relative to the vault root and end in .md, .markdown, .html or .htm.
 operates on the filesystem directly — the gateway does not need to be running.`

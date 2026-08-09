@@ -62,6 +62,7 @@ class ProjectMapping {
     required this.path,
     required this.defaultPath,
     required this.custom,
+    this.personalPath = '',
   });
 
   factory ProjectMapping.fromJson(Map<String, dynamic> json) => ProjectMapping(
@@ -69,6 +70,7 @@ class ProjectMapping {
         path: json['path'] as String? ?? '',
         defaultPath: json['default_path'] as String? ?? '',
         custom: json['custom'] as bool? ?? false,
+        personalPath: json['personal_path'] as String? ?? '',
       );
 
   // Absolute filesystem path resolved as the vault folder for the
@@ -77,6 +79,13 @@ class ProjectMapping {
   final String path;
   final String defaultPath;
   final bool custom;
+
+  /// Where this cwd's personal scratchpad belongs, resolved by the
+  /// gateway. It depends on the vault layout — flat keeps it inside the
+  /// project directory, so a project override moves it too — which is
+  /// why the phone does not work it out itself. Empty when talking to a
+  /// gateway that predates the field.
+  final String personalPath;
 }
 
 class NotesInfo {

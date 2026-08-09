@@ -11,9 +11,21 @@ export interface FullNote extends Note {
   body: string
 }
 
+/** How the vault files projects. Mirrors notes.Layout in Go. */
+export type VaultLayout = 'flat' | 'nested'
+
 export interface VaultInfo {
   root: string
+  /**
+   * "flat" files each project at the vault root under its own name,
+   * with its personal notes inside it; "nested" uses the prefixes
+   * below. Absent on a gateway older than this field — treat that as
+   * nested, which is what those gateways do.
+   */
+  layout?: VaultLayout
+  /** Nested layout only. */
   personal_prefix?: string
+  /** Nested layout only. */
   projects_prefix?: string
 }
 
@@ -27,6 +39,14 @@ export interface ProjectMappingResolved {
   path: string         // resolved path (override OR default)
   default_path: string // what auto-derivation would produce
   custom: boolean      // true when path != default_path
+  /**
+   * Where this cwd's personal scratchpad belongs. Served rather than
+   * derived here because it depends on the vault's layout: the flat
+   * layout keeps it inside the project directory (so a per-cwd override
+   * moves it too), while the nested layout files it in its own tree.
+   * Use personalNotePath() only as a fallback before this arrives.
+   */
+  personal_path?: string
 }
 
 export interface ProjectMapping {
@@ -291,9 +311,13 @@ export function projectNotePath(cwd: string): string {
 }
 
 // personalNotePath is the user's personal scratchpad for this project.
-// One file per cwd basename, edited inline in the Notes panel. AI
-// agents do NOT write here — the convention keeps human and agent
-// authoring lanes clean.
+// One file per cwd, edited inline in the Notes panel. AI agents do NOT
+// write here — the convention keeps human and agent authoring lanes
+// clean, and under the flat layout that rule is the ONLY thing keeping
+// them apart, since the file now sits inside the project's directory.
+//
+// This returns the NESTED path and is a fallback only: ask the gateway
+// via notesProjectMapping(cwd).personal_path, which knows the layout.
 export function personalNotePath(cwd: string): string {
   return `personal/${cwdSlug(cwd)}.md`
 }

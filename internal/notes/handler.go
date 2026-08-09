@@ -50,7 +50,11 @@ type writeRequest struct {
 
 func (h *Handlers) info(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"root":            h.v.Root(),
+		"root": h.v.Root(),
+		// Clients render from this rather than deriving paths of their
+		// own. Three implementations guessing where a project's notes
+		// live is three chances to disagree with the gateway.
+		"layout":          string(h.v.Layout()),
 		"personal_prefix": h.v.PersonalPrefix(),
 		"projects_prefix": h.v.ProjectsPrefix(),
 	})
@@ -231,6 +235,11 @@ func (h *Handlers) projectMappingGet(w http.ResponseWriter, r *http.Request) {
 		"path":         resolved,
 		"default_path": defaultDir,
 		"custom":       custom,
+		// Served rather than derived client-side: in the flat layout
+		// the personal note sits inside the project directory, so an
+		// override here moves it too — a rule no client should have to
+		// reimplement.
+		"personal_path": h.v.ResolvedPersonalPath(cwd),
 	})
 }
 

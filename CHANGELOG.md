@@ -76,6 +76,41 @@ for the full rationale and what triggers a major bump.
 
 ### Changed
 
+- **A project's documents are filed under the project's name.** The
+  Vault is a project documentation library, and it filed every project
+  under `projects/` — a folder naming what the whole library already
+  is. One level of nesting that told the reader nothing, on every path,
+  in every listing, and at the top of the git repository the Vault syncs
+  to. The operator's own notes were split off further still: agent docs
+  at `projects/<name>/…`, the human scratchpad at `personal/<name>.md` —
+  the same project's material in two distant places, sorted by *who
+  wrote it* rather than by what it is about.
+
+  New vaults now use `<name>/…` with that project's `personal.md`
+  inside it. **Existing vaults are not rearranged.** The layout is
+  decided once, at first start, and written into `config.toml` as
+  `[vault] layout`. Recording it is the point: the alternative — work
+  the shape out from what is on disk each time — is the bug that put
+  one install's entire document library behind a `notes/` directory,
+  because a probe asking "does this folder have content?" changes its
+  answer the moment someone puts content there.
+
+  `opendray notes flatten` converts a vault deliberately. It defaults
+  to a dry run, drives the same rename the UI uses so `[[wiki links]]`
+  are repointed as it goes, repoints per-cwd project overrides, and
+  **never overwrites**: a destination that already exists is reported
+  and skipped, leaving both copies for you to reconcile.
+
+  Where a project's notes live is now answered by the gateway —
+  `/notes/info` reports the layout and the project mapping carries
+  `personal_path` — instead of being re-derived by web, mobile and the
+  CLI. Three implementations guessing is three chances to disagree, and
+  the CLI's `notes project` was already guessing wrong.
+
+  Reserved names step aside rather than collide: a project called
+  `daily` files under `daily-docs`, since `daily/YYYY-MM-DD.md` belongs
+  to the whole vault. `_`- and `.`-prefixed names are reserved too.
+
 - **The Vault is your documents. Agent skills and the MCP registry moved
   out.** One root held three tenants with nothing in common — the
   operator's markdown, the skills opendray injects at spawn, and the MCP

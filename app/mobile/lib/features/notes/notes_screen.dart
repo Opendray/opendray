@@ -585,7 +585,11 @@ class _NoteRow extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       leading: Icon(
-        note.path.startsWith('personal/')
+        // The operator's own note carries a different icon from the
+        // agent-written docs. Both layouts have to be recognised: the
+        // nested one files it under personal/, the flat one puts
+        // personal.md inside the project's own directory.
+        _isPersonalNote(note.path)
             ? Icons.edit_note_outlined
             : Icons.description_outlined,
         color: Theme.of(context).colorScheme.primary,
@@ -758,3 +762,11 @@ String _relTime(DateTime ts) {
   if (diff.inDays < 7) return '${diff.inDays}d ago';
   return DateFormat.yMMMd().format(ts.toLocal());
 }
+
+// _isPersonalNote recognises the operator's own scratchpad in either
+// vault layout: `personal/<project>.md` when projects are nested, and
+// `<project>/personal.md` when they are flat.
+bool _isPersonalNote(String path) =>
+    path.startsWith('personal/') ||
+    path == 'personal.md' ||
+    path.endsWith('/personal.md');

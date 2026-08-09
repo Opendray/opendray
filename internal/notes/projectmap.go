@@ -36,6 +36,21 @@ func (v *Vault) ResolvedProjectDir(cwd string) string {
 	return v.ProjectDir(base)
 }
 
+// ResolvedPersonalPath returns where this cwd's personal scratchpad
+// belongs, honouring a per-cwd project override.
+//
+// In the flat layout the personal note lives INSIDE the project's
+// directory, so an override that moves the project moves the personal
+// note with it — the two stop being separately configurable, which is
+// the point of putting them together. The nested layout keeps them in
+// separate trees, so there is nothing for an override to move.
+func (v *Vault) ResolvedPersonalPath(cwd string) string {
+	if v.layout == LayoutFlat {
+		return v.ResolvedProjectDir(cwd) + "/personal.md"
+	}
+	return v.PersonalPath(basenameOf(cwd))
+}
+
 // ListProjectMappings returns every override currently saved. Used by
 // the UI so users can see/manage what's configured.
 func (v *Vault) ListProjectMappings() ([]ProjectMapping, error) {

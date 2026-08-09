@@ -497,7 +497,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// Vault + skills are needed by the SessionProvider so spawn-time
 	// injection has them available. Constructed here (before the
 	// session manager) so the manager's first Resolve call sees them.
+	vaultLayout := resolveVaultLayout(cfg, paths.Vault, log)
 	vault, err := notesapi.New(paths.Vault, notesapi.Options{
+		Layout:         vaultLayout,
 		PersonalPrefix: cfg.Vault.PersonalPrefix,
 		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
 		// On a pre-split install skills/ and mcp/ sit inside the
@@ -1876,6 +1878,47 @@ func logLayout(log *slog.Logger, p config.Paths) {
 		"documents", p.Vault,
 		"skills_inside_documents", p.LegacySkills,
 		"mcp_inside_documents", p.LegacyMCP)
+}
+
+// resolveVaultLayout returns the vault layout, deciding it exactly
+// once for installs that predate the setting and writing the answer
+// into config.toml.
+//
+// Recording it is the point. The obvious alternative — work the layout
+// out from what is on disk every time — is the bug that put this
+// install's whole document library behind a `notes/` directory: a probe
+// that asks "does this folder have content?" flips the moment someone
+// puts content there. A vault's shape must not depend on the order
+// files arrived in.
+//
+// A failed write is logged, not fatal. The gateway can serve a correct
+// layout this run; what it loses is the guarantee for the next one, and
+// refusing to start over a config write would be a worse trade.
+func resolveVaultLayout(cfg config.Config, docRoot string, log *slog.Logger) notesapi.Layout {
+	if l := notesapi.Layout(cfg.Vault.Layout); l.Valid() {
+		return l
+	}
+	layout := notesapi.DetectLayout(docRoot)
+	log.Info("vault layout decided", "layout", string(layout), "documents", docRoot)
+
+	if cfg.FilePath == "" {
+		log.Warn("no config file to record the vault layout in; it will be " +
+			"detected again next start")
+		return layout
+	}
+	svc := settings.NewService(cfg.FilePath, log)
+	cur, err := svc.Get()
+	if err != nil {
+		log.Warn("could not read config to record the vault layout",
+			"error", err, "layout", string(layout))
+		return layout
+	}
+	cur.Vault.Layout = string(layout)
+	if err := svc.Update(cur); err != nil {
+		log.Warn("could not record the vault layout in config",
+			"error", err, "layout", string(layout))
+	}
+	return layout
 }
 
 // memoryKeyPath is where we cache the plaintext API key for the
