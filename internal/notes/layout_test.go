@@ -2,6 +2,7 @@ package notes
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -253,5 +254,100 @@ func TestResolvedPersonalPathFollowsAProjectOverride(t *testing.T) {
 	if got, want := nested.ResolvedPersonalPath("/Users/x/code/app"),
 		"personal/app.md"; got != want {
 		t.Errorf("nested ResolvedPersonalPath = %q, want %q", got, want)
+	}
+}
+
+func TestFlattenRecordsTheNewLayout(t *testing.T) {
+	// The bug this test exists for shipped: the migration left recording
+	// to the gateway's startup detection, which only runs when the
+	// setting is EMPTY. A vault already recorded as nested stayed nested
+	// after conversion, so projects kept resolving to `projects/<name>`
+	// and personal notes kept landing in `personal/` — against
+	// directories the migration had just emptied.
+	var recorded []Layout
+	dir := t.TempDir()
+	v, err := New(dir, Options{
+		Layout:         LayoutNested,
+		OnLayoutChange: func(l Layout) error { recorded = append(recorded, l); return nil },
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	writeFileT(t, dir, "projects/app/README.md", "# app\n")
+
+	if _, err := v.Flatten(context.Background(), false); err != nil {
+		t.Fatalf("Flatten: %v", err)
+	}
+
+	if len(recorded) != 1 || recorded[0] != LayoutFlat {
+		t.Fatalf("layout persisted as %v, want one flat", recorded)
+	}
+	// The running gateway must follow immediately, not at next restart.
+	if got := v.Layout(); got != LayoutFlat {
+		t.Errorf("in-memory layout = %q, want flat", got)
+	}
+	if got, want := v.ProjectDir("app"), "app"; got != want {
+		t.Errorf("ProjectDir after conversion = %q, want %q", got, want)
+	}
+	if got, want := v.PersonalPath("app"), "app/personal.md"; got != want {
+		t.Errorf("PersonalPath after conversion = %q, want %q", got, want)
+	}
+}
+
+func TestFlattenReportsAFailureToRecordTheLayout(t *testing.T) {
+	dir := t.TempDir()
+	v, err := New(dir, Options{
+		Layout:         LayoutNested,
+		OnLayoutChange: func(Layout) error { return errors.New("config is read-only") },
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	writeFileT(t, dir, "projects/app/README.md", "# app\n")
+
+	res, err := v.Flatten(context.Background(), false)
+	if err != nil {
+		t.Fatalf("Flatten: %v", err)
+	}
+	// The documents did move — saying otherwise would be a lie — but the
+	// operator has to hear that the next restart will disagree.
+	if res.LayoutRecorded {
+		t.Error("LayoutRecorded is true despite the hook failing")
+	}
+	if res.Warning == "" {
+		t.Error("a failure to record the layout was reported silently")
+	}
+	if len(res.Moves) != 1 {
+		t.Errorf("moves = %+v, want the one document", res.Moves)
+	}
+}
+
+func TestFlattenRemovesTheDirectoriesItEmptied(t *testing.T) {
+	v, root := newVaultT(t, LayoutNested)
+	writeFileT(t, root, "projects/app/features/x.md", "# x\n")
+	writeFileT(t, root, "personal/app.md", "# notes\n")
+
+	if _, err := v.Flatten(context.Background(), false); err != nil {
+		t.Fatalf("Flatten: %v", err)
+	}
+	for _, gone := range []string{"projects", "personal"} {
+		if _, err := os.Stat(filepath.Join(root, gone)); !os.IsNotExist(err) {
+			t.Errorf("%s/ survived as an empty directory", gone)
+		}
+	}
+}
+
+func TestFlattenKeepsADirectoryThatStillHasSomethingInIt(t *testing.T) {
+	v, root := newVaultT(t, LayoutNested)
+	writeFileT(t, root, "projects/app/README.md", "# app\n")
+	// Not a document, so the migration never moves it — and must not
+	// delete the directory holding it either.
+	writeFileT(t, root, "projects/app/diagram.png", "binary")
+
+	if _, err := v.Flatten(context.Background(), false); err != nil {
+		t.Fatalf("Flatten: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "projects", "app", "diagram.png")); err != nil {
+		t.Errorf("a non-document was lost with its directory: %v", err)
 	}
 }

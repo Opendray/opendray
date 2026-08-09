@@ -45,7 +45,7 @@ func (v *Vault) ResolvedProjectDir(cwd string) string {
 // the point of putting them together. The nested layout keeps them in
 // separate trees, so there is nothing for an override to move.
 func (v *Vault) ResolvedPersonalPath(cwd string) string {
-	if v.layout == LayoutFlat {
+	if v.Layout() == LayoutFlat {
 		return v.ResolvedProjectDir(cwd) + "/personal.md"
 	}
 	return v.PersonalPath(basenameOf(cwd))

@@ -55,8 +55,15 @@ type FullNote struct {
 // being independent FS calls (no shared in-memory state in this phase
 // — index lands in Phase 4).
 type Vault struct {
-	root           string   // canonical absolute path to the notes root
-	layout         Layout   // flat or nested — see layout.go
+	root string // canonical absolute path to the notes root
+
+	// layout can change under a running gateway: the flatten migration
+	// rewrites the shape on disk, and every path derived after that
+	// must follow immediately rather than at the next restart.
+	layoutMu       sync.RWMutex
+	layout         Layout // flat or nested — see layout.go
+	onLayoutChange func(Layout) error
+
 	personalPrefix string   // nested only: subfolder for personal scratchpads
 	projectsPrefix string   // nested only: subfolder for AI project docs
 	hidden         []string // vault-relative dirs excluded from listings
@@ -73,6 +80,14 @@ type Options struct {
 	// nested — the shape every pre-existing install already has, so a
 	// caller that forgets cannot relocate anyone's documents.
 	Layout Layout
+
+	// OnLayoutChange persists a layout the vault decided for itself —
+	// today, only the flatten migration. Wiring it is not optional in a
+	// long-lived process: startup detection runs ONLY when the setting
+	// is empty, so a vault recorded as nested and then flattened would
+	// come back nested on the next restart, deriving paths for
+	// directories that no longer exist.
+	OnLayoutChange func(Layout) error
 
 	// PersonalPrefix / ProjectsPrefix apply to the NESTED layout only.
 	// The flat layout has no prefixes to configure: a project is its
@@ -134,6 +149,7 @@ func New(notesRoot string, opts Options) (*Vault, error) {
 	return &Vault{
 		root:           root,
 		layout:         layout,
+		onLayoutChange: opts.OnLayoutChange,
 		personalPrefix: personal,
 		projectsPrefix: projects,
 		hidden:         relativeHidden(root, opts.HiddenDirs),
@@ -185,7 +201,17 @@ func (v *Vault) ProjectsPrefix() string { return v.projectsPrefix }
 // /api/v1/notes/info rather than deriving paths themselves — which is
 // what keeps the layout a server-side concern and stops web, mobile
 // and the CLI drifting apart on where a project's notes live.
-func (v *Vault) Layout() Layout { return v.layout }
+func (v *Vault) Layout() Layout {
+	v.layoutMu.RLock()
+	defer v.layoutMu.RUnlock()
+	return v.layout
+}
+
+func (v *Vault) setLayout(l Layout) {
+	v.layoutMu.Lock()
+	v.layout = l
+	v.layoutMu.Unlock()
+}
 
 // Root returns the canonical absolute path to the notes directory.
 // Useful for surfacing in /api/v1/notes/info and the CLI describe.
@@ -494,7 +520,7 @@ func DailyPath(t time.Time) string {
 // create .html by naming it. Same for DailyPath and ProjectPath.
 func (v *Vault) PersonalPath(basename string) string {
 	slug := sanitiseBasename(basename)
-	if v.layout == LayoutFlat {
+	if v.Layout() == LayoutFlat {
 		return flatRoot(slug) + "/personal.md"
 	}
 	return v.personalPrefix + "/" + slug + ".md"
@@ -506,7 +532,7 @@ func (v *Vault) PersonalPath(basename string) string {
 // that behaviour. This is the "default location" used as a fallback.
 func (v *Vault) ProjectDir(basename string) string {
 	slug := sanitiseBasename(basename)
-	if v.layout == LayoutFlat {
+	if v.Layout() == LayoutFlat {
 		return flatRoot(slug)
 	}
 	return v.projectsPrefix + "/" + slug

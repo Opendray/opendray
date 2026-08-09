@@ -29,6 +29,7 @@ import (
 
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/notes"
+	"github.com/opendray/opendray-v2/internal/settings"
 )
 
 func runNotes(args []string) int {
@@ -186,10 +187,12 @@ func runNotes(args []string) int {
 // migration that starts moving files because someone typed the command
 // to see what it would do is not one anybody should trust.
 //
-// The config is left alone even on success. Recording `layout = "flat"`
-// belongs to the gateway's startup detection, which sees a vault with
-// no `projects/` directory and reaches the same conclusion — one place
-// deciding, rather than two that can disagree if this run half-fails.
+// On success the new layout is recorded in config.toml through the
+// vault's OnLayoutChange hook. Leaving that to the gateway's startup
+// detection was the original design and it was wrong: detection runs
+// only when the setting is empty, so a vault already recorded as nested
+// stayed nested after conversion and kept deriving paths for the
+// directories this had just emptied.
 func runFlatten(vault *notes.Vault, cfgPath string, apply, asJSON bool) int {
 	res, err := vault.Flatten(context.Background(), !apply)
 	if err != nil {
@@ -225,8 +228,13 @@ func runFlatten(vault *notes.Vault, cfgPath string, apply, asJSON bool) int {
 			fmt.Fprintf(os.Stderr, ", repointed %d project override(s)",
 				res.MappingsRewritten)
 		}
-		fmt.Fprintf(os.Stderr, ".\nRestart the gateway so it picks up the "+
-			"new layout.\n")
+		fmt.Fprintln(os.Stderr, ".")
+		if res.Warning != "" {
+			fmt.Fprintf(os.Stderr, "\nWARNING: %s\n", res.Warning)
+			return 1
+		}
+		fmt.Fprintln(os.Stderr,
+			"Recorded [vault] layout = \"flat\". Restart the gateway.")
 	}
 	return 0
 }
@@ -244,7 +252,12 @@ func openVault(cfgPath, override string) (*notes.Vault, error) {
 	// exists to prevent. An unset value means no gateway has started
 	// yet, and Options falls back to the nested shape.
 	return notes.New(root, notes.Options{
-		Layout:         notes.Layout(cfg.Vault.Layout),
+		Layout: notes.Layout(cfg.Vault.Layout),
+		// `notes flatten --apply` must record the new shape, or the
+		// gateway comes back looking for directories it just emptied.
+		OnLayoutChange: func(l notes.Layout) error {
+			return settings.RecordVaultLayout(cfg.FilePath, string(l), nil)
+		},
 		PersonalPrefix: cfg.Vault.PersonalPrefix,
 		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
 		HiddenDirs:     paths.NestedInVault(),

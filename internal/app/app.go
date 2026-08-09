@@ -499,7 +499,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// session manager) so the manager's first Resolve call sees them.
 	vaultLayout := resolveVaultLayout(cfg, paths.Vault, log)
 	vault, err := notesapi.New(paths.Vault, notesapi.Options{
-		Layout:         vaultLayout,
+		Layout: vaultLayout,
+		// The flatten migration changes the shape on disk; without this
+		// the change would survive on disk but not in config, and the
+		// next start would derive paths for the old directories.
+		OnLayoutChange: func(l notesapi.Layout) error {
+			return settings.RecordVaultLayout(cfg.FilePath, string(l), log)
+		},
 		PersonalPrefix: cfg.Vault.PersonalPrefix,
 		ProjectsPrefix: cfg.Vault.ProjectsPrefix,
 		// On a pre-split install skills/ and mcp/ sit inside the
@@ -1918,15 +1924,7 @@ func resolveVaultLayout(cfg config.Config, docRoot string, log *slog.Logger) not
 			"detected again next start")
 		return layout
 	}
-	svc := settings.NewService(cfg.FilePath, log)
-	cur, err := svc.Get()
-	if err != nil {
-		log.Warn("could not read config to record the vault layout",
-			"error", err, "layout", string(layout))
-		return layout
-	}
-	cur.Vault.Layout = string(layout)
-	if err := svc.Update(cur); err != nil {
+	if err := settings.RecordVaultLayout(cfg.FilePath, string(layout), log); err != nil {
 		log.Warn("could not record the vault layout in config",
 			"error", err, "layout", string(layout))
 	}
