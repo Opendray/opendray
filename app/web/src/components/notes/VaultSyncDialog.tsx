@@ -28,6 +28,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 
@@ -1095,12 +1102,18 @@ function AutoSyncSection({
   const [draft, setDraft] = useState<VaultSyncConfigUpdate>({})
   const [collapsed, setCollapsed] = useState(true)
 
-  // Whenever the server config changes (and the user isn't actively
-  // editing) clear the local draft so the inputs reflect the truth.
-  useEffect(() => {
-    if (cfg.data) setDraft({})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cfg.dataUpdatedAt])
+  // There is deliberately no effect resetting `draft` from the server
+  // config. The query above refetches every 8s while the dialog is
+  // open, and TanStack's `dataUpdatedAt` advances on every successful
+  // fetch even when the payload is byte-identical — so an effect keyed
+  // on it wiped whatever the operator was typing, and greyed out Save
+  // along with it, roughly 8 seconds after they started. That is why
+  // the interval always appeared stuck at its stored value.
+  //
+  // Nothing is needed in its place: `v` below reads
+  // `draft.x ?? server.x`, so an empty draft already follows the
+  // server, save clears the draft on success, and DialogContent
+  // unmounts on close (no forceMount) so reopening starts clean.
 
   const save = useMutation({
     mutationFn: () => setVaultSyncConfig(draft),
@@ -1140,7 +1153,13 @@ function AutoSyncSection({
     }
   }, [c, draft])
 
+  // A custom interval that Go can't parse must not be savable — the
+  // backend would otherwise drop it and keep the old value, which is
+  // indistinguishable from a save that did nothing.
+  const [commitValid, setCommitValid] = useState(true)
+  const [pullValid, setPullValid] = useState(true)
   const dirty = Object.keys(draft).length > 0
+  const canSave = dirty && commitValid && pullValid
 
   if (cfg.isLoading || !v || !c) {
     return (
@@ -1226,21 +1245,15 @@ function AutoSyncSection({
               >
                 {t('web.notes.vaultSync.autoSync.commitEvery')}
               </Label>
-              <Input
+              <IntervalPicker
                 id="commit-interval"
                 value={v.commit_interval}
-                onChange={(e) =>
-                  setDraft((p) => ({ ...p, commit_interval: e.target.value }))
+                presets={COMMIT_PRESETS}
+                onChange={(next) =>
+                  setDraft((p) => ({ ...p, commit_interval: next }))
                 }
-                placeholder="10m"
-                className="text-[12px] font-mono h-8"
+                onValidityChange={setCommitValid}
               />
-              <span className="text-[10px] text-muted-foreground/60">
-                <Trans
-                  i18nKey="web.notes.vaultSync.autoSync.commitEveryExamples"
-                  components={{ 1: <code />, 3: <code />, 5: <code /> }}
-                />
-              </span>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -1250,15 +1263,15 @@ function AutoSyncSection({
               >
                 {t('web.notes.vaultSync.autoSync.pullEvery')}
               </Label>
-              <Input
+              <IntervalPicker
                 id="pull-interval"
                 value={v.pull_interval}
-                onChange={(e) =>
-                  setDraft((p) => ({ ...p, pull_interval: e.target.value }))
-                }
-                placeholder="1h"
-                className="text-[12px] font-mono h-8"
+                presets={PULL_PRESETS}
                 disabled={!v.pull_enabled}
+                onChange={(next) =>
+                  setDraft((p) => ({ ...p, pull_interval: next }))
+                }
+                onValidityChange={setPullValid}
               />
               <span className="text-[10px] text-muted-foreground/60">
                 {t('web.notes.vaultSync.autoSync.pullEveryHint')}
@@ -1315,7 +1328,7 @@ function AutoSyncSection({
               size="sm"
               variant="accent"
               onClick={() => save.mutate()}
-              disabled={!dirty || save.isPending}
+              disabled={!canSave || save.isPending}
             >
               {save.isPending && <Loader2 className="size-3 animate-spin" />}
               {t('web.notes.vaultSync.autoSync.saveSettings')}
@@ -1373,6 +1386,120 @@ function SyncTimestampRow({
       <span>{ts ? relativeTime(ts) : t('web.notes.vaultSync.autoSync.never')}</span>
       {extra && <span className="text-muted-foreground/50">{extra}</span>}
     </div>
+  )
+}
+
+// Auto-sync intervals used to be a bare text box expecting a Go
+// duration ("10m", "2h"). Anything the backend's time.ParseDuration
+// rejected was silently discarded and the previous value kept, so a
+// typo looked exactly like a save that did nothing. Presets cover the
+// cadences anyone actually picks; Custom keeps the escape hatch but
+// validates before the value can be saved.
+const COMMIT_PRESETS = ['30s', '1m', '5m', '10m', '15m', '30m', '1h', '6h'] as const
+const PULL_PRESETS = ['5m', '15m', '30m', '1h', '6h', '24h'] as const
+
+const CUSTOM = '__custom__'
+
+// Mirrors internal/vaultgit.minTickInterval — the loop clamps anything
+// shorter, so offering it would be a lie.
+const MIN_INTERVAL_S = 30
+
+// parseGoDuration returns the duration in seconds, or null when the
+// string isn't a duration Go would accept. Deliberately the same shape
+// as time.ParseDuration: a sequence of <number><unit> pairs.
+export function parseGoDuration(input: string): number | null {
+  const s = input.trim()
+  if (!s || !/^(\d+(\.\d+)?(ns|us|µs|ms|s|m|h))+$/.test(s)) return null
+  const UNIT_S: Record<string, number> = {
+    ns: 1e-9, us: 1e-6, 'µs': 1e-6, ms: 1e-3, s: 1, m: 60, h: 3600,
+  }
+  let total = 0
+  for (const [, n, , unit] of s.matchAll(/(\d+(\.\d+)?)(ns|us|µs|ms|s|m|h)/g)) {
+    total += parseFloat(n) * UNIT_S[unit]
+  }
+  return total
+}
+
+function IntervalPicker({
+  id,
+  value,
+  presets,
+  disabled,
+  onChange,
+  onValidityChange,
+}: {
+  id: string
+  value: string
+  presets: readonly string[]
+  disabled?: boolean
+  onChange: (v: string) => void
+  onValidityChange: (ok: boolean) => void
+}) {
+  const { t } = useTranslation()
+  const isPreset = presets.includes(value)
+  // Once the operator picks Custom we must stay on the text input even
+  // while they type something that happens to match a preset,
+  // otherwise the field would yank itself away mid-keystroke.
+  const [custom, setCustom] = useState(!isPreset)
+
+  const seconds = parseGoDuration(value)
+  const invalid = seconds === null
+  const tooShort = seconds !== null && seconds < MIN_INTERVAL_S
+  const error = invalid
+    ? t('web.notes.vaultSync.autoSync.intervalInvalid')
+    : tooShort
+      ? t('web.notes.vaultSync.autoSync.intervalTooShort', { min: '30s' })
+      : ''
+
+  useEffect(() => {
+    onValidityChange(!error)
+  }, [error, onValidityChange])
+
+  return (
+    <>
+      <Select
+        value={custom ? CUSTOM : value}
+        disabled={disabled}
+        onValueChange={(next) => {
+          if (next === CUSTOM) {
+            setCustom(true)
+            return
+          }
+          setCustom(false)
+          onChange(next)
+        }}
+      >
+        <SelectTrigger id={id} className="h-8 text-[12px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {presets.map((p) => (
+            <SelectItem key={p} value={p} className="font-mono text-[12px]">
+              {t(`web.notes.vaultSync.autoSync.every.${p}`)}
+            </SelectItem>
+          ))}
+          <SelectItem value={CUSTOM} className="text-[12px]">
+            {t('web.notes.vaultSync.autoSync.intervalCustom')}
+          </SelectItem>
+        </SelectContent>
+      </Select>
+      {custom && (
+        <Input
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={presets[presets.length - 1]}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className="text-[12px] font-mono h-8"
+        />
+      )}
+      {error && (
+        <span id={`${id}-error`} className="text-[10px] text-destructive">
+          {error}
+        </span>
+      )}
+    </>
   )
 }
 
