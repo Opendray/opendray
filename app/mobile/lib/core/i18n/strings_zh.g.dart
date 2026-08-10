@@ -63,6 +63,7 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsSkillsZh skills = _TranslationsSkillsZh._(_root);
 	@override late final _TranslationsCustomTasksZh customTasks = _TranslationsCustomTasksZh._(_root);
 	@override late final _TranslationsNotesPageZh notesPage = _TranslationsNotesPageZh._(_root);
+	@override late final _TranslationsVaultSyncZh vaultSync = _TranslationsVaultSyncZh._(_root);
 	@override late final _TranslationsDataExportZh dataExport = _TranslationsDataExportZh._(_root);
 	@override late final _TranslationsMemoryZh memory = _TranslationsMemoryZh._(_root);
 	@override late final _TranslationsAboutZh about = _TranslationsAboutZh._(_root);
@@ -894,6 +895,50 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override late final _TranslationsNotesPageHtmlZh html = _TranslationsNotesPageHtmlZh._(_root);
 	@override late final _TranslationsNotesPageFlattenZh flatten = _TranslationsNotesPageFlattenZh._(_root);
 	@override late final _TranslationsNotesPageRenameZh rename = _TranslationsNotesPageRenameZh._(_root);
+}
+
+// Path: vaultSync
+class _TranslationsVaultSyncZh extends TranslationsVaultSyncEn {
+	_TranslationsVaultSyncZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Vault 同步';
+	@override String get refresh => '刷新';
+	@override String get statusTitle => '状态';
+	@override String get notARepo => 'vault 还不是 git 仓库。请先在网页端初始化。';
+	@override String ahead({required Object n}) => '领先 ${n}';
+	@override String behind({required Object n}) => '落后 ${n}';
+	@override String get clean => '没有本地改动';
+	@override String changedFiles({required Object n}) => '${n} 处改动';
+	@override String get noRemote => '未配置 remote';
+	@override String get midOperation => '仓库正处于 rebase 或 merge 中。请先在网页端完成或中止，再进行同步。';
+	@override String get actionsTitle => '手动操作';
+	@override String get commit => '提交';
+	@override String get push => '推送';
+	@override String get pull => '拉取';
+	@override String get runNow => '立即同步';
+	@override String get committedToast => '已提交';
+	@override String committedToastWithHash({required Object hash}) => '已提交 ${hash}';
+	@override String get pushedToast => '已推送';
+	@override String get pulledToast => '已拉取';
+	@override String get runNowToast => '已唤醒同步循环';
+	@override String get autoTitle => '自动同步';
+	@override String get autoEnabled => '启用';
+	@override String get autoNoRemoteHint => '请先在网页端配置 remote —— 没有 remote 时自动同步只会在本地提交，永远不会发布。';
+	@override String get commitEvery => '提交间隔';
+	@override String get pullEvery => '拉取间隔';
+	@override String get pushAfterCommit => '提交后推送';
+	@override String get pullPeriodically => '周期性拉取';
+	@override String get save => '保存';
+	@override String get discard => '放弃';
+	@override String get savedToast => '自动同步设置已保存';
+	@override String get lastCommit => '最近提交';
+	@override String get lastPush => '最近推送';
+	@override String get lastPull => '最近拉取';
+	@override String get never => '从未';
+	@override late final _TranslationsVaultSyncEveryZh every = _TranslationsVaultSyncEveryZh._(_root);
 }
 
 // Path: dataExport
@@ -2805,6 +2850,24 @@ class _TranslationsNotesPageRenameZh extends TranslationsNotesPageRenameEn {
 	@override String get doneWithWarning => '已重命名，但链接没有全部更新';
 }
 
+// Path: vaultSync.every
+class _TranslationsVaultSyncEveryZh extends TranslationsVaultSyncEveryEn {
+	_TranslationsVaultSyncEveryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get sec30 => '每 30 秒';
+	@override String get min1 => '每分钟';
+	@override String get min5 => '每 5 分钟';
+	@override String get min10 => '每 10 分钟';
+	@override String get min15 => '每 15 分钟';
+	@override String get min30 => '每 30 分钟';
+	@override String get hour1 => '每小时';
+	@override String get hour6 => '每 6 小时';
+	@override String get hour24 => '每 24 小时';
+}
+
 // Path: dataExport.sections
 class _TranslationsDataExportSectionsZh extends TranslationsDataExportSectionsEn {
 	_TranslationsDataExportSectionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -3312,6 +3375,7 @@ class _TranslationsWebSessionsHeaderZh extends TranslationsWebSessionsHeaderEn {
 	@override String get selectTextTooltip => '打开可选择文本视图,复制输出中的任意部分';
 	@override String get transcript => '完整记录';
 	@override String get transcriptTooltip => '打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）';
+	@override String get moreActions => '更多操作';
 }
 
 // Path: web.sessions.terminal
@@ -4070,6 +4134,8 @@ class _TranslationsWebNotesLeftZh extends TranslationsWebNotesLeftEn {
 	@override String get collapseAllTooltip => '收起全部文件夹';
 	@override String get loading => '加载中…';
 	@override String footer({required Object visible, required Object total}) => '${visible} / ${total} 条笔记';
+	@override String get openTree => '打开笔记树';
+	@override String get closeTree => '收起笔记树';
 }
 
 // Path: web.notes.tags
@@ -10065,6 +10131,7 @@ extension on TranslationsZh {
 			'web.sessions.header.selectTextTooltip' => '打开可选择文本视图,复制输出中的任意部分',
 			'web.sessions.header.transcript' => '完整记录',
 			'web.sessions.header.transcriptTooltip' => '打开整个会话的完整文本记录（适用于自身不支持滚动的 CLI，例如 Grok）',
+			'web.sessions.header.moreActions' => '更多操作',
 			'web.sessions.terminal.uploadingToast' => '正在上传图片…',
 			'web.sessions.terminal.uploadFailedToast' => '上传失败',
 			'web.sessions.terminal.uploadInvalidTypeToast' => '仅支持图片文件',
@@ -10447,9 +10514,9 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.plan_drift.description' => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。',
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => '改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。',
 			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
-			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
 			'web.memoryWorkers.tasks.capture.description' => '按触发器从 session transcript 抽取 fact。Agent 模式在长会话上 fact 质量明显更好；summarizer 模式便宜且本地。',
@@ -10774,6 +10841,8 @@ extension on TranslationsZh {
 			'web.notes.left.collapseAllTooltip' => '收起全部文件夹',
 			'web.notes.left.loading' => '加载中…',
 			'web.notes.left.footer' => ({required Object visible, required Object total}) => '${visible} / ${total} 条笔记',
+			'web.notes.left.openTree' => '打开笔记树',
+			'web.notes.left.closeTree' => '收起笔记树',
 			'web.notes.tags.emptyVault' => 'vault 中暂无标签。',
 			'web.notes.tags.noMatches' => ({required Object query}) => '未找到匹配 "${query}"。',
 			'web.notes.tree.empty' => 'vault 为空。',
@@ -10959,11 +11028,11 @@ extension on TranslationsZh {
 			'web.activity.table.status' => '状态',
 			'web.activity.table.duration' => '耗时',
 			'web.activity.table.inboundAria' => '入站',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.outboundAria' => '出站',
 			'web.activity.empty.filtered' => '没有调用符合当前筛选条件。',
 			'web.activity.empty.title' => '尚未记录任何 API 调用',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.empty.description' => '当第三方应用以其集成 API key 调用 opendray 时，每次请求都会被记录在这里。',
 			'web.activity.empty.stepWithIntegrations' => '在你的第三方应用中使用已有集成的 API key',
 			'web.activity.empty.stepRegister' => '在 集成 → 新建 中注册一个集成',
@@ -11473,11 +11542,11 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.addFailedToast' => '添加失败',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => '更新失败',
 			'web.plugins.gitHosts.dialog.ownerLabel' => '所有者(可选)',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.verifyLabel' => '验证此凭据',
 			'web.plugins.gitHosts.dialog.verifyHint' => '向 forge 求证这个 token 属于谁。可以填一个仓库(owner/name)来确认凭据既能读取、也能推送 —— 读和写是两个独立的授权,能拉取的 token 照样可能推送全部失败,而 forge 自己的报错指的是另一个权限。',
 			'web.plugins.gitHosts.dialog.verifyRepoPlaceholder' => 'owner/repo(可选)',
@@ -11987,11 +12056,11 @@ extension on TranslationsZh {
 			'web.serverSettings.host.modes.on_demand.desc' => '网关空闲时机器正常入睡;收到请求时被唤醒,opendray 在服务期间保持唤醒,结束后让它继续休眠。',
 			'web.serverSettings.host.modes.on_demand.caveat' => '需要开启"网络访问唤醒"(sudo pmset -a womp 1),有线以太网最可靠。休眠后的第一个请求会有几秒延迟,偶尔需要重试一次。',
 			'web.serverSettings.host.modes.off.label' => '完全不干预电源',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray 不对机器电源做任何操作。',
 			'web.serverSettings.host.modes.off.caveat' => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。',
 			'web.serverSettings.layout.title' => '实际解析到',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.layout.documents' => '文档',
 			'web.serverSettings.layout.git' => 'Git 仓库',
 			'web.serverSettings.layout.skills' => 'Skills',
@@ -12501,11 +12570,11 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.reserved' => '保留',
 			'web.cortex.blueprint.deleteNote' => '删除章节只是隐藏，内容不会丢——重新添加同名标识即可恢复。',
 			'web.cortex.blueprint.cancel' => '取消',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => '应用蓝图',
 			'web.cortex.blueprint.applyFailed' => '应用失败',
 			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.writePolicy.direct' => '直接写入',
 			'web.cortex.blueprint.writePolicy.proposal' => '提案',
 			'web.cortex.blueprint.writePolicy.hint' => '直接写入：会话中的 AI 在文档未锁定时直接更新实时文档。提案：AI 的写入需先经你批准。',
@@ -13015,11 +13084,11 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.emptyBlurb' => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
 			'sessions.inspector.canvas.viewportPhone' => '手机宽度',
 			'sessions.inspector.canvas.viewportTablet' => '平板宽度',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
 			'sessions.inspector.canvas.openFull' => '全屏打开',
 			'sessions.inspector.canvas.confirm' => '确认',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.captured' => ({required Object what}) => '已捕获:${what}',
 			'sessions.inspector.canvas.notes' => '备注',
 			'sessions.inspector.canvas.clear' => '清除标记',
@@ -13529,11 +13598,11 @@ extension on TranslationsZh {
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
 			'backups.restartToActivate' => '重启 opendray 以激活备份',
 			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
-			_ => null,
-		} ?? switch (path) {
 			'backups.wizard.intro' => '选择一个主密语。opendray 用它通过 AES-256-GCM 加密每一份备份。丢失密语就丢失数据 — 无法恢复。',
 			'backups.wizard.saving' => '保存中…',
 			'backups.wizard.generateAndSave' => '生成并保存',
@@ -14007,6 +14076,51 @@ extension on TranslationsZh {
 			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
 			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
 			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
+			'vaultSync.title' => 'Vault 同步',
+			'vaultSync.refresh' => '刷新',
+			'vaultSync.statusTitle' => '状态',
+			'vaultSync.notARepo' => 'vault 还不是 git 仓库。请先在网页端初始化。',
+			'vaultSync.ahead' => ({required Object n}) => '领先 ${n}',
+			'vaultSync.behind' => ({required Object n}) => '落后 ${n}',
+			'vaultSync.clean' => '没有本地改动',
+			'vaultSync.changedFiles' => ({required Object n}) => '${n} 处改动',
+			'vaultSync.noRemote' => '未配置 remote',
+			'vaultSync.midOperation' => '仓库正处于 rebase 或 merge 中。请先在网页端完成或中止，再进行同步。',
+			'vaultSync.actionsTitle' => '手动操作',
+			'vaultSync.commit' => '提交',
+			'vaultSync.push' => '推送',
+			'vaultSync.pull' => '拉取',
+			'vaultSync.runNow' => '立即同步',
+			'vaultSync.committedToast' => '已提交',
+			'vaultSync.committedToastWithHash' => ({required Object hash}) => '已提交 ${hash}',
+			'vaultSync.pushedToast' => '已推送',
+			'vaultSync.pulledToast' => '已拉取',
+			'vaultSync.runNowToast' => '已唤醒同步循环',
+			'vaultSync.autoTitle' => '自动同步',
+			'vaultSync.autoEnabled' => '启用',
+			'vaultSync.autoNoRemoteHint' => '请先在网页端配置 remote —— 没有 remote 时自动同步只会在本地提交，永远不会发布。',
+			'vaultSync.commitEvery' => '提交间隔',
+			'vaultSync.pullEvery' => '拉取间隔',
+			'vaultSync.pushAfterCommit' => '提交后推送',
+			'vaultSync.pullPeriodically' => '周期性拉取',
+			'vaultSync.save' => '保存',
+			'vaultSync.discard' => '放弃',
+			'vaultSync.savedToast' => '自动同步设置已保存',
+			'vaultSync.lastCommit' => '最近提交',
+			'vaultSync.lastPush' => '最近推送',
+			'vaultSync.lastPull' => '最近拉取',
+			'vaultSync.never' => '从未',
+			'vaultSync.every.sec30' => '每 30 秒',
+			'vaultSync.every.min1' => '每分钟',
+			_ => null,
+		} ?? switch (path) {
+			'vaultSync.every.min5' => '每 5 分钟',
+			'vaultSync.every.min10' => '每 10 分钟',
+			'vaultSync.every.min15' => '每 15 分钟',
+			'vaultSync.every.min30' => '每 30 分钟',
+			'vaultSync.every.hour1' => '每小时',
+			'vaultSync.every.hour6' => '每 6 小时',
+			'vaultSync.every.hour24' => '每 24 小时',
 			'dataExport.title' => '数据导出与导入',
 			'dataExport.subtitle' => '面向用户的数据包，用于迁移或验证 — 与 /backups（灾难恢复）相互独立。',
 			'dataExport.sections.export' => '导出',
@@ -14046,8 +14160,6 @@ extension on TranslationsZh {
 			'dataExport.history.delete' => '删除',
 			'dataExport.history.downloadCopiedToast' => '下载 URL 已复制到剪贴板。在浏览器中粘贴以获取（单次使用）。',
 			'dataExport.history.columns.scope' => '范围',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.history.columns.size' => '大小',
 			'dataExport.history.columns.expires' => '过期',
 			'dataExport.history.columns.actions' => '操作',

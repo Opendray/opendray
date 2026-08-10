@@ -9,6 +9,7 @@ import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/flatten_notice.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
+import 'package:opendray/features/notes/vault_sync_screen.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
@@ -403,6 +404,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
                 onPressed: _goUp,
               ),
         actions: [
+          const VaultSyncBadge(),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: t.sessions.inspector.shared.refresh,
