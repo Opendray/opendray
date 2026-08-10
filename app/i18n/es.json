@@ -5022,6 +5022,10 @@
     "newButton": "Nueva",
     "newNoteDialogTitle": "Nueva nota",
     "searchHint": "Busca en todo el vault…",
+    "browse": {
+      "tree": "Carpetas",
+      "tags": "Etiquetas"
+    },
     "up": "Arriba",
     "copyPath": "Copiar ruta",
     "open": "Abrir",
@@ -5042,7 +5046,7 @@
     "emptyFolder": "La carpeta \"{path}\" está vacía.",
     "validatePath": "La ruta es obligatoria",
     "validatePathDots": "La ruta no puede contener \"..\"",
-    "pathHelper": "Añade .md automáticamente si falta.",
+    "pathHelper": "Añade .md salvo que el nombre ya termine en .md o .html.",
     "editor": {
       "markdownHint": "Markdown, o HTML si el archivo termina en .html…",
       "saving": "Guardando…",
@@ -5081,6 +5085,33 @@
       "helper": "Ruta relativa a la bóveda. Las carpetas se crean solas.",
       "doneSnack": "Renombrado. {count} enlace(s) actualizados.",
       "doneWithWarning": "Renombrado, pero no se actualizaron todos los enlaces"
+    },
+    "tags": {
+      "empty": "Aún no hay etiquetas en el almacén. Escribe #así en una nota.",
+      "noMatches": "Ninguna etiqueta coincide con «{query}».",
+      "filteredBy": "Filtrado por",
+      "clear": "Quitar el filtro de etiqueta",
+      "noNotes": "Ya no hay notas con #{tag}."
+    },
+    "backlinks": {
+      "title": "Retroenlaces",
+      "loading": "Buscando enlaces…",
+      "empty": "Todavía no hay notas que enlacen aquí.",
+      "failed": "No se pudieron cargar los retroenlaces: {error}"
+    },
+    "outline": {
+      "action": "Esquema",
+      "title": "Esquema",
+      "empty": "Este documento no tiene encabezados.",
+      "jumpedToSource": "La vista previa no puede desplazarse sin scripts, así que se abrió el código."
+    },
+    "today": {
+      "tooltip": "Abrir la nota diaria de hoy"
+    },
+    "wikiLink": {
+      "suggestions": "Enlazar a…",
+      "createNew": "Crear «{name}»",
+      "noMatches": "Ninguna nota coincide: sigue escribiendo para crear una."
     }
   },
   "vaultSync": {

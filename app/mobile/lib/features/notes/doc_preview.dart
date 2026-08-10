@@ -30,28 +30,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/notes/vault_text.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// What kind of document a vault path holds. Mirrors notes.KindOf in
-/// internal/notes/doc.go and docKind() in app/shared/src/lib/notes.ts.
-enum DocKind { markdown, html, unknown }
-
-DocKind docKindOf(String path) {
-  final base = path.split('/').last;
-  final dot = base.lastIndexOf('.');
-  // A leading dot is a dotfile, not an extension.
-  if (dot <= 0) return DocKind.unknown;
-  switch (base.substring(dot + 1).toLowerCase()) {
-    case 'md':
-    case 'markdown':
-      return DocKind.markdown;
-    case 'html':
-    case 'htm':
-      return DocKind.html;
-    default:
-      return DocKind.unknown;
-  }
-}
+// DocKind / docKindOf moved to vault_text.dart when the vault's pure
+// text layer was split out. Re-exported so the callers that reach for
+// them through this file keep working.
+export 'package:opendray/features/notes/vault_text.dart'
+    show DocKind, docKindOf;
 
 const _scriptsKeyPrefix = 'vault.html.scripts:';
 
@@ -59,11 +45,25 @@ class DocPreview extends StatefulWidget {
   const DocPreview({
     required this.path,
     required this.body,
+    this.onOpenWikiLink,
+    this.resolveWikiTarget,
     super.key,
   });
 
   final String path;
   final String body;
+
+  /// Called with the resolved vault path when a `[[wiki-link]]` in the
+  /// rendered document is tapped. Null leaves wiki-links as literal
+  /// text — the previous behaviour, and the right one where there is
+  /// nowhere for the tap to go.
+  final ValueChanged<String>? onOpenWikiLink;
+
+  /// Turns a link's raw target into a vault path. Supplied by the
+  /// caller because resolution needs the note list, which this widget
+  /// deliberately does not fetch. Defaults to treating the target as a
+  /// path when absent.
+  final String Function(String target)? resolveWikiTarget;
 
   @override
   State<DocPreview> createState() => _DocPreviewState();
@@ -146,7 +146,25 @@ class _DocPreviewState extends State<DocPreview> {
   // `about:srcdoc` here would CREATE that bug.
   String _document() {
     if (_kind == DocKind.html) return retargetLinks(widget.body);
-    return _markdownDocument(widget.body);
+    return _markdownDocument(
+      widget.body,
+      wikiLinks: widget.onOpenWikiLink != null,
+    );
+  }
+
+  /// Intercept the wiki scheme and hand the target to the caller. Every
+  /// other navigation is left to the rules already in place: fragments
+  /// scroll in place, external links were retargeted to a new window.
+  Future<NavigationActionPolicy> _onNavigate(
+    InAppWebViewController _,
+    NavigationAction action,
+  ) async {
+    final uri = action.request.url;
+    final target = uri == null ? null : wikiLinkTarget(uri);
+    if (target == null) return NavigationActionPolicy.ALLOW;
+    final resolve = widget.resolveWikiTarget;
+    widget.onOpenWikiLink?.call(resolve == null ? target : resolve(target));
+    return NavigationActionPolicy.CANCEL;
   }
 
   @override
@@ -207,11 +225,17 @@ class _DocPreviewState extends State<DocPreview> {
               // No document should be able to start a navigation that
               // leaves the viewer stranded — there is no address bar.
               javaScriptCanOpenWindowsAutomatically: false,
+              // Android only consults shouldOverrideUrlLoading when this
+              // is on, and that callback is the whole wiki-link
+              // mechanism — without JavaScript there is nothing else to
+              // catch the tap with.
+              useShouldOverrideUrlLoading: true,
               transparentBackground: true,
               supportZoom: true,
               useWideViewPort: true,
               loadWithOverviewMode: true,
             ),
+            shouldOverrideUrlLoading: _onNavigate,
             onWebViewCreated: (ctl) {
               _web = ctl;
               unawaited(
@@ -255,6 +279,10 @@ String retargetLinks(String html) {
     final href = (h?.group(1) ?? h?.group(2) ?? h?.group(3) ?? '').trim();
     // No href is not a link. A leading '#' points inside this document.
     if (href.isEmpty || href.startsWith('#')) return m.group(0)!;
+    // A wiki-link never navigates — it is cancelled and handled in
+    // Dart. Asking for a new window would only make the webview field a
+    // popup request it is configured to refuse.
+    if (href.startsWith('$kWikiLinkScheme:')) return m.group(0)!;
     // Drop a self-closing slash so the injected attributes don't land
     // after it and break the tag.
     final clean = attrs.replaceFirst(_selfClosing, '');
@@ -266,14 +294,17 @@ String retargetLinks(String html) {
 /// text size and renders legibly without any external resources — the
 /// webview has no network access to a stylesheet and should not want
 /// one.
-String _markdownDocument(String source) {
+String _markdownDocument(String source, {bool wikiLinks = false}) {
   final body = retargetLinks(
     md.markdownToHtml(
-      source,
+      // The vault's [[wiki links]] are not markdown, so they are turned
+      // into anchors on our own scheme BEFORE conversion — the
+      // converter passes inline HTML through, and an anchor is the only
+      // clickable thing available with JavaScript off. Off by default:
+      // where the caller has nowhere to send the tap, literal text is
+      // the honest rendering.
+      wikiLinks ? linkifyWikiLinks(source) : source,
       extensionSet: md.ExtensionSet.gitHubWeb,
-      // The vault's [[wiki links]] are not markdown; leaving them as
-      // literal text is honest. Resolving them would need the note list,
-      // which this widget deliberately does not take.
     ),
     // Markdown needs the same treatment as HTML, and for the same
     // reason: gitHubWeb renders footnotes as fragment links, which a
@@ -307,4 +338,5 @@ $body
 }
 
 /// Exposed for the editor's "copy as HTML" affordances and for tests.
-String renderMarkdownDocument(String source) => _markdownDocument(source);
+String renderMarkdownDocument(String source, {bool wikiLinks = false}) =>
+    _markdownDocument(source, wikiLinks: wikiLinks);

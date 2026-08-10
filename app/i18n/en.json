@@ -5022,6 +5022,10 @@
     "newButton": "New",
     "newNoteDialogTitle": "New note",
     "searchHint": "Search across the whole vault…",
+    "browse": {
+      "tree": "Folders",
+      "tags": "Tags"
+    },
     "up": "Up",
     "copyPath": "Copy path",
     "open": "Open",
@@ -5042,7 +5046,7 @@
     "emptyFolder": "Folder \"{path}\" is empty.",
     "validatePath": "Path is required",
     "validatePathDots": "Path cannot contain \"..\"",
-    "pathHelper": "Auto-appends .md if missing.",
+    "pathHelper": "Adds .md unless the name already ends in .md or .html.",
     "editor": {
       "markdownHint": "Markdown, or HTML if the file ends .html…",
       "saving": "Saving…",
@@ -5081,6 +5085,33 @@
       "helper": "Vault-relative path. Folders are created as needed.",
       "doneSnack": "Renamed. {count} link(s) repointed.",
       "doneWithWarning": "Renamed, but the links were not all updated"
+    },
+    "tags": {
+      "empty": "No tags in the vault yet. Write #like-this in a note.",
+      "noMatches": "No tags match \"{query}\".",
+      "filteredBy": "Filtered by",
+      "clear": "Clear tag filter",
+      "noNotes": "No notes carry #{tag} any more."
+    },
+    "backlinks": {
+      "title": "Backlinks",
+      "loading": "Looking for links…",
+      "empty": "No notes link here yet.",
+      "failed": "Could not load backlinks: {error}"
+    },
+    "outline": {
+      "action": "Outline",
+      "title": "Outline",
+      "empty": "This document has no headings.",
+      "jumpedToSource": "Preview can't scroll without scripts, so this opened the source view."
+    },
+    "today": {
+      "tooltip": "Open today's daily note"
+    },
+    "wikiLink": {
+      "suggestions": "Link to…",
+      "createNew": "Create \"{name}\"",
+      "noMatches": "No note matches — keep typing to create one."
     }
   },
   "vaultSync": {
