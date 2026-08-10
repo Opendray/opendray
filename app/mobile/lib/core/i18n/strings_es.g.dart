@@ -63,6 +63,7 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsSkillsEs skills = _TranslationsSkillsEs._(_root);
 	@override late final _TranslationsCustomTasksEs customTasks = _TranslationsCustomTasksEs._(_root);
 	@override late final _TranslationsNotesPageEs notesPage = _TranslationsNotesPageEs._(_root);
+	@override late final _TranslationsVaultSyncEs vaultSync = _TranslationsVaultSyncEs._(_root);
 	@override late final _TranslationsDataExportEs dataExport = _TranslationsDataExportEs._(_root);
 	@override late final _TranslationsMemoryEs memory = _TranslationsMemoryEs._(_root);
 	@override late final _TranslationsAboutEs about = _TranslationsAboutEs._(_root);
@@ -894,6 +895,50 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override late final _TranslationsNotesPageHtmlEs html = _TranslationsNotesPageHtmlEs._(_root);
 	@override late final _TranslationsNotesPageFlattenEs flatten = _TranslationsNotesPageFlattenEs._(_root);
 	@override late final _TranslationsNotesPageRenameEs rename = _TranslationsNotesPageRenameEs._(_root);
+}
+
+// Path: vaultSync
+class _TranslationsVaultSyncEs extends TranslationsVaultSyncEn {
+	_TranslationsVaultSyncEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Sincronización del vault';
+	@override String get refresh => 'Actualizar';
+	@override String get statusTitle => 'Estado';
+	@override String get notARepo => 'El vault aún no es un repositorio git. Inicialízalo desde la interfaz web.';
+	@override String ahead({required Object n}) => '${n} por delante';
+	@override String behind({required Object n}) => '${n} por detrás';
+	@override String get clean => 'Sin cambios locales';
+	@override String changedFiles({required Object n}) => '${n} con cambios';
+	@override String get noRemote => 'Sin remote';
+	@override String get midOperation => 'Hay un rebase o merge en curso. Termínalo o abórtalo desde la interfaz web antes de sincronizar.';
+	@override String get actionsTitle => 'Manual';
+	@override String get commit => 'Confirmar';
+	@override String get push => 'Enviar';
+	@override String get pull => 'Traer';
+	@override String get runNow => 'Sincronizar ahora';
+	@override String get committedToast => 'Confirmado';
+	@override String committedToastWithHash({required Object hash}) => 'Confirmado ${hash}';
+	@override String get pushedToast => 'Enviado';
+	@override String get pulledToast => 'Traído';
+	@override String get runNowToast => 'Bucle de sincronización despertado';
+	@override String get autoTitle => 'Sincronización automática';
+	@override String get autoEnabled => 'Activada';
+	@override String get autoNoRemoteHint => 'Configura primero un remote desde la interfaz web: sin él, la sincronización automática confirmaría en local y nunca publicaría.';
+	@override String get commitEvery => 'Confirmar cada';
+	@override String get pullEvery => 'Traer cada';
+	@override String get pushAfterCommit => 'Enviar tras confirmar';
+	@override String get pullPeriodically => 'Traer periódicamente';
+	@override String get save => 'Guardar';
+	@override String get discard => 'Descartar';
+	@override String get savedToast => 'Ajustes de sincronización guardados';
+	@override String get lastCommit => 'Última confirmación';
+	@override String get lastPush => 'Último envío';
+	@override String get lastPull => 'Última traída';
+	@override String get never => 'Nunca';
+	@override late final _TranslationsVaultSyncEveryEs every = _TranslationsVaultSyncEveryEs._(_root);
 }
 
 // Path: dataExport
@@ -2805,6 +2850,24 @@ class _TranslationsNotesPageRenameEs extends TranslationsNotesPageRenameEn {
 	@override String get doneWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
 }
 
+// Path: vaultSync.every
+class _TranslationsVaultSyncEveryEs extends TranslationsVaultSyncEveryEn {
+	_TranslationsVaultSyncEveryEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get sec30 => 'Cada 30 segundos';
+	@override String get min1 => 'Cada minuto';
+	@override String get min5 => 'Cada 5 minutos';
+	@override String get min10 => 'Cada 10 minutos';
+	@override String get min15 => 'Cada 15 minutos';
+	@override String get min30 => 'Cada 30 minutos';
+	@override String get hour1 => 'Cada hora';
+	@override String get hour6 => 'Cada 6 horas';
+	@override String get hour24 => 'Cada 24 horas';
+}
+
 // Path: dataExport.sections
 class _TranslationsDataExportSectionsEs extends TranslationsDataExportSectionsEn {
 	_TranslationsDataExportSectionsEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -3312,6 +3375,7 @@ class _TranslationsWebSessionsHeaderEs extends TranslationsWebSessionsHeaderEn {
 	@override String get selectTextTooltip => 'Abre una vista de texto seleccionable para copiar cualquier parte de la salida';
 	@override String get transcript => 'Transcripción';
 	@override String get transcriptTooltip => 'Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)';
+	@override String get moreActions => 'Más acciones';
 }
 
 // Path: web.sessions.terminal
@@ -4070,6 +4134,8 @@ class _TranslationsWebNotesLeftEs extends TranslationsWebNotesLeftEn {
 	@override String get collapseAllTooltip => 'Contraer todas las carpetas';
 	@override String get loading => 'Cargando…';
 	@override String footer({required Object visible, required Object total}) => '${visible} / ${total} notas';
+	@override String get openTree => 'Abrir árbol de notas';
+	@override String get closeTree => 'Cerrar árbol de notas';
 }
 
 // Path: web.notes.tags
@@ -10068,6 +10134,7 @@ extension on TranslationsEs {
 			'web.sessions.header.selectTextTooltip' => 'Abre una vista de texto seleccionable para copiar cualquier parte de la salida',
 			'web.sessions.header.transcript' => 'Transcripción',
 			'web.sessions.header.transcriptTooltip' => 'Abre la transcripción completa de la sesión (útil para CLIs cuyo propio desplazamiento no funciona, p. ej. Grok)',
+			'web.sessions.header.moreActions' => 'Más acciones',
 			'web.sessions.terminal.uploadingToast' => 'Subiendo imagen…',
 			'web.sessions.terminal.uploadFailedToast' => 'Error al subir',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Solo se pueden adjuntar archivos de imagen',
@@ -10450,9 +10517,9 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.plan_drift.description' => 'Al terminar cada sesión, comprueba si el plan del proyecto necesita actualizarse y presenta una propuesta. Encaja con un worker de agente para un razonamiento más completo.',
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Reescribe goal/plan/secciones — exige criterio; un modelo fuerte (sonnet/opus) evita malas actualizaciones.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Detector de conflictos entre capas',
-			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Escaneo diario de contradicciones — un modelo equilibrado basta.',
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
 			'web.memoryWorkers.tasks.capture.description' => 'Extracción de hechos por cada trigger a partir de los transcripts de sesión. El modo agente ofrece hechos notablemente mejores en sesiones largas; el modo summarizer es barato y local.',
@@ -10777,6 +10844,8 @@ extension on TranslationsEs {
 			'web.notes.left.collapseAllTooltip' => 'Contraer todas las carpetas',
 			'web.notes.left.loading' => 'Cargando…',
 			'web.notes.left.footer' => ({required Object visible, required Object total}) => '${visible} / ${total} notas',
+			'web.notes.left.openTree' => 'Abrir árbol de notas',
+			'web.notes.left.closeTree' => 'Cerrar árbol de notas',
 			'web.notes.tags.emptyVault' => 'Aún no hay etiquetas en el vault.',
 			'web.notes.tags.noMatches' => ({required Object query}) => 'No hay coincidencias para "${query}".',
 			'web.notes.tree.empty' => 'El vault está vacío.',
@@ -10962,11 +11031,11 @@ extension on TranslationsEs {
 			'web.activity.table.directionTitle' => 'Dirección',
 			'web.activity.table.method' => 'Método',
 			'web.activity.table.path' => 'Ruta',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.status' => 'Estado',
 			'web.activity.table.duration' => 'Duración',
 			'web.activity.table.inboundAria' => 'entrante',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.outboundAria' => 'saliente',
 			'web.activity.empty.filtered' => 'Ninguna llamada coincide con estos filtros.',
 			'web.activity.empty.title' => 'Aún no se ha registrado ninguna llamada API',
@@ -11476,11 +11545,11 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.enabledLabel' => 'Habilitado',
 			'web.plugins.gitHosts.dialog.addedToast' => 'Host de git añadido',
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Host de git actualizado',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Déjalo vacío para una credencial de todo el host: se usa en cada repo de este host que no tenga una entrada propia.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Se usa solo para ${host}/${owner}/…; los demás propietarios de este host recurren a la entrada de todo el host. Añádelo cuando un token de permisos detallados esté concedido a una cuenta u organización.',
@@ -11990,11 +12059,11 @@ extension on TranslationsEs {
 			'web.serverSettings.host.modes.always.desc' => 'Nunca se duerme por inactividad, tampoco con batería.',
 			'web.serverSettings.host.modes.always.caveat' => 'Agotará la batería de un portátil desenchufado.',
 			'web.serverSettings.host.modes.on_demand.label' => 'Duerme inactivo, despierta con tráfico',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.on_demand.desc' => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.',
 			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray no interviene en absoluto en la máquina.',
 			'web.serverSettings.host.modes.off.caveat' => 'La pasarela será inaccesible cuando el host duerma, salvo que otra cosa lo mantenga despierto.',
 			'web.serverSettings.layout.title' => 'Se resuelve en',
@@ -12504,11 +12573,11 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.mode.human' => 'Humano',
 			'web.cortex.blueprint.mode.scanner' => 'Escáner',
 			'web.cortex.blueprint.inject' => 'inyectar',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.reserved' => 'reservada',
 			'web.cortex.blueprint.deleteNote' => 'Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.',
 			'web.cortex.blueprint.cancel' => 'Cancelar',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => 'Aplicar plano',
 			'web.cortex.blueprint.applyFailed' => 'Error al aplicar',
 			'web.cortex.blueprint.appliedToast' => 'Plano aplicado',
@@ -13018,11 +13087,11 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.deleteTitle' => '¿Eliminar lienzo?',
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.',
 			'sessions.inspector.canvas.emptyTitle' => 'Aún no hay lienzos',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
 			'sessions.inspector.canvas.viewportPhone' => 'Ancho de móvil',
 			'sessions.inspector.canvas.viewportTablet' => 'Ancho de tablet',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => 'Ancho de escritorio',
 			'sessions.inspector.canvas.openFull' => 'Pantalla completa',
 			'sessions.inspector.canvas.confirm' => 'Confirmar',
@@ -13532,11 +13601,11 @@ extension on TranslationsEs {
 			'backups.emptyNoTargets.headline' => 'No hay destinos de copia de seguridad configurados',
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
+			_ => null,
+		} ?? switch (path) {
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Archivo de clave',
 			'backups.configuredViaLabel' => 'Configurado mediante',
 			'backups.wizard.title' => 'Configurar copias de seguridad',
@@ -14013,6 +14082,51 @@ extension on TranslationsEs {
 			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
 			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
+			'vaultSync.title' => 'Sincronización del vault',
+			'vaultSync.refresh' => 'Actualizar',
+			'vaultSync.statusTitle' => 'Estado',
+			'vaultSync.notARepo' => 'El vault aún no es un repositorio git. Inicialízalo desde la interfaz web.',
+			'vaultSync.ahead' => ({required Object n}) => '${n} por delante',
+			'vaultSync.behind' => ({required Object n}) => '${n} por detrás',
+			'vaultSync.clean' => 'Sin cambios locales',
+			'vaultSync.changedFiles' => ({required Object n}) => '${n} con cambios',
+			'vaultSync.noRemote' => 'Sin remote',
+			'vaultSync.midOperation' => 'Hay un rebase o merge en curso. Termínalo o abórtalo desde la interfaz web antes de sincronizar.',
+			'vaultSync.actionsTitle' => 'Manual',
+			'vaultSync.commit' => 'Confirmar',
+			'vaultSync.push' => 'Enviar',
+			'vaultSync.pull' => 'Traer',
+			'vaultSync.runNow' => 'Sincronizar ahora',
+			'vaultSync.committedToast' => 'Confirmado',
+			'vaultSync.committedToastWithHash' => ({required Object hash}) => 'Confirmado ${hash}',
+			'vaultSync.pushedToast' => 'Enviado',
+			'vaultSync.pulledToast' => 'Traído',
+			'vaultSync.runNowToast' => 'Bucle de sincronización despertado',
+			'vaultSync.autoTitle' => 'Sincronización automática',
+			'vaultSync.autoEnabled' => 'Activada',
+			'vaultSync.autoNoRemoteHint' => 'Configura primero un remote desde la interfaz web: sin él, la sincronización automática confirmaría en local y nunca publicaría.',
+			'vaultSync.commitEvery' => 'Confirmar cada',
+			'vaultSync.pullEvery' => 'Traer cada',
+			'vaultSync.pushAfterCommit' => 'Enviar tras confirmar',
+			'vaultSync.pullPeriodically' => 'Traer periódicamente',
+			'vaultSync.save' => 'Guardar',
+			'vaultSync.discard' => 'Descartar',
+			'vaultSync.savedToast' => 'Ajustes de sincronización guardados',
+			'vaultSync.lastCommit' => 'Última confirmación',
+			'vaultSync.lastPush' => 'Último envío',
+			'vaultSync.lastPull' => 'Última traída',
+			_ => null,
+		} ?? switch (path) {
+			'vaultSync.never' => 'Nunca',
+			'vaultSync.every.sec30' => 'Cada 30 segundos',
+			'vaultSync.every.min1' => 'Cada minuto',
+			'vaultSync.every.min5' => 'Cada 5 minutos',
+			'vaultSync.every.min10' => 'Cada 10 minutos',
+			'vaultSync.every.min15' => 'Cada 15 minutos',
+			'vaultSync.every.min30' => 'Cada 30 minutos',
+			'vaultSync.every.hour1' => 'Cada hora',
+			'vaultSync.every.hour6' => 'Cada 6 horas',
+			'vaultSync.every.hour24' => 'Cada 24 horas',
 			'dataExport.title' => 'Exportación e importación de datos',
 			'dataExport.subtitle' => 'Paquetes a nivel de usuario para migración o verificación, independientes de /backups (recuperación ante desastres).',
 			'dataExport.sections.export' => 'Exportar',
@@ -14049,8 +14163,6 @@ extension on TranslationsEs {
 			'dataExport.history.deleteConfirmTitle' => '¿Eliminar la exportación?',
 			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Elimina el paquete y revoca el token de descarga. ${id}',
 			'dataExport.history.download' => 'Descargar',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.history.delete' => 'Eliminar',
 			'dataExport.history.downloadCopiedToast' => 'URL de descarga copiada al portapapeles. Pégala en un navegador para obtenerla (un solo uso).',
 			'dataExport.history.columns.scope' => 'Alcance',

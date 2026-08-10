@@ -64,6 +64,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsSkillsEn skills = TranslationsSkillsEn.internal(_root);
 	late final TranslationsCustomTasksEn customTasks = TranslationsCustomTasksEn.internal(_root);
 	late final TranslationsNotesPageEn notesPage = TranslationsNotesPageEn.internal(_root);
+	late final TranslationsVaultSyncEn vaultSync = TranslationsVaultSyncEn.internal(_root);
 	late final TranslationsDataExportEn dataExport = TranslationsDataExportEn.internal(_root);
 	late final TranslationsMemoryEn memory = TranslationsMemoryEn.internal(_root);
 	late final TranslationsAboutEn about = TranslationsAboutEn.internal(_root);
@@ -1961,6 +1962,119 @@ class TranslationsNotesPageEn {
 	late final TranslationsNotesPageHtmlEn html = TranslationsNotesPageHtmlEn.internal(_root);
 	late final TranslationsNotesPageFlattenEn flatten = TranslationsNotesPageFlattenEn.internal(_root);
 	late final TranslationsNotesPageRenameEn rename = TranslationsNotesPageRenameEn.internal(_root);
+}
+
+// Path: vaultSync
+class TranslationsVaultSyncEn {
+	TranslationsVaultSyncEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Vault sync'
+	String get title => 'Vault sync';
+
+	/// en: 'Refresh'
+	String get refresh => 'Refresh';
+
+	/// en: 'Status'
+	String get statusTitle => 'Status';
+
+	/// en: 'The vault is not a git repository yet. Initialise it from the web UI.'
+	String get notARepo => 'The vault is not a git repository yet. Initialise it from the web UI.';
+
+	/// en: '{n} ahead'
+	String ahead({required Object n}) => '${n} ahead';
+
+	/// en: '{n} behind'
+	String behind({required Object n}) => '${n} behind';
+
+	/// en: 'No local changes'
+	String get clean => 'No local changes';
+
+	/// en: '{n} changed'
+	String changedFiles({required Object n}) => '${n} changed';
+
+	/// en: 'No remote'
+	String get noRemote => 'No remote';
+
+	/// en: 'A rebase or merge is in progress. Finish or abort it from the web UI before syncing.'
+	String get midOperation => 'A rebase or merge is in progress. Finish or abort it from the web UI before syncing.';
+
+	/// en: 'Manual'
+	String get actionsTitle => 'Manual';
+
+	/// en: 'Commit'
+	String get commit => 'Commit';
+
+	/// en: 'Push'
+	String get push => 'Push';
+
+	/// en: 'Pull'
+	String get pull => 'Pull';
+
+	/// en: 'Sync now'
+	String get runNow => 'Sync now';
+
+	/// en: 'Committed'
+	String get committedToast => 'Committed';
+
+	/// en: 'Committed {hash}'
+	String committedToastWithHash({required Object hash}) => 'Committed ${hash}';
+
+	/// en: 'Pushed'
+	String get pushedToast => 'Pushed';
+
+	/// en: 'Pulled'
+	String get pulledToast => 'Pulled';
+
+	/// en: 'Sync loop woken'
+	String get runNowToast => 'Sync loop woken';
+
+	/// en: 'Auto-sync'
+	String get autoTitle => 'Auto-sync';
+
+	/// en: 'Enabled'
+	String get autoEnabled => 'Enabled';
+
+	/// en: 'Set a remote from the web UI first — without one, auto-sync would commit locally and never publish.'
+	String get autoNoRemoteHint => 'Set a remote from the web UI first — without one, auto-sync would commit locally and never publish.';
+
+	/// en: 'Commit every'
+	String get commitEvery => 'Commit every';
+
+	/// en: 'Pull every'
+	String get pullEvery => 'Pull every';
+
+	/// en: 'Push after commit'
+	String get pushAfterCommit => 'Push after commit';
+
+	/// en: 'Pull periodically'
+	String get pullPeriodically => 'Pull periodically';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Discard'
+	String get discard => 'Discard';
+
+	/// en: 'Auto-sync settings saved'
+	String get savedToast => 'Auto-sync settings saved';
+
+	/// en: 'Last commit'
+	String get lastCommit => 'Last commit';
+
+	/// en: 'Last push'
+	String get lastPush => 'Last push';
+
+	/// en: 'Last pull'
+	String get lastPull => 'Last pull';
+
+	/// en: 'Never'
+	String get never => 'Never';
+
+	late final TranslationsVaultSyncEveryEn every = TranslationsVaultSyncEveryEn.internal(_root);
 }
 
 // Path: dataExport
@@ -5511,6 +5625,42 @@ class TranslationsNotesPageRenameEn {
 	String get doneWithWarning => 'Renamed, but the links were not all updated';
 }
 
+// Path: vaultSync.every
+class TranslationsVaultSyncEveryEn {
+	TranslationsVaultSyncEveryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Every 30 seconds'
+	String get sec30 => 'Every 30 seconds';
+
+	/// en: 'Every minute'
+	String get min1 => 'Every minute';
+
+	/// en: 'Every 5 minutes'
+	String get min5 => 'Every 5 minutes';
+
+	/// en: 'Every 10 minutes'
+	String get min10 => 'Every 10 minutes';
+
+	/// en: 'Every 15 minutes'
+	String get min15 => 'Every 15 minutes';
+
+	/// en: 'Every 30 minutes'
+	String get min30 => 'Every 30 minutes';
+
+	/// en: 'Every hour'
+	String get hour1 => 'Every hour';
+
+	/// en: 'Every 6 hours'
+	String get hour6 => 'Every 6 hours';
+
+	/// en: 'Every 24 hours'
+	String get hour24 => 'Every 24 hours';
+}
+
 // Path: dataExport.sections
 class TranslationsDataExportSectionsEn {
 	TranslationsDataExportSectionsEn.internal(this._root);
@@ -6484,6 +6634,9 @@ class TranslationsWebSessionsHeaderEn {
 
 	/// en: 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)'
 	String get transcriptTooltip => 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)';
+
+	/// en: 'More actions'
+	String get moreActions => 'More actions';
 }
 
 // Path: web.sessions.terminal
@@ -7977,6 +8130,12 @@ class TranslationsWebNotesLeftEn {
 
 	/// en: '{visible} / {total} notes'
 	String footer({required Object visible, required Object total}) => '${visible} / ${total} notes';
+
+	/// en: 'Open note tree'
+	String get openTree => 'Open note tree';
+
+	/// en: 'Close note tree'
+	String get closeTree => 'Close note tree';
 }
 
 // Path: web.notes.tags
@@ -19070,6 +19229,7 @@ extension on Translations {
 			'web.sessions.header.selectTextTooltip' => 'Open a selectable text view to copy any part of the output',
 			'web.sessions.header.transcript' => 'Transcript',
 			'web.sessions.header.transcriptTooltip' => 'Open the full session transcript (works for CLIs whose own scrollback is unreachable, e.g. Grok)',
+			'web.sessions.header.moreActions' => 'More actions',
 			'web.sessions.terminal.uploadingToast' => 'Uploading image…',
 			'web.sessions.terminal.uploadFailedToast' => 'Upload failed',
 			'web.sessions.terminal.uploadInvalidTypeToast' => 'Only image files can be attached',
@@ -19452,9 +19612,9 @@ extension on Translations {
 			'web.memoryWorkers.tasks.plan_drift.description' => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.',
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
-			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			_ => null,
 		} ?? switch (path) {
+			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
 			'web.memoryWorkers.tasks.capture.description' => 'Per-trigger fact extraction from session transcripts. Agent mode gives noticeably better facts on long sessions; summarizer mode is cheap and local.',
@@ -19779,6 +19939,8 @@ extension on Translations {
 			'web.notes.left.collapseAllTooltip' => 'Collapse every folder',
 			'web.notes.left.loading' => 'Loading…',
 			'web.notes.left.footer' => ({required Object visible, required Object total}) => '${visible} / ${total} notes',
+			'web.notes.left.openTree' => 'Open note tree',
+			'web.notes.left.closeTree' => 'Close note tree',
 			'web.notes.tags.emptyVault' => 'No tags in vault yet.',
 			'web.notes.tags.noMatches' => ({required Object query}) => 'No matches for "${query}".',
 			'web.notes.tree.empty' => 'Vault is empty.',
@@ -19964,11 +20126,11 @@ extension on Translations {
 			'web.activity.table.directionTitle' => 'Direction',
 			'web.activity.table.method' => 'Method',
 			'web.activity.table.path' => 'Path',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.table.status' => 'Status',
 			'web.activity.table.duration' => 'Duration',
 			'web.activity.table.inboundAria' => 'inbound',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.outboundAria' => 'outbound',
 			'web.activity.empty.filtered' => 'No calls match these filters.',
 			'web.activity.empty.title' => 'No API calls recorded yet',
@@ -20478,11 +20640,11 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.enabledLabel' => 'Enabled',
 			'web.plugins.gitHosts.dialog.addedToast' => 'Git host added',
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Git host updated',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => 'Leave empty for a host-wide credential: used for every repo on this host that has no owner-specific entry.',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => 'Used only for ${host}/${owner}/… — other owners on this host fall back to the host-wide entry. Add this when a fine-grained token is granted to one account or org.',
@@ -20992,11 +21154,11 @@ extension on Translations {
 			'web.serverSettings.host.modes.always.desc' => 'Never idle-sleeps, including on battery.',
 			'web.serverSettings.host.modes.always.caveat' => 'Will drain a laptop battery left unplugged.',
 			'web.serverSettings.host.modes.on_demand.label' => 'Sleep when idle, wake on traffic',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.modes.on_demand.desc' => 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.',
 			'web.serverSettings.host.modes.off.label' => 'Never touch power settings',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray leaves the machine alone entirely.',
 			'web.serverSettings.host.modes.off.caveat' => 'The gateway is unreachable whenever the host sleeps, unless something else keeps it awake.',
 			'web.serverSettings.layout.title' => 'Resolving to',
@@ -21506,11 +21668,11 @@ extension on Translations {
 			'web.cortex.blueprint.mode.human' => 'Human',
 			'web.cortex.blueprint.mode.scanner' => 'Scanner',
 			'web.cortex.blueprint.inject' => 'inject',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.reserved' => 'reserved',
 			'web.cortex.blueprint.deleteNote' => 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.',
 			'web.cortex.blueprint.cancel' => 'Cancel',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => 'Apply blueprint',
 			'web.cortex.blueprint.applyFailed' => 'Apply failed',
 			'web.cortex.blueprint.appliedToast' => 'Blueprint applied',
@@ -22020,11 +22182,11 @@ extension on Translations {
 			'sessions.inspector.canvas.deleteTitle' => 'Delete canvas?',
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => 'Delete "${title}"? This can\'t be undone.',
 			'sessions.inspector.canvas.emptyTitle' => 'No canvas yet',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
 			'sessions.inspector.canvas.viewportPhone' => 'Phone width',
 			'sessions.inspector.canvas.viewportTablet' => 'Tablet width',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => 'Desktop width',
 			'sessions.inspector.canvas.openFull' => 'Open full screen',
 			'sessions.inspector.canvas.confirm' => 'Confirm',
@@ -22534,11 +22696,11 @@ extension on Translations {
 			'backups.emptyNoTargets.headline' => 'No backup targets configured',
 			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
 			'backups.emptyNoBackups.headline' => 'No backups yet',
+			_ => null,
+		} ?? switch (path) {
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
 			'backups.restartToActivate' => 'Restart opendray to activate backups',
 			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.keyFileLabel' => 'Key file',
 			'backups.configuredViaLabel' => 'Configured via',
 			'backups.wizard.title' => 'Set up backups',
@@ -23015,6 +23177,51 @@ extension on Translations {
 			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
 			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
+			'vaultSync.title' => 'Vault sync',
+			'vaultSync.refresh' => 'Refresh',
+			'vaultSync.statusTitle' => 'Status',
+			'vaultSync.notARepo' => 'The vault is not a git repository yet. Initialise it from the web UI.',
+			'vaultSync.ahead' => ({required Object n}) => '${n} ahead',
+			'vaultSync.behind' => ({required Object n}) => '${n} behind',
+			'vaultSync.clean' => 'No local changes',
+			'vaultSync.changedFiles' => ({required Object n}) => '${n} changed',
+			'vaultSync.noRemote' => 'No remote',
+			'vaultSync.midOperation' => 'A rebase or merge is in progress. Finish or abort it from the web UI before syncing.',
+			'vaultSync.actionsTitle' => 'Manual',
+			'vaultSync.commit' => 'Commit',
+			'vaultSync.push' => 'Push',
+			'vaultSync.pull' => 'Pull',
+			'vaultSync.runNow' => 'Sync now',
+			'vaultSync.committedToast' => 'Committed',
+			'vaultSync.committedToastWithHash' => ({required Object hash}) => 'Committed ${hash}',
+			'vaultSync.pushedToast' => 'Pushed',
+			'vaultSync.pulledToast' => 'Pulled',
+			'vaultSync.runNowToast' => 'Sync loop woken',
+			'vaultSync.autoTitle' => 'Auto-sync',
+			'vaultSync.autoEnabled' => 'Enabled',
+			'vaultSync.autoNoRemoteHint' => 'Set a remote from the web UI first — without one, auto-sync would commit locally and never publish.',
+			'vaultSync.commitEvery' => 'Commit every',
+			'vaultSync.pullEvery' => 'Pull every',
+			'vaultSync.pushAfterCommit' => 'Push after commit',
+			'vaultSync.pullPeriodically' => 'Pull periodically',
+			'vaultSync.save' => 'Save',
+			'vaultSync.discard' => 'Discard',
+			'vaultSync.savedToast' => 'Auto-sync settings saved',
+			'vaultSync.lastCommit' => 'Last commit',
+			'vaultSync.lastPush' => 'Last push',
+			'vaultSync.lastPull' => 'Last pull',
+			_ => null,
+		} ?? switch (path) {
+			'vaultSync.never' => 'Never',
+			'vaultSync.every.sec30' => 'Every 30 seconds',
+			'vaultSync.every.min1' => 'Every minute',
+			'vaultSync.every.min5' => 'Every 5 minutes',
+			'vaultSync.every.min10' => 'Every 10 minutes',
+			'vaultSync.every.min15' => 'Every 15 minutes',
+			'vaultSync.every.min30' => 'Every 30 minutes',
+			'vaultSync.every.hour1' => 'Every hour',
+			'vaultSync.every.hour6' => 'Every 6 hours',
+			'vaultSync.every.hour24' => 'Every 24 hours',
 			'dataExport.title' => 'Data export & import',
 			'dataExport.subtitle' => 'User-level bundles for migration or verification — separate from /backups (disaster recovery).',
 			'dataExport.sections.export' => 'Export',
@@ -23051,8 +23258,6 @@ extension on Translations {
 			'dataExport.history.deleteConfirmTitle' => 'Delete export?',
 			'dataExport.history.deleteConfirmBody' => ({required Object id}) => 'Removes the bundle and revokes the download token. ${id}',
 			'dataExport.history.download' => 'Download',
-			_ => null,
-		} ?? switch (path) {
 			'dataExport.history.delete' => 'Delete',
 			'dataExport.history.downloadCopiedToast' => 'Download URL copied to clipboard. Paste into a browser to fetch (single-use).',
 			'dataExport.history.columns.scope' => 'Scope',
