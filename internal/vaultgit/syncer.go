@@ -298,11 +298,19 @@ func (s *Syncer) write(ctx context.Context, u SyncConfigUpdate) (SyncConfig, err
 	}
 	commitMs := durationMs(cur.CommitInterval, 600_000)
 	if u.CommitInterval != nil {
-		commitMs = parseDurationMs(*u.CommitInterval, commitMs)
+		ms, err := parseIntervalMs("commit_interval", *u.CommitInterval)
+		if err != nil {
+			return SyncConfig{}, err
+		}
+		commitMs = ms
 	}
 	pullMs := durationMs(cur.PullInterval, 3_600_000)
 	if u.PullInterval != nil {
-		pullMs = parseDurationMs(*u.PullInterval, pullMs)
+		ms, err := parseIntervalMs("pull_interval", *u.PullInterval)
+		if err != nil {
+			return SyncConfig{}, err
+		}
+		pullMs = ms
 	}
 
 	if _, err := s.pool.Exec(ctx, `
@@ -393,6 +401,10 @@ func (s *Syncer) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	cfg, err := s.write(r.Context(), u)
 	if err != nil {
+		if errors.Is(err, ErrBadInterval) {
+			writeError(w, http.StatusBadRequest, err)
+			return
+		}
 		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -406,15 +418,27 @@ func (s *Syncer) handleRun(w http.ResponseWriter, _ *http.Request) {
 
 // ── helpers ────────────────────────────────────────────────────
 
-func parseDurationMs(s string, fallback int64) int64 {
-	d, err := time.ParseDuration(s)
+// ErrBadInterval marks an interval the client sent that we refuse to
+// store, so the handler can answer 400 instead of 500.
+var ErrBadInterval = errors.New("invalid interval")
+
+// parseIntervalMs validates a client-supplied interval. It used to fall
+// back to the previous value on a parse error, which made a typo
+// indistinguishable from a save that quietly did nothing — the caller
+// got 200 and the old value back. Sub-minimum values are still clamped
+// rather than rejected: the loop cannot tick faster than
+// minTickInterval anyway, and clamping is the friendlier answer to
+// "every 5s" than an error.
+func parseIntervalMs(field, s string) (int64, error) {
+	d, err := time.ParseDuration(trimSpace(s))
 	if err != nil {
-		return fallback
+		return 0, fmt.Errorf("%w: %s must be a duration like 30s, 10m or 2h (got %q)",
+			ErrBadInterval, field, s)
 	}
 	if d < minTickInterval {
 		d = minTickInterval
 	}
-	return d.Milliseconds()
+	return d.Milliseconds(), nil
 }
 
 func durationMs(s string, fallback int64) int64 {
