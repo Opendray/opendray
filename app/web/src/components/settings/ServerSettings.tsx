@@ -2082,6 +2082,10 @@ function BackupSection({
                 <div className="text-muted-foreground mt-0.5">
                   <Trans
                     i18nKey="web.serverSettings.backup.featureDisabledHint"
+                    // Trans parses the string as HTML before rendering it, so the copy
+                    // has to escape its <angle-bracket> placeholders or the parser eats
+                    // them; shouldUnescape turns the entities back into literal text.
+                    shouldUnescape
                     components={{
                       1: <code className="text-foreground" />,
                       3: <code className="text-foreground" />,

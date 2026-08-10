@@ -246,6 +246,10 @@ function McpSection() {
       description={
         <Trans
           i18nKey="web.plugins.mcp.description"
+          // Trans parses the string as HTML before rendering it, so the copy
+          // has to escape its <angle-bracket> placeholders or the parser eats
+          // them; shouldUnescape turns the entities back into literal text.
+          shouldUnescape
           components={{ 1: <code />, 3: <code />, 5: <strong /> }}
         />
       }
@@ -1065,6 +1069,10 @@ function SkillsSection() {
       description={
         <Trans
           i18nKey="web.plugins.skills.description"
+          // Trans parses the string as HTML before rendering it, so the copy
+          // has to escape its <angle-bracket> placeholders or the parser eats
+          // them; shouldUnescape turns the entities back into literal text.
+          shouldUnescape
           components={{ 1: <code />, 3: <strong />, 5: <code /> }}
         />
       }
@@ -1392,6 +1400,10 @@ function SkillEditor({ open, onOpenChange, mode, editingId }: SkillEditorProps) 
                 <p className="text-[10.5px] text-muted-foreground/80">
                   <Trans
                     i18nKey="web.plugins.skills.editor.idHint"
+                    // Trans parses the string as HTML before rendering it, so the copy
+                    // has to escape its <angle-bracket> placeholders or the parser eats
+                    // them; shouldUnescape turns the entities back into literal text.
+                    shouldUnescape
                     components={{ 1: <code /> }}
                   />
                 </p>
