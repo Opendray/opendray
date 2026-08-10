@@ -8,6 +8,7 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/flatten_notice.dart';
+import 'package:opendray/features/notes/note_actions.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:opendray/features/notes/vault_sync_screen.dart';
 import 'package:opendray/features/notes/vault_text.dart';
@@ -190,7 +191,9 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     setState(() => _currentPath = (parent == '.' || parent == '/') ? '' : parent);
   }
 
-  Future<void> _onLongPress(NoteSummary note) async {
+  /// The row's action sheet. Reached from the trailing button and
+  /// from a long press on the row.
+  Future<void> _showRowActions(NoteSummary note) async {
     final action = await showModalBottomSheet<_RowAction>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -274,121 +277,21 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     }
   }
 
-  // Rename goes through the move endpoint, which repoints the
-  // [[wiki links]] that referenced the old path. Writing a copy and
-  // deleting the original would leave every one of them pointing at a
-  // document that no longer exists.
   Future<void> _promptRename(NoteSummary note) async {
-    final ctrl = TextEditingController(text: note.path);
-    final to = await showDialog<String>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text(t.notesPage.rename.title),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: InputDecoration(
-            helperText: t.notesPage.rename.helper,
-            hintText: t.notesPage.pathHint,
-          ),
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(ctrl.text.trim()),
-            child: Text(t.notesPage.rename.action),
-          ),
-        ],
-      ),
-    );
-    if (to == null || to.isEmpty || to == note.path || !mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final res = await ref.read(notesApiProvider).move(from: note.path, to: to);
-      // A warning means the file moved but the link rewrite did not
-      // finish. Reporting only "renamed" would hide a vault full of
-      // references to a path that no longer exists.
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            res.warning?.isNotEmpty ?? false
-                ? '${t.notesPage.rename.doneWithWarning}: ${res.warning}'
-                : t.notesPage.rename.doneSnack(count: res.linksRewritten),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      await _load();
-    } on ApiException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
-      );
-    }
+    final to = await renameNoteFlow(context: context, ref: ref, path: note.path);
+    if (to == null || !mounted) return;
+    await _load();
   }
 
   Future<void> _confirmAndDelete(NoteSummary note) async {
-    final ok = await showDialog<bool>(
+    final gone = await deleteNoteFlow(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text(t.notesPage.deleteTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              note.title.isNotEmpty ? note.title : p.basename(note.path),
-              style: Theme.of(dialogCtx).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              note.path,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t.notesPage.deleteBody,
-              style: Theme.of(dialogCtx).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogCtx).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: Text(t.common.delete),
-          ),
-        ],
-      ),
+      ref: ref,
+      path: note.path,
+      title: note.title,
     );
-    if (ok != true || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(notesApiProvider).delete(note.path);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(t.notesPage.deletedSnack(path: note.path)),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      await _load();
-    } on ApiException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(t.notesPage.deleteFailedApi(error: e.message))),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(t.notesPage.deleteFailedGeneric(error: e.toString()))));
-    }
+    if (!gone || !mounted) return;
+    await _load();
   }
 
   Future<void> _newNote() async {
@@ -697,7 +600,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
                 note: results[i],
                 showFullPath: true,
                 onTap: () => _openNote(results[i]),
-                onLongPress: () => _onLongPress(results[i]),
+                onMenu: () => _showRowActions(results[i]),
               ),
             ),
           );
@@ -719,7 +622,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
                 note: results[i],
                 showFullPath: true,
                 onTap: () => _openNote(results[i]),
-                onLongPress: () => _onLongPress(results[i]),
+                onMenu: () => _showRowActions(results[i]),
               ),
             ),
           );
@@ -751,7 +654,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
                   note: n,
                   showFullPath: false,
                   onTap: () => _openNote(n),
-                  onLongPress: () => _onLongPress(n),
+                  onMenu: () => _showRowActions(n),
                 ),
             ],
           ),
@@ -894,13 +797,17 @@ class _NoteRow extends StatelessWidget {
     required this.note,
     required this.showFullPath,
     required this.onTap,
-    required this.onLongPress,
+    required this.onMenu,
   });
 
   final NoteSummary note;
   final bool showFullPath;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+
+  /// Opens the row's actions. Wired to both the trailing button and a
+  /// long press: the button is the one anybody finds, the gesture is
+  /// the shortcut for whoever already knows it.
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -909,7 +816,7 @@ class _NoteRow extends StatelessWidget {
         : '${_formatBytes(note.size)} · ${_relTime(note.modified)}';
     return ListTile(
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: onMenu,
       leading: Icon(
         // The operator's own note carries a different icon from the
         // agent-written docs. Both layouts have to be recognised: the
@@ -930,7 +837,16 @@ class _NoteRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodySmall,
       ),
-      trailing: const Icon(Icons.chevron_right),
+      // This slot used to hold a chevron. Tapping the row already opens
+      // the document, so the arrow said nothing the row didn't — while
+      // rename and delete sat behind a long press with no hint that
+      // they existed at all. Same pixels, an affordance instead of a
+      // decoration.
+      trailing: IconButton(
+        icon: const Icon(Icons.more_vert),
+        tooltip: t.common.more,
+        onPressed: onMenu,
+      ),
     );
   }
 }

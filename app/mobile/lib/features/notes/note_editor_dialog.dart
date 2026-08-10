@@ -9,6 +9,7 @@ import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/doc_preview.dart';
 import 'package:opendray/features/notes/markdown_highlight_controller.dart';
+import 'package:opendray/features/notes/note_actions.dart';
 import 'package:opendray/features/notes/vault_text.dart';
 import 'package:path/path.dart' as p;
 
@@ -46,7 +47,20 @@ class NoteEditorDialog extends ConsumerStatefulWidget {
   ConsumerState<NoteEditorDialog> createState() => _NoteEditorDialogState();
 }
 
+/// What the editor's overflow menu offers beyond editing.
+enum _DocAction { rename, delete }
+
 class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
+  /// The document being edited. Deliberately not `widget.path`: a
+  /// rename moves the open document, and everything below — reads,
+  /// writes, backlinks, the preview — has to follow it rather than keep
+  /// addressing the path it was opened under.
+  late String _path = widget.path;
+
+  /// Set once the document has been deleted from under us, so the
+  /// flush-on-close cannot write it straight back.
+  bool _deleted = false;
+
   final _ctrl = MarkdownHighlightController();
   final _focus = FocusNode();
   bool _dirty = false;
@@ -71,7 +85,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
   String? _backlinksError;
 
   String get _currentDir {
-    final dir = p.dirname(widget.path);
+    final dir = p.dirname(_path);
     return (dir == '.' || dir == '/') ? '' : dir;
   }
 
@@ -109,7 +123,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
       );
     }
     try {
-      final note = await api.read(widget.path);
+      final note = await api.read(_path);
       if (!mounted) return;
       _initial = note.body;
       _ctrl.text = note.body;
@@ -159,6 +173,9 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
   }
 
   Future<void> _save() async {
+    // Writing after a delete would recreate the document — the close
+    // button flushes, and closing is exactly what follows a delete.
+    if (_deleted) return;
     final body = _ctrl.text;
     if (body == _initial) return;
     setState(() {
@@ -166,7 +183,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
       _error = null;
     });
     try {
-      await ref.read(notesApiProvider).write(path: widget.path, body: body);
+      await ref.read(notesApiProvider).write(path: _path, body: body);
       if (!mounted) return;
       _initial = body;
       setState(() {
@@ -294,7 +311,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
       _backlinksError = null;
     });
     try {
-      final links = await ref.read(notesApiProvider).backlinks(widget.path);
+      final links = await ref.read(notesApiProvider).backlinks(_path);
       if (!mounted) return;
       setState(() {
         _backlinks = links;
@@ -318,6 +335,47 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
         _backlinksError = t.notesPage.backlinks.failed(error: e.toString());
       });
     }
+  }
+
+  // ---------------------------------------------------- rename / delete
+
+  // These live here as well as on the browser's row menu because the
+  // moment you decide a document is finished with is the moment you are
+  // looking at it. Having to close the editor, find the row again and
+  // press-and-hold it is how "the vault has no delete" happens.
+
+  Future<void> _rename() async {
+    // Flush first: the move copies what is on disk, so unsaved edits
+    // would be left behind at the old path.
+    await _save();
+    if (!mounted) return;
+    final to = await renameNoteFlow(context: context, ref: ref, path: _path);
+    if (to == null || !mounted) return;
+    setState(() {
+      _path = to;
+      // Backlinks were resolved against the old path; the answer for
+      // the new one has to be asked for again.
+      _backlinks = null;
+      _backlinksError = null;
+    });
+  }
+
+  Future<void> _delete() async {
+    // The confirmation names the document by its first heading, the
+    // same thing the listing shows, so the dialog is recognisably about
+    // the note on screen and not just a path.
+    final headings = extractOutline(_ctrl.text);
+    final gone = await deleteNoteFlow(
+      context: context,
+      ref: ref,
+      path: _path,
+      title: headings.isEmpty ? '' : headings.first.text,
+    );
+    if (!gone || !mounted) return;
+    // _deleted before popping: closing flushes, and a flush here would
+    // put the document straight back.
+    setState(() => _deleted = true);
+    Navigator.of(context).pop();
   }
 
   // --------------------------------------------------------- wiki links
@@ -349,7 +407,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
     final q = query.trim().toLowerCase();
     final out = <String>[];
     for (final path in _allPaths) {
-      if (path == widget.path) continue;
+      if (path == _path) continue;
       final base = p.basenameWithoutExtension(path).toLowerCase();
       if (q.isEmpty || base.contains(q) || path.toLowerCase().contains(q)) {
         out.add(path);
@@ -411,7 +469,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
                   ? const Center(child: CircularProgressIndicator())
                   : _preview
                       ? DocPreview(
-                          path: widget.path,
+                          path: _path,
                           body: _ctrl.text,
                           onOpenWikiLink: _openLinked,
                           resolveWikiTarget: _resolve,
@@ -466,12 +524,12 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  p.basename(widget.path),
+                  p.basename(_path),
                   style: Theme.of(context).textTheme.titleSmall,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  widget.path,
+                  _path,
                   style: Theme.of(context).textTheme.bodySmall,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -481,11 +539,13 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
           IconButton(
             tooltip: t.notesPage.outline.action,
             icon: const Icon(Icons.toc),
+            visualDensity: VisualDensity.compact,
             onPressed: _loading ? null : () => unawaited(_showOutline()),
           ),
           IconButton(
             tooltip: t.notesPage.editor.save,
             icon: const Icon(Icons.save_outlined),
+            visualDensity: VisualDensity.compact,
             // Disabled with nothing to save, so the control doubles as
             // the answer to "did that go through?".
             onPressed: _dirty && !_saving ? () => unawaited(_save()) : null,
@@ -495,6 +555,7 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
                 ? t.notesPage.editor.showSource
                 : t.notesPage.editor.showPreview,
             icon: Icon(_preview ? Icons.code : Icons.visibility_outlined),
+            visualDensity: VisualDensity.compact,
             onPressed: () {
               // Flush before switching: preview renders the SAVED body,
               // so an unsaved keystroke would otherwise render stale.
@@ -505,9 +566,54 @@ class _NoteEditorDialogState extends ConsumerState<NoteEditorDialog> {
               });
             },
           ),
+          PopupMenuButton<_DocAction>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: t.common.more,
+            enabled: !_loading,
+            // Five controls plus the path share this row on a phone;
+            // the default padding is what pushes the title into an
+            // ellipsis two characters in.
+            padding: EdgeInsets.zero,
+            onSelected: (action) {
+              switch (action) {
+                case _DocAction.rename:
+                  unawaited(_rename());
+                case _DocAction.delete:
+                  unawaited(_delete());
+              }
+            },
+            itemBuilder: (menuCtx) => [
+              PopupMenuItem(
+                value: _DocAction.rename,
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.drive_file_rename_outline),
+                  title: Text(t.notesPage.rename.action),
+                ),
+              ),
+              PopupMenuItem(
+                value: _DocAction.delete,
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(menuCtx).colorScheme.error,
+                  ),
+                  title: Text(
+                    t.notesPage.popupDelete,
+                    style:
+                        TextStyle(color: Theme.of(menuCtx).colorScheme.error),
+                  ),
+                ),
+              ),
+            ],
+          ),
           Builder(
             builder: (innerCtx) => IconButton(
               icon: const Icon(Icons.close),
+              visualDensity: VisualDensity.compact,
               onPressed: () async {
                 // Flush pending edits before dismissing rather than
                 // dropping the last keystrokes on the floor.
