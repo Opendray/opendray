@@ -10,7 +10,54 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.13.2] — 2026-08-11
+
+The Vault stops being a flat pile of markdown. It holds a folder
+structure you maintain, files each project under its own name, and
+renders HTML documents as carefully as it renders markdown — from an
+in-memory string in a sandboxed frame, with scripts off, because a
+document that arrived by `git pull` is not your own writing.
+
+The phone catches up with the browser. It can see whether your edits
+reached the remote, browse by tag, follow `[[wiki links]]`, show what
+links back, and start today's note — instead of being somewhere you
+could only read what you had written elsewhere. The admin UI itself
+now fits a phone screen, which it never did.
+
 ### Added
+
+- **The admin UI works on a phone and a tablet.** It was built for a
+  desktop three-pane layout, which on a phone meant a horizontal
+  scrollbar and two columns you could not reach. Every page now has a
+  narrow form: below 1024px the third pane becomes a slide-over, below
+  768px the list becomes the page until you pick something and the
+  navigation tree follows it into a drawer. Tables, spacing and the
+  topbar were sized to match.
+
+  The drawer is one component rather than a pattern re-implemented per
+  page, and it is reachable from a labelled control in the header —
+  never from an edge handle alone, which is unreachable in practice.
+
+- **The Vault syncs from the phone.** Repository status, a manual
+  commit / push / pull, and the auto-sync settings are all on the
+  phone now; previously the mobile app could edit documents but not
+  see whether they had reached the remote, so the answer to "did that
+  save get anywhere" was only available on a desktop.
+
+- **The mobile Vault has the knowledge layer the web has had.** It
+  could create, read, edit, rename and delete a document, but nothing
+  that makes a vault more than a folder. It now browses by `#tag`,
+  shows a document's backlinks and its tags, follows `[[wiki links]]`,
+  completes them while you type, jumps by heading, and opens today's
+  daily note from the same template the web writes.
+
+  Two constraints worth knowing. The preview runs with JavaScript off
+  — a document can arrive by `git pull`, so it is not the operator's
+  own writing by default — which means wiki-links are anchors on a
+  private scheme intercepted at navigation, and a heading jump lands
+  in the source view rather than scrolling the rendered page. And the
+  path rules are Unicode-aware on mobile: the web's ASCII-only
+  sanitiser turns `笔记.md` into `--.md`.
 
 - **The Vault stores and renders HTML documents, not just markdown.**
   Project documentation increasingly ships as HTML — exported from
@@ -50,6 +97,29 @@ for the full rationale and what triggers a major bump.
 
 ### Fixed
 
+- **Vault auto-sync settings could not be saved.** Whatever interval
+  you set, the dialog snapped back to "every 10 minutes" — the form
+  refetched every 8 seconds and overwrote the draft mid-edit, so Save
+  was never enabled and no setting had ever reached the database. The
+  interval is now a free-text Go duration with presets, and the
+  gateway rejects an unparseable one with a message instead of quietly
+  substituting a default.
+
+- **The mobile Vault's rename and delete were unfindable.** They
+  existed, behind a long press on a row, with nothing on screen saying
+  so — reported in testing as missing outright, which for a hidden
+  gesture amounts to the same thing. Each row now carries a visible
+  actions button in place of a chevron that did nothing the row did
+  not already do, and the open editor offers rename and delete where
+  the web has always had them.
+
+- **Creating `guide.html` on the phone produced `guide.html.md`.** The
+  new-document path appended `.md` unconditionally, so an HTML
+  document could not be created from mobile at all.
+
+- **Six hints rendered `&lt;prefix&gt;` as literal text** instead of
+  `<prefix>`.
+
 - **A table-of-contents link no longer loses the document.** In the web
   viewer, clicking an in-document `#anchor` navigated the frame away
   and rendered the opendray app *inside* the document view. A `srcdoc`
@@ -75,6 +145,13 @@ for the full rationale and what triggers a major bump.
   rather than fixed it.
 
 ### Changed
+
+- **CI no longer runs the whole suite twice on every branch commit.**
+  A `feat/**` branch with an open PR matched both the `push` and
+  `pull_request` triggers, and the concurrency group keys on the ref —
+  which differs between the two events — so neither run cancelled the
+  other. `push` is now main-only; `pull_request` already covered branch
+  work.
 
 - **A project's documents are filed under the project's name.** The
   Vault is a project documentation library, and it filed every project
