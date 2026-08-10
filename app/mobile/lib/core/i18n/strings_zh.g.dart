@@ -870,6 +870,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get newButton => '新建';
 	@override String get newNoteDialogTitle => '新建笔记';
 	@override String get searchHint => '搜索整个仓库…';
+	@override late final _TranslationsNotesPageBrowseZh browse = _TranslationsNotesPageBrowseZh._(_root);
 	@override String get up => '上级';
 	@override String get copyPath => '复制路径';
 	@override String get open => '打开';
@@ -890,11 +891,16 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String emptyFolder({required Object path}) => '文件夹「${path}」为空。';
 	@override String get validatePath => '必须填写路径';
 	@override String get validatePathDots => '路径不能包含「..」';
-	@override String get pathHelper => '缺失时自动追加 .md。';
+	@override String get pathHelper => '除非名字已经以 .md 或 .html 结尾，否则会自动补 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 	@override late final _TranslationsNotesPageHtmlZh html = _TranslationsNotesPageHtmlZh._(_root);
 	@override late final _TranslationsNotesPageFlattenZh flatten = _TranslationsNotesPageFlattenZh._(_root);
 	@override late final _TranslationsNotesPageRenameZh rename = _TranslationsNotesPageRenameZh._(_root);
+	@override late final _TranslationsNotesPageTagsZh tags = _TranslationsNotesPageTagsZh._(_root);
+	@override late final _TranslationsNotesPageBacklinksZh backlinks = _TranslationsNotesPageBacklinksZh._(_root);
+	@override late final _TranslationsNotesPageOutlineZh outline = _TranslationsNotesPageOutlineZh._(_root);
+	@override late final _TranslationsNotesPageTodayZh today = _TranslationsNotesPageTodayZh._(_root);
+	@override late final _TranslationsNotesPageWikiLinkZh wikiLink = _TranslationsNotesPageWikiLinkZh._(_root);
 }
 
 // Path: vaultSync
@@ -2783,6 +2789,17 @@ class _TranslationsChannelsKindsZh extends TranslationsChannelsKindsEn {
 	@override late final _TranslationsChannelsKindsWecomZh wecom = _TranslationsChannelsKindsWecomZh._(_root);
 }
 
+// Path: notesPage.browse
+class _TranslationsNotesPageBrowseZh extends TranslationsNotesPageBrowseEn {
+	_TranslationsNotesPageBrowseZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tree => '目录';
+	@override String get tags => '标签';
+}
+
 // Path: notesPage.editor
 class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	_TranslationsNotesPageEditorZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2848,6 +2865,68 @@ class _TranslationsNotesPageRenameZh extends TranslationsNotesPageRenameEn {
 	@override String get helper => '文档库相对路径。目录会自动创建。';
 	@override String doneSnack({required Object count}) => '已重命名，${count} 个链接已改写。';
 	@override String get doneWithWarning => '已重命名，但链接没有全部更新';
+}
+
+// Path: notesPage.tags
+class _TranslationsNotesPageTagsZh extends TranslationsNotesPageTagsEn {
+	_TranslationsNotesPageTagsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '文档库里还没有标签。在笔记里写 #像这样 就会出现。';
+	@override String noMatches({required Object query}) => '没有标签匹配“${query}”。';
+	@override String get filteredBy => '已按标签筛选';
+	@override String get clear => '清除标签筛选';
+	@override String noNotes({required Object tag}) => '已经没有笔记带 #${tag} 了。';
+}
+
+// Path: notesPage.backlinks
+class _TranslationsNotesPageBacklinksZh extends TranslationsNotesPageBacklinksEn {
+	_TranslationsNotesPageBacklinksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '反向链接';
+	@override String get loading => '正在查找链接…';
+	@override String get empty => '还没有笔记链接到这里。';
+	@override String failed({required Object error}) => '反向链接加载失败：${error}';
+}
+
+// Path: notesPage.outline
+class _TranslationsNotesPageOutlineZh extends TranslationsNotesPageOutlineEn {
+	_TranslationsNotesPageOutlineZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => '大纲';
+	@override String get title => '大纲';
+	@override String get empty => '这篇文档没有标题。';
+	@override String get jumpedToSource => '预览关闭了脚本、无法滚动，所以已切到源码视图。';
+}
+
+// Path: notesPage.today
+class _TranslationsNotesPageTodayZh extends TranslationsNotesPageTodayEn {
+	_TranslationsNotesPageTodayZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => '打开今天的日记';
+}
+
+// Path: notesPage.wikiLink
+class _TranslationsNotesPageWikiLinkZh extends TranslationsNotesPageWikiLinkEn {
+	_TranslationsNotesPageWikiLinkZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get suggestions => '链接到…';
+	@override String createNew({required Object name}) => '新建“${name}”';
+	@override String get noMatches => '没有匹配的笔记 —— 继续输入即可新建。';
 }
 
 // Path: vaultSync.every
@@ -8219,7 +8298,10 @@ class _TranslationsWebNotesVaultSyncAutoSyncZh extends TranslationsWebNotesVault
 	@override String get enabledTooltipNoRemote => '请先配置 remote 才能启用自动同步';
 	@override String get noRemoteHint => '尚无 remote — push/pull 将被跳过。';
 	@override String get commitEvery => '提交间隔';
-	@override String get commitEveryExamples => '示例：<1>30s</1>、<3>10m</3>、<5>2h</5>。最小 30s。';
+	@override late final _TranslationsWebNotesVaultSyncAutoSyncEveryZh every = _TranslationsWebNotesVaultSyncAutoSyncEveryZh._(_root);
+	@override String get intervalCustom => '自定义…';
+	@override String get intervalInvalid => '不是有效的时长。请填写数字加单位，例如 30s、10m、2h。';
+	@override String intervalTooShort({required Object min}) => '同步循环最快也只会 ${min} 触发一次。';
 	@override String get pullEvery => '拉取间隔';
 	@override String get pullEveryHint => '仅在启用 Pull 时使用。';
 	@override String get pushAfterCommit => '提交后 push';
@@ -9901,6 +9983,24 @@ class _TranslationsWebNotesVaultSyncConflictKindsZh extends TranslationsWebNotes
 	@override String get operation => 'operation';
 }
 
+// Path: web.notes.vaultSync.autoSync.every
+class _TranslationsWebNotesVaultSyncAutoSyncEveryZh extends TranslationsWebNotesVaultSyncAutoSyncEveryEn {
+	_TranslationsWebNotesVaultSyncAutoSyncEveryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get k30s => '每 30 秒';
+	@override String get k1m => '每分钟';
+	@override String get k5m => '每 5 分钟';
+	@override String get k10m => '每 10 分钟';
+	@override String get k15m => '每 15 分钟';
+	@override String get k30m => '每 30 分钟';
+	@override String get k1h => '每小时';
+	@override String get k6h => '每 6 小时';
+	@override String get k24h => '每 24 小时';
+}
+
 // Path: web.serverSettings.host.modes.ac
 class _TranslationsWebServerSettingsHostModesAcZh extends TranslationsWebServerSettingsHostModesAcEn {
 	_TranslationsWebServerSettingsHostModesAcZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -10954,7 +11054,18 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.autoSync.enabledTooltipNoRemote' => '请先配置 remote 才能启用自动同步',
 			'web.notes.vaultSync.autoSync.noRemoteHint' => '尚无 remote — push/pull 将被跳过。',
 			'web.notes.vaultSync.autoSync.commitEvery' => '提交间隔',
-			'web.notes.vaultSync.autoSync.commitEveryExamples' => '示例：<1>30s</1>、<3>10m</3>、<5>2h</5>。最小 30s。',
+			'web.notes.vaultSync.autoSync.every.k30s' => '每 30 秒',
+			'web.notes.vaultSync.autoSync.every.k1m' => '每分钟',
+			'web.notes.vaultSync.autoSync.every.k5m' => '每 5 分钟',
+			'web.notes.vaultSync.autoSync.every.k10m' => '每 10 分钟',
+			'web.notes.vaultSync.autoSync.every.k15m' => '每 15 分钟',
+			'web.notes.vaultSync.autoSync.every.k30m' => '每 30 分钟',
+			'web.notes.vaultSync.autoSync.every.k1h' => '每小时',
+			'web.notes.vaultSync.autoSync.every.k6h' => '每 6 小时',
+			'web.notes.vaultSync.autoSync.every.k24h' => '每 24 小时',
+			'web.notes.vaultSync.autoSync.intervalCustom' => '自定义…',
+			'web.notes.vaultSync.autoSync.intervalInvalid' => '不是有效的时长。请填写数字加单位，例如 30s、10m、2h。',
+			'web.notes.vaultSync.autoSync.intervalTooShort' => ({required Object min}) => '同步循环最快也只会 ${min} 触发一次。',
 			'web.notes.vaultSync.autoSync.pullEvery' => '拉取间隔',
 			'web.notes.vaultSync.autoSync.pullEveryHint' => '仅在启用 Pull 时使用。',
 			'web.notes.vaultSync.autoSync.pushAfterCommit' => '提交后 push',
@@ -11017,6 +11128,8 @@ extension on TranslationsZh {
 			'web.activity.filters.status3' => '3xx 重定向',
 			'web.activity.filters.status4' => '4xx 客户端错误',
 			'web.activity.filters.status5' => '5xx 服务端错误',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.callsCount_one' => ({required Object count}) => '${count} 次调用',
 			'web.activity.callsCount_other' => ({required Object count}) => '${count} 次调用',
 			'web.activity.loading' => '加载中…',
@@ -11028,8 +11141,6 @@ extension on TranslationsZh {
 			'web.activity.table.status' => '状态',
 			'web.activity.table.duration' => '耗时',
 			'web.activity.table.inboundAria' => '入站',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.outboundAria' => '出站',
 			'web.activity.empty.filtered' => '没有调用符合当前筛选条件。',
 			'web.activity.empty.title' => '尚未记录任何 API 调用',
@@ -11531,6 +11642,8 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			'web.plugins.gitHosts.dialog.displayNameLabel' => '显示名称（可选）',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
 			'web.plugins.gitHosts.dialog.newTokenLabel' => '新 token（留空表示保留）',
 			'web.plugins.gitHosts.dialog.tokenPlaceholder' => 'ghp_… / gho_… / glpat-…',
@@ -11542,8 +11655,6 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.addFailedToast' => '添加失败',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => '更新失败',
 			'web.plugins.gitHosts.dialog.ownerLabel' => '所有者(可选)',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
@@ -12045,6 +12156,8 @@ extension on TranslationsZh {
 			'web.serverSettings.toggle.defaultOff' => '默认（关）',
 			'web.serverSettings.memoryRuntimeBanner' => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。',
 			'web.serverSettings.memoryRuntimeBannerButton' => '打开 Cortex 设置',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.intro' => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。',
 			'web.serverSettings.host.platformNote' => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。',
 			'web.serverSettings.host.modes.ac.label' => '插电时保持唤醒',
@@ -12056,8 +12169,6 @@ extension on TranslationsZh {
 			'web.serverSettings.host.modes.on_demand.desc' => '网关空闲时机器正常入睡;收到请求时被唤醒,opendray 在服务期间保持唤醒,结束后让它继续休眠。',
 			'web.serverSettings.host.modes.on_demand.caveat' => '需要开启"网络访问唤醒"(sudo pmset -a womp 1),有线以太网最可靠。休眠后的第一个请求会有几秒延迟,偶尔需要重试一次。',
 			'web.serverSettings.host.modes.off.label' => '完全不干预电源',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray 不对机器电源做任何操作。',
 			'web.serverSettings.host.modes.off.caveat' => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。',
 			'web.serverSettings.layout.title' => '实际解析到',
@@ -12559,6 +12670,8 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.proposeHint' => '识别项目类型并提议契合的章节结构',
 			'web.cortex.blueprint.proposeFailed' => '提议失败',
 			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'AI 判断项目类型为：${type}——${reason} 请在下方审阅并自由修改后应用。',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.addSection' => '添加章节',
 			'web.cortex.blueprint.slugPlaceholder' => '标识',
 			'web.cortex.blueprint.titlePlaceholder' => '标题',
@@ -12570,8 +12683,6 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.reserved' => '保留',
 			'web.cortex.blueprint.deleteNote' => '删除章节只是隐藏，内容不会丢——重新添加同名标识即可恢复。',
 			'web.cortex.blueprint.cancel' => '取消',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => '应用蓝图',
 			'web.cortex.blueprint.applyFailed' => '应用失败',
 			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
@@ -13073,6 +13184,8 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.messagePlaceholder' => '整体说明(可选)……',
 			'sessions.inspector.canvas.send' => '发送',
 			'sessions.inspector.canvas.sent' => '反馈已发送到会话。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.nothingToSend' => '请先添加钉点、框选或说明。',
 			'sessions.inspector.canvas.requestPlaceholder' => '让 agent 设计或画点什么……',
 			'sessions.inspector.canvas.requested' => '已发送 —— agent 会渲染到这里。',
@@ -13084,8 +13197,6 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.emptyBlurb' => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
 			'sessions.inspector.canvas.viewportPhone' => '手机宽度',
 			'sessions.inspector.canvas.viewportTablet' => '平板宽度',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
 			'sessions.inspector.canvas.openFull' => '全屏打开',
 			'sessions.inspector.canvas.confirm' => '确认',
@@ -13587,6 +13698,8 @@ extension on TranslationsZh {
 			'backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'backups.recoveryKit.confirmLabel' => '确认恢复口令',
 			'backups.recoveryKit.generate' => '生成',
+			_ => null,
+		} ?? switch (path) {
 			'backups.recoveryKit.copy' => '复制工具包',
 			'backups.recoveryKit.copied' => '恢复工具包已复制 —— 请妥善保存',
 			'backups.recoveryKit.failed' => ({required Object error}) => '无法生成恢复工具包：${error}',
@@ -13598,8 +13711,6 @@ extension on TranslationsZh {
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
 			'backups.restartToActivate' => '重启 opendray 以激活备份',
 			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
@@ -14024,6 +14135,8 @@ extension on TranslationsZh {
 			'notesPage.newButton' => '新建',
 			'notesPage.newNoteDialogTitle' => '新建笔记',
 			'notesPage.searchHint' => '搜索整个仓库…',
+			'notesPage.browse.tree' => '目录',
+			'notesPage.browse.tags' => '标签',
 			'notesPage.up' => '上级',
 			'notesPage.copyPath' => '复制路径',
 			'notesPage.open' => '打开',
@@ -14044,7 +14157,7 @@ extension on TranslationsZh {
 			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
 			'notesPage.validatePath' => '必须填写路径',
 			'notesPage.validatePathDots' => '路径不能包含「..」',
-			'notesPage.pathHelper' => '缺失时自动追加 .md。',
+			'notesPage.pathHelper' => '除非名字已经以 .md 或 .html 结尾，否则会自动补 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown;文件名以 .html 结尾则写 HTML…',
 			'notesPage.editor.saving' => '保存中…',
 			'notesPage.editor.autosave' => '已保存',
@@ -14076,12 +14189,31 @@ extension on TranslationsZh {
 			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
 			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
 			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
+			'notesPage.tags.empty' => '文档库里还没有标签。在笔记里写 #像这样 就会出现。',
+			'notesPage.tags.noMatches' => ({required Object query}) => '没有标签匹配“${query}”。',
+			'notesPage.tags.filteredBy' => '已按标签筛选',
+			'notesPage.tags.clear' => '清除标签筛选',
+			'notesPage.tags.noNotes' => ({required Object tag}) => '已经没有笔记带 #${tag} 了。',
+			'notesPage.backlinks.title' => '反向链接',
+			'notesPage.backlinks.loading' => '正在查找链接…',
+			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
+			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
+			'notesPage.outline.action' => '大纲',
+			'notesPage.outline.title' => '大纲',
+			'notesPage.outline.empty' => '这篇文档没有标题。',
+			'notesPage.outline.jumpedToSource' => '预览关闭了脚本、无法滚动，所以已切到源码视图。',
+			'notesPage.today.tooltip' => '打开今天的日记',
+			'notesPage.wikiLink.suggestions' => '链接到…',
+			'notesPage.wikiLink.createNew' => ({required Object name}) => '新建“${name}”',
+			'notesPage.wikiLink.noMatches' => '没有匹配的笔记 —— 继续输入即可新建。',
 			'vaultSync.title' => 'Vault 同步',
 			'vaultSync.refresh' => '刷新',
 			'vaultSync.statusTitle' => '状态',
 			'vaultSync.notARepo' => 'vault 还不是 git 仓库。请先在网页端初始化。',
 			'vaultSync.ahead' => ({required Object n}) => '领先 ${n}',
 			'vaultSync.behind' => ({required Object n}) => '落后 ${n}',
+			_ => null,
+		} ?? switch (path) {
 			'vaultSync.clean' => '没有本地改动',
 			'vaultSync.changedFiles' => ({required Object n}) => '${n} 处改动',
 			'vaultSync.noRemote' => '未配置 remote',
@@ -14112,8 +14244,6 @@ extension on TranslationsZh {
 			'vaultSync.never' => '从未',
 			'vaultSync.every.sec30' => '每 30 秒',
 			'vaultSync.every.min1' => '每分钟',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.every.min5' => '每 5 分钟',
 			'vaultSync.every.min10' => '每 10 分钟',
 			'vaultSync.every.min15' => '每 15 分钟',

@@ -5019,6 +5019,10 @@
     "newButton": "新建",
     "newNoteDialogTitle": "新建笔记",
     "searchHint": "搜索整个仓库…",
+    "browse": {
+      "tree": "目录",
+      "tags": "标签"
+    },
     "up": "上级",
     "copyPath": "复制路径",
     "open": "打开",
@@ -5039,7 +5043,7 @@
     "emptyFolder": "文件夹「{path}」为空。",
     "validatePath": "必须填写路径",
     "validatePathDots": "路径不能包含「..」",
-    "pathHelper": "缺失时自动追加 .md。",
+    "pathHelper": "除非名字已经以 .md 或 .html 结尾，否则会自动补 .md。",
     "editor": {
       "markdownHint": "Markdown;文件名以 .html 结尾则写 HTML…",
       "saving": "保存中…",
@@ -5078,6 +5082,33 @@
       "helper": "文档库相对路径。目录会自动创建。",
       "doneSnack": "已重命名，{count} 个链接已改写。",
       "doneWithWarning": "已重命名，但链接没有全部更新"
+    },
+    "tags": {
+      "empty": "文档库里还没有标签。在笔记里写 #像这样 就会出现。",
+      "noMatches": "没有标签匹配“{query}”。",
+      "filteredBy": "已按标签筛选",
+      "clear": "清除标签筛选",
+      "noNotes": "已经没有笔记带 #{tag} 了。"
+    },
+    "backlinks": {
+      "title": "反向链接",
+      "loading": "正在查找链接…",
+      "empty": "还没有笔记链接到这里。",
+      "failed": "反向链接加载失败：{error}"
+    },
+    "outline": {
+      "action": "大纲",
+      "title": "大纲",
+      "empty": "这篇文档没有标题。",
+      "jumpedToSource": "预览关闭了脚本、无法滚动，所以已切到源码视图。"
+    },
+    "today": {
+      "tooltip": "打开今天的日记"
+    },
+    "wikiLink": {
+      "suggestions": "链接到…",
+      "createNew": "新建“{name}”",
+      "noMatches": "没有匹配的笔记 —— 继续输入即可新建。"
     }
   },
   "vaultSync": {

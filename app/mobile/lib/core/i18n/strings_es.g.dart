@@ -870,6 +870,7 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String get newButton => 'Nueva';
 	@override String get newNoteDialogTitle => 'Nueva nota';
 	@override String get searchHint => 'Busca en todo el vault…';
+	@override late final _TranslationsNotesPageBrowseEs browse = _TranslationsNotesPageBrowseEs._(_root);
 	@override String get up => 'Arriba';
 	@override String get copyPath => 'Copiar ruta';
 	@override String get open => 'Abrir';
@@ -890,11 +891,16 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String emptyFolder({required Object path}) => 'La carpeta "${path}" está vacía.';
 	@override String get validatePath => 'La ruta es obligatoria';
 	@override String get validatePathDots => 'La ruta no puede contener ".."';
-	@override String get pathHelper => 'Añade .md automáticamente si falta.';
+	@override String get pathHelper => 'Añade .md salvo que el nombre ya termine en .md o .html.';
 	@override late final _TranslationsNotesPageEditorEs editor = _TranslationsNotesPageEditorEs._(_root);
 	@override late final _TranslationsNotesPageHtmlEs html = _TranslationsNotesPageHtmlEs._(_root);
 	@override late final _TranslationsNotesPageFlattenEs flatten = _TranslationsNotesPageFlattenEs._(_root);
 	@override late final _TranslationsNotesPageRenameEs rename = _TranslationsNotesPageRenameEs._(_root);
+	@override late final _TranslationsNotesPageTagsEs tags = _TranslationsNotesPageTagsEs._(_root);
+	@override late final _TranslationsNotesPageBacklinksEs backlinks = _TranslationsNotesPageBacklinksEs._(_root);
+	@override late final _TranslationsNotesPageOutlineEs outline = _TranslationsNotesPageOutlineEs._(_root);
+	@override late final _TranslationsNotesPageTodayEs today = _TranslationsNotesPageTodayEs._(_root);
+	@override late final _TranslationsNotesPageWikiLinkEs wikiLink = _TranslationsNotesPageWikiLinkEs._(_root);
 }
 
 // Path: vaultSync
@@ -2783,6 +2789,17 @@ class _TranslationsChannelsKindsEs extends TranslationsChannelsKindsEn {
 	@override late final _TranslationsChannelsKindsWecomEs wecom = _TranslationsChannelsKindsWecomEs._(_root);
 }
 
+// Path: notesPage.browse
+class _TranslationsNotesPageBrowseEs extends TranslationsNotesPageBrowseEn {
+	_TranslationsNotesPageBrowseEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get tree => 'Carpetas';
+	@override String get tags => 'Etiquetas';
+}
+
 // Path: notesPage.editor
 class _TranslationsNotesPageEditorEs extends TranslationsNotesPageEditorEn {
 	_TranslationsNotesPageEditorEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -2848,6 +2865,68 @@ class _TranslationsNotesPageRenameEs extends TranslationsNotesPageRenameEn {
 	@override String get helper => 'Ruta relativa a la bóveda. Las carpetas se crean solas.';
 	@override String doneSnack({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.';
 	@override String get doneWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
+}
+
+// Path: notesPage.tags
+class _TranslationsNotesPageTagsEs extends TranslationsNotesPageTagsEn {
+	_TranslationsNotesPageTagsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => 'Aún no hay etiquetas en el almacén. Escribe #así en una nota.';
+	@override String noMatches({required Object query}) => 'Ninguna etiqueta coincide con «${query}».';
+	@override String get filteredBy => 'Filtrado por';
+	@override String get clear => 'Quitar el filtro de etiqueta';
+	@override String noNotes({required Object tag}) => 'Ya no hay notas con #${tag}.';
+}
+
+// Path: notesPage.backlinks
+class _TranslationsNotesPageBacklinksEs extends TranslationsNotesPageBacklinksEn {
+	_TranslationsNotesPageBacklinksEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Retroenlaces';
+	@override String get loading => 'Buscando enlaces…';
+	@override String get empty => 'Todavía no hay notas que enlacen aquí.';
+	@override String failed({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}';
+}
+
+// Path: notesPage.outline
+class _TranslationsNotesPageOutlineEs extends TranslationsNotesPageOutlineEn {
+	_TranslationsNotesPageOutlineEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => 'Esquema';
+	@override String get title => 'Esquema';
+	@override String get empty => 'Este documento no tiene encabezados.';
+	@override String get jumpedToSource => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.';
+}
+
+// Path: notesPage.today
+class _TranslationsNotesPageTodayEs extends TranslationsNotesPageTodayEn {
+	_TranslationsNotesPageTodayEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => 'Abrir la nota diaria de hoy';
+}
+
+// Path: notesPage.wikiLink
+class _TranslationsNotesPageWikiLinkEs extends TranslationsNotesPageWikiLinkEn {
+	_TranslationsNotesPageWikiLinkEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get suggestions => 'Enlazar a…';
+	@override String createNew({required Object name}) => 'Crear «${name}»';
+	@override String get noMatches => 'Ninguna nota coincide: sigue escribiendo para crear una.';
 }
 
 // Path: vaultSync.every
@@ -8222,7 +8301,10 @@ class _TranslationsWebNotesVaultSyncAutoSyncEs extends TranslationsWebNotesVault
 	@override String get enabledTooltipNoRemote => 'Configura primero un remoto para habilitar la sincronización automática';
 	@override String get noRemoteHint => 'Sin remoto: se omitirán push/pull.';
 	@override String get commitEvery => 'Hacer commit cada';
-	@override String get commitEveryExamples => 'Ejemplos: <1>30s</1>, <3>10m</3>, <5>2h</5>. Mínimo 30s.';
+	@override late final _TranslationsWebNotesVaultSyncAutoSyncEveryEs every = _TranslationsWebNotesVaultSyncAutoSyncEveryEs._(_root);
+	@override String get intervalCustom => 'Personalizado…';
+	@override String get intervalInvalid => 'No es una duración válida. Usa un número con unidad, p. ej. 30s, 10m, 2h.';
+	@override String intervalTooShort({required Object min}) => 'El bucle de sincronización nunca se ejecuta más rápido que cada ${min}.';
 	@override String get pullEvery => 'Hacer pull cada';
 	@override String get pullEveryHint => 'Solo se usa cuando Pull está habilitado.';
 	@override String get pushAfterCommit => 'Hacer push tras el commit';
@@ -9904,6 +9986,24 @@ class _TranslationsWebNotesVaultSyncConflictKindsEs extends TranslationsWebNotes
 	@override String get operation => 'operación';
 }
 
+// Path: web.notes.vaultSync.autoSync.every
+class _TranslationsWebNotesVaultSyncAutoSyncEveryEs extends TranslationsWebNotesVaultSyncAutoSyncEveryEn {
+	_TranslationsWebNotesVaultSyncAutoSyncEveryEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get k30s => 'Cada 30 segundos';
+	@override String get k1m => 'Cada minuto';
+	@override String get k5m => 'Cada 5 minutos';
+	@override String get k10m => 'Cada 10 minutos';
+	@override String get k15m => 'Cada 15 minutos';
+	@override String get k30m => 'Cada 30 minutos';
+	@override String get k1h => 'Cada hora';
+	@override String get k6h => 'Cada 6 horas';
+	@override String get k24h => 'Cada 24 horas';
+}
+
 // Path: web.serverSettings.host.modes.ac
 class _TranslationsWebServerSettingsHostModesAcEs extends TranslationsWebServerSettingsHostModesAcEn {
 	_TranslationsWebServerSettingsHostModesAcEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -10960,7 +11060,18 @@ extension on TranslationsEs {
 			'web.notes.vaultSync.autoSync.enabledTooltipNoRemote' => 'Configura primero un remoto para habilitar la sincronización automática',
 			'web.notes.vaultSync.autoSync.noRemoteHint' => 'Sin remoto: se omitirán push/pull.',
 			'web.notes.vaultSync.autoSync.commitEvery' => 'Hacer commit cada',
-			'web.notes.vaultSync.autoSync.commitEveryExamples' => 'Ejemplos: <1>30s</1>, <3>10m</3>, <5>2h</5>. Mínimo 30s.',
+			'web.notes.vaultSync.autoSync.every.k30s' => 'Cada 30 segundos',
+			'web.notes.vaultSync.autoSync.every.k1m' => 'Cada minuto',
+			'web.notes.vaultSync.autoSync.every.k5m' => 'Cada 5 minutos',
+			'web.notes.vaultSync.autoSync.every.k10m' => 'Cada 10 minutos',
+			'web.notes.vaultSync.autoSync.every.k15m' => 'Cada 15 minutos',
+			'web.notes.vaultSync.autoSync.every.k30m' => 'Cada 30 minutos',
+			'web.notes.vaultSync.autoSync.every.k1h' => 'Cada hora',
+			'web.notes.vaultSync.autoSync.every.k6h' => 'Cada 6 horas',
+			'web.notes.vaultSync.autoSync.every.k24h' => 'Cada 24 horas',
+			'web.notes.vaultSync.autoSync.intervalCustom' => 'Personalizado…',
+			'web.notes.vaultSync.autoSync.intervalInvalid' => 'No es una duración válida. Usa un número con unidad, p. ej. 30s, 10m, 2h.',
+			'web.notes.vaultSync.autoSync.intervalTooShort' => ({required Object min}) => 'El bucle de sincronización nunca se ejecuta más rápido que cada ${min}.',
 			'web.notes.vaultSync.autoSync.pullEvery' => 'Hacer pull cada',
 			'web.notes.vaultSync.autoSync.pullEveryHint' => 'Solo se usa cuando Pull está habilitado.',
 			'web.notes.vaultSync.autoSync.pushAfterCommit' => 'Hacer push tras el commit',
@@ -11020,6 +11131,8 @@ extension on TranslationsEs {
 			'web.activity.filters.outbound' => 'Saliente',
 			'web.activity.filters.allStatuses' => 'Todos los estados',
 			'web.activity.filters.status2' => '2xx correcto',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.filters.status3' => '3xx redirección',
 			'web.activity.filters.status4' => '4xx error de cliente',
 			'web.activity.filters.status5' => '5xx error de servidor',
@@ -11031,8 +11144,6 @@ extension on TranslationsEs {
 			'web.activity.table.directionTitle' => 'Dirección',
 			'web.activity.table.method' => 'Método',
 			'web.activity.table.path' => 'Ruta',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.status' => 'Estado',
 			'web.activity.table.duration' => 'Duración',
 			'web.activity.table.inboundAria' => 'entrante',
@@ -11534,6 +11645,8 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.kindGitea' => 'Gitea',
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Nombre visible (opcional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
@@ -11545,8 +11658,6 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.enabledLabel' => 'Habilitado',
 			'web.plugins.gitHosts.dialog.addedToast' => 'Host de git añadido',
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Host de git actualizado',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
@@ -12048,6 +12159,8 @@ extension on TranslationsEs {
 			'web.serverSettings.toggle.on' => 'Activado',
 			'web.serverSettings.toggle.off' => 'Desactivado',
 			'web.serverSettings.toggle.defaultOn' => 'Por defecto (on)',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.toggle.defaultOff' => 'Por defecto (off)',
 			'web.serverSettings.memoryRuntimeBanner' => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Abrir ajustes de Cortex',
@@ -12059,8 +12172,6 @@ extension on TranslationsEs {
 			'web.serverSettings.host.modes.always.desc' => 'Nunca se duerme por inactividad, tampoco con batería.',
 			'web.serverSettings.host.modes.always.caveat' => 'Agotará la batería de un portátil desenchufado.',
 			'web.serverSettings.host.modes.on_demand.label' => 'Duerme inactivo, despierta con tráfico',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.on_demand.desc' => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.',
 			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
@@ -12562,6 +12673,8 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.title' => 'Plano del documento',
 			'web.cortex.blueprint.description' => 'El conjunto de secciones del documento oficial. Cada tipo de proyecto merece secciones distintas — dale forma tú o deja que la IA proponga.',
 			'web.cortex.blueprint.propose' => 'Proponer (IA)',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.proposeHint' => 'Clasifica el proyecto y propone un conjunto de secciones a medida',
 			'web.cortex.blueprint.proposeFailed' => 'Propuesta fallida',
 			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'La IA lo clasificó como: ${type} — ${reason} Revísalo, edítalo y aplica.',
@@ -12573,8 +12686,6 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.mode.human' => 'Humano',
 			'web.cortex.blueprint.mode.scanner' => 'Escáner',
 			'web.cortex.blueprint.inject' => 'inyectar',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.reserved' => 'reservada',
 			'web.cortex.blueprint.deleteNote' => 'Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.',
 			'web.cortex.blueprint.cancel' => 'Cancelar',
@@ -13076,6 +13187,8 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.modeRegion' => 'Encuadrar',
 			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => 'Trabajando en ${title} · ${kind}: el agente lo trata como «este lienzo».',
 			'sessions.inspector.canvas.notePlaceholder' => 'Qué cambiar aquí…',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.messagePlaceholder' => 'Nota general (opcional)…',
 			'sessions.inspector.canvas.send' => 'Enviar',
 			'sessions.inspector.canvas.sent' => 'Comentarios enviados a la sesión.',
@@ -13087,8 +13200,6 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.deleteTitle' => '¿Eliminar lienzo?',
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.',
 			'sessions.inspector.canvas.emptyTitle' => 'Aún no hay lienzos',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
 			'sessions.inspector.canvas.viewportPhone' => 'Ancho de móvil',
 			'sessions.inspector.canvas.viewportTablet' => 'Ancho de tablet',
@@ -13590,6 +13701,8 @@ extension on TranslationsEs {
 			'backups.recoveryKit.menuLabel' => 'Kit de recuperación',
 			'backups.recoveryKit.title' => 'Kit de recuperación',
 			'backups.recoveryKit.warning' => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
 			'backups.recoveryKit.generate' => 'Generar',
@@ -13601,8 +13714,6 @@ extension on TranslationsEs {
 			'backups.emptyNoTargets.headline' => 'No hay destinos de copia de seguridad configurados',
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
-			_ => null,
-		} ?? switch (path) {
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
@@ -14030,6 +14141,8 @@ extension on TranslationsEs {
 			'notesPage.newButton' => 'Nueva',
 			'notesPage.newNoteDialogTitle' => 'Nueva nota',
 			'notesPage.searchHint' => 'Busca en todo el vault…',
+			'notesPage.browse.tree' => 'Carpetas',
+			'notesPage.browse.tags' => 'Etiquetas',
 			'notesPage.up' => 'Arriba',
 			'notesPage.copyPath' => 'Copiar ruta',
 			'notesPage.open' => 'Abrir',
@@ -14050,7 +14163,7 @@ extension on TranslationsEs {
 			'notesPage.emptyFolder' => ({required Object path}) => 'La carpeta "${path}" está vacía.',
 			'notesPage.validatePath' => 'La ruta es obligatoria',
 			'notesPage.validatePathDots' => 'La ruta no puede contener ".."',
-			'notesPage.pathHelper' => 'Añade .md automáticamente si falta.',
+			'notesPage.pathHelper' => 'Añade .md salvo que el nombre ya termine en .md o .html.',
 			'notesPage.editor.markdownHint' => 'Markdown, o HTML si el archivo termina en .html…',
 			'notesPage.editor.saving' => 'Guardando…',
 			'notesPage.editor.autosave' => 'Guardado',
@@ -14082,9 +14195,28 @@ extension on TranslationsEs {
 			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
 			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
+			'notesPage.tags.empty' => 'Aún no hay etiquetas en el almacén. Escribe #así en una nota.',
+			'notesPage.tags.noMatches' => ({required Object query}) => 'Ninguna etiqueta coincide con «${query}».',
+			'notesPage.tags.filteredBy' => 'Filtrado por',
+			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
+			'notesPage.backlinks.title' => 'Retroenlaces',
+			'notesPage.backlinks.loading' => 'Buscando enlaces…',
+			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',
+			'notesPage.backlinks.failed' => ({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}',
+			'notesPage.outline.action' => 'Esquema',
+			'notesPage.outline.title' => 'Esquema',
+			'notesPage.outline.empty' => 'Este documento no tiene encabezados.',
+			'notesPage.outline.jumpedToSource' => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.',
+			'notesPage.today.tooltip' => 'Abrir la nota diaria de hoy',
+			'notesPage.wikiLink.suggestions' => 'Enlazar a…',
+			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Crear «${name}»',
+			'notesPage.wikiLink.noMatches' => 'Ninguna nota coincide: sigue escribiendo para crear una.',
 			'vaultSync.title' => 'Sincronización del vault',
 			'vaultSync.refresh' => 'Actualizar',
 			'vaultSync.statusTitle' => 'Estado',
+			_ => null,
+		} ?? switch (path) {
 			'vaultSync.notARepo' => 'El vault aún no es un repositorio git. Inicialízalo desde la interfaz web.',
 			'vaultSync.ahead' => ({required Object n}) => '${n} por delante',
 			'vaultSync.behind' => ({required Object n}) => '${n} por detrás',
@@ -14115,8 +14247,6 @@ extension on TranslationsEs {
 			'vaultSync.lastCommit' => 'Última confirmación',
 			'vaultSync.lastPush' => 'Último envío',
 			'vaultSync.lastPull' => 'Última traída',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.never' => 'Nunca',
 			'vaultSync.every.sec30' => 'Cada 30 segundos',
 			'vaultSync.every.min1' => 'Cada minuto',
