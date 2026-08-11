@@ -1133,9 +1133,18 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
       ? 'foundational'
       : 'emergent';
   late bool _inject = _section?.inject ?? false;
+  late String _maintainer = _section?.maintainerMode ?? 'ai';
   bool _busy = false;
 
   static final _slugRe = RegExp(r'^kb_[a-z0-9][a-z0-9_]{0,44}$');
+
+  // A foundational or pinned page can't be session-maintained (the gateway
+  // refuses the write), so the option is offered only where it works and a
+  // stale selection falls back rather than saving something inert.
+  bool get _sessionAllowed =>
+      !(_section?.pinned ?? false) && _nature != 'foundational';
+  String get _effectiveMaintainer =>
+      (_maintainer == 'session' && !_sessionAllowed) ? 'ai' : _maintainer;
 
   @override
   void dispose() {
@@ -1162,7 +1171,7 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               // Preserve fields the config editor doesn't expose so an edit
               // never silently resets them; new pages get sensible defaults.
               position: _section?.position ?? 99,
-              maintainerMode: _section?.maintainerMode ?? 'ai',
+              maintainerMode: _effectiveMaintainer,
               writePolicy: _section?.writePolicy ?? 'proposal',
               promptHint: _section?.promptHint ?? '',
               pinned: _section?.pinned ?? false,
@@ -1267,6 +1276,30 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               title: Text(t.web.knowledge.kb.newPage.inject),
               subtitle: Text(t.web.knowledge.kb.newPage.injectHint,
                   style: Theme.of(context).textTheme.bodySmall),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: _effectiveMaintainer,
+              decoration: const InputDecoration(isDense: true),
+              items: [
+                DropdownMenuItem(
+                    value: 'ai', child: Text(t.web.knowledge.kb.maintainer.ai)),
+                DropdownMenuItem(
+                    value: 'human',
+                    child: Text(t.web.knowledge.kb.maintainer.human)),
+                DropdownMenuItem(
+                    value: 'session',
+                    enabled: _sessionAllowed,
+                    child: Text(t.web.knowledge.kb.maintainer.session)),
+              ],
+              onChanged: (v) => setState(() => _maintainer = v ?? 'ai'),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _sessionAllowed
+                  ? t.web.knowledge.kb.maintainer.hint
+                  : t.web.knowledge.kb.maintainer.sessionUnavailable,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),

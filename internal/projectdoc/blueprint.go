@@ -84,9 +84,41 @@ func ValidGlobalKBSlug(s string) bool {
 	return kbSlugRe.MatchString(s)
 }
 
-// ValidMaintainerMode reports whether m is ai|human|scanner.
+// ValidMaintainerMode reports whether m is ai|human|scanner|session.
+//
+// The mode answers one question: WHO keeps this page current?
+//   - "ai"      — the Cortex background sweep redrafts it from memory.
+//   - "human"   — the operator authors it by hand; automation only proposes.
+//   - "scanner" — a mechanical rebuilder owns it (tech_stack, recent_activity).
+//   - "session" — the agent doing the work writes it, live, mid-session.
+//
+// "session" exists because some knowledge only the working agent ever
+// holds: it just provisioned the container, created the role, picked the
+// port. The background sweep cannot reconstruct that from episodic facts,
+// so a session-maintained page hands the pen to the one who was there.
 func ValidMaintainerMode(m string) bool {
-	return m == "ai" || m == "human" || m == "scanner"
+	return m == "ai" || m == "human" || m == "scanner" || m == "session"
+}
+
+// MaintainerSession is the maintainer_mode that lets an ordinary
+// in-session agent write a global knowledge page's body.
+const MaintainerSession = "session"
+
+// SessionWritable reports whether an ordinary (non-Librarian) session may
+// write this section's body via SetDocByPolicy.
+//
+// Deliberately metadata-driven: no slug is special-cased, so an operator
+// who creates kb_anything and marks it session-maintained gets it, and an
+// install that never creates one exposes no writable page at all. The
+// extra guards below are belt-and-braces against a mislabelled page —
+// foundational pages carry binding rules and pinned pages are reserved,
+// so neither is ever handed to a session regardless of its mode.
+func SessionWritable(sec Section) bool {
+	return sec.Cwd == GlobalCwd &&
+		ValidGlobalKBSlug(sec.Slug) &&
+		sec.MaintainerMode == MaintainerSession &&
+		sec.Nature != "foundational" &&
+		!sec.Pinned
 }
 
 // ValidWritePolicy reports whether p is direct|proposal.
@@ -111,6 +143,33 @@ func ValidNature(n string) bool {
 // ErrReservedSection is returned when a caller tries to delete or
 // demote the reserved overview section.
 var ErrReservedSection = errors.New("projectdoc: the overview section is reserved")
+
+// ErrNotSessionWritable is returned when an agent-side write targets a
+// global knowledge page that is not session-maintained.
+var ErrNotSessionWritable = errors.New(
+	"projectdoc: this knowledge page is not session-maintained — " +
+		"only pages whose blueprint maintainer_mode is \"session\" accept an in-session write")
+
+// globalKBWriteGuard authorises an agent-side write to a GLOBAL knowledge
+// page against the live blueprint.
+//
+// Fails closed: a page missing from the blueprint — including the case
+// where we read no blueprint at all — is refused rather than written. The
+// alternative (degrade to a proposal, as an unknown per-project section
+// does) would let any agent queue proposals against pages the operator
+// never opened to sessions.
+func globalKBWriteGuard(sections []Section, kind Kind) error {
+	for _, sec := range sections {
+		if sec.Slug == string(kind) {
+			if !SessionWritable(sec) {
+				return fmt.Errorf("%w (%s is maintained by %q)",
+					ErrNotSessionWritable, kind, sec.MaintainerMode)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("%w (%s is not in the knowledge blueprint)", ErrNotSessionWritable, kind)
+}
 
 // defaultSections is the blueprint a never-configured project gets —
 // a 1:1 map of the legacy fixed kinds, so pre-blueprint behaviour is
@@ -253,9 +312,17 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 		if sec.Slug == SlugOverview {
 			sec.Pinned = true // the front page stays pinned
 		}
+		if sec.MaintainerMode == MaintainerSession {
+			// Per-project docs already have an in-session write path
+			// (current_objective_set and friends); "session" is a
+			// knowledge-layer mode and would be inert here, so reject it
+			// rather than store a setting that does nothing.
+			return Section{}, fmt.Errorf(
+				"projectdoc: maintainer_mode %q applies to global knowledge pages only", MaintainerSession)
+		}
 	}
 	if !ValidMaintainerMode(sec.MaintainerMode) {
-		return Section{}, fmt.Errorf("projectdoc: maintainer_mode must be ai|human|scanner, got %q", sec.MaintainerMode)
+		return Section{}, fmt.Errorf("projectdoc: maintainer_mode must be ai|human|scanner|session, got %q", sec.MaintainerMode)
 	}
 	// Empty defaults to the safe proposal gate; a bad explicit value is
 	// rejected so a caller can't silently mistype direct-write away.

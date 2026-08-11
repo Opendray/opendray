@@ -448,17 +448,32 @@ func (s *Service) SetDocByPolicy(ctx context.Context, cwd string, kind Kind, con
 		return SetOutcome{}, ErrEmptyCwd
 	}
 
-	policy := "proposal"
-	if sections, err := s.ListSections(ctx, cwd); err == nil {
-		for _, sec := range sections {
-			if sec.Slug == string(kind) {
-				policy = normalizeWritePolicy(sec.WritePolicy)
-				break
-			}
-		}
-	} else {
+	sections, listErr := s.ListSections(ctx, cwd)
+	if listErr != nil {
 		s.log.Warn("projectdoc: set policy lookup failed — using proposal gate",
-			"cwd", cwd, "kind", kind, "err", err)
+			"cwd", cwd, "kind", kind, "err", listErr)
+	}
+
+	// Global knowledge pages are shared across every project, so an
+	// agent-side write has to be authorised page-by-page: only a
+	// session-maintained page accepts one. Per-project sections keep
+	// their existing behaviour (unknown → safe proposal gate).
+	if cwd == GlobalCwd {
+		if listErr != nil {
+			return SetOutcome{}, fmt.Errorf("%w: blueprint unavailable: %w",
+				ErrNotSessionWritable, listErr)
+		}
+		if err := globalKBWriteGuard(sections, kind); err != nil {
+			return SetOutcome{}, err
+		}
+	}
+
+	policy := "proposal"
+	for _, sec := range sections {
+		if sec.Slug == string(kind) {
+			policy = normalizeWritePolicy(sec.WritePolicy)
+			break
+		}
 	}
 
 	if policy == "direct" {
@@ -1252,22 +1267,7 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		b.WriteString("\n")
 	}
 
-	b.WriteString("### Knowledge index (cross-project)\n\n")
-	for _, sec := range kbSections {
-		if sec.Nature == "foundational" && sec.Inject {
-			continue // already injected in full above
-		}
-		authority := "reference"
-		if sec.Nature == "foundational" {
-			authority = "binding"
-		}
-		fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, authority)
-		if desc := strings.TrimSpace(sec.Description); desc != "" {
-			b.WriteString(" — " + desc)
-		}
-		b.WriteString("\n")
-	}
-	b.WriteString("\n")
+	b.WriteString(renderKnowledgeIndex(kbSections))
 
 	b.WriteString("The headings above are NOT loaded — they are a MAP. Fetch on demand via the " +
 		"opendray-memory MCP tools. **Before any work that touches how our system works — " +
@@ -1291,6 +1291,47 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		"`project_goal_set` and medium-term `project_plan_set`, do **not** silently overwrite " +
 		"— those file a proposal the operator approves first.\n")
 	return b.String(), nil
+}
+
+// renderKnowledgeIndex lists the global knowledge pages an agent can fetch
+// on demand, and marks the ones this session is expected to keep current.
+//
+// The mark matters: the injected foundational rules tell agents where to
+// record what they learn, and without it an agent reads an instruction to
+// write a page its tool surface never offered — which it can only report
+// as a missing capability. The index and the MCP tool list are derived
+// from the same blueprint metadata so they cannot disagree.
+func renderKnowledgeIndex(kbSections []Section) string {
+	var b strings.Builder
+	b.WriteString("### Knowledge index (cross-project)\n\n")
+	writable := 0
+	for _, sec := range kbSections {
+		if sec.Nature == "foundational" && sec.Inject {
+			continue // already injected in full above
+		}
+		authority := "reference"
+		if sec.Nature == "foundational" {
+			authority = "binding"
+		}
+		fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, authority)
+		if desc := strings.TrimSpace(sec.Description); desc != "" {
+			b.WriteString(" — " + desc)
+		}
+		if SessionWritable(sec) {
+			writable++
+			b.WriteString(" **[you maintain this page — write it with `kb_page_set`]**")
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+	if writable > 0 {
+		b.WriteString("The page(s) marked above are yours to keep current: when work " +
+			"produces a durable cross-project fact that belongs on one, `doc_read` it and " +
+			"write the updated body back with `kb_page_set`. Every other knowledge page is " +
+			"maintained by the operator or by opendray's background curation — record what " +
+			"you learn about those with `memory_store` instead.\n\n")
+	}
+	return b.String()
 }
 
 // globalKBDoc fetches a global Knowledge page for spawn injection. Empty on

@@ -3043,6 +3043,13 @@
         "emergentHint": "Lessons & reusable features distilled from past work — guidance.",
         "bindingBadge": "Binding · must follow",
         "referenceBadge": "Reference",
+        "maintainer": {
+          "ai": "Maintained by opendray's background curation",
+          "human": "Maintained by me — automation only proposes",
+          "session": "Maintained by the agent doing the work",
+          "hint": "Who keeps this page current. \"The agent doing the work\" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.",
+          "sessionUnavailable": "Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task."
+        },
         "proposal": {
           "text": "AI proposed an update to this page (new evidence diverged).",
           "preview": "Preview",

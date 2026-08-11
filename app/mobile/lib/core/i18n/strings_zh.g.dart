@@ -6073,6 +6073,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get emergentHint => '从过往工作蒸馏的教训与可复用功能——参考性引导。';
 	@override String get bindingBadge => '强约束 · 必须遵守';
 	@override String get referenceBadge => '参考';
+	@override late final _TranslationsWebKnowledgeKbMaintainerZh maintainer = _TranslationsWebKnowledgeKbMaintainerZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbProposalZh proposal = _TranslationsWebKnowledgeKbProposalZh._(_root);
 	@override String get discuss => '与 AI 讨论';
 	@override String get discussHint => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写';
@@ -9735,6 +9736,20 @@ class _TranslationsWebKnowledgeKbKindsZh extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_reusable => '可复用功能';
 }
 
+// Path: web.knowledge.kb.maintainer
+class _TranslationsWebKnowledgeKbMaintainerZh extends TranslationsWebKnowledgeKbMaintainerEn {
+	_TranslationsWebKnowledgeKbMaintainerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get ai => '由 opendray 后台整理维护';
+	@override String get human => '由我维护 —— 自动化只能提交提案';
+	@override String get session => '由干活的 agent 维护';
+	@override String get hint => '谁负责让这一页保持最新。选「由干活的 agent 维护」后，每个会话都会拿到一个直接写这一页的工具 —— 适合只有当场干活的 agent 才知道的记录，比如它刚创建的容器。后台整理则是从积累的记忆里重新起草整页。';
+	@override String get sessionUnavailable => '谁负责让这一页保持最新。基础页和内置页不能交给 agent 维护 —— 它们是强约束规则，不能让会话在干活途中改写。';
+}
+
 // Path: web.knowledge.kb.proposal
 class _TranslationsWebKnowledgeKbProposalZh extends TranslationsWebKnowledgeKbProposalEn {
 	_TranslationsWebKnowledgeKbProposalZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -12514,6 +12529,11 @@ extension on TranslationsZh {
 			'web.knowledge.kb.emergentHint' => '从过往工作蒸馏的教训与可复用功能——参考性引导。',
 			'web.knowledge.kb.bindingBadge' => '强约束 · 必须遵守',
 			'web.knowledge.kb.referenceBadge' => '参考',
+			'web.knowledge.kb.maintainer.ai' => '由 opendray 后台整理维护',
+			'web.knowledge.kb.maintainer.human' => '由我维护 —— 自动化只能提交提案',
+			'web.knowledge.kb.maintainer.session' => '由干活的 agent 维护',
+			'web.knowledge.kb.maintainer.hint' => '谁负责让这一页保持最新。选「由干活的 agent 维护」后，每个会话都会拿到一个直接写这一页的工具 —— 适合只有当场干活的 agent 才知道的记录，比如它刚创建的容器。后台整理则是从积累的记忆里重新起草整页。',
+			'web.knowledge.kb.maintainer.sessionUnavailable' => '谁负责让这一页保持最新。基础页和内置页不能交给 agent 维护 —— 它们是强约束规则，不能让会话在干活途中改写。',
 			'web.knowledge.kb.proposal.text' => 'AI 提议更新此页(出现了与之冲突的新证据)。',
 			'web.knowledge.kb.proposal.preview' => '预览',
 			'web.knowledge.kb.proposal.hide' => '收起',
@@ -12665,13 +12685,13 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.open' => '蓝图',
 			'web.cortex.blueprint.openHint' => '编辑本项目文档包含哪些章节',
 			'web.cortex.blueprint.title' => '文档蓝图',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.description' => '本项目官方文档的章节结构。不同类型的项目应有不同的章节——可自行调整，也可让 AI 按项目类型提议。',
 			'web.cortex.blueprint.propose' => 'AI 提议',
 			'web.cortex.blueprint.proposeHint' => '识别项目类型并提议契合的章节结构',
 			'web.cortex.blueprint.proposeFailed' => '提议失败',
 			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'AI 判断项目类型为：${type}——${reason} 请在下方审阅并自由修改后应用。',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.addSection' => '添加章节',
 			'web.cortex.blueprint.slugPlaceholder' => '标识',
 			'web.cortex.blueprint.titlePlaceholder' => '标题',
@@ -13179,13 +13199,13 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.modeView' => '查看',
 			'sessions.inspector.canvas.modePin' => '钉点',
 			'sessions.inspector.canvas.modeRegion' => '框选',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => '正在处理 ${title} · ${kind} —— agent 已把它当作「这个画布」。',
 			'sessions.inspector.canvas.notePlaceholder' => '这里要改什么……',
 			'sessions.inspector.canvas.messagePlaceholder' => '整体说明(可选)……',
 			'sessions.inspector.canvas.send' => '发送',
 			'sessions.inspector.canvas.sent' => '反馈已发送到会话。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.nothingToSend' => '请先添加钉点、框选或说明。',
 			'sessions.inspector.canvas.requestPlaceholder' => '让 agent 设计或画点什么……',
 			'sessions.inspector.canvas.requested' => '已发送 —— agent 会渲染到这里。',
@@ -13693,13 +13713,13 @@ extension on TranslationsZh {
 			'backups.kv.yes' => '是',
 			'backups.kv.no' => '否',
 			'backups.recoveryKit.menuLabel' => '恢复工具包',
+			_ => null,
+		} ?? switch (path) {
 			'backups.recoveryKit.title' => '恢复工具包',
 			'backups.recoveryKit.warning' => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。',
 			'backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
 			'backups.recoveryKit.confirmLabel' => '确认恢复口令',
 			'backups.recoveryKit.generate' => '生成',
-			_ => null,
-		} ?? switch (path) {
 			'backups.recoveryKit.copy' => '复制工具包',
 			'backups.recoveryKit.copied' => '恢复工具包已复制 —— 请妥善保存',
 			'backups.recoveryKit.failed' => ({required Object error}) => '无法生成恢复工具包：${error}',
@@ -14207,13 +14227,13 @@ extension on TranslationsZh {
 			'notesPage.wikiLink.createNew' => ({required Object name}) => '新建“${name}”',
 			'notesPage.wikiLink.noMatches' => '没有匹配的笔记 —— 继续输入即可新建。',
 			'vaultSync.title' => 'Vault 同步',
+			_ => null,
+		} ?? switch (path) {
 			'vaultSync.refresh' => '刷新',
 			'vaultSync.statusTitle' => '状态',
 			'vaultSync.notARepo' => 'vault 还不是 git 仓库。请先在网页端初始化。',
 			'vaultSync.ahead' => ({required Object n}) => '领先 ${n}',
 			'vaultSync.behind' => ({required Object n}) => '落后 ${n}',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.clean' => '没有本地改动',
 			'vaultSync.changedFiles' => ({required Object n}) => '${n} 处改动',
 			'vaultSync.noRemote' => '未配置 remote',

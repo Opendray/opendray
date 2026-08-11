@@ -11869,6 +11869,7 @@ class TranslationsWebKnowledgeKbEn {
 	/// en: 'Reference'
 	String get referenceBadge => 'Reference';
 
+	late final TranslationsWebKnowledgeKbMaintainerEn maintainer = TranslationsWebKnowledgeKbMaintainerEn.internal(_root);
 	late final TranslationsWebKnowledgeKbProposalEn proposal = TranslationsWebKnowledgeKbProposalEn.internal(_root);
 
 	/// en: 'Discuss with AI'
@@ -18650,6 +18651,30 @@ class TranslationsWebKnowledgeKbKindsEn {
 	String get kb_reusable => 'Reusable features';
 }
 
+// Path: web.knowledge.kb.maintainer
+class TranslationsWebKnowledgeKbMaintainerEn {
+	TranslationsWebKnowledgeKbMaintainerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Maintained by opendray's background curation'
+	String get ai => 'Maintained by opendray\'s background curation';
+
+	/// en: 'Maintained by me — automation only proposes'
+	String get human => 'Maintained by me — automation only proposes';
+
+	/// en: 'Maintained by the agent doing the work'
+	String get session => 'Maintained by the agent doing the work';
+
+	/// en: 'Who keeps this page current. "The agent doing the work" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.'
+	String get hint => 'Who keeps this page current. "The agent doing the work" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.';
+
+	/// en: 'Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task.'
+	String get sessionUnavailable => 'Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task.';
+}
+
 // Path: web.knowledge.kb.proposal
 class TranslationsWebKnowledgeKbProposalEn {
 	TranslationsWebKnowledgeKbProposalEn.internal(this._root);
@@ -21677,6 +21702,11 @@ extension on Translations {
 			'web.knowledge.kb.emergentHint' => 'Lessons & reusable features distilled from past work — guidance.',
 			'web.knowledge.kb.bindingBadge' => 'Binding · must follow',
 			'web.knowledge.kb.referenceBadge' => 'Reference',
+			'web.knowledge.kb.maintainer.ai' => 'Maintained by opendray\'s background curation',
+			'web.knowledge.kb.maintainer.human' => 'Maintained by me — automation only proposes',
+			'web.knowledge.kb.maintainer.session' => 'Maintained by the agent doing the work',
+			'web.knowledge.kb.maintainer.hint' => 'Who keeps this page current. "The agent doing the work" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.',
+			'web.knowledge.kb.maintainer.sessionUnavailable' => 'Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task.',
 			'web.knowledge.kb.proposal.text' => 'AI proposed an update to this page (new evidence diverged).',
 			'web.knowledge.kb.proposal.preview' => 'Preview',
 			'web.knowledge.kb.proposal.hide' => 'Hide',
@@ -21825,13 +21855,13 @@ extension on Translations {
 			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
 			'web.cortex.chat.modelProviderDefault' => 'Provider default',
 			'web.cortex.chat.modelProbeFailed' => 'Couldn\'t reach the endpoint to list models — pick the provider default or configure it in Memory settings.',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.open' => 'Blueprint',
 			'web.cortex.blueprint.openHint' => 'Edit which doc sections this project carries',
 			'web.cortex.blueprint.title' => 'Doc blueprint',
 			'web.cortex.blueprint.description' => 'The section set of this project\'s official document. Different kinds of projects deserve different sections — shape it yourself or let the AI propose one.',
 			'web.cortex.blueprint.propose' => 'AI propose',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.proposeHint' => 'Classify this project and propose a tailored section set',
 			'web.cortex.blueprint.proposeFailed' => 'Proposal failed',
 			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'AI classified this as: ${type} — ${reason} Review below, edit freely, then Apply.',
@@ -22339,13 +22369,13 @@ extension on Translations {
 			'sessions.inspector.canvas.kindMindmap' => 'Mind map',
 			'sessions.inspector.canvas.kindGraph' => 'Relationships',
 			'sessions.inspector.canvas.kindDoc' => 'Document',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.modeView' => 'View',
 			'sessions.inspector.canvas.modePin' => 'Pin',
 			'sessions.inspector.canvas.modeRegion' => 'Frame',
 			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => 'Working on ${title} · ${kind} — the agent treats this as "this canvas".',
 			'sessions.inspector.canvas.notePlaceholder' => 'What to change here…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.messagePlaceholder' => 'Overall note (optional)…',
 			'sessions.inspector.canvas.send' => 'Send',
 			'sessions.inspector.canvas.sent' => 'Feedback sent to the session.',
@@ -22853,13 +22883,13 @@ extension on Translations {
 			'backups.kv.encrypted' => 'Encrypted',
 			'backups.kv.targetPath' => 'Target path',
 			'backups.kv.error' => 'Error',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.yes' => 'yes',
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Recovery Kit',
 			'backups.recoveryKit.title' => 'Recovery Kit',
 			'backups.recoveryKit.warning' => 'Disaster-recovery insurance — you only need this if this host AND its keys are lost together; normally you never touch it. The kit is your backup passphrase sealed under the password you pick here. Each time you generate, it\'s a separate kit sealed with THAT password — nothing is stored, so there is no single master password. Keep the kit and its password together, out-of-band. Note: this password protects the kit, not the gateway — anyone with admin access can generate a new one.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.recoveryKit.passphraseLabel' => 'Recovery passphrase (min 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirm recovery passphrase',
 			'backups.recoveryKit.generate' => 'Generate',
@@ -23367,13 +23397,13 @@ extension on Translations {
 			'notesPage.outline.jumpedToSource' => 'Preview can\'t scroll without scripts, so this opened the source view.',
 			'notesPage.today.tooltip' => 'Open today\'s daily note',
 			'notesPage.wikiLink.suggestions' => 'Link to…',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Create "${name}"',
 			'notesPage.wikiLink.noMatches' => 'No note matches — keep typing to create one.',
 			'vaultSync.title' => 'Vault sync',
 			'vaultSync.refresh' => 'Refresh',
 			'vaultSync.statusTitle' => 'Status',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.notARepo' => 'The vault is not a git repository yet. Initialise it from the web UI.',
 			'vaultSync.ahead' => ({required Object n}) => '${n} ahead',
 			'vaultSync.behind' => ({required Object n}) => '${n} behind',

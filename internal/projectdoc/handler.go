@@ -455,6 +455,11 @@ func (h *Handlers) respondErr(w http.ResponseWriter, err error) {
 	case errors.Is(err, ErrAlreadyDecided):
 		// 409 — request can't be reapplied to current state.
 		writeError(w, http.StatusConflict, err)
+	case errors.Is(err, ErrNotSessionWritable),
+		errors.Is(err, ErrReservedSection):
+		// 403 — the request is well-formed; this page just isn't the
+		// caller's to write.
+		writeError(w, http.StatusForbidden, err)
 	case errors.Is(err, ErrInvalidKind),
 		errors.Is(err, ErrInvalidLogKind),
 		errors.Is(err, ErrInvalidStatus),

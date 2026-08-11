@@ -6073,6 +6073,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get emergentHint => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.';
 	@override String get bindingBadge => 'Vinculante · obligatorio';
 	@override String get referenceBadge => 'Referencia';
+	@override late final _TranslationsWebKnowledgeKbMaintainerEs maintainer = _TranslationsWebKnowledgeKbMaintainerEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbProposalEs proposal = _TranslationsWebKnowledgeKbProposalEs._(_root);
 	@override String get discuss => 'Hablar con la IA';
 	@override String get discussHint => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras';
@@ -9738,6 +9739,20 @@ class _TranslationsWebKnowledgeKbKindsEs extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_reusable => 'Funciones reutilizables';
 }
 
+// Path: web.knowledge.kb.maintainer
+class _TranslationsWebKnowledgeKbMaintainerEs extends TranslationsWebKnowledgeKbMaintainerEn {
+	_TranslationsWebKnowledgeKbMaintainerEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get ai => 'Mantenida por la curación en segundo plano de opendray';
+	@override String get human => 'Mantenida por mí: la automatización solo propone';
+	@override String get session => 'Mantenida por el agente que hace el trabajo';
+	@override String get hint => 'Quién mantiene esta página al día. «El agente que hace el trabajo» da a cada sesión una herramienta para escribir esta página sobre la marcha: ideal para registros que solo conoce el agente que trabaja, como un contenedor que acaba de crear. La curación en segundo plano, en cambio, redacta la página a partir de la memoria acumulada.';
+	@override String get sessionUnavailable => 'Quién mantiene esta página al día. La opción mantenida por el agente no está disponible para páginas fundacionales ni integradas: sus reglas son vinculantes, así que una sesión no debe reescribirlas a mitad de una tarea.';
+}
+
 // Path: web.knowledge.kb.proposal
 class _TranslationsWebKnowledgeKbProposalEs extends TranslationsWebKnowledgeKbProposalEn {
 	_TranslationsWebKnowledgeKbProposalEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -12520,6 +12535,11 @@ extension on TranslationsEs {
 			'web.knowledge.kb.emergentHint' => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.',
 			'web.knowledge.kb.bindingBadge' => 'Vinculante · obligatorio',
 			'web.knowledge.kb.referenceBadge' => 'Referencia',
+			'web.knowledge.kb.maintainer.ai' => 'Mantenida por la curación en segundo plano de opendray',
+			'web.knowledge.kb.maintainer.human' => 'Mantenida por mí: la automatización solo propone',
+			'web.knowledge.kb.maintainer.session' => 'Mantenida por el agente que hace el trabajo',
+			'web.knowledge.kb.maintainer.hint' => 'Quién mantiene esta página al día. «El agente que hace el trabajo» da a cada sesión una herramienta para escribir esta página sobre la marcha: ideal para registros que solo conoce el agente que trabaja, como un contenedor que acaba de crear. La curación en segundo plano, en cambio, redacta la página a partir de la memoria acumulada.',
+			'web.knowledge.kb.maintainer.sessionUnavailable' => 'Quién mantiene esta página al día. La opción mantenida por el agente no está disponible para páginas fundacionales ni integradas: sus reglas son vinculantes, así que una sesión no debe reescribirlas a mitad de una tarea.',
 			'web.knowledge.kb.proposal.text' => 'La IA propuso una actualización de esta página (evidencia nueva divergente).',
 			'web.knowledge.kb.proposal.preview' => 'Vista previa',
 			'web.knowledge.kb.proposal.hide' => 'Ocultar',
@@ -12668,13 +12688,13 @@ extension on TranslationsEs {
 			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
 			'web.cortex.chat.modelProviderDefault' => 'Predeterminado del proveedor',
 			'web.cortex.chat.modelProbeFailed' => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.blueprint.open' => 'Plano',
 			'web.cortex.blueprint.openHint' => 'Edita qué secciones documenta este proyecto',
 			'web.cortex.blueprint.title' => 'Plano del documento',
 			'web.cortex.blueprint.description' => 'El conjunto de secciones del documento oficial. Cada tipo de proyecto merece secciones distintas — dale forma tú o deja que la IA proponga.',
 			'web.cortex.blueprint.propose' => 'Proponer (IA)',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.proposeHint' => 'Clasifica el proyecto y propone un conjunto de secciones a medida',
 			'web.cortex.blueprint.proposeFailed' => 'Propuesta fallida',
 			'web.cortex.blueprint.proposalNote' => ({required Object type, required Object reason}) => 'La IA lo clasificó como: ${type} — ${reason} Revísalo, edítalo y aplica.',
@@ -13182,13 +13202,13 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.kindMindmap' => 'Mapa mental',
 			'sessions.inspector.canvas.kindGraph' => 'Relaciones',
 			'sessions.inspector.canvas.kindDoc' => 'Documento',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.modeView' => 'Ver',
 			'sessions.inspector.canvas.modePin' => 'Marcar',
 			'sessions.inspector.canvas.modeRegion' => 'Encuadrar',
 			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => 'Trabajando en ${title} · ${kind}: el agente lo trata como «este lienzo».',
 			'sessions.inspector.canvas.notePlaceholder' => 'Qué cambiar aquí…',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.messagePlaceholder' => 'Nota general (opcional)…',
 			'sessions.inspector.canvas.send' => 'Enviar',
 			'sessions.inspector.canvas.sent' => 'Comentarios enviados a la sesión.',
@@ -13696,13 +13716,13 @@ extension on TranslationsEs {
 			'backups.kv.encrypted' => 'Cifrado',
 			'backups.kv.targetPath' => 'Ruta de destino',
 			'backups.kv.error' => 'Error',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.yes' => 'sí',
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Kit de recuperación',
 			'backups.recoveryKit.title' => 'Kit de recuperación',
 			'backups.recoveryKit.warning' => 'Seguro de recuperación ante desastres: solo lo necesitas si este host Y sus claves se pierden juntos; normalmente nunca lo usas. El kit es tu frase de copia de seguridad sellada con la contraseña que eliges aquí. Cada vez que lo generas es un kit independiente sellado con ESA contraseña: no se almacena nada, así que no hay una única contraseña maestra. Guarda el kit y su contraseña juntos, fuera de banda. Nota: esta contraseña protege el kit, no la puerta de enlace: cualquiera con acceso de administrador puede generar uno nuevo.',
-			_ => null,
-		} ?? switch (path) {
 			'backups.recoveryKit.passphraseLabel' => 'Frase de recuperación (mín. 8)',
 			'backups.recoveryKit.confirmLabel' => 'Confirmar frase de recuperación',
 			'backups.recoveryKit.generate' => 'Generar',
@@ -14210,13 +14230,13 @@ extension on TranslationsEs {
 			'notesPage.outline.jumpedToSource' => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.',
 			'notesPage.today.tooltip' => 'Abrir la nota diaria de hoy',
 			'notesPage.wikiLink.suggestions' => 'Enlazar a…',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Crear «${name}»',
 			'notesPage.wikiLink.noMatches' => 'Ninguna nota coincide: sigue escribiendo para crear una.',
 			'vaultSync.title' => 'Sincronización del vault',
 			'vaultSync.refresh' => 'Actualizar',
 			'vaultSync.statusTitle' => 'Estado',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.notARepo' => 'El vault aún no es un repositorio git. Inicialízalo desde la interfaz web.',
 			'vaultSync.ahead' => ({required Object n}) => '${n} por delante',
 			'vaultSync.behind' => ({required Object n}) => '${n} por detrás',
