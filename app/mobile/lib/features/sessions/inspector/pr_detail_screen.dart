@@ -72,6 +72,38 @@ class _PRDetailScreenState extends ConsumerState<PRDetailScreen> {
     }
   }
 
+  // Merging a PR whose base has moved on is refused by repos that require
+  // branches to be up to date — GitHub reports it as missing status
+  // checks, which points at the wrong thing. This is GitHub's "Update
+  // branch": merge the base in so the checks re-run on it.
+  Future<void> _updateBranch() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    final errorColor = Theme.of(context).colorScheme.error;
+    try {
+      final updated = await ref
+          .read(gitApiProvider)
+          .updatePullRequestBranch(dir: widget.cwd, number: _pr.number);
+      if (!mounted) return;
+      setState(() => _pr = updated);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Merged ${_pr.base} into the branch — checks re-run'),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Update branch failed: ${e.message}'),
+          backgroundColor: errorColor,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _merge() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -246,6 +278,15 @@ class _PRDetailScreenState extends ConsumerState<PRDetailScreen> {
             ),
             Text('Delete branch', style: theme.textTheme.bodySmall),
             const Spacer(),
+            if (_pr.behindBase)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: OutlinedButton.icon(
+                  onPressed: _busy ? null : _updateBranch,
+                  icon: const Icon(Icons.sync, size: 16),
+                  label: const Text('Update branch'),
+                ),
+              ),
             FilledButton.icon(
               onPressed: _busy ? null : _merge,
               icon: _busy
@@ -423,7 +464,9 @@ class _CommentCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
+              ),
             ),
             child: Row(
               children: [
@@ -479,10 +522,7 @@ class _ReviewStateBadge extends StatelessWidget {
       ),
       child: Text(
         state.replaceAll('_', ' '),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontSize: 9,
-        ),
+        style: theme.textTheme.labelSmall?.copyWith(color: color, fontSize: 9),
       ),
     );
   }
@@ -540,7 +580,8 @@ class _CommitsTabState extends ConsumerState<_CommitsTab> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _commits!.length,
-      separatorBuilder: (_, __) => Divider(height: 14, color: theme.dividerColor),
+      separatorBuilder: (_, __) =>
+          Divider(height: 14, color: theme.dividerColor),
       itemBuilder: (context, i) {
         final c = _commits![i];
         return Row(
@@ -827,9 +868,7 @@ class _DiffView extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final line in lines) _diffLine(theme, line),
-          ],
+          children: [for (final line in lines) _diffLine(theme, line)],
         ),
       ),
     );
