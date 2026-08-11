@@ -33,6 +33,8 @@ import {
   getPRFiles,
   listGitPRs,
   mergeGitPR,
+  updateGitPRBranch,
+  isBehindBase,
 } from '@/lib/githost'
 import { cn } from '@/lib/utils'
 import { CredentialNote } from './CredentialNote'
@@ -438,6 +440,25 @@ function PRDetailDrawer({
     },
   })
 
+  // Merging a PR whose base has moved on is refused by repos that require
+  // branches to be up to date. This is GitHub's "Update branch": merge the
+  // base in so the checks re-run on it. Without it, an operator working
+  // only through opendray has no way out of that state.
+  const updateBranch = useMutation({
+    mutationFn: () => updateGitPRBranch(cwd, pr.number),
+    onSuccess: () => {
+      toast.success(`PR #${pr.number} branch updated`, {
+        description: `Merged ${full.base} in — checks will re-run.`,
+      })
+      void detail.refetch()
+    },
+    onError: (err) => {
+      toast.error('Update branch failed', {
+        description: (err as Error).message,
+      })
+    },
+  })
+
   // body is undefined until the detail fetch resolves; '' means the PR
   // genuinely has no description. While the query still serves the
   // seeded list row (isPlaceholderData), the body fetch is in flight.
@@ -534,6 +555,25 @@ function PRDetailDrawer({
           {tab === 'checks' && <ChecksTab cwd={cwd} number={full.number} />}
           {tab === 'files' && <FilesTab cwd={cwd} number={full.number} />}
         </div>
+
+        {/* Behind the base — merging will be refused until this is done,
+            so say it plainly and offer the one-click fix. */}
+        {full.state === 'open' && isBehindBase(full) && (
+          <div className="border-t border-amber-500/30 bg-amber-500/10 px-3 py-2 flex flex-wrap items-center gap-2 text-[11px]">
+            <span className="flex-1 text-amber-300">
+              This branch is behind <code>{full.base}</code>. The repository
+              requires branches to be up to date before merging.
+            </span>
+            <button
+              type="button"
+              disabled={updateBranch.isPending}
+              onClick={() => updateBranch.mutate()}
+              className="rounded border border-amber-400/40 px-2 py-0.5 text-amber-200 disabled:opacity-50"
+            >
+              {updateBranch.isPending ? 'Updating…' : 'Update branch'}
+            </button>
+          </div>
+        )}
 
         {/* Merge — footer, only while the PR is open (visible on any tab) */}
         {full.state === 'open' && (
