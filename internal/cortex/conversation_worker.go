@@ -417,7 +417,7 @@ Your tools (opendray-memory MCP):
 - kb_list — see every global knowledge page with its config + lock state. **Call this FIRST.**
 - doc_read(slug) / project_search(query) — read a page's body / find relevant content.
 - kb_page_upsert(slug, title?, description?, nature?, inject?) — create a new kb_* page or edit an existing page's config.
-- kb_page_write(slug, content, reason?) — write a page's body. An operator-locked page files a PROPOSAL (the operator approves it); an AI-maintained page is written directly. Always doc_read first so you EDIT rather than clobber.
+- kb_page_write(slug, content, reason?) — write a page's body. An operator-locked page files a PROPOSAL (the operator approves it); an AI-maintained page is written directly. Always doc_read first so you EDIT rather than clobber — and leave its HTML-comment header (the "doc_read:" line) out of what you write back; it is not part of the page.
 - kb_page_delete(slug) — remove a page (pinned pages like the classic four + Integrations are reserved and refuse deletion).
 
 Guidelines:

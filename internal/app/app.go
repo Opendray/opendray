@@ -253,6 +253,16 @@ func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowl
 }
 
 func (a knowledgeDocSink) PutKBDoc(ctx context.Context, cwd, kind, content string) error {
+	// Strip any doc_read framing the drafter inherited. The LLM preserves
+	// the current page's structure, so a frame that once landed in a body
+	// is copied forward on every redraft — kb_conventions and
+	// kb_infrastructure both carry a slug-titled H1 from before doc_read
+	// stopped emitting one. Cleaning here retires those on the next sweep
+	// instead of leaving them to be edited out by hand.
+	//
+	// Only the sweep's writes pass through here; an operator saving from
+	// the UI goes straight to PutDoc and is left alone.
+	content = projectdoc.StripDocFrame(kind, content)
 	_, err := a.pd.PutDoc(ctx, cwd, projectdoc.Kind(kind), content, projectdoc.AuthorAgent)
 	return err
 }
