@@ -18729,6 +18729,9 @@ class TranslationsWebKnowledgeKbProposalEn {
 
 	/// en: 'Proposal rejected'
 	String get rejected => 'Proposal rejected';
+
+	/// en: 'Review'
+	String get review => 'Review';
 }
 
 // Path: web.knowledge.kb.newPage
@@ -21764,6 +21767,7 @@ extension on Translations {
 			'web.knowledge.kb.proposal.reject' => 'Reject',
 			'web.knowledge.kb.proposal.approved' => 'Update approved',
 			'web.knowledge.kb.proposal.rejected' => 'Proposal rejected',
+			'web.knowledge.kb.proposal.review' => 'Review',
 			'web.knowledge.kb.discuss' => 'Discuss with AI',
 			'web.knowledge.kb.discussHint' => 'Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites',
 			'web.knowledge.kb.onDemand' => 'on-demand',
@@ -21904,9 +21908,9 @@ extension on Translations {
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
-			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
 			'web.cortex.chat.modelGroupLocal' => 'Local models',
 			'web.cortex.chat.accountDefault' => 'Default account',
 			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
@@ -22418,9 +22422,9 @@ extension on Translations {
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.inspector.notes.renameTitle' => 'Rename or move',
 			'sessions.inspector.notes.move' => 'Move',
-			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
 			'sessions.inspector.notes.renamed' => 'Moved.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
@@ -22932,9 +22936,9 @@ extension on Translations {
 			'backups.menuTargets' => 'Targets',
 			'backups.kv.status' => 'Status',
 			'backups.kv.verified' => 'Verified',
-			'backups.kv.kind' => 'Type',
 			_ => null,
 		} ?? switch (path) {
+			'backups.kv.kind' => 'Type',
 			'backups.kv.target' => 'Target',
 			'backups.kv.dedup' => 'Dedup',
 			'backups.kv.fanout' => 'Fan-out group',
@@ -23446,9 +23450,9 @@ extension on Translations {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'No tags match "${query}".',
 			'notesPage.tags.filteredBy' => 'Filtered by',
 			'notesPage.tags.clear' => 'Clear tag filter',
-			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
 			'notesPage.backlinks.title' => 'Backlinks',
 			'notesPage.backlinks.loading' => 'Looking for links…',
 			'notesPage.backlinks.empty' => 'No notes link here yet.',

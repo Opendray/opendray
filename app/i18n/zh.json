@@ -3054,7 +3054,8 @@
           "approve": "批准",
           "reject": "拒绝",
           "approved": "更新已批准",
-          "rejected": "提议已拒绝"
+          "rejected": "提议已拒绝",
+          "review": "审阅"
         },
         "discuss": "与 AI 讨论",
         "discussHint": "与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写",

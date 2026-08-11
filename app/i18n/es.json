@@ -3057,7 +3057,8 @@
           "approve": "Aprobar",
           "reject": "Rechazar",
           "approved": "Actualización aprobada",
-          "rejected": "Propuesta rechazada"
+          "rejected": "Propuesta rechazada",
+          "review": "Revisar"
         },
         "discuss": "Hablar con la IA",
         "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras",
