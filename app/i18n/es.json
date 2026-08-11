@@ -3043,6 +3043,13 @@
         "emergentHint": "Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.",
         "bindingBadge": "Vinculante · obligatorio",
         "referenceBadge": "Referencia",
+        "maintainer": {
+          "ai": "Mantenida por la curación en segundo plano de opendray",
+          "human": "Mantenida por mí: la automatización solo propone",
+          "session": "Mantenida por el agente que hace el trabajo",
+          "hint": "Quién mantiene esta página al día. «El agente que hace el trabajo» da a cada sesión una herramienta para escribir esta página sobre la marcha: ideal para registros que solo conoce el agente que trabaja, como un contenedor que acaba de crear. La curación en segundo plano, en cambio, redacta la página a partir de la memoria acumulada.",
+          "sessionUnavailable": "Quién mantiene esta página al día. La opción mantenida por el agente no está disponible para páginas fundacionales ni integradas: sus reglas son vinculantes, así que una sesión no debe reescribirlas a mitad de una tarea."
+        },
         "proposal": {
           "text": "La IA propuso una actualización de esta página (evidencia nueva divergente).",
           "preview": "Vista previa",

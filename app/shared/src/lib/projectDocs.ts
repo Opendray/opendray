@@ -84,7 +84,12 @@ export async function putProjectDoc(input: {
 
 // ── blueprint (Cortex Phase 3) ────────────────────────────────
 
-export type MaintainerMode = 'ai' | 'human' | 'scanner'
+/** Who keeps a section current: 'ai' (opendray's background curation
+ * redrafts it), 'human' (the operator authors it by hand), 'scanner' (a
+ * mechanical rebuilder owns it), or 'session' (the agent doing the work
+ * writes it live via the kb_page_set MCP tool). 'session' applies to
+ * global knowledge pages only — see canBeSessionMaintained. */
+export type MaintainerMode = 'ai' | 'human' | 'scanner' | 'session'
 
 /** Who lands an agent-side MCP write: 'proposal' files an operator-approved
  * proposal (goal/plan — long-term, deliberate); 'direct' lets the in-session
@@ -114,6 +119,17 @@ export interface BlueprintSection {
   nature?: string
   created_at?: string
   updated_at?: string
+}
+
+/** Whether a knowledge page may be handed to in-session agents
+ * (maintainer_mode 'session'). Mirrors the backend's SessionWritable:
+ * pinned pages are reserved, and foundational pages carry binding rules
+ * an agent must not rewrite mid-task. Offering the mode where the
+ * backend would refuse the write is worse than not offering it. */
+export function canBeSessionMaintained(
+  section: Pick<BlueprintSection, 'pinned' | 'nature'>,
+): boolean {
+  return !section.pinned && section.nature !== 'foundational'
 }
 
 /** Lists the project's blueprint (lazily seeded with defaults). */

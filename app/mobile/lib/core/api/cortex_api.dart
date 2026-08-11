@@ -406,7 +406,7 @@ class BlueprintSection {
   final String title;
   final String description;
   final int position;
-  final String maintainerMode; // ai | human | scanner
+  final String maintainerMode; // ai | human | scanner | session
   // 'proposal' (agent write files an operator-approved proposal) |
   // 'direct' (in-session agent writes the live doc when unlocked).
   final String writePolicy;

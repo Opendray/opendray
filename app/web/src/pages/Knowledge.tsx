@@ -32,10 +32,12 @@ import {
   listBlueprintSections,
   putBlueprintSection,
   deleteBlueprintSection,
+  canBeSessionMaintained,
   GLOBAL_CWD,
   type BlueprintSection,
   type DocKind,
   type DocProposal,
+  type MaintainerMode,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
 import { SlideOverAside } from '@/components/SlideOverAside'
@@ -228,6 +230,18 @@ function PageSettingsDialog({
     section?.nature === 'foundational' ? 'foundational' : 'emergent',
   )
   const [inject, setInject] = useState(() => section?.inject ?? false)
+  const [maintainer, setMaintainer] = useState<MaintainerMode>(
+    () => section?.maintainer_mode ?? 'ai',
+  )
+
+  // A foundational or pinned page can't be session-maintained (the backend
+  // refuses the write), so fall back rather than leave a dead selection.
+  const sessionAllowed = canBeSessionMaintained({
+    pinned: section?.pinned ?? false,
+    nature,
+  })
+  const effectiveMaintainer: MaintainerMode =
+    maintainer === 'session' && !sessionAllowed ? 'ai' : maintainer
 
   const fullSlug = editing ? section.slug : 'kb_' + slug.trim()
   const valid =
@@ -244,7 +258,7 @@ function PageSettingsDialog({
         title: title.trim(),
         description: description.trim(),
         position: section?.position ?? 99,
-        maintainer_mode: section?.maintainer_mode ?? 'ai',
+        maintainer_mode: effectiveMaintainer,
         write_policy: section?.write_policy,
         prompt_hint: section?.prompt_hint ?? '',
         pinned: section?.pinned ?? false,
@@ -333,6 +347,32 @@ function PageSettingsDialog({
           <p className="text-muted-foreground text-[11px]">
             {t('web.knowledge.kb.newPage.injectHint')}
           </p>
+          <div className="space-y-1.5">
+            <Select
+              value={effectiveMaintainer}
+              onValueChange={(v) => setMaintainer(v as MaintainerMode)}
+            >
+              <SelectTrigger className="h-8 w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ai">
+                  {t('web.knowledge.kb.maintainer.ai')}
+                </SelectItem>
+                <SelectItem value="human">
+                  {t('web.knowledge.kb.maintainer.human')}
+                </SelectItem>
+                <SelectItem value="session" disabled={!sessionAllowed}>
+                  {t('web.knowledge.kb.maintainer.session')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-[11px]">
+              {sessionAllowed
+                ? t('web.knowledge.kb.maintainer.hint')
+                : t('web.knowledge.kb.maintainer.sessionUnavailable')}
+            </p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

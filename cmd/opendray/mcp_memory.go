@@ -52,6 +52,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 // runMcpMemory is the subcommand entry point. Returns a process
@@ -221,10 +222,19 @@ func (s *memMCPServer) handle(raw []byte) {
 				filtered = append(filtered, t)
 			}
 			tools = filtered
-		} else if s.cfg.kbAdmin {
-			// The KB Librarian session (OPENDRAY_KB_ADMIN=1) additionally sees
-			// the global-KB write tools; no other session does.
-			tools = append(append([]map[string]any{}, toolDefs...), kbAdminToolDefs...)
+		} else {
+			if s.cfg.kbAdmin {
+				// The KB Librarian session (OPENDRAY_KB_ADMIN=1) additionally
+				// sees the global-KB admin tools; no other session does.
+				tools = append(append([]map[string]any{}, toolDefs...), kbAdminToolDefs...)
+			}
+			// Any read-write session additionally gets kb_page_set IF the
+			// operator has marked at least one knowledge page as
+			// session-maintained. Discovered per session, so creating such a
+			// page needs no code change — and none existing costs nothing.
+			if pages := s.sessionWritableKBPages(); len(pages) > 0 {
+				tools = append(append([]map[string]any{}, tools...), kbPageSetToolDef(pages))
+			}
 		}
 		s.respond(req.ID, map[string]any{"tools": tools})
 	case "tools/call":
@@ -345,6 +355,7 @@ var writeToolNames = map[string]bool{
 	"skill_distill":         true,
 	"canvas_render":         true,
 	"canvas_design":         true,
+	"kb_page_set":           true,
 }
 
 // toolDefs is the static list returned for tools/list.
@@ -971,6 +982,10 @@ func (s *memMCPServer) dispatchTool(name string, args json.RawMessage) (result a
 		result, err = s.callCanvasContext(args)
 	case "canvas_design":
 		result, err = s.callCanvasDesign(args)
+	case "kb_page_set":
+		// Authorisation is the gateway's: it re-reads the blueprint and
+		// refuses any page that is not session-maintained.
+		result, err = s.callKBPageSet(args)
 	case "kb_list", "kb_page_upsert", "kb_page_write", "kb_page_delete":
 		// KB Librarian write surface — refuse unless this session was
 		// spawned as the KB admin (defence in depth: the tools aren't even
@@ -1604,6 +1619,164 @@ func (s *memMCPServer) callCanvasDesign(args json.RawMessage) (any, error) {
 	}, nil
 }
 
+// ── Session-maintained knowledge pages ───────────────────────────────
+//
+// Some knowledge only the working agent ever holds: it just provisioned
+// the container, created the role, chose the port. The background sweep
+// distils episodic facts and cannot reconstruct that, so the operator can
+// mark a page maintainer_mode="session" and hand the pen to the session.
+//
+// Which pages those are is discovered from the blueprint at tools/list
+// time, never hardcoded: an install with no session-maintained page never
+// sees the tool, and an operator's own kb_* page needs no code change to
+// become writable. The gateway re-checks the blueprint on every write —
+// this side only decides what to advertise.
+
+// sessionWriteTimeout bounds the blueprint fetch on the tools/list
+// handshake. Missing the tool is recoverable; a hung handshake is not.
+const sessionWriteTimeout = 3 * time.Second
+
+// sessionWritableKBPages returns the global knowledge pages this session
+// may write, in blueprint order. Any failure yields none: the tool is
+// simply not offered.
+func (s *memMCPServer) sessionWritableKBPages() []kbSection {
+	if s.client == nil || s.cfg.baseURL == "" {
+		return nil // nothing to ask; tools/list must not fail over it
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), sessionWriteTimeout)
+	defer cancel()
+
+	var out struct {
+		Sections []kbSection `json:"sections"`
+	}
+	if err := s.gatewayGetJSONCtx(ctx, "/api/v1/project-docs/blueprint?cwd="+urlQuery(kbGlobalCwd), &out); err != nil {
+		// Not fatal, and not worth a stderr line on every spawn: a
+		// gateway that isn't up yet just means no writable pages.
+		return nil
+	}
+	var pages []kbSection
+	for _, sec := range out.Sections {
+		// Mirrors projectdoc.SessionWritable. The gateway holds the
+		// authoritative copy; this one only shapes the advertisement,
+		// so a drift between them can hide a page but never expose one.
+		if strings.HasPrefix(sec.Slug, "kb_") &&
+			sec.Maintainer == "session" &&
+			sec.Nature != "foundational" &&
+			!sec.Pinned {
+			pages = append(pages, sec)
+		}
+	}
+	return pages
+}
+
+// kbPageSetToolDef builds the kb_page_set definition for a specific set of
+// pages. The description carries each page's own blueprint description —
+// that text is how the agent knows which page a fact belongs on, and it is
+// the operator's to write, so steering the agent needs no code change.
+func kbPageSetToolDef(pages []kbSection) map[string]any {
+	slugs := make([]string, 0, len(pages))
+	var b strings.Builder
+	b.WriteString("Record durable CROSS-PROJECT knowledge on a global knowledge page — " +
+		"the shared pages every project's sessions read. Use it when work produces a fact " +
+		"that outlives this project and belongs in the knowledge base (a new container, " +
+		"database role, endpoint, domain, or release target). Project-local notes belong " +
+		"in session_log_append / current_objective_set instead, and one-off facts in " +
+		"memory_store.\n\nRead the page first with doc_read(slug) and pass the FULL new " +
+		"body — this replaces the page, so fold your addition into what is already there.\n\n" +
+		"Pages you can write:\n")
+	for _, p := range pages {
+		slugs = append(slugs, p.Slug)
+		fmt.Fprintf(&b, "  • %s (%s)", p.Slug, p.Title)
+		if d := strings.TrimSpace(p.Description); d != "" {
+			b.WriteString(" — " + d)
+		}
+		if p.WritePolicy == "direct" {
+			b.WriteString(" [writes live]")
+		} else {
+			b.WriteString(" [files a proposal for the operator]")
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\nEvery other knowledge page is maintained by the operator or by " +
+		"opendray's background curation — those are not writable here.")
+
+	return map[string]any{
+		"name":        "kb_page_set",
+		"description": b.String(),
+		"inputSchema": map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"slug": map[string]any{
+					"type":        "string",
+					"enum":        slugs,
+					"description": "Which knowledge page to write.",
+				},
+				"content": map[string]any{
+					"type":        "string",
+					"description": "The full new markdown body for the page (replaces it — include the existing content you want to keep).",
+				},
+				"reason": map[string]any{
+					"type":        "string",
+					"description": "Short note on what changed. Shown to the operator when the write files a proposal.",
+				},
+			},
+			"required": []string{"slug", "content"},
+		},
+	}
+}
+
+// callKBPageSet writes a session-maintained knowledge page through the
+// gateway's policy-routed endpoint: a "direct" page updates live when
+// unlocked, anything else files a proposal. The gateway authorises the
+// page against the blueprint and refuses (403) one that is not
+// session-maintained, so a stale advertisement cannot become a write.
+func (s *memMCPServer) callKBPageSet(args json.RawMessage) (any, error) {
+	var in struct {
+		Slug    string `json:"slug"`
+		Content string `json:"content"`
+		Reason  string `json:"reason"`
+	}
+	if err := json.Unmarshal(args, &in); err != nil {
+		return nil, fmt.Errorf("invalid arguments: %w", err)
+	}
+	slug := strings.TrimSpace(in.Slug)
+	if !strings.HasPrefix(slug, "kb_") {
+		return nil, errors.New("slug must be a global knowledge page (kb_*)")
+	}
+	if strings.TrimSpace(in.Content) == "" {
+		return nil, errors.New("content is required")
+	}
+	body := map[string]any{
+		"cwd":     kbGlobalCwd,
+		"content": in.Content,
+		"reason":  in.Reason,
+	}
+	var out struct {
+		Action   string `json:"action"`
+		Proposal struct {
+			ID string `json:"id"`
+		} `json:"proposal"`
+	}
+	if err := s.gatewayPostJSON("/api/v1/project-docs/"+urlQuery(slug)+"/set", body, &out); err != nil {
+		return nil, err
+	}
+	switch out.Action {
+	case "applied":
+		return textResult(fmt.Sprintf("Updated the live %s knowledge page.", slug)), nil
+	case "proposed":
+		if out.Proposal.ID == "" {
+			return textResult(fmt.Sprintf(
+				"Filed a %s proposal (gateway returned no id) — check the opendray inbox.", slug)), nil
+		}
+		return textResult(fmt.Sprintf(
+			"Filed proposal %s for %s — this page is proposal-gated or human-locked, so it is unchanged until the operator approves.",
+			out.Proposal.ID, slug)), nil
+	default:
+		return textResult(fmt.Sprintf(
+			"Gateway returned an unexpected action %q for %s — nothing confirmed.", out.Action, slug)), nil
+	}
+}
+
 // ── KB Librarian tools (OPENDRAY_KB_ADMIN sessions only) ─────────────
 
 const kbGlobalCwd = "__global__"
@@ -1965,7 +2138,15 @@ func (s *memMCPServer) gatewayPostJSON(path string, body, out any) error {
 
 // gatewayGetJSON is the GET twin of gatewayPostJSON.
 func (s *memMCPServer) gatewayGetJSON(path string, out any) error {
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, s.cfg.baseURL+path, nil)
+	return s.gatewayGetJSONCtx(context.Background(), path, out)
+}
+
+// gatewayGetJSONCtx is gatewayGetJSON with a caller-supplied context. The
+// shared http.Client has no timeout (agent-facing calls like memory_search
+// are allowed to take their time), so any call on a latency-sensitive path
+// — notably the tools/list handshake — must bound itself here.
+func (s *memMCPServer) gatewayGetJSONCtx(ctx context.Context, path string, out any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.cfg.baseURL+path, nil)
 	if err != nil {
 		return err
 	}
