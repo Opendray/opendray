@@ -38,6 +38,7 @@ import {
   type DocKind,
   type DocProposal,
   type MaintainerMode,
+  type WritePolicy,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
 import { ProposalDiff } from '@/components/cortex/ProposalDiff'
@@ -234,6 +235,18 @@ function PageSettingsDialog({
   const [maintainer, setMaintainer] = useState<MaintainerMode>(
     () => section?.maintainer_mode ?? 'ai',
   )
+  // Default new pages to the approval gate: a page that quietly rewrites
+  // itself is the surprising option, not the safe one.
+  const [writePolicy, setWritePolicy] = useState<WritePolicy>(
+    () => section?.write_policy ?? 'proposal',
+  )
+
+  // The classic four keep two fixed fields: their titles come from i18n
+  // (editing the stored one changes nothing visible) and their natures are
+  // what make them guardrails. Everything else — who maintains the page,
+  // whether writes need approval, the description that drives retrieval,
+  // the inject flag — is the operator's to change.
+  const classic = !!section && CLASSIC_KB_KINDS.has(section.slug)
 
   // A foundational or pinned page can't be session-maintained (the backend
   // refuses the write), so fall back rather than leave a dead selection.
@@ -260,7 +273,7 @@ function PageSettingsDialog({
         description: description.trim(),
         position: section?.position ?? 99,
         maintainer_mode: effectiveMaintainer,
-        write_policy: section?.write_policy,
+        write_policy: writePolicy,
         prompt_hint: section?.prompt_hint ?? '',
         pinned: section?.pinned ?? false,
         inject,
@@ -308,10 +321,14 @@ function PageSettingsDialog({
             />
           </div>
           <Input
-            value={title}
+            value={classic ? t(`web.knowledge.kb.kinds.${section.slug}`) : title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('web.knowledge.kb.newPage.titlePlaceholder')}
             className="h-8 text-sm"
+            // A classic page's displayed title comes from i18n, so editing
+            // the stored one would change nothing the operator can see.
+            disabled={classic}
+            title={classic ? t('web.knowledge.kb.pageSettings.fixedTitle') : undefined}
           />
           <Input
             value={description}
@@ -323,8 +340,14 @@ function PageSettingsDialog({
             <Select
               value={nature}
               onValueChange={(v) => setNature(v as 'foundational' | 'emergent')}
+              // Nature is what makes a foundational page a guardrail;
+              // flipping it silently changes how every session reads it.
+              disabled={classic}
             >
-              <SelectTrigger className="h-8 w-44 text-sm">
+              <SelectTrigger
+                className="h-8 w-44 text-sm"
+                title={classic ? t('web.knowledge.kb.pageSettings.fixedNature') : undefined}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -374,6 +397,31 @@ function PageSettingsDialog({
                 : t('web.knowledge.kb.maintainer.sessionUnavailable')}
             </p>
           </div>
+          {/* Approval gate. Only meaningful when something automated writes
+              the page — an operator-maintained page has no AI write to gate. */}
+          {maintainer !== 'human' && (
+            <div className="space-y-1.5">
+              <Select
+                value={writePolicy}
+                onValueChange={(v) => setWritePolicy(v as WritePolicy)}
+              >
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="proposal">
+                    {t('web.knowledge.kb.writePolicy.proposal')}
+                  </SelectItem>
+                  <SelectItem value="direct">
+                    {t('web.knowledge.kb.writePolicy.direct')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-[11px]">
+                {t('web.knowledge.kb.writePolicy.hint')}
+              </p>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -628,13 +676,16 @@ function KnowledgeBaseView() {
                 {t('web.knowledge.kb.discuss')}
               </button>
             )}
-            {/* Settings is offered on every page except the classic four,
-                whose titles are i18n-driven and natures are fixed by design.
-                Seeded pages like Integrations (pinned but non-classic) are
-                configurable — e.g. flipping inject to make the guide a
-                standing guardrail. Note this is a WIDER gate than Remove
-                (!pinned): a pinned page can be reconfigured but not deleted. */}
-            {!editing && selSection && !CLASSIC_KB_KINDS.has(selSection.slug) && (
+            {/* Settings is offered on EVERY page. The classic four used to
+                be excluded because their titles are i18n-driven and their
+                natures fixed by design — but that also put who maintains
+                the page, and whether its writes need approval, out of
+                reach. Those are exactly the knobs an operator needs on the
+                foundational pages. The dialog disables the two fields that
+                genuinely are fixed; everything else is editable.
+                Note this is a WIDER gate than Remove (!pinned): a pinned
+                page can be reconfigured but not deleted. */}
+            {!editing && selSection && (
               <button
                 onClick={() => setSettingsOpen(true)}
                 className="border-border rounded-md border px-2.5 py-1 text-xs"
