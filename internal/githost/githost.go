@@ -541,7 +541,20 @@ type PullRequest struct {
 	Draft     bool      `json:"draft"`
 	Body      string    `json:"body,omitempty"` // description (detail fetch only)
 	UpdatedAt time.Time `json:"updated_at"`
+	// MergeableState is the host's view of why a PR can or cannot merge
+	// right now: "clean", "behind" (base moved on), "blocked" (checks
+	// pending/failing), "dirty" (real conflicts), "unstable", "draft".
+	// Empty when the host didn't report one — list endpoints usually
+	// omit it, so treat it as unknown rather than as a problem.
+	MergeableState string `json:"mergeable_state,omitempty"`
 }
+
+// BehindBase reports whether this PR's only obstacle is that its base
+// branch has moved on. Repos that require branches to be up to date
+// refuse the merge in that state, and the fix is to merge the base in —
+// which is what UpdateBranch does. Distinguished from "dirty" (real
+// conflicts, which updating cannot fix) and "blocked" (checks).
+func (p PullRequest) BehindBase() bool { return p.MergeableState == "behind" }
 
 func (s *Service) ListPullRequests(ctx context.Context, dir, state string) (Remote, []PullRequest, error) {
 	rem, err := s.DetectRemote(ctx, dir)
@@ -704,16 +717,27 @@ func (s *Service) MergePullRequest(ctx context.Context, req MergePRRequest) (Pul
 	if req.Method == "" {
 		req.Method = "squash"
 	}
+	var pr PullRequest
 	switch hostRow.Kind {
 	case KindGitHub:
-		return s.mergeGitHubPR(ctx, hostRow, rem, req)
+		pr, err = s.mergeGitHubPR(ctx, hostRow, rem, req)
 	case KindGitea:
-		return s.mergeGiteaPR(ctx, hostRow, rem, req)
+		pr, err = s.mergeGiteaPR(ctx, hostRow, rem, req)
 	case KindGitLab:
-		return s.mergeGitLabMR(ctx, hostRow, rem, req)
+		pr, err = s.mergeGitLabMR(ctx, hostRow, rem, req)
 	default:
 		return PullRequest{}, fmt.Errorf("unsupported host kind: %s", hostRow.Kind)
 	}
+	if err != nil {
+		// Ask the host why before giving up: a refusal caused by a stale
+		// branch is reported as a checks failure, which sends the operator
+		// looking in the wrong place. A failed lookup just means we pass
+		// the original error through unchanged.
+		if cur, ferr := s.GetPullRequest(ctx, req.Dir, req.Number); ferr == nil {
+			return PullRequest{}, explainMergeFailure(err, cur)
+		}
+	}
+	return pr, err
 }
 
 // PRChecks returns the check runs attached to a PR's head commit.
@@ -953,6 +977,9 @@ type githubPRResponse struct {
 	} `json:"base"`
 	Body     string     `json:"body"`
 	MergedAt *time.Time `json:"merged_at"`
+	// Only the single-PR detail endpoint fills this reliably; the list
+	// endpoint leaves it empty, which reads as "unknown".
+	MergeableState string `json:"mergeable_state"`
 }
 
 func (p githubPRResponse) toPullRequest() PullRequest {
@@ -961,16 +988,17 @@ func (p githubPRResponse) toPullRequest() PullRequest {
 		st = "merged"
 	}
 	return PullRequest{
-		Number:    p.Number,
-		Title:     p.Title,
-		State:     st,
-		Author:    p.User.Login,
-		Head:      p.Head.Ref,
-		Base:      p.Base.Ref,
-		URL:       p.HTMLURL,
-		Draft:     p.Draft,
-		Body:      p.Body,
-		UpdatedAt: p.UpdatedAt,
+		Number:         p.Number,
+		Title:          p.Title,
+		State:          st,
+		Author:         p.User.Login,
+		Head:           p.Head.Ref,
+		Base:           p.Base.Ref,
+		URL:            p.HTMLURL,
+		Draft:          p.Draft,
+		Body:           p.Body,
+		UpdatedAt:      p.UpdatedAt,
+		MergeableState: p.MergeableState,
 	}
 }
 
@@ -2152,6 +2180,7 @@ func (h *Handlers) Mount(r chi.Router) {
 	r.Post("/git/prs", h.createPR)
 	r.Get("/git/prs/{number}", h.prDetail)
 	r.Post("/git/prs/{number}/merge", h.mergePR)
+	r.Post("/git/prs/{number}/update-branch", h.updatePRBranch)
 	r.Get("/git/prs/{number}/checks", h.prChecks)
 	r.Get("/git/prs/{number}/commits", h.prCommits)
 	r.Get("/git/prs/{number}/files", h.prFiles)
@@ -2203,6 +2232,34 @@ func (h *Handlers) mergePR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pr, err := h.svc.MergePullRequest(r.Context(), req)
+	if err != nil {
+		writeError(w, statusFromGitErr(err), err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pr)
+}
+
+// updatePRBranch mounts POST /git/prs/{number}/update-branch — merges
+// the PR's base into its head so a BEHIND branch can be merged.
+func (h *Handlers) updatePRBranch(w http.ResponseWriter, r *http.Request) {
+	var req UpdateBranchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("decode body: %w", err))
+		return
+	}
+	if num := chi.URLParam(r, "number"); num != "" {
+		n, err := strconv.Atoi(num)
+		if err != nil || n <= 0 {
+			writeError(w, http.StatusBadRequest, errors.New("invalid number"))
+			return
+		}
+		req.Number = n
+	}
+	if req.Dir == "" {
+		writeError(w, http.StatusBadRequest, errors.New("dir required"))
+		return
+	}
+	pr, err := h.svc.UpdatePullRequestBranch(r.Context(), req)
 	if err != nil {
 		writeError(w, statusFromGitErr(err), err)
 		return
