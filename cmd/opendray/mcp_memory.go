@@ -53,6 +53,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/opendray/opendray-v2/internal/projectdoc"
 )
 
 // runMcpMemory is the subcommand entry point. Returns a process
@@ -1257,7 +1259,7 @@ func (s *memMCPServer) callProjectDocGet(kind string) (any, error) {
 	if strings.TrimSpace(doc.Content) == "" {
 		fmt.Fprintf(&b, "(no %s set for this project yet)", kind)
 	} else {
-		fmt.Fprintf(&b, "# Project %s\n\n_last updated by %s_\n\n%s", kind, doc.UpdatedBy, doc.Content)
+		b.WriteString(projectdoc.FrameDocForRead("Project "+kind, doc.UpdatedBy, doc.Content))
 	}
 	return map[string]any{
 		"content": []map[string]any{
@@ -1306,7 +1308,7 @@ func (s *memMCPServer) callDocRead(args json.RawMessage) (any, error) {
 	if strings.TrimSpace(doc.Content) == "" {
 		fmt.Fprintf(&b, "(document %q is empty)", slug)
 	} else {
-		fmt.Fprintf(&b, "# %s\n\n_last updated by %s_\n\n%s", slug, doc.UpdatedBy, doc.Content)
+		b.WriteString(projectdoc.FrameDocForRead(slug, doc.UpdatedBy, doc.Content))
 	}
 	return map[string]any{
 		"content": []map[string]any{
@@ -1681,7 +1683,8 @@ func kbPageSetToolDef(pages []kbSection) map[string]any {
 		"that outlives this project and belongs in the knowledge base (a new container, " +
 		"database role, endpoint, domain, or release target). Project-local notes belong " +
 		"in session_log_append / current_objective_set instead, and one-off facts in " +
-		"memory_store.\n\nRead the page first with doc_read(slug) and pass the FULL new " +
+		"memory_store.\n\nRead the page first with doc_read(slug) — its `<!-- doc_read: … -->` " +
+		"header is not part of the page, so leave it out — and pass the FULL new " +
 		"body — this replaces the page, so fold your addition into what is already there.\n\n" +
 		"Pages you can write:\n")
 	for _, p := range pages {
@@ -1746,9 +1749,16 @@ func (s *memMCPServer) callKBPageSet(args json.RawMessage) (any, error) {
 	if strings.TrimSpace(in.Content) == "" {
 		return nil, errors.New("content is required")
 	}
+	// The agent was told to doc_read this page and write the full body
+	// back, so the read's framing usually comes back with it. Strip it, or
+	// it lands in the page and the next read frames the result again.
+	content := projectdoc.StripDocFrame(slug, in.Content)
+	if strings.TrimSpace(content) == "" {
+		return nil, errors.New("content is only the doc_read header — pass the page body too")
+	}
 	body := map[string]any{
 		"cwd":     kbGlobalCwd,
-		"content": in.Content,
+		"content": content,
 		"reason":  in.Reason,
 	}
 	var out struct {
@@ -1930,6 +1940,12 @@ func (s *memMCPServer) callKBPageWrite(args json.RawMessage) (any, error) {
 	if strings.TrimSpace(in.Content) == "" {
 		return nil, errors.New("content is required")
 	}
+	// Same round-trip as kb_page_set: the Librarian is told to doc_read
+	// first, so the read's framing comes back with the body.
+	content := projectdoc.StripDocFrame(slug, in.Content)
+	if strings.TrimSpace(content) == "" {
+		return nil, errors.New("content is only the doc_read header — pass the page body too")
+	}
 	// Lock check: a page last written by the operator is human-locked.
 	var doc struct {
 		UpdatedBy string `json:"updated_by"`
@@ -1941,7 +1957,7 @@ func (s *memMCPServer) callKBPageWrite(args json.RawMessage) (any, error) {
 		// Locked → file a proposal the operator approves in the inbox.
 		body := map[string]any{
 			"cwd": kbGlobalCwd, "kind": slug,
-			"proposed_content": in.Content, "reason": in.Reason,
+			"proposed_content": content, "reason": in.Reason,
 		}
 		var out struct {
 			ID string `json:"id"`
@@ -1952,7 +1968,7 @@ func (s *memMCPServer) callKBPageWrite(args json.RawMessage) (any, error) {
 		return textResult(fmt.Sprintf("Page %s is human-locked, so I filed proposal %s — the body is unchanged until the operator approves it in the inbox.", slug, out.ID)), nil
 	}
 	// Unlocked → write the live body directly (authored by the agent).
-	body := map[string]any{"cwd": kbGlobalCwd, "content": in.Content, "updated_by": "agent"}
+	body := map[string]any{"cwd": kbGlobalCwd, "content": content, "updated_by": "agent"}
 	if err := s.gatewayPutJSON("/api/v1/project-docs/"+urlQuery(slug), body, nil); err != nil {
 		return nil, err
 	}
