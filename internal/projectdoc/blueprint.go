@@ -97,8 +97,20 @@ func ValidGlobalKBSlug(s string) bool {
 // port. The background sweep cannot reconstruct that from episodic facts,
 // so a session-maintained page hands the pen to the one who was there.
 func ValidMaintainerMode(m string) bool {
-	return m == "ai" || m == "human" || m == "scanner" || m == "session"
+	for _, valid := range MaintainerModes {
+		if m == valid {
+			return true
+		}
+	}
+	return false
 }
+
+// MaintainerModes is the full set, and the single source of truth for it.
+// It is mirrored by a CHECK constraint on doc_blueprint_sections, so
+// adding a mode here without a migration widening that constraint gets a
+// 23514 at write time — which is what TestMaintainerModesMatchMigration
+// exists to catch before it reaches a running gateway.
+var MaintainerModes = []string{"ai", "human", "scanner", MaintainerSession}
 
 // MaintainerSession is the maintainer_mode that lets an ordinary
 // in-session agent write a global knowledge page's body.

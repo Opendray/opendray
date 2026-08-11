@@ -2,6 +2,10 @@ package projectdoc
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -51,6 +55,59 @@ func TestValidMaintainerMode(t *testing.T) {
 			t.Errorf("ValidMaintainerMode(%q) = %v, want %v", tt.mode, got, tt.want)
 		}
 	}
+}
+
+// The Go-side set and the DB CHECK constraint must agree. They are two
+// declarations of one rule, and when they drift the failure surfaces only
+// at write time as a raw 23514 in front of the operator — which is
+// exactly what happened when "session" was added here without widening
+// the constraint.
+func TestMaintainerModesMatchMigration(t *testing.T) {
+	dbModes := modesFromMigrations(t)
+	if len(dbModes) == 0 {
+		t.Fatal("no maintainer_mode CHECK found in the migrations — did the file move?")
+	}
+	for _, m := range MaintainerModes {
+		if !dbModes[m] {
+			t.Errorf("maintainer_mode %q is valid in Go but rejected by the DB constraint — add a migration widening doc_blueprint_sections_maintainer_mode_check", m)
+		}
+	}
+	for m := range dbModes {
+		if !ValidMaintainerMode(m) {
+			t.Errorf("maintainer_mode %q is allowed by the DB but rejected in Go — the two declarations have drifted", m)
+		}
+	}
+}
+
+// modesFromMigrations returns the values allowed by the LAST migration
+// that (re)declares the maintainer_mode CHECK, which is the one in force.
+func modesFromMigrations(t *testing.T) map[string]bool {
+	t.Helper()
+	files, err := filepath.Glob(filepath.Join("..", "store", "migrations", "*.sql"))
+	if err != nil {
+		t.Fatalf("glob migrations: %v", err)
+	}
+	sort.Strings(files) // numeric prefixes sort chronologically
+	re := regexp.MustCompile(`maintainer_mode\s+IN\s*\(([^)]*)\)`)
+
+	out := map[string]bool{}
+	for _, f := range files {
+		body, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		m := re.FindSubmatch(body)
+		if m == nil {
+			continue
+		}
+		out = map[string]bool{} // a later migration REPLACES the constraint
+		for _, raw := range strings.Split(string(m[1]), ",") {
+			if v := strings.Trim(strings.TrimSpace(raw), "'"); v != "" {
+				out[v] = true
+			}
+		}
+	}
+	return out
 }
 
 func TestSessionWritable(t *testing.T) {
