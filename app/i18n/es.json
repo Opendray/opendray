@@ -3499,6 +3499,13 @@
         "bypass": "Omitir permisos (YOLO)",
         "bypassHint": "Inicia la sesión con su indicador de bypass para no pedir aprobaciones."
       }
+    },
+    "diff": {
+      "noChanges": "Sin cambios: el contenido propuesto es idéntico a la página actual.",
+      "added": "+{count}",
+      "removed": "−{count}",
+      "changedLines": "líneas modificadas",
+      "collapsed": "⋯ {count} sin cambios ⋯"
     }
   },
   "more": {

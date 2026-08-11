@@ -183,6 +183,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebCortexZh cortex = _TranslationsWebCortexZh._(_root);
 	@override late final _TranslationsWebDatabaseZh database = _TranslationsWebDatabaseZh._(_root);
 	@override late final _TranslationsWebRoundTableZh roundTable = _TranslationsWebRoundTableZh._(_root);
+	@override late final _TranslationsWebDiffZh diff = _TranslationsWebDiffZh._(_root);
 }
 
 // Path: more
@@ -1811,6 +1812,20 @@ class _TranslationsWebRoundTableZh extends TranslationsWebRoundTableEn {
 	@override String get untitled => '新群聊';
 	@override late final _TranslationsWebRoundTableHandoffZh handoff = _TranslationsWebRoundTableHandoffZh._(_root);
 	@override late final _TranslationsWebRoundTablePlanZh plan = _TranslationsWebRoundTablePlanZh._(_root);
+}
+
+// Path: web.diff
+class _TranslationsWebDiffZh extends TranslationsWebDiffEn {
+	_TranslationsWebDiffZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get noChanges => '没有改动 —— 提案内容与当前页面完全一致。';
+	@override String added({required Object count}) => '+${count}';
+	@override String removed({required Object count}) => '−${count}';
+	@override String get changedLines => '行变更';
+	@override String collapsed({required Object count}) => '⋯ 未改动 ${count} 行 ⋯';
 }
 
 // Path: more.identity
@@ -12900,6 +12915,11 @@ extension on TranslationsZh {
 			'web.roundTable.plan.accountDefault' => '默认',
 			'web.roundTable.plan.bypass' => '跳过权限 (YOLO)',
 			'web.roundTable.plan.bypassHint' => '用 bypass 标志启动会话,不再逐个请求批准。',
+			'web.diff.noChanges' => '没有改动 —— 提案内容与当前页面完全一致。',
+			'web.diff.added' => ({required Object count}) => '+${count}',
+			'web.diff.removed' => ({required Object count}) => '−${count}',
+			'web.diff.changedLines' => '行变更',
+			'web.diff.collapsed' => ({required Object count}) => '⋯ 未改动 ${count} 行 ⋯',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -13194,13 +13214,13 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
 			'sessions.inspector.canvas.kindFlow' => '流程图',
 			'sessions.inspector.canvas.kindMindmap' => '思维导图',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.kindGraph' => '关系图',
 			'sessions.inspector.canvas.kindDoc' => '文档',
 			'sessions.inspector.canvas.modeView' => '查看',
 			'sessions.inspector.canvas.modePin' => '钉点',
 			'sessions.inspector.canvas.modeRegion' => '框选',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.focusLine' => ({required Object title, required Object kind}) => '正在处理 ${title} · ${kind} —— agent 已把它当作「这个画布」。',
 			'sessions.inspector.canvas.notePlaceholder' => '这里要改什么……',
 			'sessions.inspector.canvas.messagePlaceholder' => '整体说明(可选)……',
@@ -13708,13 +13728,13 @@ extension on TranslationsZh {
 			'backups.kv.finished' => '完成',
 			'backups.kv.size' => '大小',
 			'backups.kv.encrypted' => '已加密',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.targetPath' => '目标路径',
 			'backups.kv.error' => '错误',
 			'backups.kv.yes' => '是',
 			'backups.kv.no' => '否',
 			'backups.recoveryKit.menuLabel' => '恢复工具包',
-			_ => null,
-		} ?? switch (path) {
 			'backups.recoveryKit.title' => '恢复工具包',
 			'backups.recoveryKit.warning' => '灾难恢复保险 —— 仅当本机与其密钥同时丢失时才需要,正常情况下你永远用不到。本工具包是你的备份口令,用你此处自设的密码封装。每次生成都是一份独立工具包、用当次的密码封装 —— 服务端不存储,因此没有唯一的“主密码”。请把工具包和它的密码一起、异地分开保存。注意:这个密码保护的是工具包本身,而不是网关 —— 任何有后台权限的人都能再生成一份。',
 			'backups.recoveryKit.passphraseLabel' => '恢复口令（至少 8 位）',
@@ -14222,13 +14242,13 @@ extension on TranslationsZh {
 			'notesPage.outline.title' => '大纲',
 			'notesPage.outline.empty' => '这篇文档没有标题。',
 			'notesPage.outline.jumpedToSource' => '预览关闭了脚本、无法滚动，所以已切到源码视图。',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.today.tooltip' => '打开今天的日记',
 			'notesPage.wikiLink.suggestions' => '链接到…',
 			'notesPage.wikiLink.createNew' => ({required Object name}) => '新建“${name}”',
 			'notesPage.wikiLink.noMatches' => '没有匹配的笔记 —— 继续输入即可新建。',
 			'vaultSync.title' => 'Vault 同步',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.refresh' => '刷新',
 			'vaultSync.statusTitle' => '状态',
 			'vaultSync.notARepo' => 'vault 还不是 git 仓库。请先在网页端初始化。',

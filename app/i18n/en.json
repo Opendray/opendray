@@ -3499,6 +3499,13 @@
         "bypass": "Skip permissions (YOLO)",
         "bypassHint": "Start the session with its bypass flag so it does not prompt for approvals."
       }
+    },
+    "diff": {
+      "noChanges": "No changes — the proposed content is identical to the live page.",
+      "added": "+{count}",
+      "removed": "−{count}",
+      "changedLines": "changed lines",
+      "collapsed": "⋯ {count} unchanged ⋯"
     }
   },
   "more": {

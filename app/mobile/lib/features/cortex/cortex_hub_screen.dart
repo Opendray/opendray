@@ -6,6 +6,7 @@ import 'package:opendray/core/api/cortex_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/cortex_settings_screen.dart';
+import 'package:opendray/features/cortex/proposal_diff.dart';
 import 'package:opendray/features/knowledge/knowledge_screen.dart';
 import 'package:opendray/features/memory/memory_screen.dart';
 import 'package:opendray/features/memory_quarantine/quarantine_screen.dart';
@@ -426,8 +427,11 @@ class _ProposalCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SingleChildScrollView(
-                child: Text(proposal.proposedContent,
-                    style: const TextStyle(fontSize: 12, height: 1.4)),
+                // Show what CHANGED; pre-diff proposals fall back to the body.
+                child: proposal.diff != null
+                    ? ProposalDiffView(diff: proposal.diff!)
+                    : Text(proposal.proposedContent,
+                        style: const TextStyle(fontSize: 12, height: 1.4)),
               ),
             ),
           OverflowBar(

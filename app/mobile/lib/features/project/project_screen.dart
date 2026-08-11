@@ -12,6 +12,7 @@ import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/blueprint_editor_screen.dart';
 import 'package:opendray/features/cortex/curation_chat_screen.dart';
+import 'package:opendray/features/cortex/proposal_diff.dart';
 import 'package:opendray/features/sessions/directory_picker_sheet.dart';
 import 'package:path/path.dart' as p;
 
@@ -2603,19 +2604,26 @@ class _ProposalCard extends StatelessWidget {
               Text(proposal.reason),
               const SizedBox(height: 8),
             ],
-            _DiffBlock(
-              label: 'Current ${proposal.kind}',
-              body: currentContent,
-              empty: '(not set)',
-              tint: scheme.outline,
-            ),
-            const SizedBox(height: 6),
-            _DiffBlock(
-              label: 'After approve',
-              body: proposal.proposedContent,
-              empty: '(empty — approving would clear the doc)',
-              tint: scheme.primary,
-            ),
+            // What CHANGED, not two full documents to compare by eye.
+            // Proposals filed before the server attached diffs still fall
+            // back to the stacked bodies.
+            if (proposal.diff != null)
+              ProposalDiffView(diff: proposal.diff!)
+            else ...[
+              _DiffBlock(
+                label: 'Current ${proposal.kind}',
+                body: currentContent,
+                empty: '(not set)',
+                tint: scheme.outline,
+              ),
+              const SizedBox(height: 6),
+              _DiffBlock(
+                label: 'After approve',
+                body: proposal.proposedContent,
+                empty: '(empty — approving would clear the doc)',
+                tint: scheme.primary,
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -2658,21 +2666,25 @@ class _ProposalCard extends StatelessWidget {
                     style: Theme.of(ctx).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 12),
-                  _DiffBlock(
-                    label: 'Current',
-                    body: currentContent,
-                    empty: '(not set)',
-                    tint: scheme.outline,
-                    maxLines: 8,
-                  ),
-                  const SizedBox(height: 8),
-                  _DiffBlock(
-                    label: 'After approve',
-                    body: proposal.proposedContent,
-                    empty: '(empty)',
-                    tint: scheme.primary,
-                    maxLines: 8,
-                  ),
+                  if (proposal.diff != null)
+                    ProposalDiffView(diff: proposal.diff!)
+                  else ...[
+                    _DiffBlock(
+                      label: 'Current',
+                      body: currentContent,
+                      empty: '(not set)',
+                      tint: scheme.outline,
+                      maxLines: 8,
+                    ),
+                    const SizedBox(height: 8),
+                    _DiffBlock(
+                      label: 'After approve',
+                      body: proposal.proposedContent,
+                      empty: '(empty)',
+                      tint: scheme.primary,
+                      maxLines: 8,
+                    ),
+                  ],
                 ],
               ),
             ),

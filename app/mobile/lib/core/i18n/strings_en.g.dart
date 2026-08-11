@@ -278,6 +278,7 @@ class TranslationsWebEn {
 	late final TranslationsWebCortexEn cortex = TranslationsWebCortexEn.internal(_root);
 	late final TranslationsWebDatabaseEn database = TranslationsWebDatabaseEn.internal(_root);
 	late final TranslationsWebRoundTableEn roundTable = TranslationsWebRoundTableEn.internal(_root);
+	late final TranslationsWebDiffEn diff = TranslationsWebDiffEn.internal(_root);
 }
 
 // Path: more
@@ -3665,6 +3666,30 @@ class TranslationsWebRoundTableEn {
 
 	late final TranslationsWebRoundTableHandoffEn handoff = TranslationsWebRoundTableHandoffEn.internal(_root);
 	late final TranslationsWebRoundTablePlanEn plan = TranslationsWebRoundTablePlanEn.internal(_root);
+}
+
+// Path: web.diff
+class TranslationsWebDiffEn {
+	TranslationsWebDiffEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No changes — the proposed content is identical to the live page.'
+	String get noChanges => 'No changes — the proposed content is identical to the live page.';
+
+	/// en: '+{count}'
+	String added({required Object count}) => '+${count}';
+
+	/// en: '−{count}'
+	String removed({required Object count}) => '−${count}';
+
+	/// en: 'changed lines'
+	String get changedLines => 'changed lines';
+
+	/// en: '⋯ {count} unchanged ⋯'
+	String collapsed({required Object count}) => '⋯ ${count} unchanged ⋯';
 }
 
 // Path: more.identity
@@ -22073,6 +22098,11 @@ extension on Translations {
 			'web.roundTable.plan.accountDefault' => 'Default',
 			'web.roundTable.plan.bypass' => 'Skip permissions (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Start the session with its bypass flag so it does not prompt for approvals.',
+			'web.diff.noChanges' => 'No changes — the proposed content is identical to the live page.',
+			'web.diff.added' => ({required Object count}) => '+${count}',
+			'web.diff.removed' => ({required Object count}) => '−${count}',
+			'web.diff.changedLines' => 'changed lines',
+			'web.diff.collapsed' => ({required Object count}) => '⋯ ${count} unchanged ⋯',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -22364,13 +22394,13 @@ extension on Translations {
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Move failed: ${error}',
 			'sessions.inspector.notes.openFolderIndex' => 'Open folder index',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.kindUi' => 'UI mock',
 			'sessions.inspector.canvas.kindFlow' => 'Flowchart',
 			'sessions.inspector.canvas.kindMindmap' => 'Mind map',
 			'sessions.inspector.canvas.kindGraph' => 'Relationships',
 			'sessions.inspector.canvas.kindDoc' => 'Document',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.modeView' => 'View',
 			'sessions.inspector.canvas.modePin' => 'Pin',
 			'sessions.inspector.canvas.modeRegion' => 'Frame',
@@ -22878,13 +22908,13 @@ extension on Translations {
 			'backups.kv.fanout' => 'Fan-out group',
 			'backups.kv.triggeredBy' => 'Triggered by',
 			'backups.kv.started' => 'Started',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.finished' => 'Finished',
 			'backups.kv.size' => 'Size',
 			'backups.kv.encrypted' => 'Encrypted',
 			'backups.kv.targetPath' => 'Target path',
 			'backups.kv.error' => 'Error',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.yes' => 'yes',
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Recovery Kit',
@@ -23392,13 +23422,13 @@ extension on Translations {
 			'notesPage.backlinks.empty' => 'No notes link here yet.',
 			'notesPage.backlinks.failed' => ({required Object error}) => 'Could not load backlinks: ${error}',
 			'notesPage.outline.action' => 'Outline',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.outline.title' => 'Outline',
 			'notesPage.outline.empty' => 'This document has no headings.',
 			'notesPage.outline.jumpedToSource' => 'Preview can\'t scroll without scripts, so this opened the source view.',
 			'notesPage.today.tooltip' => 'Open today\'s daily note',
 			'notesPage.wikiLink.suggestions' => 'Link to…',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Create "${name}"',
 			'notesPage.wikiLink.noMatches' => 'No note matches — keep typing to create one.',
 			'vaultSync.title' => 'Vault sync',
