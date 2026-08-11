@@ -79,6 +79,90 @@ func TestUnmanagedBinLink_VendorInstallerLinkIsReported(t *testing.T) {
 	}
 }
 
+// The npm prefix itself can sit behind a symlink — nvm, a linked
+// /usr/local, or on macOS simply /var -> /private/var, which is why this
+// case reproduced on darwin and not on CI's Linux. Resolving the bin link
+// while leaving npmRoot unresolved makes the two paths incomparable, so
+// npm's own shim looks foreign and a healthy install gets reported as
+// hijacked. Build the symlinked prefix explicitly so every platform runs
+// the same check.
+func TestUnmanagedBinLink_NpmOwnedLinkUnderSymlinkedPrefix(t *testing.T) {
+	base := t.TempDir()
+	realPrefix := filepath.Join(base, "real")
+	root := filepath.Join(realPrefix, "lib", "node_modules")
+	bin := filepath.Join(realPrefix, "bin")
+	for _, d := range []string{root, bin} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A second path to the same tree, the way nvm/homebrew/macOS do it.
+	linkedPrefix := filepath.Join(base, "linked")
+	if err := os.Symlink(realPrefix, linkedPrefix); err != nil {
+		t.Skipf("symlinks unavailable on this platform: %v", err)
+	}
+
+	// npm's own shim: bin/grok -> ../lib/node_modules/<pkg>/bin/grok
+	target := filepath.Join(root, "@xai-official", "grok", "bin", "grok")
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(bin, "grok")); err != nil {
+		t.Fatal(err)
+	}
+
+	// `npm root -g` reports the path the caller reached it by — here the
+	// symlinked one, which is what makes this differ from the plain case.
+	linkedRoot := filepath.Join(linkedPrefix, "lib", "node_modules")
+	link, isFile := unmanagedBinLink(linkedRoot, "grok")
+	if link != "" || isFile {
+		t.Errorf("npm-owned link under a symlinked prefix must not be reported as unmanaged; got link=%q isFile=%v", link, isFile)
+	}
+}
+
+// A vendor installer's link must still be caught when the prefix is
+// symlinked — the fix must not turn into "resolve everything, report
+// nothing".
+func TestUnmanagedBinLink_VendorLinkUnderSymlinkedPrefix(t *testing.T) {
+	base := t.TempDir()
+	realPrefix := filepath.Join(base, "real")
+	root := filepath.Join(realPrefix, "lib", "node_modules")
+	bin := filepath.Join(realPrefix, "bin")
+	for _, d := range []string{root, bin} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	linkedPrefix := filepath.Join(base, "linked")
+	if err := os.Symlink(realPrefix, linkedPrefix); err != nil {
+		t.Skipf("symlinks unavailable on this platform: %v", err)
+	}
+
+	vendor := filepath.Join(base, "grok-downloads", "grok")
+	if err := os.MkdirAll(filepath.Dir(vendor), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(vendor, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(vendor, filepath.Join(bin, "grok")); err != nil {
+		t.Fatal(err)
+	}
+
+	linkedRoot := filepath.Join(linkedPrefix, "lib", "node_modules")
+	want := filepath.Join(linkedPrefix, "lib", "node_modules", "..", "..", "bin", "grok")
+	link, isFile := unmanagedBinLink(linkedRoot, "grok")
+	if link != filepath.Clean(want) {
+		t.Errorf("vendor link under symlinked prefix not reported: got %q, want %q", link, filepath.Clean(want))
+	}
+	if isFile {
+		t.Error("a symlink must not be reported as a regular file")
+	}
+}
+
 func TestUnmanagedBinLink_DanglingLinkIsReplaceable(t *testing.T) {
 	root, bin := npmPrefix(t)
 	want := filepath.Join(bin, "grok")

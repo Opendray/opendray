@@ -416,9 +416,22 @@ func unmanagedBinLink(npmRoot, exe string) (path string, isFile bool) {
 	if err != nil {
 		return p, false // dangling — safe to replace
 	}
-	if dest == npmRoot || strings.HasPrefix(dest, npmRoot+string(os.PathSeparator)) {
+	// Compare resolved against resolved. The prefix itself often sits
+	// behind a symlink — nvm, a linked /usr/local, or on macOS simply
+	// /var -> /private/var — and resolving only one side makes the two
+	// incomparable, so npm's own shim looks foreign and a healthy install
+	// gets reported as hijacked. If npmRoot can't be resolved (npm has
+	// installed nothing yet) fall back to it verbatim: an entry in bin
+	// then genuinely isn't npm's.
+	root := npmRoot
+	if resolved, err := filepath.EvalSymlinks(npmRoot); err == nil {
+		root = resolved
+	}
+	if dest == root || strings.HasPrefix(dest, root+string(os.PathSeparator)) {
 		return "", false // npm's own shim
 	}
+	// Report the path the CALLER knows, not the resolved one — it is what
+	// they must remove, and what the operator sees in the message.
 	return p, false // vendor installer's link
 }
 
