@@ -6101,6 +6101,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbNewPageZh newPage = _TranslationsWebKnowledgeKbNewPageZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbPageSettingsZh pageSettings = _TranslationsWebKnowledgeKbPageSettingsZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianZh librarian = _TranslationsWebKnowledgeKbLibrarianZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbWritePolicyZh writePolicy = _TranslationsWebKnowledgeKbWritePolicyZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9813,6 +9814,8 @@ class _TranslationsWebKnowledgeKbPageSettingsZh extends TranslationsWebKnowledge
 	@override String get hint => '编辑此页面的标题、摘要、性质与注入开关';
 	@override String get save => '保存设置';
 	@override String get savedToast => '页面设置已更新';
+	@override String get fixedTitle => '这一页的标题由界面语言决定，不能在这里修改。';
+	@override String get fixedNature => '内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -9830,6 +9833,18 @@ class _TranslationsWebKnowledgeKbLibrarianZh extends TranslationsWebKnowledgeKbL
 	@override String get provider => 'Cloud agent';
 	@override String get account => 'Claude 账号';
 	@override String get launch => '启动';
+}
+
+// Path: web.knowledge.kb.writePolicy
+class _TranslationsWebKnowledgeKbWritePolicyZh extends TranslationsWebKnowledgeKbWritePolicyEn {
+	_TranslationsWebKnowledgeKbWritePolicyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get proposal => '改动前需要我批准';
+	@override String get direct => '自动更新，无需批准';
+	@override String get hint => '自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -12580,6 +12595,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.pageSettings.hint' => '编辑此页面的标题、摘要、性质与注入开关',
 			'web.knowledge.kb.pageSettings.save' => '保存设置',
 			'web.knowledge.kb.pageSettings.savedToast' => '页面设置已更新',
+			'web.knowledge.kb.pageSettings.fixedTitle' => '这一页的标题由界面语言决定，不能在这里修改。',
+			'web.knowledge.kb.pageSettings.fixedNature' => '内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。',
 			'web.knowledge.kb.librarian.button' => '用 AI 管理知识库',
 			'web.knowledge.kb.librarian.hint' => '启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB 图书管理员会话已启动',
@@ -12588,6 +12605,9 @@ extension on TranslationsZh {
 			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
 			'web.knowledge.kb.librarian.account' => 'Claude 账号',
 			'web.knowledge.kb.librarian.launch' => '启动',
+			'web.knowledge.kb.writePolicy.proposal' => '改动前需要我批准',
+			'web.knowledge.kb.writePolicy.direct' => '自动更新，无需批准',
+			'web.knowledge.kb.writePolicy.hint' => '自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -12695,13 +12715,13 @@ extension on TranslationsZh {
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
 			'web.cortex.chat.accountDefault' => '默认账号',
 			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.modelProviderDefault' => '供应商默认',
 			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
 			'web.cortex.blueprint.openHint' => '编辑本项目文档包含哪些章节',
 			'web.cortex.blueprint.title' => '文档蓝图',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.description' => '本项目官方文档的章节结构。不同类型的项目应有不同的章节——可自行调整，也可让 AI 按项目类型提议。',
 			'web.cortex.blueprint.propose' => 'AI 提议',
 			'web.cortex.blueprint.proposeHint' => '识别项目类型并提议契合的章节结构',
@@ -13209,13 +13229,13 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.renamed' => '已移动。',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
 			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
 			'sessions.inspector.canvas.kindFlow' => '流程图',
 			'sessions.inspector.canvas.kindMindmap' => '思维导图',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.kindGraph' => '关系图',
 			'sessions.inspector.canvas.kindDoc' => '文档',
 			'sessions.inspector.canvas.modeView' => '查看',
@@ -13723,13 +13743,13 @@ extension on TranslationsZh {
 			'backups.kv.target' => '目标',
 			'backups.kv.dedup' => '去重',
 			'backups.kv.fanout' => '扇出组',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.triggeredBy' => '触发者',
 			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
 			'backups.kv.size' => '大小',
 			'backups.kv.encrypted' => '已加密',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.targetPath' => '目标路径',
 			'backups.kv.error' => '错误',
 			'backups.kv.yes' => '是',
@@ -14237,13 +14257,13 @@ extension on TranslationsZh {
 			'notesPage.backlinks.title' => '反向链接',
 			'notesPage.backlinks.loading' => '正在查找链接…',
 			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
 			'notesPage.outline.action' => '大纲',
 			'notesPage.outline.title' => '大纲',
 			'notesPage.outline.empty' => '这篇文档没有标题。',
 			'notesPage.outline.jumpedToSource' => '预览关闭了脚本、无法滚动，所以已切到源码视图。',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.today.tooltip' => '打开今天的日记',
 			'notesPage.wikiLink.suggestions' => '链接到…',
 			'notesPage.wikiLink.createNew' => ({required Object name}) => '新建“${name}”',

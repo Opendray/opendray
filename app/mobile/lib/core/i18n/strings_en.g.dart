@@ -11924,6 +11924,7 @@ class TranslationsWebKnowledgeKbEn {
 	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
 	late final TranslationsWebKnowledgeKbPageSettingsEn pageSettings = TranslationsWebKnowledgeKbPageSettingsEn.internal(_root);
 	late final TranslationsWebKnowledgeKbLibrarianEn librarian = TranslationsWebKnowledgeKbLibrarianEn.internal(_root);
+	late final TranslationsWebKnowledgeKbWritePolicyEn writePolicy = TranslationsWebKnowledgeKbWritePolicyEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -18794,6 +18795,12 @@ class TranslationsWebKnowledgeKbPageSettingsEn {
 
 	/// en: 'Page settings updated'
 	String get savedToast => 'Page settings updated';
+
+	/// en: 'This page's title comes from the interface language and can't be edited here.'
+	String get fixedTitle => 'This page\'s title comes from the interface language and can\'t be edited here.';
+
+	/// en: 'A built-in page's nature is fixed — it determines whether sessions read it as a binding rule or as reference.'
+	String get fixedNature => 'A built-in page\'s nature is fixed — it determines whether sessions read it as a binding rule or as reference.';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -18827,6 +18834,24 @@ class TranslationsWebKnowledgeKbLibrarianEn {
 
 	/// en: 'Launch'
 	String get launch => 'Launch';
+}
+
+// Path: web.knowledge.kb.writePolicy
+class TranslationsWebKnowledgeKbWritePolicyEn {
+	TranslationsWebKnowledgeKbWritePolicyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Needs my approval before it changes'
+	String get proposal => 'Needs my approval before it changes';
+
+	/// en: 'Updates itself automatically'
+	String get direct => 'Updates itself automatically';
+
+	/// en: 'Whether automation may rewrite this page in place. Approval means opendray's background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.'
+	String get hint => 'Whether automation may rewrite this page in place. Approval means opendray\'s background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -21763,6 +21788,8 @@ extension on Translations {
 			'web.knowledge.kb.pageSettings.hint' => 'Edit this page\'s title, summary, nature and inject flag',
 			'web.knowledge.kb.pageSettings.save' => 'Save settings',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Page settings updated',
+			'web.knowledge.kb.pageSettings.fixedTitle' => 'This page\'s title comes from the interface language and can\'t be edited here.',
+			'web.knowledge.kb.pageSettings.fixedNature' => 'A built-in page\'s nature is fixed — it determines whether sessions read it as a binding rule or as reference.',
 			'web.knowledge.kb.librarian.button' => 'Manage KB with AI',
 			'web.knowledge.kb.librarian.hint' => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB Librarian session started',
@@ -21771,6 +21798,9 @@ extension on Translations {
 			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
 			'web.knowledge.kb.librarian.account' => 'Claude account',
 			'web.knowledge.kb.librarian.launch' => 'Launch',
+			'web.knowledge.kb.writePolicy.proposal' => 'Needs my approval before it changes',
+			'web.knowledge.kb.writePolicy.direct' => 'Updates itself automatically',
+			'web.knowledge.kb.writePolicy.hint' => 'Whether automation may rewrite this page in place. Approval means opendray\'s background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -21875,13 +21905,13 @@ extension on Translations {
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
 			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.modelGroupLocal' => 'Local models',
 			'web.cortex.chat.accountDefault' => 'Default account',
 			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
 			'web.cortex.chat.modelProviderDefault' => 'Provider default',
 			'web.cortex.chat.modelProbeFailed' => 'Couldn\'t reach the endpoint to list models — pick the provider default or configure it in Memory settings.',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.open' => 'Blueprint',
 			'web.cortex.blueprint.openHint' => 'Edit which doc sections this project carries',
 			'web.cortex.blueprint.title' => 'Doc blueprint',
@@ -22389,13 +22419,13 @@ extension on Translations {
 			'sessions.inspector.notes.renameTitle' => 'Rename or move',
 			'sessions.inspector.notes.move' => 'Move',
 			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.renamed' => 'Moved.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Move failed: ${error}',
 			'sessions.inspector.notes.openFolderIndex' => 'Open folder index',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.kindUi' => 'UI mock',
 			'sessions.inspector.canvas.kindFlow' => 'Flowchart',
 			'sessions.inspector.canvas.kindMindmap' => 'Mind map',
@@ -22903,13 +22933,13 @@ extension on Translations {
 			'backups.kv.status' => 'Status',
 			'backups.kv.verified' => 'Verified',
 			'backups.kv.kind' => 'Type',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.target' => 'Target',
 			'backups.kv.dedup' => 'Dedup',
 			'backups.kv.fanout' => 'Fan-out group',
 			'backups.kv.triggeredBy' => 'Triggered by',
 			'backups.kv.started' => 'Started',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.finished' => 'Finished',
 			'backups.kv.size' => 'Size',
 			'backups.kv.encrypted' => 'Encrypted',
@@ -23417,13 +23447,13 @@ extension on Translations {
 			'notesPage.tags.filteredBy' => 'Filtered by',
 			'notesPage.tags.clear' => 'Clear tag filter',
 			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.backlinks.title' => 'Backlinks',
 			'notesPage.backlinks.loading' => 'Looking for links…',
 			'notesPage.backlinks.empty' => 'No notes link here yet.',
 			'notesPage.backlinks.failed' => ({required Object error}) => 'Could not load backlinks: ${error}',
 			'notesPage.outline.action' => 'Outline',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.outline.title' => 'Outline',
 			'notesPage.outline.empty' => 'This document has no headings.',
 			'notesPage.outline.jumpedToSource' => 'Preview can\'t scroll without scripts, so this opened the source view.',

@@ -777,11 +777,14 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
                     value: _KbAction.regenerate,
                     child: Text(t.web.knowledge.kb.regenerate),
                   ),
-                  if (widget.editable)
-                    PopupMenuItem(
-                      value: _KbAction.settings,
-                      child: Text(t.web.knowledge.kb.pageSettings.button),
-                    ),
+                  // Settings on EVERY page. The classic four used to be
+                  // excluded, which also put who maintains the page and
+                  // whether its writes need approval out of reach; the
+                  // dialog disables only the two genuinely fixed fields.
+                  PopupMenuItem(
+                    value: _KbAction.settings,
+                    child: Text(t.web.knowledge.kb.pageSettings.button),
+                  ),
                 ],
               ),
             ];
@@ -1138,7 +1141,21 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
       ? 'foundational'
       : 'emergent';
   late bool _inject = _section?.inject ?? false;
+  // The classic four keep two fixed fields: their titles come from i18n
+  // (editing the stored one changes nothing visible) and their natures are
+  // what make them guardrails. Everything else is the operator's.
+  bool get _classic => _classicSlugs.contains(_section?.slug);
+  static const _classicSlugs = {
+    'kb_infrastructure',
+    'kb_conventions',
+    'kb_lessons',
+    'kb_reusable',
+  };
+
   late String _maintainer = _section?.maintainerMode ?? 'ai';
+  // Default new pages to the approval gate: a page that quietly rewrites
+  // itself is the surprising option, not the safe one.
+  late String _writePolicy = _section?.writePolicy ?? 'proposal';
   bool _busy = false;
 
   static final _slugRe = RegExp(r'^kb_[a-z0-9][a-z0-9_]{0,44}$');
@@ -1177,7 +1194,7 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               // never silently resets them; new pages get sensible defaults.
               position: _section?.position ?? 99,
               maintainerMode: _effectiveMaintainer,
-              writePolicy: _section?.writePolicy ?? 'proposal',
+              writePolicy: _writePolicy,
               promptHint: _section?.promptHint ?? '',
               pinned: _section?.pinned ?? false,
               inject: _inject,
@@ -1243,8 +1260,15 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
             const SizedBox(height: 8),
             TextField(
               controller: _title,
+              // A classic page's displayed title comes from i18n, so editing
+              // the stored one would change nothing the operator can see.
+              readOnly: _classic,
+              enabled: !_classic,
               decoration: InputDecoration(
                 hintText: t.web.knowledge.kb.newPage.titlePlaceholder,
+                helperText:
+                    _classic ? t.web.knowledge.kb.pageSettings.fixedTitle : null,
+                helperMaxLines: 3,
                 isDense: true,
               ),
               onChanged: (_) => setState(() {}),
@@ -1260,7 +1284,13 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _nature,
-              decoration: const InputDecoration(isDense: true),
+              decoration: InputDecoration(
+                isDense: true,
+                helperText: _classic
+                    ? t.web.knowledge.kb.pageSettings.fixedNature
+                    : null,
+                helperMaxLines: 3,
+              ),
               items: [
                 DropdownMenuItem(
                     value: 'foundational',
@@ -1269,7 +1299,11 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
                     value: 'emergent',
                     child: Text(t.web.knowledge.kb.emergent)),
               ],
-              onChanged: (v) => setState(() => _nature = v ?? 'emergent'),
+              // Nature is what makes a foundational page a guardrail;
+              // flipping it changes how every session reads the page.
+              onChanged: _classic
+                  ? null
+                  : (v) => setState(() => _nature = v ?? 'emergent'),
             ),
             const SizedBox(height: 4),
             CheckboxListTile(
@@ -1306,6 +1340,31 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
                   : t.web.knowledge.kb.maintainer.sessionUnavailable,
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            // Approval gate. Only meaningful when something automated
+            // writes the page — an operator-maintained page has no AI
+            // write to gate.
+            if (_maintainer != 'human') ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _writePolicy,
+                decoration: const InputDecoration(isDense: true),
+                items: [
+                  DropdownMenuItem(
+                      value: 'proposal',
+                      child: Text(t.web.knowledge.kb.writePolicy.proposal)),
+                  DropdownMenuItem(
+                      value: 'direct',
+                      child: Text(t.web.knowledge.kb.writePolicy.direct)),
+                ],
+                onChanged: (v) =>
+                    setState(() => _writePolicy = v ?? 'proposal'),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.writePolicy.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ],
         ),
       ),

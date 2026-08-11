@@ -3085,7 +3085,9 @@
           "description": "Edit this page's title, summary, nature and injection. The slug is fixed and the page body is edited separately.",
           "hint": "Edit this page's title, summary, nature and inject flag",
           "save": "Save settings",
-          "savedToast": "Page settings updated"
+          "savedToast": "Page settings updated",
+          "fixedTitle": "This page's title comes from the interface language and can't be edited here.",
+          "fixedNature": "A built-in page's nature is fixed — it determines whether sessions read it as a binding rule or as reference."
         },
         "librarian": {
           "button": "Manage KB with AI",
@@ -3096,6 +3098,11 @@
           "provider": "Cloud agent",
           "account": "Claude account",
           "launch": "Launch"
+        },
+        "writePolicy": {
+          "proposal": "Needs my approval before it changes",
+          "direct": "Updates itself automatically",
+          "hint": "Whether automation may rewrite this page in place. Approval means opendray's background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them."
         }
       },
       "kinds": {

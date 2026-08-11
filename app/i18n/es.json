@@ -3085,7 +3085,9 @@
           "description": "Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.",
           "hint": "Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página",
           "save": "Guardar ajustes",
-          "savedToast": "Ajustes de la página actualizados"
+          "savedToast": "Ajustes de la página actualizados",
+          "fixedTitle": "El título de esta página proviene del idioma de la interfaz y no se edita aquí.",
+          "fixedNature": "La naturaleza de una página integrada es fija: determina si las sesiones la leen como regla vinculante o como referencia."
         },
         "librarian": {
           "button": "Gestionar KB con IA",
@@ -3096,6 +3098,11 @@
           "provider": "Agente en la nube",
           "account": "Cuenta de Claude",
           "launch": "Lanzar"
+        },
+        "writePolicy": {
+          "proposal": "Requiere mi aprobación antes de cambiar",
+          "direct": "Se actualiza automáticamente",
+          "hint": "Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben."
         }
       },
       "kinds": {
