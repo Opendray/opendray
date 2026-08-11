@@ -12,7 +12,7 @@ import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/curation_chat_screen.dart';
-import 'package:opendray/features/cortex/proposal_diff.dart';
+import 'package:opendray/features/cortex/proposal_review_screen.dart';
 import 'package:opendray/features/knowledge/force_graph.dart';
 
 // Knowledge tab — read-mostly browser over the M-KG knowledge graph.
@@ -565,7 +565,6 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
   final _editCtrl = TextEditingController();
   bool _editing = false;
   bool _busy = false;
-  bool _showProposal = false;
   AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
   List<DocProposal> _proposals = const [];
   late String _title = widget.title;
@@ -592,7 +591,6 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
     setState(() {
       _doc = const AsyncValue.loading();
       _editing = false;
-      _showProposal = false;
     });
     try {
       final api = ref.read(projectDocsApiProvider);
@@ -652,6 +650,26 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         SnackBar(content: Text(t.web.knowledge.actionFailed)),
       );
     }
+  }
+
+  // Pushes the full-screen review. The decision is made there and applied
+  // here, so this screen keeps owning the reload and the busy flag.
+  Future<void> _openReview() async {
+    final p = _pending;
+    if (p == null) return;
+    final approve = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => ProposalReviewScreen(
+          pageTitle: widget.title,
+          proposal: p,
+          busy: false,
+          onDecide: ({required approve}) =>
+              Navigator.of(context).pop(approve),
+        ),
+      ),
+    );
+    if (approve == null || !mounted) return;
+    await _decide(approve);
   }
 
   Future<void> _decide(bool approve) async {
@@ -865,46 +883,48 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
                     color: scheme.tertiaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  // A summary and one way in. The diff itself used to sit
+                  // here in a 240px window on this tinted background, with
+                  // approve and reject sharing a row that overflowed on a
+                  // phone — reject was pushed off-screen, leaving Approve
+                  // as the only visible action on something unreadable.
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(t.web.knowledge.kb.proposal.text,
-                          style: const TextStyle(fontSize: 12)),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: scheme.onTertiaryContainer,
+                          )),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          TextButton(
-                            onPressed: () => setState(
-                                () => _showProposal = !_showProposal),
-                            child: Text(_showProposal
-                                ? t.web.knowledge.kb.proposal.hide
-                                : t.web.knowledge.kb.proposal.preview),
-                          ),
+                          if (pending.diff != null) ...[
+                            Text(
+                              t.web.diff.added(count: pending.diff!.added),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              t.web.diff.removed(count: pending.diff!.removed),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                          ],
                           const Spacer(),
-                          TextButton(
-                            onPressed: _busy ? null : () => _decide(false),
-                            child: Text(t.web.knowledge.kb.proposal.reject),
-                          ),
-                          FilledButton(
-                            onPressed: _busy ? null : () => _decide(true),
-                            child: Text(t.web.knowledge.kb.proposal.approve),
+                          FilledButton.tonalIcon(
+                            onPressed: _busy ? null : _openReview,
+                            icon: const Icon(Icons.rate_review_outlined,
+                                size: 16),
+                            label: Text(t.web.knowledge.kb.proposal.review),
                           ),
                         ],
                       ),
-                      if (_showProposal)
-                        Container(
-                          constraints: const BoxConstraints(maxHeight: 240),
-                          margin: const EdgeInsets.only(top: 6),
-                          child: SingleChildScrollView(
-                            // Show what CHANGED. Proposals filed before the
-                            // server attached diffs fall back to the body.
-                            child: pending.diff != null
-                                ? ProposalDiffView(diff: pending.diff!)
-                                : SelectableText(
-                                    _stripSig(pending.proposedContent),
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                          ),
-                        ),
                     ],
                   ),
                 ),

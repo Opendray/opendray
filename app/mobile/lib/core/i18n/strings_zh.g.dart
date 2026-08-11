@@ -9780,6 +9780,7 @@ class _TranslationsWebKnowledgeKbProposalZh extends TranslationsWebKnowledgeKbPr
 	@override String get reject => '拒绝';
 	@override String get approved => '更新已批准';
 	@override String get rejected => '提议已拒绝';
+	@override String get review => '审阅';
 }
 
 // Path: web.knowledge.kb.newPage
@@ -12571,6 +12572,7 @@ extension on TranslationsZh {
 			'web.knowledge.kb.proposal.reject' => '拒绝',
 			'web.knowledge.kb.proposal.approved' => '更新已批准',
 			'web.knowledge.kb.proposal.rejected' => '提议已拒绝',
+			'web.knowledge.kb.proposal.review' => '审阅',
 			'web.knowledge.kb.discuss' => '与 AI 讨论',
 			'web.knowledge.kb.discussHint' => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写',
 			'web.knowledge.kb.onDemand' => '按需',
@@ -12714,9 +12716,9 @@ extension on TranslationsZh {
 			'web.cortex.chat.modelGroupCloud' => '云端 agent',
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
 			'web.cortex.chat.accountDefault' => '默认账号',
-			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
 			'web.cortex.chat.modelProviderDefault' => '供应商默认',
 			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
@@ -13228,9 +13230,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.renameHelp' => '项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md',
 			'sessions.inspector.notes.renamed' => '已移动。',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
-			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
 			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
@@ -13742,9 +13744,9 @@ extension on TranslationsZh {
 			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
 			'backups.kv.dedup' => '去重',
-			'backups.kv.fanout' => '扇出组',
 			_ => null,
 		} ?? switch (path) {
+			'backups.kv.fanout' => '扇出组',
 			'backups.kv.triggeredBy' => '触发者',
 			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
@@ -14256,9 +14258,9 @@ extension on TranslationsZh {
 			'notesPage.tags.noNotes' => ({required Object tag}) => '已经没有笔记带 #${tag} 了。',
 			'notesPage.backlinks.title' => '反向链接',
 			'notesPage.backlinks.loading' => '正在查找链接…',
-			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
 			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
 			'notesPage.outline.action' => '大纲',
 			'notesPage.outline.title' => '大纲',

@@ -9783,6 +9783,7 @@ class _TranslationsWebKnowledgeKbProposalEs extends TranslationsWebKnowledgeKbPr
 	@override String get reject => 'Rechazar';
 	@override String get approved => 'Actualización aprobada';
 	@override String get rejected => 'Propuesta rechazada';
+	@override String get review => 'Revisar';
 }
 
 // Path: web.knowledge.kb.newPage
@@ -12577,6 +12578,7 @@ extension on TranslationsEs {
 			'web.knowledge.kb.proposal.reject' => 'Rechazar',
 			'web.knowledge.kb.proposal.approved' => 'Actualización aprobada',
 			'web.knowledge.kb.proposal.rejected' => 'Propuesta rechazada',
+			'web.knowledge.kb.proposal.review' => 'Revisar',
 			'web.knowledge.kb.discuss' => 'Hablar con la IA',
 			'web.knowledge.kb.discussHint' => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras',
 			'web.knowledge.kb.onDemand' => 'bajo demanda',
@@ -12717,9 +12719,9 @@ extension on TranslationsEs {
 			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
 			'web.cortex.chat.modelCliDefault' => 'Predeterminado del CLI',
 			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
-			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
 			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
 			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
 			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
@@ -13231,9 +13233,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.inspector.notes.renameTitle' => 'Renombrar o mover',
 			'sessions.inspector.notes.move' => 'Mover',
-			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
 			'sessions.inspector.notes.renamed' => 'Movido.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
@@ -13745,9 +13747,9 @@ extension on TranslationsEs {
 			'backups.menuTargets' => 'Destinos',
 			'backups.kv.status' => 'Estado',
 			'backups.kv.verified' => 'Verificada',
-			'backups.kv.kind' => 'Tipo',
 			_ => null,
 		} ?? switch (path) {
+			'backups.kv.kind' => 'Tipo',
 			'backups.kv.target' => 'Destino',
 			'backups.kv.dedup' => 'Deduplicación',
 			'backups.kv.fanout' => 'Grupo de difusión',
@@ -14259,9 +14261,9 @@ extension on TranslationsEs {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'Ninguna etiqueta coincide con «${query}».',
 			'notesPage.tags.filteredBy' => 'Filtrado por',
 			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',
-			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
 			'notesPage.backlinks.title' => 'Retroenlaces',
 			'notesPage.backlinks.loading' => 'Buscando enlaces…',
 			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',

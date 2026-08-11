@@ -3057,7 +3057,8 @@
           "approve": "Approve",
           "reject": "Reject",
           "approved": "Update approved",
-          "rejected": "Proposal rejected"
+          "rejected": "Proposal rejected",
+          "review": "Review"
         },
         "discuss": "Discuss with AI",
         "discussHint": "Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites",
