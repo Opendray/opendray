@@ -26,6 +26,39 @@ func renderDiff(d DocDiff) string {
 	return b.String()
 }
 
+// A pending proposal's PriorContent is empty — that column is only
+// written on APPROVAL, to record what the approval replaced. Diffing
+// against it would make every pending proposal read as "all lines
+// added", which is the full-document view this feature exists to
+// replace. The baseline must be the live document.
+func TestDiffBaseline_UsesLiveDocNotPriorContent(t *testing.T) {
+	live := "alpha\nbravo\ncharlie\n"
+	p := Proposal{
+		ProposedContent: "alpha\nbravo\nNEW\ncharlie\n",
+		PriorContent:    "", // what a pending proposal actually carries
+	}
+
+	d := DiffBaseline(live, p)
+	if d.Added != 1 || d.Removed != 0 {
+		t.Errorf("Added/Removed = %d/%d, want 1/0 — the diff is not against the live doc", d.Added, d.Removed)
+	}
+	if got := renderDiff(d); strings.Count(got, "+") != 1 {
+		t.Errorf("expected a single added line, got:\n%s", got)
+	}
+}
+
+// Even when PriorContent happens to be populated (an approved row), the
+// live document still wins — it is what the operator is deciding about.
+func TestDiffBaseline_IgnoresStalePriorContent(t *testing.T) {
+	p := Proposal{
+		ProposedContent: "one\ntwo\n",
+		PriorContent:    "something\nentirely\ndifferent\n",
+	}
+	if d := DiffBaseline("one\ntwo\n", p); !d.Unchanged {
+		t.Errorf("proposal matching the live doc should show no changes; got +%d/-%d", d.Added, d.Removed)
+	}
+}
+
 func TestDiffLines_AddedLine(t *testing.T) {
 	before := "alpha\nbravo\ncharlie\n"
 	after := "alpha\nbravo\nnew line\ncharlie\n"

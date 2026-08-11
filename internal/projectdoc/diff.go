@@ -53,6 +53,22 @@ type DocDiff struct {
 // change — the same default git and GitHub use.
 const DefaultDiffContext = 3
 
+// DiffBaseline picks what a pending proposal should be diffed AGAINST.
+//
+// Not Proposal.PriorContent: that column is written when a proposal is
+// APPROVED, to record what the approval replaced. A pending proposal's
+// PriorContent is always empty, so diffing against it makes every
+// proposal read as "all lines added" — the full-document view the diff
+// exists to replace.
+//
+// The live document is also the more useful baseline: the reviewer is
+// deciding what this proposal does to the page as it stands NOW, which
+// may have been edited since the proposal was filed. An absent live doc
+// (a page being created) correctly yields an all-additions diff.
+func DiffBaseline(liveContent string, p Proposal) DocDiff {
+	return DiffLines(liveContent, p.ProposedContent, DefaultDiffContext)
+}
+
 // DiffLines computes a line-level diff of two document bodies, keeping
 // context unchanged lines around each change.
 //

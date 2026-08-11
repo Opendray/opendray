@@ -541,15 +541,42 @@ func (s *Service) ListPendingProposals(ctx context.Context, cwd string) ([]Propo
 		if err != nil {
 			return nil, err
 		}
-		// Attach the review diff here rather than in each client, so web
-		// and mobile show the same thing. This is the operator's approval
-		// queue — a handful of rows — so computing it eagerly costs less
-		// than a second round-trip per proposal would.
-		d := DiffLines(p.PriorContent, p.ProposedContent, DefaultDiffContext)
-		p.Diff = &d
 		out = append(out, p)
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	s.attachDiffs(ctx, out)
+	return out, nil
+}
+
+// attachDiffs fills each proposal's review diff against the LIVE document.
+// Done here rather than in each client so web and mobile show the same
+// review; this is the operator's approval queue — a handful of rows — so
+// computing it eagerly costs less than a round-trip per proposal.
+//
+// Live bodies are fetched once per (cwd, kind): a queue commonly holds
+// several proposals for the same page.
+func (s *Service) attachDiffs(ctx context.Context, proposals []Proposal) {
+	live := make(map[string]string, len(proposals))
+	for i := range proposals {
+		p := &proposals[i]
+		key := p.Cwd + "\x00" + string(p.Kind)
+		body, cached := live[key]
+		if !cached {
+			// A missing doc is not an error here: the proposal may be
+			// creating the page, which correctly diffs as all additions.
+			if d, err := s.GetDoc(ctx, p.Cwd, p.Kind); err == nil {
+				body = d.Content
+			} else if !errors.Is(err, ErrNotFound) {
+				s.log.Warn("projectdoc: diff baseline unavailable — showing proposal as all additions",
+					"cwd", p.Cwd, "kind", p.Kind, "err", err)
+			}
+			live[key] = body
+		}
+		d := DiffBaseline(body, *p)
+		p.Diff = &d
+	}
 }
 
 // RejectedProposalContents returns the proposed_content of every REJECTED
