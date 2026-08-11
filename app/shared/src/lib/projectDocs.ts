@@ -202,6 +202,33 @@ export async function setProjectLifecycle(
 
 // ── proposals ─────────────────────────────────────────────────
 
+/** One line of a review diff. 'context' lines are unchanged and shown
+ * only for orientation. */
+export interface DiffLine {
+  kind: 'context' | 'add' | 'remove'
+  text: string
+}
+
+/** A run of changed lines with its surrounding context. */
+export interface DiffHunk {
+  /** Unchanged lines between the previous hunk and this one. Rendered as
+   * "N unchanged lines" so the reviewer knows something was collapsed
+   * rather than wondering whether the diff is complete. */
+  skipped_before: number
+  /** 1-based first line of this hunk in the NEW document. */
+  start_line: number
+  lines: DiffLine[]
+}
+
+/** The reviewable difference between the live doc and a proposal. Computed
+ * server-side so every client shows the same review. */
+export interface DocDiff {
+  hunks: DiffHunk[]
+  added: number
+  removed: number
+  unchanged: boolean
+}
+
 export interface DocProposal {
   id: string
   cwd: string
@@ -212,8 +239,11 @@ export interface DocProposal {
   /** When the proposal has been decided, the verdict. */
   decision?: 'approved' | 'rejected'
   decided_at?: string
-  /** The prior live content at the time of proposal — used for diff display. */
+  /** The prior live content at the time of proposal. */
   prior_content?: string
+  /** Line-level change from prior_content to proposed_content. Present on
+   * the review endpoints; absent on paths that don't serve a review. */
+  diff?: DocDiff
   created_at: string
 }
 

@@ -12,6 +12,7 @@ import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/curation_chat_screen.dart';
+import 'package:opendray/features/cortex/proposal_diff.dart';
 import 'package:opendray/features/knowledge/force_graph.dart';
 
 // Knowledge tab — read-mostly browser over the M-KG knowledge graph.
@@ -891,10 +892,14 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
                           constraints: const BoxConstraints(maxHeight: 240),
                           margin: const EdgeInsets.only(top: 6),
                           child: SingleChildScrollView(
-                            child: SelectableText(
-                              _stripSig(pending.proposedContent),
-                              style: const TextStyle(fontSize: 12),
-                            ),
+                            // Show what CHANGED. Proposals filed before the
+                            // server attached diffs fall back to the body.
+                            child: pending.diff != null
+                                ? ProposalDiffView(diff: pending.diff!)
+                                : SelectableText(
+                                    _stripSig(pending.proposedContent),
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                           ),
                         ),
                     ],

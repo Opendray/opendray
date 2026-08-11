@@ -3496,6 +3496,13 @@
         "bypass": "跳过权限 (YOLO)",
         "bypassHint": "用 bypass 标志启动会话,不再逐个请求批准。"
       }
+    },
+    "diff": {
+      "noChanges": "没有改动 —— 提案内容与当前页面完全一致。",
+      "added": "+{count}",
+      "removed": "−{count}",
+      "changedLines": "行变更",
+      "collapsed": "⋯ 未改动 {count} 行 ⋯"
     }
   },
   "more": {

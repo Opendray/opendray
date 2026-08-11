@@ -183,6 +183,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebCortexEs cortex = _TranslationsWebCortexEs._(_root);
 	@override late final _TranslationsWebDatabaseEs database = _TranslationsWebDatabaseEs._(_root);
 	@override late final _TranslationsWebRoundTableEs roundTable = _TranslationsWebRoundTableEs._(_root);
+	@override late final _TranslationsWebDiffEs diff = _TranslationsWebDiffEs._(_root);
 }
 
 // Path: more
@@ -1811,6 +1812,20 @@ class _TranslationsWebRoundTableEs extends TranslationsWebRoundTableEn {
 	@override String get untitled => 'Chat nuevo';
 	@override late final _TranslationsWebRoundTableHandoffEs handoff = _TranslationsWebRoundTableHandoffEs._(_root);
 	@override late final _TranslationsWebRoundTablePlanEs plan = _TranslationsWebRoundTablePlanEs._(_root);
+}
+
+// Path: web.diff
+class _TranslationsWebDiffEs extends TranslationsWebDiffEn {
+	_TranslationsWebDiffEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get noChanges => 'Sin cambios: el contenido propuesto es idéntico a la página actual.';
+	@override String added({required Object count}) => '+${count}';
+	@override String removed({required Object count}) => '−${count}';
+	@override String get changedLines => 'líneas modificadas';
+	@override String collapsed({required Object count}) => '⋯ ${count} sin cambios ⋯';
 }
 
 // Path: more.identity
@@ -12906,6 +12921,11 @@ extension on TranslationsEs {
 			'web.roundTable.plan.accountDefault' => 'Predeterminada',
 			'web.roundTable.plan.bypass' => 'Omitir permisos (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Inicia la sesión con su indicador de bypass para no pedir aprobaciones.',
+			'web.diff.noChanges' => 'Sin cambios: el contenido propuesto es idéntico a la página actual.',
+			'web.diff.added' => ({required Object count}) => '+${count}',
+			'web.diff.removed' => ({required Object count}) => '−${count}',
+			'web.diff.changedLines' => 'líneas modificadas',
+			'web.diff.collapsed' => ({required Object count}) => '⋯ ${count} sin cambios ⋯',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -13197,13 +13217,13 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Error al mover: ${error}',
 			'sessions.inspector.notes.openFolderIndex' => 'Abrir índice de carpeta',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.canvas.kindUi' => 'Maqueta UI',
 			'sessions.inspector.canvas.kindFlow' => 'Diagrama de flujo',
 			'sessions.inspector.canvas.kindMindmap' => 'Mapa mental',
 			'sessions.inspector.canvas.kindGraph' => 'Relaciones',
 			'sessions.inspector.canvas.kindDoc' => 'Documento',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.modeView' => 'Ver',
 			'sessions.inspector.canvas.modePin' => 'Marcar',
 			'sessions.inspector.canvas.modeRegion' => 'Encuadrar',
@@ -13711,13 +13731,13 @@ extension on TranslationsEs {
 			'backups.kv.fanout' => 'Grupo de difusión',
 			'backups.kv.triggeredBy' => 'Lanzado por',
 			'backups.kv.started' => 'Iniciado',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.finished' => 'Finalizado',
 			'backups.kv.size' => 'Tamaño',
 			'backups.kv.encrypted' => 'Cifrado',
 			'backups.kv.targetPath' => 'Ruta de destino',
 			'backups.kv.error' => 'Error',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.yes' => 'sí',
 			'backups.kv.no' => 'no',
 			'backups.recoveryKit.menuLabel' => 'Kit de recuperación',
@@ -14225,13 +14245,13 @@ extension on TranslationsEs {
 			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',
 			'notesPage.backlinks.failed' => ({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}',
 			'notesPage.outline.action' => 'Esquema',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.outline.title' => 'Esquema',
 			'notesPage.outline.empty' => 'Este documento no tiene encabezados.',
 			'notesPage.outline.jumpedToSource' => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.',
 			'notesPage.today.tooltip' => 'Abrir la nota diaria de hoy',
 			'notesPage.wikiLink.suggestions' => 'Enlazar a…',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Crear «${name}»',
 			'notesPage.wikiLink.noMatches' => 'Ninguna nota coincide: sigue escribiendo para crear una.',
 			'vaultSync.title' => 'Sincronización del vault',

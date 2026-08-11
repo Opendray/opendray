@@ -172,6 +172,13 @@ type Proposal struct {
 	DecidedAt         *time.Time `json:"decided_at,omitempty"`
 	PriorContent      string     `json:"prior_content,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
+
+	// Diff is the line-level change from PriorContent to ProposedContent,
+	// attached on the review paths so a client renders what changed instead
+	// of asking the operator to compare two full documents by eye. Nil on
+	// paths that don't serve a review (e.g. the proposal returned when one
+	// is filed).
+	Diff *DocDiff `json:"diff,omitempty"`
 }
 
 // LogEntry represents one row from session_logs.
@@ -534,6 +541,12 @@ func (s *Service) ListPendingProposals(ctx context.Context, cwd string) ([]Propo
 		if err != nil {
 			return nil, err
 		}
+		// Attach the review diff here rather than in each client, so web
+		// and mobile show the same thing. This is the operator's approval
+		// queue — a handful of rows — so computing it eagerly costs less
+		// than a second round-trip per proposal would.
+		d := DiffLines(p.PriorContent, p.ProposedContent, DefaultDiffContext)
+		p.Diff = &d
 		out = append(out, p)
 	}
 	return out, rows.Err()

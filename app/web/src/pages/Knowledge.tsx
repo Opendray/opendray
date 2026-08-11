@@ -40,6 +40,7 @@ import {
   type MaintainerMode,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
+import { ProposalDiff } from '@/components/cortex/ProposalDiff'
 import { SlideOverAside } from '@/components/SlideOverAside'
 import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 import { Switch } from '@/components/ui/switch'
@@ -701,9 +702,16 @@ function KnowledgeBaseView() {
             </div>
             {showProposal && (
               <div className="bg-card mt-2 max-h-72 overflow-auto rounded-md p-3">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
-                  {stripSig(pending.proposed_content)}
-                </ReactMarkdown>
+                {/* Show what CHANGED. Falling back to the full proposed
+                    body keeps old proposals (filed before the server
+                    started attaching a diff) reviewable. */}
+                {pending.diff ? (
+                  <ProposalDiff diff={pending.diff} />
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+                    {stripSig(pending.proposed_content)}
+                  </ReactMarkdown>
+                )}
               </div>
             )}
           </div>
