@@ -18795,6 +18795,12 @@ class TranslationsWebKnowledgeKbPageSettingsEn {
 
 	/// en: 'Page settings updated'
 	String get savedToast => 'Page settings updated';
+
+	/// en: 'This page's title comes from the interface language and can't be edited here.'
+	String get fixedTitle => 'This page\'s title comes from the interface language and can\'t be edited here.';
+
+	/// en: 'A built-in page's nature is fixed — it determines whether sessions read it as a binding rule or as reference.'
+	String get fixedNature => 'A built-in page\'s nature is fixed — it determines whether sessions read it as a binding rule or as reference.';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -21782,6 +21788,8 @@ extension on Translations {
 			'web.knowledge.kb.pageSettings.hint' => 'Edit this page\'s title, summary, nature and inject flag',
 			'web.knowledge.kb.pageSettings.save' => 'Save settings',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Page settings updated',
+			'web.knowledge.kb.pageSettings.fixedTitle' => 'This page\'s title comes from the interface language and can\'t be edited here.',
+			'web.knowledge.kb.pageSettings.fixedNature' => 'A built-in page\'s nature is fixed — it determines whether sessions read it as a binding rule or as reference.',
 			'web.knowledge.kb.librarian.button' => 'Manage KB with AI',
 			'web.knowledge.kb.librarian.hint' => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB Librarian session started',
@@ -21897,10 +21905,10 @@ extension on Translations {
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
 			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
-			'web.cortex.chat.modelGroupLocal' => 'Local models',
-			'web.cortex.chat.accountDefault' => 'Default account',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.modelGroupLocal' => 'Local models',
+			'web.cortex.chat.accountDefault' => 'Default account',
 			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
 			'web.cortex.chat.modelProviderDefault' => 'Provider default',
 			'web.cortex.chat.modelProbeFailed' => 'Couldn\'t reach the endpoint to list models — pick the provider default or configure it in Memory settings.',
@@ -22411,10 +22419,10 @@ extension on Translations {
 			'sessions.inspector.notes.renameTitle' => 'Rename or move',
 			'sessions.inspector.notes.move' => 'Move',
 			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
-			'sessions.inspector.notes.renamed' => 'Moved.',
-			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.renamed' => 'Moved.',
+			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Move failed: ${error}',
 			'sessions.inspector.notes.openFolderIndex' => 'Open folder index',
@@ -22925,10 +22933,10 @@ extension on Translations {
 			'backups.kv.status' => 'Status',
 			'backups.kv.verified' => 'Verified',
 			'backups.kv.kind' => 'Type',
-			'backups.kv.target' => 'Target',
-			'backups.kv.dedup' => 'Dedup',
 			_ => null,
 		} ?? switch (path) {
+			'backups.kv.target' => 'Target',
+			'backups.kv.dedup' => 'Dedup',
 			'backups.kv.fanout' => 'Fan-out group',
 			'backups.kv.triggeredBy' => 'Triggered by',
 			'backups.kv.started' => 'Started',
@@ -23439,10 +23447,10 @@ extension on Translations {
 			'notesPage.tags.filteredBy' => 'Filtered by',
 			'notesPage.tags.clear' => 'Clear tag filter',
 			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
-			'notesPage.backlinks.title' => 'Backlinks',
-			'notesPage.backlinks.loading' => 'Looking for links…',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.backlinks.title' => 'Backlinks',
+			'notesPage.backlinks.loading' => 'Looking for links…',
 			'notesPage.backlinks.empty' => 'No notes link here yet.',
 			'notesPage.backlinks.failed' => ({required Object error}) => 'Could not load backlinks: ${error}',
 			'notesPage.outline.action' => 'Outline',

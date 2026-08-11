@@ -9817,6 +9817,8 @@ class _TranslationsWebKnowledgeKbPageSettingsEs extends TranslationsWebKnowledge
 	@override String get hint => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página';
 	@override String get save => 'Guardar ajustes';
 	@override String get savedToast => 'Ajustes de la página actualizados';
+	@override String get fixedTitle => 'El título de esta página proviene del idioma de la interfaz y no se edita aquí.';
+	@override String get fixedNature => 'La naturaleza de una página integrada es fija: determina si las sesiones la leen como regla vinculante o como referencia.';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -12599,6 +12601,8 @@ extension on TranslationsEs {
 			'web.knowledge.kb.pageSettings.hint' => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página',
 			'web.knowledge.kb.pageSettings.save' => 'Guardar ajustes',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Ajustes de la página actualizados',
+			'web.knowledge.kb.pageSettings.fixedTitle' => 'El título de esta página proviene del idioma de la interfaz y no se edita aquí.',
+			'web.knowledge.kb.pageSettings.fixedNature' => 'La naturaleza de una página integrada es fija: determina si las sesiones la leen como regla vinculante o como referencia.',
 			'web.knowledge.kb.librarian.button' => 'Gestionar KB con IA',
 			'web.knowledge.kb.librarian.hint' => 'Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento',
 			'web.knowledge.kb.librarian.launchedToast' => 'Sesión del bibliotecario de KB iniciada',
@@ -12714,10 +12718,10 @@ extension on TranslationsEs {
 			'web.cortex.chat.modelCliDefault' => 'Predeterminado del CLI',
 			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
 			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
-			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
-			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
+			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
 			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
 			'web.cortex.chat.modelProviderDefault' => 'Predeterminado del proveedor',
 			'web.cortex.chat.modelProbeFailed' => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.',
@@ -13228,10 +13232,10 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.renameTitle' => 'Renombrar o mover',
 			'sessions.inspector.notes.move' => 'Mover',
 			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
-			'sessions.inspector.notes.renamed' => 'Movido.',
-			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.renamed' => 'Movido.',
+			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Error al mover: ${error}',
 			'sessions.inspector.notes.openFolderIndex' => 'Abrir índice de carpeta',
@@ -13742,10 +13746,10 @@ extension on TranslationsEs {
 			'backups.kv.status' => 'Estado',
 			'backups.kv.verified' => 'Verificada',
 			'backups.kv.kind' => 'Tipo',
-			'backups.kv.target' => 'Destino',
-			'backups.kv.dedup' => 'Deduplicación',
 			_ => null,
 		} ?? switch (path) {
+			'backups.kv.target' => 'Destino',
+			'backups.kv.dedup' => 'Deduplicación',
 			'backups.kv.fanout' => 'Grupo de difusión',
 			'backups.kv.triggeredBy' => 'Lanzado por',
 			'backups.kv.started' => 'Iniciado',
@@ -14256,10 +14260,10 @@ extension on TranslationsEs {
 			'notesPage.tags.filteredBy' => 'Filtrado por',
 			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',
 			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
-			'notesPage.backlinks.title' => 'Retroenlaces',
-			'notesPage.backlinks.loading' => 'Buscando enlaces…',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.backlinks.title' => 'Retroenlaces',
+			'notesPage.backlinks.loading' => 'Buscando enlaces…',
 			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',
 			'notesPage.backlinks.failed' => ({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}',
 			'notesPage.outline.action' => 'Esquema',

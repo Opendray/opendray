@@ -9814,6 +9814,8 @@ class _TranslationsWebKnowledgeKbPageSettingsZh extends TranslationsWebKnowledge
 	@override String get hint => '编辑此页面的标题、摘要、性质与注入开关';
 	@override String get save => '保存设置';
 	@override String get savedToast => '页面设置已更新';
+	@override String get fixedTitle => '这一页的标题由界面语言决定，不能在这里修改。';
+	@override String get fixedNature => '内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -12593,6 +12595,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.pageSettings.hint' => '编辑此页面的标题、摘要、性质与注入开关',
 			'web.knowledge.kb.pageSettings.save' => '保存设置',
 			'web.knowledge.kb.pageSettings.savedToast' => '页面设置已更新',
+			'web.knowledge.kb.pageSettings.fixedTitle' => '这一页的标题由界面语言决定，不能在这里修改。',
+			'web.knowledge.kb.pageSettings.fixedNature' => '内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。',
 			'web.knowledge.kb.librarian.button' => '用 AI 管理知识库',
 			'web.knowledge.kb.librarian.hint' => '启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB 图书管理员会话已启动',
@@ -12711,10 +12715,10 @@ extension on TranslationsZh {
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
 			'web.cortex.chat.accountDefault' => '默认账号',
 			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
-			'web.cortex.chat.modelProviderDefault' => '供应商默认',
-			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.modelProviderDefault' => '供应商默认',
+			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
 			'web.cortex.blueprint.openHint' => '编辑本项目文档包含哪些章节',
 			'web.cortex.blueprint.title' => '文档蓝图',
@@ -13225,10 +13229,10 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.renamed' => '已移动。',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
-			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
-			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
+			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
 			'sessions.inspector.canvas.kindFlow' => '流程图',
 			'sessions.inspector.canvas.kindMindmap' => '思维导图',
@@ -13739,10 +13743,10 @@ extension on TranslationsZh {
 			'backups.kv.target' => '目标',
 			'backups.kv.dedup' => '去重',
 			'backups.kv.fanout' => '扇出组',
-			'backups.kv.triggeredBy' => '触发者',
-			'backups.kv.started' => '开始',
 			_ => null,
 		} ?? switch (path) {
+			'backups.kv.triggeredBy' => '触发者',
+			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
 			'backups.kv.size' => '大小',
 			'backups.kv.encrypted' => '已加密',
@@ -14253,10 +14257,10 @@ extension on TranslationsZh {
 			'notesPage.backlinks.title' => '反向链接',
 			'notesPage.backlinks.loading' => '正在查找链接…',
 			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
-			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
-			'notesPage.outline.action' => '大纲',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
+			'notesPage.outline.action' => '大纲',
 			'notesPage.outline.title' => '大纲',
 			'notesPage.outline.empty' => '这篇文档没有标题。',
 			'notesPage.outline.jumpedToSource' => '预览关闭了脚本、无法滚动，所以已切到源码视图。',

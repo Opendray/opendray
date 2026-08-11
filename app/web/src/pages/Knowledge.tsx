@@ -241,6 +241,13 @@ function PageSettingsDialog({
     () => section?.write_policy ?? 'proposal',
   )
 
+  // The classic four keep two fixed fields: their titles come from i18n
+  // (editing the stored one changes nothing visible) and their natures are
+  // what make them guardrails. Everything else — who maintains the page,
+  // whether writes need approval, the description that drives retrieval,
+  // the inject flag — is the operator's to change.
+  const classic = !!section && CLASSIC_KB_KINDS.has(section.slug)
+
   // A foundational or pinned page can't be session-maintained (the backend
   // refuses the write), so fall back rather than leave a dead selection.
   const sessionAllowed = canBeSessionMaintained({
@@ -314,10 +321,14 @@ function PageSettingsDialog({
             />
           </div>
           <Input
-            value={title}
+            value={classic ? t(`web.knowledge.kb.kinds.${section.slug}`) : title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('web.knowledge.kb.newPage.titlePlaceholder')}
             className="h-8 text-sm"
+            // A classic page's displayed title comes from i18n, so editing
+            // the stored one would change nothing the operator can see.
+            disabled={classic}
+            title={classic ? t('web.knowledge.kb.pageSettings.fixedTitle') : undefined}
           />
           <Input
             value={description}
@@ -329,8 +340,14 @@ function PageSettingsDialog({
             <Select
               value={nature}
               onValueChange={(v) => setNature(v as 'foundational' | 'emergent')}
+              // Nature is what makes a foundational page a guardrail;
+              // flipping it silently changes how every session reads it.
+              disabled={classic}
             >
-              <SelectTrigger className="h-8 w-44 text-sm">
+              <SelectTrigger
+                className="h-8 w-44 text-sm"
+                title={classic ? t('web.knowledge.kb.pageSettings.fixedNature') : undefined}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -659,13 +676,16 @@ function KnowledgeBaseView() {
                 {t('web.knowledge.kb.discuss')}
               </button>
             )}
-            {/* Settings is offered on every page except the classic four,
-                whose titles are i18n-driven and natures are fixed by design.
-                Seeded pages like Integrations (pinned but non-classic) are
-                configurable — e.g. flipping inject to make the guide a
-                standing guardrail. Note this is a WIDER gate than Remove
-                (!pinned): a pinned page can be reconfigured but not deleted. */}
-            {!editing && selSection && !CLASSIC_KB_KINDS.has(selSection.slug) && (
+            {/* Settings is offered on EVERY page. The classic four used to
+                be excluded because their titles are i18n-driven and their
+                natures fixed by design — but that also put who maintains
+                the page, and whether its writes need approval, out of
+                reach. Those are exactly the knobs an operator needs on the
+                foundational pages. The dialog disables the two fields that
+                genuinely are fixed; everything else is editable.
+                Note this is a WIDER gate than Remove (!pinned): a pinned
+                page can be reconfigured but not deleted. */}
+            {!editing && selSection && (
               <button
                 onClick={() => setSettingsOpen(true)}
                 className="border-border rounded-md border px-2.5 py-1 text-xs"
