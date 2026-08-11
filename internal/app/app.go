@@ -246,6 +246,7 @@ func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowl
 		if sec, ok, serr := a.pd.GetSection(ctx, cwd, kind); serr == nil && ok {
 			out.MaintainerMode = sec.MaintainerMode
 			out.PromptHint = sec.PromptHint
+			out.WritePolicy = sec.WritePolicy
 		}
 	}
 	return out, nil

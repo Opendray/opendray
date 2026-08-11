@@ -1139,6 +1139,9 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
       : 'emergent';
   late bool _inject = _section?.inject ?? false;
   late String _maintainer = _section?.maintainerMode ?? 'ai';
+  // Default new pages to the approval gate: a page that quietly rewrites
+  // itself is the surprising option, not the safe one.
+  late String _writePolicy = _section?.writePolicy ?? 'proposal';
   bool _busy = false;
 
   static final _slugRe = RegExp(r'^kb_[a-z0-9][a-z0-9_]{0,44}$');
@@ -1177,7 +1180,7 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               // never silently resets them; new pages get sensible defaults.
               position: _section?.position ?? 99,
               maintainerMode: _effectiveMaintainer,
-              writePolicy: _section?.writePolicy ?? 'proposal',
+              writePolicy: _writePolicy,
               promptHint: _section?.promptHint ?? '',
               pinned: _section?.pinned ?? false,
               inject: _inject,
@@ -1306,6 +1309,31 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
                   : t.web.knowledge.kb.maintainer.sessionUnavailable,
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            // Approval gate. Only meaningful when something automated
+            // writes the page — an operator-maintained page has no AI
+            // write to gate.
+            if (_maintainer != 'human') ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _writePolicy,
+                decoration: const InputDecoration(isDense: true),
+                items: [
+                  DropdownMenuItem(
+                      value: 'proposal',
+                      child: Text(t.web.knowledge.kb.writePolicy.proposal)),
+                  DropdownMenuItem(
+                      value: 'direct',
+                      child: Text(t.web.knowledge.kb.writePolicy.direct)),
+                ],
+                onChanged: (v) =>
+                    setState(() => _writePolicy = v ?? 'proposal'),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.writePolicy.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ],
         ),
       ),

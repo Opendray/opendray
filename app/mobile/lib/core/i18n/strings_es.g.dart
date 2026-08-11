@@ -6101,6 +6101,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbNewPageEs newPage = _TranslationsWebKnowledgeKbNewPageEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbPageSettingsEs pageSettings = _TranslationsWebKnowledgeKbPageSettingsEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianEs librarian = _TranslationsWebKnowledgeKbLibrarianEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbWritePolicyEs writePolicy = _TranslationsWebKnowledgeKbWritePolicyEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9835,6 +9836,18 @@ class _TranslationsWebKnowledgeKbLibrarianEs extends TranslationsWebKnowledgeKbL
 	@override String get launch => 'Lanzar';
 }
 
+// Path: web.knowledge.kb.writePolicy
+class _TranslationsWebKnowledgeKbWritePolicyEs extends TranslationsWebKnowledgeKbWritePolicyEn {
+	_TranslationsWebKnowledgeKbWritePolicyEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get proposal => 'Requiere mi aprobación antes de cambiar';
+	@override String get direct => 'Se actualiza automáticamente';
+	@override String get hint => 'Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben.';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementEs extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -12594,6 +12607,9 @@ extension on TranslationsEs {
 			'web.knowledge.kb.librarian.provider' => 'Agente en la nube',
 			'web.knowledge.kb.librarian.account' => 'Cuenta de Claude',
 			'web.knowledge.kb.librarian.launch' => 'Lanzar',
+			'web.knowledge.kb.writePolicy.proposal' => 'Requiere mi aprobación antes de cambiar',
+			'web.knowledge.kb.writePolicy.direct' => 'Se actualiza automáticamente',
+			'web.knowledge.kb.writePolicy.hint' => 'Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben.',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -12700,11 +12716,11 @@ extension on TranslationsEs {
 			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
 			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
 			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
 			'web.cortex.chat.modelProviderDefault' => 'Predeterminado del proveedor',
 			'web.cortex.chat.modelProbeFailed' => 'No se pudo contactar el endpoint para listar modelos: usa el predeterminado del proveedor o configúralo en Ajustes de memoria.',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.open' => 'Plano',
 			'web.cortex.blueprint.openHint' => 'Edita qué secciones documenta este proyecto',
 			'web.cortex.blueprint.title' => 'Plano del documento',
@@ -13214,11 +13230,11 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
 			'sessions.inspector.notes.renamed' => 'Movido.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => 'Error al mover: ${error}',
 			'sessions.inspector.notes.openFolderIndex' => 'Abrir índice de carpeta',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.kindUi' => 'Maqueta UI',
 			'sessions.inspector.canvas.kindFlow' => 'Diagrama de flujo',
 			'sessions.inspector.canvas.kindMindmap' => 'Mapa mental',
@@ -13728,11 +13744,11 @@ extension on TranslationsEs {
 			'backups.kv.kind' => 'Tipo',
 			'backups.kv.target' => 'Destino',
 			'backups.kv.dedup' => 'Deduplicación',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.fanout' => 'Grupo de difusión',
 			'backups.kv.triggeredBy' => 'Lanzado por',
 			'backups.kv.started' => 'Iniciado',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.finished' => 'Finalizado',
 			'backups.kv.size' => 'Tamaño',
 			'backups.kv.encrypted' => 'Cifrado',
@@ -14242,11 +14258,11 @@ extension on TranslationsEs {
 			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
 			'notesPage.backlinks.title' => 'Retroenlaces',
 			'notesPage.backlinks.loading' => 'Buscando enlaces…',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',
 			'notesPage.backlinks.failed' => ({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}',
 			'notesPage.outline.action' => 'Esquema',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.outline.title' => 'Esquema',
 			'notesPage.outline.empty' => 'Este documento no tiene encabezados.',
 			'notesPage.outline.jumpedToSource' => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.',

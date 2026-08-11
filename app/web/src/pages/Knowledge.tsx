@@ -38,6 +38,7 @@ import {
   type DocKind,
   type DocProposal,
   type MaintainerMode,
+  type WritePolicy,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
 import { ProposalDiff } from '@/components/cortex/ProposalDiff'
@@ -234,6 +235,11 @@ function PageSettingsDialog({
   const [maintainer, setMaintainer] = useState<MaintainerMode>(
     () => section?.maintainer_mode ?? 'ai',
   )
+  // Default new pages to the approval gate: a page that quietly rewrites
+  // itself is the surprising option, not the safe one.
+  const [writePolicy, setWritePolicy] = useState<WritePolicy>(
+    () => section?.write_policy ?? 'proposal',
+  )
 
   // A foundational or pinned page can't be session-maintained (the backend
   // refuses the write), so fall back rather than leave a dead selection.
@@ -260,7 +266,7 @@ function PageSettingsDialog({
         description: description.trim(),
         position: section?.position ?? 99,
         maintainer_mode: effectiveMaintainer,
-        write_policy: section?.write_policy,
+        write_policy: writePolicy,
         prompt_hint: section?.prompt_hint ?? '',
         pinned: section?.pinned ?? false,
         inject,
@@ -374,6 +380,31 @@ function PageSettingsDialog({
                 : t('web.knowledge.kb.maintainer.sessionUnavailable')}
             </p>
           </div>
+          {/* Approval gate. Only meaningful when something automated writes
+              the page — an operator-maintained page has no AI write to gate. */}
+          {maintainer !== 'human' && (
+            <div className="space-y-1.5">
+              <Select
+                value={writePolicy}
+                onValueChange={(v) => setWritePolicy(v as WritePolicy)}
+              >
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="proposal">
+                    {t('web.knowledge.kb.writePolicy.proposal')}
+                  </SelectItem>
+                  <SelectItem value="direct">
+                    {t('web.knowledge.kb.writePolicy.direct')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-[11px]">
+                {t('web.knowledge.kb.writePolicy.hint')}
+              </p>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

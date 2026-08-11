@@ -43,6 +43,22 @@ type KBDoc struct {
 	// treated as "ai" (the historical default).
 	MaintainerMode string
 	PromptHint     string
+	// WritePolicy is the page's blueprint approval gate: "proposal" means
+	// even an UNLOCKED page is never overwritten in place — the refreshed
+	// draft is filed for the operator.
+	//
+	// Empty is treated as "direct" here, the opposite of projectdoc's
+	// normalizeWritePolicy. The two guard different things: there, an
+	// unknown policy gates an AGENT's explicit write, where the safe answer
+	// is to ask. Here it decides whether the background sweep runs at all,
+	// and a blueprint we failed to read should not silently stop the sweep
+	// across every page. A hand-edited page is still protected either way —
+	// HumanLocked is checked independently of this field.
+	//
+	// Without this the gate was configured but never consulted: a page the
+	// operator had not personally edited was rewritten every sweep, which
+	// is why hand edits to a swept page did not survive.
+	WritePolicy string
 }
 
 // DocSink persists curated KB pages into the note system (projectdoc-backed in
@@ -207,7 +223,8 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 func (d *KBDrafter) draftOne(ctx context.Context, cwd, kind, feedstock string) KBDraftResult {
 	system := kbBaseSystem + "\n\n" + kbTopics[kind]
 	return draftOrPropose(ctx, d.llm, d.docs, d.proposals, d.log, cwd, kind, system, feedstock,
-		draftOpts{honorMaintainerMode: true, preserveCurrent: true, applyPromptHint: true})
+		draftOpts{honorMaintainerMode: true, preserveCurrent: true, applyPromptHint: true,
+			honorWritePolicy: true})
 }
 
 // draftOpts turns on the operator-owned-form behaviours. They default OFF so
@@ -223,6 +240,11 @@ type draftOpts struct {
 	// applyPromptHint: append the page's blueprint prompt_hint to the system
 	// prompt so the operator can steer form/scope without a code change.
 	applyPromptHint bool
+	// honorWritePolicy: a page whose blueprint write_policy is "proposal"
+	// is never overwritten in place, even when no human has edited it —
+	// the refreshed draft is filed for approval instead. Off by default so
+	// the Overview drafter, which shares this path, is unaffected.
+	honorWritePolicy bool
 }
 
 // draftOrPropose is the shared lock-aware, dirty-checked draft path used by the
@@ -271,9 +293,17 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 	if opts.preserveCurrent {
 		current = cur.Content
 	}
-	if cur.HumanLocked {
+	// Two independent reasons to propose rather than overwrite: the operator
+	// edited this page by hand (their text is not ours to clobber), or the
+	// page's blueprint gates every AI write behind approval.
+	policyGated := opts.honorWritePolicy && cur.WritePolicy == "proposal"
+	if cur.HumanLocked || policyGated {
 		if proposals == nil {
+			// Fail closed: no way to file a proposal means no write at all.
 			res.Status = "skipped-locked"
+			if policyGated && !cur.HumanLocked {
+				res.Status = "skipped-proposal-gated"
+			}
 			return res
 		}
 		if pending, _ := proposals.HasPendingKBProposal(ctx, cwd, kind); pending {
@@ -300,13 +330,17 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 			res.Status, res.Err = "error", err.Error()
 			return res
 		}
-		if err := proposals.ProposeKBDoc(ctx, cwd, kind, body,
-			"New evidence has diverged from this locked page; review the refreshed draft."); err != nil {
+		reason := "New evidence has diverged from this locked page; review the refreshed draft."
+		if policyGated && !cur.HumanLocked {
+			reason = "New evidence has diverged from this page. It is approval-gated, so here is the refreshed draft to review."
+		}
+		if err := proposals.ProposeKBDoc(ctx, cwd, kind, body, reason); err != nil {
 			log.Warn("draft: propose failed", "kind", kind, "cwd", cwd, "err", err)
 			res.Status, res.Err = "error", "propose: "+err.Error()
 			return res
 		}
-		log.Info("update proposed for locked page", "kind", kind, "cwd", cwd)
+		log.Info("update proposed instead of written", "kind", kind, "cwd", cwd,
+			"human_locked", cur.HumanLocked, "policy_gated", policyGated)
 		res.Status, res.Bytes = "proposed", len(body)
 		return res
 	}

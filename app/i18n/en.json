@@ -3096,6 +3096,11 @@
           "provider": "Cloud agent",
           "account": "Claude account",
           "launch": "Launch"
+        },
+        "writePolicy": {
+          "proposal": "Needs my approval before it changes",
+          "direct": "Updates itself automatically",
+          "hint": "Whether automation may rewrite this page in place. Approval means opendray's background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them."
         }
       },
       "kinds": {

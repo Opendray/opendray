@@ -3096,6 +3096,11 @@
           "provider": "Agente en la nube",
           "account": "Cuenta de Claude",
           "launch": "Lanzar"
+        },
+        "writePolicy": {
+          "proposal": "Requiere mi aprobación antes de cambiar",
+          "direct": "Se actualiza automáticamente",
+          "hint": "Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben."
         }
       },
       "kinds": {
