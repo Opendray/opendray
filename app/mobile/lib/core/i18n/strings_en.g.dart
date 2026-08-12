@@ -9969,8 +9969,8 @@ class TranslationsWebPluginsCustomTasksEn {
 	/// en: 'Custom tasks'
 	String get title => 'Custom tasks';
 
-	/// en: 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.'
-	String get description => 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.';
+	/// en: 'Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.'
+	String get description => 'Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.';
 
 	/// en: 'Add task'
 	String get addTask => 'Add task';
@@ -9980,8 +9980,8 @@ class TranslationsWebPluginsCustomTasksEn {
 
 	late final TranslationsWebPluginsCustomTasksColumnsEn columns = TranslationsWebPluginsCustomTasksColumnsEn.internal(_root);
 
-	/// en: 'global'
-	String get globalScope => 'global';
+	/// en: 'Global'
+	String get globalGroup => 'Global';
 
 	/// en: 'Delete custom task "{name}"?'
 	String deleteConfirm({required Object name}) => 'Delete custom task "${name}"?';
@@ -16662,9 +16662,6 @@ class TranslationsWebPluginsCustomTasksColumnsEn {
 
 	/// en: 'Command'
 	String get command => 'Command';
-
-	/// en: 'Scope'
-	String get scope => 'Scope';
 }
 
 // Path: web.plugins.customTasks.dialog
@@ -20833,13 +20830,12 @@ extension on Translations {
 			'web.plugins.skills.uploadFailedToast' => 'Skill upload failed',
 			'web.plugins.skills.uploadInvalidTypeToast' => 'Only SKILL.md files can be installed by drop',
 			'web.plugins.customTasks.title' => 'Custom tasks',
-			'web.plugins.customTasks.description' => 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.',
+			'web.plugins.customTasks.description' => 'Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.',
 			'web.plugins.customTasks.addTask' => 'Add task',
 			'web.plugins.customTasks.empty' => 'No custom tasks yet.',
 			'web.plugins.customTasks.columns.name' => 'Name',
 			'web.plugins.customTasks.columns.command' => 'Command',
-			'web.plugins.customTasks.columns.scope' => 'Scope',
-			'web.plugins.customTasks.globalScope' => 'global',
+			'web.plugins.customTasks.globalGroup' => 'Global',
 			'web.plugins.customTasks.deleteConfirm' => ({required Object name}) => 'Delete custom task "${name}"?',
 			'web.plugins.customTasks.removedToast' => 'Task removed',
 			'web.plugins.customTasks.deleteFailedToast' => 'Delete failed',
@@ -20880,9 +20876,9 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.kindGitea' => 'Gitea',
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
+			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			_ => null,
 		} ?? switch (path) {
-			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Display name (optional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
@@ -21394,9 +21390,9 @@ extension on Translations {
 			'web.serverSettings.toggle.on' => 'On',
 			'web.serverSettings.toggle.off' => 'Off',
 			'web.serverSettings.toggle.defaultOn' => 'Default (on)',
+			'web.serverSettings.toggle.defaultOff' => 'Default (off)',
 			_ => null,
 		} ?? switch (path) {
-			'web.serverSettings.toggle.defaultOff' => 'Default (off)',
 			'web.serverSettings.memoryRuntimeBanner' => 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Open Cortex settings',
 			'web.serverSettings.host.intro' => 'A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as "opendray is flaky" when the machine is really just asleep. Pick how opendray should handle that.',
@@ -21908,9 +21904,9 @@ extension on Translations {
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
+			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
 			_ => null,
 		} ?? switch (path) {
-			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
 			'web.cortex.chat.modelGroupLocal' => 'Local models',
 			'web.cortex.chat.accountDefault' => 'Default account',
 			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
@@ -22422,9 +22418,9 @@ extension on Translations {
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.inspector.notes.renameTitle' => 'Rename or move',
 			'sessions.inspector.notes.move' => 'Move',
+			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
 			'sessions.inspector.notes.renamed' => 'Moved.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
@@ -22936,9 +22932,9 @@ extension on Translations {
 			'backups.menuTargets' => 'Targets',
 			'backups.kv.status' => 'Status',
 			'backups.kv.verified' => 'Verified',
+			'backups.kv.kind' => 'Type',
 			_ => null,
 		} ?? switch (path) {
-			'backups.kv.kind' => 'Type',
 			'backups.kv.target' => 'Target',
 			'backups.kv.dedup' => 'Dedup',
 			'backups.kv.fanout' => 'Fan-out group',
@@ -23450,9 +23446,9 @@ extension on Translations {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'No tags match "${query}".',
 			'notesPage.tags.filteredBy' => 'Filtered by',
 			'notesPage.tags.clear' => 'Clear tag filter',
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
 			_ => null,
 		} ?? switch (path) {
-			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
 			'notesPage.backlinks.title' => 'Backlinks',
 			'notesPage.backlinks.loading' => 'Looking for links…',
 			'notesPage.backlinks.empty' => 'No notes link here yet.',

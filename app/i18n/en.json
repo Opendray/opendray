@@ -1795,15 +1795,14 @@
       },
       "customTasks": {
         "title": "Custom tasks",
-        "description": "Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.",
+        "description": "Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.",
         "addTask": "Add task",
         "empty": "No custom tasks yet.",
         "columns": {
           "name": "Name",
-          "command": "Command",
-          "scope": "Scope"
+          "command": "Command"
         },
-        "globalScope": "global",
+        "globalGroup": "Global",
         "deleteConfirm": "Delete custom task \"{name}\"?",
         "removedToast": "Task removed",
         "deleteFailedToast": "Delete failed",

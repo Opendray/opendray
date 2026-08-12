@@ -1,4 +1,10 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Plus,
@@ -14,6 +20,9 @@ import {
   Plug,
   ShieldCheck,
   ChevronDown,
+  ChevronRight,
+  Folder,
+  Globe,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
@@ -50,6 +59,7 @@ import {
 import {
   listCustomTasks,
   deleteCustomTask,
+  groupCustomTasksByProject,
   type CustomTask,
 } from '@/lib/customTasks'
 import { CustomTaskDialog } from '@/components/tasks/CustomTaskDialog'
@@ -1461,6 +1471,21 @@ function CustomTasksSection() {
   })
   const [editing, setEditing] = useState<CustomTask | null>(null)
   const [creating, setCreating] = useState(false)
+  // Collapsed group cwds. Empty set = everything expanded, which is
+  // the state operators land on; collapsing is opt-in per project.
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
+
+  const groups = useMemo(
+    () => groupCustomTasksByProject(tasks ?? []),
+    [tasks],
+  )
+  const toggleGroup = (cwd: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(cwd)) next.delete(cwd)
+      else next.add(cwd)
+      return next
+    })
 
   const remove = useMutation({
     mutationFn: deleteCustomTask,
@@ -1493,95 +1518,135 @@ function CustomTasksSection() {
         </Button>
       }
     >
-      <div className="rounded-md border border-border overflow-x-auto">
-        {isLoading ? (
-          <div className="px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
-            <Loader2 className="size-3 animate-spin" />
-            {t('web.plugins.common.loading')}
-          </div>
-        ) : (tasks ?? []).length === 0 ? (
-          <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">
-            {t('web.plugins.customTasks.empty')}
-          </div>
-        ) : (
-          <table className="w-full min-w-[720px] text-[12px]">
-            <thead className="bg-card/40 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-              <tr>
-                <th className="text-left px-3 py-2 font-medium">
-                  {t('web.plugins.customTasks.columns.name')}
-                </th>
-                <th className="text-left px-3 py-2 font-medium">
-                  {t('web.plugins.customTasks.columns.command')}
-                </th>
-                <th className="text-left px-3 py-2 font-medium">
-                  {t('web.plugins.customTasks.columns.scope')}
-                </th>
-                <th className="px-3 py-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks!.map((task) => (
-                <tr
-                  key={task.id}
-                  className="border-t border-border hover:bg-card/40 align-top"
+      {isLoading ? (
+        <div className="rounded-md border border-border px-4 py-6 flex items-center gap-2 text-[12px] text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" />
+          {t('web.plugins.common.loading')}
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="rounded-md border border-border px-4 py-8 text-center text-[12px] text-muted-foreground">
+          {t('web.plugins.customTasks.empty')}
+        </div>
+      ) : (
+        // One block per project (plus the global bucket) so a long
+        // catalogue reads as a handful of named groups instead of one
+        // undifferentiated list. The group header carries the scope,
+        // which is why the rows no longer repeat it per task.
+        <div className="space-y-2">
+          {groups.map((group) => {
+            const open = !collapsed.has(group.cwd)
+            return (
+              <div
+                key={group.cwd || '__global__'}
+                className="rounded-md border border-border overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.cwd)}
+                  aria-expanded={open}
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-card/40 hover:bg-card/60 text-left"
                 >
-                  <td className="px-3 py-2">
-                    <div className="font-medium">{task.name}</div>
-                    {task.description && (
-                      <div className="text-[10px] text-muted-foreground/70 italic">
-                        {task.description}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-[11px] break-all">
-                    {task.command}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-[10px]">
-                    {task.cwd ? (
-                      <span title={task.cwd}>{trimPath(task.cwd)}</span>
-                    ) : (
-                      <span className="text-muted-foreground/70">
-                        {t('web.plugins.customTasks.globalScope')}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditing(task)}
-                        className="h-7 px-2 text-[11px] gap-1"
-                      >
-                        <Pencil className="size-3" />
-                        {t('web.plugins.common.edit')}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              t('web.plugins.customTasks.deleteConfirm', {
-                                name: task.name,
-                              }),
-                            )
-                          ) {
-                            remove.mutate(task.id)
-                          }
-                        }}
-                        className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="size-3" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+                  {open ? (
+                    <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  {group.cwd ? (
+                    <Folder className="size-3.5 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <Globe className="size-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className="text-[12px] font-medium truncate">
+                    {group.cwd
+                      ? group.label
+                      : t('web.plugins.customTasks.globalGroup')}
+                  </span>
+                  {group.cwd && (
+                    <span
+                      className="font-mono text-[10px] text-muted-foreground/70 truncate"
+                      title={group.cwd}
+                    >
+                      {trimPath(group.cwd)}
+                    </span>
+                  )}
+                  <span className="ml-auto shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {group.tasks.length}
+                  </span>
+                </button>
+                {open && (
+                  <div className="overflow-x-auto border-t border-border">
+                    <table className="w-full min-w-[560px] text-[12px]">
+                      <thead className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium">
+                            {t('web.plugins.customTasks.columns.name')}
+                          </th>
+                          <th className="text-left px-3 py-2 font-medium">
+                            {t('web.plugins.customTasks.columns.command')}
+                          </th>
+                          <th className="px-3 py-2"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.tasks.map((task) => (
+                          <tr
+                            key={task.id}
+                            className="border-t border-border hover:bg-card/40 align-top"
+                          >
+                            <td className="px-3 py-2">
+                              <div className="font-medium">{task.name}</div>
+                              {task.description && (
+                                <div className="text-[10px] text-muted-foreground/70 italic">
+                                  {task.description}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 font-mono text-[11px] break-all">
+                              {task.command}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditing(task)}
+                                  className="h-7 px-2 text-[11px] gap-1"
+                                >
+                                  <Pencil className="size-3" />
+                                  {t('web.plugins.common.edit')}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (
+                                      confirm(
+                                        t(
+                                          'web.plugins.customTasks.deleteConfirm',
+                                          { name: task.name },
+                                        ),
+                                      )
+                                    ) {
+                                      remove.mutate(task.id)
+                                    }
+                                  }}
+                                  className="h-7 px-2 text-[11px] gap-1 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="size-3" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       <CustomTaskDialog
         open={creating}

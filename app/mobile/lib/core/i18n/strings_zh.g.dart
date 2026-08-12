@@ -5044,11 +5044,11 @@ class _TranslationsWebPluginsCustomTasksZh extends TranslationsWebPluginsCustomT
 
 	// Translations
 	@override String get title => '自定义任务';
-	@override String get description => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。';
+	@override String get description => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式，按项目分组。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。';
 	@override String get addTask => '添加任务';
 	@override String get empty => '尚无自定义任务。';
 	@override late final _TranslationsWebPluginsCustomTasksColumnsZh columns = _TranslationsWebPluginsCustomTasksColumnsZh._(_root);
-	@override String get globalScope => '全局';
+	@override String get globalGroup => '全局';
 	@override String deleteConfirm({required Object name}) => '删除自定义任务 "${name}"?';
 	@override String get removedToast => '任务已移除';
 	@override String get deleteFailedToast => '删除失败';
@@ -8524,7 +8524,6 @@ class _TranslationsWebPluginsCustomTasksColumnsZh extends TranslationsWebPlugins
 	// Translations
 	@override String get name => '名称';
 	@override String get command => '命令';
-	@override String get scope => 'Scope';
 }
 
 // Path: web.plugins.customTasks.dialog
@@ -11638,13 +11637,12 @@ extension on TranslationsZh {
 			'web.plugins.skills.uploadFailedToast' => '上传 skill 失败',
 			'web.plugins.skills.uploadInvalidTypeToast' => '仅支持拖放 SKILL.md 文件',
 			'web.plugins.customTasks.title' => '自定义任务',
-			'web.plugins.customTasks.description' => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。',
+			'web.plugins.customTasks.description' => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式，按项目分组。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。',
 			'web.plugins.customTasks.addTask' => '添加任务',
 			'web.plugins.customTasks.empty' => '尚无自定义任务。',
 			'web.plugins.customTasks.columns.name' => '名称',
 			'web.plugins.customTasks.columns.command' => '命令',
-			'web.plugins.customTasks.columns.scope' => 'Scope',
-			'web.plugins.customTasks.globalScope' => '全局',
+			'web.plugins.customTasks.globalGroup' => '全局',
 			'web.plugins.customTasks.deleteConfirm' => ({required Object name}) => '删除自定义任务 "${name}"?',
 			'web.plugins.customTasks.removedToast' => '任务已移除',
 			'web.plugins.customTasks.deleteFailedToast' => '删除失败',
@@ -11688,9 +11686,9 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			'web.plugins.gitHosts.dialog.displayNameLabel' => '显示名称（可选）',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
+			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
 			_ => null,
 		} ?? switch (path) {
-			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
 			'web.plugins.gitHosts.dialog.newTokenLabel' => '新 token（留空表示保留）',
 			'web.plugins.gitHosts.dialog.tokenPlaceholder' => 'ghp_… / gho_… / glpat-…',
 			'web.plugins.gitHosts.dialog.tokenPlaceholderEdit' => '…',
@@ -12202,9 +12200,9 @@ extension on TranslationsZh {
 			'web.serverSettings.toggle.defaultOff' => '默认（关）',
 			'web.serverSettings.memoryRuntimeBanner' => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。',
 			'web.serverSettings.memoryRuntimeBannerButton' => '打开 Cortex 设置',
+			'web.serverSettings.host.intro' => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。',
 			_ => null,
 		} ?? switch (path) {
-			'web.serverSettings.host.intro' => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。',
 			'web.serverSettings.host.platformNote' => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。',
 			'web.serverSettings.host.modes.ac.label' => '插电时保持唤醒',
 			'web.serverSettings.host.modes.ac.desc' => '插电状态下机器不会空闲休眠,手机与网页随时秒连;使用电池时照常休眠。屏幕仍会正常熄灭。',
@@ -12716,9 +12714,9 @@ extension on TranslationsZh {
 			'web.cortex.chat.modelGroupCloud' => '云端 agent',
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
 			'web.cortex.chat.accountDefault' => '默认账号',
+			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
 			_ => null,
 		} ?? switch (path) {
-			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
 			'web.cortex.chat.modelProviderDefault' => '供应商默认',
 			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
@@ -13230,9 +13228,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.renameHelp' => '项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md',
 			'sessions.inspector.notes.renamed' => '已移动。',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
+			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
 			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
@@ -13744,9 +13742,9 @@ extension on TranslationsZh {
 			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
 			'backups.kv.dedup' => '去重',
+			'backups.kv.fanout' => '扇出组',
 			_ => null,
 		} ?? switch (path) {
-			'backups.kv.fanout' => '扇出组',
 			'backups.kv.triggeredBy' => '触发者',
 			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
@@ -14258,9 +14256,9 @@ extension on TranslationsZh {
 			'notesPage.tags.noNotes' => ({required Object tag}) => '已经没有笔记带 #${tag} 了。',
 			'notesPage.backlinks.title' => '反向链接',
 			'notesPage.backlinks.loading' => '正在查找链接…',
+			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
 			_ => null,
 		} ?? switch (path) {
-			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
 			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
 			'notesPage.outline.action' => '大纲',
 			'notesPage.outline.title' => '大纲',
