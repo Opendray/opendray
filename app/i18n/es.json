@@ -3116,7 +3116,8 @@
           "title": "Líneas que eliminaste",
           "banned": "vetada",
           "dismiss": "Olvidar",
-          "hint": "Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto)."
+          "hint": "Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).",
+          "recent": "Eliminadas recientes ({n})"
         }
       },
       "kinds": {

@@ -37,6 +37,7 @@ import {
   canBeSessionMaintained,
   GLOBAL_CWD,
   type BlueprintSection,
+  type DocLineRemoval,
   type DocKind,
   type DocProposal,
   type MaintainerMode,
@@ -89,6 +90,74 @@ function TabBtn({
     >
       {children}
     </button>
+  )
+}
+
+// RemovalsList renders deletion-as-signal records: banned lines (the
+// protection — always visible, with unban) and, collapsed behind a count
+// toggle, the once-deleted lines still inside their 30-day watch window.
+// Collapsing matters: this list is written by the system on every save,
+// and an always-open ledger would dominate the dialog within weeks.
+function RemovalsList({
+  removals,
+  busy,
+  onDismiss,
+}: {
+  removals: DocLineRemoval[]
+  busy: boolean
+  onDismiss: (id: string) => void
+}) {
+  const { t } = useTranslation()
+  const [showRecent, setShowRecent] = useState(false)
+  const banned = removals.filter((r) => r.status === 'banned')
+  const recent = removals.filter((r) => r.status !== 'banned')
+
+  const row = (r: DocLineRemoval) => (
+    <li key={r.id} className="flex items-center gap-2 text-xs">
+      {r.status === 'banned' && (
+        <Badge variant="danger">{t('web.knowledge.kb.removals.banned')}</Badge>
+      )}
+      <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono">
+        {r.line_text}
+      </span>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 px-1.5 text-[11px]"
+        disabled={busy}
+        onClick={() => onDismiss(r.id)}
+      >
+        {t('web.knowledge.kb.removals.dismiss')}
+      </Button>
+    </li>
+  )
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-medium">
+          {t('web.knowledge.kb.removals.title')}
+        </p>
+        {recent.length > 0 && (
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
+            onClick={() => setShowRecent((v) => !v)}
+          >
+            {t('web.knowledge.kb.removals.recent', { n: recent.length })}
+          </button>
+        )}
+      </div>
+      {(banned.length > 0 || showRecent) && (
+        <ul className="max-h-40 space-y-1 overflow-y-auto">
+          {banned.map(row)}
+          {showRecent && recent.map(row)}
+        </ul>
+      )}
+      <p className="text-muted-foreground text-[11px]">
+        {t('web.knowledge.kb.removals.hint')}
+      </p>
+    </div>
   )
 }
 
@@ -324,7 +393,10 @@ function PageSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* This dialog carries far more form than the default max-w-md was
+          made for; wide + two-column halves its height so the whole thing
+          fits a normal viewport instead of living behind a scrollbar. */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {editing
@@ -400,6 +472,7 @@ function PageSettingsDialog({
           <p className="text-muted-foreground text-[11px]">
             {t('web.knowledge.kb.newPage.injectHint')}
           </p>
+          <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Select
               value={effectiveMaintainer}
@@ -451,69 +524,43 @@ function PageSettingsDialog({
               </p>
             </div>
           )}
+          </div>
           {/* Steering. Only an AI-maintained page has a draft to steer, so
               both controls follow the approval gate in hiding for "human". */}
           {maintainer !== 'human' && (
             <>
-              <div className="space-y-1.5">
-                <textarea
-                  value={guidance}
-                  onChange={(e) => setGuidance(e.target.value)}
-                  placeholder={t('web.knowledge.kb.guidance.placeholder')}
-                  rows={3}
-                  className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
-                />
-                <p className="text-muted-foreground text-[11px]">
-                  {t('web.knowledge.kb.guidance.hint')}
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <textarea
-                  value={exclusions}
-                  onChange={(e) => setExclusions(e.target.value)}
-                  placeholder={t('web.knowledge.kb.exclusions.placeholder')}
-                  rows={3}
-                  className="border-input bg-background w-full rounded-md border px-2 py-1.5 font-mono text-sm"
-                />
-                <p className="text-muted-foreground text-[11px]">
-                  {t('web.knowledge.kb.exclusions.hint')}
-                </p>
-              </div>
-              {editing && (removals.data?.length ?? 0) > 0 && (
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <p className="text-sm font-medium">
-                    {t('web.knowledge.kb.removals.title')}
-                  </p>
-                  <ul className="max-h-40 space-y-1 overflow-y-auto">
-                    {removals.data!.map((r) => (
-                      <li
-                        key={r.id}
-                        className="flex items-center gap-2 text-xs"
-                      >
-                        {r.status === 'banned' && (
-                          <Badge variant="danger">
-                            {t('web.knowledge.kb.removals.banned')}
-                          </Badge>
-                        )}
-                        <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono">
-                          {r.line_text}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-1.5 text-[11px]"
-                          disabled={dismissLine.isPending}
-                          onClick={() => dismissLine.mutate(r.id)}
-                        >
-                          {t('web.knowledge.kb.removals.dismiss')}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
+                  <textarea
+                    value={guidance}
+                    onChange={(e) => setGuidance(e.target.value)}
+                    placeholder={t('web.knowledge.kb.guidance.placeholder')}
+                    rows={3}
+                    className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+                  />
                   <p className="text-muted-foreground text-[11px]">
-                    {t('web.knowledge.kb.removals.hint')}
+                    {t('web.knowledge.kb.guidance.hint')}
                   </p>
                 </div>
+                <div className="space-y-1.5">
+                  <textarea
+                    value={exclusions}
+                    onChange={(e) => setExclusions(e.target.value)}
+                    placeholder={t('web.knowledge.kb.exclusions.placeholder')}
+                    rows={3}
+                    className="border-input bg-background w-full rounded-md border px-2 py-1.5 font-mono text-sm"
+                  />
+                  <p className="text-muted-foreground text-[11px]">
+                    {t('web.knowledge.kb.exclusions.hint')}
+                  </p>
+                </div>
+              </div>
+              {editing && (removals.data?.length ?? 0) > 0 && (
+                <RemovalsList
+                  removals={removals.data!}
+                  busy={dismissLine.isPending}
+                  onDismiss={(id) => dismissLine.mutate(id)}
+                />
               )}
             </>
           )}

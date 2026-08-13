@@ -9883,6 +9883,7 @@ class _TranslationsWebKnowledgeKbRemovalsZh extends TranslationsWebKnowledgeKbRe
 	@override String get banned => '已封禁';
 	@override String get dismiss => '忘记';
 	@override String get hint => '你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。';
+	@override String recent({required Object n}) => '最近删除（${n}）';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -12654,6 +12655,7 @@ extension on TranslationsZh {
 			'web.knowledge.kb.removals.banned' => '已封禁',
 			'web.knowledge.kb.removals.dismiss' => '忘记',
 			'web.knowledge.kb.removals.hint' => '你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。',
+			'web.knowledge.kb.removals.recent' => ({required Object n}) => '最近删除（${n}）',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -12752,9 +12754,9 @@ extension on TranslationsZh {
 			'web.cortex.chat.closeHint' => '关闭此对话',
 			'web.cortex.chat.revisionApplied' => '文档已更新',
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
-			'web.cortex.chat.modelLabel' => '模型：',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.modelLabel' => '模型：',
 			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。',
 			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
 			'web.cortex.chat.modelCliDefault' => 'CLI 默认',
@@ -13266,9 +13268,9 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
-			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.inspector.notes.renameTitle' => '重命名或移动',
@@ -13780,9 +13782,9 @@ extension on TranslationsZh {
 			'backups.deleteBody' => ({required Object target}) => '从 ${target} 移除二进制文件，并在索引中标记该行为已删除。',
 			'backups.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
 			'backups.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
-			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			_ => null,
 		} ?? switch (path) {
+			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
 			'backups.kv.status' => '状态',
@@ -14294,9 +14296,9 @@ extension on TranslationsZh {
 			'notesPage.rename.title' => '重命名文档',
 			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
 			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
-			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
 			'notesPage.tags.empty' => '文档库里还没有标签。在笔记里写 #像这样 就会出现。',
 			'notesPage.tags.noMatches' => ({required Object query}) => '没有标签匹配“${query}”。',
 			'notesPage.tags.filteredBy' => '已按标签筛选',

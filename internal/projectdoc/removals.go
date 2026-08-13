@@ -88,7 +88,25 @@ func minedRemovals(prev, next string) map[string]string {
 // not strike two); a re-removal of a 'banned' line just refreshes the
 // timestamp. Best-effort by design: a failure here must never fail the
 // operator's save, so the caller logs and moves on.
+// removalRetention is how long a non-banned removal stays interesting.
+// An 'active' row exists to catch the system reintroducing the line; if
+// thirty days pass without that happening, the threat is over and the
+// row is noise. 'dismissed' rows only exist to reset escalation and age
+// out the same way. 'banned' rows are the protection itself and are
+// never pruned — only the operator's explicit Forget removes one.
+const removalRetention = 30 * 24 * time.Hour
+
 func (s *Service) recordRemovals(ctx context.Context, cwd string, kind Kind, prev, next string) (int, error) {
+	// Lazy retention: prune this page's expired rows on the write path —
+	// no background loop to run or operate. Best-effort like the rest.
+	if _, err := s.pool.Exec(ctx, `
+		DELETE FROM doc_line_removals
+		 WHERE cwd = $1 AND kind = $2
+		   AND status IN ('active', 'dismissed')
+		   AND last_removed_at < NOW() - make_interval(secs => $3)`,
+		cwd, string(kind), removalRetention.Seconds()); err != nil {
+		s.log.Warn("projectdoc: removal retention prune failed", "cwd", cwd, "kind", kind, "err", err)
+	}
 	removed := minedRemovals(prev, next)
 	for norm, raw := range removed {
 		if _, err := s.pool.Exec(ctx, `

@@ -1155,6 +1155,7 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
   // Deletion-as-signal: lines the operator deleted from this page. The
   // system writes this list; the operator only clears entries.
   List<DocLineRemoval> _removals = const [];
+  bool _showRecent = false;
   late final _slug = TextEditingController(
     text: _section?.slug.replaceFirst('kb_', '') ?? '',
   );
@@ -1194,6 +1195,8 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
       final rows = await ref
           .read(cortexApiProvider)
           .listDocRemovals('__global__', _section!.slug);
+      rows.sort((a, b) => (a.status == 'banned' ? 0 : 1)
+          .compareTo(b.status == 'banned' ? 0 : 1));
       if (mounted) setState(() => _removals = rows);
     } on Object {
       // Best-effort — the settings dialog still works without the list.
@@ -1465,12 +1468,31 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               ),
               if (_editing && _removals.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
-                  t.web.knowledge.kb.removals.title,
-                  style: Theme.of(context).textTheme.titleSmall,
+                // Banned lines (the protection) stay visible; once-deleted
+                // lines in their 30-day watch window collapse behind a
+                // count toggle so the ledger can't dominate the dialog.
+                Row(
+                  children: [
+                    Text(
+                      t.web.knowledge.kb.removals.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(width: 8),
+                    if (_removals.any((r) => r.status != 'banned'))
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _showRecent = !_showRecent),
+                        child: Text(t.web.knowledge.kb.removals.recent(
+                          n: _removals
+                              .where((r) => r.status != 'banned')
+                              .length,
+                        )),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
-                for (final r in _removals)
+                for (final r in _removals.where((r) =>
+                    r.status == 'banned' || _showRecent))
                   Row(
                     children: [
                       if (r.status == 'banned')

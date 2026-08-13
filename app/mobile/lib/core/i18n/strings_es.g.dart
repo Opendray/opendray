@@ -9886,6 +9886,7 @@ class _TranslationsWebKnowledgeKbRemovalsEs extends TranslationsWebKnowledgeKbRe
 	@override String get banned => 'vetada';
 	@override String get dismiss => 'Olvidar';
 	@override String get hint => 'Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).';
+	@override String recent({required Object n}) => 'Eliminadas recientes (${n})';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -12660,6 +12661,7 @@ extension on TranslationsEs {
 			'web.knowledge.kb.removals.banned' => 'vetada',
 			'web.knowledge.kb.removals.dismiss' => 'Olvidar',
 			'web.knowledge.kb.removals.hint' => 'Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).',
+			'web.knowledge.kb.removals.recent' => ({required Object n}) => 'Eliminadas recientes (${n})',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -12755,9 +12757,9 @@ extension on TranslationsEs {
 			'web.cortex.chat.escalateHint' => 'Lanza una sesión de agente completa, fundamentada en el código, con esta conversación',
 			'web.cortex.chat.escalateFailed' => 'Error al escalar',
 			'web.cortex.chat.escalatedToast' => 'Sesión de agente lanzada',
-			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
 			'web.cortex.chat.revisionApplied' => 'Documento actualizado',
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
 			'web.cortex.chat.modelLabel' => 'Modelo:',
@@ -13269,9 +13271,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No hay coincidencias para "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Fija el cwd de esta session a una carpeta específica dentro de tu almacén de notas. Déjalo en blanco para restablecer.',
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
-			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
@@ -13783,9 +13785,9 @@ extension on TranslationsEs {
 			'backups.unknownError' => 'error desconocido',
 			'backups.detailTitle' => 'Detalle de la copia de seguridad',
 			'backups.deleteTitle' => '¿Eliminar copia de seguridad?',
-			'backups.deleteBody' => ({required Object target}) => 'Elimina el blob de ${target} y marca la fila como eliminada en el índice.',
 			_ => null,
 		} ?? switch (path) {
+			'backups.deleteBody' => ({required Object target}) => 'Elimina el blob de ${target} y marca la fila como eliminada en el índice.',
 			'backups.deletedSnack' => ({required Object id}) => 'Eliminado ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
@@ -14297,9 +14299,9 @@ extension on TranslationsEs {
 			'notesPage.flatten.done' => ({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.',
 			'notesPage.flatten.restartHint' => 'Reinicia la pasarela después.',
 			'notesPage.rename.action' => 'Renombrar',
-			'notesPage.rename.title' => 'Renombrar documento',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.rename.title' => 'Renombrar documento',
 			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
 			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',

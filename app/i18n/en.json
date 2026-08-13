@@ -3116,7 +3116,8 @@
           "title": "Lines you deleted",
           "banned": "banned",
           "dismiss": "Forget",
-          "hint": "Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban)."
+          "hint": "Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).",
+          "recent": "Recently deleted ({n})"
         }
       },
       "kinds": {

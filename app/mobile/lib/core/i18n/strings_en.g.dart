@@ -18906,6 +18906,9 @@ class TranslationsWebKnowledgeKbRemovalsEn {
 
 	/// en: 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).'
 	String get hint => 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).';
+
+	/// en: 'Recently deleted ({n})'
+	String recent({required Object n}) => 'Recently deleted (${n})';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -21863,6 +21866,7 @@ extension on Translations {
 			'web.knowledge.kb.removals.banned' => 'banned',
 			'web.knowledge.kb.removals.dismiss' => 'Forget',
 			'web.knowledge.kb.removals.hint' => 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).',
+			'web.knowledge.kb.removals.recent' => ({required Object n}) => 'Recently deleted (${n})',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -21958,9 +21962,9 @@ extension on Translations {
 			'web.cortex.chat.escalateHint' => 'Spawn a full agent session, grounded in the codebase, seeded with this conversation',
 			'web.cortex.chat.escalateFailed' => 'Escalation failed',
 			'web.cortex.chat.escalatedToast' => 'Agent session launched',
-			'web.cortex.chat.closeHint' => 'Close this conversation',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.closeHint' => 'Close this conversation',
 			'web.cortex.chat.revisionApplied' => 'Document updated',
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
 			'web.cortex.chat.modelLabel' => 'Model:',
@@ -22472,9 +22476,9 @@ extension on Translations {
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
-			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			_ => null,
 		} ?? switch (path) {
+			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
@@ -22986,9 +22990,9 @@ extension on Translations {
 			'backups.unknownError' => 'unknown error',
 			'backups.detailTitle' => 'Backup detail',
 			'backups.deleteTitle' => 'Delete backup?',
-			'backups.deleteBody' => ({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.',
 			_ => null,
 		} ?? switch (path) {
+			'backups.deleteBody' => ({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.',
 			'backups.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
@@ -23500,9 +23504,9 @@ extension on Translations {
 			'notesPage.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
 			'notesPage.flatten.restartHint' => 'Restart the gateway afterwards.',
 			'notesPage.rename.action' => 'Rename',
-			'notesPage.rename.title' => 'Rename document',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.rename.title' => 'Rename document',
 			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
 			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
