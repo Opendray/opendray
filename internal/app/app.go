@@ -1309,8 +1309,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				// Polarity classification runs FIRST each cycle so the same
 				// cycle's KB stage already sees meta-directives (instructions
 				// about the docs themselves) filtered out of its feedstock.
+				// kbLLM, not kgLLM: a 20-row batch's JSON verdict runs ~1k
+				// output tokens, and kgLLM's 512-token cap truncated the
+				// array — every batch failed to parse and nothing was ever
+				// classified (silently, since the stage is fail-open).
 				WithClassifier(knowledge.NewClassifier(
-					knowledgePolaritySource{mem: memorySvc}, kgLLM, log))
+					knowledgePolaritySource{mem: memorySvc}, kbLLM, log))
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)
