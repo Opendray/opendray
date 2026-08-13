@@ -29,7 +29,9 @@ export type KnownDocKind =
   | 'kb_reusable'
 // `string & {}` keeps literal autocomplete while accepting custom slugs.
 export type DocKind = KnownDocKind | (string & {})
-export type DocAuthor = 'operator' | 'agent' | 'scanner'
+/** 'approved' = an AI draft the operator approved — locks like a hand
+ * edit but stays distinguishable from one for provenance. */
+export type DocAuthor = 'operator' | 'agent' | 'scanner' | 'approved'
 
 // GlobalCwd sentinel: the cwd under which cross-project (global) KB pages live.
 // Mirrors projectdoc.GlobalCwd on the backend.
@@ -157,6 +159,36 @@ export async function putBlueprintSection(
     `/api/v1/project-docs/blueprint/${section.slug}`,
     { method: 'PUT', body: section },
   )
+}
+
+/** One line the operator deleted from a knowledge page (deletion-as-
+ * signal). status 'active' = deleted once, soft negative context for the
+ * drafter; 'banned' = deleted twice — the system reintroduced it and the
+ * operator removed it again — hard-scrubbed from every future draft. */
+export interface DocLineRemoval {
+  id: string
+  cwd: string
+  kind: string
+  line_text: string
+  removal_count: number
+  status: 'active' | 'banned' | 'dismissed'
+  last_removed_at: string
+}
+
+/** Lists a page's recorded operator deletions (active + banned). */
+export async function listDocRemovals(
+  cwd: string,
+  kind: string,
+): Promise<DocLineRemoval[]> {
+  const res = await api<{ removals: DocLineRemoval[] }>(
+    `/api/v1/project-docs/removals?cwd=${encodeURIComponent(cwd)}&kind=${encodeURIComponent(kind)}`,
+  )
+  return res.removals ?? []
+}
+
+/** Unbans / forgets one recorded line removal. */
+export async function dismissDocRemoval(id: string): Promise<void> {
+  await api(`/api/v1/project-docs/removals/${id}/dismiss`, { method: 'POST' })
 }
 
 /** Removes a section from the blueprint (its doc content is kept and

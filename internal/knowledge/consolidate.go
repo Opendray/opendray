@@ -28,10 +28,14 @@ import (
 
 // ConsolidationEngine sequences the knowledge-side consolidation stages.
 type ConsolidationEngine struct {
-	anchorer *Anchorer
-	compiler *ExperienceCompiler
-	kb       *KBDrafter
-	overview *OverviewDrafter
+	// classifier assigns polarity to new memories FIRST, so the same
+	// cycle's KB stage already sees meta-directives filtered out of its
+	// feedstock instead of one cycle later.
+	classifier *Classifier
+	anchorer   *Anchorer
+	compiler   *ExperienceCompiler
+	kb         *KBDrafter
+	overview   *OverviewDrafter
 	// curator runs the skill-lifecycle sweep (active→stale→auto-
 	// disabled). Optional, like every other stage.
 	curator interface {
@@ -49,6 +53,13 @@ func (e *ConsolidationEngine) WithCurator(c interface {
 	return e
 }
 
+// WithClassifier wires the memory polarity classifier as the cycle's
+// first stage. Optional, like every other stage.
+func (e *ConsolidationEngine) WithClassifier(c *Classifier) *ConsolidationEngine {
+	e.classifier = c
+	return e
+}
+
 // NewConsolidationEngine wires the stages. Any of them may be nil.
 func NewConsolidationEngine(a *Anchorer, c *ExperienceCompiler, kb *KBDrafter, ov *OverviewDrafter, log *slog.Logger) *ConsolidationEngine {
 	if log == nil {
@@ -60,7 +71,7 @@ func NewConsolidationEngine(a *Anchorer, c *ExperienceCompiler, kb *KBDrafter, o
 // Enabled reports whether at least one stage is wired (otherwise the loop is a
 // no-op and the caller can skip launching it).
 func (e *ConsolidationEngine) Enabled() bool {
-	return e.anchorer != nil || e.compiler != nil || e.kb != nil || e.overview != nil
+	return e.classifier != nil || e.anchorer != nil || e.compiler != nil || e.kb != nil || e.overview != nil
 }
 
 // ConsolidateConfig tunes the unified loop. One interval drives the whole
@@ -114,6 +125,14 @@ func (e *ConsolidationEngine) Run(ctx context.Context, cfg ConsolidateConfig) {
 func (e *ConsolidationEngine) RunOnce(ctx context.Context, cfg ConsolidateConfig) {
 	cfg = cfg.withDefaults()
 
+	if e.classifier != nil {
+		if _, err := e.classifier.RunOnce(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			e.log.Warn("consolidation: polarity-classify stage failed", "err", err)
+		}
+	}
+	if ctx.Err() != nil {
+		return
+	}
 	if e.anchorer != nil {
 		if err := e.anchorer.AnchorAll(ctx, cfg.PerProject); err != nil && !errors.Is(err, context.Canceled) {
 			e.log.Warn("consolidation: anchor stage failed", "err", err)

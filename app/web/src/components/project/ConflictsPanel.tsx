@@ -32,7 +32,7 @@ import {
   detectMemoryConflicts,
   listMemoryConflicts,
 } from '@/lib/memoryConflicts'
-import { deleteMemory, getMemory } from '@/lib/memory'
+import { getMemory } from '@/lib/memory'
 
 interface ConflictsPanelProps {
   cwd: string
@@ -94,15 +94,20 @@ export function ConflictsPanel({ cwd, onJumpTab }: ConflictsPanelProps) {
     side: 'A' | 'B'
   } | null>(null)
 
-  // M-PD quick-action: "Delete this fact" — yanks the offending
-  // memory row and auto-accepts the conflict so the inbox clears
-  // in one click. Plan/goal sides delegate to a tab-jump instead
-  // (we don't want one-click overwriting of operator-owned docs).
+  // M-PD quick-action: "Archive this fact" — accepts the conflict AND
+  // soft-archives the losing memory in one backend call, with a
+  // supersession reason recorded. Archived rows drop out of feedstock,
+  // search and injection everywhere, but stay restorable — unlike the
+  // hard delete this flow used to do. Plan/goal sides delegate to a
+  // tab-jump instead (we don't want one-click overwriting of
+  // operator-owned docs).
   const deleteFactAndAccept = useMutation({
-    mutationFn: async (input: { conflictId: string; factId: string }) => {
-      await deleteMemory(input.factId)
-      await decideMemoryConflict(input.conflictId, 'accepted')
-    },
+    mutationFn: (input: { conflictId: string; side: 'A' | 'B' }) =>
+      decideMemoryConflict(
+        input.conflictId,
+        'accepted',
+        input.side === 'A' ? 'a' : 'b',
+      ),
     onSuccess: () => {
       toast.success(t('web.conflicts.deletedFact'))
       setPendingDelete(null)
@@ -180,11 +185,11 @@ export function ConflictsPanel({ cwd, onJumpTab }: ConflictsPanelProps) {
         pending={pendingDelete}
         busy={deleteFactAndAccept.isPending}
         onCancel={() => setPendingDelete(null)}
-        onConfirm={(factId) => {
+        onConfirm={() => {
           if (pendingDelete) {
             deleteFactAndAccept.mutate({
               conflictId: pendingDelete.conflict.id,
-              factId,
+              side: pendingDelete.side,
             })
           }
         }}
@@ -204,7 +209,7 @@ interface DeleteFactConfirmDialogProps {
   pending: { conflict: MemoryConflict; side: 'A' | 'B' } | null
   busy: boolean
   onCancel: () => void
-  onConfirm: (factId: string) => void
+  onConfirm: () => void
 }
 
 function DeleteFactConfirmDialog({
@@ -330,7 +335,7 @@ function DeleteFactConfirmDialog({
           <Button
             variant="destructive"
             onClick={() => {
-              if (targetRef) onConfirm(targetRef)
+              if (targetRef) onConfirm()
             }}
             disabled={busy || !targetRef || targetQuery.isLoading}
           >

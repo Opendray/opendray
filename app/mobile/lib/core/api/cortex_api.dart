@@ -93,6 +93,34 @@ class CortexApi {
     }
   }
 
+  /// Lists a knowledge page's recorded operator deletions (deletion-as-
+  /// signal): 'active' = deleted once (soft drafter context), 'banned' =
+  /// deleted twice — hard-scrubbed from every future draft.
+  Future<List<DocLineRemoval>> listDocRemovals(String cwd, String kind) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/project-docs/removals',
+        queryParameters: {'cwd': cwd, 'kind': kind},
+      );
+      final rows = (res.data?['removals'] as List?) ?? const [];
+      return rows
+          .whereType<Map<String, dynamic>>()
+          .map(DocLineRemoval.fromJson)
+          .toList(growable: false);
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// Unbans / forgets one recorded line removal.
+  Future<void> dismissDocRemoval(String id) async {
+    try {
+      await _dio.post<void>('/api/v1/project-docs/removals/$id/dismiss');
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   /// Asks the AI to classify the project and propose a tailored section
   /// set. Nothing is persisted — apply via [applyBlueprint] on accept.
   Future<BlueprintProposal> proposeBlueprint(String cwd) async {
@@ -332,6 +360,29 @@ class CortexStatus {
   final int quarantineCount;
   final bool knowledgeEnabled;
   final int knowledgePendingProposals;
+}
+
+/// One line the operator deleted from a knowledge page (deletion-as-
+/// signal). See CortexApi.listDocRemovals.
+class DocLineRemoval {
+  DocLineRemoval({
+    required this.id,
+    required this.lineText,
+    required this.removalCount,
+    required this.status,
+  });
+
+  factory DocLineRemoval.fromJson(Map<String, dynamic> j) => DocLineRemoval(
+        id: j['id']?.toString() ?? '',
+        lineText: j['line_text']?.toString() ?? '',
+        removalCount: (j['removal_count'] as num?)?.toInt() ?? 0,
+        status: j['status']?.toString() ?? 'active',
+      );
+
+  final String id;
+  final String lineText;
+  final int removalCount;
+  final String status; // active | banned | dismissed
 }
 
 /// One section of a project's doc blueprint — its slug IS the doc kind.

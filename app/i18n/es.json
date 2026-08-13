@@ -445,21 +445,21 @@
       "dismiss": "Descartar",
       "accepted": "Conflicto aceptado. Recuerda aplicar la corrección",
       "dismissed": "Conflicto descartado",
-      "deletedFact": "Hecho eliminado y conflicto aceptado",
+      "deletedFact": "Hecho archivado (restaurable) y conflicto aceptado",
       "quickActions": "Corrección:",
-      "deleteFact": "Eliminar hecho",
-      "deleteFactSide": "Eliminar {side}: {ref}",
+      "deleteFact": "Archivar hecho",
+      "deleteFactSide": "Archivar {side}: {ref}",
       "confirmDelete": {
-        "title": "¿Eliminar el hecho {side}?",
-        "description": "Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado se conserva como la afirmación superviviente.",
-        "targetLabel": "Se eliminará (lado {side}):",
+        "title": "¿Archivar el hecho {side}?",
+        "description": "Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.",
+        "targetLabel": "Se archivará (lado {side}):",
         "keepLabel": "Se conservará (lado {side}):",
         "nonFactOther": "(entrada de {layer}, abre la pestaña correspondiente para inspeccionar)",
         "evidenceLabel": "Evidencia del detector:",
         "loading": "Cargando texto del hecho…",
         "loadError": "No se pudo cargar el texto del hecho. Inspecciónalo en la página de Memoria.",
         "cancel": "Cancelar",
-        "confirm": "Eliminar {side}"
+        "confirm": "Archivar {side}"
       },
       "openLayer": {
         "plan": "Abrir editor de plan",
@@ -3111,6 +3111,12 @@
         "exclusions": {
           "placeholder": "Un asunto por línea",
           "hint": "Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas."
+        },
+        "removals": {
+          "title": "Líneas que eliminaste",
+          "banned": "vetada",
+          "dismiss": "Olvidar",
+          "hint": "Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto)."
         }
       },
       "kinds": {
@@ -4415,15 +4421,15 @@
       "detected": "{count} conflicto(s) nuevo(s) encontrado(s)",
       "accept": "Aceptar",
       "dismiss": "Descartar",
-      "deleteFact": "Eliminar hecho {side}",
-      "deleteConfirmTitle": "¿Eliminar hecho {side}?",
-      "deleteConfirmBody": "Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado permanece como la afirmación superviviente.",
-      "deleteWillDelete": "Se eliminará (lado {side}):",
+      "deleteFact": "Archivar hecho",
+      "deleteConfirmTitle": "¿Archivar el hecho {side}?",
+      "deleteConfirmBody": "Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.",
+      "deleteWillDelete": "Se archivará (lado {side}):",
       "deleteWillKeep": "Se conservará (lado {side}):",
       "deleteNonFactOther": "(entrada de {layer}, abre la pestaña correspondiente para inspeccionar)",
       "deleteLoading": "Cargando el texto del hecho…",
-      "deleteFactLabel": "Eliminar {side}",
-      "deletedFact": "Hecho eliminado y conflicto aceptado",
+      "deleteFactLabel": "Archivar {side}",
+      "deletedFact": "Hecho archivado (restaurable), conflicto aceptado",
       "openPlanEditor": "Abrir el editor del plan",
       "openGoalEditor": "Abrir el editor del objetivo",
       "severity": {

@@ -445,21 +445,21 @@
       "dismiss": "Dismiss",
       "accepted": "Conflict accepted — remember to apply the fix",
       "dismissed": "Conflict dismissed",
-      "deletedFact": "Fact deleted and conflict accepted",
+      "deletedFact": "Fact archived (restorable) and conflict accepted",
       "quickActions": "Fix:",
-      "deleteFact": "Delete fact",
-      "deleteFactSide": "Delete {side}: {ref}",
+      "deleteFact": "Archive fact",
+      "deleteFactSide": "Archive {side}: {ref}",
       "confirmDelete": {
-        "title": "Delete fact {side}?",
-        "description": "This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.",
-        "targetLabel": "Will delete (side {side}):",
+        "title": "Archive fact {side}?",
+        "description": "This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.",
+        "targetLabel": "Will archive (side {side}):",
         "keepLabel": "Will keep (side {side}):",
         "nonFactOther": "({layer} entry — open the corresponding tab to inspect)",
         "evidenceLabel": "Detector evidence:",
         "loading": "Loading fact text…",
         "loadError": "Failed to load fact text. Inspect on the Memory page.",
         "cancel": "Cancel",
-        "confirm": "Delete {side}"
+        "confirm": "Archive {side}"
       },
       "openLayer": {
         "plan": "Open plan editor",
@@ -3111,6 +3111,12 @@
         "exclusions": {
           "placeholder": "One subject per line",
           "hint": "Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words."
+        },
+        "removals": {
+          "title": "Lines you deleted",
+          "banned": "banned",
+          "dismiss": "Forget",
+          "hint": "Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban)."
         }
       },
       "kinds": {
@@ -4415,15 +4421,15 @@
       "detected": "{count} new conflict(s) found",
       "accept": "Accept",
       "dismiss": "Dismiss",
-      "deleteFact": "Delete fact {side}",
-      "deleteConfirmTitle": "Delete fact {side}?",
-      "deleteConfirmBody": "This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.",
-      "deleteWillDelete": "Will delete (side {side}):",
+      "deleteFact": "Archive fact",
+      "deleteConfirmTitle": "Archive fact {side}?",
+      "deleteConfirmBody": "This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.",
+      "deleteWillDelete": "Will archive (side {side}):",
       "deleteWillKeep": "Will keep (side {side}):",
       "deleteNonFactOther": "({layer} entry — open the corresponding tab to inspect)",
       "deleteLoading": "Loading fact text…",
-      "deleteFactLabel": "Delete {side}",
-      "deletedFact": "Fact deleted and conflict accepted",
+      "deleteFactLabel": "Archive {side}",
+      "deletedFact": "Fact archived (restorable), conflict accepted",
       "openPlanEditor": "Open plan editor",
       "openGoalEditor": "Open goal editor",
       "severity": {

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 )
 
@@ -66,6 +67,21 @@ type KBDoc struct {
 	// feedstock to be re-derived next sweep. See exclude.go. Empty (the
 	// default, and everything the Overview drafter passes) is a no-op.
 	Exclusions []string
+	// Title + Description come from the page's blueprint section and give
+	// the drafter a topic to retrieve evidence AGAINST (per-page topical
+	// feedstock) instead of every page wading through the same global list.
+	Title       string
+	Description string
+	// RemovedLines is the raw text of lines the operator recently deleted
+	// from this page (deletion-as-signal, soft tier): the drafter is told
+	// not to reintroduce their content. BannedLines is the hard tier — the
+	// NORMALIZED (NormalizeLine) form of lines deleted twice, i.e. lines
+	// the system reintroduced once already; they are deterministically
+	// scrubbed from every draft. Neither participates in the dirty-check
+	// signature: an operator deletion should quiet the page, not trigger a
+	// fresh draft of it.
+	RemovedLines []string
+	BannedLines  []string
 }
 
 // DocSink persists curated KB pages into the note system (projectdoc-backed in
@@ -90,11 +106,20 @@ type ProposalSink interface {
 	RejectedSigs(ctx context.Context, cwd, kind string) ([]string, error)
 }
 
+// TopicalSource retrieves memories relevant to one query — the optional
+// upgrade from "every page reads the same global list" to per-page topical
+// feedstock. Separate from MemorySource so the app can wire it only when
+// an embedder is actually available.
+type TopicalSource interface {
+	SearchMemories(ctx context.Context, query string, k int) ([]MemoryRow, error)
+}
+
 // KBDrafter distils Memory + the graph into the global Knowledge pages.
 type KBDrafter struct {
 	store     *Store
 	llm       LLM
-	mem       MemorySource // P-G: declarative facts come straight from Memory
+	mem       MemorySource  // P-G: declarative facts come straight from Memory
+	topical   TopicalSource // optional: per-page evidence retrieval
 	docs      DocSink
 	proposals ProposalSink    // B3: propose updates to locked pages instead of skipping
 	lifecycle LifecycleFilter // Cortex Phase 2: frozen projects' facts leave the feedstock
@@ -130,6 +155,32 @@ func (d *KBDrafter) WithProposals(p ProposalSink) *KBDrafter {
 func (d *KBDrafter) WithLifecycle(f LifecycleFilter) *KBDrafter {
 	d.lifecycle = f
 	return d
+}
+
+// WithTopical enables per-page evidence retrieval. Without it every page
+// distils from the same global fact list — which also means any
+// memory_store anywhere changes every page's feedstock signature, so
+// rejected refreshes resurface each cycle and pages redraft on evidence
+// that has nothing to do with them.
+func (d *KBDrafter) WithTopical(t TopicalSource) *KBDrafter {
+	d.topical = t
+	return d
+}
+
+// dropMeta removes meta-polarity rows — directives about the docs system
+// itself. They must never be treated as page evidence: "docs must not
+// mention X" read as evidence writes X back onto the page, and every
+// operator restatement feeds that loop another line. Unclassified rows
+// (empty polarity) pass through as facts.
+func dropMeta(facts []MemoryRow) []MemoryRow {
+	out := facts[:0]
+	for _, f := range facts {
+		if f.Polarity == PolarityMeta {
+			continue
+		}
+		out = append(out, f)
+	}
+	return out
 }
 
 // filterFrozenFacts drops facts whose project (scope key) is frozen.
@@ -207,20 +258,96 @@ func (d *KBDrafter) DraftAll(ctx context.Context) ([]KBDraftResult, error) {
 	if d.llm == nil || d.docs == nil {
 		return nil, nil
 	}
-	var facts []MemoryRow
+	var shared []MemoryRow
 	if d.mem != nil {
-		facts, _ = d.mem.ListAllMemories(ctx, 400)
-		facts = filterFrozenFacts(ctx, d.lifecycle, facts)
+		shared, _ = d.mem.ListAllMemories(ctx, 400)
+		shared = dropMeta(filterFrozenFacts(ctx, d.lifecycle, shared))
 	}
 	entities, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindEntity, Limit: 400})
 	playbooks, _ := d.store.ListNodes(ctx, NodeFilter{Kind: KindPlaybook, Limit: 200})
 
+	infra := d.pageFacts(ctx, GlobalKBCwd, KBKindInfrastructure, shared)
+	conv := d.pageFacts(ctx, GlobalKBCwd, KBKindConventions, shared)
+	reuse := d.pageFacts(ctx, GlobalKBCwd, KBKindReusable, shared)
+
 	var out []KBDraftResult
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, buildInfraFeedstock(facts, entities)))
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, buildConvFeedstock(facts)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindInfrastructure, buildInfraFeedstock(infra, entities)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindConventions, buildConvFeedstock(conv)))
 	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindLessons, buildLessonsFeedstock(playbooks)))
-	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindReusable, buildReusableFeedstock(playbooks, facts)))
+	out = append(out, d.draftOne(ctx, GlobalKBCwd, KBKindReusable, buildReusableFeedstock(playbooks, reuse)))
 	return out, nil
+}
+
+// pageFacts selects one page's evidence: topical top-K ∪ recent-N when a
+// topical source is wired and answering, else the shared global list
+// (byte-identical to the historical behaviour). Two properties matter:
+//
+//   - Topical scoping means an unrelated memory_store no longer changes
+//     this page's feedstock — so its signature holds, "skipped-unchanged"
+//     and RejectedSigs work again, and the page stops redrafting on
+//     evidence that has nothing to do with it.
+//   - The result is sorted deterministically (recency, then id) because
+//     similarity rankings jitter between runs and the signature hashes
+//     the rendered feedstock — rank jitter must not read as new evidence.
+func (d *KBDrafter) pageFacts(ctx context.Context, cwd, kind string, shared []MemoryRow) []MemoryRow {
+	if d.topical == nil {
+		return shared
+	}
+	cur, err := d.docs.GetKBDoc(ctx, cwd, kind)
+	if err != nil {
+		return shared
+	}
+	hits, err := d.topical.SearchMemories(ctx, topicQuery(kind, cur), 60)
+	if err != nil || len(hits) == 0 {
+		return shared // no embedder / empty index — degrade to the old path
+	}
+	hits = dropMeta(filterFrozenFacts(ctx, d.lifecycle, hits))
+	merged := mergeRows(hits, topRecent(shared, 40))
+	sortRowsForFeedstock(merged)
+	return merged
+}
+
+// topicQuery renders what this page is ABOUT, for evidence retrieval: the
+// fixed topic line plus whatever the operator wrote on the section.
+func topicQuery(kind string, cur KBDoc) string {
+	parts := []string{kbTopics[kind], cur.Title, cur.Description, cur.PromptHint}
+	return strings.TrimSpace(strings.Join(parts, "\n"))
+}
+
+// topRecent returns the n most recent rows of already-filtered facts.
+// The recency safety net exists because topical retrieval can miss brand-
+// new evidence whose phrasing doesn't yet resemble the page.
+func topRecent(facts []MemoryRow, n int) []MemoryRow {
+	cp := make([]MemoryRow, len(facts))
+	copy(cp, facts)
+	sortRowsForFeedstock(cp)
+	if len(cp) > n {
+		cp = cp[:n]
+	}
+	return cp
+}
+
+// mergeRows unions by id, preserving first occurrence.
+func mergeRows(a, b []MemoryRow) []MemoryRow {
+	seen := make(map[string]struct{}, len(a)+len(b))
+	out := make([]MemoryRow, 0, len(a)+len(b))
+	for _, r := range append(append([]MemoryRow{}, a...), b...) {
+		if _, dup := seen[r.ID]; dup {
+			continue
+		}
+		seen[r.ID] = struct{}{}
+		out = append(out, r)
+	}
+	return out
+}
+
+func sortRowsForFeedstock(rows []MemoryRow) {
+	sort.Slice(rows, func(i, j int) bool {
+		if !rows[i].CreatedAt.Equal(rows[j].CreatedAt) {
+			return rows[i].CreatedAt.After(rows[j].CreatedAt)
+		}
+		return rows[i].ID < rows[j].ID
+	})
 }
 
 // draftOne maintains one global KB page. The operator owns its form, so the
@@ -319,6 +446,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		system += "\n\nOPERATOR MAINTAINER HINT (authoritative on this page's form and scope):\n" + hint
 	}
 	system += excludeInstruction(cur.Exclusions)
+	system += removedInstruction(cur.RemovedLines)
 	current := ""
 	if opts.preserveCurrent {
 		// The current page is fed back as the structure to preserve, so an
@@ -358,7 +486,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 				}
 			}
 		}
-		body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig, ex)
+		body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig, ex, cur.BannedLines)
 		if err != nil {
 			res.Status, res.Err = "error", err.Error()
 			return res
@@ -377,7 +505,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		res.Status, res.Bytes = "proposed", len(body)
 		return res
 	}
-	body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig, ex)
+	body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig, ex, cur.BannedLines)
 	if err != nil {
 		res.Status, res.Err = "error", err.Error()
 		return res
@@ -408,7 +536,7 @@ func draftUserMessage(current, feedstock string) string {
 
 // draftPageBody runs the LLM and returns the cleaned page body with the
 // feedstock signature appended (so the next sweep's dirty-check can skip it).
-func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, current, feedstock, sig string, ex excluder) (string, error) {
+func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, current, feedstock, sig string, ex excluder, bannedNorm []string) (string, error) {
 	body, err := llm.Complete(ctx, system, draftUserMessage(current, feedstock))
 	if err != nil {
 		log.Warn("draft: llm failed", "err", err)
@@ -421,6 +549,13 @@ func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, curre
 	// stronger signal, not just a bigger filter.
 	if scrubbed, n := ex.scrub(body); n > 0 {
 		log.Warn("draft: excluded subject removed from generated body", "lines", n)
+		body = strings.TrimSpace(scrubbed)
+	}
+	// Banned lines (deletion-as-signal hard tier): the operator deleted
+	// these twice, so a draft may never carry them again regardless of what
+	// the model produced.
+	if scrubbed, n := bannedScrub(body, bannedNorm); n > 0 {
+		log.Warn("draft: operator-banned line removed from generated body", "lines", n)
 		body = strings.TrimSpace(scrubbed)
 	}
 	if body == "" {
@@ -498,6 +633,13 @@ func writeFactTitles(b *strings.Builder, facts []MemoryRow) {
 			continue
 		}
 		b.WriteString("- ")
+		// A rule-polarity memory is a binding directive about how we work.
+		// Tagging it tells the drafter to file it under the page's rules
+		// rather than narrate it as a fact about the world. (meta rows
+		// never reach here — dropMeta runs upstream.)
+		if f.Polarity == PolarityRule {
+			b.WriteString("[rule] ")
+		}
 		b.WriteString(t)
 		b.WriteByte('\n')
 	}

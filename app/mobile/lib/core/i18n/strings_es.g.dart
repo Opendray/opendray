@@ -1228,10 +1228,10 @@ class _TranslationsWebConflictsEs extends TranslationsWebConflictsEn {
 	@override String get dismiss => 'Descartar';
 	@override String get accepted => 'Conflicto aceptado. Recuerda aplicar la corrección';
 	@override String get dismissed => 'Conflicto descartado';
-	@override String get deletedFact => 'Hecho eliminado y conflicto aceptado';
+	@override String get deletedFact => 'Hecho archivado (restaurable) y conflicto aceptado';
 	@override String get quickActions => 'Corrección:';
-	@override String get deleteFact => 'Eliminar hecho';
-	@override String deleteFactSide({required Object side, required Object ref}) => 'Eliminar ${side}: ${ref}';
+	@override String get deleteFact => 'Archivar hecho';
+	@override String deleteFactSide({required Object side, required Object ref}) => 'Archivar ${side}: ${ref}';
 	@override late final _TranslationsWebConflictsConfirmDeleteEs confirmDelete = _TranslationsWebConflictsConfirmDeleteEs._(_root);
 	@override late final _TranslationsWebConflictsOpenLayerEs openLayer = _TranslationsWebConflictsOpenLayerEs._(_root);
 	@override late final _TranslationsWebConflictsSeverityEs severity = _TranslationsWebConflictsSeverityEs._(_root);
@@ -2386,15 +2386,15 @@ class _TranslationsProjectConflictsEs extends TranslationsProjectConflictsEn {
 	@override String detected({required Object count}) => '${count} conflicto(s) nuevo(s) encontrado(s)';
 	@override String get accept => 'Aceptar';
 	@override String get dismiss => 'Descartar';
-	@override String deleteFact({required Object side}) => 'Eliminar hecho ${side}';
-	@override String deleteConfirmTitle({required Object side}) => '¿Eliminar hecho ${side}?';
-	@override String get deleteConfirmBody => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado permanece como la afirmación superviviente.';
-	@override String deleteWillDelete({required Object side}) => 'Se eliminará (lado ${side}):';
+	@override String get deleteFact => 'Archivar hecho';
+	@override String deleteConfirmTitle({required Object side}) => '¿Archivar el hecho ${side}?';
+	@override String get deleteConfirmBody => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.';
+	@override String deleteWillDelete({required Object side}) => 'Se archivará (lado ${side}):';
 	@override String deleteWillKeep({required Object side}) => 'Se conservará (lado ${side}):';
 	@override String deleteNonFactOther({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)';
 	@override String get deleteLoading => 'Cargando el texto del hecho…';
-	@override String deleteFactLabel({required Object side}) => 'Eliminar ${side}';
-	@override String get deletedFact => 'Hecho eliminado y conflicto aceptado';
+	@override String deleteFactLabel({required Object side}) => 'Archivar ${side}';
+	@override String get deletedFact => 'Hecho archivado (restaurable), conflicto aceptado';
 	@override String get openPlanEditor => 'Abrir el editor del plan';
 	@override String get openGoalEditor => 'Abrir el editor del objetivo';
 	@override late final _TranslationsProjectConflictsSeverityEs severity = _TranslationsProjectConflictsSeverityEs._(_root);
@@ -3626,16 +3626,16 @@ class _TranslationsWebConflictsConfirmDeleteEs extends TranslationsWebConflictsC
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object side}) => '¿Eliminar el hecho ${side}?';
-	@override String get description => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado se conserva como la afirmación superviviente.';
-	@override String targetLabel({required Object side}) => 'Se eliminará (lado ${side}):';
+	@override String title({required Object side}) => '¿Archivar el hecho ${side}?';
+	@override String get description => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.';
+	@override String targetLabel({required Object side}) => 'Se archivará (lado ${side}):';
 	@override String keepLabel({required Object side}) => 'Se conservará (lado ${side}):';
 	@override String nonFactOther({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)';
 	@override String get evidenceLabel => 'Evidencia del detector:';
 	@override String get loading => 'Cargando texto del hecho…';
 	@override String get loadError => 'No se pudo cargar el texto del hecho. Inspecciónalo en la página de Memoria.';
 	@override String get cancel => 'Cancelar';
-	@override String confirm({required Object side}) => 'Eliminar ${side}';
+	@override String confirm({required Object side}) => 'Archivar ${side}';
 }
 
 // Path: web.conflicts.openLayer
@@ -6104,6 +6104,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbWritePolicyEs writePolicy = _TranslationsWebKnowledgeKbWritePolicyEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbGuidanceEs guidance = _TranslationsWebKnowledgeKbGuidanceEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbExclusionsEs exclusions = _TranslationsWebKnowledgeKbExclusionsEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbRemovalsEs removals = _TranslationsWebKnowledgeKbRemovalsEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9874,6 +9875,19 @@ class _TranslationsWebKnowledgeKbExclusionsEs extends TranslationsWebKnowledgeKb
 	@override String get hint => 'Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas.';
 }
 
+// Path: web.knowledge.kb.removals
+class _TranslationsWebKnowledgeKbRemovalsEs extends TranslationsWebKnowledgeKbRemovalsEn {
+	_TranslationsWebKnowledgeKbRemovalsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Líneas que eliminaste';
+	@override String get banned => 'vetada';
+	@override String get dismiss => 'Olvidar';
+	@override String get hint => 'Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementEs extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -10568,20 +10582,20 @@ extension on TranslationsEs {
 			'web.conflicts.dismiss' => 'Descartar',
 			'web.conflicts.accepted' => 'Conflicto aceptado. Recuerda aplicar la corrección',
 			'web.conflicts.dismissed' => 'Conflicto descartado',
-			'web.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
+			'web.conflicts.deletedFact' => 'Hecho archivado (restaurable) y conflicto aceptado',
 			'web.conflicts.quickActions' => 'Corrección:',
-			'web.conflicts.deleteFact' => 'Eliminar hecho',
-			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Eliminar ${side}: ${ref}',
-			'web.conflicts.confirmDelete.title' => ({required Object side}) => '¿Eliminar el hecho ${side}?',
-			'web.conflicts.confirmDelete.description' => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado se conserva como la afirmación superviviente.',
-			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Se eliminará (lado ${side}):',
+			'web.conflicts.deleteFact' => 'Archivar hecho',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Archivar ${side}: ${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => '¿Archivar el hecho ${side}?',
+			'web.conflicts.confirmDelete.description' => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Se archivará (lado ${side}):',
 			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => 'Se conservará (lado ${side}):',
 			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'web.conflicts.confirmDelete.evidenceLabel' => 'Evidencia del detector:',
 			'web.conflicts.confirmDelete.loading' => 'Cargando texto del hecho…',
 			'web.conflicts.confirmDelete.loadError' => 'No se pudo cargar el texto del hecho. Inspecciónalo en la página de Memoria.',
 			'web.conflicts.confirmDelete.cancel' => 'Cancelar',
-			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Eliminar ${side}',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Archivar ${side}',
 			'web.conflicts.openLayer.plan' => 'Abrir editor de plan',
 			'web.conflicts.openLayer.goal' => 'Abrir editor de objetivo',
 			'web.conflicts.severity.low' => 'baja',
@@ -12642,6 +12656,10 @@ extension on TranslationsEs {
 			'web.knowledge.kb.guidance.hint' => 'Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté».',
 			'web.knowledge.kb.exclusions.placeholder' => 'Un asunto por línea',
 			'web.knowledge.kb.exclusions.hint' => 'Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas.',
+			'web.knowledge.kb.removals.title' => 'Líneas que eliminaste',
+			'web.knowledge.kb.removals.banned' => 'vetada',
+			'web.knowledge.kb.removals.dismiss' => 'Olvidar',
+			'web.knowledge.kb.removals.hint' => 'Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -12738,12 +12756,12 @@ extension on TranslationsEs {
 			'web.cortex.chat.escalateFailed' => 'Error al escalar',
 			'web.cortex.chat.escalatedToast' => 'Sesión de agente lanzada',
 			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.revisionApplied' => 'Documento actualizado',
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
 			'web.cortex.chat.modelLabel' => 'Modelo:',
 			'web.cortex.chat.modelHint' => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
 			'web.cortex.chat.modelCliDefault' => 'Predeterminado del CLI',
 			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
@@ -13252,12 +13270,12 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.locationDialogHelp' => 'Fija el cwd de esta session a una carpeta específica dentro de tu almacén de notas. Déjalo en blanco para restablecer.',
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.inspector.notes.renameTitle' => 'Renombrar o mover',
 			'sessions.inspector.notes.move' => 'Mover',
@@ -13690,15 +13708,15 @@ extension on TranslationsEs {
 			'project.conflicts.detected' => ({required Object count}) => '${count} conflicto(s) nuevo(s) encontrado(s)',
 			'project.conflicts.accept' => 'Aceptar',
 			'project.conflicts.dismiss' => 'Descartar',
-			'project.conflicts.deleteFact' => ({required Object side}) => 'Eliminar hecho ${side}',
-			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '¿Eliminar hecho ${side}?',
-			'project.conflicts.deleteConfirmBody' => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado permanece como la afirmación superviviente.',
-			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Se eliminará (lado ${side}):',
+			'project.conflicts.deleteFact' => 'Archivar hecho',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '¿Archivar el hecho ${side}?',
+			'project.conflicts.deleteConfirmBody' => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Se archivará (lado ${side}):',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => 'Se conservará (lado ${side}):',
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'project.conflicts.deleteLoading' => 'Cargando el texto del hecho…',
-			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Eliminar ${side}',
-			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Archivar ${side}',
+			'project.conflicts.deletedFact' => 'Hecho archivado (restaurable), conflicto aceptado',
 			'project.conflicts.openPlanEditor' => 'Abrir el editor del plan',
 			'project.conflicts.openGoalEditor' => 'Abrir el editor del objetivo',
 			'project.conflicts.severity.low' => 'baja',
@@ -13766,12 +13784,12 @@ extension on TranslationsEs {
 			'backups.detailTitle' => 'Detalle de la copia de seguridad',
 			'backups.deleteTitle' => '¿Eliminar copia de seguridad?',
 			'backups.deleteBody' => ({required Object target}) => 'Elimina el blob de ${target} y marca la fila como eliminada en el índice.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.deletedSnack' => ({required Object id}) => 'Eliminado ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'backups.menuSchedules' => 'Programaciones',
-			_ => null,
-		} ?? switch (path) {
 			'backups.menuTargets' => 'Destinos',
 			'backups.kv.status' => 'Estado',
 			'backups.kv.verified' => 'Verificada',
@@ -14280,12 +14298,12 @@ extension on TranslationsEs {
 			'notesPage.flatten.restartHint' => 'Reinicia la pasarela después.',
 			'notesPage.rename.action' => 'Renombrar',
 			'notesPage.rename.title' => 'Renombrar documento',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
 			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
 			'notesPage.tags.empty' => 'Aún no hay etiquetas en el almacén. Escribe #así en una nota.',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'Ninguna etiqueta coincide con «${query}».',
 			'notesPage.tags.filteredBy' => 'Filtrado por',
 			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',

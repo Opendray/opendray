@@ -133,6 +133,62 @@ func sigPart(patterns []string) string {
 	return "\x00exclusions:" + strings.Join(clean, "\x01")
 }
 
+// bannedScrub drops every line of body whose normalized form appears in
+// bannedNorm (lines the operator deleted twice — see deletion-as-signal).
+// Exact-after-normalization matching only: this is the hard tier, and a
+// false positive here silently censors a page, so nothing fuzzier is
+// permitted. Returns the scrubbed body and how many lines were dropped.
+func bannedScrub(body string, bannedNorm []string) (string, int) {
+	if len(bannedNorm) == 0 || body == "" {
+		return body, 0
+	}
+	banned := make(map[string]struct{}, len(bannedNorm))
+	for _, b := range bannedNorm {
+		if b != "" {
+			banned[b] = struct{}{}
+		}
+	}
+	lines := strings.Split(body, "\n")
+	out := make([]string, 0, len(lines))
+	dropped := 0
+	for _, ln := range lines {
+		if _, hit := banned[NormalizeLine(ln)]; hit {
+			dropped++
+			continue
+		}
+		if strings.TrimSpace(ln) == "" && len(out) > 0 && strings.TrimSpace(out[len(out)-1]) == "" {
+			continue
+		}
+		out = append(out, ln)
+	}
+	if dropped == 0 {
+		return body, 0
+	}
+	return strings.Join(out, "\n"), dropped
+}
+
+// removedInstruction is the soft tier of deletion-as-signal: a system-
+// prompt block listing lines the operator recently deleted from this
+// page. The drafter preserves the current page's structure, so without
+// this it has no way to know a missing line is missing ON PURPOSE — the
+// feedstock still carries the evidence it was derived from, and the
+// drafter would helpfully restore it.
+func removedInstruction(lines []string) string {
+	if len(lines) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("\n\nOPERATOR-REMOVED LINES (the operator deleted these from this page; " +
+		"do NOT reintroduce them or content equivalent to them, even if the evidence " +
+		"still supports them — their absence is deliberate):\n")
+	for _, ln := range lines {
+		b.WriteString("- ")
+		b.WriteString(ln)
+		b.WriteByte('\n')
+	}
+	return b.String()
+}
+
 // excludeInstruction is the system-prompt block naming the excluded subjects.
 // The input scrubbing above is the mechanism that actually works; this exists
 // so the model does not reach into its own priors and reintroduce a subject

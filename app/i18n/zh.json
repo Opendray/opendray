@@ -445,21 +445,21 @@
       "dismiss": "驳回",
       "accepted": "已采纳 — 别忘了实际修正",
       "dismissed": "已驳回",
-      "deletedFact": "已删除 fact 并采纳冲突",
+      "deletedFact": "该事实已归档（可恢复），冲突已接受",
       "quickActions": "快速修复：",
-      "deleteFact": "删除 fact",
-      "deleteFactSide": "删除 {side}: {ref}",
+      "deleteFact": "归档事实",
+      "deleteFactSide": "归档 {side}：{ref}",
       "confirmDelete": {
-        "title": "确认删除 fact {side}?",
-        "description": "永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。",
-        "targetLabel": "将删除（{side} 侧）：",
+        "title": "归档事实 {side}？",
+        "description": "该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。",
+        "targetLabel": "将归档（{side} 侧）：",
         "keepLabel": "将保留（{side} 侧）：",
         "nonFactOther": "（{layer} 条目 — 请打开对应 tab 查看完整内容）",
         "evidenceLabel": "Detector 给出的证据：",
         "loading": "加载 fact 内容中…",
         "loadError": "无法加载 fact 内容，请在 Memory 页面手动查看。",
         "cancel": "取消",
-        "confirm": "确认删除 {side}"
+        "confirm": "归档 {side}"
       },
       "openLayer": {
         "plan": "打开计划编辑器",
@@ -3108,6 +3108,12 @@
         "exclusions": {
           "placeholder": "每行一个主题",
           "hint": "本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。"
+        },
+        "removals": {
+          "title": "你删除过的行",
+          "banned": "已封禁",
+          "dismiss": "忘记",
+          "hint": "你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。"
         }
       },
       "kinds": {
@@ -4412,15 +4418,15 @@
       "detected": "新发现 {count} 条冲突",
       "accept": "采纳",
       "dismiss": "驳回",
-      "deleteFact": "删除 fact {side}",
-      "deleteConfirmTitle": "确认删除 fact {side}?",
-      "deleteConfirmBody": "永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。",
-      "deleteWillDelete": "将删除（{side} 侧）：",
+      "deleteFact": "归档事实",
+      "deleteConfirmTitle": "归档事实 {side}？",
+      "deleteConfirmBody": "该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。",
+      "deleteWillDelete": "将归档（{side} 侧）：",
       "deleteWillKeep": "将保留（{side} 侧）：",
       "deleteNonFactOther": "（{layer} 条目 — 请打开对应 tab 查看）",
       "deleteLoading": "加载中…",
-      "deleteFactLabel": "删除 {side}",
-      "deletedFact": "已删除 fact 并采纳冲突",
+      "deleteFactLabel": "归档 {side}",
+      "deletedFact": "该事实已归档（可恢复），冲突已接受",
       "openPlanEditor": "打开计划编辑器",
       "openGoalEditor": "打开目标编辑器",
       "severity": {

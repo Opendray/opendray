@@ -144,7 +144,21 @@ const (
 	AuthorSummarizer Author = "summarizer"
 	AuthorManual     Author = "manual"
 	AuthorScanner    Author = "scanner" // M16 — project scanner
+	// AuthorApproved marks a doc whose content is an AI draft the operator
+	// APPROVED — sanctioned, but not hand-written. It locks exactly like
+	// AuthorOperator (see LocksDoc); what it fixes is the provenance:
+	// stamping approvals as 'operator' made AI text indistinguishable from
+	// hand edits, which both misled the UI badge and would poison
+	// deletion-as-signal mining (which must learn only from lines a human
+	// personally deleted, not from diffs between two AI drafts).
+	AuthorApproved Author = "approved"
 )
+
+// LocksDoc reports whether a doc author human-locks the page against
+// direct AI overwrite. Approval locks like a hand edit — the operator
+// engaged with the page, so future drift must come back as a proposal —
+// but the two remain distinguishable for provenance and for mining.
+func LocksDoc(a Author) bool { return a == AuthorOperator || a == AuthorApproved }
 
 // Doc represents one row from project_docs — the live state of a
 // goal/plan document for a single project.
@@ -377,14 +391,29 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 	if author == "" {
 		author = AuthorOperator
 	}
-	// Keep the drafter's hidden signature across an edit that dropped it (the
-	// clients hide the marker while editing, so every operator save arrives
-	// without one). Losing it disables the sweep's dirty check and the page
-	// gets redrafted every cycle — see CarryDraftSig. Global knowledge pages
-	// are the only ones carrying a signature, so nothing else pays the read.
-	if cwd == GlobalCwd && IsGlobalKBKind(kind) && !strings.Contains(content, draftSigMarker) {
+	// Global KB pages get two extra passes against the previous body.
+	//
+	// Signature carry: the clients hide the drafter's kb-sig marker while
+	// editing, so every operator save arrives without one; losing it
+	// disables the sweep's dirty check and the page gets redrafted every
+	// cycle — see CarryDraftSig.
+	//
+	// Removal mining: an OPERATOR save (specifically — not 'approved',
+	// which is the diff between two AI drafts, and not 'agent') records
+	// which lines the human deleted, feeding deletion-as-signal. Mining is
+	// best-effort: it must never fail the save it observes.
+	if cwd == GlobalCwd && IsGlobalKBKind(kind) {
 		if prev, err := s.GetDoc(ctx, cwd, kind); err == nil {
-			content = CarryDraftSig(prev.Content, content)
+			if author == AuthorOperator {
+				if n, merr := s.recordRemovals(ctx, cwd, kind, prev.Content, content); merr != nil {
+					s.log.Warn("projectdoc: removal mining failed", "cwd", cwd, "kind", kind, "err", merr)
+				} else if n > 0 {
+					s.log.Info("projectdoc: operator removals recorded", "cwd", cwd, "kind", kind, "lines", n)
+				}
+			}
+			if !strings.Contains(content, draftSigMarker) {
+				content = CarryDraftSig(prev.Content, content)
+			}
 		}
 	}
 	id := newID("pd_")
@@ -499,7 +528,7 @@ func (s *Service) SetDocByPolicy(ctx context.Context, cwd string, kind Kind, con
 		// read error → fall through to a proposal rather than risk clobbering.
 		locked := true
 		if cur, err := s.GetDoc(ctx, cwd, kind); err == nil {
-			locked = cur.UpdatedBy == AuthorOperator
+			locked = LocksDoc(cur.UpdatedBy)
 		} else if errors.Is(err, ErrNotFound) {
 			locked = false // no doc yet — free to seed it directly
 		}
@@ -655,18 +684,20 @@ func (s *Service) ApproveProposal(ctx context.Context, id string) (Doc, error) {
 		`SELECT content FROM project_docs WHERE cwd=$1 AND kind=$2`,
 		p.Cwd, string(p.Kind)).Scan(&prior)
 
-	// Approving is an operator decision, so the resulting doc is
-	// operator-authored — this PRESERVES the human-lock (updated_by=operator).
-	// Stamping 'agent' here would silently un-lock the page: the next time the
-	// feedstock diverged, the drafter would overwrite it directly instead of
-	// proposing, making the lock a one-shot that any approval throws away.
+	// Approving is an operator decision, so the resulting doc stays LOCKED
+	// (LocksDoc treats 'approved' like 'operator') — stamping 'agent' here
+	// would make the lock a one-shot any approval throws away. But it is
+	// stamped 'approved', not 'operator': the content is an AI draft the
+	// operator sanctioned, not text they wrote, and deletion-as-signal
+	// mining must never read the diff between two AI drafts as a set of
+	// human deletions.
 	newDocID := newID("pd_")
 	docRow := tx.QueryRow(ctx, `
 		INSERT INTO project_docs (id, cwd, kind, content, updated_by)
-		VALUES ($1, $2, $3, $4, 'operator')
+		VALUES ($1, $2, $3, $4, 'approved')
 		ON CONFLICT (cwd, kind) DO UPDATE
 		   SET content      = EXCLUDED.content,
-		       updated_by   = 'operator',
+		       updated_by   = 'approved',
 		       updated_at   = NOW(),
 		       embedding    = NULL,
 		       embedder     = NULL,
@@ -1428,7 +1459,7 @@ func (s *Service) foundationalRules(ctx context.Context, kbSections []Section) s
 			b.WriteString("\n\n")
 		}
 		b.WriteString(body)
-		if d.UpdatedBy != AuthorOperator {
+		if !LocksDoc(d.UpdatedBy) {
 			b.WriteString("\n_(AI-drafted — verify before relying on it)_")
 		}
 	}

@@ -150,7 +150,56 @@ func (a knowledgeMemorySource) ListProjectMemories(ctx context.Context, scopeKey
 	}
 	out := make([]knowledge.MemoryRow, 0, len(mems))
 	for _, m := range mems {
-		out = append(out, knowledge.MemoryRow{ID: m.ID, Text: m.Text, ScopeKey: m.ScopeKey, CreatedAt: m.CreatedAt})
+		out = append(out, toMemoryRow(m))
+	}
+	return out, nil
+}
+
+func toMemoryRow(m memory.Memory) knowledge.MemoryRow {
+	return knowledge.MemoryRow{
+		ID: m.ID, Text: m.Text, ScopeKey: m.ScopeKey,
+		CreatedAt: m.CreatedAt, Polarity: m.Polarity,
+	}
+}
+
+// knowledgePolaritySource adapts *memory.Service to knowledge.PolaritySource
+// so the polarity classifier can read its work queue and record verdicts.
+// One-way dependency (knowledge owns the interface).
+type knowledgePolaritySource struct{ mem *memory.Service }
+
+func (a knowledgePolaritySource) ListUnclassified(ctx context.Context, limit int) ([]knowledge.MemoryRow, error) {
+	mems, err := a.mem.ListUnclassified(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]knowledge.MemoryRow, 0, len(mems))
+	for _, m := range mems {
+		out = append(out, toMemoryRow(m))
+	}
+	return out, nil
+}
+
+func (a knowledgePolaritySource) SetPolarity(ctx context.Context, id, polarity string) error {
+	return a.mem.SetPolarity(ctx, id, polarity)
+}
+
+// knowledgeTopicalSource adapts *memory.Service to knowledge.TopicalSource
+// for the KB drafter's per-page evidence retrieval. Integration zones are
+// excluded the same way ListAllMemories excludes them — their memories must
+// never leak into the operator's cross-project knowledge pages.
+type knowledgeTopicalSource struct{ mem *memory.Service }
+
+func (a knowledgeTopicalSource) SearchMemories(ctx context.Context, query string, k int) ([]knowledge.MemoryRow, error) {
+	mems, err := a.mem.SearchAcrossProjects(ctx, query, k)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]knowledge.MemoryRow, 0, len(mems))
+	for _, m := range mems {
+		if memory.IsIntegrationScopeKey(m.ScopeKey) {
+			continue
+		}
+		out = append(out, toMemoryRow(m))
 	}
 	return out, nil
 }
@@ -233,7 +282,7 @@ func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowl
 		return knowledge.KBDoc{}, err
 	default:
 		out.Content = d.Content
-		out.HumanLocked = d.UpdatedBy == projectdoc.AuthorOperator
+		out.HumanLocked = projectdoc.LocksDoc(d.UpdatedBy)
 		out.Exists = true
 	}
 	// Operator-owned-form controls from the page's blueprint section. Only the
@@ -248,6 +297,15 @@ func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowl
 			out.PromptHint = sec.PromptHint
 			out.WritePolicy = sec.WritePolicy
 			out.Exclusions = sec.Exclusions
+			out.Title = sec.Title
+			out.Description = sec.Description
+		}
+		// Deletion-as-signal: what the operator removed from this page.
+		// Best-effort — a read failure degrades to "no signal", never
+		// blocks a draft.
+		if removed, banned, rerr := a.pd.RemovalSignals(ctx, cwd, kind); rerr == nil {
+			out.RemovedLines = removed
+			out.BannedLines = banned
 		}
 	}
 	return out, nil
@@ -1224,6 +1282,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				knowledge.NewStore(st.Pool()), kbLLM,
 				knowledgeDocSink{pd: projectDocSvc}, log).
 				WithMemory(knowledgeMemorySource{mem: memorySvc}).       // P-G — facts from Memory
+				WithTopical(knowledgeTopicalSource{mem: memorySvc}).     // per-page evidence retrieval
 				WithProposals(knowledgeProposalSink{pd: projectDocSvc}). // B3 — propose updates to locked pages
 				WithLifecycle(knowledgeLifecycle{pd: projectDocSvc})     // Cortex P2 — frozen projects leave the feedstock
 			knowledgeSvc.WithKBDrafter(knowledgeKBDrafter) // manual /kb/draft endpoint
@@ -1246,7 +1305,12 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				knowledgeOverview, log).
 				// Hermes-style curator: skill lifecycle sweep
 				// (active → stale 30d → auto-disabled 90d).
-				WithCurator(knowledgeSvc)
+				WithCurator(knowledgeSvc).
+				// Polarity classification runs FIRST each cycle so the same
+				// cycle's KB stage already sees meta-directives (instructions
+				// about the docs themselves) filtered out of its feedstock.
+				WithClassifier(knowledge.NewClassifier(
+					knowledgePolaritySource{mem: memorySvc}, kgLLM, log))
 		}
 		knowledgeHandlers = knowledge.NewHandlers(knowledgeSvc, log)
 		log.Info("knowledge graph (M-KG) enabled", "anchorer", knowledgeAnchorer != nil)

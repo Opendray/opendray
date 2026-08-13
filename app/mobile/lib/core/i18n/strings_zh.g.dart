@@ -1228,10 +1228,10 @@ class _TranslationsWebConflictsZh extends TranslationsWebConflictsEn {
 	@override String get dismiss => '驳回';
 	@override String get accepted => '已采纳 — 别忘了实际修正';
 	@override String get dismissed => '已驳回';
-	@override String get deletedFact => '已删除 fact 并采纳冲突';
+	@override String get deletedFact => '该事实已归档（可恢复），冲突已接受';
 	@override String get quickActions => '快速修复：';
-	@override String get deleteFact => '删除 fact';
-	@override String deleteFactSide({required Object side, required Object ref}) => '删除 ${side}: ${ref}';
+	@override String get deleteFact => '归档事实';
+	@override String deleteFactSide({required Object side, required Object ref}) => '归档 ${side}：${ref}';
 	@override late final _TranslationsWebConflictsConfirmDeleteZh confirmDelete = _TranslationsWebConflictsConfirmDeleteZh._(_root);
 	@override late final _TranslationsWebConflictsOpenLayerZh openLayer = _TranslationsWebConflictsOpenLayerZh._(_root);
 	@override late final _TranslationsWebConflictsSeverityZh severity = _TranslationsWebConflictsSeverityZh._(_root);
@@ -2386,15 +2386,15 @@ class _TranslationsProjectConflictsZh extends TranslationsProjectConflictsEn {
 	@override String detected({required Object count}) => '新发现 ${count} 条冲突';
 	@override String get accept => '采纳';
 	@override String get dismiss => '驳回';
-	@override String deleteFact({required Object side}) => '删除 fact ${side}';
-	@override String deleteConfirmTitle({required Object side}) => '确认删除 fact ${side}?';
-	@override String get deleteConfirmBody => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。';
-	@override String deleteWillDelete({required Object side}) => '将删除（${side} 侧）：';
+	@override String get deleteFact => '归档事实';
+	@override String deleteConfirmTitle({required Object side}) => '归档事实 ${side}？';
+	@override String get deleteConfirmBody => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。';
+	@override String deleteWillDelete({required Object side}) => '将归档（${side} 侧）：';
 	@override String deleteWillKeep({required Object side}) => '将保留（${side} 侧）：';
 	@override String deleteNonFactOther({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）';
 	@override String get deleteLoading => '加载中…';
-	@override String deleteFactLabel({required Object side}) => '删除 ${side}';
-	@override String get deletedFact => '已删除 fact 并采纳冲突';
+	@override String deleteFactLabel({required Object side}) => '归档 ${side}';
+	@override String get deletedFact => '该事实已归档（可恢复），冲突已接受';
 	@override String get openPlanEditor => '打开计划编辑器';
 	@override String get openGoalEditor => '打开目标编辑器';
 	@override late final _TranslationsProjectConflictsSeverityZh severity = _TranslationsProjectConflictsSeverityZh._(_root);
@@ -3626,16 +3626,16 @@ class _TranslationsWebConflictsConfirmDeleteZh extends TranslationsWebConflictsC
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object side}) => '确认删除 fact ${side}?';
-	@override String get description => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。';
-	@override String targetLabel({required Object side}) => '将删除（${side} 侧）：';
+	@override String title({required Object side}) => '归档事实 ${side}？';
+	@override String get description => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。';
+	@override String targetLabel({required Object side}) => '将归档（${side} 侧）：';
 	@override String keepLabel({required Object side}) => '将保留（${side} 侧）：';
 	@override String nonFactOther({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看完整内容）';
 	@override String get evidenceLabel => 'Detector 给出的证据：';
 	@override String get loading => '加载 fact 内容中…';
 	@override String get loadError => '无法加载 fact 内容，请在 Memory 页面手动查看。';
 	@override String get cancel => '取消';
-	@override String confirm({required Object side}) => '确认删除 ${side}';
+	@override String confirm({required Object side}) => '归档 ${side}';
 }
 
 // Path: web.conflicts.openLayer
@@ -6104,6 +6104,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbWritePolicyZh writePolicy = _TranslationsWebKnowledgeKbWritePolicyZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbGuidanceZh guidance = _TranslationsWebKnowledgeKbGuidanceZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbExclusionsZh exclusions = _TranslationsWebKnowledgeKbExclusionsZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbRemovalsZh removals = _TranslationsWebKnowledgeKbRemovalsZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9871,6 +9872,19 @@ class _TranslationsWebKnowledgeKbExclusionsZh extends TranslationsWebKnowledgeKb
 	@override String get hint => '本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。';
 }
 
+// Path: web.knowledge.kb.removals
+class _TranslationsWebKnowledgeKbRemovalsZh extends TranslationsWebKnowledgeKbRemovalsEn {
+	_TranslationsWebKnowledgeKbRemovalsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '你删除过的行';
+	@override String get banned => '已封禁';
+	@override String get dismiss => '忘记';
+	@override String get hint => '你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementZh extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -10565,20 +10579,20 @@ extension on TranslationsZh {
 			'web.conflicts.dismiss' => '驳回',
 			'web.conflicts.accepted' => '已采纳 — 别忘了实际修正',
 			'web.conflicts.dismissed' => '已驳回',
-			'web.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			'web.conflicts.deletedFact' => '该事实已归档（可恢复），冲突已接受',
 			'web.conflicts.quickActions' => '快速修复：',
-			'web.conflicts.deleteFact' => '删除 fact',
-			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => '删除 ${side}: ${ref}',
-			'web.conflicts.confirmDelete.title' => ({required Object side}) => '确认删除 fact ${side}?',
-			'web.conflicts.confirmDelete.description' => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。',
-			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => '将删除（${side} 侧）：',
+			'web.conflicts.deleteFact' => '归档事实',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => '归档 ${side}：${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => '归档事实 ${side}？',
+			'web.conflicts.confirmDelete.description' => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => '将归档（${side} 侧）：',
 			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => '将保留（${side} 侧）：',
 			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看完整内容）',
 			'web.conflicts.confirmDelete.evidenceLabel' => 'Detector 给出的证据：',
 			'web.conflicts.confirmDelete.loading' => '加载 fact 内容中…',
 			'web.conflicts.confirmDelete.loadError' => '无法加载 fact 内容，请在 Memory 页面手动查看。',
 			'web.conflicts.confirmDelete.cancel' => '取消',
-			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => '确认删除 ${side}',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => '归档 ${side}',
 			'web.conflicts.openLayer.plan' => '打开计划编辑器',
 			'web.conflicts.openLayer.goal' => '打开目标编辑器',
 			'web.conflicts.severity.low' => '低',
@@ -12636,6 +12650,10 @@ extension on TranslationsZh {
 			'web.knowledge.kb.guidance.hint' => '决定本页写什么、怎么写，优先于起草器自身的默认风格。适合写「保持精简」「只写规则」，以及「不要把我删减过的章节重新展开」。',
 			'web.knowledge.kb.exclusions.placeholder' => '每行一个主题',
 			'web.knowledge.kb.exclusions.hint' => '本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。',
+			'web.knowledge.kb.removals.title' => '你删除过的行',
+			'web.knowledge.kb.removals.banned' => '已封禁',
+			'web.knowledge.kb.removals.dismiss' => '忘记',
+			'web.knowledge.kb.removals.hint' => '你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -12735,12 +12753,12 @@ extension on TranslationsZh {
 			'web.cortex.chat.revisionApplied' => '文档已更新',
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
 			'web.cortex.chat.modelLabel' => '模型：',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。',
 			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
 			'web.cortex.chat.modelCliDefault' => 'CLI 默认',
 			'web.cortex.chat.modelChangeFailed' => '切换讨论模型失败',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.modelGroupCloud' => '云端 agent',
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
 			'web.cortex.chat.accountDefault' => '默认账号',
@@ -13249,12 +13267,12 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.inspector.notes.renameTitle' => '重命名或移动',
 			'sessions.inspector.notes.move' => '移动',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.renameHelp' => '项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md',
 			'sessions.inspector.notes.renamed' => '已移动。',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
@@ -13684,15 +13702,15 @@ extension on TranslationsZh {
 			'project.conflicts.detected' => ({required Object count}) => '新发现 ${count} 条冲突',
 			'project.conflicts.accept' => '采纳',
 			'project.conflicts.dismiss' => '驳回',
-			'project.conflicts.deleteFact' => ({required Object side}) => '删除 fact ${side}',
-			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '确认删除 fact ${side}?',
-			'project.conflicts.deleteConfirmBody' => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。',
-			'project.conflicts.deleteWillDelete' => ({required Object side}) => '将删除（${side} 侧）：',
+			'project.conflicts.deleteFact' => '归档事实',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '归档事实 ${side}？',
+			'project.conflicts.deleteConfirmBody' => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => '将归档（${side} 侧）：',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => '将保留（${side} 侧）：',
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）',
 			'project.conflicts.deleteLoading' => '加载中…',
-			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
-			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => '归档 ${side}',
+			'project.conflicts.deletedFact' => '该事实已归档（可恢复），冲突已接受',
 			'project.conflicts.openPlanEditor' => '打开计划编辑器',
 			'project.conflicts.openGoalEditor' => '打开目标编辑器',
 			'project.conflicts.severity.low' => '低',
@@ -13763,12 +13781,12 @@ extension on TranslationsZh {
 			'backups.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
 			'backups.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
 			'backups.kv.status' => '状态',
 			'backups.kv.verified' => '校验',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
 			'backups.kv.dedup' => '去重',
@@ -14277,12 +14295,12 @@ extension on TranslationsZh {
 			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
 			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
 			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.tags.empty' => '文档库里还没有标签。在笔记里写 #像这样 就会出现。',
 			'notesPage.tags.noMatches' => ({required Object query}) => '没有标签匹配“${query}”。',
 			'notesPage.tags.filteredBy' => '已按标签筛选',
 			'notesPage.tags.clear' => '清除标签筛选',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.tags.noNotes' => ({required Object tag}) => '已经没有笔记带 #${tag} 了。',
 			'notesPage.backlinks.title' => '反向链接',
 			'notesPage.backlinks.loading' => '正在查找链接…',

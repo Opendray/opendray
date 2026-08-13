@@ -755,7 +755,7 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         title: Text(_title, overflow: TextOverflow.ellipsis),
         actions: _doc.maybeWhen(
           data: (d) {
-            final locked = d.updatedBy == 'operator';
+            final locked = d.updatedBy == 'operator' || d.updatedBy == 'approved';
             if (_editing) {
               return [
                 TextButton(
@@ -820,7 +820,7 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         ),
         data: (d) {
           final content = _stripSig(d.content);
-          final locked = d.updatedBy == 'operator';
+          final locked = d.updatedBy == 'operator' || d.updatedBy == 'approved';
           final pending = _pending;
           if (_editing) {
             return Padding(
@@ -1152,6 +1152,9 @@ class _KbPageDialog extends ConsumerStatefulWidget {
 class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
   late final BlueprintSection? _section = widget.section;
   bool get _editing => _section != null;
+  // Deletion-as-signal: lines the operator deleted from this page. The
+  // system writes this list; the operator only clears entries.
+  List<DocLineRemoval> _removals = const [];
   late final _slug = TextEditingController(
     text: _section?.slug.replaceFirst('kb_', '') ?? '',
   );
@@ -1179,6 +1182,35 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
     'kb_lessons',
     'kb_reusable',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    if (_editing) _loadRemovals();
+  }
+
+  Future<void> _loadRemovals() async {
+    try {
+      final rows = await ref
+          .read(cortexApiProvider)
+          .listDocRemovals('__global__', _section!.slug);
+      if (mounted) setState(() => _removals = rows);
+    } on Object {
+      // Best-effort — the settings dialog still works without the list.
+    }
+  }
+
+  Future<void> _dismissRemoval(String id) async {
+    try {
+      await ref.read(cortexApiProvider).dismissDocRemoval(id);
+      await _loadRemovals();
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t.web.knowledge.actionFailed}: $e')),
+      );
+    }
+  }
 
   late String _maintainer = _section?.maintainerMode ?? 'ai';
   // Default new pages to the approval gate: a page that quietly rewrites
@@ -1431,6 +1463,49 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
                 t.web.knowledge.kb.exclusions.hint,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              if (_editing && _removals.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  t.web.knowledge.kb.removals.title,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 4),
+                for (final r in _removals)
+                  Row(
+                    children: [
+                      if (r.status == 'banned')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Text(
+                            t.web.knowledge.kb.removals.banned,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          r.lineText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => _dismissRemoval(r.id),
+                        child: Text(t.web.knowledge.kb.removals.dismiss),
+                      ),
+                    ],
+                  ),
+                Text(
+                  t.web.knowledge.kb.removals.hint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ],
         ),

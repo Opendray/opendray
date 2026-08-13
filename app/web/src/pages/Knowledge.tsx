@@ -32,6 +32,8 @@ import {
   listBlueprintSections,
   putBlueprintSection,
   deleteBlueprintSection,
+  listDocRemovals,
+  dismissDocRemoval,
   canBeSessionMaintained,
   GLOBAL_CWD,
   type BlueprintSection,
@@ -46,6 +48,7 @@ import { SlideOverAside } from '@/components/SlideOverAside'
 import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 import { Switch } from '@/components/ui/switch'
 import { Loader2, Plus, Sparkles } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -249,6 +252,19 @@ function PageSettingsDialog({
   const [exclusions, setExclusions] = useState(() =>
     (section?.exclusions ?? []).join('\n'),
   )
+  // Deletion-as-signal: lines the operator deleted from this page. Read-only
+  // record plus the unban action — the system writes this list, the operator
+  // only clears entries.
+  const removals = useQuery({
+    queryKey: ['kb-removals', section?.slug],
+    queryFn: () => listDocRemovals(GLOBAL_CWD, section!.slug),
+    enabled: editing,
+  })
+  const dismissLine = useMutation({
+    mutationFn: (id: string) => dismissDocRemoval(id),
+    onSuccess: () => removals.refetch(),
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
 
   // The classic four keep two fixed fields: their titles come from i18n
   // (editing the stored one changes nothing visible) and their natures are
@@ -463,6 +479,42 @@ function PageSettingsDialog({
                   {t('web.knowledge.kb.exclusions.hint')}
                 </p>
               </div>
+              {editing && (removals.data?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-sm font-medium">
+                    {t('web.knowledge.kb.removals.title')}
+                  </p>
+                  <ul className="max-h-40 space-y-1 overflow-y-auto">
+                    {removals.data!.map((r) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        {r.status === 'banned' && (
+                          <Badge variant="danger">
+                            {t('web.knowledge.kb.removals.banned')}
+                          </Badge>
+                        )}
+                        <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono">
+                          {r.line_text}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-1.5 text-[11px]"
+                          disabled={dismissLine.isPending}
+                          onClick={() => dismissLine.mutate(r.id)}
+                        >
+                          {t('web.knowledge.kb.removals.dismiss')}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-muted-foreground text-[11px]">
+                    {t('web.knowledge.kb.removals.hint')}
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -598,7 +650,8 @@ function KnowledgeBaseView() {
 
   const content = stripSig(doc.data?.content ?? '')
   const exists = !!doc.data?.id
-  const locked = doc.data?.updated_by === 'operator'
+  const locked =
+    doc.data?.updated_by === 'operator' || doc.data?.updated_by === 'approved'
   const foundational = selSection?.nature === 'foundational'
 
   return (

@@ -2633,17 +2633,17 @@ class TranslationsWebConflictsEn {
 	/// en: 'Conflict dismissed'
 	String get dismissed => 'Conflict dismissed';
 
-	/// en: 'Fact deleted and conflict accepted'
-	String get deletedFact => 'Fact deleted and conflict accepted';
+	/// en: 'Fact archived (restorable) and conflict accepted'
+	String get deletedFact => 'Fact archived (restorable) and conflict accepted';
 
 	/// en: 'Fix:'
 	String get quickActions => 'Fix:';
 
-	/// en: 'Delete fact'
-	String get deleteFact => 'Delete fact';
+	/// en: 'Archive fact'
+	String get deleteFact => 'Archive fact';
 
-	/// en: 'Delete {side}: {ref}'
-	String deleteFactSide({required Object side, required Object ref}) => 'Delete ${side}: ${ref}';
+	/// en: 'Archive {side}: {ref}'
+	String deleteFactSide({required Object side, required Object ref}) => 'Archive ${side}: ${ref}';
 
 	late final TranslationsWebConflictsConfirmDeleteEn confirmDelete = TranslationsWebConflictsConfirmDeleteEn.internal(_root);
 	late final TranslationsWebConflictsOpenLayerEn openLayer = TranslationsWebConflictsOpenLayerEn.internal(_root);
@@ -4721,17 +4721,17 @@ class TranslationsProjectConflictsEn {
 	/// en: 'Dismiss'
 	String get dismiss => 'Dismiss';
 
-	/// en: 'Delete fact {side}'
-	String deleteFact({required Object side}) => 'Delete fact ${side}';
+	/// en: 'Archive fact'
+	String get deleteFact => 'Archive fact';
 
-	/// en: 'Delete fact {side}?'
-	String deleteConfirmTitle({required Object side}) => 'Delete fact ${side}?';
+	/// en: 'Archive fact {side}?'
+	String deleteConfirmTitle({required Object side}) => 'Archive fact ${side}?';
 
-	/// en: 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.'
-	String get deleteConfirmBody => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.';
+	/// en: 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.'
+	String get deleteConfirmBody => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.';
 
-	/// en: 'Will delete (side {side}):'
-	String deleteWillDelete({required Object side}) => 'Will delete (side ${side}):';
+	/// en: 'Will archive (side {side}):'
+	String deleteWillDelete({required Object side}) => 'Will archive (side ${side}):';
 
 	/// en: 'Will keep (side {side}):'
 	String deleteWillKeep({required Object side}) => 'Will keep (side ${side}):';
@@ -4742,11 +4742,11 @@ class TranslationsProjectConflictsEn {
 	/// en: 'Loading fact text…'
 	String get deleteLoading => 'Loading fact text…';
 
-	/// en: 'Delete {side}'
-	String deleteFactLabel({required Object side}) => 'Delete ${side}';
+	/// en: 'Archive {side}'
+	String deleteFactLabel({required Object side}) => 'Archive ${side}';
 
-	/// en: 'Fact deleted and conflict accepted'
-	String get deletedFact => 'Fact deleted and conflict accepted';
+	/// en: 'Fact archived (restorable), conflict accepted'
+	String get deletedFact => 'Fact archived (restorable), conflict accepted';
 
 	/// en: 'Open plan editor'
 	String get openPlanEditor => 'Open plan editor';
@@ -7113,14 +7113,14 @@ class TranslationsWebConflictsConfirmDeleteEn {
 
 	// Translations
 
-	/// en: 'Delete fact {side}?'
-	String title({required Object side}) => 'Delete fact ${side}?';
+	/// en: 'Archive fact {side}?'
+	String title({required Object side}) => 'Archive fact ${side}?';
 
-	/// en: 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.'
-	String get description => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.';
+	/// en: 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.'
+	String get description => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.';
 
-	/// en: 'Will delete (side {side}):'
-	String targetLabel({required Object side}) => 'Will delete (side ${side}):';
+	/// en: 'Will archive (side {side}):'
+	String targetLabel({required Object side}) => 'Will archive (side ${side}):';
 
 	/// en: 'Will keep (side {side}):'
 	String keepLabel({required Object side}) => 'Will keep (side ${side}):';
@@ -7140,8 +7140,8 @@ class TranslationsWebConflictsConfirmDeleteEn {
 	/// en: 'Cancel'
 	String get cancel => 'Cancel';
 
-	/// en: 'Delete {side}'
-	String confirm({required Object side}) => 'Delete ${side}';
+	/// en: 'Archive {side}'
+	String confirm({required Object side}) => 'Archive ${side}';
 }
 
 // Path: web.conflicts.openLayer
@@ -11927,6 +11927,7 @@ class TranslationsWebKnowledgeKbEn {
 	late final TranslationsWebKnowledgeKbWritePolicyEn writePolicy = TranslationsWebKnowledgeKbWritePolicyEn.internal(_root);
 	late final TranslationsWebKnowledgeKbGuidanceEn guidance = TranslationsWebKnowledgeKbGuidanceEn.internal(_root);
 	late final TranslationsWebKnowledgeKbExclusionsEn exclusions = TranslationsWebKnowledgeKbExclusionsEn.internal(_root);
+	late final TranslationsWebKnowledgeKbRemovalsEn removals = TranslationsWebKnowledgeKbRemovalsEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -18886,6 +18887,27 @@ class TranslationsWebKnowledgeKbExclusionsEn {
 	String get hint => 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.';
 }
 
+// Path: web.knowledge.kb.removals
+class TranslationsWebKnowledgeKbRemovalsEn {
+	TranslationsWebKnowledgeKbRemovalsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Lines you deleted'
+	String get title => 'Lines you deleted';
+
+	/// en: 'banned'
+	String get banned => 'banned';
+
+	/// en: 'Forget'
+	String get dismiss => 'Forget';
+
+	/// en: 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).'
+	String get hint => 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).';
+}
+
 // Path: web.knowledge.distill.retirement
 class TranslationsWebKnowledgeDistillRetirementEn {
 	TranslationsWebKnowledgeDistillRetirementEn.internal(this._root);
@@ -19763,20 +19785,20 @@ extension on Translations {
 			'web.conflicts.dismiss' => 'Dismiss',
 			'web.conflicts.accepted' => 'Conflict accepted — remember to apply the fix',
 			'web.conflicts.dismissed' => 'Conflict dismissed',
-			'web.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			'web.conflicts.deletedFact' => 'Fact archived (restorable) and conflict accepted',
 			'web.conflicts.quickActions' => 'Fix:',
-			'web.conflicts.deleteFact' => 'Delete fact',
-			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Delete ${side}: ${ref}',
-			'web.conflicts.confirmDelete.title' => ({required Object side}) => 'Delete fact ${side}?',
-			'web.conflicts.confirmDelete.description' => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.',
-			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Will delete (side ${side}):',
+			'web.conflicts.deleteFact' => 'Archive fact',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Archive ${side}: ${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => 'Archive fact ${side}?',
+			'web.conflicts.confirmDelete.description' => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Will archive (side ${side}):',
 			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => 'Will keep (side ${side}):',
 			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
 			'web.conflicts.confirmDelete.evidenceLabel' => 'Detector evidence:',
 			'web.conflicts.confirmDelete.loading' => 'Loading fact text…',
 			'web.conflicts.confirmDelete.loadError' => 'Failed to load fact text. Inspect on the Memory page.',
 			'web.conflicts.confirmDelete.cancel' => 'Cancel',
-			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Delete ${side}',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Archive ${side}',
 			'web.conflicts.openLayer.plan' => 'Open plan editor',
 			'web.conflicts.openLayer.goal' => 'Open goal editor',
 			'web.conflicts.severity.low' => 'low',
@@ -21837,6 +21859,10 @@ extension on Translations {
 			'web.knowledge.kb.guidance.hint' => 'Steers what the page covers and how it reads. Authoritative over the drafter\'s own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".',
 			'web.knowledge.kb.exclusions.placeholder' => 'One subject per line',
 			'web.knowledge.kb.exclusions.hint' => 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.',
+			'web.knowledge.kb.removals.title' => 'Lines you deleted',
+			'web.knowledge.kb.removals.banned' => 'banned',
+			'web.knowledge.kb.removals.dismiss' => 'Forget',
+			'web.knowledge.kb.removals.hint' => 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -21933,12 +21959,12 @@ extension on Translations {
 			'web.cortex.chat.escalateFailed' => 'Escalation failed',
 			'web.cortex.chat.escalatedToast' => 'Agent session launched',
 			'web.cortex.chat.closeHint' => 'Close this conversation',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.revisionApplied' => 'Document updated',
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
 			'web.cortex.chat.modelLabel' => 'Model:',
 			'web.cortex.chat.modelHint' => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
@@ -22447,12 +22473,12 @@ extension on Translations {
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.inspector.notes.renameTitle' => 'Rename or move',
 			'sessions.inspector.notes.move' => 'Move',
@@ -22885,15 +22911,15 @@ extension on Translations {
 			'project.conflicts.detected' => ({required Object count}) => '${count} new conflict(s) found',
 			'project.conflicts.accept' => 'Accept',
 			'project.conflicts.dismiss' => 'Dismiss',
-			'project.conflicts.deleteFact' => ({required Object side}) => 'Delete fact ${side}',
-			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => 'Delete fact ${side}?',
-			'project.conflicts.deleteConfirmBody' => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.',
-			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Will delete (side ${side}):',
+			'project.conflicts.deleteFact' => 'Archive fact',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => 'Archive fact ${side}?',
+			'project.conflicts.deleteConfirmBody' => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Will archive (side ${side}):',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => 'Will keep (side ${side}):',
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
 			'project.conflicts.deleteLoading' => 'Loading fact text…',
-			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Delete ${side}',
-			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Archive ${side}',
+			'project.conflicts.deletedFact' => 'Fact archived (restorable), conflict accepted',
 			'project.conflicts.openPlanEditor' => 'Open plan editor',
 			'project.conflicts.openGoalEditor' => 'Open goal editor',
 			'project.conflicts.severity.low' => 'low',
@@ -22961,12 +22987,12 @@ extension on Translations {
 			'backups.detailTitle' => 'Backup detail',
 			'backups.deleteTitle' => 'Delete backup?',
 			'backups.deleteBody' => ({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.',
+			_ => null,
+		} ?? switch (path) {
 			'backups.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.menuSchedules' => 'Schedules',
-			_ => null,
-		} ?? switch (path) {
 			'backups.menuTargets' => 'Targets',
 			'backups.kv.status' => 'Status',
 			'backups.kv.verified' => 'Verified',
@@ -23475,12 +23501,12 @@ extension on Translations {
 			'notesPage.flatten.restartHint' => 'Restart the gateway afterwards.',
 			'notesPage.rename.action' => 'Rename',
 			'notesPage.rename.title' => 'Rename document',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
 			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
 			'notesPage.tags.empty' => 'No tags in the vault yet. Write #like-this in a note.',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'No tags match "${query}".',
 			'notesPage.tags.filteredBy' => 'Filtered by',
 			'notesPage.tags.clear' => 'Clear tag filter',

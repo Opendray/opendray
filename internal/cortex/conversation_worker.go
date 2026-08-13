@@ -376,7 +376,7 @@ func (s *CurationService) applyRevision(ctx context.Context, conv Conversation, 
 
 	locked := false
 	if doc, derr := s.docs.GetDoc(ctx, conv.TargetCwd, kind); derr == nil {
-		locked = doc.UpdatedBy == projectdoc.AuthorOperator
+		locked = projectdoc.LocksDoc(doc.UpdatedBy)
 	}
 	humanMode := false
 	if conv.TargetKind == TargetDocSection {
