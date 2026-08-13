@@ -6102,6 +6102,8 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbPageSettingsEs pageSettings = _TranslationsWebKnowledgeKbPageSettingsEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianEs librarian = _TranslationsWebKnowledgeKbLibrarianEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbWritePolicyEs writePolicy = _TranslationsWebKnowledgeKbWritePolicyEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbGuidanceEs guidance = _TranslationsWebKnowledgeKbGuidanceEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbExclusionsEs exclusions = _TranslationsWebKnowledgeKbExclusionsEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9850,6 +9852,28 @@ class _TranslationsWebKnowledgeKbWritePolicyEs extends TranslationsWebKnowledgeK
 	@override String get hint => 'Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben.';
 }
 
+// Path: web.knowledge.kb.guidance
+class _TranslationsWebKnowledgeKbGuidanceEs extends TranslationsWebKnowledgeKbGuidanceEn {
+	_TranslationsWebKnowledgeKbGuidanceEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => 'Qué debe ser esta página: su alcance, forma y nivel de detalle';
+	@override String get hint => 'Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté».';
+}
+
+// Path: web.knowledge.kb.exclusions
+class _TranslationsWebKnowledgeKbExclusionsEs extends TranslationsWebKnowledgeKbExclusionsEn {
+	_TranslationsWebKnowledgeKbExclusionsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => 'Un asunto por línea';
+	@override String get hint => 'Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas.';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementEs extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -12614,6 +12638,10 @@ extension on TranslationsEs {
 			'web.knowledge.kb.writePolicy.proposal' => 'Requiere mi aprobación antes de cambiar',
 			'web.knowledge.kb.writePolicy.direct' => 'Se actualiza automáticamente',
 			'web.knowledge.kb.writePolicy.hint' => 'Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben.',
+			'web.knowledge.kb.guidance.placeholder' => 'Qué debe ser esta página: su alcance, forma y nivel de detalle',
+			'web.knowledge.kb.guidance.hint' => 'Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté».',
+			'web.knowledge.kb.exclusions.placeholder' => 'Un asunto por línea',
+			'web.knowledge.kb.exclusions.hint' => 'Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas.',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -12714,12 +12742,12 @@ extension on TranslationsEs {
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
 			'web.cortex.chat.modelLabel' => 'Modelo:',
 			'web.cortex.chat.modelHint' => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
 			'web.cortex.chat.modelCliDefault' => 'Predeterminado del CLI',
 			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
 			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
 			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
 			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
@@ -13228,12 +13256,12 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
 			'sessions.inspector.notes.noProjectMapping2' => '(sin asignación de proyecto)',
 			'sessions.inspector.notes.clearOverride' => 'Borrar anulación',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.inspector.notes.renameTitle' => 'Renombrar o mover',
 			'sessions.inspector.notes.move' => 'Mover',
 			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.renamed' => 'Movido.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
@@ -13742,12 +13770,12 @@ extension on TranslationsEs {
 			'backups.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Error al eliminar: ${error}',
 			'backups.menuSchedules' => 'Programaciones',
+			_ => null,
+		} ?? switch (path) {
 			'backups.menuTargets' => 'Destinos',
 			'backups.kv.status' => 'Estado',
 			'backups.kv.verified' => 'Verificada',
 			'backups.kv.kind' => 'Tipo',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.target' => 'Destino',
 			'backups.kv.dedup' => 'Deduplicación',
 			'backups.kv.fanout' => 'Grupo de difusión',
@@ -14256,12 +14284,12 @@ extension on TranslationsEs {
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
 			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
 			'notesPage.tags.empty' => 'Aún no hay etiquetas en el almacén. Escribe #así en una nota.',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'Ninguna etiqueta coincide con «${query}».',
 			'notesPage.tags.filteredBy' => 'Filtrado por',
 			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',
 			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.backlinks.title' => 'Retroenlaces',
 			'notesPage.backlinks.loading' => 'Buscando enlaces…',
 			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',

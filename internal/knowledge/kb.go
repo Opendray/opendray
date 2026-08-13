@@ -59,6 +59,13 @@ type KBDoc struct {
 	// operator had not personally edited was rewritten every sweep, which
 	// is why hand edits to a swept page did not survive.
 	WritePolicy string
+	// Exclusions are subjects this page must never cover, from its blueprint
+	// section. They are the pipeline's only NEGATIVE channel: everything else
+	// the drafter reads is material to fold in, so "stop writing about X" had
+	// nowhere to live and deleting X from the page just left it in the
+	// feedstock to be re-derived next sweep. See exclude.go. Empty (the
+	// default, and everything the Overview drafter passes) is a no-op.
+	Exclusions []string
 }
 
 // DocSink persists curated KB pages into the note system (projectdoc-backed in
@@ -269,6 +276,23 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		res.Status = "skipped-human"
 		return res
 	}
+	// Drop excluded subjects from the evidence BEFORE anything else reads it.
+	// Scrubbing here rather than only instructing the model is what breaks the
+	// re-derivation loop, and doing it before the signature means a newly
+	// stored fact about an excluded subject leaves the scrubbed feedstock
+	// unchanged — so it no longer triggers a pointless redraft either.
+	ex := newExcluder(cur.Exclusions)
+	if !ex.empty() {
+		if scrubbed, n := ex.scrub(feedstock); n > 0 {
+			log.Info("draft: excluded feedstock lines dropped",
+				"kind", kind, "cwd", cwd, "lines", n)
+			feedstock = scrubbed
+		}
+		if strings.TrimSpace(feedstock) == "" {
+			res.Status = "skipped-empty"
+			return res
+		}
+	}
 	// Fold the operator's prompt_hint into the dirty-check signature. The hint
 	// steers the page's form, so changing it must invalidate the cached draft —
 	// otherwise (sig keys on feedstock alone) a new hint would never take effect
@@ -278,20 +302,29 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 	if opts.applyPromptHint {
 		hint = strings.TrimSpace(cur.PromptHint)
 	}
-	sig := kbSig(feedstock)
+	// The exclusion list joins the hint in the signature for the same reason:
+	// it steers what the page may contain, so editing it must invalidate the
+	// cached draft instead of waiting for the feedstock to happen to move.
+	sigInput := feedstock
 	if hint != "" {
-		sig = kbSig(feedstock + "\x00prompt_hint:" + hint)
+		sigInput += "\x00prompt_hint:" + hint
 	}
+	sigInput += sigPart(cur.Exclusions)
+	sig := kbSig(sigInput)
 	if cur.Exists && extractKBSig(cur.Content) == sig {
 		res.Status = "skipped-unchanged"
-		return res // feedstock + hint unchanged since last draft — nothing to do
+		return res // feedstock + hint + exclusions unchanged — nothing to do
 	}
 	if hint != "" {
 		system += "\n\nOPERATOR MAINTAINER HINT (authoritative on this page's form and scope):\n" + hint
 	}
+	system += excludeInstruction(cur.Exclusions)
 	current := ""
 	if opts.preserveCurrent {
-		current = cur.Content
+		// The current page is fed back as the structure to preserve, so an
+		// excluded subject already sitting on it would be copied straight
+		// through however well the model behaves. Scrub it too.
+		current, _ = ex.scrub(cur.Content)
 	}
 	// Two independent reasons to propose rather than overwrite: the operator
 	// edited this page by hand (their text is not ours to clobber), or the
@@ -325,7 +358,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 				}
 			}
 		}
-		body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig)
+		body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig, ex)
 		if err != nil {
 			res.Status, res.Err = "error", err.Error()
 			return res
@@ -344,7 +377,7 @@ func draftOrPropose(ctx context.Context, llm LLM, docs DocSink, proposals Propos
 		res.Status, res.Bytes = "proposed", len(body)
 		return res
 	}
-	body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig)
+	body, err := draftPageBody(ctx, llm, log, system, current, feedstock, sig, ex)
 	if err != nil {
 		res.Status, res.Err = "error", err.Error()
 		return res
@@ -375,13 +408,21 @@ func draftUserMessage(current, feedstock string) string {
 
 // draftPageBody runs the LLM and returns the cleaned page body with the
 // feedstock signature appended (so the next sweep's dirty-check can skip it).
-func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, current, feedstock, sig string) (string, error) {
+func draftPageBody(ctx context.Context, llm LLM, log *slog.Logger, system, current, feedstock, sig string, ex excluder) (string, error) {
 	body, err := llm.Complete(ctx, system, draftUserMessage(current, feedstock))
 	if err != nil {
 		log.Warn("draft: llm failed", "err", err)
 		return "", fmt.Errorf("llm: %w", err)
 	}
 	body = stripFences(strings.TrimSpace(body))
+	// Backstop. The inputs were already scrubbed, so a hit here means the
+	// model reached into its own priors — log it loudly, because a page that
+	// keeps tripping this is telling us the exclusion needs to become a
+	// stronger signal, not just a bigger filter.
+	if scrubbed, n := ex.scrub(body); n > 0 {
+		log.Warn("draft: excluded subject removed from generated body", "lines", n)
+		body = strings.TrimSpace(scrubbed)
+	}
 	if body == "" {
 		return "", fmt.Errorf("empty llm output")
 	}

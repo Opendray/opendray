@@ -377,6 +377,16 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 	if author == "" {
 		author = AuthorOperator
 	}
+	// Keep the drafter's hidden signature across an edit that dropped it (the
+	// clients hide the marker while editing, so every operator save arrives
+	// without one). Losing it disables the sweep's dirty check and the page
+	// gets redrafted every cycle — see CarryDraftSig. Global knowledge pages
+	// are the only ones carrying a signature, so nothing else pays the read.
+	if cwd == GlobalCwd && IsGlobalKBKind(kind) && !strings.Contains(content, draftSigMarker) {
+		if prev, err := s.GetDoc(ctx, cwd, kind); err == nil {
+			content = CarryDraftSig(prev.Content, content)
+		}
+	}
 	id := newID("pd_")
 	// Clear the embedding on a content change so a stale vector never
 	// lingers: embedDocBestEffort repopulates it synchronously below, and

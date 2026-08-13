@@ -3103,6 +3103,14 @@
           "proposal": "Needs my approval before it changes",
           "direct": "Updates itself automatically",
           "hint": "Whether automation may rewrite this page in place. Approval means opendray's background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them."
+        },
+        "guidance": {
+          "placeholder": "What this page should be — its scope, shape and level of detail",
+          "hint": "Steers what the page covers and how it reads. Authoritative over the drafter's own defaults, so it is the place to say \"keep it terse\" or \"rules only\" — including \"do not re-expand a section I trimmed\"."
+        },
+        "exclusions": {
+          "placeholder": "One subject per line",
+          "hint": "Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words."
         }
       },
       "kinds": {

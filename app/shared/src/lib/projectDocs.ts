@@ -117,6 +117,13 @@ export interface BlueprintSection {
   /** Knowledge nature ('foundational' | 'emergent') — GLOBAL pages
    * only; empty/absent for per-project sections. */
   nature?: string
+  /** Subjects the AI maintainer must never write about on this page.
+   * `prompt_hint` steers what the page SHOULD be; everything else the
+   * drafter reads is material to fold in, so this is the only way to say
+   * "leave this out". Removing a subject from the page body alone does
+   * not work — it stays in the feedstock and is re-derived next sweep.
+   * GLOBAL knowledge pages only; the backend rejects it elsewhere. */
+  exclusions?: string[]
   created_at?: string
   updated_at?: string
 }

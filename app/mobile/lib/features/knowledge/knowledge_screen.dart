@@ -1157,6 +1157,14 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
   );
   late final _title = TextEditingController(text: _section?.title ?? '');
   late final _desc = TextEditingController(text: _section?.description ?? '');
+  // The two steering controls for an AI-maintained page. _guidance says what
+  // the page should be; _exclusions says what it may never contain — the only
+  // negative channel in the pipeline, since every other input is material to
+  // fold in. Edited one-per-line; the gateway trims, de-dupes and caps them.
+  late final _guidance = TextEditingController(text: _section?.promptHint ?? '');
+  late final _exclusions = TextEditingController(
+    text: (_section?.exclusions ?? const []).join('\n'),
+  );
   late String _nature = _section?.nature == 'foundational'
       ? 'foundational'
       : 'emergent';
@@ -1193,6 +1201,8 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
     _slug.dispose();
     _title.dispose();
     _desc.dispose();
+    _guidance.dispose();
+    _exclusions.dispose();
     super.dispose();
   }
 
@@ -1215,10 +1225,15 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               position: _section?.position ?? 99,
               maintainerMode: _effectiveMaintainer,
               writePolicy: _writePolicy,
-              promptHint: _section?.promptHint ?? '',
+              promptHint: _guidance.text.trim(),
               pinned: _section?.pinned ?? false,
               inject: _inject,
               nature: _nature,
+              exclusions: _exclusions.text
+                  .split('\n')
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList(growable: false),
             ),
           );
       if (!mounted) return;
@@ -1382,6 +1397,38 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               const SizedBox(height: 4),
               Text(
                 t.web.knowledge.kb.writePolicy.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              // Steering. Only an AI-maintained page has a draft to steer,
+              // so both controls sit under the same gate.
+              const SizedBox(height: 8),
+              TextField(
+                controller: _guidance,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t.web.knowledge.kb.guidance.placeholder,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.guidance.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _exclusions,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t.web.knowledge.kb.exclusions.placeholder,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.exclusions.hint,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

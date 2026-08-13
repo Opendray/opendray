@@ -3103,6 +3103,14 @@
           "proposal": "Requiere mi aprobación antes de cambiar",
           "direct": "Se actualiza automáticamente",
           "hint": "Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben."
+        },
+        "guidance": {
+          "placeholder": "Qué debe ser esta página: su alcance, forma y nivel de detalle",
+          "hint": "Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté»."
+        },
+        "exclusions": {
+          "placeholder": "Un asunto por línea",
+          "hint": "Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas."
         }
       },
       "kinds": {

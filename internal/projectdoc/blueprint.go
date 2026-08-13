@@ -54,9 +54,46 @@ type Section struct {
 	// (binding ground truth + rules, injected as guardrails) or
 	// "emergent" (distilled guidance, injected as reference). Always
 	// empty for per-project sections.
-	Nature    string    `json:"nature,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Nature string `json:"nature,omitempty"`
+	// Exclusions are subjects the AI maintainer must never write about on
+	// this page. PromptHint steers what the page SHOULD be; every other
+	// input is material to fold in, so this is the only way to say "leave
+	// this out" — and without it, deleting a subject from the page left it
+	// in the feedstock to be re-derived on the next sweep.
+	Exclusions []string  `json:"exclusions,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// MaxExclusions bounds a page's exclusion list. The list is injected into
+// every draft's system prompt and compiled into a regexp per entry on every
+// sweep, so it is a steering control, not a bulk filter — a page needing
+// dozens of them is describing a scope problem the prompt_hint should solve.
+const MaxExclusions = 32
+
+// normalizeExclusions trims, drops empties, and de-duplicates
+// case-insensitively while preserving the operator's order and their
+// original casing (the list is shown back to them, and matching is
+// case-insensitive anyway). Over-long lists are truncated rather than
+// rejected so a paste never loses the whole edit.
+func normalizeExclusions(in []string) []string {
+	seen := make(map[string]struct{}, len(in))
+	out := make([]string, 0, len(in))
+	for _, p := range in {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		k := strings.ToLower(p)
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		if out = append(out, p); len(out) == MaxExclusions {
+			break
+		}
+	}
+	return out
 }
 
 // SlugOverview is the reserved front-page section: present in every
@@ -254,7 +291,7 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 	rows, err := s.pool.Query(ctx, `
 		SELECT cwd, slug, title, description, position, maintainer_mode,
 		       COALESCE(write_policy, 'proposal'), prompt_hint, pinned, inject,
-		       COALESCE(nature, ''), created_at, updated_at
+		       COALESCE(nature, ''), COALESCE(exclusions, '{}'), created_at, updated_at
 		  FROM doc_blueprint_sections
 		 WHERE cwd = $1
 		 ORDER BY pinned DESC, position ASC, slug ASC`, cwd)
@@ -267,7 +304,8 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 		var sec Section
 		if err := rows.Scan(&sec.Cwd, &sec.Slug, &sec.Title, &sec.Description,
 			&sec.Position, &sec.MaintainerMode, &sec.WritePolicy, &sec.PromptHint,
-			&sec.Pinned, &sec.Inject, &sec.Nature, &sec.CreatedAt, &sec.UpdatedAt); err != nil {
+			&sec.Pinned, &sec.Inject, &sec.Nature, &sec.Exclusions,
+			&sec.CreatedAt, &sec.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("projectdoc: scan section: %w", err)
 		}
 		out = append(out, sec)
@@ -342,6 +380,14 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 		return Section{}, fmt.Errorf("projectdoc: write_policy must be direct|proposal, got %q", sec.WritePolicy)
 	}
 	sec.WritePolicy = normalizeWritePolicy(sec.WritePolicy)
+	sec.Exclusions = normalizeExclusions(sec.Exclusions)
+	if len(sec.Exclusions) > 0 && sec.Cwd != GlobalCwd {
+		// Only the global knowledge drafter consults exclusions. Reject
+		// rather than store a setting that would silently do nothing —
+		// same reasoning as maintainer_mode "session" above.
+		return Section{}, errors.New(
+			"projectdoc: exclusions apply to global knowledge pages only")
+	}
 	if strings.TrimSpace(sec.Title) == "" {
 		return Section{}, errors.New("projectdoc: section title is required")
 	}
@@ -352,8 +398,8 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO doc_blueprint_sections
-			(cwd, slug, title, description, position, maintainer_mode, write_policy, prompt_hint, pinned, inject, nature)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			(cwd, slug, title, description, position, maintainer_mode, write_policy, prompt_hint, pinned, inject, nature, exclusions)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (cwd, slug) DO UPDATE SET
 			title = EXCLUDED.title,
 			description = EXCLUDED.description,
@@ -364,16 +410,19 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 			pinned = EXCLUDED.pinned,
 			inject = EXCLUDED.inject,
 			nature = EXCLUDED.nature,
+			exclusions = EXCLUDED.exclusions,
 			updated_at = NOW()
 		RETURNING cwd, slug, title, description, position, maintainer_mode,
 		          COALESCE(write_policy, 'proposal'), prompt_hint, pinned, inject,
-		          COALESCE(nature, ''), created_at, updated_at`,
+		          COALESCE(nature, ''), COALESCE(exclusions, '{}'), created_at, updated_at`,
 		sec.Cwd, sec.Slug, sec.Title, sec.Description, sec.Position,
-		sec.MaintainerMode, sec.WritePolicy, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature)
+		sec.MaintainerMode, sec.WritePolicy, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature,
+		sec.Exclusions)
 	var out Section
 	if err := row.Scan(&out.Cwd, &out.Slug, &out.Title, &out.Description,
 		&out.Position, &out.MaintainerMode, &out.WritePolicy, &out.PromptHint,
-		&out.Pinned, &out.Inject, &out.Nature, &out.CreatedAt, &out.UpdatedAt); err != nil {
+		&out.Pinned, &out.Inject, &out.Nature, &out.Exclusions,
+		&out.CreatedAt, &out.UpdatedAt); err != nil {
 		return Section{}, fmt.Errorf("projectdoc: put section: %w", err)
 	}
 	return out, nil

@@ -247,6 +247,7 @@ func (a knowledgeDocSink) GetKBDoc(ctx context.Context, cwd, kind string) (knowl
 			out.MaintainerMode = sec.MaintainerMode
 			out.PromptHint = sec.PromptHint
 			out.WritePolicy = sec.WritePolicy
+			out.Exclusions = sec.Exclusions
 		}
 	}
 	return out, nil

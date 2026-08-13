@@ -240,6 +240,15 @@ function PageSettingsDialog({
   const [writePolicy, setWritePolicy] = useState<WritePolicy>(
     () => section?.write_policy ?? 'proposal',
   )
+  // The two steering controls for an AI-maintained page. `guidance` says what
+  // the page should be; `exclusions` says what it may never contain — the
+  // only negative channel in the pipeline, since every other input is
+  // material to fold in. Exclusions are edited as one-per-line text and
+  // normalised on save (the backend trims, de-dupes and caps them anyway).
+  const [guidance, setGuidance] = useState(() => section?.prompt_hint ?? '')
+  const [exclusions, setExclusions] = useState(() =>
+    (section?.exclusions ?? []).join('\n'),
+  )
 
   // The classic four keep two fixed fields: their titles come from i18n
   // (editing the stored one changes nothing visible) and their natures are
@@ -265,8 +274,8 @@ function PageSettingsDialog({
     mutationFn: () =>
       putBlueprintSection({
         // Preserve everything the config editor doesn't expose (position,
-        // maintainer_mode, write_policy, prompt_hint, pinned) so an edit
-        // never silently resets them; new pages get sensible defaults.
+        // pinned) so an edit never silently resets them; new pages get
+        // sensible defaults.
         cwd: GLOBAL_CWD,
         slug: fullSlug,
         title: title.trim(),
@@ -274,10 +283,14 @@ function PageSettingsDialog({
         position: section?.position ?? 99,
         maintainer_mode: effectiveMaintainer,
         write_policy: writePolicy,
-        prompt_hint: section?.prompt_hint ?? '',
+        prompt_hint: guidance.trim(),
         pinned: section?.pinned ?? false,
         inject,
         nature,
+        exclusions: exclusions
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
       }),
     onSuccess: (sec) => {
       toast.success(
@@ -421,6 +434,36 @@ function PageSettingsDialog({
                 {t('web.knowledge.kb.writePolicy.hint')}
               </p>
             </div>
+          )}
+          {/* Steering. Only an AI-maintained page has a draft to steer, so
+              both controls follow the approval gate in hiding for "human". */}
+          {maintainer !== 'human' && (
+            <>
+              <div className="space-y-1.5">
+                <textarea
+                  value={guidance}
+                  onChange={(e) => setGuidance(e.target.value)}
+                  placeholder={t('web.knowledge.kb.guidance.placeholder')}
+                  rows={3}
+                  className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+                />
+                <p className="text-muted-foreground text-[11px]">
+                  {t('web.knowledge.kb.guidance.hint')}
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <textarea
+                  value={exclusions}
+                  onChange={(e) => setExclusions(e.target.value)}
+                  placeholder={t('web.knowledge.kb.exclusions.placeholder')}
+                  rows={3}
+                  className="border-input bg-background w-full rounded-md border px-2 py-1.5 font-mono text-sm"
+                />
+                <p className="text-muted-foreground text-[11px]">
+                  {t('web.knowledge.kb.exclusions.hint')}
+                </p>
+              </div>
+            </>
           )}
         </div>
         <DialogFooter>

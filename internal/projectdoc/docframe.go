@@ -88,3 +88,41 @@ func splitFirstLine(s string) (first, rest string) {
 	}
 	return s, ""
 }
+
+// draftSigMarker is the hidden trailer the knowledge drafter appends to a
+// page it wrote: "<!-- kb-sig:<hash> -->". The hash covers the evidence the
+// draft was built from, and the next sweep skips the page while it matches.
+// knowledge owns the format; this file only needs to recognise and move one.
+const draftSigMarker = "<!-- kb-sig:"
+
+// CarryDraftSig re-attaches the previous body's draft signature to a new body
+// that has none.
+//
+// The clients strip the marker before showing a page in their editor — it is
+// machinery, not prose — so every operator save wrote the page back without
+// it. That silently disabled the sweep's dirty check: with no signature to
+// compare, the page looked stale on every cycle and was redrafted every 15
+// minutes forever, which is what made hand edits look like they were being
+// reverted. Carrying the signature across says the right thing instead: the
+// operator edited a page built from THIS evidence, so leave it alone until
+// the evidence actually moves.
+//
+// Only fills a gap. A body that carries its own signature (the drafter's own
+// writes, and approved proposals) is returned untouched, as is one whose
+// predecessor had none.
+func CarryDraftSig(prev, next string) string {
+	if prev == "" || strings.Contains(next, draftSigMarker) {
+		return next
+	}
+	i := strings.LastIndex(prev, draftSigMarker)
+	if i < 0 {
+		return next
+	}
+	sig := prev[i:]
+	if j := strings.Index(sig, "-->"); j >= 0 {
+		sig = sig[:j+3]
+	} else {
+		return next // truncated marker — don't propagate a broken one
+	}
+	return strings.TrimRight(next, "\n") + "\n\n" + sig + "\n"
+}

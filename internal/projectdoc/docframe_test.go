@@ -132,3 +132,60 @@ func TestFrameDocForRead_IsNotAHeading(t *testing.T) {
 		}
 	}
 }
+
+// --- draft signature carry-forward ---------------------------------------
+//
+// The clients hide the drafter's kb-sig marker while editing, so an operator
+// save arrives without one. Losing it disabled the sweep's dirty check and
+// the page was redrafted every cycle — which is what made hand edits look
+// like they kept getting reverted.
+
+func TestCarryDraftSig_RestoresAStrippedMarker(t *testing.T) {
+	prev := "# Infra\n- old line\n\n<!-- kb-sig:abc123 -->\n"
+	next := "# Infra\n- edited by hand\n"
+	got := CarryDraftSig(prev, next)
+	if !strings.Contains(got, "<!-- kb-sig:abc123 -->") {
+		t.Errorf("signature not carried across:\n%q", got)
+	}
+	if !strings.Contains(got, "- edited by hand") {
+		t.Errorf("carry lost the operator's edit:\n%q", got)
+	}
+	if strings.Contains(got, "- old line") {
+		t.Errorf("carry resurrected the old body:\n%q", got)
+	}
+}
+
+func TestCarryDraftSig_LeavesABodyThatHasItsOwn(t *testing.T) {
+	prev := "old\n\n<!-- kb-sig:aaa -->\n"
+	next := "new\n\n<!-- kb-sig:bbb -->\n"
+	if got := CarryDraftSig(prev, next); got != next {
+		t.Errorf("rewrote a body that already carried a signature:\n%q", got)
+	}
+	if strings.Contains(CarryDraftSig(prev, next), "aaa") {
+		t.Error("the incoming signature must win")
+	}
+}
+
+func TestCarryDraftSig_NoopWithoutAPredecessorSig(t *testing.T) {
+	for _, prev := range []string{"", "plain body\n", "truncated <!-- kb-sig:abc"} {
+		next := "new body\n"
+		if got := CarryDraftSig(prev, next); got != next {
+			t.Errorf("prev %q: got %q, want unchanged", prev, got)
+		}
+	}
+}
+
+// A page that round-trips through the editor repeatedly must not accumulate
+// markers, and must keep exactly the newest one.
+func TestCarryDraftSig_DoesNotAccumulate(t *testing.T) {
+	body := "v1\n\n<!-- kb-sig:one -->\n"
+	for i, edit := range []string{"v2\n", "v3\n", "v4\n"} {
+		body = CarryDraftSig(body, edit)
+		if n := strings.Count(body, draftSigMarker); n != 1 {
+			t.Fatalf("edit %d: %d markers, want 1:\n%q", i, n, body)
+		}
+	}
+	if !strings.Contains(body, "<!-- kb-sig:one -->") || !strings.Contains(body, "v4") {
+		t.Errorf("final body wrong:\n%q", body)
+	}
+}

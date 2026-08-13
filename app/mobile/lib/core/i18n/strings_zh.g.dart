@@ -6102,6 +6102,8 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbPageSettingsZh pageSettings = _TranslationsWebKnowledgeKbPageSettingsZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianZh librarian = _TranslationsWebKnowledgeKbLibrarianZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbWritePolicyZh writePolicy = _TranslationsWebKnowledgeKbWritePolicyZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbGuidanceZh guidance = _TranslationsWebKnowledgeKbGuidanceZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbExclusionsZh exclusions = _TranslationsWebKnowledgeKbExclusionsZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -9847,6 +9849,28 @@ class _TranslationsWebKnowledgeKbWritePolicyZh extends TranslationsWebKnowledgeK
 	@override String get hint => '自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。';
 }
 
+// Path: web.knowledge.kb.guidance
+class _TranslationsWebKnowledgeKbGuidanceZh extends TranslationsWebKnowledgeKbGuidanceEn {
+	_TranslationsWebKnowledgeKbGuidanceZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => '这一页应该是什么样——范围、结构、详略程度';
+	@override String get hint => '决定本页写什么、怎么写，优先于起草器自身的默认风格。适合写「保持精简」「只写规则」，以及「不要把我删减过的章节重新展开」。';
+}
+
+// Path: web.knowledge.kb.exclusions
+class _TranslationsWebKnowledgeKbExclusionsZh extends TranslationsWebKnowledgeKbExclusionsEn {
+	_TranslationsWebKnowledgeKbExclusionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => '每行一个主题';
+	@override String get hint => '本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。';
+}
+
 // Path: web.knowledge.distill.retirement
 class _TranslationsWebKnowledgeDistillRetirementZh extends TranslationsWebKnowledgeDistillRetirementEn {
 	_TranslationsWebKnowledgeDistillRetirementZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -12608,6 +12632,10 @@ extension on TranslationsZh {
 			'web.knowledge.kb.writePolicy.proposal' => '改动前需要我批准',
 			'web.knowledge.kb.writePolicy.direct' => '自动更新，无需批准',
 			'web.knowledge.kb.writePolicy.hint' => '自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。',
+			'web.knowledge.kb.guidance.placeholder' => '这一页应该是什么样——范围、结构、详略程度',
+			'web.knowledge.kb.guidance.hint' => '决定本页写什么、怎么写，优先于起草器自身的默认风格。适合写「保持精简」「只写规则」，以及「不要把我删减过的章节重新展开」。',
+			'web.knowledge.kb.exclusions.placeholder' => '每行一个主题',
+			'web.knowledge.kb.exclusions.hint' => '本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -12711,12 +12739,12 @@ extension on TranslationsZh {
 			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
 			'web.cortex.chat.modelCliDefault' => 'CLI 默认',
 			'web.cortex.chat.modelChangeFailed' => '切换讨论模型失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.modelGroupCloud' => '云端 agent',
 			'web.cortex.chat.modelGroupLocal' => '本地模型',
 			'web.cortex.chat.accountDefault' => '默认账号',
 			'web.cortex.chat.accountHint' => '本次讨论使用哪个 Claude 账号(Claude 是多账号)。',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.modelProviderDefault' => '供应商默认',
 			'web.cortex.chat.modelProbeFailed' => '无法连接端点列出模型——用供应商默认，或在 Memory 设置里配置。',
 			'web.cortex.blueprint.open' => '蓝图',
@@ -13225,12 +13253,12 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.save' => '保存',
 			'sessions.inspector.notes.renameTitle' => '重命名或移动',
 			'sessions.inspector.notes.move' => '移动',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.renameHelp' => '项目文件夹内的路径。加斜杠即可归入目录,例如 features/canvas.md',
 			'sessions.inspector.notes.renamed' => '已移动。',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object notes, required Object count}) => '已移动 —— 更新了 ${notes} 篇笔记中的 ${count} 处链接。',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => '已移动,但链接可能未更新:${warning}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.renameFailed' => ({required Object error}) => '移动失败:${error}',
 			'sessions.inspector.notes.openFolderIndex' => '打开目录索引',
 			'sessions.inspector.canvas.kindUi' => 'UI 稿',
@@ -13739,12 +13767,12 @@ extension on TranslationsZh {
 			'backups.menuTargets' => '目标',
 			'backups.kv.status' => '状态',
 			'backups.kv.verified' => '校验',
+			_ => null,
+		} ?? switch (path) {
 			'backups.kv.kind' => '类型',
 			'backups.kv.target' => '目标',
 			'backups.kv.dedup' => '去重',
 			'backups.kv.fanout' => '扇出组',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.triggeredBy' => '触发者',
 			'backups.kv.started' => '开始',
 			'backups.kv.finished' => '完成',
@@ -14253,12 +14281,12 @@ extension on TranslationsZh {
 			'notesPage.tags.noMatches' => ({required Object query}) => '没有标签匹配“${query}”。',
 			'notesPage.tags.filteredBy' => '已按标签筛选',
 			'notesPage.tags.clear' => '清除标签筛选',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.tags.noNotes' => ({required Object tag}) => '已经没有笔记带 #${tag} 了。',
 			'notesPage.backlinks.title' => '反向链接',
 			'notesPage.backlinks.loading' => '正在查找链接…',
 			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
 			'notesPage.outline.action' => '大纲',
 			'notesPage.outline.title' => '大纲',

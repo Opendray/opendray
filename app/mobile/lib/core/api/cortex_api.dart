@@ -348,6 +348,7 @@ class BlueprintSection {
     required this.inject,
     this.writePolicy = 'proposal',
     this.nature = 'emergent',
+    this.exclusions = const [],
   });
 
   factory BlueprintSection.fromJson(Map<String, dynamic> j) =>
@@ -363,6 +364,10 @@ class BlueprintSection {
         pinned: j['pinned'] == true,
         inject: j['inject'] == true,
         nature: j['nature']?.toString() ?? 'emergent',
+        exclusions: (j['exclusions'] as List?)
+                ?.map((e) => e.toString())
+                .toList(growable: false) ??
+            const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -377,6 +382,7 @@ class BlueprintSection {
         'pinned': pinned,
         'inject': inject,
         'nature': nature,
+        'exclusions': exclusions,
       };
 
   BlueprintSection copyWith({
@@ -399,6 +405,7 @@ class BlueprintSection {
         pinned: pinned,
         inject: inject ?? this.inject,
         nature: nature,
+        exclusions: exclusions,
       );
 
   final String cwd;
@@ -411,6 +418,12 @@ class BlueprintSection {
   // 'direct' (in-session agent writes the live doc when unlocked).
   final String writePolicy;
   final String promptHint;
+  /// Subjects the AI maintainer must never write about on this page.
+  /// promptHint steers what the page SHOULD be; everything else the
+  /// drafter reads is material to fold in, so this is the only way to
+  /// say "leave this out" — deleting a subject from the body alone
+  /// leaves it in the feedstock to be re-derived on the next sweep.
+  final List<String> exclusions;
   final bool pinned;
   final bool inject;
   // 'foundational' (binding, injected into every project) | 'emergent'.

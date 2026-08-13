@@ -11925,6 +11925,8 @@ class TranslationsWebKnowledgeKbEn {
 	late final TranslationsWebKnowledgeKbPageSettingsEn pageSettings = TranslationsWebKnowledgeKbPageSettingsEn.internal(_root);
 	late final TranslationsWebKnowledgeKbLibrarianEn librarian = TranslationsWebKnowledgeKbLibrarianEn.internal(_root);
 	late final TranslationsWebKnowledgeKbWritePolicyEn writePolicy = TranslationsWebKnowledgeKbWritePolicyEn.internal(_root);
+	late final TranslationsWebKnowledgeKbGuidanceEn guidance = TranslationsWebKnowledgeKbGuidanceEn.internal(_root);
+	late final TranslationsWebKnowledgeKbExclusionsEn exclusions = TranslationsWebKnowledgeKbExclusionsEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -18854,6 +18856,36 @@ class TranslationsWebKnowledgeKbWritePolicyEn {
 	String get hint => 'Whether automation may rewrite this page in place. Approval means opendray\'s background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.';
 }
 
+// Path: web.knowledge.kb.guidance
+class TranslationsWebKnowledgeKbGuidanceEn {
+	TranslationsWebKnowledgeKbGuidanceEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'What this page should be — its scope, shape and level of detail'
+	String get placeholder => 'What this page should be — its scope, shape and level of detail';
+
+	/// en: 'Steers what the page covers and how it reads. Authoritative over the drafter's own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".'
+	String get hint => 'Steers what the page covers and how it reads. Authoritative over the drafter\'s own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".';
+}
+
+// Path: web.knowledge.kb.exclusions
+class TranslationsWebKnowledgeKbExclusionsEn {
+	TranslationsWebKnowledgeKbExclusionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'One subject per line'
+	String get placeholder => 'One subject per line';
+
+	/// en: 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.'
+	String get hint => 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.';
+}
+
 // Path: web.knowledge.distill.retirement
 class TranslationsWebKnowledgeDistillRetirementEn {
 	TranslationsWebKnowledgeDistillRetirementEn.internal(this._root);
@@ -21801,6 +21833,10 @@ extension on Translations {
 			'web.knowledge.kb.writePolicy.proposal' => 'Needs my approval before it changes',
 			'web.knowledge.kb.writePolicy.direct' => 'Updates itself automatically',
 			'web.knowledge.kb.writePolicy.hint' => 'Whether automation may rewrite this page in place. Approval means opendray\'s background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.',
+			'web.knowledge.kb.guidance.placeholder' => 'What this page should be — its scope, shape and level of detail',
+			'web.knowledge.kb.guidance.hint' => 'Steers what the page covers and how it reads. Authoritative over the drafter\'s own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".',
+			'web.knowledge.kb.exclusions.placeholder' => 'One subject per line',
+			'web.knowledge.kb.exclusions.hint' => 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -21901,12 +21937,12 @@ extension on Translations {
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
 			'web.cortex.chat.modelLabel' => 'Model:',
 			'web.cortex.chat.modelHint' => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
 			'web.cortex.chat.modelCliDefault' => 'CLI default',
 			'web.cortex.chat.modelChangeFailed' => 'Couldn\'t change the discussion model',
 			'web.cortex.chat.modelGroupCloud' => 'Cloud agents',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.modelGroupLocal' => 'Local models',
 			'web.cortex.chat.accountDefault' => 'Default account',
 			'web.cortex.chat.accountHint' => 'Which Claude account this discussion runs against (Claude is multi-account).',
@@ -22415,12 +22451,12 @@ extension on Translations {
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
 			'sessions.inspector.notes.noProjectMapping2' => '(no project mapping)',
 			'sessions.inspector.notes.clearOverride' => 'Clear override',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.save' => 'Save',
 			'sessions.inspector.notes.renameTitle' => 'Rename or move',
 			'sessions.inspector.notes.move' => 'Move',
 			'sessions.inspector.notes.renameHelp' => 'Path inside the project folder. Include a slash to file it in a folder, e.g. features/canvas.md',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.renamed' => 'Moved.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Moved — updated ${count} link(s) in ${notes} note(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Moved, but links may not be updated: ${warning}',
@@ -22929,12 +22965,12 @@ extension on Translations {
 			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.deleteFailedGeneric' => ({required Object error}) => 'Delete failed: ${error}',
 			'backups.menuSchedules' => 'Schedules',
+			_ => null,
+		} ?? switch (path) {
 			'backups.menuTargets' => 'Targets',
 			'backups.kv.status' => 'Status',
 			'backups.kv.verified' => 'Verified',
 			'backups.kv.kind' => 'Type',
-			_ => null,
-		} ?? switch (path) {
 			'backups.kv.target' => 'Target',
 			'backups.kv.dedup' => 'Dedup',
 			'backups.kv.fanout' => 'Fan-out group',
@@ -23443,12 +23479,12 @@ extension on Translations {
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
 			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
 			'notesPage.tags.empty' => 'No tags in the vault yet. Write #like-this in a note.',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'No tags match "${query}".',
 			'notesPage.tags.filteredBy' => 'Filtered by',
 			'notesPage.tags.clear' => 'Clear tag filter',
 			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.backlinks.title' => 'Backlinks',
 			'notesPage.backlinks.loading' => 'Looking for links…',
 			'notesPage.backlinks.empty' => 'No notes link here yet.',

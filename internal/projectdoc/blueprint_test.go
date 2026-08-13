@@ -2,6 +2,7 @@ package projectdoc
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -391,5 +392,44 @@ func TestSectionDriftSystemPrompt(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("custom section prompt missing %q", want)
 		}
+	}
+}
+
+// --- exclusions ----------------------------------------------------------
+
+func TestNormalizeExclusions(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []string
+		want []string
+	}{
+		{"trims", []string{"  rcc  ", "ntc"}, []string{"rcc", "ntc"}},
+		{"drops empties", []string{"", "   ", "rcc"}, []string{"rcc"}},
+		{"dedupes case-insensitively", []string{"rcc", "RCC", "Rcc"}, []string{"rcc"}},
+		{"keeps operator order and casing", []string{"NTC", "rcc"}, []string{"NTC", "rcc"}},
+		{"nil stays empty", nil, []string{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := normalizeExclusions(tt.in)
+			if len(got) != len(tt.want) {
+				t.Fatalf("got %q, want %q", got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Fatalf("got %q, want %q", got, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func TestNormalizeExclusionsCaps(t *testing.T) {
+	in := make([]string, MaxExclusions+10)
+	for i := range in {
+		in[i] = fmt.Sprintf("subject-%d", i)
+	}
+	if got := normalizeExclusions(in); len(got) != MaxExclusions {
+		t.Errorf("len = %d, want the %d cap", len(got), MaxExclusions)
 	}
 }
