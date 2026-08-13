@@ -5044,11 +5044,11 @@ class _TranslationsWebPluginsCustomTasksEs extends TranslationsWebPluginsCustomT
 
 	// Translations
 	@override String get title => 'Tareas personalizadas';
-	@override String get description => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.';
+	@override String get description => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas, agrupados por proyecto. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.';
 	@override String get addTask => 'Añadir tarea';
 	@override String get empty => 'Aún no hay tareas personalizadas.';
 	@override late final _TranslationsWebPluginsCustomTasksColumnsEs columns = _TranslationsWebPluginsCustomTasksColumnsEs._(_root);
-	@override String get globalScope => 'global';
+	@override String get globalGroup => 'Global';
 	@override String deleteConfirm({required Object name}) => '¿Eliminar la tarea personalizada "${name}"?';
 	@override String get removedToast => 'Tarea eliminada';
 	@override String get deleteFailedToast => 'Error al eliminar';
@@ -8527,7 +8527,6 @@ class _TranslationsWebPluginsCustomTasksColumnsEs extends TranslationsWebPlugins
 	// Translations
 	@override String get name => 'Nombre';
 	@override String get command => 'Comando';
-	@override String get scope => 'Ámbito';
 }
 
 // Path: web.plugins.customTasks.dialog
@@ -11644,13 +11643,12 @@ extension on TranslationsEs {
 			'web.plugins.skills.uploadFailedToast' => 'Error al subir la habilidad',
 			'web.plugins.skills.uploadInvalidTypeToast' => 'Solo se pueden instalar archivos SKILL.md por arrastre',
 			'web.plugins.customTasks.title' => 'Tareas personalizadas',
-			'web.plugins.customTasks.description' => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.',
+			'web.plugins.customTasks.description' => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas, agrupados por proyecto. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.',
 			'web.plugins.customTasks.addTask' => 'Añadir tarea',
 			'web.plugins.customTasks.empty' => 'Aún no hay tareas personalizadas.',
 			'web.plugins.customTasks.columns.name' => 'Nombre',
 			'web.plugins.customTasks.columns.command' => 'Comando',
-			'web.plugins.customTasks.columns.scope' => 'Ámbito',
-			'web.plugins.customTasks.globalScope' => 'global',
+			'web.plugins.customTasks.globalGroup' => 'Global',
 			'web.plugins.customTasks.deleteConfirm' => ({required Object name}) => '¿Eliminar la tarea personalizada "${name}"?',
 			'web.plugins.customTasks.removedToast' => 'Tarea eliminada',
 			'web.plugins.customTasks.deleteFailedToast' => 'Error al eliminar',
@@ -11691,9 +11689,9 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.kindGitea' => 'Gitea',
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
+			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			_ => null,
 		} ?? switch (path) {
-			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Nombre visible (opcional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
@@ -12205,9 +12203,9 @@ extension on TranslationsEs {
 			'web.serverSettings.toggle.on' => 'Activado',
 			'web.serverSettings.toggle.off' => 'Desactivado',
 			'web.serverSettings.toggle.defaultOn' => 'Por defecto (on)',
+			'web.serverSettings.toggle.defaultOff' => 'Por defecto (off)',
 			_ => null,
 		} ?? switch (path) {
-			'web.serverSettings.toggle.defaultOff' => 'Por defecto (off)',
 			'web.serverSettings.memoryRuntimeBanner' => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Abrir ajustes de Cortex',
 			'web.serverSettings.host.intro' => 'Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.',
@@ -12719,9 +12717,9 @@ extension on TranslationsEs {
 			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
 			'web.cortex.chat.modelCliDefault' => 'Predeterminado del CLI',
 			'web.cortex.chat.modelChangeFailed' => 'No se pudo cambiar el modelo de la conversación',
+			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
 			_ => null,
 		} ?? switch (path) {
-			'web.cortex.chat.modelGroupCloud' => 'Agentes en la nube',
 			'web.cortex.chat.modelGroupLocal' => 'Modelos locales',
 			'web.cortex.chat.accountDefault' => 'Cuenta predeterminada',
 			'web.cortex.chat.accountHint' => 'Con qué cuenta de Claude se ejecuta esta discusión (Claude es multicuenta).',
@@ -13233,9 +13231,9 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.save' => 'Guardar',
 			'sessions.inspector.notes.renameTitle' => 'Renombrar o mover',
 			'sessions.inspector.notes.move' => 'Mover',
+			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
 			_ => null,
 		} ?? switch (path) {
-			'sessions.inspector.notes.renameHelp' => 'Ruta dentro de la carpeta del proyecto. Incluye una barra para archivarlo en una carpeta, p. ej. features/canvas.md',
 			'sessions.inspector.notes.renamed' => 'Movido.',
 			'sessions.inspector.notes.renamedWithLinks' => ({required Object count, required Object notes}) => 'Movido: se actualizaron ${count} enlace(s) en ${notes} nota(s).',
 			'sessions.inspector.notes.renamedWithWarning' => ({required Object warning}) => 'Movido, pero los enlaces podrían no actualizarse: ${warning}',
@@ -13747,9 +13745,9 @@ extension on TranslationsEs {
 			'backups.menuTargets' => 'Destinos',
 			'backups.kv.status' => 'Estado',
 			'backups.kv.verified' => 'Verificada',
+			'backups.kv.kind' => 'Tipo',
 			_ => null,
 		} ?? switch (path) {
-			'backups.kv.kind' => 'Tipo',
 			'backups.kv.target' => 'Destino',
 			'backups.kv.dedup' => 'Deduplicación',
 			'backups.kv.fanout' => 'Grupo de difusión',
@@ -14261,9 +14259,9 @@ extension on TranslationsEs {
 			'notesPage.tags.noMatches' => ({required Object query}) => 'Ninguna etiqueta coincide con «${query}».',
 			'notesPage.tags.filteredBy' => 'Filtrado por',
 			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
 			_ => null,
 		} ?? switch (path) {
-			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
 			'notesPage.backlinks.title' => 'Retroenlaces',
 			'notesPage.backlinks.loading' => 'Buscando enlaces…',
 			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',

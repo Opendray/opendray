@@ -1795,15 +1795,14 @@
       },
       "customTasks": {
         "title": "Tareas personalizadas",
-        "description": "Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.",
+        "description": "Atajos de ejecución con un clic que se muestran en la pestaña Tareas, agrupados por proyecto. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.",
         "addTask": "Añadir tarea",
         "empty": "Aún no hay tareas personalizadas.",
         "columns": {
           "name": "Nombre",
-          "command": "Comando",
-          "scope": "Ámbito"
+          "command": "Comando"
         },
-        "globalScope": "global",
+        "globalGroup": "Global",
         "deleteConfirm": "¿Eliminar la tarea personalizada \"{name}\"?",
         "removedToast": "Tarea eliminada",
         "deleteFailedToast": "Error al eliminar",

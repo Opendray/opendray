@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/custom_tasks_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart' as i18n;
+import 'package:path/path.dart' as p;
 
 class CustomTasksScreen extends ConsumerStatefulWidget {
   const CustomTasksScreen({super.key});
@@ -54,8 +55,58 @@ class CustomTasksScreen extends ConsumerStatefulWidget {
       _CustomTasksScreenState();
 }
 
+// One block of the grouped list: the global bucket (cwd empty) or a
+// single project's tasks.
+class _TaskGroup {
+  const _TaskGroup({
+    required this.cwd,
+    required this.label,
+    required this.tasks,
+  });
+
+  /// '' for the global bucket, otherwise the project's absolute cwd.
+  final String cwd;
+
+  /// Basename of [cwd] — the project name shown in the header. Empty
+  /// for the global bucket, which uses a translated label instead.
+  final String label;
+  final List<CustomTask> tasks;
+}
+
+// Buckets tasks by cwd. Global first, then projects by name with the
+// full path breaking ties so two projects sharing a basename keep a
+// stable order. Tasks inside a group are sorted by name.
+List<_TaskGroup> _groupByProject(List<CustomTask> tasks) {
+  final byCwd = <String, List<CustomTask>>{};
+  for (final t in tasks) {
+    byCwd.putIfAbsent(t.cwd, () => <CustomTask>[]).add(t);
+  }
+  final groups = byCwd.entries.map((e) {
+    final label = e.key.isEmpty ? '' : p.basename(e.key);
+    final sorted = [...e.value]
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return _TaskGroup(
+      cwd: e.key,
+      label: label.isEmpty ? e.key : label,
+      tasks: sorted,
+    );
+  }).toList()
+    ..sort((a, b) {
+      if (a.cwd.isEmpty) return -1;
+      if (b.cwd.isEmpty) return 1;
+      final byLabel =
+          a.label.toLowerCase().compareTo(b.label.toLowerCase());
+      return byLabel != 0 ? byLabel : a.cwd.compareTo(b.cwd);
+    });
+  return groups;
+}
+
 class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
   AsyncValue<List<CustomTask>> _state = const AsyncValue.loading();
+
+  // Collapsed group cwds. Empty = everything expanded, which is where
+  // operators land; collapsing is opt-in per project.
+  final Set<String> _collapsed = <String>{};
 
   @override
   void initState() {
@@ -68,7 +119,8 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
     try {
       final list = await ref.read(customTasksApiProvider).list();
       if (!mounted) return;
-      list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      // Ordering is decided by _groupByProject, which sorts within
+      // each project bucket.
       setState(() => _state = AsyncValue.data(list));
     } on ApiException catch (e) {
       if (mounted) {
@@ -198,82 +250,143 @@ class _CustomTasksScreenState extends ConsumerState<CustomTasksScreen> {
         ),
       );
     }
+    // One collapsible block per project (plus the global bucket) so a
+    // long catalogue reads as a handful of named groups instead of one
+    // flat list. The header carries the scope, so the rows below it no
+    // longer repeat it per task.
+    final groups = _groupByProject(list);
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView.separated(
-        itemCount: list.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: Theme.of(context).dividerColor,
-        ),
-        itemBuilder: (_, i) {
-          final t = list[i];
-          final isGlobal = t.cwd.isEmpty;
-          return ListTile(
-            leading: Icon(
-              isGlobal ? Icons.public : Icons.folder_outlined,
-              size: 20,
-            ),
-            title: Row(
+      child: ListView.builder(
+        itemCount: groups.length,
+        itemBuilder: (_, i) => _buildGroup(groups[i]),
+      ),
+    );
+  }
+
+  Widget _buildGroup(_TaskGroup group) {
+    final theme = Theme.of(context);
+    final isGlobal = group.cwd.isEmpty;
+    final expanded = !_collapsed.contains(group.cwd);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () => setState(() {
+            if (expanded) {
+              _collapsed.add(group.cwd);
+            } else {
+              _collapsed.remove(group.cwd);
+            }
+          }),
+          child: Container(
+            color: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.35),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Row(
               children: [
-                Flexible(
-                  child: Text(
-                    t.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                Icon(
+                  expanded ? Icons.expand_more : Icons.chevron_right,
+                  size: 18,
                 ),
-                if (!isGlobal) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    '· scoped',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
+                const SizedBox(width: 4),
+                Icon(isGlobal ? Icons.public : Icons.folder_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isGlobal ? i18n.t.customTasks.scopeGlobal : group.label,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
-                  ),
-                ],
-              ],
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (t.description.isNotEmpty)
-                  Text(
-                    t.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                Text(
-                  t.command,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                        fontSize: 11,
                       ),
+                      if (!isGlobal)
+                        Text(
+                          group.cwd,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${group.tasks.length}',
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                  ),
                 ),
               ],
             ),
-            trailing: PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 20),
-              itemBuilder: (_) => [
-                PopupMenuItem(value: 'edit', child: Text(i18n.t.customTasks.popupEdit)),
-                PopupMenuItem(value: 'delete', child: Text(i18n.t.customTasks.popupDelete)),
-              ],
-              onSelected: (action) {
-                if (action == 'edit') {
-                  _openEditor(existing: t);
-                } else if (action == 'delete') {
-                  _confirmDelete(t);
-                }
-              },
+          ),
+        ),
+        if (expanded)
+          for (final t in group.tasks) _buildTile(t),
+        Divider(height: 1, color: theme.dividerColor),
+      ],
+    );
+  }
+
+  Widget _buildTile(CustomTask t) {
+    return ListTile(
+      contentPadding: const EdgeInsets.only(left: 34, right: 8),
+      title: Text(
+        t.name,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (t.description.isNotEmpty)
+            Text(
+              t.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-            onTap: () => _openEditor(existing: t),
-            isThreeLine: t.description.isNotEmpty,
-          );
+          Text(
+            t.command,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                ),
+          ),
+        ],
+      ),
+      trailing: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert, size: 20),
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'edit', child: Text(i18n.t.customTasks.popupEdit)),
+          PopupMenuItem(
+              value: 'delete', child: Text(i18n.t.customTasks.popupDelete)),
+        ],
+        onSelected: (action) {
+          if (action == 'edit') {
+            _openEditor(existing: t);
+          } else if (action == 'delete') {
+            _confirmDelete(t);
+          }
         },
       ),
+      onTap: () => _openEditor(existing: t),
+      isThreeLine: t.description.isNotEmpty,
     );
   }
 }
