@@ -12191,6 +12191,27 @@ class TranslationsWebCortexChatEn {
 	/// en: 'Proposal filed — review in Inbox'
 	String get revisionProposed => 'Proposal filed — review in Inbox';
 
+	/// en: 'Rule suggestion'
+	String get rulesSuggestionTitle => 'Rule suggestion';
+
+	/// en: 'Guidance'
+	String get rulesGuidance => 'Guidance';
+
+	/// en: 'Add exclusions'
+	String get rulesExclusionsAdd => 'Add exclusions';
+
+	/// en: 'Remove exclusions'
+	String get rulesExclusionsRemove => 'Remove exclusions';
+
+	/// en: 'Apply'
+	String get rulesApply => 'Apply';
+
+	/// en: 'Rules applied'
+	String get rulesApplied => 'Rules applied';
+
+	/// en: 'Couldn't apply the rule suggestion'
+	String get rulesApplyFailed => 'Couldn\'t apply the rule suggestion';
+
 	/// en: 'Model:'
 	String get modelLabel => 'Model:';
 
@@ -21967,6 +21988,13 @@ extension on Translations {
 			'web.cortex.chat.closeHint' => 'Close this conversation',
 			'web.cortex.chat.revisionApplied' => 'Document updated',
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
+			'web.cortex.chat.rulesSuggestionTitle' => 'Rule suggestion',
+			'web.cortex.chat.rulesGuidance' => 'Guidance',
+			'web.cortex.chat.rulesExclusionsAdd' => 'Add exclusions',
+			'web.cortex.chat.rulesExclusionsRemove' => 'Remove exclusions',
+			'web.cortex.chat.rulesApply' => 'Apply',
+			'web.cortex.chat.rulesApplied' => 'Rules applied',
+			'web.cortex.chat.rulesApplyFailed' => 'Couldn\'t apply the rule suggestion',
 			'web.cortex.chat.modelLabel' => 'Model:',
 			'web.cortex.chat.modelHint' => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.',
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
@@ -22469,6 +22497,8 @@ extension on Translations {
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
 			'sessions.inspector.notes.newDocTooltip' => 'New doc',
 			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
@@ -22476,8 +22506,6 @@ extension on Translations {
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No matches for "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Pin this session\'s cwd to a specific folder under your notes vault. Leave blank to reset.',
 			'sessions.inspector.notes.sessionCwd' => 'Session cwd',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.projectDocsPath' => 'Vault-relative project docs path',
 			'sessions.inspector.notes.locationStoredHint' => 'Stored in <vault>/.opendray-projects.json — git-syncs with the rest of the vault.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Pinned to ${path}/ (overrides ${defaultPath}). AI agents author docs here too.',
@@ -22983,6 +23011,8 @@ extension on Translations {
 			'backups.runNow' => 'Run now',
 			'backups.queueing' => 'Queueing…',
 			'backups.queuedSnack' => ({required Object id}) => 'Backup queued (${id}). Watching for progress…',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runFailedApi' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Backup succeeded (${bytes}).',
@@ -22990,8 +23020,6 @@ extension on Translations {
 			'backups.unknownError' => 'unknown error',
 			'backups.detailTitle' => 'Backup detail',
 			'backups.deleteTitle' => 'Delete backup?',
-			_ => null,
-		} ?? switch (path) {
 			'backups.deleteBody' => ({required Object target}) => 'Removes the blob from ${target} and marks the row deleted in the index.',
 			'backups.deletedSnack' => ({required Object id}) => 'Deleted ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Delete failed: ${error}',
@@ -23497,6 +23525,8 @@ extension on Translations {
 			'notesPage.flatten.preview' => 'Preview',
 			'notesPage.flatten.dismiss' => 'Not now',
 			'notesPage.flatten.title' => 'File projects under their own names',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
 			'notesPage.flatten.nothingToMove' => 'Nothing to move.',
 			'notesPage.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',
@@ -23504,8 +23534,6 @@ extension on Translations {
 			'notesPage.flatten.done' => ({required Object count}) => 'Moved ${count} document(s). Restart the gateway to pick up the new layout.',
 			'notesPage.flatten.restartHint' => 'Restart the gateway afterwards.',
 			'notesPage.rename.action' => 'Rename',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.rename.title' => 'Rename document',
 			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',

@@ -279,6 +279,23 @@ class CortexApi {
     }
   }
 
+  /// Applies an AI message's rule suggestion (guidance / excluded
+  /// subjects) to the target page's settings. Returns the updated
+  /// message with ruleAppliedAt set.
+  Future<ConversationMessage> applyRuleSuggestion(
+    String conversationId,
+    String messageId,
+  ) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/cortex/conversations/$conversationId/messages/$messageId/apply-rules',
+      );
+      return ConversationMessage.fromJson(res.data ?? const {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   /// Escalates the conversation into a full agent session (grounded in
   /// the codebase). Returns the updated conversation with the session id.
   Future<CortexConversation> escalate(String id) async {
@@ -552,6 +569,35 @@ class CortexConversation {
   final String summarizerId;
 }
 
+/// An AI turn's proposed change to the page's operator-owned steering
+/// rules (guidance / excluded subjects). Applied — never written by the
+/// AI itself — via [CortexApi.applyRuleSuggestion].
+class RuleSuggestion {
+  RuleSuggestion({
+    required this.guidance,
+    required this.exclusionsAdd,
+    required this.exclusionsRemove,
+    required this.reason,
+  });
+
+  factory RuleSuggestion.fromJson(Map<String, dynamic> j) => RuleSuggestion(
+    guidance: j['guidance']?.toString() ?? '',
+    exclusionsAdd: _stringList(j['exclusions_add']),
+    exclusionsRemove: _stringList(j['exclusions_remove']),
+    reason: j['reason']?.toString() ?? '',
+  );
+
+  static List<String> _stringList(Object? raw) => raw is List
+      ? raw.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+      : const [];
+
+  /// Full replacement guidance text; empty = leave guidance unchanged.
+  final String guidance;
+  final List<String> exclusionsAdd;
+  final List<String> exclusionsRemove;
+  final String reason;
+}
+
 class ConversationMessage {
   ConversationMessage({
     required this.id,
@@ -560,19 +606,27 @@ class ConversationMessage {
     required this.revisionAction,
     required this.revisionRef,
     required this.createdAt,
+    this.ruleSuggestion,
+    this.ruleAppliedAt,
   });
 
-  factory ConversationMessage.fromJson(Map<String, dynamic> j) =>
-      ConversationMessage(
-        id: j['id']?.toString() ?? '',
-        role: j['role']?.toString() ?? '',
-        content: j['content']?.toString() ?? '',
-        revisionAction: j['revision_action']?.toString() ?? '',
-        revisionRef: j['revision_ref']?.toString() ?? '',
-        createdAt:
-            DateTime.tryParse(j['created_at']?.toString() ?? '') ??
-                DateTime.now(),
-      );
+  factory ConversationMessage.fromJson(Map<String, dynamic> j) {
+    final sug = j['rule_suggestion'];
+    return ConversationMessage(
+      id: j['id']?.toString() ?? '',
+      role: j['role']?.toString() ?? '',
+      content: j['content']?.toString() ?? '',
+      revisionAction: j['revision_action']?.toString() ?? '',
+      revisionRef: j['revision_ref']?.toString() ?? '',
+      createdAt:
+          DateTime.tryParse(j['created_at']?.toString() ?? '') ??
+              DateTime.now(),
+      ruleSuggestion: sug is Map<String, dynamic>
+          ? RuleSuggestion.fromJson(sug)
+          : null,
+      ruleAppliedAt: DateTime.tryParse(j['rule_applied_at']?.toString() ?? ''),
+    );
+  }
 
   final String id;
   final String role; // operator | ai | system
@@ -580,6 +634,12 @@ class ConversationMessage {
   final String revisionAction; // '' | applied | proposed
   final String revisionRef;
   final DateTime createdAt;
+
+  /// Pending/applied rule suggestion carried by this AI turn.
+  final RuleSuggestion? ruleSuggestion;
+
+  /// Set once the operator applied the suggestion (applies at most once).
+  final DateTime? ruleAppliedAt;
 }
 
 final cortexApiProvider = Provider<CortexApi>((ref) {

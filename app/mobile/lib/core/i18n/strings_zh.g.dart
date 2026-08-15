@@ -6225,6 +6225,13 @@ class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
 	@override String get closeHint => '关闭此对话';
 	@override String get revisionApplied => '文档已更新';
 	@override String get revisionProposed => '已生成提案——请到收件箱审阅';
+	@override String get rulesSuggestionTitle => '规则建议';
+	@override String get rulesGuidance => '指引';
+	@override String get rulesExclusionsAdd => '新增排除主题';
+	@override String get rulesExclusionsRemove => '移除排除主题';
+	@override String get rulesApply => '应用';
+	@override String get rulesApplied => '规则已应用';
+	@override String get rulesApplyFailed => '规则建议应用失败';
 	@override String get modelLabel => '模型：';
 	@override String get modelHint => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。';
 	@override String get modelGlobalDefault => '默认（全局）';
@@ -12756,6 +12763,13 @@ extension on TranslationsZh {
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
 			_ => null,
 		} ?? switch (path) {
+			'web.cortex.chat.rulesSuggestionTitle' => '规则建议',
+			'web.cortex.chat.rulesGuidance' => '指引',
+			'web.cortex.chat.rulesExclusionsAdd' => '新增排除主题',
+			'web.cortex.chat.rulesExclusionsRemove' => '移除排除主题',
+			'web.cortex.chat.rulesApply' => '应用',
+			'web.cortex.chat.rulesApplied' => '规则已应用',
+			'web.cortex.chat.rulesApplyFailed' => '规则建议应用失败',
 			'web.cortex.chat.modelLabel' => '模型：',
 			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。',
 			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
@@ -13261,6 +13275,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.cancelTooltip' => '取消',
 			'sessions.inspector.notes.newDocTooltip' => '新建文档',
 			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
@@ -13268,8 +13284,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.projectDocsPath' => '相对笔记库的项目文档路径',
 			'sessions.inspector.notes.locationStoredHint' => '存储于 <vault>/.opendray-projects.json — 与笔记库其余部分一起 git 同步。',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => '已固定到 ${path}/（覆盖 ${defaultPath}）。AI agent 也会在此撰写文档。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.noProjectMapping2' => '（无项目映射）',
 			'sessions.inspector.notes.clearOverride' => '清除覆盖',
 			'sessions.inspector.notes.save' => '保存',
@@ -13775,6 +13789,8 @@ extension on TranslationsZh {
 			'backups.runFailedApi' => ({required Object error}) => '运行失败：${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => '运行失败：${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => '备份成功（${bytes}）。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.rowFailedSnack' => ({required Object error}) => '备份失败：${error}',
 			'backups.unknownError' => '未知错误',
 			'backups.detailTitle' => '备份详情',
@@ -13782,8 +13798,6 @@ extension on TranslationsZh {
 			'backups.deleteBody' => ({required Object target}) => '从 ${target} 移除二进制文件，并在索引中标记该行为已删除。',
 			'backups.deletedSnack' => ({required Object id}) => '已删除 ${id}。',
 			'backups.deleteFailedApi' => ({required Object error}) => '删除失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'backups.deleteFailedGeneric' => ({required Object error}) => '删除失败：${error}',
 			'backups.menuSchedules' => '计划',
 			'backups.menuTargets' => '目标',
@@ -14289,6 +14303,8 @@ extension on TranslationsZh {
 			'notesPage.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
 			'notesPage.flatten.nothingToMove' => '没有需要移动的文件。',
 			'notesPage.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.flatten.convert' => ({required Object count}) => '转换 ${count} 个',
 			'notesPage.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
 			'notesPage.flatten.restartHint' => '完成后请重启网关。',
@@ -14296,8 +14312,6 @@ extension on TranslationsZh {
 			'notesPage.rename.title' => '重命名文档',
 			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
 			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
 			'notesPage.tags.empty' => '文档库里还没有标签。在笔记里写 #像这样 就会出现。',
 			'notesPage.tags.noMatches' => ({required Object query}) => '没有标签匹配“${query}”。',

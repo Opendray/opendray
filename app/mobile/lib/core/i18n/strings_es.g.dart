@@ -6225,6 +6225,13 @@ class _TranslationsWebCortexChatEs extends TranslationsWebCortexChatEn {
 	@override String get closeHint => 'Cerrar esta conversación';
 	@override String get revisionApplied => 'Documento actualizado';
 	@override String get revisionProposed => 'Propuesta creada — revísala en la bandeja';
+	@override String get rulesSuggestionTitle => 'Sugerencia de reglas';
+	@override String get rulesGuidance => 'Guía';
+	@override String get rulesExclusionsAdd => 'Añadir exclusiones';
+	@override String get rulesExclusionsRemove => 'Quitar exclusiones';
+	@override String get rulesApply => 'Aplicar';
+	@override String get rulesApplied => 'Reglas aplicadas';
+	@override String get rulesApplyFailed => 'No se pudo aplicar la sugerencia de reglas';
 	@override String get modelLabel => 'Modelo:';
 	@override String get modelHint => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.';
 	@override String get modelGlobalDefault => 'Predeterminado (global)';
@@ -12762,6 +12769,13 @@ extension on TranslationsEs {
 			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
 			'web.cortex.chat.revisionApplied' => 'Documento actualizado',
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
+			'web.cortex.chat.rulesSuggestionTitle' => 'Sugerencia de reglas',
+			'web.cortex.chat.rulesGuidance' => 'Guía',
+			'web.cortex.chat.rulesExclusionsAdd' => 'Añadir exclusiones',
+			'web.cortex.chat.rulesExclusionsRemove' => 'Quitar exclusiones',
+			'web.cortex.chat.rulesApply' => 'Aplicar',
+			'web.cortex.chat.rulesApplied' => 'Reglas aplicadas',
+			'web.cortex.chat.rulesApplyFailed' => 'No se pudo aplicar la sugerencia de reglas',
 			'web.cortex.chat.modelLabel' => 'Modelo:',
 			'web.cortex.chat.modelHint' => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.',
 			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
@@ -13264,6 +13278,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Asignado a ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancelar',
 			'sessions.inspector.notes.newDocTooltip' => 'Nuevo documento',
 			'sessions.inspector.notes.noProjectMapping' => 'No se pudo resolver una asignación de proyecto para esta session. Comprueba que el gateway tenga configurado un almacén de notas y que el cwd de la session esté establecido.',
@@ -13271,8 +13287,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => 'No hay coincidencias para "${query}".',
 			'sessions.inspector.notes.locationDialogHelp' => 'Fija el cwd de esta session a una carpeta específica dentro de tu almacén de notas. Déjalo en blanco para restablecer.',
 			'sessions.inspector.notes.sessionCwd' => 'cwd de la session',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.projectDocsPath' => 'Ruta de los documentos del proyecto relativa al almacén',
 			'sessions.inspector.notes.locationStoredHint' => 'Almacenado en <vault>/.opendray-projects.json. Se sincroniza con git junto con el resto del almacén.',
 			'sessions.inspector.notes.pinnedHint' => ({required Object path, required Object defaultPath}) => 'Fijado a ${path}/ (anula ${defaultPath}). Los agentes de IA también redactan documentos aquí.',
@@ -13778,6 +13792,8 @@ extension on TranslationsEs {
 			'backups.runNow' => 'Ejecutar ahora',
 			'backups.queueing' => 'Encolando…',
 			'backups.queuedSnack' => ({required Object id}) => 'Copia de seguridad encolada (${id}). Esperando el progreso…',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runFailedApi' => ({required Object error}) => 'Error al ejecutar: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Error al ejecutar: ${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Copia de seguridad completada (${bytes}).',
@@ -13785,8 +13801,6 @@ extension on TranslationsEs {
 			'backups.unknownError' => 'error desconocido',
 			'backups.detailTitle' => 'Detalle de la copia de seguridad',
 			'backups.deleteTitle' => '¿Eliminar copia de seguridad?',
-			_ => null,
-		} ?? switch (path) {
 			'backups.deleteBody' => ({required Object target}) => 'Elimina el blob de ${target} y marca la fila como eliminada en el índice.',
 			'backups.deletedSnack' => ({required Object id}) => 'Eliminado ${id}.',
 			'backups.deleteFailedApi' => ({required Object error}) => 'Error al eliminar: ${error}',
@@ -14292,6 +14306,8 @@ extension on TranslationsEs {
 			'notesPage.flatten.preview' => 'Vista previa',
 			'notesPage.flatten.dismiss' => 'Ahora no',
 			'notesPage.flatten.title' => 'Archivar los proyectos con su propio nombre',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.flatten.description' => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.',
 			'notesPage.flatten.nothingToMove' => 'No hay nada que mover.',
 			'notesPage.flatten.skipped' => ({required Object count}) => 'Sin tocar (${count}):',
@@ -14299,8 +14315,6 @@ extension on TranslationsEs {
 			'notesPage.flatten.done' => ({required Object count}) => 'Se movieron ${count} documento(s). Reinicia la pasarela para aplicar la nueva estructura.',
 			'notesPage.flatten.restartHint' => 'Reinicia la pasarela después.',
 			'notesPage.rename.action' => 'Renombrar',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.rename.title' => 'Renombrar documento',
 			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
