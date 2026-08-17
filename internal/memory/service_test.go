@@ -122,8 +122,8 @@ func (s *fakeStore) ListUnclassified(context.Context, int) ([]Memory, error) {
 	return nil, nil
 }
 func (s *fakeStore) SetPolarity(context.Context, string, string) error { return nil }
-func (s *fakeStore) CountQuarantined(context.Context) (int, error)          { return 0, nil }
-func (s *fakeStore) Promote(context.Context, string) error                  { return nil }
+func (s *fakeStore) CountQuarantined(context.Context) (int, error)     { return 0, nil }
+func (s *fakeStore) Promote(context.Context, string) error             { return nil }
 func (s *fakeStore) PurgeExpiredQuarantine(context.Context, time.Time) (int64, error) {
 	return 0, nil
 }
