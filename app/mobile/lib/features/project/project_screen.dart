@@ -1649,10 +1649,12 @@ class _ProjectScreenState extends ConsumerState<ProjectScreen>
     );
     if (confirmed != true) return;
     try {
-      await ref.read(memoryApiProvider).delete(targetRef);
+      // Accept + soft-archive the losing fact in one backend call (the
+      // supersession reason is recorded server-side); replaces the old
+      // hard delete so the row stays restorable.
       await ref
           .read(memoryConflictsApiProvider)
-          .decide(conflict.id, 'accepted');
+          .decide(conflict.id, 'accepted', archive: side == 'A' ? 'a' : 'b');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.project.conflicts.deletedFact)),
@@ -2341,7 +2343,8 @@ class _OverviewViewState extends ConsumerState<_OverviewView> {
 
   @override
   Widget build(BuildContext context) {
-    final locked = widget.doc?.updatedBy == 'operator';
+    final locked = widget.doc?.updatedBy == 'operator' ||
+        widget.doc?.updatedBy == 'approved';
     final content = _strip(widget.doc?.content ?? '');
 
     if (_editing) {

@@ -558,7 +558,9 @@ function OverviewTab({
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
-  const locked = doc?.updated_by === 'operator'
+  // 'approved' locks like a hand edit (an AI draft the operator sanctioned);
+  // it stays distinguishable from 'operator' for provenance.
+  const locked = doc?.updated_by === 'operator' || doc?.updated_by === 'approved'
   const content = stripSig(doc?.content ?? '')
 
   const save = useMutation({

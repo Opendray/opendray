@@ -89,7 +89,10 @@ func (s *CurationService) WithSessionLauncher(l SessionLauncher, workspaceCwd st
 	return s
 }
 
-// curationReply is the strict response shape the worker returns.
+// curationReply is the strict response shape the worker returns. The
+// rules block is the AI's channel for suggesting changes to the page's
+// operator-owned steering rules (Guidance / Excluded subjects) — it can
+// never write them; the operator applies with one click.
 type curationReply struct {
 	Reply    string `json:"reply"`
 	Revision struct {
@@ -97,6 +100,13 @@ type curationReply struct {
 		Content string `json:"content"`
 		Reason  string `json:"reason"`
 	} `json:"revision"`
+	Rules struct {
+		Action           string   `json:"action"` // "none" | "suggest"
+		Guidance         string   `json:"guidance"`
+		ExclusionsAdd    []string `json:"exclusions_add"`
+		ExclusionsRemove []string `json:"exclusions_remove"`
+		Reason           string   `json:"reason"`
+	} `json:"rules"`
 }
 
 const curationJSONSchema = `{
@@ -115,9 +125,21 @@ const curationJSONSchema = `{
           "reason":  {"type": "string"}
         },
         "required": ["action", "content", "reason"]
+      },
+      "rules": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action":            {"type": "string", "enum": ["none", "suggest"]},
+          "guidance":          {"type": "string"},
+          "exclusions_add":    {"type": "array", "items": {"type": "string"}},
+          "exclusions_remove": {"type": "array", "items": {"type": "string"}},
+          "reason":            {"type": "string"}
+        },
+        "required": ["action", "guidance", "exclusions_add", "exclusions_remove", "reason"]
       }
     },
-    "required": ["reply", "revision"]
+    "required": ["reply", "revision", "rules"]
   },
   "strict": true
 }`
@@ -242,6 +264,7 @@ func (s *CurationService) runAITurn(conversationID string) {
 		Content:        reply.Reply,
 		RevisionAction: action,
 		RevisionRef:    ref,
+		RuleSuggestion: ruleSuggestionFrom(reply, conv.TargetKind),
 	}); err != nil {
 		s.log.Warn("curation: append ai message failed", "conversation_id", conv.ID, "err", err)
 		return
@@ -293,23 +316,49 @@ NEVER include secrets (passwords, API keys, tokens) in any output. Preserve part
 		system.WriteString("\n\nThe target is the project's doc BLUEPRINT (its section set). You cannot apply blueprint changes directly — discuss and recommend; the operator applies via the blueprint editor. Always use action \"none\".")
 	}
 
+	// The rules channel: pages (not blueprints) carry operator-owned
+	// steering rules the AI can suggest changes to but never write.
+	if conv.TargetKind == TargetKBPage || conv.TargetKind == TargetDocSection {
+		system.WriteString("\n\nThe page also has operator-owned steering RULES, shown under \"## Page rules\": Guidance (the standing instruction to the page's AI maintainer)")
+		if conv.TargetKind == TargetKBPage {
+			system.WriteString(" and Excluded subjects (topics the drafter must never write about)")
+		}
+		system.WriteString(". You cannot change rules yourself. When the discussion shows a rule should change — e.g. the operator wants a subject kept off the page, or the page's standing instruction is wrong — fill the rules block with action \"suggest\": guidance = the FULL replacement guidance text (empty string = leave guidance unchanged)")
+		if conv.TargetKind == TargetKBPage {
+			system.WriteString("; exclusions_add / exclusions_remove = subjects to add to or remove from the exclusion list")
+		} else {
+			system.WriteString("; leave exclusions_add and exclusions_remove empty — excluded subjects exist on knowledge pages only")
+		}
+		system.WriteString(". The operator applies your suggestion with one click, so put the change in the rules block rather than telling them to edit settings by hand, and never write rule text into the document body. Otherwise use rules action \"none\".")
+	}
+
 	var user strings.Builder
 	fmt.Fprintf(&user, "## Target\n\nkind: %s · cwd: `%s` · slug: `%s`\n\n", conv.TargetKind, conv.TargetCwd, conv.TargetSlug)
 
-	// Section metadata steers the curator the same way it steers drift.
-	if conv.TargetKind == TargetDocSection {
-		if sections, err := s.docs.ListSections(ctx, conv.TargetCwd); err == nil {
-			for _, sec := range sections {
-				if sec.Slug != conv.TargetSlug {
-					continue
-				}
-				fmt.Fprintf(&user, "Section: %q — %s\n", sec.Title, sec.Description)
-				if sec.PromptHint != "" {
-					fmt.Fprintf(&user, "Maintainer hint: %s\n", sec.PromptHint)
-				}
-				fmt.Fprintf(&user, "Maintainer mode: %s\n\n", sec.MaintainerMode)
-				break
+	// Section metadata steers the curator the same way it steers drift —
+	// including the current rules, so a suggestion edits rather than guesses.
+	if conv.TargetKind == TargetKBPage || conv.TargetKind == TargetDocSection {
+		secCwd := conv.TargetCwd
+		if conv.TargetKind == TargetKBPage {
+			secCwd = projectdoc.GlobalCwd
+		}
+		if sec, ok, err := s.docs.GetSection(ctx, secCwd, conv.TargetSlug); err == nil && ok {
+			fmt.Fprintf(&user, "Section: %q — %s\n", sec.Title, sec.Description)
+			fmt.Fprintf(&user, "Maintainer mode: %s\n\n", sec.MaintainerMode)
+			user.WriteString("## Page rules (operator-owned)\n\n")
+			if sec.PromptHint != "" {
+				fmt.Fprintf(&user, "Guidance: %s\n", sec.PromptHint)
+			} else {
+				user.WriteString("Guidance: (none)\n")
 			}
+			if conv.TargetKind == TargetKBPage {
+				if len(sec.Exclusions) > 0 {
+					fmt.Fprintf(&user, "Excluded subjects: %s\n", strings.Join(sec.Exclusions, ", "))
+				} else {
+					user.WriteString("Excluded subjects: (none)\n")
+				}
+			}
+			user.WriteString("\n")
 		}
 	}
 
@@ -376,7 +425,7 @@ func (s *CurationService) applyRevision(ctx context.Context, conv Conversation, 
 
 	locked := false
 	if doc, derr := s.docs.GetDoc(ctx, conv.TargetCwd, kind); derr == nil {
-		locked = doc.UpdatedBy == projectdoc.AuthorOperator
+		locked = projectdoc.LocksDoc(doc.UpdatedBy)
 	}
 	humanMode := false
 	if conv.TargetKind == TargetDocSection {

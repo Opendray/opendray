@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -102,20 +103,42 @@ func normalizeConvOverride(providerID, model, summarizerID, claudeAccountID stri
 	return providerID, model, "", claudeAccountID, nil
 }
 
+// RuleSuggestion is an AI turn's structured proposal to change the target
+// page's operator-owned steering rules: Guidance (prompt_hint) and, for
+// knowledge pages, Excluded subjects. The AI can never write these itself —
+// the operator applies the suggestion with one click (ApplyRuleSuggestion)
+// and the backend merges it into the blueprint section.
+type RuleSuggestion struct {
+	// Guidance is the FULL replacement guidance text; empty = leave the
+	// current guidance unchanged.
+	Guidance         string   `json:"guidance,omitempty"`
+	ExclusionsAdd    []string `json:"exclusions_add,omitempty"`
+	ExclusionsRemove []string `json:"exclusions_remove,omitempty"`
+	Reason           string   `json:"reason,omitempty"`
+}
+
 // Message is one turn in a conversation. RevisionAction records what
 // the AI's structured revision did ("applied" | "proposed" | "").
 type Message struct {
-	ID             string    `json:"id"`
-	ConversationID string    `json:"conversation_id"`
-	Role           string    `json:"role"` // operator | ai | system
-	Content        string    `json:"content"`
-	RevisionAction string    `json:"revision_action,omitempty"`
-	RevisionRef    string    `json:"revision_ref,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID             string `json:"id"`
+	ConversationID string `json:"conversation_id"`
+	Role           string `json:"role"` // operator | ai | system
+	Content        string `json:"content"`
+	RevisionAction string `json:"revision_action,omitempty"`
+	RevisionRef    string `json:"revision_ref,omitempty"`
+	// RuleSuggestion carries an AI turn's proposed rule change; nil for
+	// messages without one. RuleAppliedAt is set once the operator applied
+	// it (a suggestion applies at most once).
+	RuleSuggestion *RuleSuggestion `json:"rule_suggestion,omitempty"`
+	RuleAppliedAt  *time.Time      `json:"rule_applied_at,omitempty"`
+	CreatedAt      time.Time       `json:"created_at"`
 }
 
 // ErrConversationNotFound is returned for unknown conversation ids.
 var ErrConversationNotFound = errors.New("cortex: conversation not found")
+
+// ErrMessageNotFound is returned for unknown message ids.
+var ErrMessageNotFound = errors.New("cortex: message not found")
 
 // ConversationStore persists conversations + messages.
 type ConversationStore struct {
@@ -257,20 +280,67 @@ func (s *ConversationStore) AppendMessage(ctx context.Context, m Message) (Messa
 	if m.Role != "operator" && m.Role != "ai" && m.Role != "system" {
 		return Message{}, fmt.Errorf("cortex: bad message role %q", m.Role)
 	}
+	// jsonb NULL when there is no suggestion — the column doubles as the
+	// "this message carries a pending suggestion" flag.
+	var sug any
+	if m.RuleSuggestion != nil {
+		b, err := json.Marshal(m.RuleSuggestion)
+		if err != nil {
+			return Message{}, fmt.Errorf("cortex: encode rule suggestion: %w", err)
+		}
+		sug = b
+	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO cortex_conversation_messages
-			(id, conversation_id, role, content, revision_action, revision_ref)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, conversation_id, role, content, revision_action, revision_ref, created_at`,
-		newConvID("ccm_"), m.ConversationID, m.Role, m.Content, m.RevisionAction, m.RevisionRef)
-	var out Message
-	if err := row.Scan(&out.ID, &out.ConversationID, &out.Role, &out.Content,
-		&out.RevisionAction, &out.RevisionRef, &out.CreatedAt); err != nil {
+			(id, conversation_id, role, content, revision_action, revision_ref, rule_suggestion)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, conversation_id, role, content, revision_action, revision_ref,
+		          rule_suggestion, rule_applied_at, created_at`,
+		newConvID("ccm_"), m.ConversationID, m.Role, m.Content, m.RevisionAction, m.RevisionRef, sug)
+	out, err := scanMessage(row)
+	if err != nil {
 		return Message{}, fmt.Errorf("cortex: append message: %w", err)
 	}
 	_, _ = s.pool.Exec(ctx,
 		`UPDATE cortex_conversations SET updated_at = NOW() WHERE id = $1`, m.ConversationID)
 	return out, nil
+}
+
+// GetMessage returns one message of a conversation.
+func (s *ConversationStore) GetMessage(ctx context.Context, conversationID, messageID string) (Message, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, conversation_id, role, content, revision_action, revision_ref,
+		       rule_suggestion, rule_applied_at, created_at
+		  FROM cortex_conversation_messages
+		 WHERE id = $1 AND conversation_id = $2`, messageID, conversationID)
+	m, err := scanMessage(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Message{}, ErrMessageNotFound
+	}
+	if err != nil {
+		return Message{}, fmt.Errorf("cortex: get message: %w", err)
+	}
+	return m, nil
+}
+
+// MarkRuleApplied stamps a message's rule suggestion as applied. The guard
+// makes apply idempotent-hostile on purpose: a suggestion without a payload
+// or one already applied affects zero rows and errors, so a double-click can
+// never merge the same change twice.
+func (s *ConversationStore) MarkRuleApplied(ctx context.Context, conversationID, messageID string) error {
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE cortex_conversation_messages
+		   SET rule_applied_at = NOW()
+		 WHERE id = $1 AND conversation_id = $2
+		   AND rule_suggestion IS NOT NULL AND rule_applied_at IS NULL`,
+		messageID, conversationID)
+	if err != nil {
+		return fmt.Errorf("cortex: mark rule applied: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return errors.New("cortex: no pending rule suggestion on this message")
+	}
+	return nil
 }
 
 // Messages returns a conversation's turns, oldest first.
@@ -279,7 +349,8 @@ func (s *ConversationStore) Messages(ctx context.Context, conversationID string,
 		limit = 200
 	}
 	rows, err := s.pool.Query(ctx, `
-		SELECT id, conversation_id, role, content, revision_action, revision_ref, created_at
+		SELECT id, conversation_id, role, content, revision_action, revision_ref,
+		       rule_suggestion, rule_applied_at, created_at
 		  FROM cortex_conversation_messages
 		 WHERE conversation_id = $1
 		 ORDER BY created_at ASC LIMIT $2`, conversationID, limit)
@@ -289,14 +360,32 @@ func (s *ConversationStore) Messages(ctx context.Context, conversationID string,
 	defer rows.Close()
 	var out []Message
 	for rows.Next() {
-		var m Message
-		if err := rows.Scan(&m.ID, &m.ConversationID, &m.Role, &m.Content,
-			&m.RevisionAction, &m.RevisionRef, &m.CreatedAt); err != nil {
+		m, err := scanMessage(rows)
+		if err != nil {
 			return nil, err
 		}
 		out = append(out, m)
 	}
 	return out, rows.Err()
+}
+
+// scanMessage reads one message row (column order fixed across the four
+// message queries). A rule_suggestion that fails to decode is dropped
+// rather than failing the whole read — the message text still matters.
+func scanMessage(row convRowScanner) (Message, error) {
+	var m Message
+	var sug []byte
+	if err := row.Scan(&m.ID, &m.ConversationID, &m.Role, &m.Content,
+		&m.RevisionAction, &m.RevisionRef, &sug, &m.RuleAppliedAt, &m.CreatedAt); err != nil {
+		return Message{}, err
+	}
+	if len(sug) > 0 {
+		var rs RuleSuggestion
+		if err := json.Unmarshal(sug, &rs); err == nil {
+			m.RuleSuggestion = &rs
+		}
+	}
+	return m, nil
 }
 
 type convRowScanner interface{ Scan(dest ...any) error }

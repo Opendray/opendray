@@ -378,9 +378,9 @@ func (j *Journaler) maybeProposeDocDrift(sess SessionInfo, transcriptSummary str
 	}
 
 	// AI-maintained + unlocked → apply directly so the doc actually
-	// tracks the work. A human edit (updated_by=operator) or an
-	// explicit human maintainer mode keeps the proposal gate.
-	locked := currentDoc.UpdatedBy == AuthorOperator
+	// tracks the work. A human edit or an approved proposal (LocksDoc)
+	// or an explicit human maintainer mode keeps the proposal gate.
+	locked := LocksDoc(currentDoc.UpdatedBy)
 	if sec.MaintainerMode == "ai" && !locked {
 		if _, uerr := j.docs.PutDoc(bgCtx, sess.Cwd, kind, out.NewPlan, AuthorAgent); uerr != nil {
 			j.log.Warn("journaler: drift auto-apply failed",

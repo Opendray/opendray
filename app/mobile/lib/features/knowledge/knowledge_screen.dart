@@ -755,7 +755,7 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         title: Text(_title, overflow: TextOverflow.ellipsis),
         actions: _doc.maybeWhen(
           data: (d) {
-            final locked = d.updatedBy == 'operator';
+            final locked = d.updatedBy == 'operator' || d.updatedBy == 'approved';
             if (_editing) {
               return [
                 TextButton(
@@ -820,7 +820,7 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         ),
         data: (d) {
           final content = _stripSig(d.content);
-          final locked = d.updatedBy == 'operator';
+          final locked = d.updatedBy == 'operator' || d.updatedBy == 'approved';
           final pending = _pending;
           if (_editing) {
             return Padding(
@@ -1152,11 +1152,23 @@ class _KbPageDialog extends ConsumerStatefulWidget {
 class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
   late final BlueprintSection? _section = widget.section;
   bool get _editing => _section != null;
+  // Deletion-as-signal: lines the operator deleted from this page. The
+  // system writes this list; the operator only clears entries.
+  List<DocLineRemoval> _removals = const [];
+  bool _showRecent = false;
   late final _slug = TextEditingController(
     text: _section?.slug.replaceFirst('kb_', '') ?? '',
   );
   late final _title = TextEditingController(text: _section?.title ?? '');
   late final _desc = TextEditingController(text: _section?.description ?? '');
+  // The two steering controls for an AI-maintained page. _guidance says what
+  // the page should be; _exclusions says what it may never contain — the only
+  // negative channel in the pipeline, since every other input is material to
+  // fold in. Edited one-per-line; the gateway trims, de-dupes and caps them.
+  late final _guidance = TextEditingController(text: _section?.promptHint ?? '');
+  late final _exclusions = TextEditingController(
+    text: (_section?.exclusions ?? const []).join('\n'),
+  );
   late String _nature = _section?.nature == 'foundational'
       ? 'foundational'
       : 'emergent';
@@ -1171,6 +1183,37 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
     'kb_lessons',
     'kb_reusable',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    if (_editing) _loadRemovals();
+  }
+
+  Future<void> _loadRemovals() async {
+    try {
+      final rows = await ref
+          .read(cortexApiProvider)
+          .listDocRemovals('__global__', _section!.slug);
+      rows.sort((a, b) => (a.status == 'banned' ? 0 : 1)
+          .compareTo(b.status == 'banned' ? 0 : 1));
+      if (mounted) setState(() => _removals = rows);
+    } on Object {
+      // Best-effort — the settings dialog still works without the list.
+    }
+  }
+
+  Future<void> _dismissRemoval(String id) async {
+    try {
+      await ref.read(cortexApiProvider).dismissDocRemoval(id);
+      await _loadRemovals();
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t.web.knowledge.actionFailed}: $e')),
+      );
+    }
+  }
 
   late String _maintainer = _section?.maintainerMode ?? 'ai';
   // Default new pages to the approval gate: a page that quietly rewrites
@@ -1193,6 +1236,8 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
     _slug.dispose();
     _title.dispose();
     _desc.dispose();
+    _guidance.dispose();
+    _exclusions.dispose();
     super.dispose();
   }
 
@@ -1215,10 +1260,15 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               position: _section?.position ?? 99,
               maintainerMode: _effectiveMaintainer,
               writePolicy: _writePolicy,
-              promptHint: _section?.promptHint ?? '',
+              promptHint: _guidance.text.trim(),
               pinned: _section?.pinned ?? false,
               inject: _inject,
               nature: _nature,
+              exclusions: _exclusions.text
+                  .split('\n')
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList(growable: false),
             ),
           );
       if (!mounted) return;
@@ -1384,6 +1434,100 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
                 t.web.knowledge.kb.writePolicy.hint,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              // Steering. Only an AI-maintained page has a draft to steer,
+              // so both controls sit under the same gate.
+              const SizedBox(height: 8),
+              TextField(
+                controller: _guidance,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t.web.knowledge.kb.guidance.placeholder,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.guidance.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _exclusions,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t.web.knowledge.kb.exclusions.placeholder,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.exclusions.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (_editing && _removals.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                // Banned lines (the protection) stay visible; once-deleted
+                // lines in their 30-day watch window collapse behind a
+                // count toggle so the ledger can't dominate the dialog.
+                Row(
+                  children: [
+                    Text(
+                      t.web.knowledge.kb.removals.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(width: 8),
+                    if (_removals.any((r) => r.status != 'banned'))
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _showRecent = !_showRecent),
+                        child: Text(t.web.knowledge.kb.removals.recent(
+                          n: _removals
+                              .where((r) => r.status != 'banned')
+                              .length,
+                        )),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                for (final r in _removals.where((r) =>
+                    r.status == 'banned' || _showRecent))
+                  Row(
+                    children: [
+                      if (r.status == 'banned')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Text(
+                            t.web.knowledge.kb.removals.banned,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          r.lineText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => _dismissRemoval(r.id),
+                        child: Text(t.web.knowledge.kb.removals.dismiss),
+                      ),
+                    ],
+                  ),
+                Text(
+                  t.web.knowledge.kb.removals.hint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ],
         ),

@@ -141,10 +141,16 @@ class MemoryConflictsApi {
   // Marks the conflict accepted ("operator agrees a contradiction
   // exists and will fix it manually") or dismissed ("detector got
   // it wrong"). action must match ConflictStatus.{accepted|dismissed}.
-  Future<void> decide(String id, String action) async {
+  //
+  // [archive] ('a' | 'b') accepts AND soft-archives the losing side's
+  // fact in the same backend call, with a supersession reason recorded —
+  // restorable, and it drops out of feedstock/search/injection
+  // everywhere. Same contract as the web panel.
+  Future<void> decide(String id, String action, {String? archive}) async {
     try {
       await _dio.post<Map<String, dynamic>>(
         '/api/v1/memory/conflicts/$id/$action',
+        queryParameters: archive == null ? null : {'archive': archive},
       );
     } on Object catch (e) {
       throw toApiException(e);
