@@ -116,6 +116,13 @@ type SessionProvider struct {
 	// 60-150s LLM call.
 	gitActivity       GitActivityRefresher
 	gitActivityMaxAge time.Duration
+
+	// globalInstruction, when non-empty, is an operator-configured
+	// system-prompt doc ([session] global_instructions_file) injected
+	// into EVERY spawn across all providers — including grok — so a
+	// single house style / communication contract applies uniformly.
+	// Empty → no injection. Set via WithGlobalInstruction.
+	globalInstruction string
 }
 
 // AmbientInjector is the contract internal/memory/injector
@@ -289,6 +296,14 @@ func (sp *SessionProvider) WithProjectDocInjector(inj ProjectDocInjector) *Sessi
 // compact "Project knowledge" (skills + playbooks) banner at spawn time.
 func (sp *SessionProvider) WithKnowledgeInjector(inj KnowledgeInjector) *SessionProvider {
 	sp.knowledgeInjector = inj
+	return sp
+}
+
+// WithGlobalInstruction installs an operator-configured system-prompt
+// doc injected into every spawn across all providers (including grok).
+// Empty text is a no-op. Sourced from [session] global_instructions_file.
+func (sp *SessionProvider) WithGlobalInstruction(text string) *SessionProvider {
+	sp.globalInstruction = text
 	return sp
 }
 
@@ -617,6 +632,16 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 					return session.PrepareOutput{}, fmt.Errorf("inject skills: %w", err)
 				}
 			}
+		}
+
+		// Global instruction: an operator-wide system-prompt doc
+		// ([session] global_instructions_file) applied to every spawn
+		// across all providers — including grok, which otherwise has no
+		// per-session injector. House style / communication contract that
+		// should hold regardless of memory / MCP settings, so it runs
+		// unconditionally (integration spawns included).
+		if err := injectGlobalInstructionFor(providerID, baseDir, sp.globalInstruction, &out); err != nil {
+			return session.PrepareOutput{}, fmt.Errorf("inject global instruction: %w", err)
 		}
 
 		// Inject memory guidance into the agent's system prompt. Without
@@ -1684,6 +1709,30 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 		return ensureOpenCodeInstructions(baseDir, out)
 	}
 	return nil
+}
+
+// injectGlobalInstructionFor injects the operator-configured global
+// instruction (an opendray-wide system-prompt doc, [session]
+// global_instructions_file) into a spawn's system prompt. It reaches
+// every provider — including grok, the one CLI with no per-session
+// injector of its own.
+//
+// claude/codex/antigravity/opencode reuse injectAmbientMemoryFor's
+// per-CLI surfaces (flag or AGENTS.md append). Grok is different: it
+// appends extra system-prompt text via --rules, which it permits at
+// most once per invocation ("--rules cannot be used multiple times").
+// The global instruction is opendray's ONLY grok system-text injector
+// today, so a single --rules arg is safe; any future grok injector must
+// merge into this one value rather than emit a second --rules.
+func injectGlobalInstructionFor(providerID, baseDir, text string, out *session.PrepareOutput) error {
+	if text == "" {
+		return nil
+	}
+	if providerID == "grok" {
+		out.Args = append(out.Args, "--rules", text)
+		return nil
+	}
+	return injectAmbientMemoryFor(providerID, baseDir, text, out)
 }
 
 // appendToFile appends content to path, creating it (mode 0600)

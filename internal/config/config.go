@@ -544,6 +544,11 @@ type LogConfig struct {
 type SessionConfig struct {
 	IdleThreshold string `toml:"idle_threshold" json:"idle_threshold"` // e.g. "30s", "2m"
 	IdleInterval  string `toml:"idle_interval" json:"idle_interval"`   // e.g. "5s"
+	// GlobalInstructionsFile points at a markdown/text file whose
+	// contents opendray injects into every spawn's system prompt across
+	// all providers (claude, codex, antigravity, opencode, grok). Empty
+	// disables it. A shared house style / communication contract.
+	GlobalInstructionsFile string `toml:"global_instructions_file" json:"global_instructions_file"`
 }
 
 // Threshold parses IdleThreshold; returns 0 if unset or invalid (caller
@@ -618,6 +623,9 @@ func applyEnv(cfg *Config) {
 	}
 	if v := os.Getenv("OPENDRAY_SESSION_IDLE_INTERVAL"); v != "" {
 		cfg.Session.IdleInterval = v
+	}
+	if v := os.Getenv("OPENDRAY_SESSION_GLOBAL_INSTRUCTIONS_FILE"); v != "" {
+		cfg.Session.GlobalInstructionsFile = v
 	}
 	if v := os.Getenv("OPENDRAY_VAULT_ROOT"); v != "" {
 		cfg.Vault.Root = v

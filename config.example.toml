@@ -37,6 +37,14 @@ format = "text"   # text | json
 # manager defaults (30s / 5s).
 idle_threshold = "30s"
 idle_interval  = "5s"
+# Global instruction: a markdown/text file whose contents opendray
+# injects into EVERY spawn's system prompt, across all providers
+# (claude, codex, antigravity, opencode, grok). Use it for a shared
+# house style or communication contract that should hold for every
+# session regardless of provider. Empty / unset = disabled. Read once
+# at startup; an unreadable or empty file is skipped without blocking
+# boot. Env override: OPENDRAY_SESSION_GLOBAL_INSTRUCTIONS_FILE.
+# global_instructions_file = "/etc/opendray/house-style.md"
 
 [memory]
 # The cross-session / cross-CLI memory layer. Every field is optional;

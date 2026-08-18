@@ -52,6 +52,39 @@ func TestLoad_EnvOverride(t *testing.T) {
 	}
 }
 
+func TestLoad_GlobalInstructionsFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+	if err := os.WriteFile(path, []byte(`
+[database]
+url = "postgres://x:y@localhost/z"
+
+[session]
+global_instructions_file = "/etc/opendray/house-style.md"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Session.GlobalInstructionsFile != "/etc/opendray/house-style.md" {
+		t.Errorf("GlobalInstructionsFile = %q", got.Session.GlobalInstructionsFile)
+	}
+}
+
+func TestLoad_GlobalInstructionsFileEnvOverride(t *testing.T) {
+	t.Setenv("OPENDRAY_DATABASE_URL", "postgres://env/db")
+	t.Setenv("OPENDRAY_SESSION_GLOBAL_INSTRUCTIONS_FILE", "/from/env.md")
+	got, err := Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Session.GlobalInstructionsFile != "/from/env.md" {
+		t.Errorf("GlobalInstructionsFile = %q, want /from/env.md", got.Session.GlobalInstructionsFile)
+	}
+}
+
 func TestLoad_MissingDatabaseURL(t *testing.T) {
 	if _, err := Load(""); err == nil {
 		t.Fatal("expected validation error for missing database url")
