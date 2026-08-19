@@ -889,6 +889,13 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		// Grok permits --rules once. Independent injectors (skill index,
+		// global instruction, …) each emit one; merge them into the single
+		// allowed slot as the final step, after every injector has run.
+		if providerID == "grok" {
+			out.Args = coalesceRulesArgs(out.Args)
+		}
+
 		if len(out.Env) == 0 {
 			out.Env = nil
 		}
@@ -918,6 +925,10 @@ func integrationMCPAllowed(providerID string, accountBound bool) bool {
 //	         and adds it via --add-dir (agy's workspace-context
 //	         convention; verified it reads AGENTS.md from added dirs)
 //	         without touching the user's real ~/.gemini
+//	grok — `--rules <text>` flag, zero filesystem touch (no grok-home
+//	         relocation, so login / trusted-folders stay intact). grok
+//	         permits --rules only once, so coalesceRulesArgs merges the
+//	         skill index with any other grok --rules into a single slot.
 //
 // codex is intentionally NOT in the default list: it has no system-
 // prompt CLI flag, so the only path is `<CODEX_HOME>/instructions.md`,
@@ -929,7 +940,7 @@ func integrationMCPAllowed(providerID string, accountBound bool) bool {
 // Adding a new provider here requires a matching arm in injectSkillsFor.
 func providerSupportsSkills(id string) bool {
 	switch id {
-	case "claude", "antigravity", "opencode":
+	case "claude", "antigravity", "opencode", "grok":
 		return true
 	default:
 		return false
@@ -1051,6 +1062,13 @@ func injectSkillsFor(providerID, baseDir string, loaded []skills.Skill, out *ses
 		if err := os.WriteFile(agentsPath, body, 0o600); err != nil {
 			return fmt.Errorf("write %s: %w", agentsPath, err)
 		}
+		return nil
+	case "grok":
+		// Grok appends the index to its system prompt via --rules. It
+		// permits --rules only once, so a Resolve-level finalizer
+		// (coalesceRulesArgs) merges this with any other grok --rules
+		// (e.g. the global instruction) into the single allowed slot.
+		out.Args = append(out.Args, "--rules", index)
 		return nil
 	case "antigravity":
 		// agy reads AGENTS.md from --add-dir'd workspace dirs.
@@ -1733,6 +1751,45 @@ func injectGlobalInstructionFor(providerID, baseDir, text string, out *session.P
 		return nil
 	}
 	return injectAmbientMemoryFor(providerID, baseDir, text, out)
+}
+
+// coalesceRulesArgs merges every "--rules <value>" pair in args into a
+// single --rules holding all values joined by a separator. Grok rejects a
+// repeated --rules ("cannot be used multiple times"), but opendray emits
+// one per independent system-prompt fragment (skill index, global
+// instruction, …). The merged flag takes the position of the first
+// --rules; a dangling trailing --rules with no value is dropped. Args with
+// zero or one well-formed --rules (and no dangling flag) are returned
+// unchanged, so this is a safe no-op for every non-grok provider.
+func coalesceRulesArgs(args []string) []string {
+	var values []string
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--rules" && i+1 < len(args) {
+			values = append(values, args[i+1])
+			i++
+		}
+	}
+	dangling := len(args) > 0 && args[len(args)-1] == "--rules"
+	if len(values) <= 1 && !dangling {
+		return args
+	}
+	merged := strings.Join(values, "\n\n---\n\n")
+	out := make([]string, 0, len(args))
+	placed := false
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--rules" {
+			if i+1 < len(args) {
+				i++ // consume the value token
+			}
+			if !placed && len(values) > 0 {
+				out = append(out, "--rules", merged)
+				placed = true
+			}
+			continue
+		}
+		out = append(out, args[i])
+	}
+	return out
 }
 
 // appendToFile appends content to path, creating it (mode 0600)
