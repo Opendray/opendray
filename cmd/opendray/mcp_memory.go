@@ -48,6 +48,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -146,10 +147,47 @@ func loadMemMCPConfig() (memMCPConfig, error) {
 	// per-session keep their exact semantics even when cwd is unset.
 	if os.Getenv("OPENDRAY_MEMORY_SCOPE_FROM_CWD") == "1" && c.scopeKey == "" {
 		if wd, err := os.Getwd(); err == nil {
-			c.scopeKey = wd
+			// A Getwd-derived key can be a managed worktree path
+			// (isolated session). Ask the gateway to canonicalize it to
+			// the logical project once, up front — that keeps worktree
+			// paths out of the scope-key namespace for every tool this
+			// subprocess serves. Best-effort: on any failure keep the
+			// raw wd (pre-worktree behaviour).
+			c.scopeKey = canonicalScopeKey(c.baseURL, c.apiKey, wd)
 		}
 	}
 	return c, nil
+}
+
+// canonicalScopeKey asks GET /api/v1/memory/canonical-scope to map a
+// physical path to its logical project cwd. Falls back to the input on
+// any error — the gateway may predate the endpoint or be unreachable
+// for one beat; a raw path only matters when the path IS a worktree,
+// and worktrees are created by gateways that have the endpoint.
+func canonicalScopeKey(baseURL, apiKey, p string) string {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		baseURL+"/api/v1/memory/canonical-scope?path="+url.QueryEscape(p), nil)
+	if err != nil {
+		return p
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return p
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return p
+	}
+	var out struct {
+		ScopeKey string `json:"scope_key"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil || out.ScopeKey == "" {
+		return p
+	}
+	return out.ScopeKey
 }
 
 // memMCPServer is the MCP request dispatcher. State held: nothing

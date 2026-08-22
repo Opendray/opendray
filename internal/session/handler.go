@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/opendray/opendray-v2/internal/integration"
+	"github.com/opendray/opendray-v2/internal/workspace"
 	"github.com/opendray/opendray-v2/internal/wsutil"
 )
 
@@ -677,6 +678,12 @@ func (h *Handlers) respondError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, err)
 	case errors.Is(err, ErrAlreadyEnded):
 		writeError(w, http.StatusConflict, err)
+	case errors.Is(err, workspace.ErrNotGitRepo),
+		errors.Is(err, workspace.ErrLinkedWorktree),
+		errors.Is(err, ErrIsolationUnavailable):
+		// Worktree-isolation preconditions are client mistakes, not
+		// gateway faults — the integration guide documents them as 400.
+		writeError(w, http.StatusBadRequest, err)
 	default:
 		h.log.Error("session handler", "err", err)
 		writeError(w, http.StatusInternalServerError, err)

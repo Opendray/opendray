@@ -72,6 +72,7 @@ import (
 	"github.com/opendray/opendray-v2/internal/store"
 	vaultgit "github.com/opendray/opendray-v2/internal/vaultgit"
 	"github.com/opendray/opendray-v2/internal/version"
+	"github.com/opendray/opendray-v2/internal/workspace"
 )
 
 type App struct {
@@ -657,6 +658,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// the sessions it creates (create AND reactivate).
 		session.WithIntegrationSpawnProfiles(&integrationDefaultsLookup{svc: intgrSvc}),
 	)
+	// Worktree isolation: managed per-session worktrees live under
+	// ~/.opendray/worktrees; the resolver keeps the work_dir → cwd
+	// canonicalization map (rebuilt from session rows at reconcile) that
+	// the memory + dbtool handlers consult so worktree paths never enter
+	// the scope-key namespace.
+	wsResolver := workspace.NewResolver()
+	wsManager := workspace.NewManager(defaultBackupDir("", "worktrees"), log)
+	sessionOpts = append(sessionOpts, session.WithWorkspaces(wsManager, wsResolver))
 	sessionMgr := session.NewManager(
 		st.Pool(),
 		bus,
@@ -853,7 +862,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				// files into the shared store. Cross-CLI search picks
 				// them up automatically.
 				mirror := memory.NewMirror(memorySvc, log)
-				sessionProvider.WithMemoryMirror(mirror.SyncCwd)
+				sessionProvider.WithMemoryMirror(mirror.SyncDir)
 				// Also expose the mirror through the Service so the
 				// "Sync now" HTTP endpoint + UI button can trigger an
 				// on-demand ingest without waiting for the next spawn.
@@ -865,7 +874,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	memoryHandlers := memory.NewHandlers(memorySvc, log).
 		// Cortex Phase 2 — direct /memory/store calls from integration
 		// keys route into the tier their memory_policy declares.
-		WithPolicyLookup(&capturePolicyAdapter{svc: intgrSvc})
+		WithPolicyLookup(&capturePolicyAdapter{svc: intgrSvc}).
+		// Worktree isolation — /memory/canonical-scope maps Getwd-derived
+		// worktree paths back to the logical project for the mcp-memory
+		// subprocess.
+		WithCanonicalizer(wsResolver.Canonical)
 
 	// Backup subsystem — opt-in. The passphrase resolution chain
 	// (env > KEY_FILE > default keyfile, see internal/backup/keyfile.go)
@@ -972,7 +985,10 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			log.Warn("dbtool per-session cwd signing disabled — sign secret unavailable",
 				"err", secErr)
 		}
-		dbtoolHandlers = dbtool.NewHandlers(dbtoolSvc, signSecret, log)
+		dbtoolHandlers = dbtool.NewHandlers(dbtoolSvc, signSecret, log).
+			// Worktree isolation — canonicalize Getwd-derived cwd params
+			// (antigravity's honest-path key) to the logical project.
+			WithCanonicalizer(wsResolver.Canonical)
 
 		// Two auto-attach keys (see ensureDbtoolKey): the SIGNED key for
 		// providers whose MCP config is per-session (the gateway then

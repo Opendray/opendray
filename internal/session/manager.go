@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/opendray/opendray-v2/internal/eventbus"
+	"github.com/opendray/opendray-v2/internal/workspace"
 )
 
 const (
@@ -145,6 +146,16 @@ func WithIntegrationSpawnProfiles(p IntegrationSpawnProfiles) ManagerOption {
 	return func(m *Manager) { m.spawnProfiles = p }
 }
 
+// WithWorkspaces wires worktree isolation: wm creates/reclaims managed
+// worktrees, r keeps the work_dir → cwd canonicalization map that the
+// memory/dbtool/projectdoc services consult. Both must be non-nil.
+func WithWorkspaces(wm *workspace.Manager, r *workspace.Resolver) ManagerOption {
+	return func(m *Manager) {
+		m.workspaces = wm
+		m.wsResolver = r
+	}
+}
+
 func WithIdleThreshold(d time.Duration) ManagerOption {
 	return func(m *Manager) { m.idleThreshold = d }
 }
@@ -204,6 +215,20 @@ type Manager struct {
 	claudeHistoryCfg      ClaudeHistoryConfig
 	codexHistoryCfg       CodexHistoryConfig
 	antigravityHistoryCfg AntigravityHistoryConfig
+
+	// workspaces + wsResolver enable worktree isolation. Both nil →
+	// isolation requests are rejected and every session runs in cwd,
+	// exactly the pre-worktree behaviour.
+	workspaces *workspace.Manager
+	wsResolver *workspace.Resolver
+	// wtMu guards the reclaim-vs-create race on worktree roots:
+	// wtPending counts creates in flight that will reference a root
+	// (reclaim skips a root with pending refs), wtReclaiming marks
+	// roots whose git teardown is running (creates refuse to inherit
+	// them). See holdWorktree / reclaimWorktree.
+	wtMu         sync.Mutex
+	wtPending    map[string]int
+	wtReclaiming map[string]struct{}
 
 	mu       sync.RWMutex
 	closed   bool
@@ -447,6 +472,26 @@ func NewManager(pool *pgxpool.Pool, bus *eventbus.Hub, providers ProviderResolve
 // after NewManager and before serving traffic; failures to resume a
 // single session are logged and skipped, never fatal.
 func (m *Manager) ReconcileStartup(ctx context.Context) error {
+	// Rebuild the worktree canonicalization registry from persisted
+	// rows so scope keys reported from inside worktrees (antigravity /
+	// dbtool Getwd derivation) map back to their project immediately —
+	// including for terminal rows, which can be restarted into the
+	// same worktree later.
+	if m.wsResolver != nil && m.workspaces != nil {
+		if rows, err := m.store.List(ctx); err == nil {
+			for _, s := range rows {
+				if s.WorkDir == "" {
+					continue
+				}
+				if root := m.workspaces.RootOf(s.WorkDir); root != "" {
+					m.wsResolver.Register(root, s.WorkDir, s.Cwd)
+				}
+			}
+		} else {
+			m.log.Warn("worktree registry rebuild failed; scope-key canonicalization degraded", "err", err)
+		}
+	}
+
 	// Crash path: a daemon that was SIGKILLed (or died hard) never ran
 	// waitExit, so its sessions are still 'running'/'idle'/'pending'.
 	// Flip them to 'interrupted'. A clean shutdown already marked its
@@ -576,12 +621,20 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		// for every pre-0044 row.
 		origin = OriginOperator
 	}
+	logicalCwd, workDir, wtBranch, wtRelease, err := m.resolveWorkspace(ctx, req, sessID)
+	if err != nil {
+		return Session{}, err
+	}
+	defer wtRelease()
+
 	sess := Session{
 		ID:                   sessID,
 		Name:                 name,
 		ProviderID:           req.ProviderID,
 		Model:                req.Model,
-		Cwd:                  req.Cwd,
+		Cwd:                  logicalCwd,
+		WorkDir:              workDir,
+		WorktreeBranch:       wtBranch,
 		Args:                 req.Args,
 		Theme:                req.Theme,
 		State:                StateRunning,
@@ -599,6 +652,16 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 
 	rs, err := m.spawn(ctx, sess, false)
 	if err != nil {
+		// A worktree created for this spawn must not leak when the
+		// spawn itself failed; it is untouched, so reclaim removes it.
+		if wtBranch != "" && m.workspaces != nil {
+			if _, rerr := m.workspaces.Reclaim(ctx, sess.Cwd, m.workspaces.RootOf(workDir), wtBranch); rerr != nil {
+				m.log.Warn("reclaim worktree after failed spawn", "session", sessID, "err", rerr)
+			}
+			if m.wsResolver != nil {
+				m.wsResolver.Unregister(m.workspaces.RootOf(workDir))
+			}
+		}
 		return Session{}, err
 	}
 
@@ -611,6 +674,101 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		},
 	})
 	return rs.sess, nil
+}
+
+// resolveWorkspace decides the session's logical identity and physical
+// execution path. Returns cwd == req.Cwd, workDir == "" for the default
+// case (run in cwd).
+//
+// A child session (ParentSessionID set) of an ISOLATED parent inherits
+// BOTH halves of the parent's workspace — parent.Cwd as the logical
+// identity and parent.WorkDir as the execution dir. Forcing the logical
+// side too is deliberate: a client-supplied cwd that differs from the
+// parent's would file the child's memory/Cortex/journal output under
+// one project while it physically edits another project's worktree.
+// The child's own Isolation flag is ignored — one worktree per family,
+// created only by the top-level session.
+//
+// A top-level request with isolation=worktree gets a fresh managed
+// worktree and owns its branch.
+//
+// The returned release func (never nil) drops the pending-reference
+// that guards the worktree against a concurrent reclaim between this
+// decision and the session row landing in the store; the caller MUST
+// invoke it once the row is persisted (or the spawn failed).
+func (m *Manager) resolveWorkspace(ctx context.Context, req CreateRequest, sessID string) (cwd, workDir, branch string, release func(), err error) {
+	release = func() {}
+	if req.ParentSessionID != "" {
+		parent, perr := m.store.Get(ctx, req.ParentSessionID)
+		if perr != nil {
+			// Parent linkage is best-effort UI grouping today; a missing
+			// parent shouldn't block the child spawn, and a parent
+			// without a work dir means nothing to inherit.
+			if !errors.Is(perr, ErrNotFound) {
+				return "", "", "", release, perr
+			}
+			return req.Cwd, "", "", release, nil
+		}
+		if parent.WorkDir == "" {
+			return req.Cwd, "", "", release, nil
+		}
+		root := ""
+		if m.workspaces != nil {
+			root = m.workspaces.RootOf(parent.WorkDir)
+		}
+		rel, ok := m.holdWorktree(root)
+		if !ok {
+			return "", "", "", release, fmt.Errorf("%w: parent worktree is being reclaimed", ErrIsolationUnavailable)
+		}
+		return parent.Cwd, parent.WorkDir, "", rel, nil
+	}
+	if req.Isolation != IsolationWorktree {
+		return req.Cwd, "", "", release, nil
+	}
+	if m.workspaces == nil {
+		return "", "", "", release, fmt.Errorf("%w: no workspace manager on this gateway", ErrIsolationUnavailable)
+	}
+	info, werr := m.workspaces.Create(ctx, req.Cwd, sessID)
+	if werr != nil {
+		return "", "", "", release, werr
+	}
+	if m.wsResolver != nil {
+		m.wsResolver.Register(info.Root, info.WorkDir, req.Cwd)
+	}
+	rel, _ := m.holdWorktree(info.Root) // fresh root cannot be mid-reclaim
+	return req.Cwd, info.WorkDir, info.Branch, rel, nil
+}
+
+// holdWorktree takes a pending reference on a worktree root, blocking
+// reclaim while a create that will reference it is in flight. Returns
+// ok=false when the root is currently being reclaimed. The returned
+// release is idempotent-enough for a single deferred call.
+func (m *Manager) holdWorktree(root string) (release func(), ok bool) {
+	if root == "" {
+		return func() {}, true
+	}
+	m.wtMu.Lock()
+	defer m.wtMu.Unlock()
+	if m.wtReclaiming == nil {
+		m.wtReclaiming = make(map[string]struct{})
+	}
+	if _, busy := m.wtReclaiming[root]; busy {
+		return func() {}, false
+	}
+	if m.wtPending == nil {
+		m.wtPending = make(map[string]int)
+	}
+	m.wtPending[root]++
+	return func() {
+		m.wtMu.Lock()
+		if m.wtPending[root] > 0 {
+			m.wtPending[root]--
+			if m.wtPending[root] == 0 {
+				delete(m.wtPending, root)
+			}
+		}
+		m.wtMu.Unlock()
+	}, true
 }
 
 // Start re-spawns a previously-stopped/ended session row. The row
@@ -669,10 +827,17 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 // true, the session row is expected to already exist and is updated
 // via Reactivate; otherwise a fresh row is inserted.
 func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*runningSession, error) {
-	if info, err := os.Stat(sess.Cwd); err != nil {
+	// workDir is where the process actually runs — the managed
+	// worktree for isolated sessions, cwd otherwise. Project-identity
+	// consumers below keep using sess.Cwd.
+	workDir := sess.EffectiveWorkDir()
+	if info, err := os.Stat(workDir); err != nil {
+		if sess.WorkDir != "" && os.IsNotExist(err) {
+			return nil, fmt.Errorf("session worktree is gone from disk (%s); remove the session — its branch, if it still exists, is preserved", workDir)
+		}
 		return nil, fmt.Errorf("cwd: %w", err)
 	} else if !info.IsDir() {
-		return nil, fmt.Errorf("cwd is not a directory: %s", sess.Cwd)
+		return nil, fmt.Errorf("cwd is not a directory: %s", workDir)
 	}
 
 	// Account selection is provider-specific: claude isolates accounts
@@ -718,7 +883,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		// UUID into Prepare so the provider emits `--resume <id>` and
 		// the prior transcript continues, instead of minting a fresh
 		// session and orphaning history.
-		prepareCtx := WithIntegrationSystemPrompt(WithSessionID(WithCwd(ctx, sess.Cwd), sess.ID), spawnProfile.SystemPrompt)
+		prepareCtx := WithIntegrationSystemPrompt(WithSessionID(WithWorkDir(WithCwd(ctx, sess.Cwd), workDir), sess.ID), spawnProfile.SystemPrompt)
 		if reactivate {
 			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
 			// Antigravity: resume the cwd's conversation so a restart (or a
@@ -730,7 +895,10 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 				convID := AntigravityResumeConversationFromContext(ctx)
 				if convID == "" && m.antigravityAccounts != nil {
 					if home, herr := m.antigravityAccounts.AccountHome(ctx, sess.AntigravityAccountID); herr == nil {
-						convID = m.antigravityAccounts.ConversationIDForCwd(home, sess.Cwd)
+						// agy records conversations under its ACTUAL
+						// working directory — the worktree for isolated
+						// sessions — so resume must look up by workDir.
+						convID = m.antigravityAccounts.ConversationIDForCwd(home, workDir)
 					}
 				}
 				if convID != "" {
@@ -782,7 +950,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	args := finalizeSpawnArgs(p.ID, providerArgs, extraArgs, userArgs)
 
 	cmd := exec.Command(p.Executable, args...)
-	cmd.Dir = sess.Cwd
+	cmd.Dir = workDir
 	cmd.Env = mergeEnv(ensureThemeEnv(ensureColorTerm(os.Environ()), sess.Theme), extraEnv)
 
 	ptmx, err := pty.Start(cmd)
@@ -1209,7 +1377,7 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 	// fields we key on are about to be overwritten.
 	var carryover string
 	if carryContext && sess.ClaudeSessionID != "" {
-		carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.Cwd, sess.ClaudeSessionID, 0)
+		carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID, 0)
 		if carryover == "" {
 			m.log.Debug("carry-context requested but no transcript recap built",
 				"session_id", id, "old_claude_session_id", sess.ClaudeSessionID)
@@ -1327,8 +1495,8 @@ func (m *Manager) SwitchAntigravityAccount(ctx context.Context, id, newAccountID
 		oldHome, oerr := m.antigravityAccounts.AccountHome(ctx, current.AntigravityAccountID)
 		newHome, nerr := m.antigravityAccounts.AccountHome(ctx, newAccountID)
 		if oerr == nil && nerr == nil {
-			if convID := m.antigravityAccounts.ConversationIDForCwd(oldHome, sess.Cwd); convID != "" {
-				if cerr := m.antigravityAccounts.CopyConversation(oldHome, newHome, convID, sess.Cwd); cerr != nil {
+			if convID := m.antigravityAccounts.ConversationIDForCwd(oldHome, sess.EffectiveWorkDir()); convID != "" {
+				if cerr := m.antigravityAccounts.CopyConversation(oldHome, newHome, convID, sess.EffectiveWorkDir()); cerr != nil {
 					m.log.Warn("carry antigravity conversation across switch failed; new account starts fresh",
 						"session", id, "conversation", convID, "err", cerr)
 				} else {
@@ -1365,10 +1533,88 @@ func (m *Manager) SwitchAntigravityAccount(ctx context.Context, id, newAccountID
 // stopped first, then the DB row is deleted. This is the destructive
 // counterpart to Stop (which leaves the row behind for restart).
 func (m *Manager) Remove(ctx context.Context, id string) error {
+	// Snapshot the row first — reclaim needs cwd/work_dir/branch after
+	// the delete.
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return err
+	}
 	if err := m.Stop(ctx, id); err != nil {
 		return err
 	}
-	return m.store.Delete(ctx, id)
+	if err := m.store.Delete(ctx, id); err != nil {
+		return err
+	}
+	if sess.WorktreeBranch != "" {
+		m.reclaimWorktree(ctx, sess)
+	}
+	return nil
+}
+
+// reclaimWorktree disposes of a removed session's worktree when that
+// loses nothing (clean + merged/never-committed); otherwise the tree
+// is kept on disk and the operator is told where it is. Skipped
+// entirely while any other session row still references the worktree
+// (children spawned into it).
+func (m *Manager) reclaimWorktree(ctx context.Context, sess Session) {
+	if m.workspaces == nil {
+		return
+	}
+	root := m.workspaces.RootOf(sess.WorkDir)
+	if root == "" {
+		return
+	}
+	// Reserve the root against concurrent creates: a create that would
+	// reference it either already holds a pending ref (we skip) or will
+	// see wtReclaiming and refuse to inherit. Closes the check-then-
+	// remove window without holding a lock across the git teardown.
+	m.wtMu.Lock()
+	if m.wtPending[root] > 0 {
+		m.wtMu.Unlock()
+		m.log.Info("worktree has a create in flight; not reclaimed", "root", root)
+		return
+	}
+	if m.wtReclaiming == nil {
+		m.wtReclaiming = make(map[string]struct{})
+	}
+	m.wtReclaiming[root] = struct{}{}
+	m.wtMu.Unlock()
+	defer func() {
+		m.wtMu.Lock()
+		delete(m.wtReclaiming, root)
+		m.wtMu.Unlock()
+	}()
+	if others, err := m.store.List(ctx); err == nil {
+		for _, o := range others {
+			if o.ID != sess.ID && o.WorkDir != "" && m.workspaces.RootOf(o.WorkDir) == root {
+				m.log.Info("worktree still referenced by another session; not reclaimed",
+					"root", root, "other_session", o.ID)
+				return
+			}
+		}
+	}
+	res, err := m.workspaces.Reclaim(ctx, sess.Cwd, root, sess.WorktreeBranch)
+	if err != nil {
+		m.log.Warn("worktree reclaim failed", "session", sess.ID, "root", root, "err", err)
+		return
+	}
+	if m.wsResolver != nil {
+		m.wsResolver.Unregister(root)
+	}
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.worktree_reclaimed",
+		Data: map[string]any{
+			"session_id": sess.ID,
+			"result":     res.String(),
+			"root":       root,
+			"branch":     sess.WorktreeBranch,
+		},
+	})
+	switch res {
+	case workspace.KeptDirty, workspace.KeptUnmerged:
+		m.log.Info("worktree kept (unmerged or dirty work present)",
+			"session", sess.ID, "root", root, "branch", sess.WorktreeBranch, "result", res.String())
+	}
 }
 
 // ExpectTurn arms turn-complete detection for a live session: after
@@ -1524,9 +1770,9 @@ func (m *Manager) History(ctx context.Context, id string, limit int) (HistoryRes
 	var entries []ProjectInput
 	switch sess.ProviderID {
 	case "claude":
-		entries = ProjectInputHistory(m.claudeHistoryCfg, sess.Cwd, limit)
+		entries = ProjectInputHistory(m.claudeHistoryCfg, sess.EffectiveWorkDir(), limit)
 	case "codex":
-		entries = CodexInputHistory(m.codexHistoryCfg, sess.Cwd, limit)
+		entries = CodexInputHistory(m.codexHistoryCfg, sess.EffectiveWorkDir(), limit)
 	default:
 		return HistoryResponse{Entries: []ProjectInput{}, UnsupportedProvider: true}, nil
 	}

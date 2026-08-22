@@ -48,6 +48,30 @@ type Handlers struct {
 	// honest-path) — used in tests and if the secret can't be loaded.
 	signSecret []byte
 	log        *slog.Logger
+	// canon maps physical worktree paths to the logical project cwd
+	// (workspace.Resolver.Canonical). Applied to the cwd query param on
+	// extraction: antigravity's honest-path key derives its cwd from
+	// the MCP subprocess Getwd, which inside an isolated session is the
+	// worktree path — without canonicalization it would never match the
+	// project's registered connections. Signed keys always send the
+	// logical cwd (canon is identity), so the HMAC check is unaffected.
+	// Nil = identity.
+	canon func(string) string
+}
+
+// WithCanonicalizer wires worktree cwd canonicalization (see canon).
+func (h *Handlers) WithCanonicalizer(fn func(string) string) *Handlers {
+	h.canon = fn
+	return h
+}
+
+// cwdParam extracts and canonicalizes the caller's project binding.
+func (h *Handlers) cwdParam(r *http.Request) string {
+	cwd := r.URL.Query().Get("cwd")
+	if cwd != "" && h.canon != nil {
+		cwd = h.canon(cwd)
+	}
+	return cwd
 }
 
 // NewHandlers builds the HTTP wrapper around svc. signSecret is the HMAC
@@ -112,7 +136,7 @@ func (h *Handlers) requireConnCwd(w http.ResponseWriter, r *http.Request) bool {
 	if p.Kind == integration.KindAdmin {
 		return true
 	}
-	cwd := r.URL.Query().Get("cwd")
+	cwd := h.cwdParam(r)
 	if cwd == "" {
 		writeError(w, http.StatusForbidden,
 			errors.New("dbtool: cwd query parameter is required for non-admin callers"))
@@ -277,7 +301,7 @@ func (h *Handlers) testConnection(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) listConnections(w http.ResponseWriter, r *http.Request) {
-	cwd := r.URL.Query().Get("cwd")
+	cwd := h.cwdParam(r)
 	// Non-admin callers may only enumerate their own project's
 	// connections — never the whole cross-project registry. Admin (web
 	// UI) may omit cwd to list everything. A db:signed key must also prove

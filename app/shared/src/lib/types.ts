@@ -17,7 +17,14 @@ export interface Session {
   id: string
   name?: string
   provider_id: string
+  /** Logical project path — keys memory/docs/Cortex and UI grouping. */
   cwd: string
+  /** Physical execution path when the session is worktree-isolated
+      (or inherits a parent's worktree). Empty/absent = runs in cwd.
+      File/git/task surfaces must use this; see sessionWorkDir(). */
+  work_dir?: string
+  /** Managed branch (opendray/<id>) of the worktree this session owns. */
+  worktree_branch?: string
   args: string[]
   state: SessionState
   pid?: number
@@ -39,6 +46,10 @@ export interface CreateSessionRequest {
   args?: string[]
   claude_account_id?: string
   parent_session_id?: string
+  /** "worktree" spawns the CLI in a private git worktree on branch
+      opendray/<session-id>; requires cwd to be inside a git repo's main
+      checkout. Omit for the default run-in-cwd behaviour. */
+  isolation?: 'worktree'
   /** Operator's applied theme. The gateway advertises it to the CLI via
       COLORFGBG so a TUI can pick a matching light/dark palette. Stamped
       automatically by createSession(); callers rarely set it. */
