@@ -79,7 +79,7 @@ func TestGrokSkillsAndGlobalInstruction_CoalesceToOne(t *testing.T) {
 	}, out); err != nil {
 		t.Fatal(err)
 	}
-	if err := injectGlobalInstructionFor("grok", t.TempDir(), "HOUSE_STYLE", out); err != nil {
+	if err := injectGlobalInstructionFor("grok", t.TempDir(), "HOUSE_STYLE", false, out); err != nil {
 		t.Fatal(err)
 	}
 	out.Args = coalesceRulesArgs(out.Args)
