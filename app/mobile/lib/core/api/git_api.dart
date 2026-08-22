@@ -121,6 +121,7 @@ class GitPullRequest {
     required this.draft,
     required this.updatedAt,
     this.body = '',
+    this.mergeableState = '',
   });
 
   factory GitPullRequest.fromJson(Map<String, dynamic> json) => GitPullRequest(
@@ -134,6 +135,7 @@ class GitPullRequest {
     draft: json['draft'] as bool? ?? false,
     updatedAt: json['updated_at'] as String? ?? '',
     body: json['body'] as String? ?? '',
+    mergeableState: json['mergeable_state'] as String? ?? '',
   );
 
   final int number;
@@ -149,6 +151,15 @@ class GitPullRequest {
   // PR description (markdown). Empty on list responses — only the
   // single-PR detail fetch (getPullRequest) populates it.
   final String body;
+  // Why the PR can or cannot merge: 'clean', 'behind' (the base moved
+  // on), 'blocked' (checks), 'dirty' (conflicts), 'unstable', 'draft'.
+  // Empty on list responses — unknown, not a problem.
+  final String mergeableState;
+
+  /// True when the only obstacle is a base branch that has moved on —
+  /// the one case "update branch" fixes. Conflicts and failing checks
+  /// need something else.
+  bool get behindBase => mergeableState == 'behind';
 }
 
 /// "host" or "host/owner" for whichever credential the gateway resolved.
@@ -638,6 +649,25 @@ class GitApi {
             'commit_message': commitMessage,
           'delete_branch': deleteBranch,
         },
+      );
+      return GitPullRequest.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // POST /git/prs/{n}/update-branch — merges the PR's base into its
+  // head so a stale branch can be merged. GitHub's "Update branch";
+  // repos that require branches to be up to date refuse the merge
+  // otherwise, and there was previously no way out from inside opendray.
+  Future<GitPullRequest> updatePullRequestBranch({
+    required String dir,
+    required int number,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        '/api/v1/git/prs/$number/update-branch',
+        data: {'dir': dir, 'number': number},
       );
       return GitPullRequest.fromJson(res.data ?? {});
     } on Object catch (e) {

@@ -289,6 +289,70 @@ class ProjectSummary {
   final bool suggestArchive;
 }
 
+/// One line of a review diff. `context` lines are unchanged and shown
+/// only for orientation.
+class DiffLine {
+  const DiffLine({required this.kind, required this.text});
+
+  factory DiffLine.fromJson(Map<String, dynamic> j) => DiffLine(
+    kind: j['kind']?.toString() ?? 'context',
+    text: j['text']?.toString() ?? '',
+  );
+
+  final String kind; // context | add | remove
+  final String text;
+}
+
+/// A run of changed lines with its surrounding context.
+class DiffHunk {
+  const DiffHunk({
+    required this.skippedBefore,
+    required this.startLine,
+    required this.lines,
+  });
+
+  factory DiffHunk.fromJson(Map<String, dynamic> j) => DiffHunk(
+    // Unchanged lines collapsed before this hunk — rendered so the
+    // reviewer can tell "nothing else changed" from "the rest is hidden".
+    skippedBefore: (j['skipped_before'] as num?)?.toInt() ?? 0,
+    startLine: (j['start_line'] as num?)?.toInt() ?? 1,
+    lines: ((j['lines'] as List<dynamic>?) ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(DiffLine.fromJson)
+        .toList(growable: false),
+  );
+
+  final int skippedBefore;
+  final int startLine;
+  final List<DiffLine> lines;
+}
+
+/// The reviewable difference between the live doc and a proposal.
+/// Computed server-side so web and mobile show the same review.
+class DocDiff {
+  const DocDiff({
+    required this.hunks,
+    required this.added,
+    required this.removed,
+    required this.unchanged,
+  });
+
+  factory DocDiff.fromJson(Map<String, dynamic> j) => DocDiff(
+    hunks: ((j['hunks'] as List<dynamic>?) ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(DiffHunk.fromJson)
+        .toList(growable: false),
+    added: (j['added'] as num?)?.toInt() ?? 0,
+    removed: (j['removed'] as num?)?.toInt() ?? 0,
+    unchanged: j['unchanged'] == true,
+  );
+
+  final List<DiffHunk> hunks;
+  final int added;
+  final int removed;
+  final bool unchanged;
+}
+
 class DocProposal {
   DocProposal({
     required this.id,
@@ -298,6 +362,7 @@ class DocProposal {
     required this.reason,
     required this.proposedBySession,
     required this.createdAt,
+    this.diff,
   });
 
   factory DocProposal.fromJson(Map<String, dynamic> j) => DocProposal(
@@ -309,6 +374,9 @@ class DocProposal {
     proposedBySession: j['proposed_by_session']?.toString() ?? '',
     createdAt:
         DateTime.tryParse(j['created_at']?.toString() ?? '') ?? DateTime.now(),
+    diff: j['diff'] is Map<String, dynamic>
+        ? DocDiff.fromJson(j['diff'] as Map<String, dynamic>)
+        : null,
   );
 
   final String id;
@@ -318,6 +386,10 @@ class DocProposal {
   final String reason;
   final String proposedBySession;
   final DateTime createdAt;
+
+  /// Line-level change from the live doc. Null on proposals filed before
+  /// the server attached diffs, which fall back to the full body.
+  final DocDiff? diff;
 }
 
 class SessionLogEntry {

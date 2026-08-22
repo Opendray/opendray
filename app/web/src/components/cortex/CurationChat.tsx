@@ -16,6 +16,7 @@ import {
   Loader2,
   MessageSquarePlus,
   Send,
+  SlidersHorizontal,
   X,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
@@ -27,7 +28,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  type ConversationMessage,
   type ConversationTargetKind,
+  applyRuleSuggestion,
   closeConversation,
   createConversation,
   escalateConversation,
@@ -277,6 +280,90 @@ export function CurationChat({
     },
   })
 
+  // One-click apply of an AI turn's rule suggestion (guidance / excluded
+  // subjects). The backend merges it into the page settings; refresh both
+  // the thread (applied badge) and the blueprint queries feeding the
+  // settings dialogs.
+  const applyRules = useMutation({
+    mutationFn: (messageId: string) => applyRuleSuggestion(active!.id, messageId),
+    onSuccess: () => {
+      toast.success(t('web.cortex.chat.rulesApplied'))
+      if (active) qc.invalidateQueries({ queryKey: ['cortex-conversation', active.id] })
+      qc.invalidateQueries({ queryKey: ['kb-blueprint'] })
+      qc.invalidateQueries({ queryKey: ['blueprint', targetCwd] })
+    },
+    onError: (e: Error) =>
+      toast.error(t('web.cortex.chat.rulesApplyFailed'), { description: e.message }),
+  })
+
+  const ruleCard = (m: ConversationMessage) => {
+    const sug = m.rule_suggestion
+    if (!sug) return null
+    const applied = !!m.rule_applied_at
+    return (
+      <div className="bg-muted/40 mt-1.5 space-y-1 rounded border px-2 py-1.5 text-xs">
+        <div className="text-muted-foreground flex items-center gap-1 font-medium">
+          <SlidersHorizontal className="h-3 w-3" />
+          {t('web.cortex.chat.rulesSuggestionTitle')}
+        </div>
+        {sug.guidance && (
+          <p>
+            <span className="text-muted-foreground">
+              {t('web.cortex.chat.rulesGuidance')}:
+            </span>{' '}
+            {sug.guidance}
+          </p>
+        )}
+        {(sug.exclusions_add?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-muted-foreground">
+              {t('web.cortex.chat.rulesExclusionsAdd')}:
+            </span>
+            {sug.exclusions_add!.map((e) => (
+              <Badge key={e} variant="success" className="text-[10px]">
+                + {e}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {(sug.exclusions_remove?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-muted-foreground">
+              {t('web.cortex.chat.rulesExclusionsRemove')}:
+            </span>
+            {sug.exclusions_remove!.map((e) => (
+              <Badge key={e} variant="danger" className="text-[10px]">
+                − {e}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {sug.reason && <p className="text-muted-foreground italic">{sug.reason}</p>}
+        {applied ? (
+          <Badge variant="success" className="text-[10px]">
+            <Check className="mr-1 h-2.5 w-2.5" />
+            {t('web.cortex.chat.rulesApplied')}
+          </Badge>
+        ) : (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-6 px-2 text-[11px]"
+            disabled={applyRules.isPending}
+            onClick={() => applyRules.mutate(m.id)}
+          >
+            {applyRules.isPending && applyRules.variables === m.id ? (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            ) : (
+              <Check className="mr-1 h-3 w-3" />
+            )}
+            {t('web.cortex.chat.rulesApply')}
+          </Button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="bg-muted/10 flex max-h-[28rem] flex-col rounded-md border">
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
@@ -434,6 +521,7 @@ export function CurationChat({
                 {t('web.cortex.chat.revisionProposed')}
               </Badge>
             )}
+            {ruleCard(m)}
           </div>
         ))}
         {awaitingReply && (

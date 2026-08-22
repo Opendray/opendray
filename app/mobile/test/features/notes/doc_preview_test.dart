@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:opendray/features/notes/doc_preview.dart';
+import 'package:opendray/features/notes/vault_text.dart' show kWikiLinkScheme;
 
 void main() {
   group('docKindOf', () {
@@ -79,9 +80,27 @@ void main() {
       expect(out, contains('target="_blank"'));
     });
 
-    test('leaves wiki links as literal text', () {
+    test('leaves wiki links as literal text by default', () {
+      // Where the caller has nowhere to send the tap, a dead link is
+      // worse than plain text.
       final out = renderMarkdownDocument('See [[projects/foo]].');
       expect(out, contains('[[projects/foo]]'));
+    });
+
+    test('renders wiki links as anchors when asked', () {
+      final out = renderMarkdownDocument(
+        'See [[projects/foo]].',
+        wikiLinks: true,
+      );
+      expect(out, contains('href="$kWikiLinkScheme://open?'));
+      expect(out, isNot(contains('[[projects/foo]]')));
+    });
+
+    test('does not retarget a wiki-link anchor to a new window', () {
+      // target="_blank" on an intercepted scheme asks the webview for a
+      // popup it is configured to refuse.
+      final out = renderMarkdownDocument('[[foo]]', wikiLinks: true);
+      expect(out, isNot(contains('target="_blank"')));
     });
   });
 }

@@ -99,6 +99,12 @@ type Memory struct {
 	CreatedAt time.Time              `json:"created_at"`
 	UpdatedAt time.Time              `json:"updated_at"`
 
+	// Polarity classifies the utterance — "fact" | "rule" | "meta" |
+	// "correction"; empty = not yet classified (treated as "fact").
+	// Populated by List and Search (the paths the knowledge drafter
+	// consumes); other read paths leave it empty.
+	Polarity string `json:"polarity,omitempty"`
+
 	// HitCount tracks how many times this memory has been returned
 	// from a search (post-threshold filter). Bumped lazily by
 	// Store.RecordHits — best-effort, never blocks the caller.
@@ -297,6 +303,12 @@ type Store interface {
 	// PurgeExpiredQuarantine hard-deletes quarantined rows whose TTL
 	// passed. Returns the row count removed; zero is not an error.
 	PurgeExpiredQuarantine(ctx context.Context, now time.Time) (int64, error)
+	// ListUnclassified returns active rows whose polarity is not yet
+	// set, oldest first — the polarity classifier's work queue.
+	ListUnclassified(ctx context.Context, limit int) ([]Memory, error)
+	// SetPolarity records a row's utterance classification
+	// (fact | rule | meta | correction).
+	SetPolarity(ctx context.Context, id, polarity string) error
 	// Close releases store-level resources (DB conns, files).
 	// Safe to call multiple times.
 	Close() error

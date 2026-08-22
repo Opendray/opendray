@@ -8,8 +8,10 @@ import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/notes_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/notes/flatten_notice.dart';
+import 'package:opendray/features/notes/note_actions.dart';
 import 'package:opendray/features/notes/note_editor_dialog.dart';
 import 'package:opendray/features/notes/vault_sync_screen.dart';
+import 'package:opendray/features/notes/vault_text.dart';
 import 'package:opendray/features/project/project_screen.dart';
 import 'package:path/path.dart' as p;
 
@@ -43,6 +45,11 @@ class NotesVaultScreen extends ConsumerStatefulWidget {
   ConsumerState<NotesVaultScreen> createState() => _NotesScreenState();
 }
 
+/// What the left-hand listing is showing. Mirrors the web vault's
+/// tree/tags switch — the two ways of finding a document that isn't
+/// where you remembered filing it.
+enum _BrowseMode { folders, tags }
+
 class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   AsyncValue<List<NoteSummary>> _state = const AsyncValue.loading();
   // Vault-relative directory the user is currently viewing. '' means
@@ -51,6 +58,16 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
   String _query = '';
   bool _flattenable = false;
   final _searchCtrl = TextEditingController();
+
+  _BrowseMode _mode = _BrowseMode.folders;
+  // Loaded the first time the tags view is opened. The gateway walks
+  // the whole vault to build it, so it is not fetched alongside the
+  // listing that every visit needs.
+  AsyncValue<List<TagCount>>? _tagState;
+  String? _activeTag;
+
+  List<String> get _allPaths =>
+      _state.valueOrNull?.map((n) => n.path).toList() ?? const [];
 
   @override
   void initState() {
@@ -90,8 +107,76 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     }
   }
 
+  // Tags are counted by a full walk of the vault on the gateway, so
+  // they are fetched when the view is opened rather than on every
+  // listing refresh.
+  Future<void> _loadTags() async {
+    setState(() => _tagState = const AsyncValue.loading());
+    try {
+      final tags = await ref.read(notesApiProvider).tags();
+      if (!mounted) return;
+      tags.sort((a, b) {
+        // Most-used first; alphabetical inside a tie so the order is
+        // stable between refreshes.
+        final byCount = b.count.compareTo(a.count);
+        return byCount != 0 ? byCount : a.tag.compareTo(b.tag);
+      });
+      setState(() => _tagState = AsyncValue.data(tags));
+    } on Object catch (e, st) {
+      if (mounted) setState(() => _tagState = AsyncValue.error(e, st));
+    }
+  }
+
   Future<void> _openNote(NoteSummary note) async {
-    await NoteEditorDialog.show(context: context, path: note.path);
+    await NoteEditorDialog.show(
+      context: context,
+      path: note.path,
+      // The editor resolves and completes [[wiki links]] against this;
+      // handing over the listing already in hand saves it a fetch.
+      allPaths: _allPaths,
+    );
+    if (!mounted) return;
+    await _load();
+  }
+
+  /// Open (creating first if needed) today's daily note. Mirrors the
+  /// web vault's "Today" button, template included — the same date on
+  /// two clients has to produce one document, not two shapes of it.
+  Future<void> _openToday() async {
+    final now = DateTime.now();
+    final path = dailyNotePath(now);
+    final exists =
+        _state.valueOrNull?.any((n) => n.path == path) ?? false;
+    final messenger = ScaffoldMessenger.of(context);
+    if (!exists) {
+      final body = dailyNoteBody(
+        now,
+        // en_US explicitly, matching the web's date-fns default, so the
+        // heading reads the same on both clients.
+        longDate: DateFormat('EEEE, MMMM d, y', 'en_US').format(now),
+      );
+      try {
+        await ref.read(notesApiProvider).write(path: path, body: body);
+      } on ApiException catch (e) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(t.notesPage.createFailedApi(error: e.message))),
+        );
+        return;
+      } on Object catch (e) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(t.notesPage.createFailedGeneric(error: e.toString())),
+          ),
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
+    await NoteEditorDialog.show(
+      context: context,
+      path: path,
+      allPaths: _allPaths,
+    );
     if (!mounted) return;
     await _load();
   }
@@ -106,7 +191,9 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     setState(() => _currentPath = (parent == '.' || parent == '/') ? '' : parent);
   }
 
-  Future<void> _onLongPress(NoteSummary note) async {
+  /// The row's action sheet. Reached from the trailing button and
+  /// from a long press on the row.
+  Future<void> _showRowActions(NoteSummary note) async {
     final action = await showModalBottomSheet<_RowAction>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -190,121 +277,21 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     }
   }
 
-  // Rename goes through the move endpoint, which repoints the
-  // [[wiki links]] that referenced the old path. Writing a copy and
-  // deleting the original would leave every one of them pointing at a
-  // document that no longer exists.
   Future<void> _promptRename(NoteSummary note) async {
-    final ctrl = TextEditingController(text: note.path);
-    final to = await showDialog<String>(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text(t.notesPage.rename.title),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: InputDecoration(
-            helperText: t.notesPage.rename.helper,
-            hintText: t.notesPage.pathHint,
-          ),
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(ctrl.text.trim()),
-            child: Text(t.notesPage.rename.action),
-          ),
-        ],
-      ),
-    );
-    if (to == null || to.isEmpty || to == note.path || !mounted) return;
-
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      final res = await ref.read(notesApiProvider).move(from: note.path, to: to);
-      // A warning means the file moved but the link rewrite did not
-      // finish. Reporting only "renamed" would hide a vault full of
-      // references to a path that no longer exists.
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            res.warning?.isNotEmpty ?? false
-                ? '${t.notesPage.rename.doneWithWarning}: ${res.warning}'
-                : t.notesPage.rename.doneSnack(count: res.linksRewritten),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      await _load();
-    } on ApiException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
-      );
-    }
+    final to = await renameNoteFlow(context: context, ref: ref, path: note.path);
+    if (to == null || !mounted) return;
+    await _load();
   }
 
   Future<void> _confirmAndDelete(NoteSummary note) async {
-    final ok = await showDialog<bool>(
+    final gone = await deleteNoteFlow(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: Text(t.notesPage.deleteTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              note.title.isNotEmpty ? note.title : p.basename(note.path),
-              style: Theme.of(dialogCtx).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              note.path,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t.notesPage.deleteBody,
-              style: Theme.of(dialogCtx).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(false),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogCtx).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: Text(t.common.delete),
-          ),
-        ],
-      ),
+      ref: ref,
+      path: note.path,
+      title: note.title,
     );
-    if (ok != true || !mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await ref.read(notesApiProvider).delete(note.path);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(t.notesPage.deletedSnack(path: note.path)),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      await _load();
-    } on ApiException catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(t.notesPage.deleteFailedApi(error: e.message))),
-      );
-    } on Object catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(t.notesPage.deleteFailedGeneric(error: e.toString()))));
-    }
+    if (!gone || !mounted) return;
+    await _load();
   }
 
   Future<void> _newNote() async {
@@ -323,7 +310,11 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
             body: '# ${p.basenameWithoutExtension(path)}\n\n',
           );
       if (!mounted) return;
-      await NoteEditorDialog.show(context: context, path: path);
+      await NoteEditorDialog.show(
+        context: context,
+        path: path,
+        allPaths: _allPaths,
+      );
       if (!mounted) return;
       await _load();
     } on ApiException catch (e) {
@@ -396,7 +387,12 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(t.notesPage.title),
-        leading: _currentPath.isEmpty
+        // "Up" belongs to the folder listing. Showing it while a tag
+        // filter or the tag index is on screen offers to walk a
+        // hierarchy that isn't what's being displayed.
+        leading: (_currentPath.isEmpty ||
+                _activeTag != null ||
+                _mode == _BrowseMode.tags)
             ? null
             : IconButton(
                 icon: const Icon(Icons.arrow_back),
@@ -405,6 +401,11 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
               ),
         actions: [
           const VaultSyncBadge(),
+          IconButton(
+            icon: const Icon(Icons.today_outlined),
+            tooltip: t.notesPage.today.tooltip,
+            onPressed: () => unawaited(_openToday()),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: t.sessions.inspector.shared.refresh,
@@ -417,12 +418,53 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
           if (_flattenable) FlattenNotice(onConverted: _load),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: SegmentedButton<_BrowseMode>(
+              showSelectedIcon: false,
+              style: const ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              segments: [
+                ButtonSegment(
+                  value: _BrowseMode.folders,
+                  icon: const Icon(Icons.folder_outlined, size: 16),
+                  label: Text(t.notesPage.browse.tree),
+                ),
+                ButtonSegment(
+                  value: _BrowseMode.tags,
+                  icon: const Icon(Icons.tag, size: 16),
+                  label: Text(t.notesPage.browse.tags),
+                ),
+              ],
+              selected: {_mode},
+              onSelectionChanged: (sel) {
+                final next = sel.first;
+                setState(() {
+                  _mode = next;
+                  // The filter box means different things in the two
+                  // views, so carrying a query across is misleading —
+                  // and so is a tag filter still narrowing the folder
+                  // listing after the user has left the tag view.
+                  _query = '';
+                  _activeTag = null;
+                  _searchCtrl.clear();
+                });
+                if (next == _BrowseMode.tags && _tagState == null) {
+                  unawaited(_loadTags());
+                }
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
             child: TextField(
               controller: _searchCtrl,
               onChanged: (v) =>
                   setState(() => _query = v.trim().toLowerCase()),
               decoration: InputDecoration(
-                hintText: t.notesPage.searchHint,
+                hintText: _showingTags
+                    ? t.notesPage.browse.tags
+                    : t.notesPage.searchHint,
                 prefixIcon: const Icon(Icons.search, size: 18),
                 isDense: true,
                 suffixIcon: _query.isEmpty
@@ -437,11 +479,15 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
               ),
             ),
           ),
-          if (_query.isEmpty) _Breadcrumb(
-            path: _currentPath,
-            onGoRoot: () => setState(() => _currentPath = ''),
-            onJumpTo: (segments) => setState(() => _currentPath = segments),
-          ),
+          if (_activeTag != null) _activeTagChip(),
+          if (_mode == _BrowseMode.folders &&
+              _activeTag == null &&
+              _query.isEmpty)
+            _Breadcrumb(
+              path: _currentPath,
+              onGoRoot: () => setState(() => _currentPath = ''),
+              onJumpTo: (segments) => setState(() => _currentPath = segments),
+            ),
           Expanded(child: _body()),
         ],
       ),
@@ -454,9 +500,111 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
     );
   }
 
+  /// True while the tag INDEX is on screen. Picking a tag swaps the
+  /// listing back to notes, so the two are not the same condition.
+  bool get _showingTags => _mode == _BrowseMode.tags && _activeTag == null;
+
+  Widget _activeTagChip() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InputChip(
+          avatar: const Icon(Icons.tag, size: 15),
+          label: Text('${t.notesPage.tags.filteredBy}: ${_activeTag!}'),
+          onDeleted: () => setState(() => _activeTag = null),
+          deleteButtonTooltipMessage: t.notesPage.tags.clear,
+        ),
+      ),
+    );
+  }
+
+  Widget _tagsBody() {
+    final state = _tagState;
+    if (state == null) return const SizedBox.shrink();
+    return state.when(
+      data: (tags) {
+        final visible = _query.isEmpty
+            ? tags
+            : tags.where((x) => x.tag.toLowerCase().contains(_query)).toList();
+        if (visible.isEmpty) {
+          return _Empty(
+            text: tags.isEmpty
+                ? t.notesPage.tags.empty
+                : t.notesPage.tags.noMatches(query: _query),
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: _loadTags,
+          child: ListView.separated(
+            itemCount: visible.length,
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: Theme.of(context).dividerColor),
+            itemBuilder: (_, i) {
+              final tag = visible[i];
+              return ListTile(
+                leading: Icon(
+                  Icons.tag,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: Text(tag.tag),
+                trailing: Text(
+                  '${tag.count}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                onTap: () => setState(() {
+                  _activeTag = tag.tag;
+                  _query = '';
+                  _searchCtrl.clear();
+                }),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => _Error(error: e, onRetry: _loadTags),
+    );
+  }
+
+  /// Paths carrying [_activeTag], from the tag index already fetched.
+  Set<String> _pathsForActiveTag() {
+    final tags = _tagState?.valueOrNull;
+    if (tags == null) return const {};
+    for (final tag in tags) {
+      if (tag.tag == _activeTag) return tag.notes.toSet();
+    }
+    return const {};
+  }
+
   Widget _body() {
+    if (_showingTags) return _tagsBody();
     return _state.when(
       data: (notes) {
+        if (_activeTag != null) {
+          final wanted = _pathsForActiveTag();
+          final results =
+              notes.where((n) => wanted.contains(n.path)).toList();
+          if (results.isEmpty) {
+            return _Empty(
+              text: t.notesPage.tags.noNotes(tag: _activeTag!),
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: _load,
+            child: ListView.separated(
+              itemCount: results.length,
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
+              itemBuilder: (_, i) => _NoteRow(
+                note: results[i],
+                showFullPath: true,
+                onTap: () => _openNote(results[i]),
+                onMenu: () => _showRowActions(results[i]),
+              ),
+            ),
+          );
+        }
         if (_query.isNotEmpty) {
           final results = _searchAll(notes);
           if (results.isEmpty) {
@@ -474,7 +622,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
                 note: results[i],
                 showFullPath: true,
                 onTap: () => _openNote(results[i]),
-                onLongPress: () => _onLongPress(results[i]),
+                onMenu: () => _showRowActions(results[i]),
               ),
             ),
           );
@@ -506,7 +654,7 @@ class _NotesScreenState extends ConsumerState<NotesVaultScreen> {
                   note: n,
                   showFullPath: false,
                   onTap: () => _openNote(n),
-                  onLongPress: () => _onLongPress(n),
+                  onMenu: () => _showRowActions(n),
                 ),
             ],
           ),
@@ -649,13 +797,17 @@ class _NoteRow extends StatelessWidget {
     required this.note,
     required this.showFullPath,
     required this.onTap,
-    required this.onLongPress,
+    required this.onMenu,
   });
 
   final NoteSummary note;
   final bool showFullPath;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+
+  /// Opens the row's actions. Wired to both the trailing button and a
+  /// long press: the button is the one anybody finds, the gesture is
+  /// the shortcut for whoever already knows it.
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -664,7 +816,7 @@ class _NoteRow extends StatelessWidget {
         : '${_formatBytes(note.size)} · ${_relTime(note.modified)}';
     return ListTile(
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: onMenu,
       leading: Icon(
         // The operator's own note carries a different icon from the
         // agent-written docs. Both layouts have to be recognised: the
@@ -685,7 +837,16 @@ class _NoteRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodySmall,
       ),
-      trailing: const Icon(Icons.chevron_right),
+      // This slot used to hold a chevron. Tapping the row already opens
+      // the document, so the arrow said nothing the row didn't — while
+      // rename and delete sat behind a long press with no hint that
+      // they existed at all. Same pixels, an affordance instead of a
+      // decoration.
+      trailing: IconButton(
+        icon: const Icon(Icons.more_vert),
+        tooltip: t.common.more,
+        onPressed: onMenu,
+      ),
     );
   }
 }
@@ -728,10 +889,10 @@ class _NewNoteDialogState extends State<_NewNoteDialog> {
       setState(() => _error = t.notesPage.validatePathDots);
       return;
     }
-    final cleaned = raw.replaceAll(RegExp('^/+'), '');
-    final withExt =
-        cleaned.toLowerCase().endsWith('.md') ? cleaned : '$cleaned.md';
-    Navigator.of(context).pop(withExt);
+    // sanitizeNotePath rather than a blanket `.md`: appending it
+    // unconditionally turned `guide.html` into `guide.html.md`, so an
+    // HTML document could not be created from the phone at all.
+    Navigator.of(context).pop(sanitizeNotePath(raw));
   }
 
   @override

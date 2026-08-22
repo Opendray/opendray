@@ -65,7 +65,9 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) decide(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	action := chi.URLParam(r, "action")
-	if err := h.svc.Decide(r.Context(), id, action, "operator"); err != nil {
+	// ?archive=a|b — accept AND archive the losing fact (closes the
+	// detect→verdict→execute loop; absent = status-only, the old shape).
+	if err := h.svc.Decide(r.Context(), id, action, "operator", r.URL.Query().Get("archive")); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			writeError(w, http.StatusNotFound, err.Error())
 			return

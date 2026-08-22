@@ -445,21 +445,21 @@
       "dismiss": "Descartar",
       "accepted": "Conflicto aceptado. Recuerda aplicar la corrección",
       "dismissed": "Conflicto descartado",
-      "deletedFact": "Hecho eliminado y conflicto aceptado",
+      "deletedFact": "Hecho archivado (restaurable) y conflicto aceptado",
       "quickActions": "Corrección:",
-      "deleteFact": "Eliminar hecho",
-      "deleteFactSide": "Eliminar {side}: {ref}",
+      "deleteFact": "Archivar hecho",
+      "deleteFactSide": "Archivar {side}: {ref}",
       "confirmDelete": {
-        "title": "¿Eliminar el hecho {side}?",
-        "description": "Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado se conserva como la afirmación superviviente.",
-        "targetLabel": "Se eliminará (lado {side}):",
+        "title": "¿Archivar el hecho {side}?",
+        "description": "Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.",
+        "targetLabel": "Se archivará (lado {side}):",
         "keepLabel": "Se conservará (lado {side}):",
         "nonFactOther": "(entrada de {layer}, abre la pestaña correspondiente para inspeccionar)",
         "evidenceLabel": "Evidencia del detector:",
         "loading": "Cargando texto del hecho…",
         "loadError": "No se pudo cargar el texto del hecho. Inspecciónalo en la página de Memoria.",
         "cancel": "Cancelar",
-        "confirm": "Eliminar {side}"
+        "confirm": "Archivar {side}"
       },
       "openLayer": {
         "plan": "Abrir editor de plan",
@@ -1795,15 +1795,14 @@
       },
       "customTasks": {
         "title": "Tareas personalizadas",
-        "description": "Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.",
+        "description": "Atajos de ejecución con un clic que se muestran en la pestaña Tareas, agrupados por proyecto. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.",
         "addTask": "Añadir tarea",
         "empty": "Aún no hay tareas personalizadas.",
         "columns": {
           "name": "Nombre",
-          "command": "Comando",
-          "scope": "Ámbito"
+          "command": "Comando"
         },
-        "globalScope": "global",
+        "globalGroup": "Global",
         "deleteConfirm": "¿Eliminar la tarea personalizada \"{name}\"?",
         "removedToast": "Tarea eliminada",
         "deleteFailedToast": "Error al eliminar",
@@ -3043,6 +3042,13 @@
         "emergentHint": "Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.",
         "bindingBadge": "Vinculante · obligatorio",
         "referenceBadge": "Referencia",
+        "maintainer": {
+          "ai": "Mantenida por la curación en segundo plano de opendray",
+          "human": "Mantenida por mí: la automatización solo propone",
+          "session": "Mantenida por el agente que hace el trabajo",
+          "hint": "Quién mantiene esta página al día. «El agente que hace el trabajo» da a cada sesión una herramienta para escribir esta página sobre la marcha: ideal para registros que solo conoce el agente que trabaja, como un contenedor que acaba de crear. La curación en segundo plano, en cambio, redacta la página a partir de la memoria acumulada.",
+          "sessionUnavailable": "Quién mantiene esta página al día. La opción mantenida por el agente no está disponible para páginas fundacionales ni integradas: sus reglas son vinculantes, así que una sesión no debe reescribirlas a mitad de una tarea."
+        },
         "proposal": {
           "text": "La IA propuso una actualización de esta página (evidencia nueva divergente).",
           "preview": "Vista previa",
@@ -3050,7 +3056,8 @@
           "approve": "Aprobar",
           "reject": "Rechazar",
           "approved": "Actualización aprobada",
-          "rejected": "Propuesta rechazada"
+          "rejected": "Propuesta rechazada",
+          "review": "Revisar"
         },
         "discuss": "Hablar con la IA",
         "discussHint": "Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras",
@@ -3078,7 +3085,9 @@
           "description": "Edita el título, el resumen, la naturaleza y la inyección de esta página. El slug es fijo y el cuerpo se edita aparte.",
           "hint": "Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página",
           "save": "Guardar ajustes",
-          "savedToast": "Ajustes de la página actualizados"
+          "savedToast": "Ajustes de la página actualizados",
+          "fixedTitle": "El título de esta página proviene del idioma de la interfaz y no se edita aquí.",
+          "fixedNature": "La naturaleza de una página integrada es fija: determina si las sesiones la leen como regla vinculante o como referencia."
         },
         "librarian": {
           "button": "Gestionar KB con IA",
@@ -3089,6 +3098,26 @@
           "provider": "Agente en la nube",
           "account": "Cuenta de Claude",
           "launch": "Lanzar"
+        },
+        "writePolicy": {
+          "proposal": "Requiere mi aprobación antes de cambiar",
+          "direct": "Se actualiza automáticamente",
+          "hint": "Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben."
+        },
+        "guidance": {
+          "placeholder": "Qué debe ser esta página: su alcance, forma y nivel de detalle",
+          "hint": "Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté»."
+        },
+        "exclusions": {
+          "placeholder": "Un asunto por línea",
+          "hint": "Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas."
+        },
+        "removals": {
+          "title": "Líneas que eliminaste",
+          "banned": "vetada",
+          "dismiss": "Olvidar",
+          "hint": "Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).",
+          "recent": "Eliminadas recientes ({n})"
         }
       },
       "kinds": {
@@ -3212,6 +3241,13 @@
         "closeHint": "Cerrar esta conversación",
         "revisionApplied": "Documento actualizado",
         "revisionProposed": "Propuesta creada — revísala en la bandeja",
+        "rulesSuggestionTitle": "Sugerencia de reglas",
+        "rulesGuidance": "Guía",
+        "rulesExclusionsAdd": "Añadir exclusiones",
+        "rulesExclusionsRemove": "Quitar exclusiones",
+        "rulesApply": "Aplicar",
+        "rulesApplied": "Reglas aplicadas",
+        "rulesApplyFailed": "No se pudo aplicar la sugerencia de reglas",
         "modelLabel": "Modelo:",
         "modelHint": "Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.",
         "modelGlobalDefault": "Predeterminado (global)",
@@ -3492,6 +3528,13 @@
         "bypass": "Omitir permisos (YOLO)",
         "bypassHint": "Inicia la sesión con su indicador de bypass para no pedir aprobaciones."
       }
+    },
+    "diff": {
+      "noChanges": "Sin cambios: el contenido propuesto es idéntico a la página actual.",
+      "added": "+{count}",
+      "removed": "−{count}",
+      "changedLines": "líneas modificadas",
+      "collapsed": "⋯ {count} sin cambios ⋯"
     }
   },
   "more": {
@@ -4386,15 +4429,15 @@
       "detected": "{count} conflicto(s) nuevo(s) encontrado(s)",
       "accept": "Aceptar",
       "dismiss": "Descartar",
-      "deleteFact": "Eliminar hecho {side}",
-      "deleteConfirmTitle": "¿Eliminar hecho {side}?",
-      "deleteConfirmBody": "Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado permanece como la afirmación superviviente.",
-      "deleteWillDelete": "Se eliminará (lado {side}):",
+      "deleteFact": "Archivar hecho",
+      "deleteConfirmTitle": "¿Archivar el hecho {side}?",
+      "deleteConfirmBody": "Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.",
+      "deleteWillDelete": "Se archivará (lado {side}):",
       "deleteWillKeep": "Se conservará (lado {side}):",
       "deleteNonFactOther": "(entrada de {layer}, abre la pestaña correspondiente para inspeccionar)",
       "deleteLoading": "Cargando el texto del hecho…",
-      "deleteFactLabel": "Eliminar {side}",
-      "deletedFact": "Hecho eliminado y conflicto aceptado",
+      "deleteFactLabel": "Archivar {side}",
+      "deletedFact": "Hecho archivado (restaurable), conflicto aceptado",
       "openPlanEditor": "Abrir el editor del plan",
       "openGoalEditor": "Abrir el editor del objetivo",
       "severity": {
@@ -5022,6 +5065,10 @@
     "newButton": "Nueva",
     "newNoteDialogTitle": "Nueva nota",
     "searchHint": "Busca en todo el vault…",
+    "browse": {
+      "tree": "Carpetas",
+      "tags": "Etiquetas"
+    },
     "up": "Arriba",
     "copyPath": "Copiar ruta",
     "open": "Abrir",
@@ -5042,7 +5089,7 @@
     "emptyFolder": "La carpeta \"{path}\" está vacía.",
     "validatePath": "La ruta es obligatoria",
     "validatePathDots": "La ruta no puede contener \"..\"",
-    "pathHelper": "Añade .md automáticamente si falta.",
+    "pathHelper": "Añade .md salvo que el nombre ya termine en .md o .html.",
     "editor": {
       "markdownHint": "Markdown, o HTML si el archivo termina en .html…",
       "saving": "Guardando…",
@@ -5081,6 +5128,33 @@
       "helper": "Ruta relativa a la bóveda. Las carpetas se crean solas.",
       "doneSnack": "Renombrado. {count} enlace(s) actualizados.",
       "doneWithWarning": "Renombrado, pero no se actualizaron todos los enlaces"
+    },
+    "tags": {
+      "empty": "Aún no hay etiquetas en el almacén. Escribe #así en una nota.",
+      "noMatches": "Ninguna etiqueta coincide con «{query}».",
+      "filteredBy": "Filtrado por",
+      "clear": "Quitar el filtro de etiqueta",
+      "noNotes": "Ya no hay notas con #{tag}."
+    },
+    "backlinks": {
+      "title": "Retroenlaces",
+      "loading": "Buscando enlaces…",
+      "empty": "Todavía no hay notas que enlacen aquí.",
+      "failed": "No se pudieron cargar los retroenlaces: {error}"
+    },
+    "outline": {
+      "action": "Esquema",
+      "title": "Esquema",
+      "empty": "Este documento no tiene encabezados.",
+      "jumpedToSource": "La vista previa no puede desplazarse sin scripts, así que se abrió el código."
+    },
+    "today": {
+      "tooltip": "Abrir la nota diaria de hoy"
+    },
+    "wikiLink": {
+      "suggestions": "Enlazar a…",
+      "createNew": "Crear «{name}»",
+      "noMatches": "Ninguna nota coincide: sigue escribiendo para crear una."
     }
   },
   "vaultSync": {
