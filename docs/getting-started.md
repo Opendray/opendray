@@ -5,12 +5,12 @@ is already on the host; 25 minutes if you need to install one too.
 
 This guide is intentionally end-to-end — it covers the things that
 sit *around* opendray (installing the CLIs it wraps, bootstrapping
-Postgres) on top of the deploy paths in the [README](../README.md#install).
+Postgres) on top of the deploy paths in the [README](../README.md#quick-start).
 If you've used opendray before and just want to redeploy, the
 condensed paths in README Production deploy are a better fit.
 
 > **Already know "is opendray for me?"**
-> If not, read the [What is opendray?](../README.md#what-is-opendray)
+> If not, read the [What is opendray?](../README.md#why-opendray)
 > section in the README first. The bullets there will save you
 > 15 minutes if your use case isn't a match.
 
@@ -139,10 +139,10 @@ feature (drive Claude / Codex / Antigravity from the web Sessions page)?
 
 | Your host | Path | README section |
 |---|---|---|
-| macOS as 24/7 home server | macOS LaunchDaemon | [Option D](../README.md#option-d--macos-launchd-mac-mini--studio-as-home-server) |
-| Linux box / VPS / LXC | systemd | [Option B](../README.md#option-b--systemd-bare-metal--vm--lxc) |
-| Just testing in foreground | `go run` from source | [Quickstart](../README.md#quickstart-5-minute-dev-path) |
-| Hand-rolled supervisor (s6 / runit / launchd Agent) | Direct binary | [Option C](../README.md#option-c--direct-binary--your-own-process-supervisor) |
+| macOS as 24/7 home server | macOS LaunchDaemon | [Production deploy](../README.md#production-deploy) |
+| Linux box / VPS / LXC | systemd | [Production deploy](../README.md#production-deploy) |
+| Just testing in foreground | `go run` from source | [Quickstart](quickstart.md) |
+| Hand-rolled supervisor (s6 / runit / launchd Agent) | Direct binary | [Binary install](install-binary.md) |
 
 > Skip Docker. The image is distroless (no Node, no AI CLIs, no
 > `pg_dump`), so the Sessions tab will error on every spawn click.
