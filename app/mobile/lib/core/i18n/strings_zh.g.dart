@@ -7238,6 +7238,7 @@ class _TranslationsSessionsSpawnSheetWorktreeZh extends TranslationsSessionsSpaw
 	@override String get unavailableNotRepo => '不可用:工作目录不在 git 仓库内。';
 	@override String get unavailableLinked => '不可用:该路径本身是 linked worktree,请选择主检出目录。';
 	@override String get concurrentWarning => '已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。';
+	@override String get checking => '正在检查工作目录……';
 }
 
 // Path: memoryWorkers.tasks.gatekeeper
@@ -13443,6 +13444,7 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.worktree.unavailableNotRepo' => '不可用:工作目录不在 git 仓库内。',
 			'sessions.spawnSheet.worktree.unavailableLinked' => '不可用:该路径本身是 linked worktree,请选择主检出目录。',
 			'sessions.spawnSheet.worktree.concurrentWarning' => '已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。',
+			'sessions.spawnSheet.worktree.checking' => '正在检查工作目录……',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => '新建服务器',
 			'mcp.addSecret' => '添加密钥',
@@ -13811,9 +13813,9 @@ extension on TranslationsZh {
 			'backups.runConfirmTitle' => '立即运行备份？',
 			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
 			'backups.runFullInstance' => '完整实例',
-			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
 			_ => null,
 		} ?? switch (path) {
+			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
 			'backups.kindDbOnly' => '仅数据库',
 			'backups.kindFullInstance' => '完整实例',
 			'backups.dedupValue' => '复用已有 blob（内容相同）',
@@ -14325,9 +14327,9 @@ extension on TranslationsZh {
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'notesPage.editor.showPreview' => '预览',
-			'notesPage.editor.showSource' => '源码',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.editor.showSource' => '源码',
 			'notesPage.editor.save' => '保存',
 			'notesPage.editor.unsaved' => '有未保存的修改',
 			'notesPage.html.scriptsOff' => '脚本已禁用 —— 这篇文档按静态 HTML 渲染。',

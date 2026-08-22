@@ -4077,7 +4077,8 @@
         "subtitleOff": "Recommended when other sessions may work on this project at the same time.",
         "unavailableNotRepo": "Unavailable: the working directory is not inside a git repository.",
         "unavailableLinked": "Unavailable: this path is a linked worktree — pick the main checkout.",
-        "concurrentWarning": "Another live session is already working in this project without isolation — consider enabling the worktree."
+        "concurrentWarning": "Another live session is already working in this project without isolation — consider enabling the worktree.",
+        "checking": "Checking the working directory…"
       }
     }
   },

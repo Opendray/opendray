@@ -14176,6 +14176,9 @@ class TranslationsSessionsSpawnSheetWorktreeEn {
 
 	/// en: 'Another live session is already working in this project without isolation — consider enabling the worktree.'
 	String get concurrentWarning => 'Another live session is already working in this project without isolation — consider enabling the worktree.';
+
+	/// en: 'Checking the working directory…'
+	String get checking => 'Checking the working directory…';
 }
 
 // Path: memoryWorkers.tasks.gatekeeper
@@ -22694,6 +22697,7 @@ extension on Translations {
 			'sessions.spawnSheet.worktree.unavailableNotRepo' => 'Unavailable: the working directory is not inside a git repository.',
 			'sessions.spawnSheet.worktree.unavailableLinked' => 'Unavailable: this path is a linked worktree — pick the main checkout.',
 			'sessions.spawnSheet.worktree.concurrentWarning' => 'Another live session is already working in this project without isolation — consider enabling the worktree.',
+			'sessions.spawnSheet.worktree.checking' => 'Checking the working directory…',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'New server',
 			'mcp.addSecret' => 'Add secret',
@@ -23059,9 +23063,9 @@ extension on Translations {
 			'project.archived.restoreFailed' => ({required Object error}) => 'Restore failed: ${error}',
 			'project.archived.restore' => 'Restore',
 			'backups.title' => 'Backups',
-			'backups.runConfirmTitle' => 'Run backup now?',
 			_ => null,
 		} ?? switch (path) {
+			'backups.runConfirmTitle' => 'Run backup now?',
 			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
 			'backups.runFullInstance' => 'Full instance',
 			'backups.runFullInstanceHint' => 'Also bundle the vault, secrets.env and config.toml — not just the database.',
@@ -23573,9 +23577,9 @@ extension on Translations {
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
-			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'notesPage.editor.showPreview' => 'Preview',
 			'notesPage.editor.showSource' => 'Source',

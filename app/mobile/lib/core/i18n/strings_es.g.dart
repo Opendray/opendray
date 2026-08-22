@@ -7238,6 +7238,7 @@ class _TranslationsSessionsSpawnSheetWorktreeEs extends TranslationsSessionsSpaw
 	@override String get unavailableNotRepo => 'No disponible: el directorio de trabajo no está dentro de un repositorio git.';
 	@override String get unavailableLinked => 'No disponible: esta ruta es un worktree enlazado; elige el checkout principal.';
 	@override String get concurrentWarning => 'Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree.';
+	@override String get checking => 'Comprobando el directorio de trabajo…';
 }
 
 // Path: memoryWorkers.tasks.gatekeeper
@@ -13449,6 +13450,7 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.worktree.unavailableNotRepo' => 'No disponible: el directorio de trabajo no está dentro de un repositorio git.',
 			'sessions.spawnSheet.worktree.unavailableLinked' => 'No disponible: esta ruta es un worktree enlazado; elige el checkout principal.',
 			'sessions.spawnSheet.worktree.concurrentWarning' => 'Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree.',
+			'sessions.spawnSheet.worktree.checking' => 'Comprobando el directorio de trabajo…',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'Nuevo servidor',
 			'mcp.addSecret' => 'Añadir secreto',
@@ -13814,9 +13816,9 @@ extension on TranslationsEs {
 			'project.archived.restoreFailed' => ({required Object error}) => 'Error al restaurar: ${error}',
 			'project.archived.restore' => 'Restaurar',
 			'backups.title' => 'Copias de seguridad',
-			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
 			_ => null,
 		} ?? switch (path) {
+			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
 			'backups.runConfirmBody' => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.',
 			'backups.runFullInstance' => 'Instancia completa',
 			'backups.runFullInstanceHint' => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.',
@@ -14328,9 +14330,9 @@ extension on TranslationsEs {
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Error al guardar: ${error}',
-			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Error al guardar: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Error al guardar: ${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Guardado ${time}',
 			'notesPage.editor.showPreview' => 'Vista previa',
 			'notesPage.editor.showSource' => 'Código',

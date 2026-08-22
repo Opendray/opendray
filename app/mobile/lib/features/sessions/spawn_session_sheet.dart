@@ -129,14 +129,19 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
     _probeDebounce = Timer(const Duration(milliseconds: 350), () async {
       final cwd = _cwdCtrl.text.trim();
       if (cwd == _probedCwd) return;
-      _probedCwd = cwd;
       if (cwd.isEmpty) {
+        _probedCwd = cwd;
         if (mounted) setState(() => _gitInfo = null);
         return;
       }
       try {
         final info = await ref.read(gitApiProvider).info(cwd);
         if (!mounted || _cwdCtrl.text.trim() != cwd) return;
+        // Committed only on success: a transient probe failure must
+        // not pin this exact path as "unavailable" for the sheet's
+        // lifetime — leaving _probedCwd stale lets a retyped
+        // identical path probe again.
+        _probedCwd = cwd;
         setState(() {
           _gitInfo = info;
           if (!(info.isRepo && !info.linkedWorktree)) {
@@ -145,10 +150,17 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
         });
       } on Object {
         if (!mounted) return;
+        _probedCwd = '';
         setState(() {
           _gitInfo = null;
           _isolationEnabled = false;
         });
+        // Self-heal: a transient failure (network blip) retries in a
+        // few seconds instead of leaving the toggle stuck on
+        // "checking…" until the operator edits the path. A keystroke
+        // meanwhile cancels this via _scheduleProbe's own cancel.
+        _probeDebounce?.cancel();
+        _probeDebounce = Timer(const Duration(seconds: 3), _scheduleProbe);
       }
     });
   }
@@ -348,7 +360,10 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                 enabled: !_submitting && _isolationAvailable,
                 value: _isolationEnabled,
                 info: _gitInfo,
-                probedCwd: _probedCwd,
+                // The live field value, not _probedCwd: a failed probe
+                // resets _probedCwd to force a retry, but the subtitle
+                // and advisory should track what the operator typed.
+                probedCwd: _cwdCtrl.text.trim(),
                 onChanged: (v) => setState(() => _isolationEnabled = v),
               ),
               if (bypassLabel != null) ...[
@@ -428,9 +443,13 @@ class _WorktreeToggle extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final wt = t.sessions.spawnSheet.worktree;
     final String subtitle;
-    if (info != null && !info!.isRepo) {
+    if (info == null) {
+      // Unprobed (empty cwd, in-flight probe, or a failed one): the
+      // switch is disabled, so don't show available-sounding copy.
+      subtitle = probedCwd.isEmpty ? wt.subtitleOff : wt.checking;
+    } else if (!info!.isRepo) {
       subtitle = wt.unavailableNotRepo;
-    } else if (info?.linkedWorktree ?? false) {
+    } else if (info!.linkedWorktree) {
       subtitle = wt.unavailableLinked;
     } else {
       subtitle = value ? wt.subtitleOn : wt.subtitleOff;

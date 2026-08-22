@@ -4074,7 +4074,8 @@
         "subtitleOff": "当其他会话可能同时修改该项目时建议开启。",
         "unavailableNotRepo": "不可用:工作目录不在 git 仓库内。",
         "unavailableLinked": "不可用:该路径本身是 linked worktree,请选择主检出目录。",
-        "concurrentWarning": "已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。"
+        "concurrentWarning": "已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。",
+        "checking": "正在检查工作目录……"
       }
     }
   },

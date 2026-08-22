@@ -4077,7 +4077,8 @@
         "subtitleOff": "Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez.",
         "unavailableNotRepo": "No disponible: el directorio de trabajo no está dentro de un repositorio git.",
         "unavailableLinked": "No disponible: esta ruta es un worktree enlazado; elige el checkout principal.",
-        "concurrentWarning": "Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree."
+        "concurrentWarning": "Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree.",
+        "checking": "Comprobando el directorio de trabajo…"
       }
     }
   },
