@@ -105,6 +105,16 @@ export function SessionRow({
           <span className="truncate font-mono">
             {visual.name} · {cwdTail(session.cwd)}
           </span>
+          {session.worktree_branch && (
+            <span
+              className="shrink-0 text-[10px] font-mono px-1.5 py-px rounded bg-card border border-border/60 text-muted-foreground/80"
+              title={t('web.sessions.list.row.worktreeTitle', {
+                branch: session.worktree_branch,
+              })}
+            >
+              ⎇ {session.worktree_branch.replace(/^opendray\//, '')}
+            </span>
+          )}
           {acct && (
             <span
               className="ml-auto shrink-0 text-[10px] font-mono px-1.5 py-px rounded bg-card border border-border/60 text-muted-foreground/80"

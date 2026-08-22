@@ -25,7 +25,7 @@ import {
   deleteCustomTask,
   type CustomTask,
 } from '@/lib/customTasks'
-import { createSession } from '@/lib/sessions'
+import { createSession, sessionWorkDir } from '@/lib/sessions'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
@@ -291,7 +291,13 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
   // just to change a command). null = dialog closed.
   const [editingTask, setEditingTask] = useState<CustomTask | null>(null)
 
-  const dirEntries = useCwdEntries(session.cwd)
+  // Physical vs logical split: manifests and scripts are read from
+  // where the session's files actually live (the worktree when
+  // isolated), while custom-task registration/lookup stays keyed by
+  // the logical project cwd.
+  const workDir = sessionWorkDir(session)
+
+  const dirEntries = useCwdEntries(workDir)
   const presentSet = useMemo(() => {
     const names = new Set<string>()
     for (const e of dirEntries.data?.entries ?? []) {
@@ -305,7 +311,7 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
     [presentSet],
   )
 
-  const manifests = useManifests(session.cwd, presentSet)
+  const manifests = useManifests(workDir, presentSet)
   const customQ = useQuery({
     queryKey: ['custom-tasks', session.cwd],
     queryFn: () => listCustomTasks({ cwd: session.cwd }),
@@ -326,13 +332,13 @@ export function TaskRunnerPanel({ session }: TaskRunnerPanelProps) {
   // One fetch per existing script dir. react-query dedupes on key so
   // re-renders don't re-fire.
   const scriptsQ = useQuery({
-    queryKey: ['script-dirs', session.cwd, scriptDirsPresent.join(',')],
+    queryKey: ['script-dirs', workDir, scriptDirsPresent.join(',')],
     queryFn: async () => {
       const out: Record<string, string[]> = {}
       await Promise.all(
         scriptDirsPresent.map(async (d) => {
           try {
-            const list = await listDir(`${session.cwd}/${d}`)
+            const list = await listDir(`${workDir}/${d}`)
             out[d] = list.entries
               .filter((e) => !e.is_dir && isShellScript(e.name))
               .map((e) => e.name)

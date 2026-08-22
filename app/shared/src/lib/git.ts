@@ -28,6 +28,21 @@ export interface GitLog {
   commits: GitCommit[]
 }
 
+/** Cheap repo probe for a path — used by the spawn dialog to decide
+    whether worktree isolation is offerable for the chosen cwd. */
+export interface GitInfo {
+  is_repo: boolean
+  /** True when the path is inside a linked worktree rather than the
+      main checkout — isolation must anchor on the main checkout. */
+  linked_worktree: boolean
+  repo_root?: string
+  branch?: string
+}
+
+export async function getGitInfo(path: string): Promise<GitInfo> {
+  return api<GitInfo>(`/api/v1/git/info?path=${encodeURIComponent(path)}`)
+}
+
 export async function getGitStatus(path: string): Promise<GitStatus> {
   return api<GitStatus>(
     `/api/v1/git/status?path=${encodeURIComponent(path)}`,

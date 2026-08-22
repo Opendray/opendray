@@ -2,6 +2,15 @@ import { api } from './api'
 import { useTheme } from '@/stores/theme'
 import type { CreateSessionRequest, Session } from './types'
 
+/** Where the session's process actually runs: the worktree for
+    isolated sessions, cwd otherwise. Every surface that touches the
+    session's literal files (file browser, git tab, task manifests)
+    must use this; project-identity surfaces (Cortex, memory, vault,
+    database, canvas, grouping) keep using session.cwd. */
+export function sessionWorkDir(s: Pick<Session, 'cwd' | 'work_dir'>): string {
+  return s.work_dir || s.cwd
+}
+
 export async function listSessions(): Promise<Session[]> {
   const res = await api<{ sessions: Session[] }>('/api/v1/sessions')
   return res.sessions ?? []

@@ -104,7 +104,8 @@
           "titleRemoveHistory": "Quitar del historial",
           "titleTerminate": "Terminar y eliminar",
           "titleRemove": "Eliminar",
-          "claudeAccountTitle": "Cuenta de Claude: {label}"
+          "claudeAccountTitle": "Cuenta de Claude: {label}",
+          "worktreeTitle": "Sesión en worktree aislado en la rama {branch}"
         },
         "deleteFailedToast": "Error al eliminar"
       },
@@ -208,7 +209,13 @@
         "submitting": "Creando…",
         "spawnedToast": "Session creada",
         "spawnedDescription": "{provider} · pid {pid}",
-        "pidFallback": "—"
+        "pidFallback": "—",
+        "worktreeIsolation": "Ejecutar en worktree aislado",
+        "worktreeOnHint": "La sesión se ejecuta en un worktree git privado en la rama opendray/<session-id>. Los cambios vuelven por el flujo normal de rama → PR. Los archivos no rastreados (.env, node_modules) no se copian.",
+        "worktreeOffHint": "Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez: cada sesión aislada edita su propia copia.",
+        "worktreeUnavailableNotRepo": "No disponible: el directorio de trabajo no está dentro de un repositorio git.",
+        "worktreeUnavailableLinked": "No disponible: esta ruta es un worktree enlazado; elige el checkout principal.",
+        "worktreeConcurrentWarning": "Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree para que no editen los mismos archivos."
       },
       "accountSwitcher": {
         "tooltip": "Cambiar de cuenta de Claude (reinicia el proceso de la CLI)",
