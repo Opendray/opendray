@@ -779,9 +779,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	// vs --ask-for-approval) fail to spawn.
 	providerArgs := dropOverriddenFlags(p.Args, userArgs)
 	providerArgs = dropConflictingFlags(providerArgs, userArgs, p.Conflicts)
-	args := append([]string(nil), providerArgs...)
-	args = append(args, extraArgs...)
-	args = append(args, userArgs...)
+	args := finalizeSpawnArgs(p.ID, providerArgs, extraArgs, userArgs)
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = sess.Cwd
@@ -1611,10 +1609,28 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 var injectionValueFlags = map[string]bool{
 	"--mcp-config":           true, // claude
 	"--append-system-prompt": true, // claude
+	"--rules":                true, // grok
 }
 var injectionBoolFlags = map[string]bool{
 	"--dangerously-skip-permissions":             true, // claude / antigravity
 	"--dangerously-bypass-approvals-and-sandbox": true, // codex
+}
+
+// finalizeSpawnArgs assembles the final exec arg list: provider-config
+// args, then the Prepare output's injection args, then the caller's raw
+// args. For grok the merged list gets one last CoalesceRulesArgs pass —
+// grok permits --rules at most once per invocation, and the Prepare-level
+// coalesce cannot see userArgs (they are appended after Prepare runs), so
+// a caller-supplied --rules would otherwise reintroduce the duplicate and
+// fail the spawn. The pass is a no-op for well-formed non-grok arg lists.
+func finalizeSpawnArgs(providerID string, providerArgs, extraArgs, userArgs []string) []string {
+	args := append([]string(nil), providerArgs...)
+	args = append(args, extraArgs...)
+	args = append(args, userArgs...)
+	if providerID == "grok" {
+		args = CoalesceRulesArgs(args)
+	}
+	return args
 }
 
 // stripInjectionFlags returns args with the spawn-profile-owned injection
