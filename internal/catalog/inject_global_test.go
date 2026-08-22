@@ -14,10 +14,14 @@ import (
 // no existing per-CLI injector. Grok appends extra system-prompt text via
 // --rules, which it permits at most once per invocation, so the global
 // instruction is delivered as a single --rules arg.
+//
+// Exception: integration-origin spawns. Third-party consumer sessions
+// are isolated and self-managed — the operator's house-style doc must
+// never leak into them, so isIntegration=true skips injection entirely.
 
 func TestInjectGlobalInstruction_Grok(t *testing.T) {
 	out := &session.PrepareOutput{}
-	if err := injectGlobalInstructionFor("grok", t.TempDir(), "GLOBAL_DOC", out); err != nil {
+	if err := injectGlobalInstructionFor("grok", t.TempDir(), "GLOBAL_DOC", false, out); err != nil {
 		t.Fatal(err)
 	}
 	if len(out.Args) != 2 || out.Args[0] != "--rules" || out.Args[1] != "GLOBAL_DOC" {
@@ -27,7 +31,7 @@ func TestInjectGlobalInstruction_Grok(t *testing.T) {
 
 func TestInjectGlobalInstruction_Claude(t *testing.T) {
 	out := &session.PrepareOutput{}
-	if err := injectGlobalInstructionFor("claude", t.TempDir(), "GLOBAL_DOC", out); err != nil {
+	if err := injectGlobalInstructionFor("claude", t.TempDir(), "GLOBAL_DOC", false, out); err != nil {
 		t.Fatal(err)
 	}
 	if len(out.Args) != 2 || out.Args[0] != "--append-system-prompt" || out.Args[1] != "GLOBAL_DOC" {
@@ -38,7 +42,7 @@ func TestInjectGlobalInstruction_Claude(t *testing.T) {
 func TestInjectGlobalInstruction_Codex(t *testing.T) {
 	base := t.TempDir()
 	out := &session.PrepareOutput{Env: map[string]string{}}
-	if err := injectGlobalInstructionFor("codex", base, "GLOBAL_DOC", out); err != nil {
+	if err := injectGlobalInstructionFor("codex", base, "GLOBAL_DOC", false, out); err != nil {
 		t.Fatal(err)
 	}
 	home := out.Env["CODEX_HOME"]
@@ -57,11 +61,36 @@ func TestInjectGlobalInstruction_Codex(t *testing.T) {
 func TestInjectGlobalInstruction_EmptyTextNoop(t *testing.T) {
 	for _, prov := range []string{"claude", "codex", "grok", "opencode", "antigravity"} {
 		out := &session.PrepareOutput{Env: map[string]string{}}
-		if err := injectGlobalInstructionFor(prov, t.TempDir(), "", out); err != nil {
+		if err := injectGlobalInstructionFor(prov, t.TempDir(), "", false, out); err != nil {
 			t.Errorf("%s: empty text should not error: %v", prov, err)
 		}
 		if len(out.Args) != 0 {
 			t.Errorf("%s: empty text should not mutate args; got %+v", prov, out.Args)
+		}
+	}
+}
+
+func TestInjectGlobalInstruction_IntegrationSpawnSkipped(t *testing.T) {
+	for _, prov := range []string{"claude", "codex", "grok", "opencode", "antigravity"} {
+		base := t.TempDir()
+		out := &session.PrepareOutput{Env: map[string]string{}}
+		if err := injectGlobalInstructionFor(prov, base, "GLOBAL_DOC", true, out); err != nil {
+			t.Errorf("%s: integration spawn should not error: %v", prov, err)
+		}
+		if len(out.Args) != 0 {
+			t.Errorf("%s: integration spawn must not receive the global instruction via args; got %+v", prov, out.Args)
+		}
+		if home := out.Env["CODEX_HOME"]; home != "" {
+			t.Errorf("%s: integration spawn must not get a file-surface injection; CODEX_HOME=%q", prov, home)
+		}
+		// antigravity/opencode inject via files under baseDir — none may
+		// be created for an integration spawn.
+		entries, err := os.ReadDir(base)
+		if err != nil {
+			t.Fatalf("%s: read baseDir: %v", prov, err)
+		}
+		if len(entries) != 0 {
+			t.Errorf("%s: integration spawn must not write injection files; baseDir has %d entries", prov, len(entries))
 		}
 	}
 }

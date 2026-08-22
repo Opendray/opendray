@@ -545,9 +545,10 @@ type SessionConfig struct {
 	IdleThreshold string `toml:"idle_threshold" json:"idle_threshold"` // e.g. "30s", "2m"
 	IdleInterval  string `toml:"idle_interval" json:"idle_interval"`   // e.g. "5s"
 	// GlobalInstructionsFile points at a markdown/text file whose
-	// contents opendray injects into every spawn's system prompt across
-	// all providers (claude, codex, antigravity, opencode, grok). Empty
-	// disables it. A shared house style / communication contract.
+	// contents opendray injects into every operator/CLI spawn's system
+	// prompt across all providers (claude, codex, antigravity, opencode,
+	// grok); integration-origin spawns are excluded. Empty disables it.
+	// A shared house style / communication contract.
 	GlobalInstructionsFile string `toml:"global_instructions_file" json:"global_instructions_file"`
 }
 

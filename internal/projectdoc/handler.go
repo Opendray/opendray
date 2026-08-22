@@ -60,6 +60,10 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/blueprint", h.listSections)
 		r.Put("/blueprint/{slug}", h.putSection)
 		r.Delete("/blueprint/{slug}", h.deleteSection)
+		// Deletion-as-signal — a page's recorded operator removals and
+		// the dismiss (unban) action. Static segment, so before {kind}.
+		r.Get("/removals", h.listRemovals)
+		r.Post("/removals/{id}/dismiss", h.dismissRemoval)
 		r.Get("/{kind}", h.getDoc)
 		r.Put("/{kind}", h.putDoc)
 		// Agent-side policy-routed write: direct-write for direct sections
@@ -135,6 +139,27 @@ func (h *Handlers) putSection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, sec)
+}
+
+// listRemovals returns a page's recorded operator deletions (active +
+// banned), newest first — the page-settings UI's "banned lines" list.
+func (h *Handlers) listRemovals(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.svc.ListRemovals(r.Context(),
+		r.URL.Query().Get("cwd"), r.URL.Query().Get("kind"))
+	if err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"removals": rows})
+}
+
+// dismissRemoval unbans / forgets one recorded line.
+func (h *Handlers) dismissRemoval(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.DismissRemoval(r.Context(), chi.URLParam(r, "id")); err != nil {
+		h.respondErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handlers) deleteSection(w http.ResponseWriter, r *http.Request) {
@@ -455,6 +480,11 @@ func (h *Handlers) respondErr(w http.ResponseWriter, err error) {
 	case errors.Is(err, ErrAlreadyDecided):
 		// 409 — request can't be reapplied to current state.
 		writeError(w, http.StatusConflict, err)
+	case errors.Is(err, ErrNotSessionWritable),
+		errors.Is(err, ErrReservedSection):
+		// 403 — the request is well-formed; this page just isn't the
+		// caller's to write.
+		writeError(w, http.StatusForbidden, err)
 	case errors.Is(err, ErrInvalidKind),
 		errors.Is(err, ErrInvalidLogKind),
 		errors.Is(err, ErrInvalidStatus),

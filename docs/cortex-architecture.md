@@ -60,7 +60,17 @@ only what is genuinely cross-layer, and depends one-way on the three:
 table declares each project's section set:
 
 - `(cwd, slug, title, description, position, maintainer_mode
-  ai|human|scanner, prompt_hint, pinned, inject)`
+  ai|human|scanner|session, prompt_hint, pinned, inject)`
+- `maintainer_mode` answers *who keeps this section current*.
+  `session` — global knowledge pages only — hands the pen to the agent
+  doing the work: it writes the page live through the `kb_page_set` MCP
+  tool. It exists because some knowledge never reaches the background
+  drafter's feedstock (the container it just provisioned, the role it
+  just created), so no amount of curation can reconstruct it. Which
+  pages carry the mode is discovered from this table at `tools/list`
+  time, so an install with none never sees the tool and adding one
+  needs no code change. The gateway re-checks this table on every such
+  write, so only a page the operator opened to sessions accepts one.
 - `overview` is the reserved, pinned, undeletable front page
   (inject=false — it restates the others, so it stays out of spawn).
 - kb_* slugs remain fixed global pages under `__global__`, governed by

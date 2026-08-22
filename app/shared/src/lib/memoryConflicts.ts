@@ -43,8 +43,13 @@ export async function listMemoryConflicts(params: {
 export async function decideMemoryConflict(
   id: string,
   action: 'accepted' | 'dismissed',
+  /** Accept AND soft-archive the losing side's fact ('a' | 'b') with a
+   * supersession reason — restorable, and it drops out of feedstock,
+   * search and injection everywhere. Omit for a status-only decision. */
+  archive?: 'a' | 'b',
 ): Promise<void> {
-  await api(`/api/v1/memory/conflicts/${id}/${action}`, { method: 'POST' })
+  const qs = archive ? `?archive=${archive}` : ''
+  await api(`/api/v1/memory/conflicts/${id}/${action}${qs}`, { method: 'POST' })
 }
 
 export async function detectMemoryConflicts(cwd: string): Promise<number> {

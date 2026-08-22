@@ -12,6 +12,7 @@ import 'package:opendray/core/api/memory_workers_api.dart';
 import 'package:opendray/core/api/project_docs_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/cortex/curation_chat_screen.dart';
+import 'package:opendray/features/cortex/proposal_review_screen.dart';
 import 'package:opendray/features/knowledge/force_graph.dart';
 
 // Knowledge tab — read-mostly browser over the M-KG knowledge graph.
@@ -564,7 +565,6 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
   final _editCtrl = TextEditingController();
   bool _editing = false;
   bool _busy = false;
-  bool _showProposal = false;
   AsyncValue<ProjectDoc> _doc = const AsyncValue.loading();
   List<DocProposal> _proposals = const [];
   late String _title = widget.title;
@@ -591,7 +591,6 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
     setState(() {
       _doc = const AsyncValue.loading();
       _editing = false;
-      _showProposal = false;
     });
     try {
       final api = ref.read(projectDocsApiProvider);
@@ -651,6 +650,26 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         SnackBar(content: Text(t.web.knowledge.actionFailed)),
       );
     }
+  }
+
+  // Pushes the full-screen review. The decision is made there and applied
+  // here, so this screen keeps owning the reload and the busy flag.
+  Future<void> _openReview() async {
+    final p = _pending;
+    if (p == null) return;
+    final approve = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => ProposalReviewScreen(
+          pageTitle: widget.title,
+          proposal: p,
+          busy: false,
+          onDecide: ({required approve}) =>
+              Navigator.of(context).pop(approve),
+        ),
+      ),
+    );
+    if (approve == null || !mounted) return;
+    await _decide(approve);
   }
 
   Future<void> _decide(bool approve) async {
@@ -736,7 +755,7 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         title: Text(_title, overflow: TextOverflow.ellipsis),
         actions: _doc.maybeWhen(
           data: (d) {
-            final locked = d.updatedBy == 'operator';
+            final locked = d.updatedBy == 'operator' || d.updatedBy == 'approved';
             if (_editing) {
               return [
                 TextButton(
@@ -776,11 +795,14 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
                     value: _KbAction.regenerate,
                     child: Text(t.web.knowledge.kb.regenerate),
                   ),
-                  if (widget.editable)
-                    PopupMenuItem(
-                      value: _KbAction.settings,
-                      child: Text(t.web.knowledge.kb.pageSettings.button),
-                    ),
+                  // Settings on EVERY page. The classic four used to be
+                  // excluded, which also put who maintains the page and
+                  // whether its writes need approval out of reach; the
+                  // dialog disables only the two genuinely fixed fields.
+                  PopupMenuItem(
+                    value: _KbAction.settings,
+                    child: Text(t.web.knowledge.kb.pageSettings.button),
+                  ),
                 ],
               ),
             ];
@@ -798,7 +820,7 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
         ),
         data: (d) {
           final content = _stripSig(d.content);
-          final locked = d.updatedBy == 'operator';
+          final locked = d.updatedBy == 'operator' || d.updatedBy == 'approved';
           final pending = _pending;
           if (_editing) {
             return Padding(
@@ -861,42 +883,48 @@ class _KbPageScreenState extends ConsumerState<_KbPageScreen> {
                     color: scheme.tertiaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  // A summary and one way in. The diff itself used to sit
+                  // here in a 240px window on this tinted background, with
+                  // approve and reject sharing a row that overflowed on a
+                  // phone — reject was pushed off-screen, leaving Approve
+                  // as the only visible action on something unreadable.
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(t.web.knowledge.kb.proposal.text,
-                          style: const TextStyle(fontSize: 12)),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: scheme.onTertiaryContainer,
+                          )),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          TextButton(
-                            onPressed: () => setState(
-                                () => _showProposal = !_showProposal),
-                            child: Text(_showProposal
-                                ? t.web.knowledge.kb.proposal.hide
-                                : t.web.knowledge.kb.proposal.preview),
-                          ),
+                          if (pending.diff != null) ...[
+                            Text(
+                              t.web.diff.added(count: pending.diff!.added),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              t.web.diff.removed(count: pending.diff!.removed),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: scheme.onTertiaryContainer,
+                              ),
+                            ),
+                          ],
                           const Spacer(),
-                          TextButton(
-                            onPressed: _busy ? null : () => _decide(false),
-                            child: Text(t.web.knowledge.kb.proposal.reject),
-                          ),
-                          FilledButton(
-                            onPressed: _busy ? null : () => _decide(true),
-                            child: Text(t.web.knowledge.kb.proposal.approve),
+                          FilledButton.tonalIcon(
+                            onPressed: _busy ? null : _openReview,
+                            icon: const Icon(Icons.rate_review_outlined,
+                                size: 16),
+                            label: Text(t.web.knowledge.kb.proposal.review),
                           ),
                         ],
                       ),
-                      if (_showProposal)
-                        Container(
-                          constraints: const BoxConstraints(maxHeight: 240),
-                          margin: const EdgeInsets.only(top: 6),
-                          child: SingleChildScrollView(
-                            child: SelectableText(
-                              _stripSig(pending.proposedContent),
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -1124,24 +1152,92 @@ class _KbPageDialog extends ConsumerStatefulWidget {
 class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
   late final BlueprintSection? _section = widget.section;
   bool get _editing => _section != null;
+  // Deletion-as-signal: lines the operator deleted from this page. The
+  // system writes this list; the operator only clears entries.
+  List<DocLineRemoval> _removals = const [];
+  bool _showRecent = false;
   late final _slug = TextEditingController(
     text: _section?.slug.replaceFirst('kb_', '') ?? '',
   );
   late final _title = TextEditingController(text: _section?.title ?? '');
   late final _desc = TextEditingController(text: _section?.description ?? '');
+  // The two steering controls for an AI-maintained page. _guidance says what
+  // the page should be; _exclusions says what it may never contain — the only
+  // negative channel in the pipeline, since every other input is material to
+  // fold in. Edited one-per-line; the gateway trims, de-dupes and caps them.
+  late final _guidance = TextEditingController(text: _section?.promptHint ?? '');
+  late final _exclusions = TextEditingController(
+    text: (_section?.exclusions ?? const []).join('\n'),
+  );
   late String _nature = _section?.nature == 'foundational'
       ? 'foundational'
       : 'emergent';
   late bool _inject = _section?.inject ?? false;
+  // The classic four keep two fixed fields: their titles come from i18n
+  // (editing the stored one changes nothing visible) and their natures are
+  // what make them guardrails. Everything else is the operator's.
+  bool get _classic => _classicSlugs.contains(_section?.slug);
+  static const _classicSlugs = {
+    'kb_infrastructure',
+    'kb_conventions',
+    'kb_lessons',
+    'kb_reusable',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    if (_editing) _loadRemovals();
+  }
+
+  Future<void> _loadRemovals() async {
+    try {
+      final rows = await ref
+          .read(cortexApiProvider)
+          .listDocRemovals('__global__', _section!.slug);
+      rows.sort((a, b) => (a.status == 'banned' ? 0 : 1)
+          .compareTo(b.status == 'banned' ? 0 : 1));
+      if (mounted) setState(() => _removals = rows);
+    } on Object {
+      // Best-effort — the settings dialog still works without the list.
+    }
+  }
+
+  Future<void> _dismissRemoval(String id) async {
+    try {
+      await ref.read(cortexApiProvider).dismissDocRemoval(id);
+      await _loadRemovals();
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t.web.knowledge.actionFailed}: $e')),
+      );
+    }
+  }
+
+  late String _maintainer = _section?.maintainerMode ?? 'ai';
+  // Default new pages to the approval gate: a page that quietly rewrites
+  // itself is the surprising option, not the safe one.
+  late String _writePolicy = _section?.writePolicy ?? 'proposal';
   bool _busy = false;
 
   static final _slugRe = RegExp(r'^kb_[a-z0-9][a-z0-9_]{0,44}$');
+
+  // A foundational or pinned page can't be session-maintained (the gateway
+  // refuses the write), so the option is offered only where it works and a
+  // stale selection falls back rather than saving something inert.
+  bool get _sessionAllowed =>
+      !(_section?.pinned ?? false) && _nature != 'foundational';
+  String get _effectiveMaintainer =>
+      (_maintainer == 'session' && !_sessionAllowed) ? 'ai' : _maintainer;
 
   @override
   void dispose() {
     _slug.dispose();
     _title.dispose();
     _desc.dispose();
+    _guidance.dispose();
+    _exclusions.dispose();
     super.dispose();
   }
 
@@ -1162,12 +1258,17 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               // Preserve fields the config editor doesn't expose so an edit
               // never silently resets them; new pages get sensible defaults.
               position: _section?.position ?? 99,
-              maintainerMode: _section?.maintainerMode ?? 'ai',
-              writePolicy: _section?.writePolicy ?? 'proposal',
-              promptHint: _section?.promptHint ?? '',
+              maintainerMode: _effectiveMaintainer,
+              writePolicy: _writePolicy,
+              promptHint: _guidance.text.trim(),
               pinned: _section?.pinned ?? false,
               inject: _inject,
               nature: _nature,
+              exclusions: _exclusions.text
+                  .split('\n')
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList(growable: false),
             ),
           );
       if (!mounted) return;
@@ -1229,8 +1330,15 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
             const SizedBox(height: 8),
             TextField(
               controller: _title,
+              // A classic page's displayed title comes from i18n, so editing
+              // the stored one would change nothing the operator can see.
+              readOnly: _classic,
+              enabled: !_classic,
               decoration: InputDecoration(
                 hintText: t.web.knowledge.kb.newPage.titlePlaceholder,
+                helperText:
+                    _classic ? t.web.knowledge.kb.pageSettings.fixedTitle : null,
+                helperMaxLines: 3,
                 isDense: true,
               ),
               onChanged: (_) => setState(() {}),
@@ -1246,7 +1354,13 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _nature,
-              decoration: const InputDecoration(isDense: true),
+              decoration: InputDecoration(
+                isDense: true,
+                helperText: _classic
+                    ? t.web.knowledge.kb.pageSettings.fixedNature
+                    : null,
+                helperMaxLines: 3,
+              ),
               items: [
                 DropdownMenuItem(
                     value: 'foundational',
@@ -1255,7 +1369,11 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
                     value: 'emergent',
                     child: Text(t.web.knowledge.kb.emergent)),
               ],
-              onChanged: (v) => setState(() => _nature = v ?? 'emergent'),
+              // Nature is what makes a foundational page a guardrail;
+              // flipping it changes how every session reads the page.
+              onChanged: _classic
+                  ? null
+                  : (v) => setState(() => _nature = v ?? 'emergent'),
             ),
             const SizedBox(height: 4),
             CheckboxListTile(
@@ -1268,6 +1386,149 @@ class _KbPageDialogState extends ConsumerState<_KbPageDialog> {
               subtitle: Text(t.web.knowledge.kb.newPage.injectHint,
                   style: Theme.of(context).textTheme.bodySmall),
             ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: _effectiveMaintainer,
+              decoration: const InputDecoration(isDense: true),
+              items: [
+                DropdownMenuItem(
+                    value: 'ai', child: Text(t.web.knowledge.kb.maintainer.ai)),
+                DropdownMenuItem(
+                    value: 'human',
+                    child: Text(t.web.knowledge.kb.maintainer.human)),
+                DropdownMenuItem(
+                    value: 'session',
+                    enabled: _sessionAllowed,
+                    child: Text(t.web.knowledge.kb.maintainer.session)),
+              ],
+              onChanged: (v) => setState(() => _maintainer = v ?? 'ai'),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _sessionAllowed
+                  ? t.web.knowledge.kb.maintainer.hint
+                  : t.web.knowledge.kb.maintainer.sessionUnavailable,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            // Approval gate. Only meaningful when something automated
+            // writes the page — an operator-maintained page has no AI
+            // write to gate.
+            if (_maintainer != 'human') ...[
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _writePolicy,
+                decoration: const InputDecoration(isDense: true),
+                items: [
+                  DropdownMenuItem(
+                      value: 'proposal',
+                      child: Text(t.web.knowledge.kb.writePolicy.proposal)),
+                  DropdownMenuItem(
+                      value: 'direct',
+                      child: Text(t.web.knowledge.kb.writePolicy.direct)),
+                ],
+                onChanged: (v) =>
+                    setState(() => _writePolicy = v ?? 'proposal'),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.writePolicy.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              // Steering. Only an AI-maintained page has a draft to steer,
+              // so both controls sit under the same gate.
+              const SizedBox(height: 8),
+              TextField(
+                controller: _guidance,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t.web.knowledge.kb.guidance.placeholder,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.guidance.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _exclusions,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: t.web.knowledge.kb.exclusions.placeholder,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                t.web.knowledge.kb.exclusions.hint,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (_editing && _removals.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                // Banned lines (the protection) stay visible; once-deleted
+                // lines in their 30-day watch window collapse behind a
+                // count toggle so the ledger can't dominate the dialog.
+                Row(
+                  children: [
+                    Text(
+                      t.web.knowledge.kb.removals.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(width: 8),
+                    if (_removals.any((r) => r.status != 'banned'))
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _showRecent = !_showRecent),
+                        child: Text(t.web.knowledge.kb.removals.recent(
+                          n: _removals
+                              .where((r) => r.status != 'banned')
+                              .length,
+                        )),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                for (final r in _removals.where((r) =>
+                    r.status == 'banned' || _showRecent))
+                  Row(
+                    children: [
+                      if (r.status == 'banned')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Text(
+                            t.web.knowledge.kb.removals.banned,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.error,
+                                ),
+                          ),
+                        ),
+                      Expanded(
+                        child: Text(
+                          r.lineText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => _dismissRemoval(r.id),
+                        child: Text(t.web.knowledge.kb.removals.dismiss),
+                      ),
+                    ],
+                  ),
+                Text(
+                  t.web.knowledge.kb.removals.hint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
           ],
         ),
       ),

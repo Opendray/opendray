@@ -183,6 +183,7 @@ class _TranslationsWebZh extends TranslationsWebEn {
 	@override late final _TranslationsWebCortexZh cortex = _TranslationsWebCortexZh._(_root);
 	@override late final _TranslationsWebDatabaseZh database = _TranslationsWebDatabaseZh._(_root);
 	@override late final _TranslationsWebRoundTableZh roundTable = _TranslationsWebRoundTableZh._(_root);
+	@override late final _TranslationsWebDiffZh diff = _TranslationsWebDiffZh._(_root);
 }
 
 // Path: more
@@ -870,6 +871,7 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String get newButton => '新建';
 	@override String get newNoteDialogTitle => '新建笔记';
 	@override String get searchHint => '搜索整个仓库…';
+	@override late final _TranslationsNotesPageBrowseZh browse = _TranslationsNotesPageBrowseZh._(_root);
 	@override String get up => '上级';
 	@override String get copyPath => '复制路径';
 	@override String get open => '打开';
@@ -890,11 +892,16 @@ class _TranslationsNotesPageZh extends TranslationsNotesPageEn {
 	@override String emptyFolder({required Object path}) => '文件夹「${path}」为空。';
 	@override String get validatePath => '必须填写路径';
 	@override String get validatePathDots => '路径不能包含「..」';
-	@override String get pathHelper => '缺失时自动追加 .md。';
+	@override String get pathHelper => '除非名字已经以 .md 或 .html 结尾，否则会自动补 .md。';
 	@override late final _TranslationsNotesPageEditorZh editor = _TranslationsNotesPageEditorZh._(_root);
 	@override late final _TranslationsNotesPageHtmlZh html = _TranslationsNotesPageHtmlZh._(_root);
 	@override late final _TranslationsNotesPageFlattenZh flatten = _TranslationsNotesPageFlattenZh._(_root);
 	@override late final _TranslationsNotesPageRenameZh rename = _TranslationsNotesPageRenameZh._(_root);
+	@override late final _TranslationsNotesPageTagsZh tags = _TranslationsNotesPageTagsZh._(_root);
+	@override late final _TranslationsNotesPageBacklinksZh backlinks = _TranslationsNotesPageBacklinksZh._(_root);
+	@override late final _TranslationsNotesPageOutlineZh outline = _TranslationsNotesPageOutlineZh._(_root);
+	@override late final _TranslationsNotesPageTodayZh today = _TranslationsNotesPageTodayZh._(_root);
+	@override late final _TranslationsNotesPageWikiLinkZh wikiLink = _TranslationsNotesPageWikiLinkZh._(_root);
 }
 
 // Path: vaultSync
@@ -1221,10 +1228,10 @@ class _TranslationsWebConflictsZh extends TranslationsWebConflictsEn {
 	@override String get dismiss => '驳回';
 	@override String get accepted => '已采纳 — 别忘了实际修正';
 	@override String get dismissed => '已驳回';
-	@override String get deletedFact => '已删除 fact 并采纳冲突';
+	@override String get deletedFact => '该事实已归档（可恢复），冲突已接受';
 	@override String get quickActions => '快速修复：';
-	@override String get deleteFact => '删除 fact';
-	@override String deleteFactSide({required Object side, required Object ref}) => '删除 ${side}: ${ref}';
+	@override String get deleteFact => '归档事实';
+	@override String deleteFactSide({required Object side, required Object ref}) => '归档 ${side}：${ref}';
 	@override late final _TranslationsWebConflictsConfirmDeleteZh confirmDelete = _TranslationsWebConflictsConfirmDeleteZh._(_root);
 	@override late final _TranslationsWebConflictsOpenLayerZh openLayer = _TranslationsWebConflictsOpenLayerZh._(_root);
 	@override late final _TranslationsWebConflictsSeverityZh severity = _TranslationsWebConflictsSeverityZh._(_root);
@@ -1807,6 +1814,20 @@ class _TranslationsWebRoundTableZh extends TranslationsWebRoundTableEn {
 	@override late final _TranslationsWebRoundTablePlanZh plan = _TranslationsWebRoundTablePlanZh._(_root);
 }
 
+// Path: web.diff
+class _TranslationsWebDiffZh extends TranslationsWebDiffEn {
+	_TranslationsWebDiffZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get noChanges => '没有改动 —— 提案内容与当前页面完全一致。';
+	@override String added({required Object count}) => '+${count}';
+	@override String removed({required Object count}) => '−${count}';
+	@override String get changedLines => '行变更';
+	@override String collapsed({required Object count}) => '⋯ 未改动 ${count} 行 ⋯';
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityZh extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2365,15 +2386,15 @@ class _TranslationsProjectConflictsZh extends TranslationsProjectConflictsEn {
 	@override String detected({required Object count}) => '新发现 ${count} 条冲突';
 	@override String get accept => '采纳';
 	@override String get dismiss => '驳回';
-	@override String deleteFact({required Object side}) => '删除 fact ${side}';
-	@override String deleteConfirmTitle({required Object side}) => '确认删除 fact ${side}?';
-	@override String get deleteConfirmBody => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。';
-	@override String deleteWillDelete({required Object side}) => '将删除（${side} 侧）：';
+	@override String get deleteFact => '归档事实';
+	@override String deleteConfirmTitle({required Object side}) => '归档事实 ${side}？';
+	@override String get deleteConfirmBody => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。';
+	@override String deleteWillDelete({required Object side}) => '将归档（${side} 侧）：';
 	@override String deleteWillKeep({required Object side}) => '将保留（${side} 侧）：';
 	@override String deleteNonFactOther({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）';
 	@override String get deleteLoading => '加载中…';
-	@override String deleteFactLabel({required Object side}) => '删除 ${side}';
-	@override String get deletedFact => '已删除 fact 并采纳冲突';
+	@override String deleteFactLabel({required Object side}) => '归档 ${side}';
+	@override String get deletedFact => '该事实已归档（可恢复），冲突已接受';
 	@override String get openPlanEditor => '打开计划编辑器';
 	@override String get openGoalEditor => '打开目标编辑器';
 	@override late final _TranslationsProjectConflictsSeverityZh severity = _TranslationsProjectConflictsSeverityZh._(_root);
@@ -2783,6 +2804,17 @@ class _TranslationsChannelsKindsZh extends TranslationsChannelsKindsEn {
 	@override late final _TranslationsChannelsKindsWecomZh wecom = _TranslationsChannelsKindsWecomZh._(_root);
 }
 
+// Path: notesPage.browse
+class _TranslationsNotesPageBrowseZh extends TranslationsNotesPageBrowseEn {
+	_TranslationsNotesPageBrowseZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tree => '目录';
+	@override String get tags => '标签';
+}
+
 // Path: notesPage.editor
 class _TranslationsNotesPageEditorZh extends TranslationsNotesPageEditorEn {
 	_TranslationsNotesPageEditorZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -2848,6 +2880,68 @@ class _TranslationsNotesPageRenameZh extends TranslationsNotesPageRenameEn {
 	@override String get helper => '文档库相对路径。目录会自动创建。';
 	@override String doneSnack({required Object count}) => '已重命名，${count} 个链接已改写。';
 	@override String get doneWithWarning => '已重命名，但链接没有全部更新';
+}
+
+// Path: notesPage.tags
+class _TranslationsNotesPageTagsZh extends TranslationsNotesPageTagsEn {
+	_TranslationsNotesPageTagsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => '文档库里还没有标签。在笔记里写 #像这样 就会出现。';
+	@override String noMatches({required Object query}) => '没有标签匹配“${query}”。';
+	@override String get filteredBy => '已按标签筛选';
+	@override String get clear => '清除标签筛选';
+	@override String noNotes({required Object tag}) => '已经没有笔记带 #${tag} 了。';
+}
+
+// Path: notesPage.backlinks
+class _TranslationsNotesPageBacklinksZh extends TranslationsNotesPageBacklinksEn {
+	_TranslationsNotesPageBacklinksZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '反向链接';
+	@override String get loading => '正在查找链接…';
+	@override String get empty => '还没有笔记链接到这里。';
+	@override String failed({required Object error}) => '反向链接加载失败：${error}';
+}
+
+// Path: notesPage.outline
+class _TranslationsNotesPageOutlineZh extends TranslationsNotesPageOutlineEn {
+	_TranslationsNotesPageOutlineZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => '大纲';
+	@override String get title => '大纲';
+	@override String get empty => '这篇文档没有标题。';
+	@override String get jumpedToSource => '预览关闭了脚本、无法滚动，所以已切到源码视图。';
+}
+
+// Path: notesPage.today
+class _TranslationsNotesPageTodayZh extends TranslationsNotesPageTodayEn {
+	_TranslationsNotesPageTodayZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => '打开今天的日记';
+}
+
+// Path: notesPage.wikiLink
+class _TranslationsNotesPageWikiLinkZh extends TranslationsNotesPageWikiLinkEn {
+	_TranslationsNotesPageWikiLinkZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get suggestions => '链接到…';
+	@override String createNew({required Object name}) => '新建“${name}”';
+	@override String get noMatches => '没有匹配的笔记 —— 继续输入即可新建。';
 }
 
 // Path: vaultSync.every
@@ -3532,16 +3626,16 @@ class _TranslationsWebConflictsConfirmDeleteZh extends TranslationsWebConflictsC
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object side}) => '确认删除 fact ${side}?';
-	@override String get description => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。';
-	@override String targetLabel({required Object side}) => '将删除（${side} 侧）：';
+	@override String title({required Object side}) => '归档事实 ${side}？';
+	@override String get description => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。';
+	@override String targetLabel({required Object side}) => '将归档（${side} 侧）：';
 	@override String keepLabel({required Object side}) => '将保留（${side} 侧）：';
 	@override String nonFactOther({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看完整内容）';
 	@override String get evidenceLabel => 'Detector 给出的证据：';
 	@override String get loading => '加载 fact 内容中…';
 	@override String get loadError => '无法加载 fact 内容，请在 Memory 页面手动查看。';
 	@override String get cancel => '取消';
-	@override String confirm({required Object side}) => '确认删除 ${side}';
+	@override String confirm({required Object side}) => '归档 ${side}';
 }
 
 // Path: web.conflicts.openLayer
@@ -4950,11 +5044,11 @@ class _TranslationsWebPluginsCustomTasksZh extends TranslationsWebPluginsCustomT
 
 	// Translations
 	@override String get title => '自定义任务';
-	@override String get description => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。';
+	@override String get description => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式，按项目分组。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。';
 	@override String get addTask => '添加任务';
 	@override String get empty => '尚无自定义任务。';
 	@override late final _TranslationsWebPluginsCustomTasksColumnsZh columns = _TranslationsWebPluginsCustomTasksColumnsZh._(_root);
-	@override String get globalScope => '全局';
+	@override String get globalGroup => '全局';
 	@override String deleteConfirm({required Object name}) => '删除自定义任务 "${name}"?';
 	@override String get removedToast => '任务已移除';
 	@override String get deleteFailedToast => '删除失败';
@@ -5994,6 +6088,7 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override String get emergentHint => '从过往工作蒸馏的教训与可复用功能——参考性引导。';
 	@override String get bindingBadge => '强约束 · 必须遵守';
 	@override String get referenceBadge => '参考';
+	@override late final _TranslationsWebKnowledgeKbMaintainerZh maintainer = _TranslationsWebKnowledgeKbMaintainerZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbProposalZh proposal = _TranslationsWebKnowledgeKbProposalZh._(_root);
 	@override String get discuss => '与 AI 讨论';
 	@override String get discussHint => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写';
@@ -6006,6 +6101,10 @@ class _TranslationsWebKnowledgeKbZh extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbNewPageZh newPage = _TranslationsWebKnowledgeKbNewPageZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbPageSettingsZh pageSettings = _TranslationsWebKnowledgeKbPageSettingsZh._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianZh librarian = _TranslationsWebKnowledgeKbLibrarianZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbWritePolicyZh writePolicy = _TranslationsWebKnowledgeKbWritePolicyZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbGuidanceZh guidance = _TranslationsWebKnowledgeKbGuidanceZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbExclusionsZh exclusions = _TranslationsWebKnowledgeKbExclusionsZh._(_root);
+	@override late final _TranslationsWebKnowledgeKbRemovalsZh removals = _TranslationsWebKnowledgeKbRemovalsZh._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -6126,6 +6225,13 @@ class _TranslationsWebCortexChatZh extends TranslationsWebCortexChatEn {
 	@override String get closeHint => '关闭此对话';
 	@override String get revisionApplied => '文档已更新';
 	@override String get revisionProposed => '已生成提案——请到收件箱审阅';
+	@override String get rulesSuggestionTitle => '规则建议';
+	@override String get rulesGuidance => '指引';
+	@override String get rulesExclusionsAdd => '新增排除主题';
+	@override String get rulesExclusionsRemove => '移除排除主题';
+	@override String get rulesApply => '应用';
+	@override String get rulesApplied => '规则已应用';
+	@override String get rulesApplyFailed => '规则建议应用失败';
 	@override String get modelLabel => '模型：';
 	@override String get modelHint => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。';
 	@override String get modelGlobalDefault => '默认（全局）';
@@ -8219,7 +8325,10 @@ class _TranslationsWebNotesVaultSyncAutoSyncZh extends TranslationsWebNotesVault
 	@override String get enabledTooltipNoRemote => '请先配置 remote 才能启用自动同步';
 	@override String get noRemoteHint => '尚无 remote — push/pull 将被跳过。';
 	@override String get commitEvery => '提交间隔';
-	@override String get commitEveryExamples => '示例：<1>30s</1>、<3>10m</3>、<5>2h</5>。最小 30s。';
+	@override late final _TranslationsWebNotesVaultSyncAutoSyncEveryZh every = _TranslationsWebNotesVaultSyncAutoSyncEveryZh._(_root);
+	@override String get intervalCustom => '自定义…';
+	@override String get intervalInvalid => '不是有效的时长。请填写数字加单位，例如 30s、10m、2h。';
+	@override String intervalTooShort({required Object min}) => '同步循环最快也只会 ${min} 触发一次。';
 	@override String get pullEvery => '拉取间隔';
 	@override String get pullEveryHint => '仅在启用 Pull 时使用。';
 	@override String get pushAfterCommit => '提交后 push';
@@ -8425,7 +8534,6 @@ class _TranslationsWebPluginsCustomTasksColumnsZh extends TranslationsWebPlugins
 	// Translations
 	@override String get name => '名称';
 	@override String get command => '命令';
-	@override String get scope => 'Scope';
 }
 
 // Path: web.plugins.customTasks.dialog
@@ -9653,6 +9761,20 @@ class _TranslationsWebKnowledgeKbKindsZh extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_reusable => '可复用功能';
 }
 
+// Path: web.knowledge.kb.maintainer
+class _TranslationsWebKnowledgeKbMaintainerZh extends TranslationsWebKnowledgeKbMaintainerEn {
+	_TranslationsWebKnowledgeKbMaintainerZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get ai => '由 opendray 后台整理维护';
+	@override String get human => '由我维护 —— 自动化只能提交提案';
+	@override String get session => '由干活的 agent 维护';
+	@override String get hint => '谁负责让这一页保持最新。选「由干活的 agent 维护」后，每个会话都会拿到一个直接写这一页的工具 —— 适合只有当场干活的 agent 才知道的记录，比如它刚创建的容器。后台整理则是从积累的记忆里重新起草整页。';
+	@override String get sessionUnavailable => '谁负责让这一页保持最新。基础页和内置页不能交给 agent 维护 —— 它们是强约束规则，不能让会话在干活途中改写。';
+}
+
 // Path: web.knowledge.kb.proposal
 class _TranslationsWebKnowledgeKbProposalZh extends TranslationsWebKnowledgeKbProposalEn {
 	_TranslationsWebKnowledgeKbProposalZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -9667,6 +9789,7 @@ class _TranslationsWebKnowledgeKbProposalZh extends TranslationsWebKnowledgeKbPr
 	@override String get reject => '拒绝';
 	@override String get approved => '更新已批准';
 	@override String get rejected => '提议已拒绝';
+	@override String get review => '审阅';
 }
 
 // Path: web.knowledge.kb.newPage
@@ -9701,6 +9824,8 @@ class _TranslationsWebKnowledgeKbPageSettingsZh extends TranslationsWebKnowledge
 	@override String get hint => '编辑此页面的标题、摘要、性质与注入开关';
 	@override String get save => '保存设置';
 	@override String get savedToast => '页面设置已更新';
+	@override String get fixedTitle => '这一页的标题由界面语言决定，不能在这里修改。';
+	@override String get fixedNature => '内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -9718,6 +9843,54 @@ class _TranslationsWebKnowledgeKbLibrarianZh extends TranslationsWebKnowledgeKbL
 	@override String get provider => 'Cloud agent';
 	@override String get account => 'Claude 账号';
 	@override String get launch => '启动';
+}
+
+// Path: web.knowledge.kb.writePolicy
+class _TranslationsWebKnowledgeKbWritePolicyZh extends TranslationsWebKnowledgeKbWritePolicyEn {
+	_TranslationsWebKnowledgeKbWritePolicyZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get proposal => '改动前需要我批准';
+	@override String get direct => '自动更新，无需批准';
+	@override String get hint => '自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。';
+}
+
+// Path: web.knowledge.kb.guidance
+class _TranslationsWebKnowledgeKbGuidanceZh extends TranslationsWebKnowledgeKbGuidanceEn {
+	_TranslationsWebKnowledgeKbGuidanceZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => '这一页应该是什么样——范围、结构、详略程度';
+	@override String get hint => '决定本页写什么、怎么写，优先于起草器自身的默认风格。适合写「保持精简」「只写规则」，以及「不要把我删减过的章节重新展开」。';
+}
+
+// Path: web.knowledge.kb.exclusions
+class _TranslationsWebKnowledgeKbExclusionsZh extends TranslationsWebKnowledgeKbExclusionsEn {
+	_TranslationsWebKnowledgeKbExclusionsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => '每行一个主题';
+	@override String get hint => '本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。';
+}
+
+// Path: web.knowledge.kb.removals
+class _TranslationsWebKnowledgeKbRemovalsZh extends TranslationsWebKnowledgeKbRemovalsEn {
+	_TranslationsWebKnowledgeKbRemovalsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => '你删除过的行';
+	@override String get banned => '已封禁';
+	@override String get dismiss => '忘记';
+	@override String get hint => '你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。';
+	@override String recent({required Object n}) => '最近删除（${n}）';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -9899,6 +10072,24 @@ class _TranslationsWebNotesVaultSyncConflictKindsZh extends TranslationsWebNotes
 	@override String get merge => 'merge';
 	@override String get cherryPick => 'cherry-pick';
 	@override String get operation => 'operation';
+}
+
+// Path: web.notes.vaultSync.autoSync.every
+class _TranslationsWebNotesVaultSyncAutoSyncEveryZh extends TranslationsWebNotesVaultSyncAutoSyncEveryEn {
+	_TranslationsWebNotesVaultSyncAutoSyncEveryZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get k30s => '每 30 秒';
+	@override String get k1m => '每分钟';
+	@override String get k5m => '每 5 分钟';
+	@override String get k10m => '每 10 分钟';
+	@override String get k15m => '每 15 分钟';
+	@override String get k30m => '每 30 分钟';
+	@override String get k1h => '每小时';
+	@override String get k6h => '每 6 小时';
+	@override String get k24h => '每 24 小时';
 }
 
 // Path: web.serverSettings.host.modes.ac
@@ -10396,20 +10587,20 @@ extension on TranslationsZh {
 			'web.conflicts.dismiss' => '驳回',
 			'web.conflicts.accepted' => '已采纳 — 别忘了实际修正',
 			'web.conflicts.dismissed' => '已驳回',
-			'web.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			'web.conflicts.deletedFact' => '该事实已归档（可恢复），冲突已接受',
 			'web.conflicts.quickActions' => '快速修复：',
-			'web.conflicts.deleteFact' => '删除 fact',
-			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => '删除 ${side}: ${ref}',
-			'web.conflicts.confirmDelete.title' => ({required Object side}) => '确认删除 fact ${side}?',
-			'web.conflicts.confirmDelete.description' => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。',
-			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => '将删除（${side} 侧）：',
+			'web.conflicts.deleteFact' => '归档事实',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => '归档 ${side}：${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => '归档事实 ${side}？',
+			'web.conflicts.confirmDelete.description' => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => '将归档（${side} 侧）：',
 			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => '将保留（${side} 侧）：',
 			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看完整内容）',
 			'web.conflicts.confirmDelete.evidenceLabel' => 'Detector 给出的证据：',
 			'web.conflicts.confirmDelete.loading' => '加载 fact 内容中…',
 			'web.conflicts.confirmDelete.loadError' => '无法加载 fact 内容，请在 Memory 页面手动查看。',
 			'web.conflicts.confirmDelete.cancel' => '取消',
-			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => '确认删除 ${side}',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => '归档 ${side}',
 			'web.conflicts.openLayer.plan' => '打开计划编辑器',
 			'web.conflicts.openLayer.goal' => '打开目标编辑器',
 			'web.conflicts.severity.low' => '低',
@@ -10954,7 +11145,18 @@ extension on TranslationsZh {
 			'web.notes.vaultSync.autoSync.enabledTooltipNoRemote' => '请先配置 remote 才能启用自动同步',
 			'web.notes.vaultSync.autoSync.noRemoteHint' => '尚无 remote — push/pull 将被跳过。',
 			'web.notes.vaultSync.autoSync.commitEvery' => '提交间隔',
-			'web.notes.vaultSync.autoSync.commitEveryExamples' => '示例：<1>30s</1>、<3>10m</3>、<5>2h</5>。最小 30s。',
+			'web.notes.vaultSync.autoSync.every.k30s' => '每 30 秒',
+			'web.notes.vaultSync.autoSync.every.k1m' => '每分钟',
+			'web.notes.vaultSync.autoSync.every.k5m' => '每 5 分钟',
+			'web.notes.vaultSync.autoSync.every.k10m' => '每 10 分钟',
+			'web.notes.vaultSync.autoSync.every.k15m' => '每 15 分钟',
+			'web.notes.vaultSync.autoSync.every.k30m' => '每 30 分钟',
+			'web.notes.vaultSync.autoSync.every.k1h' => '每小时',
+			'web.notes.vaultSync.autoSync.every.k6h' => '每 6 小时',
+			'web.notes.vaultSync.autoSync.every.k24h' => '每 24 小时',
+			'web.notes.vaultSync.autoSync.intervalCustom' => '自定义…',
+			'web.notes.vaultSync.autoSync.intervalInvalid' => '不是有效的时长。请填写数字加单位，例如 30s、10m、2h。',
+			'web.notes.vaultSync.autoSync.intervalTooShort' => ({required Object min}) => '同步循环最快也只会 ${min} 触发一次。',
 			'web.notes.vaultSync.autoSync.pullEvery' => '拉取间隔',
 			'web.notes.vaultSync.autoSync.pullEveryHint' => '仅在启用 Pull 时使用。',
 			'web.notes.vaultSync.autoSync.pushAfterCommit' => '提交后 push',
@@ -11017,6 +11219,8 @@ extension on TranslationsZh {
 			'web.activity.filters.status3' => '3xx 重定向',
 			'web.activity.filters.status4' => '4xx 客户端错误',
 			'web.activity.filters.status5' => '5xx 服务端错误',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.callsCount_one' => ({required Object count}) => '${count} 次调用',
 			'web.activity.callsCount_other' => ({required Object count}) => '${count} 次调用',
 			'web.activity.loading' => '加载中…',
@@ -11028,8 +11232,6 @@ extension on TranslationsZh {
 			'web.activity.table.status' => '状态',
 			'web.activity.table.duration' => '耗时',
 			'web.activity.table.inboundAria' => '入站',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.outboundAria' => '出站',
 			'web.activity.empty.filtered' => '没有调用符合当前筛选条件。',
 			'web.activity.empty.title' => '尚未记录任何 API 调用',
@@ -11481,13 +11683,12 @@ extension on TranslationsZh {
 			'web.plugins.skills.uploadFailedToast' => '上传 skill 失败',
 			'web.plugins.skills.uploadInvalidTypeToast' => '仅支持拖放 SKILL.md 文件',
 			'web.plugins.customTasks.title' => '自定义任务',
-			'web.plugins.customTasks.description' => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。',
+			'web.plugins.customTasks.description' => '在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式，按项目分组。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。',
 			'web.plugins.customTasks.addTask' => '添加任务',
 			'web.plugins.customTasks.empty' => '尚无自定义任务。',
 			'web.plugins.customTasks.columns.name' => '名称',
 			'web.plugins.customTasks.columns.command' => '命令',
-			'web.plugins.customTasks.columns.scope' => 'Scope',
-			'web.plugins.customTasks.globalScope' => '全局',
+			'web.plugins.customTasks.globalGroup' => '全局',
 			'web.plugins.customTasks.deleteConfirm' => ({required Object name}) => '删除自定义任务 "${name}"?',
 			'web.plugins.customTasks.removedToast' => '任务已移除',
 			'web.plugins.customTasks.deleteFailedToast' => '删除失败',
@@ -11532,6 +11733,8 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.displayNameLabel' => '显示名称（可选）',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.newTokenLabel' => '新 token（留空表示保留）',
 			'web.plugins.gitHosts.dialog.tokenPlaceholder' => 'ghp_… / gho_… / glpat-…',
 			'web.plugins.gitHosts.dialog.tokenPlaceholderEdit' => '…',
@@ -11542,8 +11745,6 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.addFailedToast' => '添加失败',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => '更新失败',
 			'web.plugins.gitHosts.dialog.ownerLabel' => '所有者(可选)',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.ownerPlaceholder' => 'my-org',
 			'web.plugins.gitHosts.dialog.ownerHintHostWide' => '留空表示全主机凭据:该主机上没有专属条目的仓库都会用它。',
 			'web.plugins.gitHosts.dialog.ownerHintScoped' => ({required Object host, required Object owner}) => '仅用于 ${host}/${owner}/… —— 该主机上的其他所有者会回退到全主机条目。当一个细粒度令牌只授权给某个账号或组织时,填这里。',
@@ -12046,6 +12247,8 @@ extension on TranslationsZh {
 			'web.serverSettings.memoryRuntimeBanner' => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。',
 			'web.serverSettings.memoryRuntimeBannerButton' => '打开 Cortex 设置',
 			'web.serverSettings.host.intro' => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.host.platformNote' => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。',
 			'web.serverSettings.host.modes.ac.label' => '插电时保持唤醒',
 			'web.serverSettings.host.modes.ac.desc' => '插电状态下机器不会空闲休眠,手机与网页随时秒连;使用电池时照常休眠。屏幕仍会正常熄灭。',
@@ -12056,8 +12259,6 @@ extension on TranslationsZh {
 			'web.serverSettings.host.modes.on_demand.desc' => '网关空闲时机器正常入睡;收到请求时被唤醒,opendray 在服务期间保持唤醒,结束后让它继续休眠。',
 			'web.serverSettings.host.modes.on_demand.caveat' => '需要开启"网络访问唤醒"(sudo pmset -a womp 1),有线以太网最可靠。休眠后的第一个请求会有几秒延迟,偶尔需要重试一次。',
 			'web.serverSettings.host.modes.off.label' => '完全不干预电源',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.off.desc' => 'opendray 不对机器电源做任何操作。',
 			'web.serverSettings.host.modes.off.caveat' => '主机一旦休眠即无法连接,除非另有程序让它保持唤醒。',
 			'web.serverSettings.layout.title' => '实际解析到',
@@ -12403,6 +12604,11 @@ extension on TranslationsZh {
 			'web.knowledge.kb.emergentHint' => '从过往工作蒸馏的教训与可复用功能——参考性引导。',
 			'web.knowledge.kb.bindingBadge' => '强约束 · 必须遵守',
 			'web.knowledge.kb.referenceBadge' => '参考',
+			'web.knowledge.kb.maintainer.ai' => '由 opendray 后台整理维护',
+			'web.knowledge.kb.maintainer.human' => '由我维护 —— 自动化只能提交提案',
+			'web.knowledge.kb.maintainer.session' => '由干活的 agent 维护',
+			'web.knowledge.kb.maintainer.hint' => '谁负责让这一页保持最新。选「由干活的 agent 维护」后，每个会话都会拿到一个直接写这一页的工具 —— 适合只有当场干活的 agent 才知道的记录，比如它刚创建的容器。后台整理则是从积累的记忆里重新起草整页。',
+			'web.knowledge.kb.maintainer.sessionUnavailable' => '谁负责让这一页保持最新。基础页和内置页不能交给 agent 维护 —— 它们是强约束规则，不能让会话在干活途中改写。',
 			'web.knowledge.kb.proposal.text' => 'AI 提议更新此页(出现了与之冲突的新证据)。',
 			'web.knowledge.kb.proposal.preview' => '预览',
 			'web.knowledge.kb.proposal.hide' => '收起',
@@ -12410,6 +12616,7 @@ extension on TranslationsZh {
 			'web.knowledge.kb.proposal.reject' => '拒绝',
 			'web.knowledge.kb.proposal.approved' => '更新已批准',
 			'web.knowledge.kb.proposal.rejected' => '提议已拒绝',
+			'web.knowledge.kb.proposal.review' => '审阅',
 			'web.knowledge.kb.discuss' => '与 AI 讨论',
 			'web.knowledge.kb.discussHint' => '与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写',
 			'web.knowledge.kb.onDemand' => '按需',
@@ -12434,6 +12641,8 @@ extension on TranslationsZh {
 			'web.knowledge.kb.pageSettings.hint' => '编辑此页面的标题、摘要、性质与注入开关',
 			'web.knowledge.kb.pageSettings.save' => '保存设置',
 			'web.knowledge.kb.pageSettings.savedToast' => '页面设置已更新',
+			'web.knowledge.kb.pageSettings.fixedTitle' => '这一页的标题由界面语言决定，不能在这里修改。',
+			'web.knowledge.kb.pageSettings.fixedNature' => '内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。',
 			'web.knowledge.kb.librarian.button' => '用 AI 管理知识库',
 			'web.knowledge.kb.librarian.hint' => '启动一个跨页面的 AI 图书管理员,可整理、创建、编辑任意知识页',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB 图书管理员会话已启动',
@@ -12442,6 +12651,18 @@ extension on TranslationsZh {
 			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
 			'web.knowledge.kb.librarian.account' => 'Claude 账号',
 			'web.knowledge.kb.librarian.launch' => '启动',
+			'web.knowledge.kb.writePolicy.proposal' => '改动前需要我批准',
+			'web.knowledge.kb.writePolicy.direct' => '自动更新，无需批准',
+			'web.knowledge.kb.writePolicy.hint' => '自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。',
+			'web.knowledge.kb.guidance.placeholder' => '这一页应该是什么样——范围、结构、详略程度',
+			'web.knowledge.kb.guidance.hint' => '决定本页写什么、怎么写，优先于起草器自身的默认风格。适合写「保持精简」「只写规则」，以及「不要把我删减过的章节重新展开」。',
+			'web.knowledge.kb.exclusions.placeholder' => '每行一个主题',
+			'web.knowledge.kb.exclusions.hint' => '本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。',
+			'web.knowledge.kb.removals.title' => '你删除过的行',
+			'web.knowledge.kb.removals.banned' => '已封禁',
+			'web.knowledge.kb.removals.dismiss' => '忘记',
+			'web.knowledge.kb.removals.hint' => '你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。',
+			'web.knowledge.kb.removals.recent' => ({required Object n}) => '最近删除（${n}）',
 			'web.knowledge.kinds.all' => '全部',
 			'web.knowledge.kinds.entity' => '实体',
 			'web.knowledge.kinds.fact' => '事实',
@@ -12540,6 +12761,15 @@ extension on TranslationsZh {
 			'web.cortex.chat.closeHint' => '关闭此对话',
 			'web.cortex.chat.revisionApplied' => '文档已更新',
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
+			_ => null,
+		} ?? switch (path) {
+			'web.cortex.chat.rulesSuggestionTitle' => '规则建议',
+			'web.cortex.chat.rulesGuidance' => '指引',
+			'web.cortex.chat.rulesExclusionsAdd' => '新增排除主题',
+			'web.cortex.chat.rulesExclusionsRemove' => '移除排除主题',
+			'web.cortex.chat.rulesApply' => '应用',
+			'web.cortex.chat.rulesApplied' => '规则已应用',
+			'web.cortex.chat.rulesApplyFailed' => '规则建议应用失败',
 			'web.cortex.chat.modelLabel' => '模型：',
 			'web.cortex.chat.modelHint' => '为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。',
 			'web.cortex.chat.modelGlobalDefault' => '默认（全局）',
@@ -12570,8 +12800,6 @@ extension on TranslationsZh {
 			'web.cortex.blueprint.reserved' => '保留',
 			'web.cortex.blueprint.deleteNote' => '删除章节只是隐藏，内容不会丢——重新添加同名标识即可恢复。',
 			'web.cortex.blueprint.cancel' => '取消',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.apply' => '应用蓝图',
 			'web.cortex.blueprint.applyFailed' => '应用失败',
 			'web.cortex.blueprint.appliedToast' => '蓝图已应用',
@@ -12769,6 +12997,11 @@ extension on TranslationsZh {
 			'web.roundTable.plan.accountDefault' => '默认',
 			'web.roundTable.plan.bypass' => '跳过权限 (YOLO)',
 			'web.roundTable.plan.bypassHint' => '用 bypass 标志启动会话,不再逐个请求批准。',
+			'web.diff.noChanges' => '没有改动 —— 提案内容与当前页面完全一致。',
+			'web.diff.added' => ({required Object count}) => '+${count}',
+			'web.diff.removed' => ({required Object count}) => '−${count}',
+			'web.diff.changedLines' => '行变更',
+			'web.diff.collapsed' => ({required Object count}) => '⋯ 未改动 ${count} 行 ⋯',
 			'more.title' => '更多',
 			'more.identity.signedInAs' => '登录账号',
 			'more.identity.server' => '服务器',
@@ -13042,6 +13275,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.cancelTooltip' => '取消',
 			'sessions.inspector.notes.newDocTooltip' => '新建文档',
 			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
@@ -13084,8 +13319,6 @@ extension on TranslationsZh {
 			'sessions.inspector.canvas.emptyBlurb' => '让 agent 设计一个界面、流程图、思维导图或关系图 —— 它会渲染到这里,你可以钉点标注。',
 			'sessions.inspector.canvas.viewportPhone' => '手机宽度',
 			'sessions.inspector.canvas.viewportTablet' => '平板宽度',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.viewportDesktop' => '电脑宽度',
 			'sessions.inspector.canvas.openFull' => '全屏打开',
 			'sessions.inspector.canvas.confirm' => '确认',
@@ -13485,15 +13718,15 @@ extension on TranslationsZh {
 			'project.conflicts.detected' => ({required Object count}) => '新发现 ${count} 条冲突',
 			'project.conflicts.accept' => '采纳',
 			'project.conflicts.dismiss' => '驳回',
-			'project.conflicts.deleteFact' => ({required Object side}) => '删除 fact ${side}',
-			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '确认删除 fact ${side}?',
-			'project.conflicts.deleteConfirmBody' => '永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。',
-			'project.conflicts.deleteWillDelete' => ({required Object side}) => '将删除（${side} 侧）：',
+			'project.conflicts.deleteFact' => '归档事实',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '归档事实 ${side}？',
+			'project.conflicts.deleteConfirmBody' => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => '将归档（${side} 侧）：',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => '将保留（${side} 侧）：',
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '（${layer} 条目 — 请打开对应 tab 查看）',
 			'project.conflicts.deleteLoading' => '加载中…',
-			'project.conflicts.deleteFactLabel' => ({required Object side}) => '删除 ${side}',
-			'project.conflicts.deletedFact' => '已删除 fact 并采纳冲突',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => '归档 ${side}',
+			'project.conflicts.deletedFact' => '该事实已归档（可恢复），冲突已接受',
 			'project.conflicts.openPlanEditor' => '打开计划编辑器',
 			'project.conflicts.openGoalEditor' => '打开目标编辑器',
 			'project.conflicts.severity.low' => '低',
@@ -13556,6 +13789,8 @@ extension on TranslationsZh {
 			'backups.runFailedApi' => ({required Object error}) => '运行失败：${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => '运行失败：${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => '备份成功（${bytes}）。',
+			_ => null,
+		} ?? switch (path) {
 			'backups.rowFailedSnack' => ({required Object error}) => '备份失败：${error}',
 			'backups.unknownError' => '未知错误',
 			'backups.detailTitle' => '备份详情',
@@ -13598,8 +13833,6 @@ extension on TranslationsZh {
 			'backups.emptyNoBackups.body' => '点击「立即运行」生成一次新快照，或打开「计划」设置定期运行。',
 			'backups.restartToActivate' => '重启 opendray 以激活备份',
 			'backups.passphraseSaved' => '你的密语已保存。网关仅在启动时加载，因此更改需重启后才生效。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.keyFileLabel' => '密钥文件',
 			'backups.configuredViaLabel' => '配置方式',
 			'backups.wizard.title' => '设置备份',
@@ -14024,6 +14257,8 @@ extension on TranslationsZh {
 			'notesPage.newButton' => '新建',
 			'notesPage.newNoteDialogTitle' => '新建笔记',
 			'notesPage.searchHint' => '搜索整个仓库…',
+			'notesPage.browse.tree' => '目录',
+			'notesPage.browse.tags' => '标签',
 			'notesPage.up' => '上级',
 			'notesPage.copyPath' => '复制路径',
 			'notesPage.open' => '打开',
@@ -14044,7 +14279,7 @@ extension on TranslationsZh {
 			'notesPage.emptyFolder' => ({required Object path}) => '文件夹「${path}」为空。',
 			'notesPage.validatePath' => '必须填写路径',
 			'notesPage.validatePathDots' => '路径不能包含「..」',
-			'notesPage.pathHelper' => '缺失时自动追加 .md。',
+			'notesPage.pathHelper' => '除非名字已经以 .md 或 .html 结尾，否则会自动补 .md。',
 			'notesPage.editor.markdownHint' => 'Markdown;文件名以 .html 结尾则写 HTML…',
 			'notesPage.editor.saving' => '保存中…',
 			'notesPage.editor.autosave' => '已保存',
@@ -14068,6 +14303,8 @@ extension on TranslationsZh {
 			'notesPage.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
 			'notesPage.flatten.nothingToMove' => '没有需要移动的文件。',
 			'notesPage.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.flatten.convert' => ({required Object count}) => '转换 ${count} 个',
 			'notesPage.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
 			'notesPage.flatten.restartHint' => '完成后请重启网关。',
@@ -14076,6 +14313,23 @@ extension on TranslationsZh {
 			'notesPage.rename.helper' => '文档库相对路径。目录会自动创建。',
 			'notesPage.rename.doneSnack' => ({required Object count}) => '已重命名，${count} 个链接已改写。',
 			'notesPage.rename.doneWithWarning' => '已重命名，但链接没有全部更新',
+			'notesPage.tags.empty' => '文档库里还没有标签。在笔记里写 #像这样 就会出现。',
+			'notesPage.tags.noMatches' => ({required Object query}) => '没有标签匹配“${query}”。',
+			'notesPage.tags.filteredBy' => '已按标签筛选',
+			'notesPage.tags.clear' => '清除标签筛选',
+			'notesPage.tags.noNotes' => ({required Object tag}) => '已经没有笔记带 #${tag} 了。',
+			'notesPage.backlinks.title' => '反向链接',
+			'notesPage.backlinks.loading' => '正在查找链接…',
+			'notesPage.backlinks.empty' => '还没有笔记链接到这里。',
+			'notesPage.backlinks.failed' => ({required Object error}) => '反向链接加载失败：${error}',
+			'notesPage.outline.action' => '大纲',
+			'notesPage.outline.title' => '大纲',
+			'notesPage.outline.empty' => '这篇文档没有标题。',
+			'notesPage.outline.jumpedToSource' => '预览关闭了脚本、无法滚动，所以已切到源码视图。',
+			'notesPage.today.tooltip' => '打开今天的日记',
+			'notesPage.wikiLink.suggestions' => '链接到…',
+			'notesPage.wikiLink.createNew' => ({required Object name}) => '新建“${name}”',
+			'notesPage.wikiLink.noMatches' => '没有匹配的笔记 —— 继续输入即可新建。',
 			'vaultSync.title' => 'Vault 同步',
 			'vaultSync.refresh' => '刷新',
 			'vaultSync.statusTitle' => '状态',
@@ -14112,8 +14366,6 @@ extension on TranslationsZh {
 			'vaultSync.never' => '从未',
 			'vaultSync.every.sec30' => '每 30 秒',
 			'vaultSync.every.min1' => '每分钟',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.every.min5' => '每 5 分钟',
 			'vaultSync.every.min10' => '每 10 分钟',
 			'vaultSync.every.min15' => '每 15 分钟',

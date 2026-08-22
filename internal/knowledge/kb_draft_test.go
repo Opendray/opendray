@@ -257,3 +257,118 @@ func TestDraftOrPropose_OverviewUserTurnUnchanged(t *testing.T) {
 		t.Fatalf("zero-opts user turn must equal feedstock verbatim; got:\n%s", llm.lastUser)
 	}
 }
+
+// --- write_policy: the sweep must respect the operator's approval gate ---
+
+// kbOptsPolicy is what the KB drafter passes once write_policy is honoured.
+var kbOptsPolicy = draftOpts{
+	honorMaintainerMode: true, preserveCurrent: true,
+	applyPromptHint: true, honorWritePolicy: true,
+}
+
+// The gap this closes: an AI-maintained page nobody had hand-edited was
+// overwritten in place even though its blueprint said write_policy=proposal.
+// That is why hand edits to a swept page never survived — the operator's
+// approval gate was configured but never consulted.
+func TestDraftOrPropose_UnlockedProposalPolicyProposes(t *testing.T) {
+	docs := &fakeDocSink{doc: KBDoc{
+		Content:     "old\n<!-- kb-sig:0000000000000000 -->\n",
+		HumanLocked: false, // never hand-edited
+		Exists:      true,
+		WritePolicy: "proposal",
+	}}
+	props := &fakeProposalSink{}
+	res := run(&fakeLLM{body: "fresh body"}, docs, props, kbOptsPolicy)
+
+	if res.Status != "proposed" {
+		t.Fatalf("status = %q, want proposed — a proposal-gated page must not be overwritten", res.Status)
+	}
+	if docs.putCalls != 0 {
+		t.Errorf("proposal-gated page was overwritten (put calls = %d)", docs.putCalls)
+	}
+	if props.proposeCalls != 1 {
+		t.Errorf("propose calls = %d, want 1", props.proposeCalls)
+	}
+}
+
+// "direct" keeps the historical behaviour: the sweep updates the page in
+// place with no approval round-trip.
+func TestDraftOrPropose_UnlockedDirectPolicyWrites(t *testing.T) {
+	docs := &fakeDocSink{doc: KBDoc{
+		Content: "old\n<!-- kb-sig:0000000000000000 -->\n", Exists: true,
+		WritePolicy: "direct",
+	}}
+	props := &fakeProposalSink{}
+	res := run(&fakeLLM{body: "fresh body"}, docs, props, kbOptsPolicy)
+
+	if res.Status != "written" {
+		t.Fatalf("status = %q, want written", res.Status)
+	}
+	if docs.putCalls != 1 {
+		t.Errorf("put calls = %d, want 1", docs.putCalls)
+	}
+	if props.proposeCalls != 0 {
+		t.Errorf("a direct page must not file a proposal (propose calls = %d)", props.proposeCalls)
+	}
+}
+
+// The flag is opt-in: the Overview drafter shares this path and must keep
+// writing in place regardless of the section's write_policy.
+func TestDraftOrPropose_WritePolicyIgnoredWhenFlagOff(t *testing.T) {
+	docs := &fakeDocSink{doc: KBDoc{
+		Content: "old\n<!-- kb-sig:0000000000000000 -->\n", Exists: true,
+		WritePolicy: "proposal",
+	}}
+	props := &fakeProposalSink{}
+	res := run(&fakeLLM{body: "fresh body"}, docs, props, kbOpts) // honorWritePolicy off
+
+	if res.Status != "written" {
+		t.Fatalf("status = %q, want written when the flag is off", res.Status)
+	}
+	if props.proposeCalls != 0 {
+		t.Errorf("propose calls = %d, want 0", props.proposeCalls)
+	}
+}
+
+// The anti-nagging guards must apply to policy-gated pages too, or every
+// sweep would re-file the same draft.
+func TestDraftOrPropose_PolicyGatedRespectsPendingAndRejected(t *testing.T) {
+	base := KBDoc{
+		Content: "old\n<!-- kb-sig:0000000000000000 -->\n", Exists: true,
+		WritePolicy: "proposal",
+	}
+
+	docs := &fakeDocSink{doc: base}
+	res := run(&fakeLLM{body: "x"}, docs, &fakeProposalSink{pending: true}, kbOptsPolicy)
+	if res.Status != "skipped-pending" {
+		t.Errorf("status = %q, want skipped-pending", res.Status)
+	}
+
+	docs = &fakeDocSink{doc: base}
+	props := &fakeProposalSink{rejected: []string{kbSig(testFeed)}}
+	res = run(&fakeLLM{body: "x"}, docs, props, kbOptsPolicy)
+	if res.Status != "skipped-rejected" {
+		t.Errorf("status = %q, want skipped-rejected", res.Status)
+	}
+	if docs.putCalls != 0 {
+		t.Errorf("a rejected draft must not fall through to an overwrite (put calls = %d)", docs.putCalls)
+	}
+}
+
+// With no proposal sink wired, a proposal-gated page is skipped rather than
+// overwritten — the gate fails closed.
+func TestDraftOrPropose_PolicyGatedWithoutProposalSinkSkips(t *testing.T) {
+	docs := &fakeDocSink{doc: KBDoc{
+		Content: "old\n<!-- kb-sig:0000000000000000 -->\n", Exists: true,
+		WritePolicy: "proposal",
+	}}
+	res := draftOrPropose(context.Background(), &fakeLLM{body: "x"}, docs, nil,
+		discardLog(), testCwd, testKind, "SYS", testFeed, kbOptsPolicy)
+
+	if docs.putCalls != 0 {
+		t.Errorf("no proposal sink must mean no write, got put calls = %d", docs.putCalls)
+	}
+	if !strings.HasPrefix(res.Status, "skipped") {
+		t.Errorf("status = %q, want a skipped-* status", res.Status)
+	}
+}
