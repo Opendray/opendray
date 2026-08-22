@@ -144,7 +144,21 @@ const (
 	AuthorSummarizer Author = "summarizer"
 	AuthorManual     Author = "manual"
 	AuthorScanner    Author = "scanner" // M16 — project scanner
+	// AuthorApproved marks a doc whose content is an AI draft the operator
+	// APPROVED — sanctioned, but not hand-written. It locks exactly like
+	// AuthorOperator (see LocksDoc); what it fixes is the provenance:
+	// stamping approvals as 'operator' made AI text indistinguishable from
+	// hand edits, which both misled the UI badge and would poison
+	// deletion-as-signal mining (which must learn only from lines a human
+	// personally deleted, not from diffs between two AI drafts).
+	AuthorApproved Author = "approved"
 )
+
+// LocksDoc reports whether a doc author human-locks the page against
+// direct AI overwrite. Approval locks like a hand edit — the operator
+// engaged with the page, so future drift must come back as a proposal —
+// but the two remain distinguishable for provenance and for mining.
+func LocksDoc(a Author) bool { return a == AuthorOperator || a == AuthorApproved }
 
 // Doc represents one row from project_docs — the live state of a
 // goal/plan document for a single project.
@@ -172,6 +186,13 @@ type Proposal struct {
 	DecidedAt         *time.Time `json:"decided_at,omitempty"`
 	PriorContent      string     `json:"prior_content,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
+
+	// Diff is the line-level change from PriorContent to ProposedContent,
+	// attached on the review paths so a client renders what changed instead
+	// of asking the operator to compare two full documents by eye. Nil on
+	// paths that don't serve a review (e.g. the proposal returned when one
+	// is filed).
+	Diff *DocDiff `json:"diff,omitempty"`
 }
 
 // LogEntry represents one row from session_logs.
@@ -370,6 +391,31 @@ func (s *Service) PutDoc(ctx context.Context, cwd string, kind Kind, content str
 	if author == "" {
 		author = AuthorOperator
 	}
+	// Global KB pages get two extra passes against the previous body.
+	//
+	// Signature carry: the clients hide the drafter's kb-sig marker while
+	// editing, so every operator save arrives without one; losing it
+	// disables the sweep's dirty check and the page gets redrafted every
+	// cycle — see CarryDraftSig.
+	//
+	// Removal mining: an OPERATOR save (specifically — not 'approved',
+	// which is the diff between two AI drafts, and not 'agent') records
+	// which lines the human deleted, feeding deletion-as-signal. Mining is
+	// best-effort: it must never fail the save it observes.
+	if cwd == GlobalCwd && IsGlobalKBKind(kind) {
+		if prev, err := s.GetDoc(ctx, cwd, kind); err == nil {
+			if author == AuthorOperator {
+				if n, merr := s.recordRemovals(ctx, cwd, kind, prev.Content, content); merr != nil {
+					s.log.Warn("projectdoc: removal mining failed", "cwd", cwd, "kind", kind, "err", merr)
+				} else if n > 0 {
+					s.log.Info("projectdoc: operator removals recorded", "cwd", cwd, "kind", kind, "lines", n)
+				}
+			}
+			if !strings.Contains(content, draftSigMarker) {
+				content = CarryDraftSig(prev.Content, content)
+			}
+		}
+	}
 	id := newID("pd_")
 	// Clear the embedding on a content change so a stale vector never
 	// lingers: embedDocBestEffort repopulates it synchronously below, and
@@ -448,17 +494,32 @@ func (s *Service) SetDocByPolicy(ctx context.Context, cwd string, kind Kind, con
 		return SetOutcome{}, ErrEmptyCwd
 	}
 
-	policy := "proposal"
-	if sections, err := s.ListSections(ctx, cwd); err == nil {
-		for _, sec := range sections {
-			if sec.Slug == string(kind) {
-				policy = normalizeWritePolicy(sec.WritePolicy)
-				break
-			}
-		}
-	} else {
+	sections, listErr := s.ListSections(ctx, cwd)
+	if listErr != nil {
 		s.log.Warn("projectdoc: set policy lookup failed — using proposal gate",
-			"cwd", cwd, "kind", kind, "err", err)
+			"cwd", cwd, "kind", kind, "err", listErr)
+	}
+
+	// Global knowledge pages are shared across every project, so an
+	// agent-side write has to be authorised page-by-page: only a
+	// session-maintained page accepts one. Per-project sections keep
+	// their existing behaviour (unknown → safe proposal gate).
+	if cwd == GlobalCwd {
+		if listErr != nil {
+			return SetOutcome{}, fmt.Errorf("%w: blueprint unavailable: %w",
+				ErrNotSessionWritable, listErr)
+		}
+		if err := globalKBWriteGuard(sections, kind); err != nil {
+			return SetOutcome{}, err
+		}
+	}
+
+	policy := "proposal"
+	for _, sec := range sections {
+		if sec.Slug == string(kind) {
+			policy = normalizeWritePolicy(sec.WritePolicy)
+			break
+		}
 	}
 
 	if policy == "direct" {
@@ -467,7 +528,7 @@ func (s *Service) SetDocByPolicy(ctx context.Context, cwd string, kind Kind, con
 		// read error → fall through to a proposal rather than risk clobbering.
 		locked := true
 		if cur, err := s.GetDoc(ctx, cwd, kind); err == nil {
-			locked = cur.UpdatedBy == AuthorOperator
+			locked = LocksDoc(cur.UpdatedBy)
 		} else if errors.Is(err, ErrNotFound) {
 			locked = false // no doc yet — free to seed it directly
 		}
@@ -521,7 +582,40 @@ func (s *Service) ListPendingProposals(ctx context.Context, cwd string) ([]Propo
 		}
 		out = append(out, p)
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	s.attachDiffs(ctx, out)
+	return out, nil
+}
+
+// attachDiffs fills each proposal's review diff against the LIVE document.
+// Done here rather than in each client so web and mobile show the same
+// review; this is the operator's approval queue — a handful of rows — so
+// computing it eagerly costs less than a round-trip per proposal.
+//
+// Live bodies are fetched once per (cwd, kind): a queue commonly holds
+// several proposals for the same page.
+func (s *Service) attachDiffs(ctx context.Context, proposals []Proposal) {
+	live := make(map[string]string, len(proposals))
+	for i := range proposals {
+		p := &proposals[i]
+		key := p.Cwd + "\x00" + string(p.Kind)
+		body, cached := live[key]
+		if !cached {
+			// A missing doc is not an error here: the proposal may be
+			// creating the page, which correctly diffs as all additions.
+			if d, err := s.GetDoc(ctx, p.Cwd, p.Kind); err == nil {
+				body = d.Content
+			} else if !errors.Is(err, ErrNotFound) {
+				s.log.Warn("projectdoc: diff baseline unavailable — showing proposal as all additions",
+					"cwd", p.Cwd, "kind", p.Kind, "err", err)
+			}
+			live[key] = body
+		}
+		d := DiffBaseline(body, *p)
+		p.Diff = &d
+	}
 }
 
 // RejectedProposalContents returns the proposed_content of every REJECTED
@@ -590,18 +684,20 @@ func (s *Service) ApproveProposal(ctx context.Context, id string) (Doc, error) {
 		`SELECT content FROM project_docs WHERE cwd=$1 AND kind=$2`,
 		p.Cwd, string(p.Kind)).Scan(&prior)
 
-	// Approving is an operator decision, so the resulting doc is
-	// operator-authored — this PRESERVES the human-lock (updated_by=operator).
-	// Stamping 'agent' here would silently un-lock the page: the next time the
-	// feedstock diverged, the drafter would overwrite it directly instead of
-	// proposing, making the lock a one-shot that any approval throws away.
+	// Approving is an operator decision, so the resulting doc stays LOCKED
+	// (LocksDoc treats 'approved' like 'operator') — stamping 'agent' here
+	// would make the lock a one-shot any approval throws away. But it is
+	// stamped 'approved', not 'operator': the content is an AI draft the
+	// operator sanctioned, not text they wrote, and deletion-as-signal
+	// mining must never read the diff between two AI drafts as a set of
+	// human deletions.
 	newDocID := newID("pd_")
 	docRow := tx.QueryRow(ctx, `
 		INSERT INTO project_docs (id, cwd, kind, content, updated_by)
-		VALUES ($1, $2, $3, $4, 'operator')
+		VALUES ($1, $2, $3, $4, 'approved')
 		ON CONFLICT (cwd, kind) DO UPDATE
 		   SET content      = EXCLUDED.content,
-		       updated_by   = 'operator',
+		       updated_by   = 'approved',
 		       updated_at   = NOW(),
 		       embedding    = NULL,
 		       embedder     = NULL,
@@ -1252,22 +1348,7 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		b.WriteString("\n")
 	}
 
-	b.WriteString("### Knowledge index (cross-project)\n\n")
-	for _, sec := range kbSections {
-		if sec.Nature == "foundational" && sec.Inject {
-			continue // already injected in full above
-		}
-		authority := "reference"
-		if sec.Nature == "foundational" {
-			authority = "binding"
-		}
-		fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, authority)
-		if desc := strings.TrimSpace(sec.Description); desc != "" {
-			b.WriteString(" — " + desc)
-		}
-		b.WriteString("\n")
-	}
-	b.WriteString("\n")
+	b.WriteString(renderKnowledgeIndex(kbSections))
 
 	b.WriteString("The headings above are NOT loaded — they are a MAP. Fetch on demand via the " +
 		"opendray-memory MCP tools. **Before any work that touches how our system works — " +
@@ -1291,6 +1372,47 @@ func (s *Service) renderLeanSpawn(ctx context.Context, cwd string) (string, erro
 		"`project_goal_set` and medium-term `project_plan_set`, do **not** silently overwrite " +
 		"— those file a proposal the operator approves first.\n")
 	return b.String(), nil
+}
+
+// renderKnowledgeIndex lists the global knowledge pages an agent can fetch
+// on demand, and marks the ones this session is expected to keep current.
+//
+// The mark matters: the injected foundational rules tell agents where to
+// record what they learn, and without it an agent reads an instruction to
+// write a page its tool surface never offered — which it can only report
+// as a missing capability. The index and the MCP tool list are derived
+// from the same blueprint metadata so they cannot disagree.
+func renderKnowledgeIndex(kbSections []Section) string {
+	var b strings.Builder
+	b.WriteString("### Knowledge index (cross-project)\n\n")
+	writable := 0
+	for _, sec := range kbSections {
+		if sec.Nature == "foundational" && sec.Inject {
+			continue // already injected in full above
+		}
+		authority := "reference"
+		if sec.Nature == "foundational" {
+			authority = "binding"
+		}
+		fmt.Fprintf(&b, "- **%s** (`%s`, %s)", sec.Title, sec.Slug, authority)
+		if desc := strings.TrimSpace(sec.Description); desc != "" {
+			b.WriteString(" — " + desc)
+		}
+		if SessionWritable(sec) {
+			writable++
+			b.WriteString(" **[you maintain this page — write it with `kb_page_set`]**")
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("\n")
+	if writable > 0 {
+		b.WriteString("The page(s) marked above are yours to keep current: when work " +
+			"produces a durable cross-project fact that belongs on one, `doc_read` it and " +
+			"write the updated body back with `kb_page_set`. Every other knowledge page is " +
+			"maintained by the operator or by opendray's background curation — record what " +
+			"you learn about those with `memory_store` instead.\n\n")
+	}
+	return b.String()
 }
 
 // globalKBDoc fetches a global Knowledge page for spawn injection. Empty on
@@ -1337,7 +1459,7 @@ func (s *Service) foundationalRules(ctx context.Context, kbSections []Section) s
 			b.WriteString("\n\n")
 		}
 		b.WriteString(body)
-		if d.UpdatedBy != AuthorOperator {
+		if !LocksDoc(d.UpdatedBy) {
 			b.WriteString("\n_(AI-drafted — verify before relying on it)_")
 		}
 	}

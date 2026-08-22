@@ -32,16 +32,24 @@ import {
   listBlueprintSections,
   putBlueprintSection,
   deleteBlueprintSection,
+  listDocRemovals,
+  dismissDocRemoval,
+  canBeSessionMaintained,
   GLOBAL_CWD,
   type BlueprintSection,
+  type DocLineRemoval,
   type DocKind,
   type DocProposal,
+  type MaintainerMode,
+  type WritePolicy,
 } from '@/lib/projectDocs'
 import { CurationChat } from '@/components/cortex/CurationChat'
+import { ProposalDiff } from '@/components/cortex/ProposalDiff'
 import { SlideOverAside } from '@/components/SlideOverAside'
 import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
 import { Switch } from '@/components/ui/switch'
 import { Loader2, Plus, Sparkles } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -82,6 +90,74 @@ function TabBtn({
     >
       {children}
     </button>
+  )
+}
+
+// RemovalsList renders deletion-as-signal records: banned lines (the
+// protection — always visible, with unban) and, collapsed behind a count
+// toggle, the once-deleted lines still inside their 30-day watch window.
+// Collapsing matters: this list is written by the system on every save,
+// and an always-open ledger would dominate the dialog within weeks.
+function RemovalsList({
+  removals,
+  busy,
+  onDismiss,
+}: {
+  removals: DocLineRemoval[]
+  busy: boolean
+  onDismiss: (id: string) => void
+}) {
+  const { t } = useTranslation()
+  const [showRecent, setShowRecent] = useState(false)
+  const banned = removals.filter((r) => r.status === 'banned')
+  const recent = removals.filter((r) => r.status !== 'banned')
+
+  const row = (r: DocLineRemoval) => (
+    <li key={r.id} className="flex items-center gap-2 text-xs">
+      {r.status === 'banned' && (
+        <Badge variant="danger">{t('web.knowledge.kb.removals.banned')}</Badge>
+      )}
+      <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono">
+        {r.line_text}
+      </span>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 px-1.5 text-[11px]"
+        disabled={busy}
+        onClick={() => onDismiss(r.id)}
+      >
+        {t('web.knowledge.kb.removals.dismiss')}
+      </Button>
+    </li>
+  )
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-medium">
+          {t('web.knowledge.kb.removals.title')}
+        </p>
+        {recent.length > 0 && (
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
+            onClick={() => setShowRecent((v) => !v)}
+          >
+            {t('web.knowledge.kb.removals.recent', { n: recent.length })}
+          </button>
+        )}
+      </div>
+      {(banned.length > 0 || showRecent) && (
+        <ul className="max-h-40 space-y-1 overflow-y-auto">
+          {banned.map(row)}
+          {showRecent && recent.map(row)}
+        </ul>
+      )}
+      <p className="text-muted-foreground text-[11px]">
+        {t('web.knowledge.kb.removals.hint')}
+      </p>
+    </div>
   )
 }
 
@@ -228,6 +304,52 @@ function PageSettingsDialog({
     section?.nature === 'foundational' ? 'foundational' : 'emergent',
   )
   const [inject, setInject] = useState(() => section?.inject ?? false)
+  const [maintainer, setMaintainer] = useState<MaintainerMode>(
+    () => section?.maintainer_mode ?? 'ai',
+  )
+  // Default new pages to the approval gate: a page that quietly rewrites
+  // itself is the surprising option, not the safe one.
+  const [writePolicy, setWritePolicy] = useState<WritePolicy>(
+    () => section?.write_policy ?? 'proposal',
+  )
+  // The two steering controls for an AI-maintained page. `guidance` says what
+  // the page should be; `exclusions` says what it may never contain — the
+  // only negative channel in the pipeline, since every other input is
+  // material to fold in. Exclusions are edited as one-per-line text and
+  // normalised on save (the backend trims, de-dupes and caps them anyway).
+  const [guidance, setGuidance] = useState(() => section?.prompt_hint ?? '')
+  const [exclusions, setExclusions] = useState(() =>
+    (section?.exclusions ?? []).join('\n'),
+  )
+  // Deletion-as-signal: lines the operator deleted from this page. Read-only
+  // record plus the unban action — the system writes this list, the operator
+  // only clears entries.
+  const removals = useQuery({
+    queryKey: ['kb-removals', section?.slug],
+    queryFn: () => listDocRemovals(GLOBAL_CWD, section!.slug),
+    enabled: editing,
+  })
+  const dismissLine = useMutation({
+    mutationFn: (id: string) => dismissDocRemoval(id),
+    onSuccess: () => removals.refetch(),
+    onError: () => toast.error(t('web.knowledge.actionFailed')),
+  })
+
+  // The classic four keep two fixed fields: their titles come from i18n
+  // (editing the stored one changes nothing visible) and their natures are
+  // what make them guardrails. Everything else — who maintains the page,
+  // whether writes need approval, the description that drives retrieval,
+  // the inject flag — is the operator's to change.
+  const classic = !!section && CLASSIC_KB_KINDS.has(section.slug)
+
+  // A foundational or pinned page can't be session-maintained (the backend
+  // refuses the write), so fall back rather than leave a dead selection.
+  const sessionAllowed = canBeSessionMaintained({
+    pinned: section?.pinned ?? false,
+    nature,
+  })
+  const effectiveMaintainer: MaintainerMode =
+    maintainer === 'session' && !sessionAllowed ? 'ai' : maintainer
 
   const fullSlug = editing ? section.slug : 'kb_' + slug.trim()
   const valid =
@@ -237,19 +359,23 @@ function PageSettingsDialog({
     mutationFn: () =>
       putBlueprintSection({
         // Preserve everything the config editor doesn't expose (position,
-        // maintainer_mode, write_policy, prompt_hint, pinned) so an edit
-        // never silently resets them; new pages get sensible defaults.
+        // pinned) so an edit never silently resets them; new pages get
+        // sensible defaults.
         cwd: GLOBAL_CWD,
         slug: fullSlug,
         title: title.trim(),
         description: description.trim(),
         position: section?.position ?? 99,
-        maintainer_mode: section?.maintainer_mode ?? 'ai',
-        write_policy: section?.write_policy,
-        prompt_hint: section?.prompt_hint ?? '',
+        maintainer_mode: effectiveMaintainer,
+        write_policy: writePolicy,
+        prompt_hint: guidance.trim(),
         pinned: section?.pinned ?? false,
         inject,
         nature,
+        exclusions: exclusions
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
       }),
     onSuccess: (sec) => {
       toast.success(
@@ -267,7 +393,10 @@ function PageSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* This dialog carries far more form than the default max-w-md was
+          made for; wide + two-column halves its height so the whole thing
+          fits a normal viewport instead of living behind a scrollbar. */}
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {editing
@@ -293,10 +422,14 @@ function PageSettingsDialog({
             />
           </div>
           <Input
-            value={title}
+            value={classic ? t(`web.knowledge.kb.kinds.${section.slug}`) : title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('web.knowledge.kb.newPage.titlePlaceholder')}
             className="h-8 text-sm"
+            // A classic page's displayed title comes from i18n, so editing
+            // the stored one would change nothing the operator can see.
+            disabled={classic}
+            title={classic ? t('web.knowledge.kb.pageSettings.fixedTitle') : undefined}
           />
           <Input
             value={description}
@@ -308,8 +441,14 @@ function PageSettingsDialog({
             <Select
               value={nature}
               onValueChange={(v) => setNature(v as 'foundational' | 'emergent')}
+              // Nature is what makes a foundational page a guardrail;
+              // flipping it silently changes how every session reads it.
+              disabled={classic}
             >
-              <SelectTrigger className="h-8 w-44 text-sm">
+              <SelectTrigger
+                className="h-8 w-44 text-sm"
+                title={classic ? t('web.knowledge.kb.pageSettings.fixedNature') : undefined}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -333,6 +472,98 @@ function PageSettingsDialog({
           <p className="text-muted-foreground text-[11px]">
             {t('web.knowledge.kb.newPage.injectHint')}
           </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Select
+              value={effectiveMaintainer}
+              onValueChange={(v) => setMaintainer(v as MaintainerMode)}
+            >
+              <SelectTrigger className="h-8 w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ai">
+                  {t('web.knowledge.kb.maintainer.ai')}
+                </SelectItem>
+                <SelectItem value="human">
+                  {t('web.knowledge.kb.maintainer.human')}
+                </SelectItem>
+                <SelectItem value="session" disabled={!sessionAllowed}>
+                  {t('web.knowledge.kb.maintainer.session')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-muted-foreground text-[11px]">
+              {sessionAllowed
+                ? t('web.knowledge.kb.maintainer.hint')
+                : t('web.knowledge.kb.maintainer.sessionUnavailable')}
+            </p>
+          </div>
+          {/* Approval gate. Only meaningful when something automated writes
+              the page — an operator-maintained page has no AI write to gate. */}
+          {maintainer !== 'human' && (
+            <div className="space-y-1.5">
+              <Select
+                value={writePolicy}
+                onValueChange={(v) => setWritePolicy(v as WritePolicy)}
+              >
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="proposal">
+                    {t('web.knowledge.kb.writePolicy.proposal')}
+                  </SelectItem>
+                  <SelectItem value="direct">
+                    {t('web.knowledge.kb.writePolicy.direct')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-[11px]">
+                {t('web.knowledge.kb.writePolicy.hint')}
+              </p>
+            </div>
+          )}
+          </div>
+          {/* Steering. Only an AI-maintained page has a draft to steer, so
+              both controls follow the approval gate in hiding for "human". */}
+          {maintainer !== 'human' && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <textarea
+                    value={guidance}
+                    onChange={(e) => setGuidance(e.target.value)}
+                    placeholder={t('web.knowledge.kb.guidance.placeholder')}
+                    rows={3}
+                    className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+                  />
+                  <p className="text-muted-foreground text-[11px]">
+                    {t('web.knowledge.kb.guidance.hint')}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <textarea
+                    value={exclusions}
+                    onChange={(e) => setExclusions(e.target.value)}
+                    placeholder={t('web.knowledge.kb.exclusions.placeholder')}
+                    rows={3}
+                    className="border-input bg-background w-full rounded-md border px-2 py-1.5 font-mono text-sm"
+                  />
+                  <p className="text-muted-foreground text-[11px]">
+                    {t('web.knowledge.kb.exclusions.hint')}
+                  </p>
+                </div>
+              </div>
+              {editing && (removals.data?.length ?? 0) > 0 && (
+                <RemovalsList
+                  removals={removals.data!}
+                  busy={dismissLine.isPending}
+                  onDismiss={(id) => dismissLine.mutate(id)}
+                />
+              )}
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -466,7 +697,8 @@ function KnowledgeBaseView() {
 
   const content = stripSig(doc.data?.content ?? '')
   const exists = !!doc.data?.id
-  const locked = doc.data?.updated_by === 'operator'
+  const locked =
+    doc.data?.updated_by === 'operator' || doc.data?.updated_by === 'approved'
   const foundational = selSection?.nature === 'foundational'
 
   return (
@@ -587,13 +819,16 @@ function KnowledgeBaseView() {
                 {t('web.knowledge.kb.discuss')}
               </button>
             )}
-            {/* Settings is offered on every page except the classic four,
-                whose titles are i18n-driven and natures are fixed by design.
-                Seeded pages like Integrations (pinned but non-classic) are
-                configurable — e.g. flipping inject to make the guide a
-                standing guardrail. Note this is a WIDER gate than Remove
-                (!pinned): a pinned page can be reconfigured but not deleted. */}
-            {!editing && selSection && !CLASSIC_KB_KINDS.has(selSection.slug) && (
+            {/* Settings is offered on EVERY page. The classic four used to
+                be excluded because their titles are i18n-driven and their
+                natures fixed by design — but that also put who maintains
+                the page, and whether its writes need approval, out of
+                reach. Those are exactly the knobs an operator needs on the
+                foundational pages. The dialog disables the two fields that
+                genuinely are fixed; everything else is editable.
+                Note this is a WIDER gate than Remove (!pinned): a pinned
+                page can be reconfigured but not deleted. */}
+            {!editing && selSection && (
               <button
                 onClick={() => setSettingsOpen(true)}
                 className="border-border rounded-md border px-2.5 py-1 text-xs"
@@ -661,9 +896,16 @@ function KnowledgeBaseView() {
             </div>
             {showProposal && (
               <div className="bg-card mt-2 max-h-72 overflow-auto rounded-md p-3">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
-                  {stripSig(pending.proposed_content)}
-                </ReactMarkdown>
+                {/* Show what CHANGED. Falling back to the full proposed
+                    body keeps old proposals (filed before the server
+                    started attaching a diff) reviewable. */}
+                {pending.diff ? (
+                  <ProposalDiff diff={pending.diff} />
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD}>
+                    {stripSig(pending.proposed_content)}
+                  </ReactMarkdown>
+                )}
               </div>
             )}
           </div>

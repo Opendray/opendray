@@ -225,9 +225,13 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 
 	vec := vectorLiteral(q.Vector)
 	args := []interface{}{vec, q.Embedder, string(q.Scope), q.ScopeKey, q.TopK}
-	// For global scope, ignore scope_key entirely.
+	// Global scope ignores scope_key entirely; an EMPTY key on any other
+	// scope means "across every key in this scope" (the KB drafter's
+	// cross-project topical retrieval). The service layer keeps requiring
+	// a key on the public search path — only internal callers that mean
+	// all-projects pass empty.
 	whereScope := `scope = $3 AND scope_key = $4`
-	if q.Scope == ScopeGlobal {
+	if q.Scope == ScopeGlobal || q.ScopeKey == "" {
 		whereScope = `scope = $3`
 		args = []interface{}{vec, q.Embedder, string(q.Scope), q.TopK}
 	}
@@ -239,6 +243,7 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 	sql := fmt.Sprintf(`
 		SELECT id, scope, scope_key, text, embedder, metadata,
 		       created_at, updated_at, hit_count, last_hit_at,
+		       COALESCE(polarity, ''),
 		       1 - (embedding <=> $1::vector) AS similarity
 		FROM memories
 		WHERE embedder = $2 AND archived_at IS NULL AND tier = 'durable' AND %s
@@ -261,7 +266,7 @@ func (s *PgvectorStore) Search(ctx context.Context, q SearchQuery) ([]SearchHit,
 		)
 		if err := rows.Scan(
 			&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
-			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &sim,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &m.Polarity, &sim,
 		); err != nil {
 			return nil, err
 		}
@@ -288,7 +293,8 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 	}
 	sql := fmt.Sprintf(`
 		SELECT id, scope, scope_key, text, embedder, metadata,
-		       created_at, updated_at, hit_count, last_hit_at
+		       created_at, updated_at, hit_count, last_hit_at,
+		       COALESCE(polarity, '')
 		FROM memories
 		WHERE archived_at IS NULL AND tier = 'durable' AND %s
 		ORDER BY created_at DESC
@@ -308,7 +314,7 @@ func (s *PgvectorStore) List(ctx context.Context, scope Scope, scopeKey string, 
 			meta []byte
 		)
 		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
-			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt); err != nil {
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &m.Polarity); err != nil {
 			return nil, err
 		}
 		if len(meta) > 0 {
@@ -744,6 +750,59 @@ func (s *PgvectorStore) Quarantine(ctx context.Context, id string, expiresAt tim
 		 WHERE id = $1 AND archived_at IS NULL AND tier = 'durable'`, id, expiresAt)
 	if err != nil {
 		return fmt.Errorf("memory: quarantine: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// ListUnclassified returns active rows with no polarity yet, oldest
+// first (stable queue order so retries hit the same rows until they
+// succeed or the backlog moves past them).
+func (s *PgvectorStore) ListUnclassified(ctx context.Context, limit int) ([]Memory, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, scope, scope_key, text, embedder, metadata,
+		       created_at, updated_at, hit_count, last_hit_at,
+		       COALESCE(polarity, '')
+		FROM memories
+		WHERE polarity IS NULL AND archived_at IS NULL
+		ORDER BY created_at ASC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("memory: list unclassified: %w", err)
+	}
+	defer rows.Close()
+	var out []Memory
+	for rows.Next() {
+		var (
+			m    Memory
+			meta []byte
+		)
+		if err := rows.Scan(&m.ID, &m.Scope, &m.ScopeKey, &m.Text, &m.Embedder, &meta,
+			&m.CreatedAt, &m.UpdatedAt, &m.HitCount, &m.LastHitAt, &m.Polarity); err != nil {
+			return nil, err
+		}
+		if len(meta) > 0 {
+			_ = json.Unmarshal(meta, &m.Metadata)
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// SetPolarity records a row's utterance classification. The CHECK
+// constraint from migration 0090 is the value validator of record; a
+// bad value surfaces as a constraint error rather than silently landing.
+func (s *PgvectorStore) SetPolarity(ctx context.Context, id, polarity string) error {
+	tag, err := s.pool.Exec(ctx,
+		`UPDATE memories SET polarity = $2 WHERE id = $1`, id, polarity)
+	if err != nil {
+		return fmt.Errorf("memory: set polarity: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return ErrNotFound

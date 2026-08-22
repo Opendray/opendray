@@ -17,6 +17,8 @@ import (
 //	POST /conversations/{id}/messages       body: {content} → operator Message
 //	     (AI reply lands async; listen for eventbus topic
 //	      "cortex.conversation.reply" or poll GET /{id})
+//	POST /conversations/{id}/messages/{msgID}/apply-rules
+//	     → Message (the AI's rule suggestion merged into the page settings)
 //	POST /conversations/{id}/escalate       → Conversation (full agent session)
 //	POST /conversations/{id}/close          → 204
 func (h *Handlers) mountConversations(r chi.Router) {
@@ -25,6 +27,7 @@ func (h *Handlers) mountConversations(r chi.Router) {
 		r.Get("/", h.listConversations)
 		r.Get("/{id}", h.getConversation)
 		r.Post("/{id}/messages", h.sendConversationMessage)
+		r.Post("/{id}/messages/{msgID}/apply-rules", h.applyConversationRules)
 		r.Post("/{id}/provider", h.setConversationProvider)
 		r.Post("/{id}/escalate", h.escalateConversation)
 		r.Post("/{id}/close", h.closeConversation)
@@ -160,6 +163,25 @@ func (h *Handlers) sendConversationMessage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	writeJSON(w, http.StatusAccepted, msg)
+}
+
+// applyConversationRules merges an AI message's rule suggestion into the
+// target page's settings. Operator-only surface: the click is the approval.
+func (h *Handlers) applyConversationRules(w http.ResponseWriter, r *http.Request) {
+	if !h.curationReady(w) {
+		return
+	}
+	msg, err := h.curation.ApplyRuleSuggestion(r.Context(),
+		chi.URLParam(r, "id"), chi.URLParam(r, "msgID"))
+	if errors.Is(err, ErrConversationNotFound) || errors.Is(err, ErrMessageNotFound) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, msg)
 }
 
 // launchLibrarian spawns the cross-page KB Librarian session and returns its

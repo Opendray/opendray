@@ -29,7 +29,9 @@ export type KnownDocKind =
   | 'kb_reusable'
 // `string & {}` keeps literal autocomplete while accepting custom slugs.
 export type DocKind = KnownDocKind | (string & {})
-export type DocAuthor = 'operator' | 'agent' | 'scanner'
+/** 'approved' = an AI draft the operator approved — locks like a hand
+ * edit but stays distinguishable from one for provenance. */
+export type DocAuthor = 'operator' | 'agent' | 'scanner' | 'approved'
 
 // GlobalCwd sentinel: the cwd under which cross-project (global) KB pages live.
 // Mirrors projectdoc.GlobalCwd on the backend.
@@ -84,7 +86,12 @@ export async function putProjectDoc(input: {
 
 // ── blueprint (Cortex Phase 3) ────────────────────────────────
 
-export type MaintainerMode = 'ai' | 'human' | 'scanner'
+/** Who keeps a section current: 'ai' (opendray's background curation
+ * redrafts it), 'human' (the operator authors it by hand), 'scanner' (a
+ * mechanical rebuilder owns it), or 'session' (the agent doing the work
+ * writes it live via the kb_page_set MCP tool). 'session' applies to
+ * global knowledge pages only — see canBeSessionMaintained. */
+export type MaintainerMode = 'ai' | 'human' | 'scanner' | 'session'
 
 /** Who lands an agent-side MCP write: 'proposal' files an operator-approved
  * proposal (goal/plan — long-term, deliberate); 'direct' lets the in-session
@@ -112,8 +119,26 @@ export interface BlueprintSection {
   /** Knowledge nature ('foundational' | 'emergent') — GLOBAL pages
    * only; empty/absent for per-project sections. */
   nature?: string
+  /** Subjects the AI maintainer must never write about on this page.
+   * `prompt_hint` steers what the page SHOULD be; everything else the
+   * drafter reads is material to fold in, so this is the only way to say
+   * "leave this out". Removing a subject from the page body alone does
+   * not work — it stays in the feedstock and is re-derived next sweep.
+   * GLOBAL knowledge pages only; the backend rejects it elsewhere. */
+  exclusions?: string[]
   created_at?: string
   updated_at?: string
+}
+
+/** Whether a knowledge page may be handed to in-session agents
+ * (maintainer_mode 'session'). Mirrors the backend's SessionWritable:
+ * pinned pages are reserved, and foundational pages carry binding rules
+ * an agent must not rewrite mid-task. Offering the mode where the
+ * backend would refuse the write is worse than not offering it. */
+export function canBeSessionMaintained(
+  section: Pick<BlueprintSection, 'pinned' | 'nature'>,
+): boolean {
+  return !section.pinned && section.nature !== 'foundational'
 }
 
 /** Lists the project's blueprint (lazily seeded with defaults). */
@@ -134,6 +159,36 @@ export async function putBlueprintSection(
     `/api/v1/project-docs/blueprint/${section.slug}`,
     { method: 'PUT', body: section },
   )
+}
+
+/** One line the operator deleted from a knowledge page (deletion-as-
+ * signal). status 'active' = deleted once, soft negative context for the
+ * drafter; 'banned' = deleted twice — the system reintroduced it and the
+ * operator removed it again — hard-scrubbed from every future draft. */
+export interface DocLineRemoval {
+  id: string
+  cwd: string
+  kind: string
+  line_text: string
+  removal_count: number
+  status: 'active' | 'banned' | 'dismissed'
+  last_removed_at: string
+}
+
+/** Lists a page's recorded operator deletions (active + banned). */
+export async function listDocRemovals(
+  cwd: string,
+  kind: string,
+): Promise<DocLineRemoval[]> {
+  const res = await api<{ removals: DocLineRemoval[] }>(
+    `/api/v1/project-docs/removals?cwd=${encodeURIComponent(cwd)}&kind=${encodeURIComponent(kind)}`,
+  )
+  return res.removals ?? []
+}
+
+/** Unbans / forgets one recorded line removal. */
+export async function dismissDocRemoval(id: string): Promise<void> {
+  await api(`/api/v1/project-docs/removals/${id}/dismiss`, { method: 'POST' })
 }
 
 /** Removes a section from the blueprint (its doc content is kept and
@@ -186,6 +241,33 @@ export async function setProjectLifecycle(
 
 // ── proposals ─────────────────────────────────────────────────
 
+/** One line of a review diff. 'context' lines are unchanged and shown
+ * only for orientation. */
+export interface DiffLine {
+  kind: 'context' | 'add' | 'remove'
+  text: string
+}
+
+/** A run of changed lines with its surrounding context. */
+export interface DiffHunk {
+  /** Unchanged lines between the previous hunk and this one. Rendered as
+   * "N unchanged lines" so the reviewer knows something was collapsed
+   * rather than wondering whether the diff is complete. */
+  skipped_before: number
+  /** 1-based first line of this hunk in the NEW document. */
+  start_line: number
+  lines: DiffLine[]
+}
+
+/** The reviewable difference between the live doc and a proposal. Computed
+ * server-side so every client shows the same review. */
+export interface DocDiff {
+  hunks: DiffHunk[]
+  added: number
+  removed: number
+  unchanged: boolean
+}
+
 export interface DocProposal {
   id: string
   cwd: string
@@ -196,8 +278,11 @@ export interface DocProposal {
   /** When the proposal has been decided, the verdict. */
   decision?: 'approved' | 'rejected'
   decided_at?: string
-  /** The prior live content at the time of proposal — used for diff display. */
+  /** The prior live content at the time of proposal. */
   prior_content?: string
+  /** Line-level change from prior_content to proposed_content. Present on
+   * the review endpoints; absent on paths that don't serve a review. */
+  diff?: DocDiff
   created_at: string
 }
 

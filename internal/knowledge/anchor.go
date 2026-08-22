@@ -34,6 +34,10 @@ type MemoryRow struct {
 	Text      string
 	ScopeKey  string
 	CreatedAt time.Time
+	// Polarity classifies the utterance: "fact" | "rule" | "meta" |
+	// "correction". Empty = not yet classified, treated as "fact"
+	// everywhere (the historical behaviour). See classify.go.
+	Polarity string
 }
 
 // Anchorer lifts episodic memory facts into the knowledge graph (Phase 1):

@@ -330,16 +330,22 @@ if [ "$PG_MODE" = "local" ]; then
     fi
 
     log_info "Waiting for PostgreSQL to accept connections..."
+    # Must be run_priv_as (runuser/sudo -u), NOT `run_priv -u`: run_priv only
+    # escalates privilege, so as root `run_priv -u postgres pg_isready` executes
+    # the literal command `-u` and fails 127 every iteration — the readiness
+    # loop then always times out even when PostgreSQL is healthy. The one-liner
+    # is normally run as root (Proxmox LXC, fresh VPS), so this hit every root
+    # install. Use the same helper the DB bootstrap below already uses.
     PG_READY=0
     for _ in $(seq 1 30); do
-        if run_priv -u postgres pg_isready -q 2>/dev/null; then
+        if run_priv_as postgres pg_isready -q 2>/dev/null; then
             PG_READY=1
             break
         fi
         sleep 1
     done
     if [ "$PG_READY" = "0" ]; then
-        log_die "PostgreSQL did not start within 30s. Check 'journalctl -u postgresql' or '/var/log/postgresql/postgresql-16-main.log'."
+        log_die "PostgreSQL did not start within 30s. Check 'journalctl -u postgresql' or '/var/log/postgresql/postgresql-16-main.log' — a full disk during initdb ('No space left on device') is a common cause."
     fi
     log_ok "PostgreSQL 16 installed and accepting connections"
 
@@ -651,8 +657,17 @@ log_ok "opendray.env: $OD_ENV_PATH (0640 root:$OPENDRAY_SERVICE_USER — secrets
 log_info "Applying migrations (idempotent)..."
 # Pass secrets via the wizard's shell env so opendray-as-service-user picks
 # them up. The actual service uses systemd's EnvironmentFile= once started.
+#
+# HOME must be the service user's data dir: run_priv_as_env uses `sudo -E` /
+# `runuser --preserve-environment`, which keeps the caller's HOME (/root when
+# the wizard runs as root). opendray then resolves its default backup keyfile
+# to $HOME/.opendray/secrets/backup.key — i.e. /root/… — which the opendray
+# user cannot read, so the pre-migrate snapshot fails with "backup key load:
+# permission denied" and migrate aborts. Pinning HOME to the data dir keeps
+# that lookup inside the service user's own, writable, home.
 OPENDRAY_DATABASE_URL="$OD_DSN" \
 OPENDRAY_ADMIN_PASSWORD="$OD_ADMIN_PW" \
+HOME="$OPENDRAY_DATA_DIR" \
     run_priv_as_env "$OPENDRAY_SERVICE_USER" "$OPENDRAY_PREFIX/bin/opendray" migrate -config "$OD_CONFIG_PATH"
 log_ok "Migrations applied"
 

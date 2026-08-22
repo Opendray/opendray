@@ -796,6 +796,57 @@ func (s *Service) Update(ctx context.Context, req EditRequest) error {
 	return nil
 }
 
+// ListUnclassified returns active rows with no polarity yet — the
+// polarity classifier's work queue.
+func (s *Service) ListUnclassified(ctx context.Context, limit int) ([]Memory, error) {
+	return s.store.ListUnclassified(ctx, limit)
+}
+
+// SetPolarity records a row's utterance classification. Values are
+// validated here so a caller bug surfaces as an error, not a DB
+// constraint violation.
+func (s *Service) SetPolarity(ctx context.Context, id, polarity string) error {
+	switch polarity {
+	case "fact", "rule", "meta", "correction":
+	default:
+		return fmt.Errorf("memory: invalid polarity %q", polarity)
+	}
+	return s.store.SetPolarity(ctx, id, polarity)
+}
+
+// SearchAcrossProjects is the KB drafter's topical retrieval: top-K by
+// similarity over EVERY project scope key at once. Deliberately not
+// reachable from the public search path (which requires a scope key so
+// integrations stay inside their zone) — this is an internal, admin-side
+// read for cross-project distillation.
+func (s *Service) SearchAcrossProjects(ctx context.Context, query string, topK int) ([]Memory, error) {
+	if strings.TrimSpace(query) == "" {
+		return nil, errors.New("memory: empty query")
+	}
+	if topK <= 0 {
+		topK = 60
+	}
+	emb, err := s.emb.Embed(ctx, []string{query})
+	if err != nil {
+		return nil, fmt.Errorf("memory: embed for topical search: %w", err)
+	}
+	hits, err := s.store.Search(ctx, SearchQuery{
+		Vector:   emb[0],
+		Embedder: s.emb.Name(),
+		Scope:    ScopeProject,
+		ScopeKey: "", // empty = all project keys (store-level contract)
+		TopK:     topK,
+	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Memory, 0, len(hits))
+	for _, h := range hits {
+		out = append(out, h.Memory)
+	}
+	return out, nil
+}
+
 // ListScopeKeys returns distinct scope_key values currently used
 // under the given scope, ordered alphabetically. Powers the UI's
 // "browse used scope keys" picker.
