@@ -103,9 +103,16 @@ class _Body extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            FilesTab(sessionId: session.id, initialPath: session.cwd),
-            GitTab(sessionId: session.id, cwd: session.cwd),
-            TasksTab(sessionId: session.id, cwd: session.cwd),
+            // Physical surfaces follow the session's actual files —
+            // the worktree when isolated; logical surfaces (Vault,
+            // Canvas, Cortex, Database) stay keyed by the project cwd.
+            FilesTab(sessionId: session.id, initialPath: session.effectiveWorkDir),
+            GitTab(sessionId: session.id, cwd: session.effectiveWorkDir),
+            TasksTab(
+              sessionId: session.id,
+              cwd: session.cwd,
+              workDir: session.effectiveWorkDir,
+            ),
             HistoryTab(sessionId: session.id),
             NotesTab(sessionId: session.id, cwd: session.cwd),
             CanvasTab(sessionId: session.id, cwd: session.cwd),

@@ -524,9 +524,47 @@ class GitIssueList {
   final String errorMessage;
 }
 
+// Cheap repo probe for a path — used by the spawn sheet to decide
+// whether worktree isolation is offerable for the chosen cwd.
+class GitInfoResponse {
+  const GitInfoResponse({
+    required this.isRepo,
+    required this.linkedWorktree,
+    this.repoRoot,
+    this.branch,
+  });
+
+  factory GitInfoResponse.fromJson(Map<String, dynamic> json) =>
+      GitInfoResponse(
+        isRepo: json['is_repo'] as bool? ?? false,
+        linkedWorktree: json['linked_worktree'] as bool? ?? false,
+        repoRoot: json['repo_root'] as String?,
+        branch: json['branch'] as String?,
+      );
+
+  final bool isRepo;
+  // The path is inside a linked worktree rather than the main
+  // checkout — isolation must anchor on the main checkout.
+  final bool linkedWorktree;
+  final String? repoRoot;
+  final String? branch;
+}
+
 class GitApi {
   GitApi(this._dio);
   final Dio _dio;
+
+  Future<GitInfoResponse> info(String path) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/git/info',
+        queryParameters: {'path': path},
+      );
+      return GitInfoResponse.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 
   Future<GitStatusResponse> status(String path) async {
     try {

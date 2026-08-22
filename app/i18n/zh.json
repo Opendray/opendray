@@ -4067,6 +4067,14 @@
         "noTokenSuffix": "（无令牌）",
         "noneHint": "未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。",
         "errorHint": "无法加载 Claude 账号（{error}）。会话将以网关默认配置启动。"
+      },
+      "worktree": {
+        "label": "在隔离 worktree 中运行",
+        "subtitleOn": "会话在独立 git worktree(分支 opendray/<session-id>)中运行,改动经分支 → PR 合回。未跟踪文件(.env、node_modules)不会复制。",
+        "subtitleOff": "当其他会话可能同时修改该项目时建议开启。",
+        "unavailableNotRepo": "不可用:工作目录不在 git 仓库内。",
+        "unavailableLinked": "不可用:该路径本身是 linked worktree,请选择主检出目录。",
+        "concurrentWarning": "已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。"
       }
     }
   },

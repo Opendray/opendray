@@ -2104,6 +2104,7 @@ class _TranslationsSessionsSpawnSheetEs extends TranslationsSessionsSpawnSheetEn
 	@override late final _TranslationsSessionsSpawnSheetNoProvidersEs noProviders = _TranslationsSessionsSpawnSheetNoProvidersEs._(_root);
 	@override late final _TranslationsSessionsSpawnSheetProviderLoadErrorEs providerLoadError = _TranslationsSessionsSpawnSheetProviderLoadErrorEs._(_root);
 	@override late final _TranslationsSessionsSpawnSheetClaudeAccountEs claudeAccount = _TranslationsSessionsSpawnSheetClaudeAccountEs._(_root);
+	@override late final _TranslationsSessionsSpawnSheetWorktreeEs worktree = _TranslationsSessionsSpawnSheetWorktreeEs._(_root);
 }
 
 // Path: mcp.errorPrefix
@@ -3541,6 +3542,12 @@ class _TranslationsWebSessionsSpawnEs extends TranslationsWebSessionsSpawnEn {
 	@override String get spawnedToast => 'Session creada';
 	@override String spawnedDescription({required Object provider, required Object pid}) => '${provider} · pid ${pid}';
 	@override String get pidFallback => '—';
+	@override String get worktreeIsolation => 'Ejecutar en worktree aislado';
+	@override String get worktreeOnHint => 'La sesión se ejecuta en un worktree git privado en la rama opendray/<session-id>. Los cambios vuelven por el flujo normal de rama → PR. Los archivos no rastreados (.env, node_modules) no se copian.';
+	@override String get worktreeOffHint => 'Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez: cada sesión aislada edita su propia copia.';
+	@override String get worktreeUnavailableNotRepo => 'No disponible: el directorio de trabajo no está dentro de un repositorio git.';
+	@override String get worktreeUnavailableLinked => 'No disponible: esta ruta es un worktree enlazado; elige el checkout principal.';
+	@override String get worktreeConcurrentWarning => 'Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree para que no editen los mismos archivos.';
 }
 
 // Path: web.sessions.accountSwitcher
@@ -7218,6 +7225,21 @@ class _TranslationsSessionsSpawnSheetClaudeAccountEs extends TranslationsSession
 	@override String errorHint({required Object error}) => 'No se pudieron cargar las cuentas de Claude (${error}). La session se creará con el valor predeterminado del gateway.';
 }
 
+// Path: sessions.spawnSheet.worktree
+class _TranslationsSessionsSpawnSheetWorktreeEs extends TranslationsSessionsSpawnSheetWorktreeEn {
+	_TranslationsSessionsSpawnSheetWorktreeEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => 'Ejecutar en worktree aislado';
+	@override String get subtitleOn => 'Se ejecuta en un worktree git privado en la rama opendray/<session-id>; los cambios vuelven por rama → PR. Los archivos no rastreados (.env, node_modules) no se copian.';
+	@override String get subtitleOff => 'Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez.';
+	@override String get unavailableNotRepo => 'No disponible: el directorio de trabajo no está dentro de un repositorio git.';
+	@override String get unavailableLinked => 'No disponible: esta ruta es un worktree enlazado; elige el checkout principal.';
+	@override String get concurrentWarning => 'Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree.';
+}
+
 // Path: memoryWorkers.tasks.gatekeeper
 class _TranslationsMemoryWorkersTasksGatekeeperEs extends TranslationsMemoryWorkersTasksGatekeeperEn {
 	_TranslationsMemoryWorkersTasksGatekeeperEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -7736,6 +7758,7 @@ class _TranslationsWebSessionsListRowEs extends TranslationsWebSessionsListRowEn
 	@override String get titleTerminate => 'Terminar y eliminar';
 	@override String get titleRemove => 'Eliminar';
 	@override String claudeAccountTitle({required Object label}) => 'Cuenta de Claude: ${label}';
+	@override String worktreeTitle({required Object branch}) => 'Sesión en worktree aislado en la rama ${branch}';
 }
 
 // Path: web.sessions.inspector.tabs
@@ -10288,6 +10311,7 @@ extension on TranslationsEs {
 			'web.sessions.list.row.titleTerminate' => 'Terminar y eliminar',
 			'web.sessions.list.row.titleRemove' => 'Eliminar',
 			'web.sessions.list.row.claudeAccountTitle' => ({required Object label}) => 'Cuenta de Claude: ${label}',
+			'web.sessions.list.row.worktreeTitle' => ({required Object branch}) => 'Sesión en worktree aislado en la rama ${branch}',
 			'web.sessions.list.deleteFailedToast' => 'Error al eliminar',
 			'web.sessions.tabs.closeAria' => 'Cerrar pestaña y eliminar session',
 			'web.sessions.tabs.closeTitle' => 'Cerrar pestaña y eliminar session',
@@ -10379,6 +10403,12 @@ extension on TranslationsEs {
 			'web.sessions.spawn.spawnedToast' => 'Session creada',
 			'web.sessions.spawn.spawnedDescription' => ({required Object provider, required Object pid}) => '${provider} · pid ${pid}',
 			'web.sessions.spawn.pidFallback' => '—',
+			'web.sessions.spawn.worktreeIsolation' => 'Ejecutar en worktree aislado',
+			'web.sessions.spawn.worktreeOnHint' => 'La sesión se ejecuta en un worktree git privado en la rama opendray/<session-id>. Los cambios vuelven por el flujo normal de rama → PR. Los archivos no rastreados (.env, node_modules) no se copian.',
+			'web.sessions.spawn.worktreeOffHint' => 'Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez: cada sesión aislada edita su propia copia.',
+			'web.sessions.spawn.worktreeUnavailableNotRepo' => 'No disponible: el directorio de trabajo no está dentro de un repositorio git.',
+			'web.sessions.spawn.worktreeUnavailableLinked' => 'No disponible: esta ruta es un worktree enlazado; elige el checkout principal.',
+			'web.sessions.spawn.worktreeConcurrentWarning' => 'Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree para que no editen los mismos archivos.',
 			'web.sessions.accountSwitcher.tooltip' => 'Cambiar de cuenta de Claude (reinicia el proceso de la CLI)',
 			'web.sessions.accountSwitcher.tooltipAgy' => 'Cambiar de cuenta de Antigravity (reinicia el proceso de la CLI)',
 			'web.sessions.accountSwitcher.currentDefault' => 'predeterminada',
@@ -10701,6 +10731,8 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Resumidor de actividad de git',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → narrativa de 2-3 párrafos cada 24h. Encaja de forma natural con un worker de agente.',
 			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'Resumen narrativo del historial git — un modelo equilibrado (sonnet / flash) se lee mejor.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.transcript.label' => 'Resumidor de transcript de sesión',
 			'web.memoryWorkers.tasks.transcript.description' => 'Resumen al final de la sesión sobre "qué hizo el agente". Encaja de forma natural con un worker de agente.',
 			'web.memoryWorkers.tasks.transcript.modelAdvice' => 'Resúmenes de sesión — modelo equilibrado recomendado; alimenta el diario y la detección de deriva.',
@@ -10708,8 +10740,6 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.plan_drift.description' => 'Al terminar cada sesión, comprueba si el plan del proyecto necesita actualizarse y presenta una propuesta. Encaja con un worker de agente para un razonamiento más completo.',
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Reescribe goal/plan/secciones — exige criterio; un modelo fuerte (sonnet/opus) evita malas actualizaciones.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Detector de conflictos entre capas',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Escaneo diario que encuentra contradicciones entre hechos / plan / objetivo / diario. Un modelo de mayor calidad = menos falsos positivos.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Escaneo diario de contradicciones — un modelo equilibrado basta.',
 			'web.memoryWorkers.tasks.capture.label' => 'Motor de captura',
@@ -11215,6 +11245,8 @@ extension on TranslationsEs {
 			'web.activity.refreshTooltip' => 'Actualizar',
 			'web.activity.filters.integration' => 'Integración',
 			'web.activity.filters.direction' => 'Dirección',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.filters.status' => 'Estado',
 			'web.activity.filters.allIntegrations' => 'Todas las integraciones',
 			'web.activity.filters.all' => 'Todas',
@@ -11222,8 +11254,6 @@ extension on TranslationsEs {
 			'web.activity.filters.outbound' => 'Saliente',
 			'web.activity.filters.allStatuses' => 'Todos los estados',
 			'web.activity.filters.status2' => '2xx correcto',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.filters.status3' => '3xx redirección',
 			'web.activity.filters.status4' => '4xx error de cliente',
 			'web.activity.filters.status5' => '5xx error de servidor',
@@ -11729,6 +11759,8 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.deleteFailedToast' => 'Error al eliminar',
 			'web.plugins.gitHosts.dialog.addTitle' => 'Añadir host de git',
 			'web.plugins.gitHosts.dialog.editTitle' => ({required Object host}) => 'Editar ${host}',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.description' => 'El token se almacena en el gateway. Se usa solo para llamadas de solo lectura a la API (listar PR, etc.).',
 			'web.plugins.gitHosts.dialog.kindLabel' => 'Tipo',
 			'web.plugins.gitHosts.dialog.kindGitHub' => 'GitHub',
@@ -11736,8 +11768,6 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Nombre visible (opcional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
@@ -12243,6 +12273,8 @@ extension on TranslationsEs {
 			'web.serverSettings.targetRow.connectionFailedTitle' => 'Conexión fallida',
 			'web.serverSettings.targetRow.testFailedTitle' => 'Prueba fallida',
 			'web.serverSettings.targetRow.deleteConfirm' => ({required Object id}) => '¿Eliminar el destino "${id}"? Las programaciones que lo referencien bloquearán la eliminación.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.targetRow.deleteSuccess' => 'Destino eliminado',
 			'web.serverSettings.targetRow.deleteFailedTitle' => 'Error al eliminar',
 			'web.serverSettings.targetRow.unknownError' => 'Error desconocido',
@@ -12250,8 +12282,6 @@ extension on TranslationsEs {
 			'web.serverSettings.toggle.off' => 'Desactivado',
 			'web.serverSettings.toggle.defaultOn' => 'Por defecto (on)',
 			'web.serverSettings.toggle.defaultOff' => 'Por defecto (off)',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.memoryRuntimeBanner' => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Abrir ajustes de Cortex',
 			'web.serverSettings.host.intro' => 'Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.',
@@ -12757,6 +12787,8 @@ extension on TranslationsEs {
 			'web.cortex.chat.hide' => 'Ocultar chat',
 			'web.cortex.chat.emptyHint' => 'Pide a la IA actualizar, reestructurar o reescribir este documento. Los cambios se aplican directamente si lo mantiene la IA, o llegan a la bandeja si lo bloqueaste.',
 			'web.cortex.chat.placeholder' => 'p. ej. actualiza esto con el trabajo reciente · ⌘↵ para enviar',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.thinking' => 'La IA está trabajando…',
 			'web.cortex.chat.sendFailed' => 'Error al enviar',
 			'web.cortex.chat.escalate' => 'Escalar a sesión',
@@ -12764,8 +12796,6 @@ extension on TranslationsEs {
 			'web.cortex.chat.escalateHint' => 'Lanza una sesión de agente completa, fundamentada en el código, con esta conversación',
 			'web.cortex.chat.escalateFailed' => 'Error al escalar',
 			'web.cortex.chat.escalatedToast' => 'Sesión de agente lanzada',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
 			'web.cortex.chat.revisionApplied' => 'Documento actualizado',
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
@@ -13271,6 +13301,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
@@ -13278,8 +13310,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Asignado a ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancelar',
 			'sessions.inspector.notes.newDocTooltip' => 'Nuevo documento',
 			'sessions.inspector.notes.noProjectMapping' => 'No se pudo resolver una asignación de proyecto para esta session. Comprueba que el gateway tenga configurado un almacén de notas y que el cwd de la session esté establecido.',
@@ -13413,6 +13443,12 @@ extension on TranslationsEs {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (sin token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No hay cuentas de Claude configuradas. El gateway usará la ANTHROPIC_API_KEY del sistema. Añade cuentas en Ajustes → Cuentas en el admin web.',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'No se pudieron cargar las cuentas de Claude (${error}). La session se creará con el valor predeterminado del gateway.',
+			'sessions.spawnSheet.worktree.label' => 'Ejecutar en worktree aislado',
+			'sessions.spawnSheet.worktree.subtitleOn' => 'Se ejecuta en un worktree git privado en la rama opendray/<session-id>; los cambios vuelven por rama → PR. Los archivos no rastreados (.env, node_modules) no se copian.',
+			'sessions.spawnSheet.worktree.subtitleOff' => 'Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez.',
+			'sessions.spawnSheet.worktree.unavailableNotRepo' => 'No disponible: el directorio de trabajo no está dentro de un repositorio git.',
+			'sessions.spawnSheet.worktree.unavailableLinked' => 'No disponible: esta ruta es un worktree enlazado; elige el checkout principal.',
+			'sessions.spawnSheet.worktree.concurrentWarning' => 'Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'Nuevo servidor',
 			'mcp.addSecret' => 'Añadir secreto',
@@ -13779,6 +13815,8 @@ extension on TranslationsEs {
 			'project.archived.restore' => 'Restaurar',
 			'backups.title' => 'Copias de seguridad',
 			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runConfirmBody' => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.',
 			'backups.runFullInstance' => 'Instancia completa',
 			'backups.runFullInstanceHint' => 'Incluye también el vault, secrets.env y config.toml, no solo la base de datos.',
@@ -13792,8 +13830,6 @@ extension on TranslationsEs {
 			'backups.runNow' => 'Ejecutar ahora',
 			'backups.queueing' => 'Encolando…',
 			'backups.queuedSnack' => ({required Object id}) => 'Copia de seguridad encolada (${id}). Esperando el progreso…',
-			_ => null,
-		} ?? switch (path) {
 			'backups.runFailedApi' => ({required Object error}) => 'Error al ejecutar: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Error al ejecutar: ${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Copia de seguridad completada (${bytes}).',
@@ -14293,6 +14329,8 @@ extension on TranslationsEs {
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Error al guardar: ${error}',
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Error al guardar: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Guardado ${time}',
 			'notesPage.editor.showPreview' => 'Vista previa',
 			'notesPage.editor.showSource' => 'Código',
@@ -14306,8 +14344,6 @@ extension on TranslationsEs {
 			'notesPage.flatten.preview' => 'Vista previa',
 			'notesPage.flatten.dismiss' => 'Ahora no',
 			'notesPage.flatten.title' => 'Archivar los proyectos con su propio nombre',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.flatten.description' => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.',
 			'notesPage.flatten.nothingToMove' => 'No hay nada que mover.',
 			'notesPage.flatten.skipped' => ({required Object count}) => 'Sin tocar (${count}):',

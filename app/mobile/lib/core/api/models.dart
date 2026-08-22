@@ -91,6 +91,8 @@ class SessionSummary {
     this.endedAt,
     this.claudeAccountId,
     this.antigravityAccountId,
+    this.workDir,
+    this.worktreeBranch,
   });
 
   factory SessionSummary.fromJson(Map<String, dynamic> json) => SessionSummary(
@@ -112,6 +114,12 @@ class SessionSummary {
             (json['antigravity_account_id'] as String?)?.isNotEmpty ?? false
                 ? json['antigravity_account_id'] as String
                 : null,
+        workDir: (json['work_dir'] as String?)?.isNotEmpty ?? false
+            ? json['work_dir'] as String
+            : null,
+        worktreeBranch: (json['worktree_branch'] as String?)?.isNotEmpty ?? false
+            ? json['worktree_branch'] as String
+            : null,
       );
 
   final String id;
@@ -129,6 +137,16 @@ class SessionSummary {
   // (null = the gateway default HOME). Only meaningful for antigravity
   // sessions; drives the in-session account switcher.
   final String? antigravityAccountId;
+  // Physical execution path when the session is worktree-isolated (or
+  // inherits a parent's worktree). Null = the process runs in cwd.
+  // File/git/task surfaces must use effectiveWorkDir; cwd stays the
+  // logical project identity (Cortex, vault, database, canvas).
+  final String? workDir;
+  // Managed branch (opendray/<id>) of the worktree this session OWNS.
+  final String? worktreeBranch;
+
+  // Where the session's process actually runs.
+  String get effectiveWorkDir => workDir ?? cwd;
 
   String get displayName => name?.isNotEmpty ?? false ? name! : id;
 
@@ -630,6 +648,7 @@ class CreateSessionRequest {
     this.args,
     this.claudeAccountId,
     this.parentSessionId,
+    this.isolation,
   });
 
   final String providerId;
@@ -640,6 +659,10 @@ class CreateSessionRequest {
   // Links a session spawned on behalf of another (e.g. a Task Runner
   // shell session) so the gateway can group it under its originator.
   final String? parentSessionId;
+  // "worktree" spawns the CLI in a private git worktree on branch
+  // opendray/<session-id>; requires cwd to be inside a git repo's
+  // main checkout. Null = default run-in-cwd behaviour.
+  final String? isolation;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'provider_id': providerId,
@@ -650,5 +673,7 @@ class CreateSessionRequest {
           'claude_account_id': claudeAccountId,
         if (parentSessionId != null && parentSessionId!.isNotEmpty)
           'parent_session_id': parentSessionId,
+        if (isolation != null && isolation!.isNotEmpty)
+          'isolation': isolation,
       };
 }

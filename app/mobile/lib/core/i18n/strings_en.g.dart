@@ -4140,6 +4140,7 @@ class TranslationsSessionsSpawnSheetEn {
 	late final TranslationsSessionsSpawnSheetNoProvidersEn noProviders = TranslationsSessionsSpawnSheetNoProvidersEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetProviderLoadErrorEn providerLoadError = TranslationsSessionsSpawnSheetProviderLoadErrorEn.internal(_root);
 	late final TranslationsSessionsSpawnSheetClaudeAccountEn claudeAccount = TranslationsSessionsSpawnSheetClaudeAccountEn.internal(_root);
+	late final TranslationsSessionsSpawnSheetWorktreeEn worktree = TranslationsSessionsSpawnSheetWorktreeEn.internal(_root);
 }
 
 // Path: mcp.errorPrefix
@@ -6957,6 +6958,24 @@ class TranslationsWebSessionsSpawnEn {
 
 	/// en: '—'
 	String get pidFallback => '—';
+
+	/// en: 'Run in isolated worktree'
+	String get worktreeIsolation => 'Run in isolated worktree';
+
+	/// en: 'The session runs in a private git worktree on branch opendray/<session-id>. Changes merge back via the normal branch → PR flow. Untracked files (.env, node_modules) are not copied.'
+	String get worktreeOnHint => 'The session runs in a private git worktree on branch opendray/<session-id>. Changes merge back via the normal branch → PR flow. Untracked files (.env, node_modules) are not copied.';
+
+	/// en: 'Recommended when other sessions may work on this project at the same time — each isolated session edits its own checkout.'
+	String get worktreeOffHint => 'Recommended when other sessions may work on this project at the same time — each isolated session edits its own checkout.';
+
+	/// en: 'Unavailable: the working directory is not inside a git repository.'
+	String get worktreeUnavailableNotRepo => 'Unavailable: the working directory is not inside a git repository.';
+
+	/// en: 'Unavailable: this path is a linked worktree — pick the main checkout.'
+	String get worktreeUnavailableLinked => 'Unavailable: this path is a linked worktree — pick the main checkout.';
+
+	/// en: 'Another live session is already working in this project without isolation — consider enabling the worktree so they don't edit the same files.'
+	String get worktreeConcurrentWarning => 'Another live session is already working in this project without isolation — consider enabling the worktree so they don\'t edit the same files.';
 }
 
 // Path: web.sessions.accountSwitcher
@@ -14132,6 +14151,33 @@ class TranslationsSessionsSpawnSheetClaudeAccountEn {
 	String errorHint({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.';
 }
 
+// Path: sessions.spawnSheet.worktree
+class TranslationsSessionsSpawnSheetWorktreeEn {
+	TranslationsSessionsSpawnSheetWorktreeEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Run in isolated worktree'
+	String get label => 'Run in isolated worktree';
+
+	/// en: 'Runs in a private git worktree on branch opendray/<session-id>; changes merge back via branch → PR. Untracked files (.env, node_modules) are not copied.'
+	String get subtitleOn => 'Runs in a private git worktree on branch opendray/<session-id>; changes merge back via branch → PR. Untracked files (.env, node_modules) are not copied.';
+
+	/// en: 'Recommended when other sessions may work on this project at the same time.'
+	String get subtitleOff => 'Recommended when other sessions may work on this project at the same time.';
+
+	/// en: 'Unavailable: the working directory is not inside a git repository.'
+	String get unavailableNotRepo => 'Unavailable: the working directory is not inside a git repository.';
+
+	/// en: 'Unavailable: this path is a linked worktree — pick the main checkout.'
+	String get unavailableLinked => 'Unavailable: this path is a linked worktree — pick the main checkout.';
+
+	/// en: 'Another live session is already working in this project without isolation — consider enabling the worktree.'
+	String get concurrentWarning => 'Another live session is already working in this project without isolation — consider enabling the worktree.';
+}
+
 // Path: memoryWorkers.tasks.gatekeeper
 class TranslationsMemoryWorkersTasksGatekeeperEn {
 	TranslationsMemoryWorkersTasksGatekeeperEn.internal(this._root);
@@ -15096,6 +15142,9 @@ class TranslationsWebSessionsListRowEn {
 
 	/// en: 'Claude account: {label}'
 	String claudeAccountTitle({required Object label}) => 'Claude account: ${label}';
+
+	/// en: 'Isolated worktree session on branch {branch}'
+	String worktreeTitle({required Object branch}) => 'Isolated worktree session on branch ${branch}';
 }
 
 // Path: web.sessions.inspector.tabs
@@ -19507,6 +19556,7 @@ extension on Translations {
 			'web.sessions.list.row.titleTerminate' => 'Terminate and remove',
 			'web.sessions.list.row.titleRemove' => 'Remove',
 			'web.sessions.list.row.claudeAccountTitle' => ({required Object label}) => 'Claude account: ${label}',
+			'web.sessions.list.row.worktreeTitle' => ({required Object branch}) => 'Isolated worktree session on branch ${branch}',
 			'web.sessions.list.deleteFailedToast' => 'Delete failed',
 			'web.sessions.tabs.closeAria' => 'Close tab and remove session',
 			'web.sessions.tabs.closeTitle' => 'Close tab and remove session',
@@ -19598,6 +19648,12 @@ extension on Translations {
 			'web.sessions.spawn.spawnedToast' => 'Session spawned',
 			'web.sessions.spawn.spawnedDescription' => ({required Object provider, required Object pid}) => '${provider} · pid ${pid}',
 			'web.sessions.spawn.pidFallback' => '—',
+			'web.sessions.spawn.worktreeIsolation' => 'Run in isolated worktree',
+			'web.sessions.spawn.worktreeOnHint' => 'The session runs in a private git worktree on branch opendray/<session-id>. Changes merge back via the normal branch → PR flow. Untracked files (.env, node_modules) are not copied.',
+			'web.sessions.spawn.worktreeOffHint' => 'Recommended when other sessions may work on this project at the same time — each isolated session edits its own checkout.',
+			'web.sessions.spawn.worktreeUnavailableNotRepo' => 'Unavailable: the working directory is not inside a git repository.',
+			'web.sessions.spawn.worktreeUnavailableLinked' => 'Unavailable: this path is a linked worktree — pick the main checkout.',
+			'web.sessions.spawn.worktreeConcurrentWarning' => 'Another live session is already working in this project without isolation — consider enabling the worktree so they don\'t edit the same files.',
 			'web.sessions.accountSwitcher.tooltip' => 'Switch Claude account (restarts the CLI process)',
 			'web.sessions.accountSwitcher.tooltipAgy' => 'Switch Antigravity account (restarts the CLI process)',
 			'web.sessions.accountSwitcher.currentDefault' => 'default',
@@ -19920,6 +19976,8 @@ extension on Translations {
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Git activity summariser',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.',
 			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better.',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.transcript.label' => 'Session transcript summariser',
 			'web.memoryWorkers.tasks.transcript.description' => 'Session-end "what did the agent do" summary. Naturally fits an agent worker.',
 			'web.memoryWorkers.tasks.transcript.modelAdvice' => 'Session \'what the agent did\' summaries — balanced model recommended; feeds the journal and drift detection.',
@@ -19927,8 +19985,6 @@ extension on Translations {
 			'web.memoryWorkers.tasks.plan_drift.description' => 'After each session ends, checks whether the project plan needs updating and files a proposal. Fits an agent worker for richer reasoning.',
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => 'Rewrites your goal/plan/sections — judgement-heavy; a strong model (sonnet/opus) avoids bad auto-updates.',
 			'web.memoryWorkers.tasks.conflict_detector.label' => 'Cross-layer conflict detector',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.conflict_detector.description' => 'Daily scan that finds contradictions between facts / plan / goal / journal. Higher-quality model = fewer false positives.',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => 'Daily cross-layer contradiction scan — balanced model is enough.',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture engine',
@@ -20434,6 +20490,8 @@ extension on Translations {
 			'web.activity.refreshTooltip' => 'Refresh',
 			'web.activity.filters.integration' => 'Integration',
 			'web.activity.filters.direction' => 'Direction',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.filters.status' => 'Status',
 			'web.activity.filters.allIntegrations' => 'All integrations',
 			'web.activity.filters.all' => 'All',
@@ -20441,8 +20499,6 @@ extension on Translations {
 			'web.activity.filters.outbound' => 'Outbound',
 			'web.activity.filters.allStatuses' => 'All statuses',
 			'web.activity.filters.status2' => '2xx success',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.filters.status3' => '3xx redirect',
 			'web.activity.filters.status4' => '4xx client error',
 			'web.activity.filters.status5' => '5xx server error',
@@ -20948,6 +21004,8 @@ extension on Translations {
 			'web.plugins.gitHosts.deleteFailedToast' => 'Delete failed',
 			'web.plugins.gitHosts.dialog.addTitle' => 'Add git host',
 			'web.plugins.gitHosts.dialog.editTitle' => ({required Object host}) => 'Edit ${host}',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.description' => 'Token is stored on the gateway. Used only for read-only API calls (list PRs, etc.).',
 			'web.plugins.gitHosts.dialog.kindLabel' => 'Kind',
 			'web.plugins.gitHosts.dialog.kindGitHub' => 'GitHub',
@@ -20955,8 +21013,6 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Display name (optional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
@@ -21462,6 +21518,8 @@ extension on Translations {
 			'web.serverSettings.targetRow.connectionFailedTitle' => 'Connection failed',
 			'web.serverSettings.targetRow.testFailedTitle' => 'Test failed',
 			'web.serverSettings.targetRow.deleteConfirm' => ({required Object id}) => 'Delete target "${id}"? Schedules referencing it will block the delete.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.targetRow.deleteSuccess' => 'Target deleted',
 			'web.serverSettings.targetRow.deleteFailedTitle' => 'Delete failed',
 			'web.serverSettings.targetRow.unknownError' => 'Unknown error',
@@ -21469,8 +21527,6 @@ extension on Translations {
 			'web.serverSettings.toggle.off' => 'Off',
 			'web.serverSettings.toggle.defaultOn' => 'Default (on)',
 			'web.serverSettings.toggle.defaultOff' => 'Default (off)',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.memoryRuntimeBanner' => 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Open Cortex settings',
 			'web.serverSettings.host.intro' => 'A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as "opendray is flaky" when the machine is really just asleep. Pick how opendray should handle that.',
@@ -21976,6 +22032,8 @@ extension on Translations {
 			'web.cortex.chat.hide' => 'Hide chat',
 			'web.cortex.chat.emptyHint' => 'Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you\'ve locked it.',
 			'web.cortex.chat.placeholder' => 'e.g. update this from the latest work · ⌘↵ to send',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.thinking' => 'AI is working…',
 			'web.cortex.chat.sendFailed' => 'Send failed',
 			'web.cortex.chat.escalate' => 'Escalate to session',
@@ -21983,8 +22041,6 @@ extension on Translations {
 			'web.cortex.chat.escalateHint' => 'Spawn a full agent session, grounded in the codebase, seeded with this conversation',
 			'web.cortex.chat.escalateFailed' => 'Escalation failed',
 			'web.cortex.chat.escalatedToast' => 'Agent session launched',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.closeHint' => 'Close this conversation',
 			'web.cortex.chat.revisionApplied' => 'Document updated',
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
@@ -22490,6 +22546,8 @@ extension on Translations {
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
@@ -22497,8 +22555,6 @@ extension on Translations {
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
 			'sessions.inspector.notes.newDocTooltip' => 'New doc',
 			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
@@ -22632,6 +22688,12 @@ extension on Translations {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => ' (no token)',
 			'sessions.spawnSheet.claudeAccount.noneHint' => 'No Claude accounts configured — the gateway will use the system ANTHROPIC_API_KEY. Add accounts under Settings → Accounts on the web admin.',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => 'Could not load Claude accounts (${error}). The session will spawn with the gateway default.',
+			'sessions.spawnSheet.worktree.label' => 'Run in isolated worktree',
+			'sessions.spawnSheet.worktree.subtitleOn' => 'Runs in a private git worktree on branch opendray/<session-id>; changes merge back via branch → PR. Untracked files (.env, node_modules) are not copied.',
+			'sessions.spawnSheet.worktree.subtitleOff' => 'Recommended when other sessions may work on this project at the same time.',
+			'sessions.spawnSheet.worktree.unavailableNotRepo' => 'Unavailable: the working directory is not inside a git repository.',
+			'sessions.spawnSheet.worktree.unavailableLinked' => 'Unavailable: this path is a linked worktree — pick the main checkout.',
+			'sessions.spawnSheet.worktree.concurrentWarning' => 'Another live session is already working in this project without isolation — consider enabling the worktree.',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => 'New server',
 			'mcp.addSecret' => 'Add secret',
@@ -22998,6 +23060,8 @@ extension on Translations {
 			'project.archived.restore' => 'Restore',
 			'backups.title' => 'Backups',
 			'backups.runConfirmTitle' => 'Run backup now?',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
 			'backups.runFullInstance' => 'Full instance',
 			'backups.runFullInstanceHint' => 'Also bundle the vault, secrets.env and config.toml — not just the database.',
@@ -23011,8 +23075,6 @@ extension on Translations {
 			'backups.runNow' => 'Run now',
 			'backups.queueing' => 'Queueing…',
 			'backups.queuedSnack' => ({required Object id}) => 'Backup queued (${id}). Watching for progress…',
-			_ => null,
-		} ?? switch (path) {
 			'backups.runFailedApi' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Backup succeeded (${bytes}).',
@@ -23512,6 +23574,8 @@ extension on Translations {
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'notesPage.editor.showPreview' => 'Preview',
 			'notesPage.editor.showSource' => 'Source',
@@ -23525,8 +23589,6 @@ extension on Translations {
 			'notesPage.flatten.preview' => 'Preview',
 			'notesPage.flatten.dismiss' => 'Not now',
 			'notesPage.flatten.title' => 'File projects under their own names',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
 			'notesPage.flatten.nothingToMove' => 'Nothing to move.',
 			'notesPage.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',

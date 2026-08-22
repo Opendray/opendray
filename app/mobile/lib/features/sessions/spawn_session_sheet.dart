@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
+import 'package:opendray/core/api/git_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/providers_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
@@ -92,16 +95,66 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
   // explicitly per spawn. When ON, _submit appends the right
   // flag(s) for the selected provider to the args list.
   bool _bypassEnabled = false;
+  // Worktree isolation: spawn the CLI in a private git worktree so
+  // concurrent sessions on the same project can't clobber each
+  // other's files. Offerable only when the cwd is inside a git
+  // repo's main checkout — probed live below.
+  bool _isolationEnabled = false;
+  GitInfoResponse? _gitInfo;
+  Timer? _probeDebounce;
+  String _probedCwd = '';
   bool _submitting = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _cwdCtrl.addListener(_scheduleProbe);
+  }
+
+  @override
   void dispose() {
+    _probeDebounce?.cancel();
     _cwdCtrl.dispose();
     _nameCtrl.dispose();
     _argsCtrl.dispose();
     super.dispose();
   }
+
+  // Debounced repo probe: refreshes _gitInfo ~350ms after the cwd
+  // field settles (typing or picker). Failures degrade to "not a
+  // repo" — the toggle just stays disabled.
+  void _scheduleProbe() {
+    _probeDebounce?.cancel();
+    _probeDebounce = Timer(const Duration(milliseconds: 350), () async {
+      final cwd = _cwdCtrl.text.trim();
+      if (cwd == _probedCwd) return;
+      _probedCwd = cwd;
+      if (cwd.isEmpty) {
+        if (mounted) setState(() => _gitInfo = null);
+        return;
+      }
+      try {
+        final info = await ref.read(gitApiProvider).info(cwd);
+        if (!mounted || _cwdCtrl.text.trim() != cwd) return;
+        setState(() {
+          _gitInfo = info;
+          if (!(info.isRepo && !info.linkedWorktree)) {
+            _isolationEnabled = false;
+          }
+        });
+      } on Object {
+        if (!mounted) return;
+        setState(() {
+          _gitInfo = null;
+          _isolationEnabled = false;
+        });
+      }
+    });
+  }
+
+  bool get _isolationAvailable =>
+      (_gitInfo?.isRepo ?? false) && !(_gitInfo?.linkedWorktree ?? false);
 
   Future<void> _browseCwd() async {
     final picked = await DirectoryPickerSheet.show(
@@ -154,6 +207,9 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
               name: _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
               args: args,
               claudeAccountId: isClaude ? _claudeAccountId : null,
+              isolation: _isolationEnabled && _isolationAvailable
+                  ? 'worktree'
+                  : null,
             ),
           );
       if (!mounted) return;
@@ -287,6 +343,14 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
                   helperText: t.sessions.spawnSheet.argsHelper,
                 ),
               ),
+              const SizedBox(height: 6),
+              _WorktreeToggle(
+                enabled: !_submitting && _isolationAvailable,
+                value: _isolationEnabled,
+                info: _gitInfo,
+                probedCwd: _probedCwd,
+                onChanged: (v) => setState(() => _isolationEnabled = v),
+              ),
               if (bypassLabel != null) ...[
                 const SizedBox(height: 6),
                 SwitchListTile.adaptive(
@@ -339,6 +403,73 @@ class _SpawnSessionSheetState extends ConsumerState<SpawnSessionSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Worktree-isolation switch with availability gating and an advisory
+// when another live un-isolated session already works this project.
+class _WorktreeToggle extends ConsumerWidget {
+  const _WorktreeToggle({
+    required this.enabled,
+    required this.value,
+    required this.info,
+    required this.probedCwd,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+  final bool value;
+  final GitInfoResponse? info;
+  final String probedCwd;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final wt = t.sessions.spawnSheet.worktree;
+    final String subtitle;
+    if (info != null && !info!.isRepo) {
+      subtitle = wt.unavailableNotRepo;
+    } else if (info?.linkedWorktree ?? false) {
+      subtitle = wt.unavailableLinked;
+    } else {
+      subtitle = value ? wt.subtitleOn : wt.subtitleOff;
+    }
+
+    // Advisory concurrency check — never blocking: a deliberately
+    // shared tree is a valid single-operator workflow.
+    final sessions = ref.watch(sessionsListProvider).value ?? const [];
+    final concurrent = !value &&
+        probedCwd.isNotEmpty &&
+        sessions.any(
+          (s) => s.cwd == probedCwd && s.isLive && s.workDir == null,
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile.adaptive(
+          value: value,
+          onChanged: enabled ? onChanged : null,
+          title: Text(wt.label),
+          subtitle: Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+        ),
+        if (concurrent)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              wt.concurrentWarning,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.amber.shade700,
+                  ),
+            ),
+          ),
+      ],
     );
   }
 }

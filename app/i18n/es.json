@@ -4070,6 +4070,14 @@
         "noTokenSuffix": " (sin token)",
         "noneHint": "No hay cuentas de Claude configuradas. El gateway usará la ANTHROPIC_API_KEY del sistema. Añade cuentas en Ajustes → Cuentas en el admin web.",
         "errorHint": "No se pudieron cargar las cuentas de Claude ({error}). La session se creará con el valor predeterminado del gateway."
+      },
+      "worktree": {
+        "label": "Ejecutar en worktree aislado",
+        "subtitleOn": "Se ejecuta en un worktree git privado en la rama opendray/<session-id>; los cambios vuelven por rama → PR. Los archivos no rastreados (.env, node_modules) no se copian.",
+        "subtitleOff": "Recomendado cuando otras sesiones puedan trabajar en este proyecto a la vez.",
+        "unavailableNotRepo": "No disponible: el directorio de trabajo no está dentro de un repositorio git.",
+        "unavailableLinked": "No disponible: esta ruta es un worktree enlazado; elige el checkout principal.",
+        "concurrentWarning": "Otra sesión activa ya trabaja en este proyecto sin aislamiento; considera activar el worktree."
       }
     }
   },

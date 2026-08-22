@@ -219,13 +219,24 @@ class _SessionCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      _shortCwd(session.cwd),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _shortCwd(session.cwd),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                    ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      overflow: TextOverflow.ellipsis,
+                        ),
+                        if (session.worktreeBranch != null) ...[
+                          const SizedBox(width: 6),
+                          _WorktreeBadge(branch: session.worktreeBranch!),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -247,6 +258,43 @@ class _SessionCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Marks a worktree-isolated session: branch icon + the session part
+// of the managed branch name (opendray/<id> → <id>).
+class _WorktreeBadge extends StatelessWidget {
+  const _WorktreeBadge({required this.branch});
+  final String branch;
+
+  @override
+  Widget build(BuildContext context) {
+    final short = branch.startsWith('opendray/')
+        ? branch.substring('opendray/'.length)
+        : branch;
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.alt_route, size: 10, color: color),
+          const SizedBox(width: 3),
+          Text(
+            short,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
