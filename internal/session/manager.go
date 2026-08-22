@@ -221,6 +221,14 @@ type Manager struct {
 	// exactly the pre-worktree behaviour.
 	workspaces *workspace.Manager
 	wsResolver *workspace.Resolver
+	// wtMu guards the reclaim-vs-create race on worktree roots:
+	// wtPending counts creates in flight that will reference a root
+	// (reclaim skips a root with pending refs), wtReclaiming marks
+	// roots whose git teardown is running (creates refuse to inherit
+	// them). See holdWorktree / reclaimWorktree.
+	wtMu         sync.Mutex
+	wtPending    map[string]int
+	wtReclaiming map[string]struct{}
 
 	mu       sync.RWMutex
 	closed   bool
@@ -613,17 +621,18 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		// for every pre-0044 row.
 		origin = OriginOperator
 	}
-	workDir, wtBranch, err := m.resolveWorkspace(ctx, req, sessID)
+	logicalCwd, workDir, wtBranch, wtRelease, err := m.resolveWorkspace(ctx, req, sessID)
 	if err != nil {
 		return Session{}, err
 	}
+	defer wtRelease()
 
 	sess := Session{
 		ID:                   sessID,
 		Name:                 name,
 		ProviderID:           req.ProviderID,
 		Model:                req.Model,
-		Cwd:                  req.Cwd,
+		Cwd:                  logicalCwd,
 		WorkDir:              workDir,
 		WorktreeBranch:       wtBranch,
 		Args:                 req.Args,
@@ -667,14 +676,28 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 	return rs.sess, nil
 }
 
-// resolveWorkspace decides the session's physical execution path.
-// Returns ("", "") for the default case (run in cwd). A child session
-// (ParentSessionID set) always inherits the parent's work dir — one
-// worktree per family, created only by the top-level session; the
-// child's own Isolation flag is ignored. A top-level request with
-// isolation=worktree gets a fresh managed worktree and owns its
-// branch.
-func (m *Manager) resolveWorkspace(ctx context.Context, req CreateRequest, sessID string) (workDir, branch string, err error) {
+// resolveWorkspace decides the session's logical identity and physical
+// execution path. Returns cwd == req.Cwd, workDir == "" for the default
+// case (run in cwd).
+//
+// A child session (ParentSessionID set) of an ISOLATED parent inherits
+// BOTH halves of the parent's workspace — parent.Cwd as the logical
+// identity and parent.WorkDir as the execution dir. Forcing the logical
+// side too is deliberate: a client-supplied cwd that differs from the
+// parent's would file the child's memory/Cortex/journal output under
+// one project while it physically edits another project's worktree.
+// The child's own Isolation flag is ignored — one worktree per family,
+// created only by the top-level session.
+//
+// A top-level request with isolation=worktree gets a fresh managed
+// worktree and owns its branch.
+//
+// The returned release func (never nil) drops the pending-reference
+// that guards the worktree against a concurrent reclaim between this
+// decision and the session row landing in the store; the caller MUST
+// invoke it once the row is persisted (or the spawn failed).
+func (m *Manager) resolveWorkspace(ctx context.Context, req CreateRequest, sessID string) (cwd, workDir, branch string, release func(), err error) {
+	release = func() {}
 	if req.ParentSessionID != "" {
 		parent, perr := m.store.Get(ctx, req.ParentSessionID)
 		if perr != nil {
@@ -682,26 +705,70 @@ func (m *Manager) resolveWorkspace(ctx context.Context, req CreateRequest, sessI
 			// parent shouldn't block the child spawn, and a parent
 			// without a work dir means nothing to inherit.
 			if !errors.Is(perr, ErrNotFound) {
-				return "", "", perr
+				return "", "", "", release, perr
 			}
-			return "", "", nil
+			return req.Cwd, "", "", release, nil
 		}
-		return parent.WorkDir, "", nil
+		if parent.WorkDir == "" {
+			return req.Cwd, "", "", release, nil
+		}
+		root := ""
+		if m.workspaces != nil {
+			root = m.workspaces.RootOf(parent.WorkDir)
+		}
+		rel, ok := m.holdWorktree(root)
+		if !ok {
+			return "", "", "", release, fmt.Errorf("%w: parent worktree is being reclaimed", ErrIsolationUnavailable)
+		}
+		return parent.Cwd, parent.WorkDir, "", rel, nil
 	}
 	if req.Isolation != IsolationWorktree {
-		return "", "", nil
+		return req.Cwd, "", "", release, nil
 	}
 	if m.workspaces == nil {
-		return "", "", errors.New("worktree isolation is not available on this gateway")
+		return "", "", "", release, fmt.Errorf("%w: no workspace manager on this gateway", ErrIsolationUnavailable)
 	}
 	info, werr := m.workspaces.Create(ctx, req.Cwd, sessID)
 	if werr != nil {
-		return "", "", werr
+		return "", "", "", release, werr
 	}
 	if m.wsResolver != nil {
 		m.wsResolver.Register(info.Root, info.WorkDir, req.Cwd)
 	}
-	return info.WorkDir, info.Branch, nil
+	rel, _ := m.holdWorktree(info.Root) // fresh root cannot be mid-reclaim
+	return req.Cwd, info.WorkDir, info.Branch, rel, nil
+}
+
+// holdWorktree takes a pending reference on a worktree root, blocking
+// reclaim while a create that will reference it is in flight. Returns
+// ok=false when the root is currently being reclaimed. The returned
+// release is idempotent-enough for a single deferred call.
+func (m *Manager) holdWorktree(root string) (release func(), ok bool) {
+	if root == "" {
+		return func() {}, true
+	}
+	m.wtMu.Lock()
+	defer m.wtMu.Unlock()
+	if m.wtReclaiming == nil {
+		m.wtReclaiming = make(map[string]struct{})
+	}
+	if _, busy := m.wtReclaiming[root]; busy {
+		return func() {}, false
+	}
+	if m.wtPending == nil {
+		m.wtPending = make(map[string]int)
+	}
+	m.wtPending[root]++
+	return func() {
+		m.wtMu.Lock()
+		if m.wtPending[root] > 0 {
+			m.wtPending[root]--
+			if m.wtPending[root] == 0 {
+				delete(m.wtPending, root)
+			}
+		}
+		m.wtMu.Unlock()
+	}, true
 }
 
 // Start re-spawns a previously-stopped/ended session row. The row
@@ -766,7 +833,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	workDir := sess.EffectiveWorkDir()
 	if info, err := os.Stat(workDir); err != nil {
 		if sess.WorkDir != "" && os.IsNotExist(err) {
-			return nil, fmt.Errorf("session worktree is gone from disk (%s); remove the session or recreate the worktree", workDir)
+			return nil, fmt.Errorf("session worktree is gone from disk (%s); remove the session — its branch, if it still exists, is preserved", workDir)
 		}
 		return nil, fmt.Errorf("cwd: %w", err)
 	} else if !info.IsDir() {
@@ -1497,6 +1564,26 @@ func (m *Manager) reclaimWorktree(ctx context.Context, sess Session) {
 	if root == "" {
 		return
 	}
+	// Reserve the root against concurrent creates: a create that would
+	// reference it either already holds a pending ref (we skip) or will
+	// see wtReclaiming and refuse to inherit. Closes the check-then-
+	// remove window without holding a lock across the git teardown.
+	m.wtMu.Lock()
+	if m.wtPending[root] > 0 {
+		m.wtMu.Unlock()
+		m.log.Info("worktree has a create in flight; not reclaimed", "root", root)
+		return
+	}
+	if m.wtReclaiming == nil {
+		m.wtReclaiming = make(map[string]struct{})
+	}
+	m.wtReclaiming[root] = struct{}{}
+	m.wtMu.Unlock()
+	defer func() {
+		m.wtMu.Lock()
+		delete(m.wtReclaiming, root)
+		m.wtMu.Unlock()
+	}()
 	if others, err := m.store.List(ctx); err == nil {
 		for _, o := range others {
 			if o.ID != sess.ID && o.WorkDir != "" && m.workspaces.RootOf(o.WorkDir) == root {

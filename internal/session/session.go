@@ -275,6 +275,10 @@ var (
 	ErrUnknownProvider          = errors.New("unknown provider")
 	ErrProviderUnavailable      = errors.New("provider unavailable")
 	ErrAccountSwitchUnsupported = errors.New("account switch only supported for claude and antigravity providers")
+	// ErrIsolationUnavailable — isolation=worktree was requested but the
+	// gateway has no workspace manager wired, or the target worktree is
+	// mid-reclaim. A client precondition failure (400), not a fault.
+	ErrIsolationUnavailable = errors.New("worktree isolation is not available for this request")
 )
 
 func newID() string {
