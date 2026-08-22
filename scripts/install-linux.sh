@@ -657,8 +657,17 @@ log_ok "opendray.env: $OD_ENV_PATH (0640 root:$OPENDRAY_SERVICE_USER — secrets
 log_info "Applying migrations (idempotent)..."
 # Pass secrets via the wizard's shell env so opendray-as-service-user picks
 # them up. The actual service uses systemd's EnvironmentFile= once started.
+#
+# HOME must be the service user's data dir: run_priv_as_env uses `sudo -E` /
+# `runuser --preserve-environment`, which keeps the caller's HOME (/root when
+# the wizard runs as root). opendray then resolves its default backup keyfile
+# to $HOME/.opendray/secrets/backup.key — i.e. /root/… — which the opendray
+# user cannot read, so the pre-migrate snapshot fails with "backup key load:
+# permission denied" and migrate aborts. Pinning HOME to the data dir keeps
+# that lookup inside the service user's own, writable, home.
 OPENDRAY_DATABASE_URL="$OD_DSN" \
 OPENDRAY_ADMIN_PASSWORD="$OD_ADMIN_PW" \
+HOME="$OPENDRAY_DATA_DIR" \
     run_priv_as_env "$OPENDRAY_SERVICE_USER" "$OPENDRAY_PREFIX/bin/opendray" migrate -config "$OD_CONFIG_PATH"
 log_ok "Migrations applied"
 
