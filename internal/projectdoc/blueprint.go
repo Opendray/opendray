@@ -54,9 +54,46 @@ type Section struct {
 	// (binding ground truth + rules, injected as guardrails) or
 	// "emergent" (distilled guidance, injected as reference). Always
 	// empty for per-project sections.
-	Nature    string    `json:"nature,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Nature string `json:"nature,omitempty"`
+	// Exclusions are subjects the AI maintainer must never write about on
+	// this page. PromptHint steers what the page SHOULD be; every other
+	// input is material to fold in, so this is the only way to say "leave
+	// this out" — and without it, deleting a subject from the page left it
+	// in the feedstock to be re-derived on the next sweep.
+	Exclusions []string  `json:"exclusions,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// MaxExclusions bounds a page's exclusion list. The list is injected into
+// every draft's system prompt and compiled into a regexp per entry on every
+// sweep, so it is a steering control, not a bulk filter — a page needing
+// dozens of them is describing a scope problem the prompt_hint should solve.
+const MaxExclusions = 32
+
+// normalizeExclusions trims, drops empties, and de-duplicates
+// case-insensitively while preserving the operator's order and their
+// original casing (the list is shown back to them, and matching is
+// case-insensitive anyway). Over-long lists are truncated rather than
+// rejected so a paste never loses the whole edit.
+func normalizeExclusions(in []string) []string {
+	seen := make(map[string]struct{}, len(in))
+	out := make([]string, 0, len(in))
+	for _, p := range in {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		k := strings.ToLower(p)
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		if out = append(out, p); len(out) == MaxExclusions {
+			break
+		}
+	}
+	return out
 }
 
 // SlugOverview is the reserved front-page section: present in every
@@ -84,9 +121,53 @@ func ValidGlobalKBSlug(s string) bool {
 	return kbSlugRe.MatchString(s)
 }
 
-// ValidMaintainerMode reports whether m is ai|human|scanner.
+// ValidMaintainerMode reports whether m is ai|human|scanner|session.
+//
+// The mode answers one question: WHO keeps this page current?
+//   - "ai"      — the Cortex background sweep redrafts it from memory.
+//   - "human"   — the operator authors it by hand; automation only proposes.
+//   - "scanner" — a mechanical rebuilder owns it (tech_stack, recent_activity).
+//   - "session" — the agent doing the work writes it, live, mid-session.
+//
+// "session" exists because some knowledge only the working agent ever
+// holds: it just provisioned the container, created the role, picked the
+// port. The background sweep cannot reconstruct that from episodic facts,
+// so a session-maintained page hands the pen to the one who was there.
 func ValidMaintainerMode(m string) bool {
-	return m == "ai" || m == "human" || m == "scanner"
+	for _, valid := range MaintainerModes {
+		if m == valid {
+			return true
+		}
+	}
+	return false
+}
+
+// MaintainerModes is the full set, and the single source of truth for it.
+// It is mirrored by a CHECK constraint on doc_blueprint_sections, so
+// adding a mode here without a migration widening that constraint gets a
+// 23514 at write time — which is what TestMaintainerModesMatchMigration
+// exists to catch before it reaches a running gateway.
+var MaintainerModes = []string{"ai", "human", "scanner", MaintainerSession}
+
+// MaintainerSession is the maintainer_mode that lets an ordinary
+// in-session agent write a global knowledge page's body.
+const MaintainerSession = "session"
+
+// SessionWritable reports whether an ordinary (non-Librarian) session may
+// write this section's body via SetDocByPolicy.
+//
+// Deliberately metadata-driven: no slug is special-cased, so an operator
+// who creates kb_anything and marks it session-maintained gets it, and an
+// install that never creates one exposes no writable page at all. The
+// extra guards below are belt-and-braces against a mislabelled page —
+// foundational pages carry binding rules and pinned pages are reserved,
+// so neither is ever handed to a session regardless of its mode.
+func SessionWritable(sec Section) bool {
+	return sec.Cwd == GlobalCwd &&
+		ValidGlobalKBSlug(sec.Slug) &&
+		sec.MaintainerMode == MaintainerSession &&
+		sec.Nature != "foundational" &&
+		!sec.Pinned
 }
 
 // ValidWritePolicy reports whether p is direct|proposal.
@@ -111,6 +192,33 @@ func ValidNature(n string) bool {
 // ErrReservedSection is returned when a caller tries to delete or
 // demote the reserved overview section.
 var ErrReservedSection = errors.New("projectdoc: the overview section is reserved")
+
+// ErrNotSessionWritable is returned when an agent-side write targets a
+// global knowledge page that is not session-maintained.
+var ErrNotSessionWritable = errors.New(
+	"projectdoc: this knowledge page is not session-maintained — " +
+		"only pages whose blueprint maintainer_mode is \"session\" accept an in-session write")
+
+// globalKBWriteGuard authorises an agent-side write to a GLOBAL knowledge
+// page against the live blueprint.
+//
+// Fails closed: a page missing from the blueprint — including the case
+// where we read no blueprint at all — is refused rather than written. The
+// alternative (degrade to a proposal, as an unknown per-project section
+// does) would let any agent queue proposals against pages the operator
+// never opened to sessions.
+func globalKBWriteGuard(sections []Section, kind Kind) error {
+	for _, sec := range sections {
+		if sec.Slug == string(kind) {
+			if !SessionWritable(sec) {
+				return fmt.Errorf("%w (%s is maintained by %q)",
+					ErrNotSessionWritable, kind, sec.MaintainerMode)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("%w (%s is not in the knowledge blueprint)", ErrNotSessionWritable, kind)
+}
 
 // defaultSections is the blueprint a never-configured project gets —
 // a 1:1 map of the legacy fixed kinds, so pre-blueprint behaviour is
@@ -183,7 +291,7 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 	rows, err := s.pool.Query(ctx, `
 		SELECT cwd, slug, title, description, position, maintainer_mode,
 		       COALESCE(write_policy, 'proposal'), prompt_hint, pinned, inject,
-		       COALESCE(nature, ''), created_at, updated_at
+		       COALESCE(nature, ''), COALESCE(exclusions, '{}'), created_at, updated_at
 		  FROM doc_blueprint_sections
 		 WHERE cwd = $1
 		 ORDER BY pinned DESC, position ASC, slug ASC`, cwd)
@@ -196,7 +304,8 @@ func (s *Service) querySections(ctx context.Context, cwd string) ([]Section, err
 		var sec Section
 		if err := rows.Scan(&sec.Cwd, &sec.Slug, &sec.Title, &sec.Description,
 			&sec.Position, &sec.MaintainerMode, &sec.WritePolicy, &sec.PromptHint,
-			&sec.Pinned, &sec.Inject, &sec.Nature, &sec.CreatedAt, &sec.UpdatedAt); err != nil {
+			&sec.Pinned, &sec.Inject, &sec.Nature, &sec.Exclusions,
+			&sec.CreatedAt, &sec.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("projectdoc: scan section: %w", err)
 		}
 		out = append(out, sec)
@@ -253,9 +362,17 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 		if sec.Slug == SlugOverview {
 			sec.Pinned = true // the front page stays pinned
 		}
+		if sec.MaintainerMode == MaintainerSession {
+			// Per-project docs already have an in-session write path
+			// (current_objective_set and friends); "session" is a
+			// knowledge-layer mode and would be inert here, so reject it
+			// rather than store a setting that does nothing.
+			return Section{}, fmt.Errorf(
+				"projectdoc: maintainer_mode %q applies to global knowledge pages only", MaintainerSession)
+		}
 	}
 	if !ValidMaintainerMode(sec.MaintainerMode) {
-		return Section{}, fmt.Errorf("projectdoc: maintainer_mode must be ai|human|scanner, got %q", sec.MaintainerMode)
+		return Section{}, fmt.Errorf("projectdoc: maintainer_mode must be ai|human|scanner|session, got %q", sec.MaintainerMode)
 	}
 	// Empty defaults to the safe proposal gate; a bad explicit value is
 	// rejected so a caller can't silently mistype direct-write away.
@@ -263,6 +380,14 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 		return Section{}, fmt.Errorf("projectdoc: write_policy must be direct|proposal, got %q", sec.WritePolicy)
 	}
 	sec.WritePolicy = normalizeWritePolicy(sec.WritePolicy)
+	sec.Exclusions = normalizeExclusions(sec.Exclusions)
+	if len(sec.Exclusions) > 0 && sec.Cwd != GlobalCwd {
+		// Only the global knowledge drafter consults exclusions. Reject
+		// rather than store a setting that would silently do nothing —
+		// same reasoning as maintainer_mode "session" above.
+		return Section{}, errors.New(
+			"projectdoc: exclusions apply to global knowledge pages only")
+	}
 	if strings.TrimSpace(sec.Title) == "" {
 		return Section{}, errors.New("projectdoc: section title is required")
 	}
@@ -273,8 +398,8 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO doc_blueprint_sections
-			(cwd, slug, title, description, position, maintainer_mode, write_policy, prompt_hint, pinned, inject, nature)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			(cwd, slug, title, description, position, maintainer_mode, write_policy, prompt_hint, pinned, inject, nature, exclusions)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (cwd, slug) DO UPDATE SET
 			title = EXCLUDED.title,
 			description = EXCLUDED.description,
@@ -285,16 +410,19 @@ func (s *Service) PutSection(ctx context.Context, sec Section) (Section, error) 
 			pinned = EXCLUDED.pinned,
 			inject = EXCLUDED.inject,
 			nature = EXCLUDED.nature,
+			exclusions = EXCLUDED.exclusions,
 			updated_at = NOW()
 		RETURNING cwd, slug, title, description, position, maintainer_mode,
 		          COALESCE(write_policy, 'proposal'), prompt_hint, pinned, inject,
-		          COALESCE(nature, ''), created_at, updated_at`,
+		          COALESCE(nature, ''), COALESCE(exclusions, '{}'), created_at, updated_at`,
 		sec.Cwd, sec.Slug, sec.Title, sec.Description, sec.Position,
-		sec.MaintainerMode, sec.WritePolicy, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature)
+		sec.MaintainerMode, sec.WritePolicy, sec.PromptHint, sec.Pinned, sec.Inject, sec.Nature,
+		sec.Exclusions)
 	var out Section
 	if err := row.Scan(&out.Cwd, &out.Slug, &out.Title, &out.Description,
 		&out.Position, &out.MaintainerMode, &out.WritePolicy, &out.PromptHint,
-		&out.Pinned, &out.Inject, &out.Nature, &out.CreatedAt, &out.UpdatedAt); err != nil {
+		&out.Pinned, &out.Inject, &out.Nature, &out.Exclusions,
+		&out.CreatedAt, &out.UpdatedAt); err != nil {
 		return Section{}, fmt.Errorf("projectdoc: put section: %w", err)
 	}
 	return out, nil

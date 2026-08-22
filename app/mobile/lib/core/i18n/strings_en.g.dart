@@ -278,6 +278,7 @@ class TranslationsWebEn {
 	late final TranslationsWebCortexEn cortex = TranslationsWebCortexEn.internal(_root);
 	late final TranslationsWebDatabaseEn database = TranslationsWebDatabaseEn.internal(_root);
 	late final TranslationsWebRoundTableEn roundTable = TranslationsWebRoundTableEn.internal(_root);
+	late final TranslationsWebDiffEn diff = TranslationsWebDiffEn.internal(_root);
 }
 
 // Path: more
@@ -1895,6 +1896,8 @@ class TranslationsNotesPageEn {
 	/// en: 'Search across the whole vault…'
 	String get searchHint => 'Search across the whole vault…';
 
+	late final TranslationsNotesPageBrowseEn browse = TranslationsNotesPageBrowseEn.internal(_root);
+
 	/// en: 'Up'
 	String get up => 'Up';
 
@@ -1955,13 +1958,18 @@ class TranslationsNotesPageEn {
 	/// en: 'Path cannot contain ".."'
 	String get validatePathDots => 'Path cannot contain ".."';
 
-	/// en: 'Auto-appends .md if missing.'
-	String get pathHelper => 'Auto-appends .md if missing.';
+	/// en: 'Adds .md unless the name already ends in .md or .html.'
+	String get pathHelper => 'Adds .md unless the name already ends in .md or .html.';
 
 	late final TranslationsNotesPageEditorEn editor = TranslationsNotesPageEditorEn.internal(_root);
 	late final TranslationsNotesPageHtmlEn html = TranslationsNotesPageHtmlEn.internal(_root);
 	late final TranslationsNotesPageFlattenEn flatten = TranslationsNotesPageFlattenEn.internal(_root);
 	late final TranslationsNotesPageRenameEn rename = TranslationsNotesPageRenameEn.internal(_root);
+	late final TranslationsNotesPageTagsEn tags = TranslationsNotesPageTagsEn.internal(_root);
+	late final TranslationsNotesPageBacklinksEn backlinks = TranslationsNotesPageBacklinksEn.internal(_root);
+	late final TranslationsNotesPageOutlineEn outline = TranslationsNotesPageOutlineEn.internal(_root);
+	late final TranslationsNotesPageTodayEn today = TranslationsNotesPageTodayEn.internal(_root);
+	late final TranslationsNotesPageWikiLinkEn wikiLink = TranslationsNotesPageWikiLinkEn.internal(_root);
 }
 
 // Path: vaultSync
@@ -2625,17 +2633,17 @@ class TranslationsWebConflictsEn {
 	/// en: 'Conflict dismissed'
 	String get dismissed => 'Conflict dismissed';
 
-	/// en: 'Fact deleted and conflict accepted'
-	String get deletedFact => 'Fact deleted and conflict accepted';
+	/// en: 'Fact archived (restorable) and conflict accepted'
+	String get deletedFact => 'Fact archived (restorable) and conflict accepted';
 
 	/// en: 'Fix:'
 	String get quickActions => 'Fix:';
 
-	/// en: 'Delete fact'
-	String get deleteFact => 'Delete fact';
+	/// en: 'Archive fact'
+	String get deleteFact => 'Archive fact';
 
-	/// en: 'Delete {side}: {ref}'
-	String deleteFactSide({required Object side, required Object ref}) => 'Delete ${side}: ${ref}';
+	/// en: 'Archive {side}: {ref}'
+	String deleteFactSide({required Object side, required Object ref}) => 'Archive ${side}: ${ref}';
 
 	late final TranslationsWebConflictsConfirmDeleteEn confirmDelete = TranslationsWebConflictsConfirmDeleteEn.internal(_root);
 	late final TranslationsWebConflictsOpenLayerEn openLayer = TranslationsWebConflictsOpenLayerEn.internal(_root);
@@ -3658,6 +3666,30 @@ class TranslationsWebRoundTableEn {
 
 	late final TranslationsWebRoundTableHandoffEn handoff = TranslationsWebRoundTableHandoffEn.internal(_root);
 	late final TranslationsWebRoundTablePlanEn plan = TranslationsWebRoundTablePlanEn.internal(_root);
+}
+
+// Path: web.diff
+class TranslationsWebDiffEn {
+	TranslationsWebDiffEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No changes — the proposed content is identical to the live page.'
+	String get noChanges => 'No changes — the proposed content is identical to the live page.';
+
+	/// en: '+{count}'
+	String added({required Object count}) => '+${count}';
+
+	/// en: '−{count}'
+	String removed({required Object count}) => '−${count}';
+
+	/// en: 'changed lines'
+	String get changedLines => 'changed lines';
+
+	/// en: '⋯ {count} unchanged ⋯'
+	String collapsed({required Object count}) => '⋯ ${count} unchanged ⋯';
 }
 
 // Path: more.identity
@@ -4689,17 +4721,17 @@ class TranslationsProjectConflictsEn {
 	/// en: 'Dismiss'
 	String get dismiss => 'Dismiss';
 
-	/// en: 'Delete fact {side}'
-	String deleteFact({required Object side}) => 'Delete fact ${side}';
+	/// en: 'Archive fact'
+	String get deleteFact => 'Archive fact';
 
-	/// en: 'Delete fact {side}?'
-	String deleteConfirmTitle({required Object side}) => 'Delete fact ${side}?';
+	/// en: 'Archive fact {side}?'
+	String deleteConfirmTitle({required Object side}) => 'Archive fact ${side}?';
 
-	/// en: 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.'
-	String get deleteConfirmBody => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.';
+	/// en: 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.'
+	String get deleteConfirmBody => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.';
 
-	/// en: 'Will delete (side {side}):'
-	String deleteWillDelete({required Object side}) => 'Will delete (side ${side}):';
+	/// en: 'Will archive (side {side}):'
+	String deleteWillDelete({required Object side}) => 'Will archive (side ${side}):';
 
 	/// en: 'Will keep (side {side}):'
 	String deleteWillKeep({required Object side}) => 'Will keep (side ${side}):';
@@ -4710,11 +4742,11 @@ class TranslationsProjectConflictsEn {
 	/// en: 'Loading fact text…'
 	String get deleteLoading => 'Loading fact text…';
 
-	/// en: 'Delete {side}'
-	String deleteFactLabel({required Object side}) => 'Delete ${side}';
+	/// en: 'Archive {side}'
+	String deleteFactLabel({required Object side}) => 'Archive ${side}';
 
-	/// en: 'Fact deleted and conflict accepted'
-	String get deletedFact => 'Fact deleted and conflict accepted';
+	/// en: 'Fact archived (restorable), conflict accepted'
+	String get deletedFact => 'Fact archived (restorable), conflict accepted';
 
 	/// en: 'Open plan editor'
 	String get openPlanEditor => 'Open plan editor';
@@ -5496,6 +5528,21 @@ class TranslationsChannelsKindsEn {
 	late final TranslationsChannelsKindsWecomEn wecom = TranslationsChannelsKindsWecomEn.internal(_root);
 }
 
+// Path: notesPage.browse
+class TranslationsNotesPageBrowseEn {
+	TranslationsNotesPageBrowseEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Folders'
+	String get tree => 'Folders';
+
+	/// en: 'Tags'
+	String get tags => 'Tags';
+}
+
 // Path: notesPage.editor
 class TranslationsNotesPageEditorEn {
 	TranslationsNotesPageEditorEn.internal(this._root);
@@ -5623,6 +5670,102 @@ class TranslationsNotesPageRenameEn {
 
 	/// en: 'Renamed, but the links were not all updated'
 	String get doneWithWarning => 'Renamed, but the links were not all updated';
+}
+
+// Path: notesPage.tags
+class TranslationsNotesPageTagsEn {
+	TranslationsNotesPageTagsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'No tags in the vault yet. Write #like-this in a note.'
+	String get empty => 'No tags in the vault yet. Write #like-this in a note.';
+
+	/// en: 'No tags match "{query}".'
+	String noMatches({required Object query}) => 'No tags match "${query}".';
+
+	/// en: 'Filtered by'
+	String get filteredBy => 'Filtered by';
+
+	/// en: 'Clear tag filter'
+	String get clear => 'Clear tag filter';
+
+	/// en: 'No notes carry #{tag} any more.'
+	String noNotes({required Object tag}) => 'No notes carry #${tag} any more.';
+}
+
+// Path: notesPage.backlinks
+class TranslationsNotesPageBacklinksEn {
+	TranslationsNotesPageBacklinksEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Backlinks'
+	String get title => 'Backlinks';
+
+	/// en: 'Looking for links…'
+	String get loading => 'Looking for links…';
+
+	/// en: 'No notes link here yet.'
+	String get empty => 'No notes link here yet.';
+
+	/// en: 'Could not load backlinks: {error}'
+	String failed({required Object error}) => 'Could not load backlinks: ${error}';
+}
+
+// Path: notesPage.outline
+class TranslationsNotesPageOutlineEn {
+	TranslationsNotesPageOutlineEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Outline'
+	String get action => 'Outline';
+
+	/// en: 'Outline'
+	String get title => 'Outline';
+
+	/// en: 'This document has no headings.'
+	String get empty => 'This document has no headings.';
+
+	/// en: 'Preview can't scroll without scripts, so this opened the source view.'
+	String get jumpedToSource => 'Preview can\'t scroll without scripts, so this opened the source view.';
+}
+
+// Path: notesPage.today
+class TranslationsNotesPageTodayEn {
+	TranslationsNotesPageTodayEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Open today's daily note'
+	String get tooltip => 'Open today\'s daily note';
+}
+
+// Path: notesPage.wikiLink
+class TranslationsNotesPageWikiLinkEn {
+	TranslationsNotesPageWikiLinkEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Link to…'
+	String get suggestions => 'Link to…';
+
+	/// en: 'Create "{name}"'
+	String createNew({required Object name}) => 'Create "${name}"';
+
+	/// en: 'No note matches — keep typing to create one.'
+	String get noMatches => 'No note matches — keep typing to create one.';
 }
 
 // Path: vaultSync.every
@@ -6970,14 +7113,14 @@ class TranslationsWebConflictsConfirmDeleteEn {
 
 	// Translations
 
-	/// en: 'Delete fact {side}?'
-	String title({required Object side}) => 'Delete fact ${side}?';
+	/// en: 'Archive fact {side}?'
+	String title({required Object side}) => 'Archive fact ${side}?';
 
-	/// en: 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.'
-	String get description => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.';
+	/// en: 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.'
+	String get description => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.';
 
-	/// en: 'Will delete (side {side}):'
-	String targetLabel({required Object side}) => 'Will delete (side ${side}):';
+	/// en: 'Will archive (side {side}):'
+	String targetLabel({required Object side}) => 'Will archive (side ${side}):';
 
 	/// en: 'Will keep (side {side}):'
 	String keepLabel({required Object side}) => 'Will keep (side ${side}):';
@@ -6997,8 +7140,8 @@ class TranslationsWebConflictsConfirmDeleteEn {
 	/// en: 'Cancel'
 	String get cancel => 'Cancel';
 
-	/// en: 'Delete {side}'
-	String confirm({required Object side}) => 'Delete ${side}';
+	/// en: 'Archive {side}'
+	String confirm({required Object side}) => 'Archive ${side}';
 }
 
 // Path: web.conflicts.openLayer
@@ -9826,8 +9969,8 @@ class TranslationsWebPluginsCustomTasksEn {
 	/// en: 'Custom tasks'
 	String get title => 'Custom tasks';
 
-	/// en: 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.'
-	String get description => 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.';
+	/// en: 'Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.'
+	String get description => 'Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.';
 
 	/// en: 'Add task'
 	String get addTask => 'Add task';
@@ -9837,8 +9980,8 @@ class TranslationsWebPluginsCustomTasksEn {
 
 	late final TranslationsWebPluginsCustomTasksColumnsEn columns = TranslationsWebPluginsCustomTasksColumnsEn.internal(_root);
 
-	/// en: 'global'
-	String get globalScope => 'global';
+	/// en: 'Global'
+	String get globalGroup => 'Global';
 
 	/// en: 'Delete custom task "{name}"?'
 	String deleteConfirm({required Object name}) => 'Delete custom task "${name}"?';
@@ -11751,6 +11894,7 @@ class TranslationsWebKnowledgeKbEn {
 	/// en: 'Reference'
 	String get referenceBadge => 'Reference';
 
+	late final TranslationsWebKnowledgeKbMaintainerEn maintainer = TranslationsWebKnowledgeKbMaintainerEn.internal(_root);
 	late final TranslationsWebKnowledgeKbProposalEn proposal = TranslationsWebKnowledgeKbProposalEn.internal(_root);
 
 	/// en: 'Discuss with AI'
@@ -11780,6 +11924,10 @@ class TranslationsWebKnowledgeKbEn {
 	late final TranslationsWebKnowledgeKbNewPageEn newPage = TranslationsWebKnowledgeKbNewPageEn.internal(_root);
 	late final TranslationsWebKnowledgeKbPageSettingsEn pageSettings = TranslationsWebKnowledgeKbPageSettingsEn.internal(_root);
 	late final TranslationsWebKnowledgeKbLibrarianEn librarian = TranslationsWebKnowledgeKbLibrarianEn.internal(_root);
+	late final TranslationsWebKnowledgeKbWritePolicyEn writePolicy = TranslationsWebKnowledgeKbWritePolicyEn.internal(_root);
+	late final TranslationsWebKnowledgeKbGuidanceEn guidance = TranslationsWebKnowledgeKbGuidanceEn.internal(_root);
+	late final TranslationsWebKnowledgeKbExclusionsEn exclusions = TranslationsWebKnowledgeKbExclusionsEn.internal(_root);
+	late final TranslationsWebKnowledgeKbRemovalsEn removals = TranslationsWebKnowledgeKbRemovalsEn.internal(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -12042,6 +12190,27 @@ class TranslationsWebCortexChatEn {
 
 	/// en: 'Proposal filed — review in Inbox'
 	String get revisionProposed => 'Proposal filed — review in Inbox';
+
+	/// en: 'Rule suggestion'
+	String get rulesSuggestionTitle => 'Rule suggestion';
+
+	/// en: 'Guidance'
+	String get rulesGuidance => 'Guidance';
+
+	/// en: 'Add exclusions'
+	String get rulesExclusionsAdd => 'Add exclusions';
+
+	/// en: 'Remove exclusions'
+	String get rulesExclusionsRemove => 'Remove exclusions';
+
+	/// en: 'Apply'
+	String get rulesApply => 'Apply';
+
+	/// en: 'Rules applied'
+	String get rulesApplied => 'Rules applied';
+
+	/// en: 'Couldn't apply the rule suggestion'
+	String get rulesApplyFailed => 'Couldn\'t apply the rule suggestion';
 
 	/// en: 'Model:'
 	String get modelLabel => 'Model:';
@@ -16108,8 +16277,16 @@ class TranslationsWebNotesVaultSyncAutoSyncEn {
 	/// en: 'Commit every'
 	String get commitEvery => 'Commit every';
 
-	/// en: 'Examples: <1>30s</1>, <3>10m</3>, <5>2h</5>. Min 30s.'
-	String get commitEveryExamples => 'Examples: <1>30s</1>, <3>10m</3>, <5>2h</5>. Min 30s.';
+	late final TranslationsWebNotesVaultSyncAutoSyncEveryEn every = TranslationsWebNotesVaultSyncAutoSyncEveryEn.internal(_root);
+
+	/// en: 'Custom…'
+	String get intervalCustom => 'Custom…';
+
+	/// en: 'Not a valid duration. Use a number with a unit, e.g. 30s, 10m, 2h.'
+	String get intervalInvalid => 'Not a valid duration. Use a number with a unit, e.g. 30s, 10m, 2h.';
+
+	/// en: 'The sync loop never ticks faster than {min}.'
+	String intervalTooShort({required Object min}) => 'The sync loop never ticks faster than ${min}.';
 
 	/// en: 'Pull every'
 	String get pullEvery => 'Pull every';
@@ -16509,9 +16686,6 @@ class TranslationsWebPluginsCustomTasksColumnsEn {
 
 	/// en: 'Command'
 	String get command => 'Command';
-
-	/// en: 'Scope'
-	String get scope => 'Scope';
 }
 
 // Path: web.plugins.customTasks.dialog
@@ -18524,6 +18698,30 @@ class TranslationsWebKnowledgeKbKindsEn {
 	String get kb_reusable => 'Reusable features';
 }
 
+// Path: web.knowledge.kb.maintainer
+class TranslationsWebKnowledgeKbMaintainerEn {
+	TranslationsWebKnowledgeKbMaintainerEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Maintained by opendray's background curation'
+	String get ai => 'Maintained by opendray\'s background curation';
+
+	/// en: 'Maintained by me — automation only proposes'
+	String get human => 'Maintained by me — automation only proposes';
+
+	/// en: 'Maintained by the agent doing the work'
+	String get session => 'Maintained by the agent doing the work';
+
+	/// en: 'Who keeps this page current. "The agent doing the work" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.'
+	String get hint => 'Who keeps this page current. "The agent doing the work" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.';
+
+	/// en: 'Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task.'
+	String get sessionUnavailable => 'Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task.';
+}
+
 // Path: web.knowledge.kb.proposal
 class TranslationsWebKnowledgeKbProposalEn {
 	TranslationsWebKnowledgeKbProposalEn.internal(this._root);
@@ -18552,6 +18750,9 @@ class TranslationsWebKnowledgeKbProposalEn {
 
 	/// en: 'Proposal rejected'
 	String get rejected => 'Proposal rejected';
+
+	/// en: 'Review'
+	String get review => 'Review';
 }
 
 // Path: web.knowledge.kb.newPage
@@ -18618,6 +18819,12 @@ class TranslationsWebKnowledgeKbPageSettingsEn {
 
 	/// en: 'Page settings updated'
 	String get savedToast => 'Page settings updated';
+
+	/// en: 'This page's title comes from the interface language and can't be edited here.'
+	String get fixedTitle => 'This page\'s title comes from the interface language and can\'t be edited here.';
+
+	/// en: 'A built-in page's nature is fixed — it determines whether sessions read it as a binding rule or as reference.'
+	String get fixedNature => 'A built-in page\'s nature is fixed — it determines whether sessions read it as a binding rule or as reference.';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -18651,6 +18858,78 @@ class TranslationsWebKnowledgeKbLibrarianEn {
 
 	/// en: 'Launch'
 	String get launch => 'Launch';
+}
+
+// Path: web.knowledge.kb.writePolicy
+class TranslationsWebKnowledgeKbWritePolicyEn {
+	TranslationsWebKnowledgeKbWritePolicyEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Needs my approval before it changes'
+	String get proposal => 'Needs my approval before it changes';
+
+	/// en: 'Updates itself automatically'
+	String get direct => 'Updates itself automatically';
+
+	/// en: 'Whether automation may rewrite this page in place. Approval means opendray's background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.'
+	String get hint => 'Whether automation may rewrite this page in place. Approval means opendray\'s background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.';
+}
+
+// Path: web.knowledge.kb.guidance
+class TranslationsWebKnowledgeKbGuidanceEn {
+	TranslationsWebKnowledgeKbGuidanceEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'What this page should be — its scope, shape and level of detail'
+	String get placeholder => 'What this page should be — its scope, shape and level of detail';
+
+	/// en: 'Steers what the page covers and how it reads. Authoritative over the drafter's own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".'
+	String get hint => 'Steers what the page covers and how it reads. Authoritative over the drafter\'s own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".';
+}
+
+// Path: web.knowledge.kb.exclusions
+class TranslationsWebKnowledgeKbExclusionsEn {
+	TranslationsWebKnowledgeKbExclusionsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'One subject per line'
+	String get placeholder => 'One subject per line';
+
+	/// en: 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.'
+	String get hint => 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.';
+}
+
+// Path: web.knowledge.kb.removals
+class TranslationsWebKnowledgeKbRemovalsEn {
+	TranslationsWebKnowledgeKbRemovalsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Lines you deleted'
+	String get title => 'Lines you deleted';
+
+	/// en: 'banned'
+	String get banned => 'banned';
+
+	/// en: 'Forget'
+	String get dismiss => 'Forget';
+
+	/// en: 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).'
+	String get hint => 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).';
+
+	/// en: 'Recently deleted ({n})'
+	String recent({required Object n}) => 'Recently deleted (${n})';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -18959,6 +19238,42 @@ class TranslationsWebNotesVaultSyncConflictKindsEn {
 
 	/// en: 'operation'
 	String get operation => 'operation';
+}
+
+// Path: web.notes.vaultSync.autoSync.every
+class TranslationsWebNotesVaultSyncAutoSyncEveryEn {
+	TranslationsWebNotesVaultSyncAutoSyncEveryEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Every 30 seconds'
+	String get k30s => 'Every 30 seconds';
+
+	/// en: 'Every minute'
+	String get k1m => 'Every minute';
+
+	/// en: 'Every 5 minutes'
+	String get k5m => 'Every 5 minutes';
+
+	/// en: 'Every 10 minutes'
+	String get k10m => 'Every 10 minutes';
+
+	/// en: 'Every 15 minutes'
+	String get k15m => 'Every 15 minutes';
+
+	/// en: 'Every 30 minutes'
+	String get k30m => 'Every 30 minutes';
+
+	/// en: 'Every hour'
+	String get k1h => 'Every hour';
+
+	/// en: 'Every 6 hours'
+	String get k6h => 'Every 6 hours';
+
+	/// en: 'Every 24 hours'
+	String get k24h => 'Every 24 hours';
 }
 
 // Path: web.serverSettings.host.modes.ac
@@ -19494,20 +19809,20 @@ extension on Translations {
 			'web.conflicts.dismiss' => 'Dismiss',
 			'web.conflicts.accepted' => 'Conflict accepted — remember to apply the fix',
 			'web.conflicts.dismissed' => 'Conflict dismissed',
-			'web.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			'web.conflicts.deletedFact' => 'Fact archived (restorable) and conflict accepted',
 			'web.conflicts.quickActions' => 'Fix:',
-			'web.conflicts.deleteFact' => 'Delete fact',
-			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Delete ${side}: ${ref}',
-			'web.conflicts.confirmDelete.title' => ({required Object side}) => 'Delete fact ${side}?',
-			'web.conflicts.confirmDelete.description' => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.',
-			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Will delete (side ${side}):',
+			'web.conflicts.deleteFact' => 'Archive fact',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Archive ${side}: ${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => 'Archive fact ${side}?',
+			'web.conflicts.confirmDelete.description' => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Will archive (side ${side}):',
 			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => 'Will keep (side ${side}):',
 			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
 			'web.conflicts.confirmDelete.evidenceLabel' => 'Detector evidence:',
 			'web.conflicts.confirmDelete.loading' => 'Loading fact text…',
 			'web.conflicts.confirmDelete.loadError' => 'Failed to load fact text. Inspect on the Memory page.',
 			'web.conflicts.confirmDelete.cancel' => 'Cancel',
-			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Delete ${side}',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Archive ${side}',
 			'web.conflicts.openLayer.plan' => 'Open plan editor',
 			'web.conflicts.openLayer.goal' => 'Open goal editor',
 			'web.conflicts.severity.low' => 'low',
@@ -20055,7 +20370,18 @@ extension on Translations {
 			'web.notes.vaultSync.autoSync.enabledTooltipNoRemote' => 'Configure a remote first to enable auto-sync',
 			'web.notes.vaultSync.autoSync.noRemoteHint' => 'No remote — push/pull will be skipped.',
 			'web.notes.vaultSync.autoSync.commitEvery' => 'Commit every',
-			'web.notes.vaultSync.autoSync.commitEveryExamples' => 'Examples: <1>30s</1>, <3>10m</3>, <5>2h</5>. Min 30s.',
+			'web.notes.vaultSync.autoSync.every.k30s' => 'Every 30 seconds',
+			'web.notes.vaultSync.autoSync.every.k1m' => 'Every minute',
+			'web.notes.vaultSync.autoSync.every.k5m' => 'Every 5 minutes',
+			'web.notes.vaultSync.autoSync.every.k10m' => 'Every 10 minutes',
+			'web.notes.vaultSync.autoSync.every.k15m' => 'Every 15 minutes',
+			'web.notes.vaultSync.autoSync.every.k30m' => 'Every 30 minutes',
+			'web.notes.vaultSync.autoSync.every.k1h' => 'Every hour',
+			'web.notes.vaultSync.autoSync.every.k6h' => 'Every 6 hours',
+			'web.notes.vaultSync.autoSync.every.k24h' => 'Every 24 hours',
+			'web.notes.vaultSync.autoSync.intervalCustom' => 'Custom…',
+			'web.notes.vaultSync.autoSync.intervalInvalid' => 'Not a valid duration. Use a number with a unit, e.g. 30s, 10m, 2h.',
+			'web.notes.vaultSync.autoSync.intervalTooShort' => ({required Object min}) => 'The sync loop never ticks faster than ${min}.',
 			'web.notes.vaultSync.autoSync.pullEvery' => 'Pull every',
 			'web.notes.vaultSync.autoSync.pullEveryHint' => 'Only used when Pull is enabled.',
 			'web.notes.vaultSync.autoSync.pushAfterCommit' => 'Push after commit',
@@ -20115,6 +20441,8 @@ extension on Translations {
 			'web.activity.filters.outbound' => 'Outbound',
 			'web.activity.filters.allStatuses' => 'All statuses',
 			'web.activity.filters.status2' => '2xx success',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.filters.status3' => '3xx redirect',
 			'web.activity.filters.status4' => '4xx client error',
 			'web.activity.filters.status5' => '5xx server error',
@@ -20126,8 +20454,6 @@ extension on Translations {
 			'web.activity.table.directionTitle' => 'Direction',
 			'web.activity.table.method' => 'Method',
 			'web.activity.table.path' => 'Path',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.status' => 'Status',
 			'web.activity.table.duration' => 'Duration',
 			'web.activity.table.inboundAria' => 'inbound',
@@ -20582,13 +20908,12 @@ extension on Translations {
 			'web.plugins.skills.uploadFailedToast' => 'Skill upload failed',
 			'web.plugins.skills.uploadInvalidTypeToast' => 'Only SKILL.md files can be installed by drop',
 			'web.plugins.customTasks.title' => 'Custom tasks',
-			'web.plugins.customTasks.description' => 'Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.',
+			'web.plugins.customTasks.description' => 'Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.',
 			'web.plugins.customTasks.addTask' => 'Add task',
 			'web.plugins.customTasks.empty' => 'No custom tasks yet.',
 			'web.plugins.customTasks.columns.name' => 'Name',
 			'web.plugins.customTasks.columns.command' => 'Command',
-			'web.plugins.customTasks.columns.scope' => 'Scope',
-			'web.plugins.customTasks.globalScope' => 'global',
+			'web.plugins.customTasks.globalGroup' => 'Global',
 			'web.plugins.customTasks.deleteConfirm' => ({required Object name}) => 'Delete custom task "${name}"?',
 			'web.plugins.customTasks.removedToast' => 'Task removed',
 			'web.plugins.customTasks.deleteFailedToast' => 'Delete failed',
@@ -20630,6 +20955,8 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Display name (optional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
@@ -20640,8 +20967,6 @@ extension on Translations {
 			'web.plugins.gitHosts.dialog.enabledLabel' => 'Enabled',
 			'web.plugins.gitHosts.dialog.addedToast' => 'Git host added',
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Git host updated',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Add failed',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Update failed',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Owner (optional)',
@@ -21144,6 +21469,8 @@ extension on Translations {
 			'web.serverSettings.toggle.off' => 'Off',
 			'web.serverSettings.toggle.defaultOn' => 'Default (on)',
 			'web.serverSettings.toggle.defaultOff' => 'Default (off)',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.memoryRuntimeBanner' => 'Runtime AI behaviour — workers, capture rules, injection profiles and spawn mode — lives in Cortex settings and applies instantly. This section is the infrastructure half: embedder, storage and background governance (restart required).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Open Cortex settings',
 			'web.serverSettings.host.intro' => 'A sleeping Mac takes its network down with it, so the gateway simply stops answering — from phone, from web, and to its database. It reads as "opendray is flaky" when the machine is really just asleep. Pick how opendray should handle that.',
@@ -21154,8 +21481,6 @@ extension on Translations {
 			'web.serverSettings.host.modes.always.desc' => 'Never idle-sleeps, including on battery.',
 			'web.serverSettings.host.modes.always.caveat' => 'Will drain a laptop battery left unplugged.',
 			'web.serverSettings.host.modes.on_demand.label' => 'Sleep when idle, wake on traffic',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.on_demand.desc' => 'The machine sleeps whenever the gateway is quiet. An incoming request wakes it, and opendray holds it awake while serving, then lets it sleep again.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Needs "Wake for network access" (sudo pmset -a womp 1), reliably wired Ethernet. The first request after a sleep takes a few seconds and may need one retry.',
 			'web.serverSettings.host.modes.off.label' => 'Never touch power settings',
@@ -21504,6 +21829,11 @@ extension on Translations {
 			'web.knowledge.kb.emergentHint' => 'Lessons & reusable features distilled from past work — guidance.',
 			'web.knowledge.kb.bindingBadge' => 'Binding · must follow',
 			'web.knowledge.kb.referenceBadge' => 'Reference',
+			'web.knowledge.kb.maintainer.ai' => 'Maintained by opendray\'s background curation',
+			'web.knowledge.kb.maintainer.human' => 'Maintained by me — automation only proposes',
+			'web.knowledge.kb.maintainer.session' => 'Maintained by the agent doing the work',
+			'web.knowledge.kb.maintainer.hint' => 'Who keeps this page current. "The agent doing the work" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.',
+			'web.knowledge.kb.maintainer.sessionUnavailable' => 'Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task.',
 			'web.knowledge.kb.proposal.text' => 'AI proposed an update to this page (new evidence diverged).',
 			'web.knowledge.kb.proposal.preview' => 'Preview',
 			'web.knowledge.kb.proposal.hide' => 'Hide',
@@ -21511,6 +21841,7 @@ extension on Translations {
 			'web.knowledge.kb.proposal.reject' => 'Reject',
 			'web.knowledge.kb.proposal.approved' => 'Update approved',
 			'web.knowledge.kb.proposal.rejected' => 'Proposal rejected',
+			'web.knowledge.kb.proposal.review' => 'Review',
 			'web.knowledge.kb.discuss' => 'Discuss with AI',
 			'web.knowledge.kb.discussHint' => 'Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites',
 			'web.knowledge.kb.onDemand' => 'on-demand',
@@ -21535,6 +21866,8 @@ extension on Translations {
 			'web.knowledge.kb.pageSettings.hint' => 'Edit this page\'s title, summary, nature and inject flag',
 			'web.knowledge.kb.pageSettings.save' => 'Save settings',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Page settings updated',
+			'web.knowledge.kb.pageSettings.fixedTitle' => 'This page\'s title comes from the interface language and can\'t be edited here.',
+			'web.knowledge.kb.pageSettings.fixedNature' => 'A built-in page\'s nature is fixed — it determines whether sessions read it as a binding rule or as reference.',
 			'web.knowledge.kb.librarian.button' => 'Manage KB with AI',
 			'web.knowledge.kb.librarian.hint' => 'Launch a cross-page AI librarian that can organize, create and edit any knowledge page',
 			'web.knowledge.kb.librarian.launchedToast' => 'KB Librarian session started',
@@ -21543,6 +21876,18 @@ extension on Translations {
 			'web.knowledge.kb.librarian.provider' => 'Cloud agent',
 			'web.knowledge.kb.librarian.account' => 'Claude account',
 			'web.knowledge.kb.librarian.launch' => 'Launch',
+			'web.knowledge.kb.writePolicy.proposal' => 'Needs my approval before it changes',
+			'web.knowledge.kb.writePolicy.direct' => 'Updates itself automatically',
+			'web.knowledge.kb.writePolicy.hint' => 'Whether automation may rewrite this page in place. Approval means opendray\'s background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them.',
+			'web.knowledge.kb.guidance.placeholder' => 'What this page should be — its scope, shape and level of detail',
+			'web.knowledge.kb.guidance.hint' => 'Steers what the page covers and how it reads. Authoritative over the drafter\'s own defaults, so it is the place to say "keep it terse" or "rules only" — including "do not re-expand a section I trimmed".',
+			'web.knowledge.kb.exclusions.placeholder' => 'One subject per line',
+			'web.knowledge.kb.exclusions.hint' => 'Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words.',
+			'web.knowledge.kb.removals.title' => 'Lines you deleted',
+			'web.knowledge.kb.removals.banned' => 'banned',
+			'web.knowledge.kb.removals.dismiss' => 'Forget',
+			'web.knowledge.kb.removals.hint' => 'Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).',
+			'web.knowledge.kb.removals.recent' => ({required Object n}) => 'Recently deleted (${n})',
 			'web.knowledge.kinds.all' => 'All',
 			'web.knowledge.kinds.entity' => 'Entities',
 			'web.knowledge.kinds.fact' => 'Facts',
@@ -21638,9 +21983,18 @@ extension on Translations {
 			'web.cortex.chat.escalateHint' => 'Spawn a full agent session, grounded in the codebase, seeded with this conversation',
 			'web.cortex.chat.escalateFailed' => 'Escalation failed',
 			'web.cortex.chat.escalatedToast' => 'Agent session launched',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.closeHint' => 'Close this conversation',
 			'web.cortex.chat.revisionApplied' => 'Document updated',
 			'web.cortex.chat.revisionProposed' => 'Proposal filed — review in Inbox',
+			'web.cortex.chat.rulesSuggestionTitle' => 'Rule suggestion',
+			'web.cortex.chat.rulesGuidance' => 'Guidance',
+			'web.cortex.chat.rulesExclusionsAdd' => 'Add exclusions',
+			'web.cortex.chat.rulesExclusionsRemove' => 'Remove exclusions',
+			'web.cortex.chat.rulesApply' => 'Apply',
+			'web.cortex.chat.rulesApplied' => 'Rules applied',
+			'web.cortex.chat.rulesApplyFailed' => 'Couldn\'t apply the rule suggestion',
 			'web.cortex.chat.modelLabel' => 'Model:',
 			'web.cortex.chat.modelHint' => 'Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.',
 			'web.cortex.chat.modelGlobalDefault' => 'Default (global)',
@@ -21668,8 +22022,6 @@ extension on Translations {
 			'web.cortex.blueprint.mode.human' => 'Human',
 			'web.cortex.blueprint.mode.scanner' => 'Scanner',
 			'web.cortex.blueprint.inject' => 'inject',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.reserved' => 'reserved',
 			'web.cortex.blueprint.deleteNote' => 'Removing a section hides it without deleting its content — re-add the same slug to resurrect it.',
 			'web.cortex.blueprint.cancel' => 'Cancel',
@@ -21870,6 +22222,11 @@ extension on Translations {
 			'web.roundTable.plan.accountDefault' => 'Default',
 			'web.roundTable.plan.bypass' => 'Skip permissions (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Start the session with its bypass flag so it does not prompt for approvals.',
+			'web.diff.noChanges' => 'No changes — the proposed content is identical to the live page.',
+			'web.diff.added' => ({required Object count}) => '+${count}',
+			'web.diff.removed' => ({required Object count}) => '−${count}',
+			'web.diff.changedLines' => 'changed lines',
+			'web.diff.collapsed' => ({required Object count}) => '⋯ ${count} unchanged ⋯',
 			'more.title' => 'More',
 			'more.identity.signedInAs' => 'Signed in as',
 			'more.identity.server' => 'Server',
@@ -22140,6 +22497,8 @@ extension on Translations {
 			'sessions.inspector.notes.projectDocsHint' => 'Architecture / spec / decisions / plan / retros — typically authored or maintained by an agent.',
 			'sessions.inspector.notes.mappingCleared' => 'Mapping cleared — using default',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Mapped to ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancel',
 			'sessions.inspector.notes.newDocTooltip' => 'New doc',
 			'sessions.inspector.notes.noProjectMapping' => 'Could not resolve a project mapping for this session. Check that the gateway has a notes vault configured and that the session cwd is set.',
@@ -22182,8 +22541,6 @@ extension on Translations {
 			'sessions.inspector.canvas.deleteTitle' => 'Delete canvas?',
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => 'Delete "${title}"? This can\'t be undone.',
 			'sessions.inspector.canvas.emptyTitle' => 'No canvas yet',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.emptyBlurb' => 'Ask the agent for a screen, a flowchart, a mind map or a relationship diagram — it renders here and you can pin and annotate it.',
 			'sessions.inspector.canvas.viewportPhone' => 'Phone width',
 			'sessions.inspector.canvas.viewportTablet' => 'Tablet width',
@@ -22586,15 +22943,15 @@ extension on Translations {
 			'project.conflicts.detected' => ({required Object count}) => '${count} new conflict(s) found',
 			'project.conflicts.accept' => 'Accept',
 			'project.conflicts.dismiss' => 'Dismiss',
-			'project.conflicts.deleteFact' => ({required Object side}) => 'Delete fact ${side}',
-			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => 'Delete fact ${side}?',
-			'project.conflicts.deleteConfirmBody' => 'This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.',
-			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Will delete (side ${side}):',
+			'project.conflicts.deleteFact' => 'Archive fact',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => 'Archive fact ${side}?',
+			'project.conflicts.deleteConfirmBody' => 'This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Will archive (side ${side}):',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => 'Will keep (side ${side}):',
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(${layer} entry — open the corresponding tab to inspect)',
 			'project.conflicts.deleteLoading' => 'Loading fact text…',
-			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Delete ${side}',
-			'project.conflicts.deletedFact' => 'Fact deleted and conflict accepted',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Archive ${side}',
+			'project.conflicts.deletedFact' => 'Fact archived (restorable), conflict accepted',
 			'project.conflicts.openPlanEditor' => 'Open plan editor',
 			'project.conflicts.openGoalEditor' => 'Open goal editor',
 			'project.conflicts.severity.low' => 'low',
@@ -22654,6 +23011,8 @@ extension on Translations {
 			'backups.runNow' => 'Run now',
 			'backups.queueing' => 'Queueing…',
 			'backups.queuedSnack' => ({required Object id}) => 'Backup queued (${id}). Watching for progress…',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runFailedApi' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Run failed: ${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Backup succeeded (${bytes}).',
@@ -22696,8 +23055,6 @@ extension on Translations {
 			'backups.emptyNoTargets.headline' => 'No backup targets configured',
 			'backups.emptyNoTargets.body' => 'Open the More menu → Targets to add a destination (local / S3 / SMB / SFTP / WebDAV / rclone). Then come back and tap "Run now".',
 			'backups.emptyNoBackups.headline' => 'No backups yet',
-			_ => null,
-		} ?? switch (path) {
 			'backups.emptyNoBackups.body' => 'Tap "Run now" to take a fresh snapshot, or open Schedules to set up recurring runs.',
 			'backups.restartToActivate' => 'Restart opendray to activate backups',
 			'backups.passphraseSaved' => 'Your passphrase is saved. The gateway only loads it at startup, so changes only take effect after a restart.',
@@ -23125,6 +23482,8 @@ extension on Translations {
 			'notesPage.newButton' => 'New',
 			'notesPage.newNoteDialogTitle' => 'New note',
 			'notesPage.searchHint' => 'Search across the whole vault…',
+			'notesPage.browse.tree' => 'Folders',
+			'notesPage.browse.tags' => 'Tags',
 			'notesPage.up' => 'Up',
 			'notesPage.copyPath' => 'Copy path',
 			'notesPage.open' => 'Open',
@@ -23145,7 +23504,7 @@ extension on Translations {
 			'notesPage.emptyFolder' => ({required Object path}) => 'Folder "${path}" is empty.',
 			'notesPage.validatePath' => 'Path is required',
 			'notesPage.validatePathDots' => 'Path cannot contain ".."',
-			'notesPage.pathHelper' => 'Auto-appends .md if missing.',
+			'notesPage.pathHelper' => 'Adds .md unless the name already ends in .md or .html.',
 			'notesPage.editor.markdownHint' => 'Markdown, or HTML if the file ends .html…',
 			'notesPage.editor.saving' => 'Saving…',
 			'notesPage.editor.autosave' => 'Saved',
@@ -23166,6 +23525,8 @@ extension on Translations {
 			'notesPage.flatten.preview' => 'Preview',
 			'notesPage.flatten.dismiss' => 'Not now',
 			'notesPage.flatten.title' => 'File projects under their own names',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.flatten.description' => 'Each document is renamed one at a time so the [[wiki links]] pointing at it are repointed too. Nothing is overwritten: a destination that already exists is skipped and left for you.',
 			'notesPage.flatten.nothingToMove' => 'Nothing to move.',
 			'notesPage.flatten.skipped' => ({required Object count}) => 'Left alone (${count}):',
@@ -23177,6 +23538,23 @@ extension on Translations {
 			'notesPage.rename.helper' => 'Vault-relative path. Folders are created as needed.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
 			'notesPage.rename.doneWithWarning' => 'Renamed, but the links were not all updated',
+			'notesPage.tags.empty' => 'No tags in the vault yet. Write #like-this in a note.',
+			'notesPage.tags.noMatches' => ({required Object query}) => 'No tags match "${query}".',
+			'notesPage.tags.filteredBy' => 'Filtered by',
+			'notesPage.tags.clear' => 'Clear tag filter',
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'No notes carry #${tag} any more.',
+			'notesPage.backlinks.title' => 'Backlinks',
+			'notesPage.backlinks.loading' => 'Looking for links…',
+			'notesPage.backlinks.empty' => 'No notes link here yet.',
+			'notesPage.backlinks.failed' => ({required Object error}) => 'Could not load backlinks: ${error}',
+			'notesPage.outline.action' => 'Outline',
+			'notesPage.outline.title' => 'Outline',
+			'notesPage.outline.empty' => 'This document has no headings.',
+			'notesPage.outline.jumpedToSource' => 'Preview can\'t scroll without scripts, so this opened the source view.',
+			'notesPage.today.tooltip' => 'Open today\'s daily note',
+			'notesPage.wikiLink.suggestions' => 'Link to…',
+			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Create "${name}"',
+			'notesPage.wikiLink.noMatches' => 'No note matches — keep typing to create one.',
 			'vaultSync.title' => 'Vault sync',
 			'vaultSync.refresh' => 'Refresh',
 			'vaultSync.statusTitle' => 'Status',
@@ -23210,8 +23588,6 @@ extension on Translations {
 			'vaultSync.lastCommit' => 'Last commit',
 			'vaultSync.lastPush' => 'Last push',
 			'vaultSync.lastPull' => 'Last pull',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.never' => 'Never',
 			'vaultSync.every.sec30' => 'Every 30 seconds',
 			'vaultSync.every.min1' => 'Every minute',

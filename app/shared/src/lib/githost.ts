@@ -138,7 +138,19 @@ export interface GitPullRequest {
   // Description (markdown). Only populated by getGitPR (the single-PR
   // detail fetch); the list endpoint omits it to stay lean.
   body?: string
+  /** Why the PR can or cannot merge right now: 'clean', 'behind' (the
+   * base moved on), 'blocked' (checks), 'dirty' (conflicts), 'unstable',
+   * 'draft'. Only the single-PR fetch reports it; absent means unknown,
+   * which must not be shown as a problem. */
+  mergeable_state?: string
   updated_at: string
+}
+
+/** True when the PR's only obstacle is a base branch that has moved on —
+ * the one case "update branch" fixes. Conflicts ('dirty') and failing
+ * checks ('blocked') need something else. */
+export function isBehindBase(pr: GitPullRequest): boolean {
+  return pr.mergeable_state === 'behind'
 }
 
 export interface GitPullRequestsResponse {
@@ -206,6 +218,19 @@ export async function mergeGitPR(
   return api<GitPullRequest>(`/api/v1/git/prs/${req.number}/merge`, {
     method: 'POST',
     body: req,
+  })
+}
+
+/** Merges the PR's base branch into its head so a stale branch can be
+ * merged — GitHub's "Update branch". GitHub-only for now; other hosts
+ * return an error naming what to do instead. */
+export async function updateGitPRBranch(
+  dir: string,
+  number: number,
+): Promise<GitPullRequest> {
+  return api<GitPullRequest>(`/api/v1/git/prs/${number}/update-branch`, {
+    method: 'POST',
+    body: { dir, number },
   })
 }
 

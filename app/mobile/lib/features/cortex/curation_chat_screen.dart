@@ -60,6 +60,8 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
   bool _loading = true;
   bool _sending = false;
   bool _escalating = false;
+  // The message whose rule suggestion is being applied ('' = none).
+  String _applyingRuleId = '';
   Timer? _poll;
   String _seenRevisionId = '';
 
@@ -345,6 +347,32 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
     }
   }
 
+  // One-click apply of an AI turn's rule suggestion (guidance / excluded
+  // subjects) into the page settings; the backend merges and journals a
+  // system message, so re-fetch the thread afterwards.
+  Future<void> _applyRules(ConversationMessage m) async {
+    final conv = _conv;
+    if (conv == null || _applyingRuleId.isNotEmpty) return;
+    setState(() => _applyingRuleId = m.id);
+    try {
+      final api = ref.read(cortexApiProvider);
+      await api.applyRuleSuggestion(conv.id, m.id);
+      final (c, msgs) = await api.getConversation(conv.id);
+      if (!mounted) return;
+      setState(() {
+        _conv = c;
+        _messages = msgs;
+        _applyingRuleId = '';
+      });
+      widget.onRevision?.call();
+      _snack(t.web.cortex.chat.rulesApplied);
+    } on Object catch (e) {
+      if (!mounted) return;
+      setState(() => _applyingRuleId = '');
+      _snack('${t.web.cortex.chat.rulesApplyFailed}: $e');
+    }
+  }
+
   Future<void> _close() async {
     final conv = _conv;
     if (conv != null) {
@@ -602,8 +630,149 @@ class _CurationChatScreenState extends ConsumerState<CurationChatScreen> {
             ),
             if (m.revisionAction == 'applied') _revisionBadge(context, true),
             if (m.revisionAction == 'proposed') _revisionBadge(context, false),
+            if (m.ruleSuggestion != null) _ruleCard(context, m),
           ],
         ),
+      ),
+    );
+  }
+
+  // Rule-suggestion card: what the AI wants changed in the page's
+  // operator-owned settings, with a one-click Apply (or applied badge).
+  Widget _ruleCard(BuildContext context, ConversationMessage m) {
+    final theme = Theme.of(context);
+    final sug = m.ruleSuggestion!;
+    final applied = m.ruleAppliedAt != null;
+    Widget chips(String label, List<String> items, Color color, String sign) =>
+        Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(label, style: theme.textTheme.labelSmall),
+            for (final e in items)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$sign $e',
+                  style: theme.textTheme.labelSmall?.copyWith(color: color),
+                ),
+              ),
+          ],
+        );
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.tune,
+                size: 13,
+                color: theme.colorScheme.outline,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                t.web.cortex.chat.rulesSuggestionTitle,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ],
+          ),
+          if (sug.guidance.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${t.web.cortex.chat.rulesGuidance}: ${sug.guidance}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (sug.exclusionsAdd.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: chips(
+                '${t.web.cortex.chat.rulesExclusionsAdd}:',
+                sug.exclusionsAdd,
+                Colors.green,
+                '+',
+              ),
+            ),
+          if (sug.exclusionsRemove.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: chips(
+                '${t.web.cortex.chat.rulesExclusionsRemove}:',
+                sug.exclusionsRemove,
+                theme.colorScheme.error,
+                '−',
+              ),
+            ),
+          if (sug.reason.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                sug.reason,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: applied
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 13,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        t.web.cortex.chat.rulesApplied,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  )
+                : FilledButton.tonalIcon(
+                    onPressed: _applyingRuleId.isNotEmpty
+                        ? null
+                        : () => _applyRules(m),
+                    icon: _applyingRuleId == m.id
+                        ? const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check, size: 14),
+                    label: Text(t.web.cortex.chat.rulesApply),
+                    style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      textStyle: theme.textTheme.labelSmall,
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

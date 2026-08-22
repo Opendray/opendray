@@ -152,6 +152,12 @@ func (p *BlueprintProposer) Propose(ctx context.Context, cwd string) (BlueprintP
 		if !projectdoc.ValidSectionSlug(sec.Slug) || !projectdoc.ValidMaintainerMode(sec.MaintainerMode) {
 			continue
 		}
+		// "session" is a global-knowledge-page mode; PutSection refuses it
+		// on a per-project section, so drop it here rather than surface a
+		// proposal the operator can approve but not save.
+		if sec.MaintainerMode == projectdoc.MaintainerSession {
+			continue
+		}
 		if sec.Slug == projectdoc.SlugOverview {
 			sec.Pinned = true
 		}

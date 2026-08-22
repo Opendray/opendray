@@ -226,9 +226,48 @@ func (s *Service) List(ctx context.Context, cwd, status string, limit int) ([]Co
 // Decide updates one conflict's status. action must be one of
 // "accepted" / "dismissed". Returns ErrNotFound when the id is
 // missing or already decided.
-func (s *Service) Decide(ctx context.Context, id, action, by string) error {
+//
+// archiveSide ("a" | "b" | "") closes the loop that used to end here:
+// accepting a conflict only ever flipped a status column, so the losing
+// fact stayed live in every feedstock and injection — the backlog of
+// accepted-but-unexecuted verdicts is why stale facts were immortal.
+// When the named side is a fact-layer ref, it is soft-archived with a
+// supersession reason; archived rows already vanish from search,
+// feedstock and injection, so retirement propagates everywhere with no
+// new machinery. Non-fact refs (journal/plan/doc) can't be archived from
+// here and return an error rather than pretending.
+func (s *Service) Decide(ctx context.Context, id, action, by, archiveSide string) error {
 	if action != string(StatusAccepted) && action != string(StatusDismissed) {
 		return fmt.Errorf("memconflict: invalid action %q", action)
+	}
+	if archiveSide != "" {
+		if action != string(StatusAccepted) {
+			return fmt.Errorf("memconflict: archive requires action=accepted")
+		}
+		c, err := s.get(ctx, id)
+		if err != nil {
+			return err
+		}
+		layer, ref := c.LayerA, c.RefA
+		switch archiveSide {
+		case "a":
+		case "b":
+			layer, ref = c.LayerB, c.RefB
+		default:
+			return fmt.Errorf("memconflict: invalid archive side %q", archiveSide)
+		}
+		if layer != "fact" {
+			return fmt.Errorf("memconflict: side %s is layer %q — only fact-layer refs can be archived", archiveSide, layer)
+		}
+		// Archive BEFORE marking decided: if this fails the conflict stays
+		// pending and the operator can retry; the reverse order would
+		// record a decision whose action never ran. Archive is idempotent,
+		// so a retry after a half-failure is safe.
+		reason := fmt.Sprintf("superseded: conflict %s resolved against this memory", id)
+		if err := s.mem.Archive(ctx, ref, reason); err != nil {
+			return fmt.Errorf("memconflict: archive loser: %w", err)
+		}
+		s.log.Info("conflict loser archived", "conflict", id, "memory", ref)
 	}
 	tag, err := s.pool.Exec(ctx, `
 		UPDATE memory_conflicts
@@ -244,6 +283,28 @@ func (s *Service) Decide(ctx context.Context, id, action, by string) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// get loads one conflict row regardless of status.
+func (s *Service) get(ctx context.Context, id string) (Conflict, error) {
+	r, err := s.pool.Query(ctx, `
+		SELECT id, cwd, layer_a, ref_a, layer_b, ref_b, evidence,
+		       severity, status, detected_at, decided_at,
+		       COALESCE(decided_by, '')
+		  FROM memory_conflicts
+		 WHERE id = $1`, id)
+	if err != nil {
+		return Conflict{}, err
+	}
+	defer r.Close()
+	out, err := scanConflicts(r)
+	if err != nil {
+		return Conflict{}, err
+	}
+	if len(out) == 0 {
+		return Conflict{}, ErrNotFound
+	}
+	return out[0], nil
 }
 
 // ErrNotFound — the conflict id doesn't exist or is no longer

@@ -321,6 +321,40 @@ class NotesApi {
     }
   }
 
+  /// GET /api/v1/notes/backlinks?path=… — every note whose body links
+  /// to [path]. The scan runs server-side over the whole vault.
+  Future<List<Backlink>> backlinks(String path) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/notes/backlinks',
+        queryParameters: {'path': path},
+      );
+      final raw = res.data?['links'];
+      if (raw is! List) return const [];
+      return raw.whereType<Map<String, dynamic>>().map(Backlink.fromJson).toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  /// GET /api/v1/notes/tags — every tag in the vault with its note
+  /// count. [prefix] restricts the scan to one subtree.
+  Future<List<TagCount>> tags({String? prefix}) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        '/api/v1/notes/tags',
+        queryParameters: {
+          if (prefix != null && prefix.isNotEmpty) 'prefix': prefix,
+        },
+      );
+      final raw = res.data?['tags'];
+      if (raw is! List) return const [];
+      return raw.whereType<Map<String, dynamic>>().map(TagCount.fromJson).toList();
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   /// Move or rename a note, repointing the [[wiki-links]] that pointed
   /// at it. Without the rewrite a rename silently strands every
   /// reference, which is why reorganising was previously unsafe.
@@ -335,6 +369,56 @@ class NotesApi {
       throw toApiException(e);
     }
   }
+}
+
+/// One note that links to the document being viewed, with a couple of
+/// matching lines for context. Mirrors notes.Backlink in
+/// internal/notes/links.go.
+class Backlink {
+  const Backlink({
+    required this.path,
+    required this.title,
+    required this.lines,
+  });
+
+  factory Backlink.fromJson(Map<String, dynamic> json) => Backlink(
+        path: json['path'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        lines: (json['lines'] as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .toList(),
+      );
+
+  final String path;
+  final String title;
+
+  /// Snippets of the lines carrying the link.
+  final List<String> lines;
+}
+
+/// One tag and how many notes mention it. Mirrors notes.TagCount in
+/// internal/notes/links.go. [notes] is what makes filtering by tag
+/// possible without a second round-trip per tag.
+class TagCount {
+  const TagCount({
+    required this.tag,
+    required this.count,
+    this.notes = const [],
+  });
+
+  factory TagCount.fromJson(Map<String, dynamic> json) => TagCount(
+        tag: json['tag'] as String? ?? '',
+        count: (json['count'] as num?)?.toInt() ?? 0,
+        notes: (json['notes'] as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .toList(),
+      );
+
+  final String tag;
+  final int count;
+
+  /// Vault paths mentioning the tag. Omitted by the gateway when empty.
+  final List<String> notes;
 }
 
 /// One starting shape for a new note. [source] is "builtin" or "vault"

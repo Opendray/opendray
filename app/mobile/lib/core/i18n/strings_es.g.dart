@@ -183,6 +183,7 @@ class _TranslationsWebEs extends TranslationsWebEn {
 	@override late final _TranslationsWebCortexEs cortex = _TranslationsWebCortexEs._(_root);
 	@override late final _TranslationsWebDatabaseEs database = _TranslationsWebDatabaseEs._(_root);
 	@override late final _TranslationsWebRoundTableEs roundTable = _TranslationsWebRoundTableEs._(_root);
+	@override late final _TranslationsWebDiffEs diff = _TranslationsWebDiffEs._(_root);
 }
 
 // Path: more
@@ -870,6 +871,7 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String get newButton => 'Nueva';
 	@override String get newNoteDialogTitle => 'Nueva nota';
 	@override String get searchHint => 'Busca en todo el vault…';
+	@override late final _TranslationsNotesPageBrowseEs browse = _TranslationsNotesPageBrowseEs._(_root);
 	@override String get up => 'Arriba';
 	@override String get copyPath => 'Copiar ruta';
 	@override String get open => 'Abrir';
@@ -890,11 +892,16 @@ class _TranslationsNotesPageEs extends TranslationsNotesPageEn {
 	@override String emptyFolder({required Object path}) => 'La carpeta "${path}" está vacía.';
 	@override String get validatePath => 'La ruta es obligatoria';
 	@override String get validatePathDots => 'La ruta no puede contener ".."';
-	@override String get pathHelper => 'Añade .md automáticamente si falta.';
+	@override String get pathHelper => 'Añade .md salvo que el nombre ya termine en .md o .html.';
 	@override late final _TranslationsNotesPageEditorEs editor = _TranslationsNotesPageEditorEs._(_root);
 	@override late final _TranslationsNotesPageHtmlEs html = _TranslationsNotesPageHtmlEs._(_root);
 	@override late final _TranslationsNotesPageFlattenEs flatten = _TranslationsNotesPageFlattenEs._(_root);
 	@override late final _TranslationsNotesPageRenameEs rename = _TranslationsNotesPageRenameEs._(_root);
+	@override late final _TranslationsNotesPageTagsEs tags = _TranslationsNotesPageTagsEs._(_root);
+	@override late final _TranslationsNotesPageBacklinksEs backlinks = _TranslationsNotesPageBacklinksEs._(_root);
+	@override late final _TranslationsNotesPageOutlineEs outline = _TranslationsNotesPageOutlineEs._(_root);
+	@override late final _TranslationsNotesPageTodayEs today = _TranslationsNotesPageTodayEs._(_root);
+	@override late final _TranslationsNotesPageWikiLinkEs wikiLink = _TranslationsNotesPageWikiLinkEs._(_root);
 }
 
 // Path: vaultSync
@@ -1221,10 +1228,10 @@ class _TranslationsWebConflictsEs extends TranslationsWebConflictsEn {
 	@override String get dismiss => 'Descartar';
 	@override String get accepted => 'Conflicto aceptado. Recuerda aplicar la corrección';
 	@override String get dismissed => 'Conflicto descartado';
-	@override String get deletedFact => 'Hecho eliminado y conflicto aceptado';
+	@override String get deletedFact => 'Hecho archivado (restaurable) y conflicto aceptado';
 	@override String get quickActions => 'Corrección:';
-	@override String get deleteFact => 'Eliminar hecho';
-	@override String deleteFactSide({required Object side, required Object ref}) => 'Eliminar ${side}: ${ref}';
+	@override String get deleteFact => 'Archivar hecho';
+	@override String deleteFactSide({required Object side, required Object ref}) => 'Archivar ${side}: ${ref}';
 	@override late final _TranslationsWebConflictsConfirmDeleteEs confirmDelete = _TranslationsWebConflictsConfirmDeleteEs._(_root);
 	@override late final _TranslationsWebConflictsOpenLayerEs openLayer = _TranslationsWebConflictsOpenLayerEs._(_root);
 	@override late final _TranslationsWebConflictsSeverityEs severity = _TranslationsWebConflictsSeverityEs._(_root);
@@ -1807,6 +1814,20 @@ class _TranslationsWebRoundTableEs extends TranslationsWebRoundTableEn {
 	@override late final _TranslationsWebRoundTablePlanEs plan = _TranslationsWebRoundTablePlanEs._(_root);
 }
 
+// Path: web.diff
+class _TranslationsWebDiffEs extends TranslationsWebDiffEn {
+	_TranslationsWebDiffEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get noChanges => 'Sin cambios: el contenido propuesto es idéntico a la página actual.';
+	@override String added({required Object count}) => '+${count}';
+	@override String removed({required Object count}) => '−${count}';
+	@override String get changedLines => 'líneas modificadas';
+	@override String collapsed({required Object count}) => '⋯ ${count} sin cambios ⋯';
+}
+
 // Path: more.identity
 class _TranslationsMoreIdentityEs extends TranslationsMoreIdentityEn {
 	_TranslationsMoreIdentityEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -2365,15 +2386,15 @@ class _TranslationsProjectConflictsEs extends TranslationsProjectConflictsEn {
 	@override String detected({required Object count}) => '${count} conflicto(s) nuevo(s) encontrado(s)';
 	@override String get accept => 'Aceptar';
 	@override String get dismiss => 'Descartar';
-	@override String deleteFact({required Object side}) => 'Eliminar hecho ${side}';
-	@override String deleteConfirmTitle({required Object side}) => '¿Eliminar hecho ${side}?';
-	@override String get deleteConfirmBody => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado permanece como la afirmación superviviente.';
-	@override String deleteWillDelete({required Object side}) => 'Se eliminará (lado ${side}):';
+	@override String get deleteFact => 'Archivar hecho';
+	@override String deleteConfirmTitle({required Object side}) => '¿Archivar el hecho ${side}?';
+	@override String get deleteConfirmBody => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.';
+	@override String deleteWillDelete({required Object side}) => 'Se archivará (lado ${side}):';
 	@override String deleteWillKeep({required Object side}) => 'Se conservará (lado ${side}):';
 	@override String deleteNonFactOther({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)';
 	@override String get deleteLoading => 'Cargando el texto del hecho…';
-	@override String deleteFactLabel({required Object side}) => 'Eliminar ${side}';
-	@override String get deletedFact => 'Hecho eliminado y conflicto aceptado';
+	@override String deleteFactLabel({required Object side}) => 'Archivar ${side}';
+	@override String get deletedFact => 'Hecho archivado (restaurable), conflicto aceptado';
 	@override String get openPlanEditor => 'Abrir el editor del plan';
 	@override String get openGoalEditor => 'Abrir el editor del objetivo';
 	@override late final _TranslationsProjectConflictsSeverityEs severity = _TranslationsProjectConflictsSeverityEs._(_root);
@@ -2783,6 +2804,17 @@ class _TranslationsChannelsKindsEs extends TranslationsChannelsKindsEn {
 	@override late final _TranslationsChannelsKindsWecomEs wecom = _TranslationsChannelsKindsWecomEs._(_root);
 }
 
+// Path: notesPage.browse
+class _TranslationsNotesPageBrowseEs extends TranslationsNotesPageBrowseEn {
+	_TranslationsNotesPageBrowseEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get tree => 'Carpetas';
+	@override String get tags => 'Etiquetas';
+}
+
 // Path: notesPage.editor
 class _TranslationsNotesPageEditorEs extends TranslationsNotesPageEditorEn {
 	_TranslationsNotesPageEditorEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -2848,6 +2880,68 @@ class _TranslationsNotesPageRenameEs extends TranslationsNotesPageRenameEn {
 	@override String get helper => 'Ruta relativa a la bóveda. Las carpetas se crean solas.';
 	@override String doneSnack({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.';
 	@override String get doneWithWarning => 'Renombrado, pero no se actualizaron todos los enlaces';
+}
+
+// Path: notesPage.tags
+class _TranslationsNotesPageTagsEs extends TranslationsNotesPageTagsEn {
+	_TranslationsNotesPageTagsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get empty => 'Aún no hay etiquetas en el almacén. Escribe #así en una nota.';
+	@override String noMatches({required Object query}) => 'Ninguna etiqueta coincide con «${query}».';
+	@override String get filteredBy => 'Filtrado por';
+	@override String get clear => 'Quitar el filtro de etiqueta';
+	@override String noNotes({required Object tag}) => 'Ya no hay notas con #${tag}.';
+}
+
+// Path: notesPage.backlinks
+class _TranslationsNotesPageBacklinksEs extends TranslationsNotesPageBacklinksEn {
+	_TranslationsNotesPageBacklinksEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Retroenlaces';
+	@override String get loading => 'Buscando enlaces…';
+	@override String get empty => 'Todavía no hay notas que enlacen aquí.';
+	@override String failed({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}';
+}
+
+// Path: notesPage.outline
+class _TranslationsNotesPageOutlineEs extends TranslationsNotesPageOutlineEn {
+	_TranslationsNotesPageOutlineEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get action => 'Esquema';
+	@override String get title => 'Esquema';
+	@override String get empty => 'Este documento no tiene encabezados.';
+	@override String get jumpedToSource => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.';
+}
+
+// Path: notesPage.today
+class _TranslationsNotesPageTodayEs extends TranslationsNotesPageTodayEn {
+	_TranslationsNotesPageTodayEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get tooltip => 'Abrir la nota diaria de hoy';
+}
+
+// Path: notesPage.wikiLink
+class _TranslationsNotesPageWikiLinkEs extends TranslationsNotesPageWikiLinkEn {
+	_TranslationsNotesPageWikiLinkEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get suggestions => 'Enlazar a…';
+	@override String createNew({required Object name}) => 'Crear «${name}»';
+	@override String get noMatches => 'Ninguna nota coincide: sigue escribiendo para crear una.';
 }
 
 // Path: vaultSync.every
@@ -3532,16 +3626,16 @@ class _TranslationsWebConflictsConfirmDeleteEs extends TranslationsWebConflictsC
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String title({required Object side}) => '¿Eliminar el hecho ${side}?';
-	@override String get description => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado se conserva como la afirmación superviviente.';
-	@override String targetLabel({required Object side}) => 'Se eliminará (lado ${side}):';
+	@override String title({required Object side}) => '¿Archivar el hecho ${side}?';
+	@override String get description => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.';
+	@override String targetLabel({required Object side}) => 'Se archivará (lado ${side}):';
 	@override String keepLabel({required Object side}) => 'Se conservará (lado ${side}):';
 	@override String nonFactOther({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)';
 	@override String get evidenceLabel => 'Evidencia del detector:';
 	@override String get loading => 'Cargando texto del hecho…';
 	@override String get loadError => 'No se pudo cargar el texto del hecho. Inspecciónalo en la página de Memoria.';
 	@override String get cancel => 'Cancelar';
-	@override String confirm({required Object side}) => 'Eliminar ${side}';
+	@override String confirm({required Object side}) => 'Archivar ${side}';
 }
 
 // Path: web.conflicts.openLayer
@@ -4950,11 +5044,11 @@ class _TranslationsWebPluginsCustomTasksEs extends TranslationsWebPluginsCustomT
 
 	// Translations
 	@override String get title => 'Tareas personalizadas';
-	@override String get description => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.';
+	@override String get description => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas, agrupados por proyecto. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.';
 	@override String get addTask => 'Añadir tarea';
 	@override String get empty => 'Aún no hay tareas personalizadas.';
 	@override late final _TranslationsWebPluginsCustomTasksColumnsEs columns = _TranslationsWebPluginsCustomTasksColumnsEs._(_root);
-	@override String get globalScope => 'global';
+	@override String get globalGroup => 'Global';
 	@override String deleteConfirm({required Object name}) => '¿Eliminar la tarea personalizada "${name}"?';
 	@override String get removedToast => 'Tarea eliminada';
 	@override String get deleteFailedToast => 'Error al eliminar';
@@ -5994,6 +6088,7 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override String get emergentHint => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.';
 	@override String get bindingBadge => 'Vinculante · obligatorio';
 	@override String get referenceBadge => 'Referencia';
+	@override late final _TranslationsWebKnowledgeKbMaintainerEs maintainer = _TranslationsWebKnowledgeKbMaintainerEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbProposalEs proposal = _TranslationsWebKnowledgeKbProposalEs._(_root);
 	@override String get discuss => 'Hablar con la IA';
 	@override String get discussHint => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras';
@@ -6006,6 +6101,10 @@ class _TranslationsWebKnowledgeKbEs extends TranslationsWebKnowledgeKbEn {
 	@override late final _TranslationsWebKnowledgeKbNewPageEs newPage = _TranslationsWebKnowledgeKbNewPageEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbPageSettingsEs pageSettings = _TranslationsWebKnowledgeKbPageSettingsEs._(_root);
 	@override late final _TranslationsWebKnowledgeKbLibrarianEs librarian = _TranslationsWebKnowledgeKbLibrarianEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbWritePolicyEs writePolicy = _TranslationsWebKnowledgeKbWritePolicyEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbGuidanceEs guidance = _TranslationsWebKnowledgeKbGuidanceEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbExclusionsEs exclusions = _TranslationsWebKnowledgeKbExclusionsEs._(_root);
+	@override late final _TranslationsWebKnowledgeKbRemovalsEs removals = _TranslationsWebKnowledgeKbRemovalsEs._(_root);
 }
 
 // Path: web.knowledge.kinds
@@ -6126,6 +6225,13 @@ class _TranslationsWebCortexChatEs extends TranslationsWebCortexChatEn {
 	@override String get closeHint => 'Cerrar esta conversación';
 	@override String get revisionApplied => 'Documento actualizado';
 	@override String get revisionProposed => 'Propuesta creada — revísala en la bandeja';
+	@override String get rulesSuggestionTitle => 'Sugerencia de reglas';
+	@override String get rulesGuidance => 'Guía';
+	@override String get rulesExclusionsAdd => 'Añadir exclusiones';
+	@override String get rulesExclusionsRemove => 'Quitar exclusiones';
+	@override String get rulesApply => 'Aplicar';
+	@override String get rulesApplied => 'Reglas aplicadas';
+	@override String get rulesApplyFailed => 'No se pudo aplicar la sugerencia de reglas';
 	@override String get modelLabel => 'Modelo:';
 	@override String get modelHint => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.';
 	@override String get modelGlobalDefault => 'Predeterminado (global)';
@@ -8222,7 +8328,10 @@ class _TranslationsWebNotesVaultSyncAutoSyncEs extends TranslationsWebNotesVault
 	@override String get enabledTooltipNoRemote => 'Configura primero un remoto para habilitar la sincronización automática';
 	@override String get noRemoteHint => 'Sin remoto: se omitirán push/pull.';
 	@override String get commitEvery => 'Hacer commit cada';
-	@override String get commitEveryExamples => 'Ejemplos: <1>30s</1>, <3>10m</3>, <5>2h</5>. Mínimo 30s.';
+	@override late final _TranslationsWebNotesVaultSyncAutoSyncEveryEs every = _TranslationsWebNotesVaultSyncAutoSyncEveryEs._(_root);
+	@override String get intervalCustom => 'Personalizado…';
+	@override String get intervalInvalid => 'No es una duración válida. Usa un número con unidad, p. ej. 30s, 10m, 2h.';
+	@override String intervalTooShort({required Object min}) => 'El bucle de sincronización nunca se ejecuta más rápido que cada ${min}.';
 	@override String get pullEvery => 'Hacer pull cada';
 	@override String get pullEveryHint => 'Solo se usa cuando Pull está habilitado.';
 	@override String get pushAfterCommit => 'Hacer push tras el commit';
@@ -8428,7 +8537,6 @@ class _TranslationsWebPluginsCustomTasksColumnsEs extends TranslationsWebPlugins
 	// Translations
 	@override String get name => 'Nombre';
 	@override String get command => 'Comando';
-	@override String get scope => 'Ámbito';
 }
 
 // Path: web.plugins.customTasks.dialog
@@ -9656,6 +9764,20 @@ class _TranslationsWebKnowledgeKbKindsEs extends TranslationsWebKnowledgeKbKinds
 	@override String get kb_reusable => 'Funciones reutilizables';
 }
 
+// Path: web.knowledge.kb.maintainer
+class _TranslationsWebKnowledgeKbMaintainerEs extends TranslationsWebKnowledgeKbMaintainerEn {
+	_TranslationsWebKnowledgeKbMaintainerEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get ai => 'Mantenida por la curación en segundo plano de opendray';
+	@override String get human => 'Mantenida por mí: la automatización solo propone';
+	@override String get session => 'Mantenida por el agente que hace el trabajo';
+	@override String get hint => 'Quién mantiene esta página al día. «El agente que hace el trabajo» da a cada sesión una herramienta para escribir esta página sobre la marcha: ideal para registros que solo conoce el agente que trabaja, como un contenedor que acaba de crear. La curación en segundo plano, en cambio, redacta la página a partir de la memoria acumulada.';
+	@override String get sessionUnavailable => 'Quién mantiene esta página al día. La opción mantenida por el agente no está disponible para páginas fundacionales ni integradas: sus reglas son vinculantes, así que una sesión no debe reescribirlas a mitad de una tarea.';
+}
+
 // Path: web.knowledge.kb.proposal
 class _TranslationsWebKnowledgeKbProposalEs extends TranslationsWebKnowledgeKbProposalEn {
 	_TranslationsWebKnowledgeKbProposalEs._(TranslationsEs root) : this._root = root, super.internal(root);
@@ -9670,6 +9792,7 @@ class _TranslationsWebKnowledgeKbProposalEs extends TranslationsWebKnowledgeKbPr
 	@override String get reject => 'Rechazar';
 	@override String get approved => 'Actualización aprobada';
 	@override String get rejected => 'Propuesta rechazada';
+	@override String get review => 'Revisar';
 }
 
 // Path: web.knowledge.kb.newPage
@@ -9704,6 +9827,8 @@ class _TranslationsWebKnowledgeKbPageSettingsEs extends TranslationsWebKnowledge
 	@override String get hint => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página';
 	@override String get save => 'Guardar ajustes';
 	@override String get savedToast => 'Ajustes de la página actualizados';
+	@override String get fixedTitle => 'El título de esta página proviene del idioma de la interfaz y no se edita aquí.';
+	@override String get fixedNature => 'La naturaleza de una página integrada es fija: determina si las sesiones la leen como regla vinculante o como referencia.';
 }
 
 // Path: web.knowledge.kb.librarian
@@ -9721,6 +9846,54 @@ class _TranslationsWebKnowledgeKbLibrarianEs extends TranslationsWebKnowledgeKbL
 	@override String get provider => 'Agente en la nube';
 	@override String get account => 'Cuenta de Claude';
 	@override String get launch => 'Lanzar';
+}
+
+// Path: web.knowledge.kb.writePolicy
+class _TranslationsWebKnowledgeKbWritePolicyEs extends TranslationsWebKnowledgeKbWritePolicyEn {
+	_TranslationsWebKnowledgeKbWritePolicyEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get proposal => 'Requiere mi aprobación antes de cambiar';
+	@override String get direct => 'Se actualiza automáticamente';
+	@override String get hint => 'Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben.';
+}
+
+// Path: web.knowledge.kb.guidance
+class _TranslationsWebKnowledgeKbGuidanceEs extends TranslationsWebKnowledgeKbGuidanceEn {
+	_TranslationsWebKnowledgeKbGuidanceEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => 'Qué debe ser esta página: su alcance, forma y nivel de detalle';
+	@override String get hint => 'Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté».';
+}
+
+// Path: web.knowledge.kb.exclusions
+class _TranslationsWebKnowledgeKbExclusionsEs extends TranslationsWebKnowledgeKbExclusionsEn {
+	_TranslationsWebKnowledgeKbExclusionsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get placeholder => 'Un asunto por línea';
+	@override String get hint => 'Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas.';
+}
+
+// Path: web.knowledge.kb.removals
+class _TranslationsWebKnowledgeKbRemovalsEs extends TranslationsWebKnowledgeKbRemovalsEn {
+	_TranslationsWebKnowledgeKbRemovalsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Líneas que eliminaste';
+	@override String get banned => 'vetada';
+	@override String get dismiss => 'Olvidar';
+	@override String get hint => 'Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).';
+	@override String recent({required Object n}) => 'Eliminadas recientes (${n})';
 }
 
 // Path: web.knowledge.distill.retirement
@@ -9902,6 +10075,24 @@ class _TranslationsWebNotesVaultSyncConflictKindsEs extends TranslationsWebNotes
 	@override String get merge => 'merge';
 	@override String get cherryPick => 'cherry-pick';
 	@override String get operation => 'operación';
+}
+
+// Path: web.notes.vaultSync.autoSync.every
+class _TranslationsWebNotesVaultSyncAutoSyncEveryEs extends TranslationsWebNotesVaultSyncAutoSyncEveryEn {
+	_TranslationsWebNotesVaultSyncAutoSyncEveryEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get k30s => 'Cada 30 segundos';
+	@override String get k1m => 'Cada minuto';
+	@override String get k5m => 'Cada 5 minutos';
+	@override String get k10m => 'Cada 10 minutos';
+	@override String get k15m => 'Cada 15 minutos';
+	@override String get k30m => 'Cada 30 minutos';
+	@override String get k1h => 'Cada hora';
+	@override String get k6h => 'Cada 6 horas';
+	@override String get k24h => 'Cada 24 horas';
 }
 
 // Path: web.serverSettings.host.modes.ac
@@ -10399,20 +10590,20 @@ extension on TranslationsEs {
 			'web.conflicts.dismiss' => 'Descartar',
 			'web.conflicts.accepted' => 'Conflicto aceptado. Recuerda aplicar la corrección',
 			'web.conflicts.dismissed' => 'Conflicto descartado',
-			'web.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
+			'web.conflicts.deletedFact' => 'Hecho archivado (restaurable) y conflicto aceptado',
 			'web.conflicts.quickActions' => 'Corrección:',
-			'web.conflicts.deleteFact' => 'Eliminar hecho',
-			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Eliminar ${side}: ${ref}',
-			'web.conflicts.confirmDelete.title' => ({required Object side}) => '¿Eliminar el hecho ${side}?',
-			'web.conflicts.confirmDelete.description' => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado se conserva como la afirmación superviviente.',
-			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Se eliminará (lado ${side}):',
+			'web.conflicts.deleteFact' => 'Archivar hecho',
+			'web.conflicts.deleteFactSide' => ({required Object side, required Object ref}) => 'Archivar ${side}: ${ref}',
+			'web.conflicts.confirmDelete.title' => ({required Object side}) => '¿Archivar el hecho ${side}?',
+			'web.conflicts.confirmDelete.description' => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.',
+			'web.conflicts.confirmDelete.targetLabel' => ({required Object side}) => 'Se archivará (lado ${side}):',
 			'web.conflicts.confirmDelete.keepLabel' => ({required Object side}) => 'Se conservará (lado ${side}):',
 			'web.conflicts.confirmDelete.nonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'web.conflicts.confirmDelete.evidenceLabel' => 'Evidencia del detector:',
 			'web.conflicts.confirmDelete.loading' => 'Cargando texto del hecho…',
 			'web.conflicts.confirmDelete.loadError' => 'No se pudo cargar el texto del hecho. Inspecciónalo en la página de Memoria.',
 			'web.conflicts.confirmDelete.cancel' => 'Cancelar',
-			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Eliminar ${side}',
+			'web.conflicts.confirmDelete.confirm' => ({required Object side}) => 'Archivar ${side}',
 			'web.conflicts.openLayer.plan' => 'Abrir editor de plan',
 			'web.conflicts.openLayer.goal' => 'Abrir editor de objetivo',
 			'web.conflicts.severity.low' => 'baja',
@@ -10960,7 +11151,18 @@ extension on TranslationsEs {
 			'web.notes.vaultSync.autoSync.enabledTooltipNoRemote' => 'Configura primero un remoto para habilitar la sincronización automática',
 			'web.notes.vaultSync.autoSync.noRemoteHint' => 'Sin remoto: se omitirán push/pull.',
 			'web.notes.vaultSync.autoSync.commitEvery' => 'Hacer commit cada',
-			'web.notes.vaultSync.autoSync.commitEveryExamples' => 'Ejemplos: <1>30s</1>, <3>10m</3>, <5>2h</5>. Mínimo 30s.',
+			'web.notes.vaultSync.autoSync.every.k30s' => 'Cada 30 segundos',
+			'web.notes.vaultSync.autoSync.every.k1m' => 'Cada minuto',
+			'web.notes.vaultSync.autoSync.every.k5m' => 'Cada 5 minutos',
+			'web.notes.vaultSync.autoSync.every.k10m' => 'Cada 10 minutos',
+			'web.notes.vaultSync.autoSync.every.k15m' => 'Cada 15 minutos',
+			'web.notes.vaultSync.autoSync.every.k30m' => 'Cada 30 minutos',
+			'web.notes.vaultSync.autoSync.every.k1h' => 'Cada hora',
+			'web.notes.vaultSync.autoSync.every.k6h' => 'Cada 6 horas',
+			'web.notes.vaultSync.autoSync.every.k24h' => 'Cada 24 horas',
+			'web.notes.vaultSync.autoSync.intervalCustom' => 'Personalizado…',
+			'web.notes.vaultSync.autoSync.intervalInvalid' => 'No es una duración válida. Usa un número con unidad, p. ej. 30s, 10m, 2h.',
+			'web.notes.vaultSync.autoSync.intervalTooShort' => ({required Object min}) => 'El bucle de sincronización nunca se ejecuta más rápido que cada ${min}.',
 			'web.notes.vaultSync.autoSync.pullEvery' => 'Hacer pull cada',
 			'web.notes.vaultSync.autoSync.pullEveryHint' => 'Solo se usa cuando Pull está habilitado.',
 			'web.notes.vaultSync.autoSync.pushAfterCommit' => 'Hacer push tras el commit',
@@ -11020,6 +11222,8 @@ extension on TranslationsEs {
 			'web.activity.filters.outbound' => 'Saliente',
 			'web.activity.filters.allStatuses' => 'Todos los estados',
 			'web.activity.filters.status2' => '2xx correcto',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.filters.status3' => '3xx redirección',
 			'web.activity.filters.status4' => '4xx error de cliente',
 			'web.activity.filters.status5' => '5xx error de servidor',
@@ -11031,8 +11235,6 @@ extension on TranslationsEs {
 			'web.activity.table.directionTitle' => 'Dirección',
 			'web.activity.table.method' => 'Método',
 			'web.activity.table.path' => 'Ruta',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.table.status' => 'Estado',
 			'web.activity.table.duration' => 'Duración',
 			'web.activity.table.inboundAria' => 'entrante',
@@ -11487,13 +11689,12 @@ extension on TranslationsEs {
 			'web.plugins.skills.uploadFailedToast' => 'Error al subir la habilidad',
 			'web.plugins.skills.uploadInvalidTypeToast' => 'Solo se pueden instalar archivos SKILL.md por arrastre',
 			'web.plugins.customTasks.title' => 'Tareas personalizadas',
-			'web.plugins.customTasks.description' => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.',
+			'web.plugins.customTasks.description' => 'Atajos de ejecución con un clic que se muestran en la pestaña Tareas, agrupados por proyecto. Deja cwd en blanco para tareas globales visibles en todas las sessions, o fíjalo a una ruta absoluta para acotarlo.',
 			'web.plugins.customTasks.addTask' => 'Añadir tarea',
 			'web.plugins.customTasks.empty' => 'Aún no hay tareas personalizadas.',
 			'web.plugins.customTasks.columns.name' => 'Nombre',
 			'web.plugins.customTasks.columns.command' => 'Comando',
-			'web.plugins.customTasks.columns.scope' => 'Ámbito',
-			'web.plugins.customTasks.globalScope' => 'global',
+			'web.plugins.customTasks.globalGroup' => 'Global',
 			'web.plugins.customTasks.deleteConfirm' => ({required Object name}) => '¿Eliminar la tarea personalizada "${name}"?',
 			'web.plugins.customTasks.removedToast' => 'Tarea eliminada',
 			'web.plugins.customTasks.deleteFailedToast' => 'Error al eliminar',
@@ -11535,6 +11736,8 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => 'Host',
 			'web.plugins.gitHosts.dialog.hostPlaceholder' => 'github.com',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.displayNameLabel' => 'Nombre visible (opcional)',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
@@ -11545,8 +11748,6 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.dialog.enabledLabel' => 'Habilitado',
 			'web.plugins.gitHosts.dialog.addedToast' => 'Host de git añadido',
 			'web.plugins.gitHosts.dialog.updatedToast' => 'Host de git actualizado',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.addFailedToast' => 'Error al añadir',
 			'web.plugins.gitHosts.dialog.updateFailedToast' => 'Error al actualizar',
 			'web.plugins.gitHosts.dialog.ownerLabel' => 'Propietario (opcional)',
@@ -12049,6 +12250,8 @@ extension on TranslationsEs {
 			'web.serverSettings.toggle.off' => 'Desactivado',
 			'web.serverSettings.toggle.defaultOn' => 'Por defecto (on)',
 			'web.serverSettings.toggle.defaultOff' => 'Por defecto (off)',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.memoryRuntimeBanner' => 'El comportamiento de IA en runtime — workers, reglas de captura, perfiles de inyección y modo de spawn — vive en los ajustes de Cortex y se aplica al instante. Esta sección es la mitad de infraestructura: embedder, almacenamiento y gobernanza de fondo (requiere reinicio).',
 			'web.serverSettings.memoryRuntimeBannerButton' => 'Abrir ajustes de Cortex',
 			'web.serverSettings.host.intro' => 'Un Mac dormido apaga también su red, así que la pasarela deja de responder: desde el móvil, desde la web y hacia su base de datos. Parece que «opendray falla» cuando en realidad la máquina solo está dormida. Elige cómo debe gestionarlo opendray.',
@@ -12059,8 +12262,6 @@ extension on TranslationsEs {
 			'web.serverSettings.host.modes.always.desc' => 'Nunca se duerme por inactividad, tampoco con batería.',
 			'web.serverSettings.host.modes.always.caveat' => 'Agotará la batería de un portátil desenchufado.',
 			'web.serverSettings.host.modes.on_demand.label' => 'Duerme inactivo, despierta con tráfico',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.modes.on_demand.desc' => 'La máquina duerme siempre que la pasarela está en calma. Una petición entrante la despierta y opendray la mantiene despierta mientras sirve; después vuelve a dormir.',
 			'web.serverSettings.host.modes.on_demand.caveat' => 'Requiere «Activar por acceso de red» (sudo pmset -a womp 1); Ethernet por cable es lo fiable. La primera petición tras dormir tarda unos segundos y puede necesitar un reintento.',
 			'web.serverSettings.host.modes.off.label' => 'No tocar la energía',
@@ -12409,6 +12610,11 @@ extension on TranslationsEs {
 			'web.knowledge.kb.emergentHint' => 'Lecciones y funciones reutilizables destiladas del trabajo previo — orientación.',
 			'web.knowledge.kb.bindingBadge' => 'Vinculante · obligatorio',
 			'web.knowledge.kb.referenceBadge' => 'Referencia',
+			'web.knowledge.kb.maintainer.ai' => 'Mantenida por la curación en segundo plano de opendray',
+			'web.knowledge.kb.maintainer.human' => 'Mantenida por mí: la automatización solo propone',
+			'web.knowledge.kb.maintainer.session' => 'Mantenida por el agente que hace el trabajo',
+			'web.knowledge.kb.maintainer.hint' => 'Quién mantiene esta página al día. «El agente que hace el trabajo» da a cada sesión una herramienta para escribir esta página sobre la marcha: ideal para registros que solo conoce el agente que trabaja, como un contenedor que acaba de crear. La curación en segundo plano, en cambio, redacta la página a partir de la memoria acumulada.',
+			'web.knowledge.kb.maintainer.sessionUnavailable' => 'Quién mantiene esta página al día. La opción mantenida por el agente no está disponible para páginas fundacionales ni integradas: sus reglas son vinculantes, así que una sesión no debe reescribirlas a mitad de una tarea.',
 			'web.knowledge.kb.proposal.text' => 'La IA propuso una actualización de esta página (evidencia nueva divergente).',
 			'web.knowledge.kb.proposal.preview' => 'Vista previa',
 			'web.knowledge.kb.proposal.hide' => 'Ocultar',
@@ -12416,6 +12622,7 @@ extension on TranslationsEs {
 			'web.knowledge.kb.proposal.reject' => 'Rechazar',
 			'web.knowledge.kb.proposal.approved' => 'Actualización aprobada',
 			'web.knowledge.kb.proposal.rejected' => 'Propuesta rechazada',
+			'web.knowledge.kb.proposal.review' => 'Revisar',
 			'web.knowledge.kb.discuss' => 'Hablar con la IA',
 			'web.knowledge.kb.discussHint' => 'Redacta de nuevo esta política conversando con la IA — las páginas bloqueadas reciben propuestas, nunca sobrescrituras',
 			'web.knowledge.kb.onDemand' => 'bajo demanda',
@@ -12440,6 +12647,8 @@ extension on TranslationsEs {
 			'web.knowledge.kb.pageSettings.hint' => 'Edita el título, el resumen, la naturaleza y el indicador de inyección de esta página',
 			'web.knowledge.kb.pageSettings.save' => 'Guardar ajustes',
 			'web.knowledge.kb.pageSettings.savedToast' => 'Ajustes de la página actualizados',
+			'web.knowledge.kb.pageSettings.fixedTitle' => 'El título de esta página proviene del idioma de la interfaz y no se edita aquí.',
+			'web.knowledge.kb.pageSettings.fixedNature' => 'La naturaleza de una página integrada es fija: determina si las sesiones la leen como regla vinculante o como referencia.',
 			'web.knowledge.kb.librarian.button' => 'Gestionar KB con IA',
 			'web.knowledge.kb.librarian.hint' => 'Lanza un bibliotecario de IA que puede organizar, crear y editar cualquier página de conocimiento',
 			'web.knowledge.kb.librarian.launchedToast' => 'Sesión del bibliotecario de KB iniciada',
@@ -12448,6 +12657,18 @@ extension on TranslationsEs {
 			'web.knowledge.kb.librarian.provider' => 'Agente en la nube',
 			'web.knowledge.kb.librarian.account' => 'Cuenta de Claude',
 			'web.knowledge.kb.librarian.launch' => 'Lanzar',
+			'web.knowledge.kb.writePolicy.proposal' => 'Requiere mi aprobación antes de cambiar',
+			'web.knowledge.kb.writePolicy.direct' => 'Se actualiza automáticamente',
+			'web.knowledge.kb.writePolicy.hint' => 'Si la automatización puede reescribir esta página directamente. Con aprobación, la curación en segundo plano de opendray presenta su borrador como propuesta para que la revises como diff: nada cambia hasta que la aceptes. También significa que tus propias ediciones sobreviven; las actualizaciones automáticas las sobrescriben.',
+			'web.knowledge.kb.guidance.placeholder' => 'Qué debe ser esta página: su alcance, forma y nivel de detalle',
+			'web.knowledge.kb.guidance.hint' => 'Orienta qué cubre la página y cómo se lee. Tiene prioridad sobre los valores por defecto del redactor, así que es el sitio para decir «mantenla breve» o «solo reglas», incluido «no vuelvas a ampliar una sección que recorté».',
+			'web.knowledge.kb.exclusions.placeholder' => 'Un asunto por línea',
+			'web.knowledge.kb.exclusions.hint' => 'Asuntos que esta página nunca debe tratar. Borrarlos solo del cuerpo no funciona: siguen en la memoria subyacente y se reescriben en la siguiente actualización. Indicarlos aquí los elimina de las fuentes antes de redactar, así que dejan de volver. Coincidencia sin distinguir mayúsculas, por palabras completas.',
+			'web.knowledge.kb.removals.title' => 'Líneas que eliminaste',
+			'web.knowledge.kb.removals.banned' => 'vetada',
+			'web.knowledge.kb.removals.dismiss' => 'Olvidar',
+			'web.knowledge.kb.removals.hint' => 'Líneas que eliminaste de esta página. Tras una eliminación, se indica al mantenedor que no las reintroduzca; si una reaparece y la eliminas de nuevo, queda vetada y se excluye de todos los borradores futuros. «Olvidar» borra el registro (y levanta el veto).',
+			'web.knowledge.kb.removals.recent' => ({required Object n}) => 'Eliminadas recientes (${n})',
 			'web.knowledge.kinds.all' => 'Todos',
 			'web.knowledge.kinds.entity' => 'Entidades',
 			'web.knowledge.kinds.fact' => 'Hechos',
@@ -12543,9 +12764,18 @@ extension on TranslationsEs {
 			'web.cortex.chat.escalateHint' => 'Lanza una sesión de agente completa, fundamentada en el código, con esta conversación',
 			'web.cortex.chat.escalateFailed' => 'Error al escalar',
 			'web.cortex.chat.escalatedToast' => 'Sesión de agente lanzada',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.closeHint' => 'Cerrar esta conversación',
 			'web.cortex.chat.revisionApplied' => 'Documento actualizado',
 			'web.cortex.chat.revisionProposed' => 'Propuesta creada — revísala en la bandeja',
+			'web.cortex.chat.rulesSuggestionTitle' => 'Sugerencia de reglas',
+			'web.cortex.chat.rulesGuidance' => 'Guía',
+			'web.cortex.chat.rulesExclusionsAdd' => 'Añadir exclusiones',
+			'web.cortex.chat.rulesExclusionsRemove' => 'Quitar exclusiones',
+			'web.cortex.chat.rulesApply' => 'Aplicar',
+			'web.cortex.chat.rulesApplied' => 'Reglas aplicadas',
+			'web.cortex.chat.rulesApplyFailed' => 'No se pudo aplicar la sugerencia de reglas',
 			'web.cortex.chat.modelLabel' => 'Modelo:',
 			'web.cortex.chat.modelHint' => 'Elige un proveedor de cloud-agent + modelo para ESTA conversación. Por defecto usa el modelo de discusión global.',
 			'web.cortex.chat.modelGlobalDefault' => 'Predeterminado (global)',
@@ -12573,8 +12803,6 @@ extension on TranslationsEs {
 			'web.cortex.blueprint.mode.human' => 'Humano',
 			'web.cortex.blueprint.mode.scanner' => 'Escáner',
 			'web.cortex.blueprint.inject' => 'inyectar',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.blueprint.reserved' => 'reservada',
 			'web.cortex.blueprint.deleteNote' => 'Quitar una sección la oculta sin borrar su contenido — vuelve a añadir el mismo slug para recuperarla.',
 			'web.cortex.blueprint.cancel' => 'Cancelar',
@@ -12775,6 +13003,11 @@ extension on TranslationsEs {
 			'web.roundTable.plan.accountDefault' => 'Predeterminada',
 			'web.roundTable.plan.bypass' => 'Omitir permisos (YOLO)',
 			'web.roundTable.plan.bypassHint' => 'Inicia la sesión con su indicador de bypass para no pedir aprobaciones.',
+			'web.diff.noChanges' => 'Sin cambios: el contenido propuesto es idéntico a la página actual.',
+			'web.diff.added' => ({required Object count}) => '+${count}',
+			'web.diff.removed' => ({required Object count}) => '−${count}',
+			'web.diff.changedLines' => 'líneas modificadas',
+			'web.diff.collapsed' => ({required Object count}) => '⋯ ${count} sin cambios ⋯',
 			'more.title' => 'Más',
 			'more.identity.signedInAs' => 'Sesión iniciada como',
 			'more.identity.server' => 'Servidor',
@@ -13045,6 +13278,8 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.projectDocsHint' => 'Arquitectura / spec / decisiones / plan / retrospectivas. Normalmente redactados o mantenidos por un agente.',
 			'sessions.inspector.notes.mappingCleared' => 'Asignación borrada. Usando el valor predeterminado',
 			'sessions.inspector.notes.mappedTo' => ({required Object path}) => 'Asignado a ${path}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.cancelTooltip' => 'Cancelar',
 			'sessions.inspector.notes.newDocTooltip' => 'Nuevo documento',
 			'sessions.inspector.notes.noProjectMapping' => 'No se pudo resolver una asignación de proyecto para esta session. Comprueba que el gateway tenga configurado un almacén de notas y que el cwd de la session esté establecido.',
@@ -13087,8 +13322,6 @@ extension on TranslationsEs {
 			'sessions.inspector.canvas.deleteTitle' => '¿Eliminar lienzo?',
 			'sessions.inspector.canvas.deleteBody' => ({required Object title}) => '¿Eliminar «${title}»? Esto no se puede deshacer.',
 			'sessions.inspector.canvas.emptyTitle' => 'Aún no hay lienzos',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.canvas.emptyBlurb' => 'Pide al agente una pantalla, un diagrama de flujo, un mapa mental o un diagrama de relaciones: se renderiza aquí y podrás anotarlo.',
 			'sessions.inspector.canvas.viewportPhone' => 'Ancho de móvil',
 			'sessions.inspector.canvas.viewportTablet' => 'Ancho de tablet',
@@ -13491,15 +13724,15 @@ extension on TranslationsEs {
 			'project.conflicts.detected' => ({required Object count}) => '${count} conflicto(s) nuevo(s) encontrado(s)',
 			'project.conflicts.accept' => 'Aceptar',
 			'project.conflicts.dismiss' => 'Descartar',
-			'project.conflicts.deleteFact' => ({required Object side}) => 'Eliminar hecho ${side}',
-			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '¿Eliminar hecho ${side}?',
-			'project.conflicts.deleteConfirmBody' => 'Esto elimina el hecho de forma permanente y acepta el conflicto. El otro lado permanece como la afirmación superviviente.',
-			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Se eliminará (lado ${side}):',
+			'project.conflicts.deleteFact' => 'Archivar hecho',
+			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '¿Archivar el hecho ${side}?',
+			'project.conflicts.deleteConfirmBody' => 'Esto archiva el hecho (restaurable) con una nota de sustitución y acepta el conflicto. El otro lado queda como la afirmación vigente.',
+			'project.conflicts.deleteWillDelete' => ({required Object side}) => 'Se archivará (lado ${side}):',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => 'Se conservará (lado ${side}):',
 			'project.conflicts.deleteNonFactOther' => ({required Object layer}) => '(entrada de ${layer}, abre la pestaña correspondiente para inspeccionar)',
 			'project.conflicts.deleteLoading' => 'Cargando el texto del hecho…',
-			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Eliminar ${side}',
-			'project.conflicts.deletedFact' => 'Hecho eliminado y conflicto aceptado',
+			'project.conflicts.deleteFactLabel' => ({required Object side}) => 'Archivar ${side}',
+			'project.conflicts.deletedFact' => 'Hecho archivado (restaurable), conflicto aceptado',
 			'project.conflicts.openPlanEditor' => 'Abrir el editor del plan',
 			'project.conflicts.openGoalEditor' => 'Abrir el editor del objetivo',
 			'project.conflicts.severity.low' => 'baja',
@@ -13559,6 +13792,8 @@ extension on TranslationsEs {
 			'backups.runNow' => 'Ejecutar ahora',
 			'backups.queueing' => 'Encolando…',
 			'backups.queuedSnack' => ({required Object id}) => 'Copia de seguridad encolada (${id}). Esperando el progreso…',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runFailedApi' => ({required Object error}) => 'Error al ejecutar: ${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => 'Error al ejecutar: ${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => 'Copia de seguridad completada (${bytes}).',
@@ -13601,8 +13836,6 @@ extension on TranslationsEs {
 			'backups.emptyNoTargets.headline' => 'No hay destinos de copia de seguridad configurados',
 			'backups.emptyNoTargets.body' => 'Abre el menú Más → Destinos para añadir un destino (local / S3 / SMB / SFTP / WebDAV / rclone). Luego vuelve y toca "Ejecutar ahora".',
 			'backups.emptyNoBackups.headline' => 'Aún no hay copias de seguridad',
-			_ => null,
-		} ?? switch (path) {
 			'backups.emptyNoBackups.body' => 'Toca "Ejecutar ahora" para tomar una nueva instantánea, o abre Programaciones para configurar ejecuciones periódicas.',
 			'backups.restartToActivate' => 'Reinicia opendray para activar las copias de seguridad',
 			'backups.passphraseSaved' => 'Tu passphrase está guardada. El gateway solo la carga al iniciarse, así que los cambios solo surten efecto tras un reinicio.',
@@ -14030,6 +14263,8 @@ extension on TranslationsEs {
 			'notesPage.newButton' => 'Nueva',
 			'notesPage.newNoteDialogTitle' => 'Nueva nota',
 			'notesPage.searchHint' => 'Busca en todo el vault…',
+			'notesPage.browse.tree' => 'Carpetas',
+			'notesPage.browse.tags' => 'Etiquetas',
 			'notesPage.up' => 'Arriba',
 			'notesPage.copyPath' => 'Copiar ruta',
 			'notesPage.open' => 'Abrir',
@@ -14050,7 +14285,7 @@ extension on TranslationsEs {
 			'notesPage.emptyFolder' => ({required Object path}) => 'La carpeta "${path}" está vacía.',
 			'notesPage.validatePath' => 'La ruta es obligatoria',
 			'notesPage.validatePathDots' => 'La ruta no puede contener ".."',
-			'notesPage.pathHelper' => 'Añade .md automáticamente si falta.',
+			'notesPage.pathHelper' => 'Añade .md salvo que el nombre ya termine en .md o .html.',
 			'notesPage.editor.markdownHint' => 'Markdown, o HTML si el archivo termina en .html…',
 			'notesPage.editor.saving' => 'Guardando…',
 			'notesPage.editor.autosave' => 'Guardado',
@@ -14071,6 +14306,8 @@ extension on TranslationsEs {
 			'notesPage.flatten.preview' => 'Vista previa',
 			'notesPage.flatten.dismiss' => 'Ahora no',
 			'notesPage.flatten.title' => 'Archivar los proyectos con su propio nombre',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.flatten.description' => 'Cada documento se renombra de uno en uno para que los [[enlaces wiki]] que apuntan a él también se actualicen. Nada se sobrescribe: si el destino ya existe, se omite y se deja intacto.',
 			'notesPage.flatten.nothingToMove' => 'No hay nada que mover.',
 			'notesPage.flatten.skipped' => ({required Object count}) => 'Sin tocar (${count}):',
@@ -14082,6 +14319,23 @@ extension on TranslationsEs {
 			'notesPage.rename.helper' => 'Ruta relativa a la bóveda. Las carpetas se crean solas.',
 			'notesPage.rename.doneSnack' => ({required Object count}) => 'Renombrado. ${count} enlace(s) actualizados.',
 			'notesPage.rename.doneWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
+			'notesPage.tags.empty' => 'Aún no hay etiquetas en el almacén. Escribe #así en una nota.',
+			'notesPage.tags.noMatches' => ({required Object query}) => 'Ninguna etiqueta coincide con «${query}».',
+			'notesPage.tags.filteredBy' => 'Filtrado por',
+			'notesPage.tags.clear' => 'Quitar el filtro de etiqueta',
+			'notesPage.tags.noNotes' => ({required Object tag}) => 'Ya no hay notas con #${tag}.',
+			'notesPage.backlinks.title' => 'Retroenlaces',
+			'notesPage.backlinks.loading' => 'Buscando enlaces…',
+			'notesPage.backlinks.empty' => 'Todavía no hay notas que enlacen aquí.',
+			'notesPage.backlinks.failed' => ({required Object error}) => 'No se pudieron cargar los retroenlaces: ${error}',
+			'notesPage.outline.action' => 'Esquema',
+			'notesPage.outline.title' => 'Esquema',
+			'notesPage.outline.empty' => 'Este documento no tiene encabezados.',
+			'notesPage.outline.jumpedToSource' => 'La vista previa no puede desplazarse sin scripts, así que se abrió el código.',
+			'notesPage.today.tooltip' => 'Abrir la nota diaria de hoy',
+			'notesPage.wikiLink.suggestions' => 'Enlazar a…',
+			'notesPage.wikiLink.createNew' => ({required Object name}) => 'Crear «${name}»',
+			'notesPage.wikiLink.noMatches' => 'Ninguna nota coincide: sigue escribiendo para crear una.',
 			'vaultSync.title' => 'Sincronización del vault',
 			'vaultSync.refresh' => 'Actualizar',
 			'vaultSync.statusTitle' => 'Estado',
@@ -14115,8 +14369,6 @@ extension on TranslationsEs {
 			'vaultSync.lastCommit' => 'Última confirmación',
 			'vaultSync.lastPush' => 'Último envío',
 			'vaultSync.lastPull' => 'Última traída',
-			_ => null,
-		} ?? switch (path) {
 			'vaultSync.never' => 'Nunca',
 			'vaultSync.every.sec30' => 'Cada 30 segundos',
 			'vaultSync.every.min1' => 'Cada minuto',

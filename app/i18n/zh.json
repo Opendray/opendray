@@ -445,21 +445,21 @@
       "dismiss": "驳回",
       "accepted": "已采纳 — 别忘了实际修正",
       "dismissed": "已驳回",
-      "deletedFact": "已删除 fact 并采纳冲突",
+      "deletedFact": "该事实已归档（可恢复），冲突已接受",
       "quickActions": "快速修复：",
-      "deleteFact": "删除 fact",
-      "deleteFactSide": "删除 {side}: {ref}",
+      "deleteFact": "归档事实",
+      "deleteFactSide": "归档 {side}：{ref}",
       "confirmDelete": {
-        "title": "确认删除 fact {side}?",
-        "description": "永久删除此 fact 并采纳冲突。另一侧保留为最终采信的版本。",
-        "targetLabel": "将删除（{side} 侧）：",
+        "title": "归档事实 {side}？",
+        "description": "该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。",
+        "targetLabel": "将归档（{side} 侧）：",
         "keepLabel": "将保留（{side} 侧）：",
         "nonFactOther": "（{layer} 条目 — 请打开对应 tab 查看完整内容）",
         "evidenceLabel": "Detector 给出的证据：",
         "loading": "加载 fact 内容中…",
         "loadError": "无法加载 fact 内容，请在 Memory 页面手动查看。",
         "cancel": "取消",
-        "confirm": "确认删除 {side}"
+        "confirm": "归档 {side}"
       },
       "openLayer": {
         "plan": "打开计划编辑器",
@@ -1792,15 +1792,14 @@
       },
       "customTasks": {
         "title": "自定义任务",
-        "description": "在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。",
+        "description": "在 Tasks 选项卡中以点选即运行的方式呈现的快捷方式，按项目分组。留空 cwd 即为所有会话可见的全局任务，或填写绝对路径以限定 scope。",
         "addTask": "添加任务",
         "empty": "尚无自定义任务。",
         "columns": {
           "name": "名称",
-          "command": "命令",
-          "scope": "Scope"
+          "command": "命令"
         },
-        "globalScope": "全局",
+        "globalGroup": "全局",
         "deleteConfirm": "删除自定义任务 \"{name}\"?",
         "removedToast": "任务已移除",
         "deleteFailedToast": "删除失败",
@@ -3040,6 +3039,13 @@
         "emergentHint": "从过往工作蒸馏的教训与可复用功能——参考性引导。",
         "bindingBadge": "强约束 · 必须遵守",
         "referenceBadge": "参考",
+        "maintainer": {
+          "ai": "由 opendray 后台整理维护",
+          "human": "由我维护 —— 自动化只能提交提案",
+          "session": "由干活的 agent 维护",
+          "hint": "谁负责让这一页保持最新。选「由干活的 agent 维护」后，每个会话都会拿到一个直接写这一页的工具 —— 适合只有当场干活的 agent 才知道的记录，比如它刚创建的容器。后台整理则是从积累的记忆里重新起草整页。",
+          "sessionUnavailable": "谁负责让这一页保持最新。基础页和内置页不能交给 agent 维护 —— 它们是强约束规则，不能让会话在干活途中改写。"
+        },
         "proposal": {
           "text": "AI 提议更新此页(出现了与之冲突的新证据)。",
           "preview": "预览",
@@ -3047,7 +3053,8 @@
           "approve": "批准",
           "reject": "拒绝",
           "approved": "更新已批准",
-          "rejected": "提议已拒绝"
+          "rejected": "提议已拒绝",
+          "review": "审阅"
         },
         "discuss": "与 AI 讨论",
         "discussHint": "与 AI 对话重新制定这页方针——已锁定的页面只会产生提案，绝不覆写",
@@ -3075,7 +3082,9 @@
           "description": "编辑此页面的标题、摘要、性质与注入方式。slug 固定不可改,页面正文另行编辑。",
           "hint": "编辑此页面的标题、摘要、性质与注入开关",
           "save": "保存设置",
-          "savedToast": "页面设置已更新"
+          "savedToast": "页面设置已更新",
+          "fixedTitle": "这一页的标题由界面语言决定，不能在这里修改。",
+          "fixedNature": "内置页的性质是固定的 —— 它决定会话把这一页当作强约束规则还是参考资料。"
         },
         "librarian": {
           "button": "用 AI 管理知识库",
@@ -3086,6 +3095,26 @@
           "provider": "Cloud agent",
           "account": "Claude 账号",
           "launch": "启动"
+        },
+        "writePolicy": {
+          "proposal": "改动前需要我批准",
+          "direct": "自动更新，无需批准",
+          "hint": "自动化能否直接改写这一页。选「需要批准」后，opendray 的后台整理会把重绘的草稿作为提案交给你审阅（以 diff 形式），你不点批准就不会变。它同时意味着你在这页上的手改会被保留 —— 自动更新会覆盖掉手改。"
+        },
+        "guidance": {
+          "placeholder": "这一页应该是什么样——范围、结构、详略程度",
+          "hint": "决定本页写什么、怎么写，优先于起草器自身的默认风格。适合写「保持精简」「只写规则」，以及「不要把我删减过的章节重新展开」。"
+        },
+        "exclusions": {
+          "placeholder": "每行一个主题",
+          "hint": "本页永远不得涉及的主题。只在正文里删掉是没用的——它仍留在底层记忆里，下次刷新又会被写回来。写在这里会在起草之前就把它从素材中剔除，于是不再出现。匹配不区分大小写，按完整单词匹配。"
+        },
+        "removals": {
+          "title": "你删除过的行",
+          "banned": "已封禁",
+          "dismiss": "忘记",
+          "hint": "你从本页删除过的行。删除一次后，维护器会被告知不要把它加回来；如果它再次出现且你又删了一次，该行会被封禁——之后的每份草稿都会强制剔除它。「忘记」清除记录（同时解除封禁）。",
+          "recent": "最近删除（{n}）"
         }
       },
       "kinds": {
@@ -3209,6 +3238,13 @@
         "closeHint": "关闭此对话",
         "revisionApplied": "文档已更新",
         "revisionProposed": "已生成提案——请到收件箱审阅",
+        "rulesSuggestionTitle": "规则建议",
+        "rulesGuidance": "指引",
+        "rulesExclusionsAdd": "新增排除主题",
+        "rulesExclusionsRemove": "移除排除主题",
+        "rulesApply": "应用",
+        "rulesApplied": "规则已应用",
+        "rulesApplyFailed": "规则建议应用失败",
         "modelLabel": "模型：",
         "modelHint": "为本次讨论选择 cloud-agent 供应商 + 模型。默认沿用全局讨论模型配置。",
         "modelGlobalDefault": "默认（全局）",
@@ -3489,6 +3525,13 @@
         "bypass": "跳过权限 (YOLO)",
         "bypassHint": "用 bypass 标志启动会话,不再逐个请求批准。"
       }
+    },
+    "diff": {
+      "noChanges": "没有改动 —— 提案内容与当前页面完全一致。",
+      "added": "+{count}",
+      "removed": "−{count}",
+      "changedLines": "行变更",
+      "collapsed": "⋯ 未改动 {count} 行 ⋯"
     }
   },
   "more": {
@@ -4383,15 +4426,15 @@
       "detected": "新发现 {count} 条冲突",
       "accept": "采纳",
       "dismiss": "驳回",
-      "deleteFact": "删除 fact {side}",
-      "deleteConfirmTitle": "确认删除 fact {side}?",
-      "deleteConfirmBody": "永久删除此 fact 并采纳冲突。另一侧保留为最终采信版本。",
-      "deleteWillDelete": "将删除（{side} 侧）：",
+      "deleteFact": "归档事实",
+      "deleteConfirmTitle": "归档事实 {side}？",
+      "deleteConfirmBody": "该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。",
+      "deleteWillDelete": "将归档（{side} 侧）：",
       "deleteWillKeep": "将保留（{side} 侧）：",
       "deleteNonFactOther": "（{layer} 条目 — 请打开对应 tab 查看）",
       "deleteLoading": "加载中…",
-      "deleteFactLabel": "删除 {side}",
-      "deletedFact": "已删除 fact 并采纳冲突",
+      "deleteFactLabel": "归档 {side}",
+      "deletedFact": "该事实已归档（可恢复），冲突已接受",
       "openPlanEditor": "打开计划编辑器",
       "openGoalEditor": "打开目标编辑器",
       "severity": {
@@ -5019,6 +5062,10 @@
     "newButton": "新建",
     "newNoteDialogTitle": "新建笔记",
     "searchHint": "搜索整个仓库…",
+    "browse": {
+      "tree": "目录",
+      "tags": "标签"
+    },
     "up": "上级",
     "copyPath": "复制路径",
     "open": "打开",
@@ -5039,7 +5086,7 @@
     "emptyFolder": "文件夹「{path}」为空。",
     "validatePath": "必须填写路径",
     "validatePathDots": "路径不能包含「..」",
-    "pathHelper": "缺失时自动追加 .md。",
+    "pathHelper": "除非名字已经以 .md 或 .html 结尾，否则会自动补 .md。",
     "editor": {
       "markdownHint": "Markdown;文件名以 .html 结尾则写 HTML…",
       "saving": "保存中…",
@@ -5078,6 +5125,33 @@
       "helper": "文档库相对路径。目录会自动创建。",
       "doneSnack": "已重命名，{count} 个链接已改写。",
       "doneWithWarning": "已重命名，但链接没有全部更新"
+    },
+    "tags": {
+      "empty": "文档库里还没有标签。在笔记里写 #像这样 就会出现。",
+      "noMatches": "没有标签匹配“{query}”。",
+      "filteredBy": "已按标签筛选",
+      "clear": "清除标签筛选",
+      "noNotes": "已经没有笔记带 #{tag} 了。"
+    },
+    "backlinks": {
+      "title": "反向链接",
+      "loading": "正在查找链接…",
+      "empty": "还没有笔记链接到这里。",
+      "failed": "反向链接加载失败：{error}"
+    },
+    "outline": {
+      "action": "大纲",
+      "title": "大纲",
+      "empty": "这篇文档没有标题。",
+      "jumpedToSource": "预览关闭了脚本、无法滚动，所以已切到源码视图。"
+    },
+    "today": {
+      "tooltip": "打开今天的日记"
+    },
+    "wikiLink": {
+      "suggestions": "链接到…",
+      "createNew": "新建“{name}”",
+      "noMatches": "没有匹配的笔记 —— 继续输入即可新建。"
     }
   },
   "vaultSync": {

@@ -77,6 +77,7 @@ import { ConflictsPanel } from '@/components/project/ConflictsPanel'
 import { JournalStalePanel } from '@/components/project/JournalStalePanel'
 import { CurationChat } from '@/components/cortex/CurationChat'
 import { BlueprintEditor } from '@/components/cortex/BlueprintEditor'
+import { ProposalDiff } from '@/components/cortex/ProposalDiff'
 
 // strip the drafter's hidden signature marker before display/edit
 function stripSig(s: string): string {
@@ -557,7 +558,9 @@ function OverviewTab({
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
-  const locked = doc?.updated_by === 'operator'
+  // 'approved' locks like a hand edit (an AI draft the operator sanctioned);
+  // it stays distinguishable from 'operator' for provenance.
+  const locked = doc?.updated_by === 'operator' || doc?.updated_by === 'approved'
   const content = stripSig(doc?.content ?? '')
 
   const save = useMutation({
@@ -1006,17 +1009,24 @@ function ProposalCard({ proposal, onChange }: ProposalCardProps) {
           {t('web.project.inbox.warningSuffix')}
         </div>
       </div>
-      <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-        <DiffBlock
-          label={t('web.project.inbox.current')}
-          body={proposal.prior_content ?? t('web.project.inbox.emptyBody')}
-        />
-        <DiffBlock
-          label={t('web.project.inbox.proposed')}
-          body={proposal.proposed_content}
-          highlight
-        />
-      </div>
+      {/* What CHANGED, not two full documents to compare by eye. Old
+          proposals carry no server-computed diff, so those still fall
+          back to the side-by-side bodies. */}
+      {proposal.diff ? (
+        <ProposalDiff diff={proposal.diff} className="mb-3" />
+      ) : (
+        <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+          <DiffBlock
+            label={t('web.project.inbox.current')}
+            body={proposal.prior_content ?? t('web.project.inbox.emptyBody')}
+          />
+          <DiffBlock
+            label={t('web.project.inbox.proposed')}
+            body={proposal.proposed_content}
+            highlight
+          />
+        </div>
+      )}
       <div className="flex gap-2">
         <Button
           size="sm"

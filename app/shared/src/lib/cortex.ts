@@ -136,6 +136,17 @@ export interface CortexConversation {
   updated_at: string
 }
 
+/** An AI turn's proposed change to the page's operator-owned steering
+ * rules (Guidance / Excluded subjects). The AI can never write these —
+ * the operator applies with one click via applyRuleSuggestion. */
+export interface RuleSuggestion {
+  /** Full replacement guidance text; empty = leave guidance unchanged. */
+  guidance?: string
+  exclusions_add?: string[]
+  exclusions_remove?: string[]
+  reason?: string
+}
+
 export interface ConversationMessage {
   id: string
   conversation_id: string
@@ -144,6 +155,10 @@ export interface ConversationMessage {
   /** What the AI's structured revision did: 'applied' | 'proposed' | ''. */
   revision_action?: string
   revision_ref?: string
+  /** Pending/applied rule suggestion carried by this AI turn. */
+  rule_suggestion?: RuleSuggestion
+  /** Set once the operator applied the suggestion (applies at most once). */
+  rule_applied_at?: string
   created_at: string
 }
 
@@ -222,6 +237,19 @@ export async function sendConversationMessage(
   return api<ConversationMessage>(
     `/api/v1/cortex/conversations/${id}/messages`,
     { method: 'POST', body: { content } },
+  )
+}
+
+/** Applies an AI message's rule suggestion to the target page's settings
+ * (guidance / excluded subjects). Returns the updated message with
+ * rule_applied_at set. */
+export async function applyRuleSuggestion(
+  conversationId: string,
+  messageId: string,
+): Promise<ConversationMessage> {
+  return api<ConversationMessage>(
+    `/api/v1/cortex/conversations/${conversationId}/messages/${messageId}/apply-rules`,
+    { method: 'POST' },
   )
 }
 

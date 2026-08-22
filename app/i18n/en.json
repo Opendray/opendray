@@ -445,21 +445,21 @@
       "dismiss": "Dismiss",
       "accepted": "Conflict accepted — remember to apply the fix",
       "dismissed": "Conflict dismissed",
-      "deletedFact": "Fact deleted and conflict accepted",
+      "deletedFact": "Fact archived (restorable) and conflict accepted",
       "quickActions": "Fix:",
-      "deleteFact": "Delete fact",
-      "deleteFactSide": "Delete {side}: {ref}",
+      "deleteFact": "Archive fact",
+      "deleteFactSide": "Archive {side}: {ref}",
       "confirmDelete": {
-        "title": "Delete fact {side}?",
-        "description": "This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.",
-        "targetLabel": "Will delete (side {side}):",
+        "title": "Archive fact {side}?",
+        "description": "This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.",
+        "targetLabel": "Will archive (side {side}):",
         "keepLabel": "Will keep (side {side}):",
         "nonFactOther": "({layer} entry — open the corresponding tab to inspect)",
         "evidenceLabel": "Detector evidence:",
         "loading": "Loading fact text…",
         "loadError": "Failed to load fact text. Inspect on the Memory page.",
         "cancel": "Cancel",
-        "confirm": "Delete {side}"
+        "confirm": "Archive {side}"
       },
       "openLayer": {
         "plan": "Open plan editor",
@@ -1795,15 +1795,14 @@
       },
       "customTasks": {
         "title": "Custom tasks",
-        "description": "Click-to-run shortcuts surfaced in the Tasks tab. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.",
+        "description": "Click-to-run shortcuts surfaced in the Tasks tab, grouped by project. Leave cwd blank for global tasks visible in every session, or pin to an absolute path to scope.",
         "addTask": "Add task",
         "empty": "No custom tasks yet.",
         "columns": {
           "name": "Name",
-          "command": "Command",
-          "scope": "Scope"
+          "command": "Command"
         },
-        "globalScope": "global",
+        "globalGroup": "Global",
         "deleteConfirm": "Delete custom task \"{name}\"?",
         "removedToast": "Task removed",
         "deleteFailedToast": "Delete failed",
@@ -3043,6 +3042,13 @@
         "emergentHint": "Lessons & reusable features distilled from past work — guidance.",
         "bindingBadge": "Binding · must follow",
         "referenceBadge": "Reference",
+        "maintainer": {
+          "ai": "Maintained by opendray's background curation",
+          "human": "Maintained by me — automation only proposes",
+          "session": "Maintained by the agent doing the work",
+          "hint": "Who keeps this page current. \"The agent doing the work\" gives every session a tool to write this page as it goes — right for records only the working agent knows, like a container it just created. Background curation instead redrafts the page from accumulated memory.",
+          "sessionUnavailable": "Who keeps this page current. Agent-maintained is unavailable for foundational and built-in pages — their rules are binding, so a session must not rewrite them mid-task."
+        },
         "proposal": {
           "text": "AI proposed an update to this page (new evidence diverged).",
           "preview": "Preview",
@@ -3050,7 +3056,8 @@
           "approve": "Approve",
           "reject": "Reject",
           "approved": "Update approved",
-          "rejected": "Proposal rejected"
+          "rejected": "Proposal rejected",
+          "review": "Review"
         },
         "discuss": "Discuss with AI",
         "discussHint": "Re-draft this policy page in conversation with the AI — locked pages get proposals, never overwrites",
@@ -3078,7 +3085,9 @@
           "description": "Edit this page's title, summary, nature and injection. The slug is fixed and the page body is edited separately.",
           "hint": "Edit this page's title, summary, nature and inject flag",
           "save": "Save settings",
-          "savedToast": "Page settings updated"
+          "savedToast": "Page settings updated",
+          "fixedTitle": "This page's title comes from the interface language and can't be edited here.",
+          "fixedNature": "A built-in page's nature is fixed — it determines whether sessions read it as a binding rule or as reference."
         },
         "librarian": {
           "button": "Manage KB with AI",
@@ -3089,6 +3098,26 @@
           "provider": "Cloud agent",
           "account": "Claude account",
           "launch": "Launch"
+        },
+        "writePolicy": {
+          "proposal": "Needs my approval before it changes",
+          "direct": "Updates itself automatically",
+          "hint": "Whether automation may rewrite this page in place. Approval means opendray's background curation files its refreshed draft for you to review as a diff — nothing changes until you accept. It also means your own edits to this page survive; automatic updates overwrite them."
+        },
+        "guidance": {
+          "placeholder": "What this page should be — its scope, shape and level of detail",
+          "hint": "Steers what the page covers and how it reads. Authoritative over the drafter's own defaults, so it is the place to say \"keep it terse\" or \"rules only\" — including \"do not re-expand a section I trimmed\"."
+        },
+        "exclusions": {
+          "placeholder": "One subject per line",
+          "hint": "Subjects this page must never cover. Deleting something from the page body alone does not stick — it stays in the underlying memory and is written back on the next refresh. Listing it here removes it from the evidence before the page is drafted, so it stops coming back. Matched case-insensitively on whole words."
+        },
+        "removals": {
+          "title": "Lines you deleted",
+          "banned": "banned",
+          "dismiss": "Forget",
+          "hint": "Lines you deleted from this page. Deleted once, the maintainer is told not to bring the line back; if it reappears and you delete it again, it is banned — scrubbed from every future draft. Forget clears the record (and lifts the ban).",
+          "recent": "Recently deleted ({n})"
         }
       },
       "kinds": {
@@ -3212,6 +3241,13 @@
         "closeHint": "Close this conversation",
         "revisionApplied": "Document updated",
         "revisionProposed": "Proposal filed — review in Inbox",
+        "rulesSuggestionTitle": "Rule suggestion",
+        "rulesGuidance": "Guidance",
+        "rulesExclusionsAdd": "Add exclusions",
+        "rulesExclusionsRemove": "Remove exclusions",
+        "rulesApply": "Apply",
+        "rulesApplied": "Rules applied",
+        "rulesApplyFailed": "Couldn't apply the rule suggestion",
         "modelLabel": "Model:",
         "modelHint": "Pick a cloud-agent provider + model for THIS discussion. Default uses the global discussion model.",
         "modelGlobalDefault": "Default (global)",
@@ -3492,6 +3528,13 @@
         "bypass": "Skip permissions (YOLO)",
         "bypassHint": "Start the session with its bypass flag so it does not prompt for approvals."
       }
+    },
+    "diff": {
+      "noChanges": "No changes — the proposed content is identical to the live page.",
+      "added": "+{count}",
+      "removed": "−{count}",
+      "changedLines": "changed lines",
+      "collapsed": "⋯ {count} unchanged ⋯"
     }
   },
   "more": {
@@ -4386,15 +4429,15 @@
       "detected": "{count} new conflict(s) found",
       "accept": "Accept",
       "dismiss": "Dismiss",
-      "deleteFact": "Delete fact {side}",
-      "deleteConfirmTitle": "Delete fact {side}?",
-      "deleteConfirmBody": "This permanently removes the fact and accepts the conflict. The other side stays as the surviving claim.",
-      "deleteWillDelete": "Will delete (side {side}):",
+      "deleteFact": "Archive fact",
+      "deleteConfirmTitle": "Archive fact {side}?",
+      "deleteConfirmBody": "This archives the fact (restorable) with a supersession note and accepts the conflict. The other side stays as the surviving claim.",
+      "deleteWillDelete": "Will archive (side {side}):",
       "deleteWillKeep": "Will keep (side {side}):",
       "deleteNonFactOther": "({layer} entry — open the corresponding tab to inspect)",
       "deleteLoading": "Loading fact text…",
-      "deleteFactLabel": "Delete {side}",
-      "deletedFact": "Fact deleted and conflict accepted",
+      "deleteFactLabel": "Archive {side}",
+      "deletedFact": "Fact archived (restorable), conflict accepted",
       "openPlanEditor": "Open plan editor",
       "openGoalEditor": "Open goal editor",
       "severity": {
@@ -5022,6 +5065,10 @@
     "newButton": "New",
     "newNoteDialogTitle": "New note",
     "searchHint": "Search across the whole vault…",
+    "browse": {
+      "tree": "Folders",
+      "tags": "Tags"
+    },
     "up": "Up",
     "copyPath": "Copy path",
     "open": "Open",
@@ -5042,7 +5089,7 @@
     "emptyFolder": "Folder \"{path}\" is empty.",
     "validatePath": "Path is required",
     "validatePathDots": "Path cannot contain \"..\"",
-    "pathHelper": "Auto-appends .md if missing.",
+    "pathHelper": "Adds .md unless the name already ends in .md or .html.",
     "editor": {
       "markdownHint": "Markdown, or HTML if the file ends .html…",
       "saving": "Saving…",
@@ -5081,6 +5128,33 @@
       "helper": "Vault-relative path. Folders are created as needed.",
       "doneSnack": "Renamed. {count} link(s) repointed.",
       "doneWithWarning": "Renamed, but the links were not all updated"
+    },
+    "tags": {
+      "empty": "No tags in the vault yet. Write #like-this in a note.",
+      "noMatches": "No tags match \"{query}\".",
+      "filteredBy": "Filtered by",
+      "clear": "Clear tag filter",
+      "noNotes": "No notes carry #{tag} any more."
+    },
+    "backlinks": {
+      "title": "Backlinks",
+      "loading": "Looking for links…",
+      "empty": "No notes link here yet.",
+      "failed": "Could not load backlinks: {error}"
+    },
+    "outline": {
+      "action": "Outline",
+      "title": "Outline",
+      "empty": "This document has no headings.",
+      "jumpedToSource": "Preview can't scroll without scripts, so this opened the source view."
+    },
+    "today": {
+      "tooltip": "Open today's daily note"
+    },
+    "wikiLink": {
+      "suggestions": "Link to…",
+      "createNew": "Create \"{name}\"",
+      "noMatches": "No note matches — keep typing to create one."
     }
   },
   "vaultSync": {
