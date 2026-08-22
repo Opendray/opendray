@@ -119,9 +119,10 @@ type SessionProvider struct {
 
 	// globalInstruction, when non-empty, is an operator-configured
 	// system-prompt doc ([session] global_instructions_file) injected
-	// into EVERY spawn across all providers — including grok — so a
-	// single house style / communication contract applies uniformly.
-	// Empty → no injection. Set via WithGlobalInstruction.
+	// into every operator/CLI spawn across all providers — including
+	// grok — so a single house style / communication contract applies
+	// uniformly. Integration-origin spawns never receive it. Empty →
+	// no injection. Set via WithGlobalInstruction.
 	globalInstruction string
 }
 
@@ -300,8 +301,9 @@ func (sp *SessionProvider) WithKnowledgeInjector(inj KnowledgeInjector) *Session
 }
 
 // WithGlobalInstruction installs an operator-configured system-prompt
-// doc injected into every spawn across all providers (including grok).
-// Empty text is a no-op. Sourced from [session] global_instructions_file.
+// doc injected into every operator/CLI spawn across all providers
+// (including grok); integration-origin spawns are excluded. Empty text
+// is a no-op. Sourced from [session] global_instructions_file.
 func (sp *SessionProvider) WithGlobalInstruction(text string) *SessionProvider {
 	sp.globalInstruction = text
 	return sp
@@ -635,12 +637,15 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		}
 
 		// Global instruction: an operator-wide system-prompt doc
-		// ([session] global_instructions_file) applied to every spawn
-		// across all providers — including grok, which otherwise has no
-		// per-session injector. House style / communication contract that
-		// should hold regardless of memory / MCP settings, so it runs
-		// unconditionally (integration spawns included).
-		if err := injectGlobalInstructionFor(providerID, baseDir, sp.globalInstruction, &out); err != nil {
+		// ([session] global_instructions_file) applied to every operator
+		// and CLI spawn across all providers — including grok, which
+		// otherwise has no per-session injector. House style /
+		// communication contract that should hold regardless of memory /
+		// MCP settings. Integration-origin spawns are excluded: their
+		// system prompt is scoped to the integration row, and the
+		// operator's house style must not leak into third-party consumer
+		// sessions.
+		if err := injectGlobalInstructionFor(providerID, baseDir, sp.globalInstruction, isIntegration, &out); err != nil {
 			return session.PrepareOutput{}, fmt.Errorf("inject global instruction: %w", err)
 		}
 
@@ -1717,6 +1722,12 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 // every provider — including grok, the one CLI with no per-session
 // injector of its own.
 //
+// Integration-origin spawns are excluded (isIntegration=true → no-op):
+// third-party consumer sessions are isolated and self-managed, with
+// their system prompt scoped to the integration row, so the operator's
+// house-style doc must never leak into them — mirroring how memory
+// guidance / ambient memory already skip integrations.
+//
 // claude/codex/antigravity/opencode reuse injectAmbientMemoryFor's
 // per-CLI surfaces (flag or AGENTS.md append). Grok is different: it
 // appends extra system-prompt text via --rules, which it permits at
@@ -1724,8 +1735,8 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 // The global instruction is opendray's ONLY grok system-text injector
 // today, so a single --rules arg is safe; any future grok injector must
 // merge into this one value rather than emit a second --rules.
-func injectGlobalInstructionFor(providerID, baseDir, text string, out *session.PrepareOutput) error {
-	if text == "" {
+func injectGlobalInstructionFor(providerID, baseDir, text string, isIntegration bool, out *session.PrepareOutput) error {
+	if text == "" || isIntegration {
 		return nil
 	}
 	if providerID == "grok" {

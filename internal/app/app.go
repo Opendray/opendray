@@ -645,15 +645,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	// [session] global_instructions_file — an operator-wide system-prompt
-	// doc injected into every spawn across all providers (claude, codex,
-	// antigravity, opencode, grok). Read once at startup; an unreadable or
-	// empty file just disables it (never blocks boot).
+	// doc injected into every operator/CLI spawn across all providers
+	// (claude, codex, antigravity, opencode, grok); integration-origin
+	// spawns are excluded. Read once at startup; an unreadable or empty
+	// file just disables it (never blocks boot).
 	if f := strings.TrimSpace(cfg.Session.GlobalInstructionsFile); f != "" {
 		if data, err := os.ReadFile(f); err != nil {
 			log.Warn("global instructions file unreadable; skipping", "path", f, "err", err)
 		} else if text := strings.TrimSpace(string(data)); text != "" {
 			sessionProvider.WithGlobalInstruction(text)
-			log.Info("global instruction loaded for all spawns", "path", f, "bytes", len(text))
+			log.Info("global instruction loaded for operator/CLI spawns", "path", f, "bytes", len(text))
 		}
 	}
 	// Built before the session manager so spawn can inject an
