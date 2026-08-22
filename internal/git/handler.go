@@ -61,6 +61,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.Get("/log", h.log_)
 		r.Get("/diff", h.diff)
 		r.Get("/show", h.show)
+		r.Get("/info", h.info)
 	})
 }
 
@@ -105,6 +106,50 @@ type LogCommit struct {
 	Author    string `json:"author"`
 	When      string `json:"when"`
 	Subject   string `json:"subject"`
+}
+
+// InfoResponse is the JSON for GET /git/info?path=<dir> — the cheap
+// repo probe the session-create dialog uses to decide whether worktree
+// isolation is offerable for a cwd (git repo, main checkout).
+type InfoResponse struct {
+	IsRepo bool `json:"is_repo"`
+	// LinkedWorktree — the path is inside a linked worktree rather
+	// than the main checkout; isolation must anchor on the main one.
+	LinkedWorktree bool   `json:"linked_worktree"`
+	RepoRoot       string `json:"repo_root,omitempty"`
+	Branch         string `json:"branch,omitempty"`
+}
+
+func (h *Handlers) info(w http.ResponseWriter, r *http.Request) {
+	dir, err := dirParam(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), gitTimeout)
+	defer cancel()
+
+	if !isWorkTree(ctx, dir) {
+		writeJSON(w, http.StatusOK, InfoResponse{})
+		return
+	}
+	resp := InfoResponse{IsRepo: true}
+	if out, err := run(ctx, dir, "rev-parse", "--show-toplevel"); err == nil {
+		resp.RepoRoot = strings.TrimSpace(string(out))
+	}
+	if out, err := run(ctx, dir, "rev-parse", "--abbrev-ref", "HEAD"); err == nil {
+		resp.Branch = strings.TrimSpace(string(out))
+	}
+	// Linked worktree ⇔ git dir differs from the common dir; a single
+	// invocation with --path-format=absolute keeps symlink resolution
+	// consistent between the two.
+	if out, err := run(ctx, dir, "rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir"); err == nil {
+		lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+		if len(lines) == 2 {
+			resp.LinkedWorktree = strings.TrimSpace(lines[0]) != strings.TrimSpace(lines[1])
+		}
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handlers) status(w http.ResponseWriter, r *http.Request) {

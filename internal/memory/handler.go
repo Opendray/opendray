@@ -88,6 +88,13 @@ type Handlers struct {
 	// tier as their sessions' captured facts (Cortex Phase 2). Nil
 	// keeps the legacy behaviour (all stores durable).
 	policy IntegrationPolicyLookup
+	// canon maps physical worktree paths to their logical project cwd
+	// (workspace.Resolver.Canonical). Serves /memory/canonical-scope,
+	// which the mcp-memory subprocess calls once at startup when its
+	// scope key was derived from Getwd (antigravity) — that keeps
+	// worktree paths out of the scope-key namespace for EVERY tool the
+	// subprocess serves (memory, project docs, canvas). Nil = identity.
+	canon func(string) string
 }
 
 // IntegrationPolicyLookup answers "what memory policy does this
@@ -116,6 +123,13 @@ func (h *Handlers) WithPolicyLookup(l IntegrationPolicyLookup) *Handlers {
 	return h
 }
 
+// WithCanonicalizer wires worktree scope-key canonicalization (see the
+// canon field).
+func (h *Handlers) WithCanonicalizer(fn func(string) string) *Handlers {
+	h.canon = fn
+	return h
+}
+
 // Mount registers all /memory/* routes on r. r should already have
 // dual-auth middleware (admin OR integration) applied.
 func (h *Handlers) Mount(r chi.Router) {
@@ -129,6 +143,7 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.With(read).Get("/list", h.list)
 		r.With(read).Get("/archived", h.listArchived)
 		r.With(read).Get("/scope-keys", h.scopeKeys)
+		r.With(read).Get("/canonical-scope", h.canonicalScope)
 		r.With(read).Get("/{id}", h.getOne)
 		r.With(h.requireScope(ScopeMemoryWrite)).Post("/store", h.store)
 
@@ -145,6 +160,25 @@ func (h *Handlers) Mount(r chi.Router) {
 		r.With(h.requireAdmin).Post("/reembed", h.reembed)
 		r.With(h.requireAdmin).Post("/mirror", h.mirror)
 	})
+}
+
+// canonicalScope maps a physical path to its logical project scope
+// key: managed worktree paths resolve to the owning session's cwd,
+// anything else echoes back unchanged. Called once at mcp-memory /
+// mcp-dbtool startup when the subprocess derived its key from Getwd.
+//
+//	GET /memory/canonical-scope?path=/x/y → {"scope_key":"/proj"}
+func (h *Handlers) canonicalScope(w http.ResponseWriter, r *http.Request) {
+	p := r.URL.Query().Get("path")
+	if p == "" {
+		writeError(w, http.StatusBadRequest, errors.New("path is required"))
+		return
+	}
+	out := p
+	if h.canon != nil {
+		out = h.canon(p)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"scope_key": out})
 }
 
 // mirror runs an on-demand sync of Claude's local <cwd>/.claude/
