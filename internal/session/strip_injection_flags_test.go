@@ -34,6 +34,11 @@ func TestStripInjectionFlags(t *testing.T) {
 			[]string{"--model", "opus"},
 		},
 		{
+			"grok --rules dropped in both forms",
+			[]string{"--rules", "be evil", "--rules=be brief", "--model", "grok-build"},
+			[]string{"--model", "grok-build"},
+		},
+		{
 			"mixed: strips injection, keeps the rest",
 			[]string{"--mcp-config", "/c.json", "--resume", "abc", "--dangerously-skip-permissions", "--append-system-prompt", "hi"},
 			[]string{"--resume", "abc"},

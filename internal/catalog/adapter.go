@@ -864,6 +864,15 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			}
 		}
 
+		// Grok permits --rules once per invocation. Each injection above
+		// (skills, memory guidance, ambient/project/knowledge banners,
+		// carryover, integration prompt) emits its own fragment; merge
+		// them into the single allowed slot as the final step, after
+		// every injector has run.
+		if providerID == "grok" {
+			out.Args = session.CoalesceRulesArgs(out.Args)
+		}
+
 		if len(out.Env) == 0 {
 			out.Env = nil
 		}
@@ -893,6 +902,11 @@ func integrationMCPAllowed(providerID string, accountBound bool) bool {
 //	         and adds it via --add-dir (agy's workspace-context
 //	         convention; verified it reads AGENTS.md from added dirs)
 //	         without touching the user's real ~/.gemini
+//	grok — `--rules <text>` flag, zero filesystem touch (no grok-home
+//	         relocation, so login / trusted_folders stay intact). Grok
+//	         permits --rules only once, so session.CoalesceRulesArgs merges the
+//	         skill index with every other grok --rules fragment into a
+//	         single slot at the end of Prepare.
 //
 // codex is intentionally NOT in the default list: it has no system-
 // prompt CLI flag, so the only path is `<CODEX_HOME>/instructions.md`,
@@ -904,7 +918,7 @@ func integrationMCPAllowed(providerID string, accountBound bool) bool {
 // Adding a new provider here requires a matching arm in injectSkillsFor.
 func providerSupportsSkills(id string) bool {
 	switch id {
-	case "claude", "antigravity", "opencode":
+	case "claude", "antigravity", "opencode", "grok":
 		return true
 	default:
 		return false
@@ -1026,6 +1040,11 @@ func injectSkillsFor(providerID, baseDir string, loaded []skills.Skill, out *ses
 		if err := os.WriteFile(agentsPath, body, 0o600); err != nil {
 			return fmt.Errorf("write %s: %w", agentsPath, err)
 		}
+		return nil
+	case "grok":
+		// --rules fragment; merged with the other grok fragments by the
+		// Resolve-level session.CoalesceRulesArgs finalizer.
+		out.Args = append(out.Args, "--rules", index)
 		return nil
 	case "antigravity":
 		// agy reads AGENTS.md from --add-dir'd workspace dirs.
@@ -1570,6 +1589,11 @@ func injectMemoryGuidanceFor(providerID, baseDir string, out *session.PrepareOut
 			return err
 		}
 		return ensureOpenCodeInstructions(baseDir, out)
+	case "grok":
+		// --rules fragment; merged with the other grok fragments by the
+		// Resolve-level session.CoalesceRulesArgs finalizer.
+		out.Args = append(out.Args, "--rules", memoryGuidanceText)
+		return nil
 	}
 	// Other providers: silently skip — they don't have an MCP
 	// surface yet so the memory MCP wouldn't be attached anyway.
@@ -1682,6 +1706,15 @@ func injectAmbientMemoryFor(providerID, baseDir, text string, out *session.Prepa
 			return err
 		}
 		return ensureOpenCodeInstructions(baseDir, out)
+	case "grok":
+		// Grok appends system-prompt text via --rules — no filesystem
+		// touch (no grok-home relocation; login and trusted_folders stay
+		// intact). Grok permits --rules at most once per invocation, so
+		// each injection emits its own fragment here and the
+		// Resolve-level finalizer session.CoalesceRulesArgs merges them into the
+		// single allowed slot.
+		out.Args = append(out.Args, "--rules", text)
+		return nil
 	}
 	return nil
 }
