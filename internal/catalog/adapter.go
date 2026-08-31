@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/opendray/opendray-v2/internal/agyacct"
 	"github.com/opendray/opendray-v2/internal/cliacct"
+	"github.com/opendray/opendray-v2/internal/grokacct"
 	"github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/session"
 	"github.com/opendray/opendray-v2/internal/skills"
@@ -52,10 +53,17 @@ type SessionProvider struct {
 	cat         *Catalog
 	accounts    *cliacct.Service // optional; nil disables claude multi-account
 	agyAccounts *agyacct.Service // optional; nil disables antigravity multi-account
-	skills      *skills.Loader   // optional; nil disables skill injection
-	mcps        *mcp.Loader      // optional; nil disables vault MCP injection
-	secretsFile string           // dotenv file for ${KEY} substitution; empty = no substitution
-	log         *slog.Logger
+
+	// grokAccounts, when set, enables grok multi-account: a session bound
+	// to a grok account spawns `grok` with GROK_HOME pointed at that
+	// account's dir. Nil disables grok multi-account. Set via
+	// WithGrokAccounts (option, not a constructor arg, to avoid churning
+	// every NewSessionProvider call site).
+	grokAccounts *grokacct.Service
+	skills       *skills.Loader // optional; nil disables skill injection
+	mcps         *mcp.Loader    // optional; nil disables vault MCP injection
+	secretsFile  string         // dotenv file for ${KEY} substitution; empty = no substitution
+	log          *slog.Logger
 
 	// memory describes the auto-attached memory MCP server. Zero
 	// value (Enabled=false) skips injection. Set via
@@ -232,6 +240,14 @@ func (sp *SessionProvider) WithMemoryAutoAttach(cfg MemoryAutoAttach) *SessionPr
 	return sp
 }
 
+// WithGrokAccounts installs the grok multi-account service. When set, a
+// session bound to a grok account spawns `grok` with GROK_HOME pointed at
+// that account's dir. Nil (the default) disables grok multi-account.
+func (sp *SessionProvider) WithGrokAccounts(svc *grokacct.Service) *SessionProvider {
+	sp.grokAccounts = svc
+	return sp
+}
+
 // DbtoolAutoAttach holds the runtime knobs for injecting the
 // Database-tool MCP server (`opendray mcp-dbtool`) into spawned
 // sessions. Field semantics mirror MemoryAutoAttach; the key is a
@@ -404,6 +420,9 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	selectedAccountID := session.AccountID(ctx)
 	wantClaudeAccount := id == "claude" && selectedAccountID != "" && sp.accounts != nil
 	wantAgyAccount := id == "antigravity" && selectedAccountID != "" && sp.agyAccounts != nil
+	// grok isolates via GROK_HOME (grok keys its state off that dir);
+	// unlike agy this relocates only grok's state, not the whole HOME.
+	wantGrokAccount := id == "grok" && selectedAccountID != "" && sp.grokAccounts != nil
 
 	// Merge vault MCP registry (enabled-only) into the provider's
 	// inline mcp_servers list. Vault entries are loaded eagerly here
@@ -523,7 +542,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// no-Prepare fast path even when nothing else needs one.
 	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
 
-	if !wantClaudeAccount && !wantAgyAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
+	if !wantClaudeAccount && !wantAgyAccount && !wantGrokAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
 		return info, nil
 	}
 
@@ -600,6 +619,19 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				sp.log.Warn("antigravity shared-cache symlink failed",
 					"home", home, "err", err)
 			}
+		}
+
+		if wantGrokAccount {
+			// grok keys its credential + config state off GROK_HOME
+			// (auth.json, config.toml, trusted_folders.toml). Binding to
+			// an account = pointing GROK_HOME at the account's dedicated
+			// dir. Unlike agy this relocates ONLY grok's state, never the
+			// whole HOME, so other tools sharing HOME are untouched.
+			home, err := sp.grokAccounts.ResolveSpawnHome(prepareCtx, selectedAccountID)
+			if err != nil {
+				return session.PrepareOutput{}, fmt.Errorf("grok account %s: %w", selectedAccountID, err)
+			}
+			out.Env["GROK_HOME"] = home
 		}
 
 		// Tier 1 skill index injected per-provider. The agent sees a
