@@ -587,6 +587,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		State:                StateRunning,
 		ClaudeAccountID:      req.ClaudeAccountID,
 		AntigravityAccountID: req.AntigravityAccountID,
+		GrokAccountID:        req.GrokAccountID,
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
@@ -682,6 +683,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	accountID := sess.ClaudeAccountID
 	if sess.ProviderID == "antigravity" {
 		accountID = sess.AntigravityAccountID
+	}
+	if sess.ProviderID == "grok" {
+		accountID = sess.GrokAccountID
 	}
 	resolveCtx := WithKBAdmin(WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model), sess.KBAdmin)
 	// Integration spawn profile: provider-agnostic MCP servers + system
