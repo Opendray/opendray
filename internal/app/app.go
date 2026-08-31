@@ -687,6 +687,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// Same fast-fail validation for PATCH
 		// /sessions/{id}/antigravity-account.
 		session.WithAntigravityAccountChecker(agyacctSvc),
+		session.WithGrokAccountChecker(grokacctSvc),
 		// Fill provider/model/claude-account from the integration's
 		// configured defaults for sessions an integration creates and
 		// the request leaves those fields empty (request still wins).

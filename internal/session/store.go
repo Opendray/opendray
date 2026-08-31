@@ -249,6 +249,19 @@ func (s *sessionStore) UpdateAntigravityAccount(ctx context.Context, id, account
 	return nil
 }
 
+func (s *sessionStore) UpdateGrokAccount(ctx context.Context, id, accountID string) error {
+	res, err := s.pool.Exec(ctx, `
+        UPDATE sessions SET grok_account_id=$1 WHERE id=$2`,
+		nullableString(accountID), id)
+	if err != nil {
+		return fmt.Errorf("update grok account: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // Delete permanently removes the row. Caller must ensure the session
 // is no longer running (Manager.Stop first).
 func (s *sessionStore) Delete(ctx context.Context, id string) error {
