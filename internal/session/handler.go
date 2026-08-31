@@ -39,6 +39,7 @@ type Service interface {
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	SwitchAntigravityAccount(ctx context.Context, id, accountID string) (Session, error)
+	SwitchGrokAccount(ctx context.Context, id, accountID string) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
@@ -50,6 +51,17 @@ type AntigravityAccountChecker interface {
 	// CheckEnabled returns nil when id refers to an existing, enabled
 	// antigravity account; an error otherwise (distinguishing
 	// not-found from disabled so the handler maps both to 400).
+	CheckEnabled(ctx context.Context, id string) error
+}
+
+// GrokAccountChecker is the minimal grokacct surface the session handler
+// needs to validate `grok_account_id` early (before the switch mutates
+// the row). Mirrors AntigravityAccountChecker; a nil checker disables
+// validation (deferred error at spawn time).
+type GrokAccountChecker interface {
+	// CheckEnabled returns nil when id refers to an existing, enabled
+	// grok account; an error otherwise (distinguishing not-found from
+	// disabled so the handler maps both to 400).
 	CheckEnabled(ctx context.Context, id string) error
 }
 
@@ -97,6 +109,7 @@ type Handlers struct {
 	svc      Service
 	acct     ClaudeAccountChecker      // optional; nil disables early validation
 	agyAcct  AntigravityAccountChecker // optional; nil disables early validation
+	grokAcct GrokAccountChecker        // optional; nil disables early validation
 	defaults IntegrationDefaults       // optional; nil disables integration spawn defaults
 	log      *slog.Logger
 	upgrader websocket.Upgrader
@@ -119,6 +132,13 @@ func WithClaudeAccountChecker(c ClaudeAccountChecker) HandlerOption {
 // nil is equivalent to omitting the option (validation is skipped).
 func WithAntigravityAccountChecker(c AntigravityAccountChecker) HandlerOption {
 	return func(h *Handlers) { h.agyAcct = c }
+}
+
+// WithGrokAccountChecker wires the grokacct surface used to validate
+// grok_account_id in switchGrokAccount(). Passing nil is equivalent to
+// omitting the option (validation is skipped).
+func WithGrokAccountChecker(c GrokAccountChecker) HandlerOption {
+	return func(h *Handlers) { h.grokAcct = c }
 }
 
 // WithIntegrationDefaults wires the resolver used to fill provider /
@@ -173,6 +193,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Get("/history", h.history)
 			r.Patch("/claude-account", h.switchClaudeAccount)
 			r.Patch("/antigravity-account", h.switchAntigravityAccount)
+			r.Patch("/grok-account", h.switchGrokAccount)
 			r.Post("/uploads", h.upload)
 		})
 	})
@@ -658,6 +679,31 @@ func (h *Handlers) switchAntigravityAccount(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	sess, err := h.svc.SwitchAntigravityAccount(r.Context(), id, req.AccountID)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
+}
+
+// switchGrokAccount handles PATCH /sessions/{id}/grok-account. Mirrors
+// switchAntigravityAccount: validate the target up-front (so a bad id
+// fails before the PTY is stopped), then hand off to the manager which
+// stops the running `grok`, rebinds GROK_HOME, and respawns.
+func (h *Handlers) switchGrokAccount(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req SwitchAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if h.grokAcct != nil && req.AccountID != "" {
+		if err := h.grokAcct.CheckEnabled(r.Context(), req.AccountID); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("account_id: %w", err))
+			return
+		}
+	}
+	sess, err := h.svc.SwitchGrokAccount(r.Context(), id, req.AccountID)
 	if err != nil {
 		h.respondError(w, err)
 		return
