@@ -632,6 +632,15 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				return session.PrepareOutput{}, fmt.Errorf("grok account %s: %w", selectedAccountID, err)
 			}
 			out.Env["GROK_HOME"] = home
+			// Share the heavy, account-independent install/cache dirs
+			// (bin, bundled, vendor, …) across accounts via symlink
+			// instead of duplicating hundreds of MB per GROK_HOME.
+			// Best-effort: a failure just means this account gets its own
+			// copy on first use. grok's --trust flag persists repo trust
+			// into this same GROK_HOME, so MCP trust is already per-account.
+			if err := grokacct.EnsureSharedAssets(home); err != nil {
+				sp.log.Warn("grok shared-assets symlink failed", "home", home, "err", err)
+			}
 		}
 
 		// Tier 1 skill index injected per-provider. The agent sees a
