@@ -1,4 +1,4 @@
-# Mobile App — bauen & installieren
+# Mobile App: bauen & installieren
 
 🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · **Deutsch** · [Русский](mobile-app.ru.md)
 
@@ -6,7 +6,7 @@ Die opendray-Mobile-App (`app/mobile/`) ist ein **Control-Client**, kein
 zweites Gateway. Sie erledigt dieselbe Aufgabe wie das Web-Admin unter
 `/admin/`: Sessions starten und steuern, Channels und Integrationen
 verwalten, Memory durchsuchen, Git-Hosts lesen. Die Agents selbst laufen
-weiterhin auf deinem Gateway-Host — das Telefon hängt sich nur an sie an.
+weiterhin auf deinem Gateway-Host, das Telefon hängt sich nur an sie an.
 
 Deshalb ist die App für sich allein nutzlos: Sie verbindet sich mit einem
 **laufenden opendray-Gateway** über HTTPS. Bring zuerst das Gateway zum
@@ -23,7 +23,7 @@ richte sie auf deine Gateway-URL.
 
 ---
 
-## Schritt 0 — das Gateway vom Telefon aus erreichbar machen
+## Schritt 0: das Gateway vom Telefon aus erreichbar machen
 
 Die App spricht über das Netzwerk mit dem Gateway, daher muss das Telefon
 es erreichen können.
@@ -32,22 +32,22 @@ es erreichen können.
 |---|---|
 | Telefon im selben LAN wie das Gateway | `http://<gateway-lan-ip>:8770` (z. B. `http://192.168.1.50:8770`) |
 | Gateway hinter einem Reverse-Proxy mit TLS | `https://opendray.yourdomain.com` |
-| Zugriff außerhalb des LAN (Mobilfunk, unterwegs) | Ein öffentlicher HTTPS-Endpunkt — Cloudflare Tunnel, Tailscale oder ein nginx/Caddy-Reverse-Proxy |
+| Zugriff außerhalb des LAN (Mobilfunk, unterwegs) | Ein öffentlicher HTTPS-Endpunkt: Cloudflare Tunnel, Tailscale oder ein nginx/Caddy-Reverse-Proxy |
 
 > **Exponiere `:8770` nicht roh ins Internet.** Setze TLS und einen Ingress
 > davor. Cloudflare Tunnel ist die reibungsärmste Option (kein
-> Port-Forwarding, keine öffentliche IP). nginx-/Caddy-Snippets —
-> einschließlich der **WebSocket-Upgrade-Header**, die das Sessions-Terminal
-> benötigt — findest du in
+> Port-Forwarding, keine öffentliche IP). nginx-/Caddy-Snippets
+> (einschließlich der **WebSocket-Upgrade-Header**, die das Sessions-Terminal
+> benötigt) findest du in
 > [operator-guide §Topology](operator-guide.md#topology).
 
 Verifiziere die Erreichbarkeit vom Telefon aus *bevor* du baust, z. B. indem
-du die Gateway URL im Browser des Telefons öffnest — du solltest die
+du die Gateway URL im Browser des Telefons öffnest. Du solltest die
 Web-Admin-Login-Seite erhalten.
 
 ---
 
-## Schritt 1 — die Flutter-Toolchain installieren
+## Schritt 1: die Flutter-Toolchain installieren
 
 Die App wird mit Flutter gebaut. Du brauchst es auf der Maschine, die den
 Build durchführt (nicht auf dem Telefon).
@@ -71,9 +71,9 @@ flutter pub get
 
 ---
 
-## Schritt 2A — Android: ein APK bauen und sideloaden
+## Schritt 2A, Android: ein APK bauen und sideloaden
 
-Das ist der einfachste Weg — kein Entwicklerkonto, kein Store.
+Das ist der einfachste Weg: kein Entwicklerkonto, kein Store.
 
 ### Das APK bauen
 
@@ -99,7 +99,7 @@ app/mobile/build/app/outputs/flutter-apk/app-release.apk
 > Ordnung. Wenn du einen richtigen Upload-Key möchtest (erforderlich für den
 > Play Store, und gute Hygiene für ein Build, das du fortlaufend
 > aktualisierst), folge
-> [Flutter — Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
+> [Flutter: Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
 > und füge eine `signingConfig` für `release` hinzu.
 
 ### Das APK aufs Telefon bekommen
@@ -116,16 +116,16 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 Oder übertrage die `.apk`-Datei aufs Telefon (AirDrop-Äquivalent, ein
 File-Share, ein Download-Link, eine E-Mail an dich selbst) und tippe sie an.
 Android fragt dich, ob du **„Install unknown apps"** für die App erlaubst,
-die die Datei öffnet (Files, Chrome usw.) — gewähre es, dann bestätige die
+die die Datei öffnet (Files, Chrome usw.). Gewähre es, dann bestätige die
 Installation.
 
 Die App erscheint als **Opendray** (`io.opendray.opendray`).
 
 ---
 
-## Schritt 2B — iOS: über Xcode bauen und installieren
+## Schritt 2B, iOS: über Xcode bauen und installieren
 
-iOS hat kein APK-Sideload-Äquivalent — jede Installation ist Code-signiert.
+iOS hat kein APK-Sideload-Äquivalent, jede Installation ist Code-signiert.
 Du brauchst einen **Mac mit Xcode** und eine **Apple ID**. Eine kostenlose
 Apple ID funktioniert (die App wird alle 7 Tage neu signiert; du
 installierst neu, wenn das Provisioning-Profil abläuft). Ein
@@ -148,7 +148,7 @@ In Xcode:
    Xcode → Settings → Accounts hinzu, falls sie nicht gelistet ist).
 4. **Bundle Identifier**: er wird als `io.opendray.opendray` ausgeliefert.
    Mit einer kostenlosen Apple ID kann genau diese ID auf Apples Seite
-   bereits vergeben sein — wenn Xcode einen Provisioning-Fehler zeigt,
+   bereits vergeben sein. Wenn Xcode einen Provisioning-Fehler zeigt,
    ändere sie auf etwas Einzigartiges wie
    `io.opendray.opendray.<yourname>`.
 
@@ -183,16 +183,16 @@ Die App erscheint als **Opendray** auf dem Home-Screen.
 
 ---
 
-## Schritt 3 — die App mit deinem Gateway verbinden
+## Schritt 3: die App mit deinem Gateway verbinden
 
 Der erste Start zeigt den Onboarding-Screen:
 
-1. **Gateway URL** — gib die URL aus Schritt 0 ein
+1. **Gateway URL.** Gib die URL aus Schritt 0 ein
    (z. B. `https://opendray.yourdomain.com`). Tippe **Continue**.
-2. **Sign in** — `admin` + dein Admin-Passwort (das, das du in
+2. **Sign in.** `admin` + dein Admin-Passwort (das, das du in
    `[admin].password` gesetzt oder danach geändert hast).
 
-Das war's — du landest auf denselben Surfaces wie im Web-Admin: Sessions,
+Das war's, du landest auf denselben Surfaces wie im Web-Admin: Sessions,
 Channels, Integrations, Memory, Git, Settings.
 
 Um die App später auf ein anderes Gateway zu richten, tippe **Change** auf
@@ -202,7 +202,7 @@ dem Login-Screen (oder Settings → server) und gib die URL erneut ein.
 
 ## Die App aktualisieren
 
-Es gibt kein Auto-Update — du installierst neu, nachdem du neuen Code
+Es gibt kein Auto-Update, du installierst neu, nachdem du neuen Code
 gezogen hast:
 
 ```sh
@@ -227,7 +227,7 @@ Der eigene Versions-String der App liegt in `app/mobile/pubspec.yaml`
 | Symptom | Ursache | Behebung |
 |---|---|---|
 | Onboarding „could not connect" | Telefon erreicht die Gateway URL nicht | Öffne die URL im Browser des Telefons; behebe zuerst LAN-IP / Tunnel / TLS (Schritt 0) |
-| Login funktioniert, aber das Sessions-Terminal verbindet nie | Reverse-Proxy verwirft das WebSocket-Upgrade | Füge WS-Header hinzu — [operator-guide §Topology](operator-guide.md#topology) |
+| Login funktioniert, aber das Sessions-Terminal verbindet nie | Reverse-Proxy verwirft das WebSocket-Upgrade | Füge WS-Header hinzu: [operator-guide §Topology](operator-guide.md#topology) |
 | Android blockiert die Installation | „Install unknown apps" nicht gewährt | Erlaube es für die App, die das `.apk` öffnet (Files / Chrome) |
 | iOS „Untrusted Developer" beim Start | Persönliches-Team-Profil noch nicht vertraut | Settings → General → VPN & Device Management → Trust |
 | iOS „Unable to install / signing" in Xcode | Bundle-ID-Kollision mit einer kostenlosen Apple ID | Ändere den Bundle Identifier auf `io.opendray.opendray.<yourname>` |
@@ -238,7 +238,7 @@ Der eigene Versions-String der App liegt in `app/mobile/pubspec.yaml`
 
 ## Siehe auch
 
-- [getting-started.md](getting-started.md) — das Gateway aufsetzen, mit dem sich die App verbindet
-- [operator-guide.md](operator-guide.md) — Reverse-Proxy-/Tunnel-Topologie für Zugriff außerhalb des LAN
-- [Flutter — build & release Android](https://docs.flutter.dev/deployment/android)
-- [Flutter — build & release iOS](https://docs.flutter.dev/deployment/ios)
+- [getting-started.md](getting-started.md): das Gateway aufsetzen, mit dem sich die App verbindet
+- [operator-guide.md](operator-guide.md): Reverse-Proxy-/Tunnel-Topologie für Zugriff außerhalb des LAN
+- [Flutter: build & release Android](https://docs.flutter.dev/deployment/android)
+- [Flutter: build & release iOS](https://docs.flutter.dev/deployment/ios)

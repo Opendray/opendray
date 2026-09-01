@@ -3,11 +3,11 @@
 すでに `opendray` バイナリだけを持っている、または欲しいだけで、
 インストールウィザードにマシンを触らせたくないという場合のための手順です。この経路は次のケースを対象としています:
 
-- **`npm install -g opendray` / `npx opendray`** — npm パッケージには公式 Go リリースバイナリが同梱されています（[README → npm / npx](../README.ja.md#npm--npx-node--18) を参照）。
-- **リリースアーカイブからのダウンロード** — [リリースページ](https://github.com/Opendray/opendray/releases) から `opendray_*_<os>_<arch>.tar.gz` を取得します。
-- **スクリプト化・エフェメラル環境** — CI ランナー、ゴールデンイメージ、構成管理（Ansible、Nix、Docker）、または独自の Postgres とプロセススーパーバイザーをすでに運用しているホスト。
+- **`npm install -g opendray` / `npx opendray`**: npm パッケージには公式 Go リリースバイナリが同梱されています（[README → npm / npx](../README.ja.md#npm--npx-node--18) を参照）。
+- **リリースアーカイブからのダウンロード**: [リリースページ](https://github.com/Opendray/opendray/releases) から `opendray_*_<os>_<arch>.tar.gz` を取得します。
+- **スクリプト化・エフェメラル環境**: CI ランナー、ゴールデンイメージ、構成管理（Ansible、Nix、Docker）、または独自の Postgres とプロセススーパーバイザーをすでに運用しているホスト。
 
-バイナリは *ゲートウェイそのもの* です — web 管理 SPA が埋め込まれているため、Node ランタイムも別の静的サーバーもビルドも不要です。バイナリが **しない** ことは、何かをセットアップすることです。それがトレードオフです: PostgreSQL データベースとプロセスを動かし続ける手段を自分で用意する代わりに、裏で何かがインストール・設定・登録されることはありません。
+バイナリは *ゲートウェイそのもの* です。web 管理 SPA が埋め込まれているため、Node ランタイムも別の静的サーバーもビルドも不要です。バイナリが **しない** ことは、何かをセットアップすることです。それがトレードオフです: PostgreSQL データベースとプロセスを動かし続ける手段を自分で用意する代わりに、裏で何かがインストール・設定・登録されることはありません。
 
 > **すべて自動でやってほしい場合は？** 新しい Linux / macOS マシンなら、ワンラインインストーラーが Postgres のプロビジョニング、AI CLI のインストール、設定の書き込み、サービスの登録まで約 5〜10 分で完了します。[README → ワンライナーインストーラー](../README.ja.md#インストール) または手動手順の [getting-started.md](getting-started.md) を参照してください。
 
@@ -15,7 +15,7 @@
 
 ---
 
-## ステップ 1 — バイナリを入手する
+## ステップ 1: バイナリを入手する
 
 ### npm 経由（Node ≥ 18 の任意の OS）
 
@@ -29,7 +29,7 @@ yarn global add opendray
 ```
 
 適切なプラットフォームバイナリ（`opendray-{linux,darwin}-{x64,arm64}`）は
-`optionalDependencies` 経由で自動的に選択されます — `postinstall` フックも、
+`optionalDependencies` 経由で自動的に選択されます。`postinstall` フックも、
 インストール時のネットワーク呼び出しもありません。`--no-optional` は **渡さないでください**:
 プラットフォームパッケージがスキップされ、ランチャーが実行すべきバイナリを見つけられなくなります。
 
@@ -49,11 +49,11 @@ opendray --help           # 全サブコマンドの一覧
 ```
 
 サポート対象プラットフォーム: **Linux**（x64、arm64）および **macOS**（x64、arm64）。
-ネイティブ Windows はパッケージ化されていません — WSL2 を使用して Linux の手順に従ってください。
+ネイティブ Windows はパッケージ化されていません。WSL2 を使用して Linux の手順に従ってください。
 
 ---
 
-## ステップ 2 — pgvector 付きの PostgreSQL 15+ を用意する
+## ステップ 2: pgvector 付きの PostgreSQL 15+ を用意する
 
 opendray はすべて（セッション、メモリ、audit log）を PostgreSQL に保存し、
 そのメモリサブシステムには [`pgvector`](https://github.com/pgvector/pgvector) 拡張が必要です。
@@ -80,17 +80,17 @@ sudo -u postgres psql -d opendray -c 'CREATE EXTENSION IF NOT EXISTS vector;'
 sudo -u postgres psql -d opendray -c 'GRANT ALL ON SCHEMA public TO opendray;'
 ```
 
-拡張が有効になると、opendray の CRUD のみの role はスーパーユーザーアクセスなしにマイグレーションを実行できます。**実行時に opendray をスーパーユーザー role に向けないでください** — プロジェクトスコープのアカウントを使用し、パスワードはアウトオブバンドでローテーションしてください。
+拡張が有効になると、opendray の CRUD のみの role はスーパーユーザーアクセスなしにマイグレーションを実行できます。**実行時に opendray をスーパーユーザー role に向けないでください**。プロジェクトスコープのアカウントを使用し、パスワードはアウトオブバンドでローテーションしてください。
 
 ---
 
-## ステップ 3 — 設定する
+## ステップ 3: 設定する
 
-opendray は TOML ファイル **または** 環境変数のみ（12-factor）から設定を読み込みます
-— 環境変数は常にファイルより優先されます。唯一の必須要件はデータベース URL で、
+opendray は TOML ファイル **または** 環境変数のみ（12-factor）から設定を読み込みます。
+環境変数は常にファイルより優先されます。唯一の必須要件はデータベース URL で、
 それ以外はすべてデフォルト値があります。
 
-### オプション A — 環境変数（コンテナ / エフェメラルホスト向け）
+### オプション A: 環境変数（コンテナ / エフェメラルホスト向け）
 
 ```sh
 export OPENDRAY_DATABASE_URL="postgres://opendray:change-me@127.0.0.1:5432/opendray?sslmode=disable"
@@ -100,8 +100,8 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # 任意; これ�
 
 | 変数 | 必須 | デフォルト | 用途 |
 |---|---|---|---|
-| `OPENDRAY_DATABASE_URL` | **必須** | — | Postgres DSN |
-| `OPENDRAY_ADMIN_PASSWORD` | 推奨 | — | Web / モバイル管理者パスワード |
+| `OPENDRAY_DATABASE_URL` | **必須** | なし | Postgres DSN |
+| `OPENDRAY_ADMIN_PASSWORD` | 推奨 | なし | Web / モバイル管理者パスワード |
 | `OPENDRAY_ADMIN_USER` | 任意 | `admin` | 管理者ユーザー名 |
 | `OPENDRAY_LISTEN` | 任意 | `127.0.0.1:8770` | バインドアドレス |
 | `OPENDRAY_LOG_LEVEL` | 任意 | `info` | `debug`/`info`/`warn`/`error` |
@@ -109,7 +109,7 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # 任意; これ�
 
 `-config` フラグなしで `opendray serve` を実行すると、環境変数のみから読み込みます。
 
-### オプション B — config.toml
+### オプション B: config.toml
 
 ```sh
 curl -fsSLO https://raw.githubusercontent.com/Opendray/opendray/main/config.example.toml
@@ -137,7 +137,7 @@ password = "use-a-real-password"
 
 ---
 
-## ステップ 4 — スキーマを適用する
+## ステップ 4: スキーマを適用する
 
 ```sh
 opendray migrate                          # 環境変数のみの設定
@@ -145,11 +145,11 @@ opendray migrate                          # 環境変数のみの設定
 opendray migrate -config config.toml
 ```
 
-冪等性あり — スキーマが最新であれば再実行しても何も起きません。最初の `serve` の前に必ず成功させてください。
+冪等性あり。スキーマが最新であれば再実行しても何も起きません。最初の `serve` の前に必ず成功させてください。
 
 ---
 
-## ステップ 5 — 実行する
+## ステップ 5: 実行する
 
 ```sh
 opendray serve                            # 環境変数のみの設定
@@ -161,11 +161,11 @@ opendray serve -config config.toml
 
 | URL | 内容 |
 |---|---|
-| `http://127.0.0.1:8770/admin/` | Web 管理画面 — `admin` とパスワードでログイン |
+| `http://127.0.0.1:8770/admin/` | Web 管理画面（`admin` とパスワードでログイン） |
 | `http://127.0.0.1:8770/api/v1/...` | REST + WebSocket API |
 
 これで完全に動作するゲートウェイです。簡単なテスト以上のことをするなら、
-再起動時も存続しクラッシュ時に再起動するよう、スーパーバイザー下で実行しましょう — 次へ。
+再起動時も存続しクラッシュ時に再起動するよう、スーパーバイザー下で実行しましょう。次へ。
 
 ---
 
@@ -176,7 +176,7 @@ opendray にはハードニング済みのすぐに使えるユニットが同�
 [README → 本番環境へのデプロイ](../README.ja.md#本番環境へのデプロイ) と同じです。
 そちらが権威的なリファレンスです（完全なブートストラップ、サンドボックスのメモ、リバースプロキシ/TLS）。
 
-### Linux — systemd
+### Linux: systemd
 
 リポジトリにはハードニング済みのユニットが
 [`deploy/systemd/opendray.service`](../deploy/systemd/opendray.service) として同梱されています
@@ -206,7 +206,7 @@ systemd がない場合（systemd のない LXC、OpenRC、runit、s6、supervis
 pre-start ステップとして `opendray migrate` を一度実行してください。
 [README → 本番環境へのデプロイ §B](../README.ja.md#option-b--直接バイナリ--任意のプロセススーパーバイザー) を参照してください。
 
-### macOS — launchd
+### macOS: launchd
 
 リポジトリには LaunchDaemon が
 [`deploy/launchd/com.opendray.opendray.plist`](../deploy/launchd/com.opendray.opendray.plist) として同梱されています
@@ -227,8 +227,8 @@ sudo launchctl print system/com.opendray.opendray
 再起動: `sudo launchctl kickstart -k system/com.opendray.opendray`。
 アンロード: `sudo launchctl bootout system/com.opendray.opendray`。
 
-> 両ユニットは完全にドキュメント化されています — シークレットレイアウトや
-> `MemoryDenyWriteExecute` をオフにしている理由を含めて —
+> 両ユニットは完全にドキュメント化されています（シークレットレイアウトや
+> `MemoryDenyWriteExecute` をオフにしている理由を含みます）。
 > [`deploy/README.md`](../deploy/README.md) を参照してください。
 
 ---
@@ -237,14 +237,14 @@ sudo launchctl print system/com.opendray.opendray
 
 更新方法はインストール方法によって異なります:
 
-- **npm 経由でインストール** — パッケージマネージャーで更新します。`opendray update` は
+- **npm 経由でインストール**: パッケージマネージャーで更新します。`opendray update` は
   npm の管理外で `node_modules` 内のバイナリを置き換えてしまい、次回インストール時に上書きされてしまうため、ここでは使用しないでください。
 
   ```sh
   npm install -g opendray@latest
   ```
 
-- **リリースダウンロード / ウィザードインストール** — バイナリが自己更新します
+- **リリースダウンロード / ウィザードインストール**: バイナリが自己更新します
   （最新リリースをダウンロードし、SHA-256 を検証してアトミックに置き換えます）:
 
   ```sh
@@ -262,7 +262,7 @@ npm が `--no-optional` で実行されたか、インストールが中断さ�
 
 **`unsupported platform`**
 npm パッケージがカバーするのは Linux / macOS の x64 / arm64 のみです。その他のターゲットでは
-ソースからビルドしてください — [quickstart.md](quickstart.md) を参照。
+ソースからビルドしてください。[quickstart.md](quickstart.md) を参照。
 
 **`config: database.url is empty`**
 `OPENDRAY_DATABASE_URL` も `[database].url` も設定されていません。どちらかを設定してください（ステップ 3）。
@@ -283,7 +283,7 @@ DSN 内のホスト / ポート / 認証情報が正しいことを確認して�
 
 ## 次のステップ
 
-- [README → 本番環境へのデプロイ](../README.ja.md#本番環境へのデプロイ) — 完全なデプロイリファレンス（systemd / launchd / 独自スーパーバイザー、ハードニング、リバースプロキシ）
-- [`docs/operator-guide.md`](operator-guide.md) — 運用: リバースプロキシ/TLS トポロジー、暗号化 DB バックアップ、データのエクスポート / インポート
-- [`docs/integration-guide.md`](integration-guide.md) — REST + WebSocket API を使った外部連携の構築
-- [`docs/getting-started.md`](getting-started.md) — 構成要素を自分で組み立てたくない場合のガイド付きオールインワンセットアップ
+- [README → 本番環境へのデプロイ](../README.ja.md#本番環境へのデプロイ): 完全なデプロイリファレンス（systemd / launchd / 独自スーパーバイザー、ハードニング、リバースプロキシ）
+- [`docs/operator-guide.md`](operator-guide.md)、運用: リバースプロキシ/TLS トポロジー、暗号化 DB バックアップ、データのエクスポート / インポート
+- [`docs/integration-guide.md`](integration-guide.md): REST + WebSocket API を使った外部連携の構築
+- [`docs/getting-started.md`](getting-started.md): 構成要素を自分で組み立てたくない場合のガイド付きオールインワンセットアップ

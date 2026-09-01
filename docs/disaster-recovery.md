@@ -1,6 +1,6 @@
 # Disaster Recovery Handbook
 
-How to rebuild an opendray-v2 instance from a backup — including the
+How to rebuild an opendray-v2 instance from a backup, including the
 worst case: a fresh machine where nothing but your off-site backup
 bundle and your Recovery Kit survived.
 
@@ -11,7 +11,7 @@ it, and the steps below assume you did.
 > Scope: this covers the operator-facing **disaster-recovery backups**
 > (encrypted PostgreSQL dumps, optionally bundling the whole instance).
 > The admin-facing data *exports* (memories / integrations / custom
-> tasks) are a separate, narrower surface — see the Operator Guide.
+> tasks) are a separate, narrower surface. See the Operator Guide.
 
 ---
 
@@ -25,18 +25,18 @@ There are two kinds:
 | `db_only` (default) | `manifest.json` + `dump.bin` (the `pg_dump`) | the database only |
 | `full_instance` | the above **plus** `vault.tar` (notes / skills / mcp), `secrets.env`, and `config.toml` | a working instance on a fresh machine |
 
-A `db_only` backup is **not** sufficient for bare-metal recovery — it
+A `db_only` backup is **not** sufficient for bare-metal recovery. It
 restores your data but not the secrets, vault, or config needed to run.
 For real disaster recovery, schedule or take `full_instance` backups.
 
 > The vault tar **excludes `.git`** by default (it's recoverable from
 > your remote and keeps the bundle small). `claude-accounts` (OAuth
-> tokens) are **not** bundled by default — they cross a trust boundary;
+> tokens) are **not** bundled by default. They cross a trust boundary;
 > the manifest records their path so you know what to re-authenticate.
 
 Every backup's encryption fingerprint is stored on the row. The UI's
 **Verified** badge means opendray decrypted the blob and ran
-`pg_restore --list` against it after writing — proof it's restorable,
+`pg_restore --list` against it after writing: proof it's restorable,
 not just that it was written.
 
 ---
@@ -45,7 +45,7 @@ not just that it was written.
 
 Backups are encrypted with a key derived from `OPENDRAY_BACKUP_KEY`
 (the backup passphrase). **opendray deliberately never puts that key
-inside a backup** — otherwise the backup would encrypt and ship its own
+inside a backup**. Otherwise the backup would encrypt and ship its own
 lock combination. Consequence:
 
 > A backup bundle without the passphrase is unrecoverable. There is no
@@ -55,7 +55,7 @@ You have two ways to survive the loss of the host that held the key:
 
 1. **Store the passphrase itself** off-site (a password manager,
    Vaultwarden, a sealed envelope). Simplest.
-2. **Recovery Kit** — opendray wraps the backup passphrase under a
+2. **Recovery Kit**: opendray wraps the backup passphrase under a
    *separate* recovery passphrase you choose, producing
    `opendray-recovery-kit.json`. You store the kit (safe to keep next
    to the backups) and memorise / vault the recovery passphrase. Losing
@@ -128,11 +128,11 @@ uploading the `.tar.gz.enc` bundle, or by re-uploading a bundle you
 downloaded. The restore is a deliberate **two-step, dry-run-first**
 flow on both web and mobile:
 
-1. **Preview (dry run)** — opendray decrypts the bundle, verifies the
+1. **Preview (dry run)**: opendray decrypts the bundle, verifies the
    fingerprint, and reports a *plan*: the dump size, and where
    `config.toml`, `secrets.env`, and the vault files would land. It
    **changes nothing**.
-2. **Apply restore** — only after you review the plan and (when
+2. **Apply restore**: only after you review the plan and (when
    restoring into opendray's own database) type the confirmation
    phrase. Apply first takes an automatic **pre-restore safety
    snapshot**, then writes the components and runs `pg_restore`.
@@ -155,9 +155,9 @@ restored `config.toml` and secrets.
 ## 4. Restoring into an external database (advanced)
 
 The Restore form accepts a **target DSN**. Leave it empty to restore
-into opendray's own database (the dangerous default — gated by the
+into opendray's own database (the dangerous default, gated by the
 confirmation phrase). Provide a DSN to replay a bundle into *any* other
-Postgres instead — useful for inspecting a backup on a throwaway DB
+Postgres instead, useful for inspecting a backup on a throwaway DB
 without touching production. Apply mode always requires the
 confirmation phrase regardless of target, because an external DSN can
 just as easily point at production.
@@ -191,11 +191,11 @@ good.
 The Backups page (web strip + mobile overview) and `GET
 /api/v1/backup-health` surface an at-a-glance roll-up:
 
-- **last good backup** — staleness signal
-- **recent failures** — failed runs in the last 24h
-- **verify failures** — succeeded backups whose restore-verify failed
-  (the blob may not be restorable — investigate before trusting it)
-- **overdue schedules** — enabled schedules more than 5 minutes past
+- **last good backup**: staleness signal
+- **recent failures**: failed runs in the last 24h
+- **verify failures**: succeeded backups whose restore-verify failed
+  (the blob may not be restorable, investigate before trusting it)
+- **overdue schedules**: enabled schedules more than 5 minutes past
   their next run
 
 Backup failures and verification failures are also dispatched to your
@@ -214,7 +214,7 @@ least once:
    §3 recovery from the bundle + Recovery Kit.
 3. Confirm the restored instance starts and the data is intact.
 
-Then you'll know the handbook works for *your* deployment — and that
+Then you'll know the handbook works for *your* deployment, and that
 your off-site key really does unlock your backups.
 
 ---
@@ -226,8 +226,8 @@ off-site. A backup or schedule can **fan out to several targets at
 once** (local + SMB/S3/WebDAV/SFTP/rclone): pick more than one
 destination and opendray writes the *same* sealed bundle to each in a
 single run, grouped under one fan-out id. A target that's temporarily
-down fails only its own copy — the others still land. Retention is
-per-target. Keep the Recovery Kit (or passphrase) off-site too —
+down fails only its own copy. The others still land. Retention is
+per-target. Keep the Recovery Kit (or passphrase) off-site too, since
 backups and their key on the same dead host is one copy, not two.
 
 ## 9. Content-dedup ("incremental")
@@ -236,8 +236,8 @@ pg_dump has no native incremental mode, so opendray dedups by content.
 Each backup records a fingerprint of its restorable content; when a
 later run on the same target produces an identical fingerprint, opendray
 skips the re-upload and points the new row at the existing blob (flagged
-**deduped** in the UI). The row is still a complete, restorable backup —
-it just shares storage with its identical predecessor. Retention is
+**deduped** in the UI). The row is still a complete, restorable backup.
+It just shares storage with its identical predecessor. Retention is
 reference-aware: a shared blob is removed only once no retained row
 still points at it, so a deduped backup is never left dangling.
 
@@ -246,18 +246,18 @@ vault / secrets / config) but **excludes the volatile, non-content
 framing** that would otherwise make every run unique even when nothing
 changed: the bundle's creation timestamp, the pg_dump archive header's
 timestamp, and vault-file mtimes (which a restore doesn't preserve
-anyway). So an **unchanged database deduplicates** — nightly backups of
+anyway). So an **unchanged database deduplicates**: nightly backups of
 a static database reuse one blob. It will *not* dedup when the data
 actually changed, or when heavy write churn reorders rows on disk (the
-dump bytes genuinely differ then) — which is exactly what you want: when
+dump bytes genuinely differ then), which is exactly what you want: when
 in doubt, opendray uploads a fresh, independent copy.
 
 ## 10. Credential encryption at rest
 
 Once backups are armed (a backup key is configured), opendray encrypts
-**git-host API tokens** at rest with the same AES-GCM key, transparently
-— no action needed. Tokens saved before backups were armed stay
+**git-host API tokens** at rest with the same AES-GCM key, transparently.
+No action needed. Tokens saved before backups were armed stay
 plaintext until next saved. Because the key is the backup passphrase,
 **rotating that passphrase makes existing encrypted tokens
-unrecoverable** — re-enter affected git-host tokens after a rotation
+unrecoverable**, so re-enter affected git-host tokens after a rotation
 (the UI shows the token as empty/needs-re-entry).

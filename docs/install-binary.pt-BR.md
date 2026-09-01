@@ -1,17 +1,17 @@
 # Instalar e rodar a partir de um binário pré-buildado
 
-Para quando você já tem — ou quer — só o binário `opendray`, sem que nenhum
+Para quando você já tem (ou quer) só o binário `opendray`, sem que nenhum
 wizard de instalação mexa na sua máquina. Este é o caminho para:
 
-- **`npm install -g opendray` / `npx opendray`** — o pacote npm traz o
+- **`npm install -g opendray` / `npx opendray`**: o pacote npm traz o
   binário oficial do release Go (veja [README → npm / npx](../README.pt-BR.md#npm--npx-node--18)).
-- **Downloads de release** — pegue `opendray_*_<os>_<arch>.tar.gz` na
+- **Downloads de release**: pegue `opendray_*_<os>_<arch>.tar.gz` na
   [página de Releases](https://github.com/Opendray/opendray/releases).
-- **Ambientes com scripts / efêmeros** — runners de CI, imagens golden,
+- **Ambientes com scripts / efêmeros**: runners de CI, imagens golden,
   gerenciamento de configuração (Ansible, Nix, Docker), ou qualquer host
   onde você já roda seu próprio Postgres e supervisor de processos.
 
-O binário é o gateway *completo* — a SPA do painel web está embutida, então
+O binário é o gateway *completo*: a SPA do painel web está embutida, então
 não há runtime Node, nenhum servidor de arquivos estáticos separado, e nada
 para buildar. O que ele **não** faz é configurar nada por você. Essa é a
 troca: você traz um banco PostgreSQL e uma forma de manter o processo rodando,
@@ -28,7 +28,7 @@ etapas, e depois mostra como mantê-lo rodando como serviço.
 
 ---
 
-## Etapa 1 — Obter o binário
+## Etapa 1: Obter o binário
 
 ### Via npm (qualquer OS com Node ≥ 18)
 
@@ -42,7 +42,7 @@ yarn global add opendray
 ```
 
 O binário correto para a plataforma (`opendray-{linux,darwin}-{x64,arm64}`)
-é selecionado automaticamente via `optionalDependencies` — não há hook de
+é selecionado automaticamente via `optionalDependencies`. Não há hook de
 `postinstall` nem chamada de rede no momento da instalação. **Não** passe
 `--no-optional`: isso pula o pacote de plataforma e deixa o launcher sem
 binário para executar.
@@ -63,11 +63,11 @@ opendray --help           # lista todos os subcomandos
 ```
 
 Plataformas suportadas: **Linux** (x64, arm64) e **macOS** (x64, arm64).
-Windows nativo não tem pacote — use WSL2 e siga o caminho do Linux.
+Windows nativo não tem pacote. Use WSL2 e siga o caminho do Linux.
 
 ---
 
-## Etapa 2 — Prover o PostgreSQL 15+ com pgvector
+## Etapa 2: Prover o PostgreSQL 15+ com pgvector
 
 O opendray armazena tudo (sessões, memória, audit log) no PostgreSQL, e
 seu subsistema de memória precisa da extensão [`pgvector`](https://github.com/pgvector/pgvector).
@@ -96,18 +96,18 @@ sudo -u postgres psql -d opendray -c 'GRANT ALL ON SCHEMA public TO opendray;'
 
 Após a extensão existir, a role CRUD do opendray executa as migrations sem
 nenhum acesso de superusuário adicional. **Nunca aponte o opendray para uma
-role de superusuário em produção** — forneça uma conta com escopo de projeto
+role de superusuário em produção.** Forneça uma conta com escopo de projeto
 e altere a senha fora do fluxo.
 
 ---
 
-## Etapa 3 — Configurar
+## Etapa 3: Configurar
 
 O opendray lê sua configuração de um arquivo TOML **ou** puramente de
-variáveis de ambiente (12-factor) — a env sempre vence sobre o arquivo. O
+variáveis de ambiente (12-factor), e a env sempre vence sobre o arquivo. O
 único requisito obrigatório é a URL do banco; todo o resto tem um padrão.
 
-### Opção A — variáveis de ambiente (bom para containers / hosts efêmeros)
+### Opção A: variáveis de ambiente (bom para containers / hosts efêmeros)
 
 ```sh
 export OPENDRAY_DATABASE_URL="postgres://opendray:change-me@127.0.0.1:5432/opendray?sslmode=disable"
@@ -117,8 +117,8 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # opcional; este �
 
 | Variável | Obrigatório | Padrão | Finalidade |
 |---|---|---|---|
-| `OPENDRAY_DATABASE_URL` | **sim** | — | DSN do Postgres |
-| `OPENDRAY_ADMIN_PASSWORD` | recomendado | — | Senha de admin web/mobile |
+| `OPENDRAY_DATABASE_URL` | **sim** | nenhum | DSN do Postgres |
+| `OPENDRAY_ADMIN_PASSWORD` | recomendado | nenhum | Senha de admin web/mobile |
 | `OPENDRAY_ADMIN_USER` | não | `admin` | Nome de usuário do admin |
 | `OPENDRAY_LISTEN` | não | `127.0.0.1:8770` | Endereço de bind |
 | `OPENDRAY_LOG_LEVEL` | não | `info` | `debug`/`info`/`warn`/`error` |
@@ -127,7 +127,7 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # opcional; este �
 Execute `opendray serve` sem a flag `-config` e ele carrega inteiramente
 do ambiente.
 
-### Opção B — config.toml
+### Opção B: config.toml
 
 ```sh
 curl -fsSLO https://raw.githubusercontent.com/Opendray/opendray/main/config.example.toml
@@ -151,12 +151,12 @@ password = "use-a-real-password"
 Veja [`config.example.toml`](../config.example.toml) para o arquivo
 completamente anotado (logging, detecção de sessão ociosa, backups, vault,
 MCP). Passe com `-config config.toml` nos comandos abaixo. Mantenha segredos
-fora do TOML em hosts compartilhados — defina `OPENDRAY_DATABASE_URL` /
+fora do TOML em hosts compartilhados: defina `OPENDRAY_DATABASE_URL` /
 `OPENDRAY_ADMIN_PASSWORD` via env e deixe o arquivo sem segredos.
 
 ---
 
-## Etapa 4 — Aplicar o schema
+## Etapa 4: Aplicar o schema
 
 ```sh
 opendray migrate                          # config somente via env
@@ -164,12 +164,12 @@ opendray migrate                          # config somente via env
 opendray migrate -config config.toml
 ```
 
-Idempotente — rodar novamente é um no-op quando o schema já está atualizado.
+Idempotente: rodar novamente é um no-op quando o schema já está atualizado.
 Isso precisa ter sucesso antes do primeiro `serve`.
 
 ---
 
-## Etapa 5 — Rodar
+## Etapa 5: Rodar
 
 ```sh
 opendray serve                            # config somente via env
@@ -181,12 +181,12 @@ Isso roda em **foreground** (Ctrl-C para). Você deve ter agora:
 
 | URL | O que é |
 |---|---|
-| `http://127.0.0.1:8770/admin/` | Painel web — faça login com `admin` + sua senha |
+| `http://127.0.0.1:8770/admin/` | Painel web, faça login com `admin` + sua senha |
 | `http://127.0.0.1:8770/api/v1/...` | API REST + WebSocket |
 
 Isso é um gateway completo e rodando. Para qualquer coisa além de um teste
 rápido, rode-o sob um supervisor para que sobreviva a reinicializações e
-reinicie em caso de crash — veja a seguir.
+reinicie em caso de crash. Veja a seguir.
 
 ---
 
@@ -198,7 +198,7 @@ os mesmos do [README → Deploy de produção](../README.pt-BR.md#deploy-de-prod
 que é a referência autoritativa (bootstrap completo, notas de sandboxing,
 reverse-proxy/TLS).
 
-### Linux — systemd
+### Linux: systemd
 
 O repositório traz uma unit endurecida em
 [`deploy/systemd/opendray.service`](../deploy/systemd/opendray.service)
@@ -228,7 +228,7 @@ supervisor para `opendray serve -config /etc/opendray/config.toml` e rode
 `opendray migrate` uma vez como etapa de pré-start. Veja
 [README → Deploy de produção §B](../README.pt-BR.md#opção-b--binário-direto--seu-próprio-supervisor-de-processos).
 
-### macOS — launchd
+### macOS: launchd
 
 O repositório traz um LaunchDaemon em
 [`deploy/launchd/com.opendray.opendray.plist`](../deploy/launchd/com.opendray.opendray.plist)
@@ -249,8 +249,8 @@ sudo launchctl print system/com.opendray.opendray
 Reinicie: `sudo launchctl kickstart -k system/com.opendray.opendray`.
 Desmonte: `sudo launchctl bootout system/com.opendray.opendray`.
 
-> Ambas as units são documentadas por completo — incluindo o layout de
-> segredos e por que `MemoryDenyWriteExecute` fica desabilitado — em
+> Ambas as units são documentadas por completo (incluindo o layout de
+> segredos e por que `MemoryDenyWriteExecute` fica desabilitado) em
 > [`deploy/README.md`](../deploy/README.md).
 
 ---
@@ -259,7 +259,7 @@ Desmonte: `sudo launchctl bootout system/com.opendray.opendray`.
 
 Como você atualiza depende de como instalou:
 
-- **Instalado via npm** — atualize com seu gerenciador de pacotes. `opendray update`
+- **Instalado via npm**: atualize com seu gerenciador de pacotes. `opendray update`
   substituiria o binário *dentro* de `node_modules` sem o conhecimento do npm
   e seria sobrescrito na próxima instalação, então não use aqui.
 
@@ -267,7 +267,7 @@ Como você atualiza depende de como instalou:
   npm install -g opendray@latest
   ```
 
-- **Download de release / instalação via wizard** — o binário se auto-atualiza
+- **Download de release / instalação via wizard**: o binário se auto-atualiza
   no lugar (baixa o release mais recente, verifica o SHA-256, troca atomicamente
   por si mesmo):
 
@@ -286,7 +286,7 @@ novamente `npm install -g opendray` (sem `--no-optional`).
 
 **`unsupported platform`**
 O pacote npm cobre somente Linux/macOS em x64/arm64. Em outros alvos, faça
-o build a partir do código-fonte — veja [quickstart.md](quickstart.md).
+o build a partir do código-fonte. Veja [quickstart.md](quickstart.md).
 
 **`config: database.url is empty`**
 Nem `OPENDRAY_DATABASE_URL` nem `[database].url` está definido. Defina um
@@ -308,11 +308,11 @@ Altere `OPENDRAY_LISTEN` (ou `listen` em config.toml) para uma porta livre.
 
 ## Próximos passos
 
-- [README → Deploy de produção](../README.pt-BR.md#deploy-de-produção) — referência
+- [README → Deploy de produção](../README.pt-BR.md#deploy-de-produção): referência
   completa de deploy (systemd / launchd / supervisor próprio, hardening, reverse proxy)
-- [`docs/operator-guide.md`](operator-guide.md) — ops: topologia de reverse-proxy/TLS,
+- [`docs/operator-guide.md`](operator-guide.md), ops: topologia de reverse-proxy/TLS,
   backups criptografados do DB, exportação/importação de dados
-- [`docs/integration-guide.md`](integration-guide.md) — escreva uma integração
+- [`docs/integration-guide.md`](integration-guide.md): escreva uma integração
   externa contra a API REST + WebSocket
-- [`docs/getting-started.md`](getting-started.md) — o setup guiado e tudo-em-um
+- [`docs/getting-started.md`](getting-started.md): o setup guiado e tudo-em-um
   se você preferir não montar as peças por conta própria

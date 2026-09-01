@@ -21,11 +21,11 @@ yarn global add opendray
 ```
 
 The right platform binary (Linux x64/arm64, macOS x64/arm64) is selected
-automatically via `optionalDependencies` — no post-install network call.
+automatically via `optionalDependencies`, with no post-install network call.
 
 ## Usage
 
-`opendray` ships the whole gateway — the web admin is embedded, so there is no
+`opendray` ships the whole gateway: the web admin is embedded, so there is no
 Node runtime or separate web server at deploy time. You bring a PostgreSQL 15+
 database (with the `pgvector` extension) and start it yourself:
 
@@ -37,7 +37,7 @@ opendray serve          # run in foreground → http://127.0.0.1:8770/admin/
 ```
 
 See the [binary install guide](https://github.com/Opendray/opendray/blob/main/docs/install-binary.md)
-for the full first-run walkthrough — pgvector setup, `config.toml`, and running
+for the full first-run walkthrough: pgvector setup, `config.toml`, and running
 as a systemd / launchd service.
 
 ## Supported platforms
@@ -47,8 +47,8 @@ as a systemd / launchd service.
 | Linux  | x64, arm64   |
 | macOS  | x64, arm64   |
 
-Windows is not yet packaged — track [opendray#XXX](https://github.com/Opendray/opendray/issues).
+Windows is not yet packaged. Track [opendray#XXX](https://github.com/Opendray/opendray/issues).
 
 ## License
 
-Apache-2.0 — see [LICENSE](./LICENSE).
+Apache-2.0, see [LICENSE](./LICENSE).

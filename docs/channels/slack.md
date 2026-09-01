@@ -38,7 +38,7 @@ Under **Subscribe to bot events** add:
 - `message.groups`
 - `message.im`
 
-(Socket Mode delivers these over the WebSocket — there's no Request URL to enter.)
+(Socket Mode delivers these over the WebSocket, so there's no Request URL to enter.)
 
 ## 5. Enable interactivity
 
@@ -69,8 +69,8 @@ the server log).
 ## 8. Test
 
 - Admin **Test** button posts to the default channel.
-- DM the bot `/help` — opendray replies in-thread.
-- Trigger session.idle — a card with Resume/End/Mute appears in the
+- DM the bot `/help`: opendray replies in-thread.
+- Trigger session.idle: a card with Resume/End/Mute appears in the
   default channel.
 
 ## Notes

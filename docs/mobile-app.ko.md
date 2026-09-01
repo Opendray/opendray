@@ -1,4 +1,4 @@
-# 모바일 앱 — 빌드 및 설치
+# 모바일 앱: 빌드 및 설치
 
 🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · **한국어** · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
 
@@ -6,7 +6,7 @@ opendray 모바일 앱(`app/mobile/`)은 **컨트롤 클라이언트**이며,
 두 번째 게이트웨이가 아닙니다. `/admin/`의 웹 어드민과 동일한 일을 합니다:
 세션을 spawn하고 조작하며, 채널과 통합을 관리하고, 메모리를 탐색하고,
 git 호스트를 읽습니다. 에이전트 자체는 게이트웨이 호스트에서 계속
-실행됩니다 — 휴대폰은 거기에 attach할 뿐입니다.
+실행됩니다. 휴대폰은 거기에 attach할 뿐입니다.
 
 그렇기 때문에 앱은 단독으로는 쓸모가 없습니다: HTTPS를 통해
 **실행 중인 opendray 게이트웨이**에 연결됩니다. 먼저 게이트웨이를
@@ -23,7 +23,7 @@ git 호스트를 읽습니다. 에이전트 자체는 게이트웨이 호스트�
 
 ---
 
-## Step 0 — 휴대폰에서 게이트웨이에 도달 가능하게 만들기
+## Step 0: 휴대폰에서 게이트웨이에 도달 가능하게 만들기
 
 앱은 네트워크를 통해 게이트웨이와 통신하므로, 휴대폰이 게이트웨이에
 도달할 수 있어야 합니다.
@@ -32,12 +32,12 @@ git 호스트를 읽습니다. 에이전트 자체는 게이트웨이 호스트�
 |---|---|
 | 휴대폰이 게이트웨이와 같은 LAN에 있음 | `http://<gateway-lan-ip>:8770` (예: `http://192.168.1.50:8770`) |
 | 게이트웨이가 TLS를 갖춘 reverse proxy 뒤에 있음 | `https://opendray.yourdomain.com` |
-| LAN 외부 접근 (셀룰러, 이동 중) | 공개 HTTPS 엔드포인트 — Cloudflare Tunnel, Tailscale, 또는 nginx/Caddy reverse proxy |
+| LAN 외부 접근 (셀룰러, 이동 중) | 공개 HTTPS 엔드포인트: Cloudflare Tunnel, Tailscale, 또는 nginx/Caddy reverse proxy |
 
 > **`:8770`을 인터넷에 그대로 노출하지 마세요.** 앞에 TLS와 ingress를
 > 두세요. Cloudflare Tunnel이 가장 마찰이 적은 옵션입니다(포트 포워딩
-> 불필요, 공개 IP 불필요). nginx / Caddy 스니펫은 — Sessions 터미널에
-> 필요한 **WebSocket upgrade 헤더**를 포함해 —
+> 불필요, 공개 IP 불필요). nginx / Caddy 스니펫은 (Sessions 터미널에
+> 필요한 **WebSocket upgrade 헤더**를 포함해)
 > [operator-guide §Topology](operator-guide.md#topology)에 있습니다.
 
 빌드하기 *전에* 휴대폰에서 도달 가능한지 확인하세요. 예를 들어
@@ -46,7 +46,7 @@ git 호스트를 읽습니다. 에이전트 자체는 게이트웨이 호스트�
 
 ---
 
-## Step 1 — Flutter 툴체인 설치
+## Step 1: Flutter 툴체인 설치
 
 앱은 Flutter로 빌드됩니다. 빌드를 수행하는 머신에 설치해야 합니다
 (휴대폰이 아닙니다).
@@ -70,9 +70,9 @@ flutter pub get
 
 ---
 
-## Step 2A — Android: APK 빌드 후 사이드로드
+## Step 2A, Android: APK 빌드 후 사이드로드
 
-가장 간단한 경로입니다 — 개발자 계정도, 스토어도 필요 없습니다.
+가장 간단한 경로입니다. 개발자 계정도, 스토어도 필요 없습니다.
 
 ### APK 빌드
 
@@ -96,7 +96,7 @@ app/mobile/build/app/outputs/flutter-apk/app-release.apk
 > 서명됩니다(`android/app/build.gradle.kts`의 `TODO` 참고). 개인
 > 사이드로딩에는 문제없습니다. 제대로 된 upload key를 원한다면(Play
 > Store에 필요하며, 계속 업데이트할 빌드라면 좋은 위생 습관입니다)
-> [Flutter — Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
+> [Flutter: Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
 > 을 따르고 `release`용 `signingConfig`를 추가하세요.
 
 ### APK를 휴대폰에 넣기
@@ -113,15 +113,15 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 또는 `.apk` 파일을 휴대폰으로 전송하고(AirDrop 상당, 파일 공유,
 다운로드 링크, 본인에게 이메일) 탭하세요. Android는 파일을 여는 앱
 (Files, Chrome 등)에 대해 **"출처를 알 수 없는 앱 설치"** 허용을
-요청합니다 — 허용한 뒤 설치를 확인하세요.
+요청합니다. 허용한 뒤 설치를 확인하세요.
 
 앱은 **Opendray**(`io.opendray.opendray`)로 나타납니다.
 
 ---
 
-## Step 2B — iOS: Xcode를 통해 빌드 및 설치
+## Step 2B, iOS: Xcode를 통해 빌드 및 설치
 
-iOS에는 APK 사이드로드에 해당하는 것이 없습니다 — 모든 설치는
+iOS에는 APK 사이드로드에 해당하는 것이 없습니다. 모든 설치는
 코드 서명됩니다. **Xcode가 설치된 Mac**과 **Apple ID**가 필요합니다.
 무료 Apple ID도 작동합니다(앱은 7일마다 재서명되며, provisioning
 profile이 만료되면 다시 설치합니다). 유료 Apple Developer 계정
@@ -143,7 +143,7 @@ Xcode에서:
    Xcode → Settings → Accounts에서 Apple ID 추가).
 4. **Bundle Identifier**: `io.opendray.opendray`로 출하됩니다. 무료
    Apple ID에서는 이 정확한 ID가 Apple 측에서 이미 사용 중일 수
-   있습니다 — Xcode가 provisioning 오류를 표시하면
+   있습니다. Xcode가 provisioning 오류를 표시하면
    `io.opendray.opendray.<yourname>` 같은 고유한 값으로 변경하세요.
 
 ### iPhone에 빌드 및 설치
@@ -176,16 +176,16 @@ iOS는 개인 팀이 서명한 앱을, 개발자 profile을 신뢰하기 전까�
 
 ---
 
-## Step 3 — 앱을 게이트웨이에 연결
+## Step 3: 앱을 게이트웨이에 연결
 
 첫 실행 시 온보딩 화면이 나타납니다:
 
-1. **Gateway URL** — Step 0의 URL을 입력하세요
+1. **Gateway URL**: Step 0의 URL을 입력하세요
    (예: `https://opendray.yourdomain.com`). **Continue**를 탭하세요.
-2. **Sign in** — `admin` + 어드민 비밀번호(`[admin].password`에서
+2. **Sign in**: `admin` + 어드민 비밀번호(`[admin].password`에서
    설정했거나 이후 변경한 값).
 
-이게 전부입니다 — 웹 어드민과 동일한 surface로 이동합니다: Sessions,
+이게 전부입니다. 웹 어드민과 동일한 surface로 이동합니다: Sessions,
 Channels, Integrations, Memory, Git, Settings.
 
 나중에 앱을 다른 게이트웨이로 가리키려면, 로그인 화면에서 **Change**를
@@ -195,7 +195,7 @@ Channels, Integrations, Memory, Git, Settings.
 
 ## 앱 업데이트
 
-자동 업데이트는 없습니다 — 새 코드를 pull한 뒤 다시 설치합니다:
+자동 업데이트는 없습니다. 새 코드를 pull한 뒤 다시 설치합니다:
 
 ```sh
 git pull
@@ -219,7 +219,7 @@ open ios/Runner.xcworkspace      # ▶ Run 다시 실행, 또는 `flutter run --
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | 온보딩 "could not connect" | 휴대폰이 Gateway URL에 도달하지 못함 | 휴대폰 브라우저에서 URL을 열고, LAN IP / 터널 / TLS를 먼저 고치세요 (Step 0) |
-| 로그인은 되지만 Sessions 터미널이 연결되지 않음 | reverse proxy가 WebSocket upgrade를 드롭함 | WS 헤더를 추가하세요 — [operator-guide §Topology](operator-guide.md#topology) |
+| 로그인은 되지만 Sessions 터미널이 연결되지 않음 | reverse proxy가 WebSocket upgrade를 드롭함 | WS 헤더를 추가하세요: [operator-guide §Topology](operator-guide.md#topology) |
 | Android가 설치를 차단함 | "출처를 알 수 없는 앱 설치"가 허용되지 않음 | `.apk`를 여는 앱(Files / Chrome)에 대해 허용하세요 |
 | 실행 시 iOS "Untrusted Developer" | 개인 팀 profile이 아직 신뢰되지 않음 | Settings → General → VPN & Device Management → Trust |
 | Xcode에서 iOS "Unable to install / signing" | 무료 Apple ID와 Bundle ID 충돌 | Bundle Identifier를 `io.opendray.opendray.<yourname>`로 변경 |
@@ -230,7 +230,7 @@ open ios/Runner.xcworkspace      # ▶ Run 다시 실행, 또는 `flutter run --
 
 ## 함께 보기
 
-- [getting-started.md](getting-started.md) — 앱이 연결할 게이트웨이를 올리기
-- [operator-guide.md](operator-guide.md) — LAN 외부 접근을 위한 reverse proxy / 터널 토폴로지
-- [Flutter — build & release Android](https://docs.flutter.dev/deployment/android)
-- [Flutter — build & release iOS](https://docs.flutter.dev/deployment/ios)
+- [getting-started.md](getting-started.md): 앱이 연결할 게이트웨이를 올리기
+- [operator-guide.md](operator-guide.md): LAN 외부 접근을 위한 reverse proxy / 터널 토폴로지
+- [Flutter: build & release Android](https://docs.flutter.dev/deployment/android)
+- [Flutter: build & release iOS](https://docs.flutter.dev/deployment/ios)

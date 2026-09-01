@@ -1,6 +1,6 @@
 # Memory System Unification Redesign (Milestone arc: M-U)
 
-> **Status:** Approved blueprint — §8 decisions owner-confirmed; not yet
+> **Status:** Approved blueprint. §8 decisions owner-confirmed; not yet
 > implemented. Delivery proceeds locally per phase and is pushed to
 > GitHub only after local tests pass.
 > **Owner:** memory subsystem is a single-author design; this redesign
@@ -24,7 +24,7 @@ and operator time:
 - **Two parallel memory stores.** A DB-backed pgvector store (shared,
   queryable, cross-CLI) *and* the Claude Code harness's file memory
   (`~/.claude-accounts/<acct>/projects/<cwd>/memory/*.md`). The file
-  store is Claude-only — Codex and Antigravity cannot see it — so it
+  store is Claude-only (Codex and Antigravity cannot see it), so it
   actively undermines the system's reason to exist (cross-agent
   continuity). Today it is bridged one-way by a mirror
   (`internal/memory/mirror.go`), which is a sync band-aid, not unity.
@@ -48,7 +48,7 @@ and operator time:
   *intended* to write memory, but the auto-provisioned memory
   integration key is granted only `session:read`
   (`internal/app/app.go:1129`), so every `memory_store` from an agent
-  returns `403`. Cross-agent contribution — the entire point — has
+  returns `403`. Cross-agent contribution, the entire point, has
   never actually run from the agents themselves.
 
 This redesign is **subtractive first**: it removes redundant systems,
@@ -65,7 +65,7 @@ the cleaner foundation.
    preserves project familiarity**.
 2. **Scopes collapse to two:** `project` (default; key = cwd) and
    `global` (written **only on explicit operator request**). The
-   `session` scope is removed — session ≡ project.
+   `session` scope is removed: session ≡ project.
 3. Writes are **free** (no per-write human approval). The **only**
    human intervention point is **conflict detection**.
 4. No patching. Each phase is a self-contained, coherent unit that
@@ -74,7 +74,7 @@ the cleaner foundation.
    running opendray must reach the new system by a normal `opendray
    update` with **no data loss and no manual SQL**. Every migration is
    forward-only, idempotent, and **never hard-deletes existing user
-   data** — rows are folded, archived, or re-embedded, never dropped.
+   data**: rows are folded, archived, or re-embedded, never dropped.
    See §7.
 6. **Ship as one change, merge after validation.** Because this is a
    large, cross-cutting redesign, the whole arc (Phase 0-6) is built on
@@ -92,7 +92,7 @@ the cleaner foundation.
 
 ---
 
-## 3. Target architecture — "one brain"
+## 3. Target architecture: "one brain"
 
 ```
    ┌──────────── all cloud agents (Claude / Codex / Antigravity / …) ───────────┐
@@ -118,7 +118,7 @@ the cleaner foundation.
 
 Five pillars:
 
-### Pillar 1 — One store, two scopes
+### Pillar 1: One store, two scopes
 
 - Single Postgres pgvector store. **No file memory** as a store (see
   Pillar 6 for the retirement path).
@@ -127,17 +127,17 @@ Five pillars:
 - All agents read and write the same project memory. Switching agents
   is instant continuity by construction, not by sync.
 
-### Pillar 2 — One write pipeline (free, self-consolidating)
+### Pillar 2: One write pipeline (free, self-consolidating)
 
-`memory_store(text, scope=project)` — agents default to `project`;
+`memory_store(text, scope=project)`: agents default to `project`;
 `global` requires an explicit operator-originated instruction.
 
-On write (the hot path — **no LLM call**, must stay millisecond-fast):
+On write (the hot path, **no LLM call**, must stay millisecond-fast):
 
 1. Embed with the active embedder.
 2. Semantic dedup **within the same (scope, scope_key)**: nearest
    neighbour search, top-1.
-3. If similarity ≥ `consolidate_threshold`: **fold** — keep the
+3. If similarity ≥ `consolidate_threshold`: **fold**. Keep the
    higher-confidence / newer row as canonical, bump `frequency`/
    `deduped_count`, record the absorbed id in `merged_from`, append
    provenance. Return the canonical id. **Rule-based only; no LLM in the
@@ -152,7 +152,7 @@ That sweep uses the pluggable-worker chain (M25): a local OpenAI-compatible
 worker if configured, else the **cloud-agent worker** (`claude --print` /
 `agy --print`), which every opendray install has. Rationale: merge is
 an easy LLM task (lighter than the gatekeeper/cleaner/conflict jobs these
-workers already do), so capability is not the concern — keeping it off
+workers already do), so capability is not the concern. Keeping it off
 the synchronous write path is.
 
 No human approval on writes. The write-time gatekeeper (LLM durability
@@ -161,7 +161,7 @@ by folding + ranking + the maintenance loop, not by a write gate. This
 replaces "store then dedup then clean up the backlog" with "don't create
 the duplicate in the first place".
 
-### Pillar 3 — One retrieval path, one ranker
+### Pillar 3: One retrieval path, one ranker
 
 - A single scoring function, defined once, used by **both** spawn
   injection and on-demand search:
@@ -181,27 +181,27 @@ the duplicate in the first place".
 - `project_search` runs its facts/journal/docs sub-searches **in
   parallel**, then merges and ranks once.
 
-### Pillar 4 — Spawn injection (query-less, budgeted)
+### Pillar 4: Spawn injection (query-less, budgeted)
 
 At spawn there is no query yet, so injection ranks the project brain by
 `importance × recency` (no similarity term), fills a **token budget**,
 and assembles: goal + plan + top-N facts + recent journal. Delivery
 stays per-provider (`--append-system-prompt` for Claude and Antigravity,
-`AGENTS.md` for Codex) — already provider-agnostic at the
+`AGENTS.md` for Codex), already provider-agnostic at the
 source (`internal/catalog/adapter.go:363` `Prepare`). Once the agent has
 a task it uses `project_search`/`memory_search` with a real query.
 
-### Pillar 5 — One maintenance loop (auto; human only for conflicts)
+### Pillar 5: One maintenance loop (auto; human only for conflicts)
 
 All destructive maintenance runs on **soft-delete + grace period**
 (reversible), which is what makes automation safe:
 
-- **Consolidation/dedup sweep** — retroactively merges semantically
+- **Consolidation/dedup sweep**: retroactively merges semantically
   equivalent facts (both the ones the write-time fold caught and any it
-  missed). This is where the **LLM text merge happens** — refining
+  missed). This is where the **LLM text merge happens**, refining
   folded near-duplicates into one canonical statement via the
   pluggable-worker chain. Off the hot path, so latency/cost are free.
-- **Staleness auto-archive** — facts never retrieved + aged, OR facts
+- **Staleness auto-archive**: facts never retrieved + aged, OR facts
   belonging to **inactive/finished projects** (lifecycle signal: git
   inactivity, or operator "project done"), are auto-archived (soft;
   hard-purged after the grace window).
@@ -211,9 +211,9 @@ All destructive maintenance runs on **soft-delete + grace period**
 The manual cleanup-approval queue is **removed**. Routine staleness
 never reaches the operator.
 
-### Pillar 6 — One embedder strategy (availability-tiered)
+### Pillar 6: One embedder strategy (availability-tiered)
 
-**Design principle — availability tiering.** Not every operator runs a
+**Design principle: availability tiering.** Not every operator runs a
 local AI, but **every** opendray install necessarily has a cloud-agent
 CLI. So each LLM/vector touch-point must name a backend that is
 *guaranteed present*, and prefer better backends only when they exist.
@@ -221,10 +221,10 @@ The guaranteed-present backend differs by task type:
 
 | Task | Best (if present) | Guaranteed-present floor |
 |---|---|---|
-| **Embedding** (vectors) | local dense (`bge-m3` 1024, `nomic-embed-text`, `mxbai-embed-large`, …) served by **any** local runtime, or a cloud OpenAI-compatible embedding endpoint | **BM25** — pure-Go, zero-dependency, already built |
+| **Embedding** (vectors) | local dense (`bge-m3` 1024, `nomic-embed-text`, `mxbai-embed-large`, …) served by **any** local runtime, or a cloud OpenAI-compatible embedding endpoint | **BM25**, pure-Go, zero-dependency, already built |
 | **LLM text** (merge, gatekeeper, cleaner, conflict) | local LLM via **any** runtime | **cloud-agent worker** (`claude --print` / `agy --print`) |
 
-Critical distinction: a **cloud-agent CLI cannot produce embeddings** —
+Critical distinction: a **cloud-agent CLI cannot produce embeddings**.
 Claude/Antigravity `--print` are text generation, not vector models, and
 Anthropic exposes no embeddings API. So the embedding floor is **BM25**,
 not the cloud agent. The cloud agent is the floor for *LLM text* tasks
@@ -235,7 +235,7 @@ not the cloud agent. The cloud agent is the floor for *LLM text* tasks
 backend over the **OpenAI-compatible HTTP contract** (`/v1/embeddings`,
 `/v1/chat/completions`), so any runtime that speaks it works:
 **ollama, LM Studio, vLLM, LocalAI, llama.cpp server, text-generation-webui**,
-etc. Configuration is a base URL + model name + (optional) API key — no
+etc. Configuration is a base URL + model name + (optional) API key, and no
 runtime-specific code paths. The existing `internal/memory/embedder_http.go`
 and the summarizer's `provider_openai_compat.go` already follow this
 contract; the redesign keeps that contract as the single local-integration
@@ -275,7 +275,7 @@ HNSW → stable recall.
 
 New migrations (`0033+`). Exact column names to be finalised in each PR.
 
-1. **Scope collapse** (`0034_memory_drop_session_scope.sql` — 0033 was
+1. **Scope collapse** (`0034_memory_drop_session_scope.sql`, 0033 was
    already taken by `0033_memory_workers_capture.sql`)
    - Migrate existing `scope='session'` rows → `scope='project'`,
      setting `scope_key` to the session's cwd
@@ -285,19 +285,19 @@ New migrations (`0033+`). Exact column names to be finalised in each PR.
      soft-delete primitive, see item 2) so the fold has a lossless place
      to put orphans.
    - Orphans (session row gone): recover cwd from `session_logs` if
-     possible; otherwise set `archived_at = now()` (lossless — restorable,
+     possible; otherwise set `archived_at = now()` (lossless, restorable,
      not dropped). **No `DELETE` in this migration.**
    - Replace the CHECK constraint with `scope IN ('project','global')`
      only after the fold, so no row violates it mid-migration.
 
-2. **Soft delete** (`0034_memory_soft_delete.sql`) — *column may be
+2. **Soft delete** (`0034_memory_soft_delete.sql`), *column may be
    co-introduced in 0033 (item 1); 0034 then only adds the behaviour.*
    - `archived_at TIMESTAMPTZ NULL`, `archived_reason TEXT NULL`.
    - All search/injection queries gain `AND archived_at IS NULL`.
    - A purge job hard-deletes rows where
      `archived_at < now() - grace_interval` (grace = 30 days, §8.2).
 
-3. **Consolidation accounting** — *no migration (done in Phase 3).* The
+3. **Consolidation accounting**: *no migration (done in Phase 3).* The
    fold count (`deduped_count`) and the lossless audit (`merged_from`)
    live in the existing `metadata` JSONB; a dedicated `frequency` column
    was dropped from the plan as redundant with `deduped_count`, which
@@ -313,7 +313,7 @@ New migrations (`0033+`). Exact column names to be finalised in each PR.
      `last_git_activity_at TIMESTAMPTZ`, `status TEXT CHECK (active |
      archived) DEFAULT 'active'`. Drives staleness auto-archive.
 
-`memory_cleanup_decisions` (0026) is **deprecated** by Pillar 5 — kept
+`memory_cleanup_decisions` (0026) is **deprecated** by Pillar 5, kept
 read-only for audit history, no new rows after Phase 4.
 
 ---
@@ -326,7 +326,7 @@ commit-by-commit, but the whole arc lands as a **single PR** opened only
 after every phase is complete and the migration is validated end-to-end
 on a copy of real data. Order is dependency-driven.
 
-### Phase 0 — Turn the write path on  *(unblocks everything)* — DONE
+### Phase 0: Turn the write path on  *(unblocks everything)*, DONE
 
 - Granted the `opendray-memory` integration key `memory:read` +
   `memory:write`; reconcile scopes on existing installs so the fix
@@ -340,7 +340,7 @@ on a copy of real data. Order is dependency-driven.
   Unit tests for `scopesCover` + `globalWriteAllowed`; packages pass
   `-race`.
 
-### Phase 1 — Scope unification — DONE
+### Phase 1: Scope unification, DONE
 
 - Migration `0034`. `session` removed from the scope model; a
   `normalizeScope` boundary coerces the legacy literal to project
@@ -352,7 +352,7 @@ on a copy of real data. Order is dependency-driven.
   keyed by the session's cwd (joined via `sessions`). Orphans (session
   gone) are **soft-archived** (`archived_at`, restorable) rather than
   deleted. **No `DELETE`.**
-- **Validated:** the fold ran on an ephemeral Postgres — 4 rows in, 4 out
+- **Validated:** the fold ran on an ephemeral Postgres, 4 rows in, 4 out
   (zero loss), 0 session rows remain, live-session row folded to its cwd,
   orphan archived, new CHECK rejects session. Go `normalizeScope` /
   `Scope.Validate` table tests; web `tsc -b && vite build` clean; mobile
@@ -361,7 +361,7 @@ on a copy of real data. Order is dependency-driven.
   the ephemeral-Postgres validation above; full-data replay still happens
   at arc-final validation.
 
-### Phase 2 — Retrieval unification — DONE
+### Phase 2: Retrieval unification, DONE
 
 - One scorer: `memory.RankingScoreFields` (M-PC formula over raw fields)
   now serves both `memory.Service` and `memquery`; `decayScore` deleted.
@@ -375,17 +375,17 @@ on a copy of real data. Order is dependency-driven.
   (wall-clock = slowest layer, not the sum).
 - **Backend-only.** The web/mobile ranking mirrors already track
   `ranking.go` (unchanged) and the Hit DTO additions are additive, so no
-  client change was required — verified.
+  client change was required, verified.
 - **Validated:** `-race` across memory/memquery/projectdoc/app; the 0035
   index predicates exercised on an ephemeral Postgres (full vector replay
   is the arc-final step on the real pgvector DB).
 - **Risk:** low/medium, retired by the ranking table tests + race pass.
 
-### Phase 3 — Write-time fold (cheap, no LLM) — DONE
+### Phase 3: Write-time fold (cheap, no LLM), DONE
 
 - **No migration.** The fold accounting (`deduped_count` + the new
   `merged_from` audit) lives in the existing `metadata` JSONB rather than
-  a redundant `frequency` column — `deduped_count` already backs the
+  a redundant `frequency` column. `deduped_count` already backs the
   mobile "merged ×N" badge.
 - Semantic dedup is now the **default** write path: an unset
   `dedup_threshold` resolves to an embedder-relative default (~0.85
@@ -403,7 +403,7 @@ on a copy of real data. Order is dependency-driven.
 - **Risk:** low. Default-on is behaviour-compatible (lossless) and the
   threshold is tunable; covered by boundary tests.
 
-### Phase 4 — Self-maintaining cleanup — DONE (backend 4.1–4.3 + 4.4 UI)
+### Phase 4: Self-maintaining cleanup, DONE (backend 4.1–4.3 + 4.4 UI)
 
 Owner-confirmed shape: keep the LLM judge, auto-apply its verdicts as
 **reversible soft-archives** (no approval queue); remove the cleanup
@@ -412,12 +412,12 @@ one-click restore; operator inbox keeps conflicts only.
 
 - **4.1 (done):** all 8 memory read queries filter `archived_at IS NULL`;
   Archive / ArchiveByScope / Restore / PurgeArchived primitives (no
-  migration — the columns landed in 0034).
+  migration, the columns landed in 0034).
 - **4.2 (done):** cleaner auto-applies verdicts as soft-archive (a
-  "duplicate" is archived noting the survivor — soft-delete preserves it,
+  "duplicate" is archived noting the survivor, and soft-delete preserves it,
   so the old merge-metadata gap is moot); `PurgeExpired` hard-deletes
   past the 30d grace each tick.
-- **4.3 (done):** `ArchiveDormantStale` — a dormant project's never-hit
+- **4.3 (done):** `ArchiveDormantStale`: a dormant project's never-hit
   aged facts auto-archive (hit facts and active projects untouched).
   `LifecycleDormantDays` (90d default, negative disables).
 - **4.4 backend (done):** `GET /api/v1/memory/archived` (read) + `POST
@@ -458,7 +458,7 @@ one-click restore; operator inbox keeps conflicts only.
 - **Risk:** medium, retired by reversibility (soft-delete + 30d grace)
   and conservative defaults (90d dormancy, never-hit only).
 
-### Phase 5 — Retire the file layer — DONE
+### Phase 5: Retire the file layer, DONE
 
 - **One-time import (done).** `Mirror.BackfillAll` enumerates every
   project scope_key already in the store and `SyncCwd`s each, launched
@@ -479,10 +479,10 @@ one-click restore; operator inbox keeps conflicts only.
   stays wired, so any file memory an agent still writes during the
   transition keeps flowing into the DB. A project that has file memory
   but no DB rows yet imports on its first spawn (the backfill only
-  front-loads already-known projects) — nothing is lost, only the timing
+  front-loads already-known projects). Nothing is lost, only the timing
   of the import differs.
 - **Acceptance:** a Claude session with no local memory files still
-  receives full project memory at spawn — already true via the ambient +
+  receives full project memory at spawn, already true via the ambient +
   projectdoc DB injectors (unchanged here); agent-authored memories land
   in DB (Phase 0 scope fix) and are visible to a subsequent Codex/Antigravity
   session in the same cwd.
@@ -495,15 +495,15 @@ one-click restore; operator inbox keeps conflicts only.
   memory). Retired by keeping the one-way mirror as the legacy capture
   net and by the import being idempotent + lossless.
 
-### Phase 6 — Embedder unification — DONE
+### Phase 6: Embedder unification, DONE
 
-- **Availability tiering — already structural, confirmed.** The backend
+- **Availability tiering: already structural, confirmed.** The backend
   matrix in `buildEmbedder` (`internal/app/app.go`) already realises
   decision §8.1: `auto`/`bm25` → the pure-Go BM25 floor (guaranteed
   present, zero-dep); `http` → any OpenAI-compatible dense endpoint;
   `local` → ONNX. Dense is used when configured; BM25 is the floor
   otherwise. We deliberately do **not** auto-switch an existing `auto`
-  (BM25) install to a detected local dense model on upgrade — that would
+  (BM25) install to a detected local dense model on upgrade: that would
   trigger a surprise full re-embed and violate the smooth-upgrade
   constraint (§2.5). Switching to dense stays an explicit operator config
   change, which the new converge loop then services automatically.
@@ -514,18 +514,18 @@ one-click restore; operator inbox keeps conflicts only.
   rows whose `embedder` ≠ active; if any, it runs the existing resumable
   `Reembed` pass and re-stamps them to the current embedder, then sleeps
   (short after progress, `IdleInterval` 5m when converged or stalled).
-  So an operator who switches embedders just restarts — convergence is
+  So an operator who switches embedders just restarts, so convergence is
   automatic, no "Migrate" click. The manual `POST /reembed` endpoint
   stays as an on-demand trigger. Self-skips in steady state; an embedder
   outage backs off instead of spinning.
-- **The silent `embedder`-mismatch search exclusion — intent met by
+- **The silent `embedder`-mismatch search exclusion: intent met by
   convergence, guard retained.** `PgvectorStore.Search` keeps
   `WHERE embedder = $active` because cross-(embedder, dim) cosine is
-  mathematically invalid — comparing a bge-m3 1024-vec against a BM25
+  mathematically invalid: comparing a bge-m3 1024-vec against a BM25
   384-vec is meaningless, and different dims can't even share an index.
   Dropping the predicate outright would surface garbage or error
-  mid-migration. The redesign's actual goal — "no row stays silently
-  invisible" — is met instead by the converge loop driving drift to
+  mid-migration. The redesign's actual goal, "no row stays silently
+  invisible", is met instead by the converge loop driving drift to
   zero, after which the predicate excludes nothing. So the guard is kept
   for correctness; convergence removes the *silent permanence* it used to
   have.
@@ -561,10 +561,10 @@ a counted dry-run and a pre-migration `opendray` memory export (the
 backup/restore path already exists, `backup/service_import.go`) so even
 operator error is recoverable.
 
-**Automatic on upgrade — DONE.** Migrations now auto-apply on startup,
+**Automatic on upgrade, DONE.** Migrations now auto-apply on startup,
 fail-closed. `app.New` (`internal/app/app.go`) calls `st.Migrate` right
 after `store.Open` and **before** `catalog.New` (which seeds tables
-migration 0001 creates — preserving the #162 fresh-DB ordering). A
+migration 0001 creates, preserving the #162 fresh-DB ordering). A
 migration error aborts boot rather than running the new binary against
 the old schema. So `opendray update` + restart reaches the new schema
 with no separate step; `opendray migrate` stays as a standalone command
@@ -590,13 +590,13 @@ quality gate (§"Quality gates"), and the manual Cleanup inbox
 ## 8. Resolved decisions (owner-confirmed)
 
 All decided. Two governing principles: **availability tiering** (Pillar
-6) — prefer the best backend present, fall back to a guaranteed-present
+6): prefer the best backend present, fall back to a guaranteed-present
 floor, and the floor differs by task type because a cloud-agent CLI can
-do LLM text but cannot produce embeddings — and **keep LLM work off the
+do LLM text but cannot produce embeddings, and **keep LLM work off the
 write hot path** (decisions 5–6).
 
-1. **Embedder** — *tiered and runtime-neutral.* Prefer a dense embedder
-   when available — a local model (`bge-m3` 1024, `nomic-embed-text`,
+1. **Embedder**: *tiered and runtime-neutral.* Prefer a dense embedder
+   when available: a local model (`bge-m3` 1024, `nomic-embed-text`,
    `mxbai-embed-large`, …) served by **any** OpenAI-compatible local
    runtime (**ollama, LM Studio, vLLM, LocalAI, llama.cpp**, …), or a
    cloud embedding endpoint. Fall back to **BM25** automatically when
@@ -604,14 +604,14 @@ write hot path** (decisions 5–6).
    zero-dep). The cloud-agent CLI is **not** an embedding backend (no
    vector API). `consolidate_threshold` is embedder-relative (≈0.85 dense
    / ≈0.2 BM25, matching today's dedup thresholds).
-2. **Grace window** — **30 days** soft-delete → hard-purge.
-3. **Write-time gatekeeper** — **kept as an optional knob, off by
+2. **Grace window**: **30 days** soft-delete → hard-purge.
+3. **Write-time gatekeeper**: **kept as an optional knob, off by
    default.** Quality is carried by consolidation + ranking +
    maintenance, not a write gate.
-4. **Lifecycle "project done" trigger** — **both**: git-inactivity
+4. **Lifecycle "project done" trigger**, **both**: git-inactivity
    threshold of **60 days**, and an explicit operator "archive project"
    action.
-5. **Consolidation merge** — *split across two paths.* Write-time = a
+5. **Consolidation merge**: *split across two paths.* Write-time = a
    cheap **rule-based fold** (keep canonical + bump frequency + record
    `merged_from`), **no LLM**, to keep writes millisecond-fast.
    Background sweep = the **LLM text merge** via the pluggable-worker
@@ -620,7 +620,7 @@ write hot path** (decisions 5–6).
    `agy --print`), which every install has. The cloud agent is a
    valid backend here because merge is an LLM *text* task (unlike
    embedding in decision 1).
-6. **LLM merge placement** — *background only, never the write hot
+6. **LLM merge placement**: *background only, never the write hot
    path.* A `--print` call costs 5-15s + subscription quota; putting it
    on every near-duplicate write is unacceptable. Write-time folds
    cheaply; the background consolidation sweep refines text when latency
@@ -651,12 +651,12 @@ write hot path** (decisions 5–6).
 
 - One store, one scope default, one ranker, one embedder.
 - An agent of any kind can write project memory; a different agent in
-  the same project reads it at spawn — verified by the cross-CLI smoke
+  the same project reads it at spawn, verified by the cross-CLI smoke
   test in `memory-system.md` extended to a write→switch→read loop.
 - The operator's recurring inbox work is **conflicts only**; routine
   staleness and duplicates are handled automatically and reversibly.
 - An existing operator upgrades via a single `opendray update` and lands
-  on the new system with **zero data loss and zero manual SQL** —
+  on the new system with **zero data loss and zero manual SQL**,
   validated by replaying the full migration on a copy of real
   pre-upgrade data and reconciling row counts to no loss.
 - Net negative line count in `internal/memory*` after the arc (the
@@ -664,7 +664,7 @@ write hot path** (decisions 5–6).
 
 ---
 
-## 11. Phase 7 — Config/settings consistency + universal `auto` embedder
+## 11. Phase 7: Config/settings consistency + universal `auto` embedder
 
 > **Status:** Approved (owner-confirmed 2026-06-06). A follow-on arc that
 > closes the gap between the M-U *implementation* (Phases 0–6) and the
@@ -681,7 +681,7 @@ could see through:
 - **Leftover deprecated keys/features.** The `session` scope (removed in
   Phase 1) is still offered in the server-settings *default-scope*
   selector on **both** web (`ServerSettings.tsx`) and mobile
-  (`server_settings_screen.dart`) — Phase 1 dropped session from the
+  (`server_settings_screen.dart`). Phase 1 dropped session from the
   memory read/write UI but missed the settings selector. `config.go` doc
   comments still describe the cleaner as a *proposal* queue (Phase 4 made
   it auto-apply), still list `session` as a valid scope, still frame
@@ -693,16 +693,16 @@ could see through:
 - **New features with no config surface.** `LifecycleDormantDays` (Phase
   4.3) and `GracePeriod` (Phase 4.2) exist on `cleaner.Config` with
   hardcoded defaults (90d / 30d) but are **not wired from `config.toml`**
-  — operators cannot tune or disable dormant auto-archive or the restore
+  so operators cannot tune or disable dormant auto-archive or the restore
   window. `config.example.toml` has **no `[memory]` block at all**.
 - **The `auto` trap.** `buildEmbedder` returns BM25 unconditionally for
   `backend="auto"` and never consults the `AutoDetect` probe or the
   configured `[memory.http]` endpoint. So an operator who configures a
   dense endpoint but leaves the default `backend="auto"` silently runs
-  BM25 with their dense model dormant — and a fresh operator who never
+  BM25 with their dense model dormant, and a fresh operator who never
   installed an embedding model has no signal that semantic memory is off.
   Phase 6 *deliberately* kept `auto`=BM25 to avoid a surprise re-embed on
-  upgrade — but that fear is now obsolete: **the Phase 6 converge loop
+  upgrade, but that fear is now obsolete: **the Phase 6 converge loop
   already makes re-embed safe, automatic, resumable, and rate-limited.**
 
 ### 11.2 Universal `auto` embedder (supersedes the Phase 6 "auto never auto-promotes" decision)
@@ -730,7 +730,7 @@ the store, so it can probe + read `CountByEmbedder`):
      the endpoint responds, then auto-resume. The system **never
      downgrades dense→BM25**, because that would both hide every dense
      row (`WHERE embedder=$active`) and trigger a lossy re-embed.
-   - **Edge — dense rows but `[memory.http]` removed from config** →
+   - **Edge: dense rows but `[memory.http]` removed from config** →
      **fail-closed** with a remediation message ("restore the endpoint,
      or set `backend=\"bm25\"` to abandon dense"), because we cannot
      reconstruct the dense embedder and must not silently churn.
@@ -742,8 +742,8 @@ the store, so it can probe + read `CountByEmbedder`):
 **Status surfacing (the "operator can't see it" fix).** `/memory/status`
 (and the web/mobile Memory settings) now show the **effective** embedder,
 the **configured** embedder, and a **degraded** flag, e.g. "Active: BM25
-keyword (no embedding model configured — semantic memory off)", "Active:
-BM25 (a dense endpoint is configured but unreachable — using BM25 until it
+keyword (no embedding model configured, semantic memory off)", "Active:
+BM25 (a dense endpoint is configured but unreachable, using BM25 until it
 responds)", or "Active: Qwen3 dense (converging N rows…)".
 
 ### 11.3 Settings/config cleanup (subtractive, matches §2.4)
@@ -757,7 +757,7 @@ responds)", or "Active: Qwen3 dense (converging N rows…)".
   auto-apply soft-archive; scope drops session; ONNX/chromem framing;
   `similarity_threshold` default is **0.1**, not 0.7).
 - Remove the orphaned cleaner approval-queue routes (`/memory/cleanup/
-  decisions`, `/approve`, `/reject`) — no frontend caller after Phase 4.4;
+  decisions`, `/approve`, `/reject`): no frontend caller after Phase 4.4;
   the `memory_cleanup_decisions` table stays read-only for audit.
 
 ### 11.4 New config knobs (close the §11.1 omissions)

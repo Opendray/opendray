@@ -1,12 +1,12 @@
 <div dir="rtl" lang="fa">
 
-# اپ موبایل — build و نصب
+# اپ موبایل: build و نصب
 
 <p dir="ltr" align="center">
 🌐 <a href="mobile-app.md">English</a> · <a href="mobile-app.zh.md">简体中文</a> · <strong>فارسی</strong> · <a href="mobile-app.es.md">Español</a> · <a href="mobile-app.pt-BR.md">Português</a> · <a href="mobile-app.ja.md">日本語</a> · <a href="mobile-app.ko.md">한국어</a> · <a href="mobile-app.fr.md">Français</a> · <a href="mobile-app.de.md">Deutsch</a> · <a href="mobile-app.ru.md">Русский</a>
 </p>
 
-اپ موبایل opendray (`app/mobile/`) یک **کلاینت کنترل** است، نه یک gateway دوم. همان کاری را می‌کند که web admin روی `/admin/` انجام می‌دهد: ساختن و راندن سشن‌ها، مدیریت channelها و integrationها، مرور حافظه، خواندن git hostها. خودِ agentها همچنان روی gateway host شما در حال اجرا می‌مانند — گوشی فقط به آن‌ها وصل می‌شود.
+اپ موبایل opendray (`app/mobile/`) یک **کلاینت کنترل** است، نه یک gateway دوم. همان کاری را می‌کند که web admin روی `/admin/` انجام می‌دهد: ساختن و راندن سشن‌ها، مدیریت channelها و integrationها، مرور حافظه، خواندن git hostها. خودِ agentها همچنان روی gateway host شما در حال اجرا می‌مانند. گوشی فقط به آن‌ها وصل می‌شود.
 
 به همین خاطر، اپ به‌تنهایی به‌دردنخور است: از طریق HTTPS به یک **gateway فعالِ opendray** وصل می‌شود. اول gateway را بالا بیاورید ([getting-started](getting-started.md))، بعد اپ را build کنید و آن را به URL gateway خودتان نشانه بگیرید.
 
@@ -15,7 +15,7 @@
 
 ---
 
-## گام ۰ — کاری کنید gateway از گوشی در دسترس باشد
+## گام ۰: کاری کنید gateway از گوشی در دسترس باشد
 
 اپ از طریق شبکه با gateway حرف می‌زند، پس گوشی باید بتواند به آن برسد.
 
@@ -23,15 +23,15 @@
 |---|---|
 | گوشی روی همان LANِ gateway | `http://<gateway-lan-ip>:8770` (مثلاً `http://192.168.1.50:8770`) |
 | gateway پشت یک reverse proxy با TLS | `https://opendray.yourdomain.com` |
-| دسترسی خارج از LAN (دیتای موبایل، در سفر) | یک endpoint عمومی HTTPS — Cloudflare Tunnel، Tailscale، یا یک reverse proxy روی nginx/Caddy |
+| دسترسی خارج از LAN (دیتای موبایل، در سفر) | یک endpoint عمومی HTTPS: Cloudflare Tunnel، Tailscale، یا یک reverse proxy روی nginx/Caddy |
 
-> **`:8770` را خام به اینترنت expose نکنید.** جلویش TLS و یک ingress بگذارید. Cloudflare Tunnel کم‌دردسرترین گزینه است (نه port-forwarding، نه IP عمومی). snippetهای nginx / Caddy — شامل **هدرهای WebSocket upgrade** که ترمینال سشن‌ها لازم دارد — در [operator-guide §Topology](operator-guide.md#topology) آمده‌اند.
+> **`:8770` را خام به اینترنت expose نکنید.** جلویش TLS و یک ingress بگذارید. Cloudflare Tunnel کم‌دردسرترین گزینه است (نه port-forwarding، نه IP عمومی). snippetهای nginx / Caddy (شامل **هدرهای WebSocket upgrade** که ترمینال سشن‌ها لازم دارد) در [operator-guide §Topology](operator-guide.md#topology) آمده‌اند.
 
-دسترسی از روی گوشی را *پیش از* build تأیید کنید، مثلاً Gateway URL را در مرورگر گوشی باز کنید — باید صفحه ورود web admin را بگیرید.
+دسترسی از روی گوشی را *پیش از* build تأیید کنید، مثلاً Gateway URL را در مرورگر گوشی باز کنید. باید صفحه ورود web admin را بگیرید.
 
 ---
 
-## گام ۱ — toolchainِ Flutter را نصب کنید
+## گام ۱: toolchainِ Flutter را نصب کنید
 
 اپ با Flutter ساخته می‌شود. آن را روی ماشینی که build را انجام می‌دهد لازم دارید (نه روی گوشی).
 
@@ -60,9 +60,9 @@ flutter pub get
 
 ---
 
-## گام ۲الف — اندروید: یک APK بسازید و sideloadش کنید
+## گام ۲الف (اندروید): یک APK بسازید و sideloadش کنید
 
-این ساده‌ترین مسیر است — نه حساب developer، نه فروشگاه.
+این ساده‌ترین مسیر است: نه حساب developer، نه فروشگاه.
 
 ### ساختن APK
 
@@ -90,7 +90,7 @@ app/mobile/build/app/outputs/flutter-apk/app-release.apk
 
 </div>
 
-> **نکته امضا.** به‌صورت پیش‌فرض، build رِلیز با **debug keystore** امضا می‌شود (به `TODO` داخل `android/app/build.gradle.kts` نگاه کنید). این برای sideload شخصی اشکالی ندارد. اگر یک upload key درست‌وحسابی می‌خواهید (برای Play Store الزامی است، و برای buildی که قرار است مدام به‌روزش کنید بهداشت خوبی است)، [Flutter — Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app) را دنبال کنید و یک `signingConfig` برای `release` اضافه کنید.
+> **نکته امضا.** به‌صورت پیش‌فرض، build رِلیز با **debug keystore** امضا می‌شود (به `TODO` داخل `android/app/build.gradle.kts` نگاه کنید). این برای sideload شخصی اشکالی ندارد. اگر یک upload key درست‌وحسابی می‌خواهید (برای Play Store الزامی است، و برای buildی که قرار است مدام به‌روزش کنید بهداشت خوبی است)، [Flutter: Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app) را دنبال کنید و یک `signingConfig` برای `release` اضافه کنید.
 
 ### رساندن APK به گوشی
 
@@ -107,15 +107,15 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 
 </div>
 
-یا فایل `.apk` را به گوشی منتقل کنید (معادل AirDrop، یک file share، یک لینک دانلود، ایمیل به خودتان) و رویش بزنید. اندروید از شما می‌خواهد برای هر اپی که فایل را باز می‌کند (Files، Chrome و غیره) اجازه **«Install unknown apps»** را بدهید — اجازه‌اش را بدهید، بعد نصب را تأیید کنید.
+یا فایل `.apk` را به گوشی منتقل کنید (معادل AirDrop، یک file share، یک لینک دانلود، ایمیل به خودتان) و رویش بزنید. اندروید از شما می‌خواهد برای هر اپی که فایل را باز می‌کند (Files، Chrome و غیره) اجازه **«Install unknown apps»** را بدهید: اجازه‌اش را بدهید، بعد نصب را تأیید کنید.
 
 اپ با نام **Opendray** (`io.opendray.opendray`) ظاهر می‌شود.
 
 ---
 
-## گام ۲ب — iOS: build و نصب از طریق Xcode
+## گام ۲ب (iOS): build و نصب از طریق Xcode
 
-iOS معادل sideloadِ APK ندارد — هر نصب code-signed است. به یک **Mac با Xcode** و یک **Apple ID** نیاز دارید. یک Apple ID رایگان کار می‌کند (اپ هر ۷ روز دوباره امضا می‌شود؛ وقتی provisioning profile منقضی شد دوباره نصبش می‌کنید). یک حساب پولی Apple Developer (سالی ۹۹ دلار) profileهای یک‌ساله و TestFlight می‌دهد.
+iOS معادل sideloadِ APK ندارد: هر نصب code-signed است. به یک **Mac با Xcode** و یک **Apple ID** نیاز دارید. یک Apple ID رایگان کار می‌کند (اپ هر ۷ روز دوباره امضا می‌شود؛ وقتی provisioning profile منقضی شد دوباره نصبش می‌کنید). یک حساب پولی Apple Developer (سالی ۹۹ دلار) profileهای یک‌ساله و TestFlight می‌دهد.
 
 ### تنظیم یک‌باره‌ی امضا
 
@@ -134,7 +134,7 @@ open ios/Runner.xcworkspace        # WORKSPACE را باز کنید، نه .xcod
 1. تارگت **Runner** را انتخاب کنید → تب **Signing & Capabilities**.
 2. تیک **Automatically manage signing** را بزنید.
 3. **Team**: تیم Apple ID خود را انتخاب کنید (اگر در فهرست نیست، Apple ID خود را زیر Xcode → Settings → Accounts اضافه کنید).
-4. **Bundle Identifier**: به‌صورت پیش‌فرض `io.opendray.opendray` است. با یک Apple ID رایگان ممکن است همین ID دقیق از سمت Apple قبلاً گرفته شده باشد — اگر Xcode خطای provisioning نشان داد، آن را به چیزی یکتا مثل `io.opendray.opendray.<yourname>` تغییر دهید.
+4. **Bundle Identifier**: به‌صورت پیش‌فرض `io.opendray.opendray` است. با یک Apple ID رایگان ممکن است همین ID دقیق از سمت Apple قبلاً گرفته شده باشد: اگر Xcode خطای provisioning نشان داد، آن را به چیزی یکتا مثل `io.opendray.opendray.<yourname>` تغییر دهید.
 
 ### build و نصب روی iPhone
 
@@ -167,15 +167,15 @@ iOS اپی را که با یک تیم شخصی امضا شده اجرا نمی�
 
 ---
 
-## گام ۳ — اپ را به gateway خود وصل کنید
+## گام ۳: اپ را به gateway خود وصل کنید
 
 اولین اجرا صفحه onboarding را نشان می‌دهد:
 
-1. **Gateway URL** — URL گام ۰ را وارد کنید
+1. **Gateway URL**: URL گام ۰ را وارد کنید
    (مثلاً `https://opendray.yourdomain.com`). روی **Continue** بزنید.
-2. **Sign in** — `admin` + رمز ادمین شما (همانی که در `[admin].password` تنظیم کردید، یا بعداً تغییرش دادید).
+2. **Sign in**: `admin` + رمز ادمین شما (همانی که در `[admin].password` تنظیم کردید، یا بعداً تغییرش دادید).
 
-همین — روی همان surfaceهای web admin فرود می‌آیید: Sessions، Channels، Integrations، Memory، Git، Settings.
+همین. روی همان surfaceهای web admin فرود می‌آیید: Sessions، Channels، Integrations، Memory، Git، Settings.
 
 برای اینکه بعداً اپ را به یک gateway دیگر نشانه بگیرید، در صفحه ورود روی **Change** بزنید (یا Settings → server) و URL را دوباره وارد کنید.
 
@@ -183,7 +183,7 @@ iOS اپی را که با یک تیم شخصی امضا شده اجرا نمی�
 
 ## به‌روزرسانی اپ
 
-به‌روزرسانی خودکار وجود ندارد — بعد از pull کردن کد جدید دوباره نصب می‌کنید:
+به‌روزرسانی خودکار وجود ندارد. بعد از pull کردن کد جدید دوباره نصب می‌کنید:
 
 <div dir="ltr">
 
@@ -210,7 +210,7 @@ open ios/Runner.xcworkspace      # دوباره ▶ Run، یا `flutter run --re
 | نشانه | علت | راه‌حل |
 |---|---|---|
 | onboarding می‌گوید «could not connect» | گوشی نمی‌تواند به Gateway URL برسد | URL را در مرورگر گوشی باز کنید؛ اول LAN IP / tunnel / TLS را درست کنید (گام ۰) |
-| ورود کار می‌کند ولی ترمینال Sessions هیچ‌وقت وصل نمی‌شود | reverse proxy دارد WebSocket upgrade را drop می‌کند | هدرهای WS را اضافه کنید — [operator-guide §Topology](operator-guide.md#topology) |
+| ورود کار می‌کند ولی ترمینال Sessions هیچ‌وقت وصل نمی‌شود | reverse proxy دارد WebSocket upgrade را drop می‌کند | هدرهای WS را اضافه کنید، [operator-guide §Topology](operator-guide.md#topology) |
 | اندروید جلوی نصب را می‌گیرد | اجازه‌ی «Install unknown apps» داده نشده | برای اپی که `.apk` را باز می‌کند (Files / Chrome) اجازه‌اش را بدهید |
 | هنگام اجرا روی iOS «Untrusted Developer» | profile تیم شخصی هنوز trust نشده | Settings → General → VPN & Device Management → Trust |
 | در Xcode «Unable to install / signing» روی iOS | برخورد Bundle ID با یک Apple ID رایگان | Bundle Identifier را به `io.opendray.opendray.<yourname>` تغییر دهید |
@@ -221,9 +221,9 @@ open ios/Runner.xcworkspace      # دوباره ▶ Run، یا `flutter run --re
 
 ## همچنین ببینید
 
-- [getting-started.md](getting-started.md) — gatewayی که اپ به آن وصل می‌شود را بالا بیاورید
-- [operator-guide.md](operator-guide.md) — توپولوژی reverse proxy / tunnel برای دسترسی خارج از LAN
-- [Flutter — build & release Android](https://docs.flutter.dev/deployment/android)
-- [Flutter — build & release iOS](https://docs.flutter.dev/deployment/ios)
+- [getting-started.md](getting-started.md): gatewayی که اپ به آن وصل می‌شود را بالا بیاورید
+- [operator-guide.md](operator-guide.md): توپولوژی reverse proxy / tunnel برای دسترسی خارج از LAN
+- [Flutter: build & release Android](https://docs.flutter.dev/deployment/android)
+- [Flutter: build & release iOS](https://docs.flutter.dev/deployment/ios)
 
 </div>

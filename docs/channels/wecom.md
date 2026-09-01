@@ -1,7 +1,7 @@
 # WeCom / Enterprise WeChat (企业微信)
 
-**Mode:** group robot webhook (outbound only — no public URL needed)
-**Capabilities:** text · card (markdown) — no callback buttons
+**Mode:** group robot webhook (outbound only, no public URL needed)
+**Capabilities:** text · card (markdown), no callback buttons
 
 > Only the group-robot webhook is supported in v1. The full
 > app-platform path (corp_id + agent_id + secret + AES-encrypted
@@ -38,7 +38,7 @@ Save with **Enabled = on**.
 ## 3. Test
 
 - Admin **Test** button sends a plain text message to the group.
-- Trigger session.idle — a markdown message appears with the bold
+- Trigger session.idle, and a markdown message appears with the bold
   title + body. Buttons whose value is a clickable URL appear as
   inline links at the bottom; `cmd:` buttons are dropped (group
   robots cannot fire callbacks).
@@ -47,10 +47,10 @@ Save with **Enabled = on**.
 
 - WeCom group robots are rate-limited to **20 messages/min per robot**.
   Bursty `session.*` notifications can hit this if you run many
-  sessions concurrently — consider tightening `notify_on` (e.g.
+  sessions concurrently. Consider tightening `notify_on` (e.g.
   `session.ended` only) or switch to the bridge.
 - WeCom markdown only supports a small subset: `**bold**`, `>` quote,
   `# heading`, `[label](url)`, `<font color="info|warning|comment">`.
   Tables and code blocks render poorly.
-- The webhook URL is a bearer credential — anyone with it can post to
+- The webhook URL is a bearer credential. Anyone with it can post to
   the group. Do not commit it to source control.

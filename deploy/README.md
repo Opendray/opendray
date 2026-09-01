@@ -5,24 +5,24 @@ one path:
 
 | Artefact | When to use |
 |---|---|
-| [`systemd/opendray.service`](systemd/opendray.service) | Bare-metal, VM, or LXC. Standard Linux deploy path — sandboxed unit with `migrate`-then-`serve` boot. |
-| [`launchd/com.opendray.opendray.plist`](launchd/com.opendray.opendray.plist) | macOS LaunchDaemon — Mac mini / Mac Studio as 24/7 home server. Starts at boot before any user login, restarts on crash. |
-| [`lxc/proxmox-pty-notes.md`](lxc/proxmox-pty-notes.md) | Proxmox LXC specifics — PTY allocation in unprivileged containers, networking, secrets. |
+| [`systemd/opendray.service`](systemd/opendray.service) | Bare-metal, VM, or LXC. Standard Linux deploy path: sandboxed unit with `migrate`-then-`serve` boot. |
+| [`launchd/com.opendray.opendray.plist`](launchd/com.opendray.opendray.plist) | macOS LaunchDaemon for a Mac mini / Mac Studio as 24/7 home server. Starts at boot before any user login, restarts on crash. |
+| [`lxc/proxmox-pty-notes.md`](lxc/proxmox-pty-notes.md) | Proxmox LXC specifics: PTY allocation in unprivileged containers, networking, secrets. |
 | [`.goreleaser.yml`](../.goreleaser.yml) (repo root) | Cut a tagged release of pre-built binaries + checksums. |
 
 > **Docker is intentionally not listed.** opendray is a host-resident
-> gateway — it spawns AI CLIs via PTYs and shares process state
+> gateway that spawns AI CLIs via PTYs and shares process state
 > (`~/.claude`, ssh-agent, project files) with them, which is
 > incompatible with the container isolation that a production Docker
 > deploy would impose. Use the systemd / launchd paths above instead.
 
 The systemd unit and the LXC notes are designed to compose: a Proxmox
-LXC running OpenDray uses both — the unit for service management,
+LXC running OpenDray uses both: the unit for service management,
 the LXC notes for the host-side container config that lets PTYs work.
 
 ## Out of scope
 
-- Reverse-proxy configs (nginx / Caddy / Traefik / Cloudflare Tunnel) —
+- Reverse-proxy configs (nginx / Caddy / Traefik / Cloudflare Tunnel):
   see [`docs/operator-guide.md`](../docs/operator-guide.md) §Topology.
 - Postgres bootstrapping. OpenDray expects an external Postgres 15+;
   use whatever flow you already have.

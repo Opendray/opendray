@@ -4,13 +4,13 @@
 > **Status:** Implemented (M5)
 > **Code:** `internal/channel/bridge/`
 
-The Bridge Protocol lets external messaging adapters — written in any
-language — connect to opendray at runtime via WebSocket. This means new
+The Bridge Protocol lets external messaging adapters (written in any
+language) connect to opendray at runtime via WebSocket. This means new
 platforms (WeChat, DingTalk, Discord variants, custom chat backends) can
 ship as standalone adapter scripts without recompiling the Go binary.
 
 The opendray side ("server") is the `bridge` channel kind. Each `bridge`
-channel row in the database holds one adapter slot — name, shared
+channel row in the database holds one adapter slot: name, shared
 token, optional capability allow-list. The adapter ("client") opens a
 WebSocket, presents the token, declares its capabilities, and is then
 treated as a regular `Channel` implementation by the Hub.
@@ -145,15 +145,15 @@ The `action` is whatever was set as `ButtonOption.Value` on the original
 card. Built-in cards produce values like `cmd:/resume <sid>` (slash
 command) or `nav:/sessions/<sid>` (UI navigation hint).
 
-opendray's Hub recognises `cmd:/...` actions — including those wrapped
-in `act:` — and dispatches them through the slash-command registry.
+opendray's Hub recognises `cmd:/...` actions, including those wrapped
+in `act:`, and dispatches them through the slash-command registry.
 
 ### `ping`
 
 Application-level keepalive. The server replies with `{"type":"pong"}`.
 
 WebSocket-level ping/pong is also sent automatically by the server every
-~54s — adapters need only respond to `Ping` control frames per RFC 6455
+~54s. Adapters need only respond to `Ping` control frames per RFC 6455
 (most WebSocket libraries do this transparently).
 
 ---
@@ -310,7 +310,7 @@ from `Card.RenderText()`.
 ## 6. Reconnection
 
 The bridge channel keeps its broker registration even after the WS
-connection closes — adapters may freely reconnect with the same token.
+connection closes. Adapters may freely reconnect with the same token.
 A new register frame replaces any prior connection. Outbound frames
 attempted while no adapter is attached return `ErrNotSupported`.
 

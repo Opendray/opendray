@@ -3,7 +3,7 @@
 ## Problem
 
 Switching a live Claude session to another account (`PATCH
-/api/v1/sessions/{id}/claude-account`) starts a **fresh conversation** —
+/api/v1/sessions/{id}/claude-account`) starts a **fresh conversation**:
 the new account's CLI has no memory of what the session was doing. This
 is intentional (PR #331): `claude --resume <uuid>` validates the UUID
 against the *target account's own* session registry, so a UUID minted
@@ -11,7 +11,7 @@ under account A fails with "No conversation found" under account B and
 the CLI exits immediately. #331 cleared `ClaudeSessionID` on switch to
 keep the session alive at the cost of conversation continuity.
 
-We cannot resume the *same* conversation across accounts — that's a
+We cannot resume the *same* conversation across accounts. That's a
 Claude Code constraint, not ours. But we **can** carry the *meaning*
 forward: read the prior transcript and inject it as context into the
 fresh session's system prompt, the same channel skills / memory /
@@ -24,7 +24,7 @@ conversation with the prior one's content, so the operator doesn't have
 to re-explain what they were working on.
 
 Non-goal: byte-exact resume (impossible across accounts). Non-goal:
-changing the default — fresh-session stays the default; carry-over is
+changing the default: fresh-session stays the default; carry-over is
 explicit.
 
 ## Constraint recap (why injection, not resume)
@@ -67,7 +67,7 @@ if req.CarryContext {
 `buildCarryover` reuses `claude_jsonl.go` to:
 1. Resolve the old account's projects root +
    `findClaudeProjectDir(cwd)`.
-2. Read `<dir>/<oldUUID>.jsonl` (fail-closed on missing — same M22
+2. Read `<dir>/<oldUUID>.jsonl` (fail-closed on missing, the same M22
    defense the existing reader uses; do NOT fall back to latest-mtime,
    that risks pulling an unrelated session).
 3. Parse the JSONL turns, keep `user` + `assistant` *text* content,
@@ -82,7 +82,7 @@ abort cleanly before we touch the running process.
 ### 2. Inject (one-shot, into the respawn only)
 
 Thread the captured text into the respawn via a new **transient**
-context key — NOT a persisted Session field:
+context key, NOT a persisted Session field:
 
 ```
 // provider.go
@@ -116,7 +116,7 @@ if text, ok := session.CarryoverContext(prepareCtx); ok && text != "" {
 `SwitchClaudeAccount`, so the carryover is injected only into the first
 spawn under the new account. The new account mints its own fresh UUID;
 later restarts `--resume` *that* UUID, whose transcript already contains
-the seeded context — so continuity persists naturally without
+the seeded context, so continuity persists naturally without
 re-injecting (and without re-injecting on every daemon-restart resume).
 
 ### 3. Prompt format
@@ -136,7 +136,7 @@ prior context, not as new instructions to act on immediately.
 
 ### 4. Budget + truncation
 
-- Cap the injected block at **~6 000 tokens** (≈ 24 KB) — large enough
+- Cap the injected block at **~6 000 tokens** (≈ 24 KB), large enough
   for meaningful continuity, small enough to not dominate the new
   context window or spike cost. Configurable.
 - Tail-truncate (keep the most recent turns); if the first kept turn is
@@ -144,7 +144,7 @@ prior context, not as new instructions to act on immediately.
 - Strip tool_use / tool_result blocks; keep their *text* outcomes only
   if cheap. v1 can drop tool content entirely.
 
-### 5. Failure handling — degrade to fresh, never fail the switch
+### 5. Failure handling: degrade to fresh, never fail the switch
 
 The switch must keep working even if carryover can't be built:
 
@@ -153,7 +153,7 @@ The switch must keep working even if carryover can't be built:
 | transcript file missing | log debug, inject nothing, fresh session |
 | parse error / malformed jsonl | log warn, inject nothing |
 | over budget | truncate to cap |
-| `carry_context=false` (default) | skip entirely — current behavior |
+| `carry_context=false` (default) | skip entirely (current behavior) |
 
 A carryover failure logs and proceeds; it never returns an error from
 `SwitchClaudeAccount`.
@@ -180,12 +180,12 @@ context"** (default off), with a one-line helper:
 > prior conversation content is sent to Anthropic under the **new**
 > account.
 
-That second sentence is the **consent surface** — see Privacy.
+That second sentence is the **consent surface**. See Privacy.
 
 ## Privacy / data-boundary note (important)
 
 Carrying context means conversation content created under **account A**
-is fed into a prompt processed under **account B** — i.e. sent to
+is fed into a prompt processed under **account B**, i.e. sent to
 Anthropic billed/governed by account B's terms. For most operators
 (personal multi-account pools) this is fine, but it's a real
 cross-boundary data flow and must be **explicit, opt-in, and labeled at
@@ -196,9 +196,9 @@ the consent surface; the API default `false` is the backstop.
 
 - **Phase 1 (this spec):** raw transcript-tail injection, opt-in via
   `carry_context`, byte/token-capped, tool-noise stripped, fail-open.
-  No extra LLM call — deterministic and cheap. UI checkbox + consent
+  No extra LLM call, deterministic and cheap. UI checkbox + consent
   helper. Ships the 80% value.
-- **Phase 2 (optional, separate PR):** *summarized* carryover — generate
+- **Phase 2 (optional, separate PR):** *summarized* carryover, generate
   a compact recap instead of raw tail. Open question: which credential
   summarizes? Cleanest is a short headless `claude -p` under the **old**
   account *before* Stop(), so the summary is produced under the account
@@ -225,17 +225,17 @@ the consent surface; the API default `false` is the backstop.
 
 ## Files touched (implementer checklist)
 
-- `internal/session/handler.go` — `SwitchAccountRequest.CarryContext`
-- `internal/session/manager.go` — `SwitchClaudeAccount` capture +
+- `internal/session/handler.go`: `SwitchAccountRequest.CarryContext`
+- `internal/session/manager.go`: `SwitchClaudeAccount` capture +
   thread carryover into respawn; `spawn` accepts the carryover ctx
-- `internal/session/provider.go` — `WithCarryoverContext` /
+- `internal/session/provider.go`: `WithCarryoverContext` /
   `CarryoverContext`
-- `internal/session/claude_jsonl.go` — `buildCarryover` helper (reuses
+- `internal/session/claude_jsonl.go`: `buildCarryover` helper (reuses
   existing locate/read/parse)
-- `internal/catalog/adapter.go` — inject `--append-system-prompt` when
+- `internal/catalog/adapter.go`: inject `--append-system-prompt` when
   carryover present (claude case)
-- `internal/catalog/*_test.go` — lock the inject contract
+- `internal/catalog/*_test.go`: lock the inject contract
 - `app/web/src/components/sessions/AccountSwitcher.tsx` + mobile
-  equivalent — checkbox + consent helper
-- `app/shared/src/lib/*` — pass `carry_context` in the switch call
+  equivalent: checkbox + consent helper
+- `app/shared/src/lib/*`: pass `carry_context` in the switch call
 - i18n: en/es/zh strings for the checkbox + helper

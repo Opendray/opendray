@@ -37,7 +37,7 @@ Before the first run, an operator needs to:
 2. Reserve the package names by publishing version `0.0.0` of each
    from a clean checkout of this directory:
    - `opendray-linux-x64`, `opendray-linux-arm64`,
-     `opendray-darwin-x64`, `opendray-darwin-arm64` (publish first —
+     `opendray-darwin-x64`, `opendray-darwin-arm64` (publish first, since
      `opendray`'s `optionalDependencies` resolve against them)
    - `opendray`
    - `@opendray/sdk` (run `npm install && npm run build` in `sdk/`

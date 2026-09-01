@@ -8,7 +8,7 @@ Get a local opendray-v2 instance running in about five minutes.
 |---|---|---|
 | Go | 1.25+ | Backend + embedded web bundle |
 | pnpm | 10+ | Web SPA build |
-| Node.js | 22+ | pnpm runtime (build only — not needed at deploy time) |
+| Node.js | 22+ | pnpm runtime (build only, not needed at deploy time) |
 | Docker | recent | Local Postgres for dev / tests (optional if you bring your own DB) |
 
 Verify:
@@ -52,7 +52,7 @@ You should now have:
 
 | URL | What |
 |---|---|
-| `http://127.0.0.1:8770/admin/` | Web admin SPA — log in with `admin` + the password you set |
+| `http://127.0.0.1:8770/admin/` | Web admin SPA, log in with `admin` + the password you set |
 | `http://127.0.0.1:8770/api/v1/...` | REST + WebSocket API |
 
 Stop the server with `Ctrl-C`. Stop the Postgres with `systemctl stop postgresql       # or brew services stop postgresql
@@ -104,13 +104,13 @@ psql "postgres://postgres@your_host/opendray" -c 'CREATE EXTENSION IF NOT EXISTS
 ```
 
 After that, opendray's regular CRUD-only role can run migrations
-without needing further superuser access — migration `0011_memory`
+without needing further superuser access. Migration `0011_memory`
 just creates the `memories` table (the extension is already
 present).
 
 ### Recommendations
 
-- Create a project-scoped role with only the CRUD privileges opendray needs — never use `postgres` / superuser at runtime.
+- Create a project-scoped role with only the CRUD privileges opendray needs. Never use `postgres` / superuser at runtime.
 - Rotate credentials out of band; don't commit them.
 - Connection pool size is configurable via `[database].max_conns` (default `16`).
 - Supported Postgres versions: **15, 16, 17**. The encrypted-backup subsystem additionally requires `pg_dump` / `pg_restore` matching the server's major version (see operator-guide.md `[backup]`).
@@ -193,6 +193,6 @@ Kill the conflicting process or change the port:
 
 ## Next steps
 
-- [`README.md`](../README.md) — high-level project overview
-- [`CONTRIBUTING.md`](../CONTRIBUTING.md) — how to send a PR
-- [`SECURITY.md`](../SECURITY.md) — vulnerability disclosure
+- [`README.md`](../README.md): high-level project overview
+- [`CONTRIBUTING.md`](../CONTRIBUTING.md): how to send a PR
+- [`SECURITY.md`](../SECURITY.md): vulnerability disclosure

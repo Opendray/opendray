@@ -1,4 +1,4 @@
-# モバイルアプリ — ビルドとインストール
+# モバイルアプリ: ビルドとインストール
 
 🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · **日本語** · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · [Русский](mobile-app.ru.md)
 
@@ -22,7 +22,7 @@ git ホストの読み取り。エージェント自体はゲートウェイホ�
 
 ---
 
-## ステップ 0 — スマートフォンからゲートウェイに到達できるようにする
+## ステップ 0: スマートフォンからゲートウェイに到達できるようにする
 
 アプリはネットワーク経由でゲートウェイと通信するため、
 スマートフォンがゲートウェイに到達できる必要があります。
@@ -31,21 +31,21 @@ git ホストの読み取り。エージェント自体はゲートウェイホ�
 |---|---|
 | スマートフォンがゲートウェイと同じ LAN 上にある | `http://<gateway-lan-ip>:8770`（例: `http://192.168.1.50:8770`） |
 | ゲートウェイが TLS 付きのリバースプロキシの背後にある | `https://opendray.yourdomain.com` |
-| LAN 外からのアクセス（モバイル回線、外出時） | パブリックな HTTPS エンドポイント — Cloudflare Tunnel、Tailscale、または nginx/Caddy リバースプロキシ |
+| LAN 外からのアクセス（モバイル回線、外出時） | パブリックな HTTPS エンドポイント（Cloudflare Tunnel、Tailscale、または nginx/Caddy リバースプロキシ） |
 
 > **`:8770` をインターネットに生のまま公開しないでください。** その前段に TLS と
 > ingress を配置してください。Cloudflare Tunnel が最も手間のかからない選択肢です
-> （ポートフォワーディング不要、パブリック IP 不要）。nginx / Caddy のスニペット —
-> Sessions ターミナルが必要とする **WebSocket アップグレードヘッダー** を含む —
+> （ポートフォワーディング不要、パブリック IP 不要）。nginx / Caddy のスニペット（
+> Sessions ターミナルが必要とする **WebSocket アップグレードヘッダー** を含む）
 > は [operator-guide §Topology](operator-guide.md#topology) にあります。
 
 ビルドする *前に* スマートフォンから到達性を確認してください。例えば
-スマートフォンのブラウザで Gateway URL を開きます — web 管理画面のログインページが
+スマートフォンのブラウザで Gateway URL を開きます。web 管理画面のログインページが
 表示されるはずです。
 
 ---
 
-## ステップ 1 — Flutter ツールチェーンをインストールする
+## ステップ 1: Flutter ツールチェーンをインストールする
 
 アプリは Flutter でビルドされています。ビルドを行うマシン（スマートフォンではない）に
 インストールする必要があります。
@@ -69,9 +69,9 @@ flutter pub get
 
 ---
 
-## ステップ 2A — Android: APK をビルドしてサイドロードする
+## ステップ 2A（Android）: APK をビルドしてサイドロードする
 
-これが最もシンプルな経路です — 開発者アカウントもストアも不要です。
+これが最もシンプルな経路です。開発者アカウントもストアも不要です。
 
 ### APK をビルドする
 
@@ -95,7 +95,7 @@ app/mobile/build/app/outputs/flutter-apk/app-release.apk
 > 署名されます（`android/app/build.gradle.kts` の `TODO` を参照）。これは個人での
 > サイドロードには問題ありません。適切なアップロードキー（Play Store には必須であり、
 > 継続的に更新するビルドには良い習慣）が欲しい場合は、
-> [Flutter — Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
+> [Flutter: Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
 > に従って `release` 用の `signingConfig` を追加してください。
 
 ### APK をスマートフォンに入れる
@@ -112,15 +112,15 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 または `.apk` ファイルをスマートフォンに転送し（AirDrop 相当、ファイル共有、
 ダウンロードリンク、自分宛のメール）、タップします。Android は、ファイルを開くアプリ
 （ファイル、Chrome など）に対して **「不明なアプリのインストール」** を許可するよう
-求めてきます — 許可してから、インストールを確認してください。
+求めてきます。許可してから、インストールを確認してください。
 
 アプリは **Opendray**（`io.opendray.opendray`）として表示されます。
 
 ---
 
-## ステップ 2B — iOS: Xcode 経由でビルドしてインストールする
+## ステップ 2B（iOS）: Xcode 経由でビルドしてインストールする
 
-iOS には APK をサイドロードする相当の手段はありません — すべてのインストールはコード署名されます。
+iOS には APK をサイドロードする相当の手段はありません。すべてのインストールはコード署名されます。
 **Xcode を搭載した Mac** と **Apple ID** が必要です。無料の Apple ID でも
 動作します（アプリは 7 日ごとに再署名され、プロビジョニングプロファイルが
 期限切れになったら再インストールします）。有料の Apple Developer アカウント
@@ -141,7 +141,7 @@ Xcode で:
 3. **Team**: あなたの Apple ID チームを選択する（リストにない場合は
    Xcode → Settings → Accounts で Apple ID を追加する）。
 4. **Bundle Identifier**: 初期値は `io.opendray.opendray` です。無料の
-   Apple ID では、この正確な ID が Apple 側ですでに使用されている場合があります —
+   Apple ID では、この正確な ID が Apple 側ですでに使用されている場合があります。
    Xcode がプロビジョニングエラーを表示する場合は、`io.opendray.opendray.<yourname>`
    のような一意なものに変更してください。
 
@@ -174,16 +174,16 @@ iOS は、開発者プロファイルを信頼するまで、個人チームで�
 
 ---
 
-## ステップ 3 — アプリをゲートウェイに接続する
+## ステップ 3: アプリをゲートウェイに接続する
 
 初回起動時にオンボーディング画面が表示されます:
 
-1. **Gateway URL** — ステップ 0 の URL を入力します
+1. **Gateway URL**: ステップ 0 の URL を入力します
    （例: `https://opendray.yourdomain.com`）。**Continue** をタップします。
-2. **Sign in** — `admin` + 管理者パスワード（`[admin].password` で設定したもの、
+2. **Sign in**: `admin` + 管理者パスワード（`[admin].password` で設定したもの、
    またはその後変更したもの）。
 
-これで完了です — web 管理画面と同じ画面に到達します: Sessions、
+これで完了です。web 管理画面と同じ画面に到達します: Sessions、
 Channels、Integrations、Memory、Git、Settings。
 
 後でアプリを別のゲートウェイに向けるには、ログイン画面の **Change** をタップ
@@ -193,7 +193,7 @@ Channels、Integrations、Memory、Git、Settings。
 
 ## アプリを更新する
 
-自動更新はありません — 新しいコードを取得した後に再インストールします:
+自動更新はありません。新しいコードを取得した後に再インストールします:
 
 ```sh
 git pull
@@ -217,7 +217,7 @@ open ios/Runner.xcworkspace      # 再度 ▶ Run、または `flutter run --rel
 | 症状 | 原因 | 対処 |
 |---|---|---|
 | オンボーディングで「接続できませんでした」 | スマートフォンが Gateway URL に到達できない | スマートフォンのブラウザで URL を開き、まず LAN IP / トンネル / TLS を修正する（ステップ 0） |
-| ログインはできるが Sessions ターミナルが接続しない | リバースプロキシが WebSocket アップグレードを落としている | WS ヘッダーを追加する — [operator-guide §Topology](operator-guide.md#topology) |
+| ログインはできるが Sessions ターミナルが接続しない | リバースプロキシが WebSocket アップグレードを落としている | WS ヘッダーを追加する: [operator-guide §Topology](operator-guide.md#topology) |
 | Android がインストールをブロックする | 「不明なアプリのインストール」が許可されていない | `.apk` を開くアプリ（ファイル / Chrome）に対して許可する |
 | 起動時に iOS が「信頼されていないデベロッパ」と表示する | 個人チームのプロファイルがまだ信頼されていない | 設定 → 一般 → VPN とデバイス管理 → 信頼 |
 | Xcode で iOS が「インストール / 署名できません」と表示する | 無料 Apple ID との Bundle ID の衝突 | Bundle Identifier を `io.opendray.opendray.<yourname>` に変更する |
@@ -228,7 +228,7 @@ open ios/Runner.xcworkspace      # 再度 ▶ Run、または `flutter run --rel
 
 ## 関連項目
 
-- [getting-started.md](getting-started.md) — アプリが接続するゲートウェイを立ち上げる
-- [operator-guide.md](operator-guide.md) — LAN 外アクセス向けのリバースプロキシ / トンネルトポロジー
-- [Flutter — build & release Android](https://docs.flutter.dev/deployment/android)
-- [Flutter — build & release iOS](https://docs.flutter.dev/deployment/ios)
+- [getting-started.md](getting-started.md): アプリが接続するゲートウェイを立ち上げる
+- [operator-guide.md](operator-guide.md): LAN 外アクセス向けのリバースプロキシ / トンネルトポロジー
+- [Flutter: build & release Android](https://docs.flutter.dev/deployment/android)
+- [Flutter: build & release iOS](https://docs.flutter.dev/deployment/ios)

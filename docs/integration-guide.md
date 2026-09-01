@@ -1,6 +1,6 @@
 # Integration Guide
 
-This guide is for developers building an **integration** — an external
+This guide is for developers building an **integration**, an external
 application that talks to an opendray-v2 gateway over HTTP and
 WebSockets, in any language.
 
@@ -9,7 +9,7 @@ If you're contributing to opendray itself, see [`CONTRIBUTING.md`](../CONTRIBUTI
 
 ## What is an integration?
 
-An integration is a separate process — your app — that registers with
+An integration is a separate process (your app) that registers with
 opendray and consumes its capabilities:
 
 - Create and drive PTY sessions backed by Claude Code, Codex, Antigravity,
@@ -32,7 +32,7 @@ to Slack when a session ends:
 1. **Operator registers your integration** with admin auth, picking a
    `route_prefix` and a list of scopes
 2. opendray returns a **plaintext API key once** (not stored, not
-   shown again — you save it securely)
+   shown again, so you save it securely)
 3. **You expose `GET /health`** so opendray can probe you every 30s
 4. **You subscribe to events** via WebSocket using the API key
 5. **When `session.ended` fires**, your bot posts to Slack
@@ -62,7 +62,7 @@ Required fields:
 | Field | Notes |
 |---|---|
 | `name` | Human-readable label |
-| `base_url` | Where opendray reverse-proxies inbound requests addressed to your `route_prefix`. Optional — pure consumers can omit it. |
+| `base_url` | Where opendray reverse-proxies inbound requests addressed to your `route_prefix`. Optional. Pure consumers can omit it. |
 | `route_prefix` | Unique slug. Reserved: `_events`, `_kinds`, `_internal`, `_*`. |
 | `scopes` | Array of allow-listed capabilities (see below). |
 | `version` | Free-form, your choice. opendray surfaces it in admin UI. |
@@ -132,7 +132,7 @@ Scopes gate what your integration can do. Defined values:
 `event:subscribe:*` and `event:subscribe:session.*` work as wildcards
 (prefix match).
 
-**Today (M3)**: only `event:subscribe:<topic>` is enforced — every
+**Today (M3)**: only `event:subscribe:<topic>` is enforced, every
 other scope is _declared_ but every business endpoint accepts any
 valid integration token. Per-route scope enforcement on session /
 channel / provider endpoints is on the v1.1 roadmap.
@@ -185,7 +185,7 @@ WS /api/v1/integrations/_events?token=odk_live_...&topics=session.output,session
 - `topics` is comma-separated; wildcards via trailing `.*` (e.g.
   `session.*`)
 - The handler enforces `event:subscribe:<topic>` for each requested
-  topic — admin tokens bypass the check
+  topic. Admin tokens bypass the check
 
 ### Frame schema
 
@@ -213,7 +213,7 @@ Every event frame is a JSON object:
   automatically by most WS libraries)
 - Per-message write timeout is 5s
 - The connection drops on auth failure, scope violation, or topic
-  parse error — reconnect with backoff
+  parse error. Reconnect with backoff
 
 ## Reverse proxy
 
@@ -237,8 +237,8 @@ GET http://slack-bot-server:3000/api/v1/dogs/123
 ```
 
 opendray injects three headers:
-- `X-OpenDray-Forwarded-For` — the original client IP
-- `X-Integration-ID` — your integration's ID (so you know it's coming
+- `X-OpenDray-Forwarded-For`: the original client IP
+- `X-Integration-ID`: your integration's ID (so you know it's coming
   from opendray, not direct)
 - `X-OpenDray-API: v1`
 
@@ -316,15 +316,15 @@ It shows:
 - The full 9-step lifecycle from `register` to `unregister`
 
 Files to read in order:
-- `examples/integrations/demo-client/src/index.ts` — top-level flow
-- `examples/integrations/demo-client/src/client.ts` — `OpendrayClient`
+- `examples/integrations/demo-client/src/index.ts`: top-level flow
+- `examples/integrations/demo-client/src/client.ts`: `OpendrayClient`
   REST + WS abstraction (a model for your own SDK)
-- `examples/integrations/demo-client/src/state.ts` — local key persistence
+- `examples/integrations/demo-client/src/state.ts`: local key persistence
 
-The demo deliberately avoids any framework dependency — it's pure
+The demo deliberately avoids any framework dependency. It's pure
 node `fetch` + the `ws` library. Port to your language of choice.
 
 ## See also
 
-- [`docs/operator-guide.md`](operator-guide.md) — running opendray
-- [`SECURITY.md`](../SECURITY.md) — vulnerability disclosure
+- [`docs/operator-guide.md`](operator-guide.md): running opendray
+- [`SECURITY.md`](../SECURITY.md): vulnerability disclosure
