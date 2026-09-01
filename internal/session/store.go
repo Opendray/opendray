@@ -22,6 +22,7 @@ const sessionSelect = `
            args, state, COALESCE(pid, 0),
            COALESCE(claude_account_id, ''), COALESCE(claude_session_id, ''),
            COALESCE(antigravity_account_id, ''),
+           COALESCE(grok_account_id, ''),
            COALESCE(parent_session_id, ''),
            COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
            COALESCE(interrupt_reason, ''),
@@ -44,15 +45,17 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
         INSERT INTO sessions
             (id, name, provider_id, model, cwd, args, state, pid,
              claude_account_id, claude_session_id, antigravity_account_id,
-             parent_session_id, origin, integration_id, started_at)
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+             parent_session_id, origin, integration_id, started_at,
+             grok_account_id)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
 		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Model,
 		sess.Cwd, argsJSON, string(sess.State), nullableInt(sess.PID),
 		nullableString(sess.ClaudeAccountID), nullableString(sess.ClaudeSessionID),
 		nullableString(sess.AntigravityAccountID),
 		nullableString(sess.ParentSessionID),
 		string(origin), nullableString(sess.IntegrationID),
-		sess.StartedAt)
+		sess.StartedAt,
+		nullableString(sess.GrokAccountID))
 	if err != nil {
 		return fmt.Errorf("insert session: %w", err)
 	}
@@ -246,6 +249,19 @@ func (s *sessionStore) UpdateAntigravityAccount(ctx context.Context, id, account
 	return nil
 }
 
+func (s *sessionStore) UpdateGrokAccount(ctx context.Context, id, accountID string) error {
+	res, err := s.pool.Exec(ctx, `
+        UPDATE sessions SET grok_account_id=$1 WHERE id=$2`,
+		nullableString(accountID), id)
+	if err != nil {
+		return fmt.Errorf("update grok account: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // Delete permanently removes the row. Caller must ensure the session
 // is no longer running (Manager.Stop first).
 func (s *sessionStore) Delete(ctx context.Context, id string) error {
@@ -275,7 +291,7 @@ func scanSession(row rowScanner) (Session, error) {
 	)
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
-		&s.AntigravityAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
+		&s.AntigravityAccountID, &s.GrokAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
 		&interruptR, &s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound

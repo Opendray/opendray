@@ -587,6 +587,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		State:                StateRunning,
 		ClaudeAccountID:      req.ClaudeAccountID,
 		AntigravityAccountID: req.AntigravityAccountID,
+		GrokAccountID:        req.GrokAccountID,
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
@@ -682,6 +683,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	accountID := sess.ClaudeAccountID
 	if sess.ProviderID == "antigravity" {
 		accountID = sess.AntigravityAccountID
+	}
+	if sess.ProviderID == "grok" {
+		accountID = sess.GrokAccountID
 	}
 	resolveCtx := WithKBAdmin(WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model), sess.KBAdmin)
 	// Integration spawn profile: provider-agnostic MCP servers + system
@@ -779,9 +783,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	// vs --ask-for-approval) fail to spawn.
 	providerArgs := dropOverriddenFlags(p.Args, userArgs)
 	providerArgs = dropConflictingFlags(providerArgs, userArgs, p.Conflicts)
-	args := append([]string(nil), providerArgs...)
-	args = append(args, extraArgs...)
-	args = append(args, userArgs...)
+	args := finalizeSpawnArgs(p.ID, providerArgs, extraArgs, userArgs)
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = sess.Cwd
@@ -1366,6 +1368,69 @@ func (m *Manager) SwitchAntigravityAccount(ctx context.Context, id, newAccountID
 // Remove tears down a session permanently — running processes are
 // stopped first, then the DB row is deleted. This is the destructive
 // counterpart to Stop (which leaves the row behind for restart).
+
+// SwitchGrokAccount terminates the running `grok` process and respawns it
+// under a different grok account binding (a different GROK_HOME). The
+// session row, cwd, args and slot are preserved — only the account moves,
+// so the session survives the switch. Mirrors SwitchAntigravityAccount;
+// conversation carry-over is deferred (RFC #532 P3). On respawn failure
+// the row stays 'stopped' with the ORIGINAL account (never persisted the
+// new value) so the user can Restart on it.
+func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	current, err := m.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if current.ProviderID != "grok" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	if current.GrokAccountID == newAccountID {
+		// No-op: caller picked the binding already in place.
+		return current, nil
+	}
+
+	if err := m.Stop(ctx, id); err != nil {
+		return Session{}, fmt.Errorf("stop before switch: %w", err)
+	}
+
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	sess.GrokAccountID = newAccountID
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	rs, err := m.spawn(ctx, sess, true)
+	if err != nil {
+		return Session{}, fmt.Errorf("respawn under new account: %w", err)
+	}
+
+	if err := m.store.UpdateGrokAccount(ctx, id, newAccountID); err != nil {
+		m.log.Error("persist new grok account failed",
+			"session", id, "account", newAccountID, "err", err)
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.account_switched",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"account_id":  newAccountID,
+		},
+	})
+	return rs.sess, nil
+}
+
 func (m *Manager) Remove(ctx context.Context, id string) error {
 	if err := m.Stop(ctx, id); err != nil {
 		return err
@@ -1611,10 +1676,28 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 var injectionValueFlags = map[string]bool{
 	"--mcp-config":           true, // claude
 	"--append-system-prompt": true, // claude
+	"--rules":                true, // grok
 }
 var injectionBoolFlags = map[string]bool{
 	"--dangerously-skip-permissions":             true, // claude / antigravity
 	"--dangerously-bypass-approvals-and-sandbox": true, // codex
+}
+
+// finalizeSpawnArgs assembles the final exec arg list: provider-config
+// args, then the Prepare output's injection args, then the caller's raw
+// args. For grok the merged list gets one last CoalesceRulesArgs pass —
+// grok permits --rules at most once per invocation, and the Prepare-level
+// coalesce cannot see userArgs (they are appended after Prepare runs), so
+// a caller-supplied --rules would otherwise reintroduce the duplicate and
+// fail the spawn. The pass is a no-op for well-formed non-grok arg lists.
+func finalizeSpawnArgs(providerID string, providerArgs, extraArgs, userArgs []string) []string {
+	args := append([]string(nil), providerArgs...)
+	args = append(args, extraArgs...)
+	args = append(args, userArgs...)
+	if providerID == "grok" {
+		args = CoalesceRulesArgs(args)
+	}
+	return args
 }
 
 // stripInjectionFlags returns args with the spawn-profile-owned injection

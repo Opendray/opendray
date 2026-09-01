@@ -47,6 +47,7 @@ import (
 	gitapi "github.com/opendray/opendray-v2/internal/git"
 	"github.com/opendray/opendray-v2/internal/gitactivity"
 	githost "github.com/opendray/opendray-v2/internal/githost"
+	"github.com/opendray/opendray-v2/internal/grokacct"
 	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/keepawake"
 	"github.com/opendray/opendray-v2/internal/knowledge"
@@ -558,6 +559,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	agyacctSvc := agyacct.NewService(st.Pool(), bus, log)
 	agyacctHandlers := agyacct.NewHandlers(agyacctSvc, log)
 
+	// Grok multi-account (parallel to agyacct; accounts surfaced via the
+	// "Import local" scan). Each account is a dedicated GROK_HOME.
+	grokacctSvc := grokacct.NewService(st.Pool(), bus, log)
+	grokacctHandlers := grokacct.NewHandlers(grokacctSvc, log)
+
 	// Every on-disk root comes from one resolver (internal/config/
 	// paths.go) so the gateway and the `opendray notes|skill|mcp`
 	// commands can never disagree about where things live.
@@ -644,6 +650,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithAntigravityAccountResolver(agyacctSvc),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
+	sessionProvider.WithGrokAccounts(grokacctSvc) // grok multi-account: bind GROK_HOME at spawn
 	// Built before the session manager so spawn can inject an
 	// integration's provider-agnostic spawn profile (MCP servers + system
 	// prompt + auto-approve) into the sessions it creates, and so POST
@@ -680,6 +687,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// Same fast-fail validation for PATCH
 		// /sessions/{id}/antigravity-account.
 		session.WithAntigravityAccountChecker(agyacctSvc),
+		session.WithGrokAccountChecker(grokacctSvc),
 		// Fill provider/model/claude-account from the integration's
 		// configured defaults for sessions an integration creates and
 		// the request leaves those fields empty (request still wins).
@@ -1567,6 +1575,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				catalogHandlers.Mount(r)
 				cliacctHandlers.Mount(r)
 				agyacctHandlers.Mount(r)
+				grokacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)
