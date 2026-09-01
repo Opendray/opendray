@@ -10,6 +10,53 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.14.0] — 2026-08-31
+
+Grok catches up. You can pool several xAI accounts, bind one to a session,
+and switch a running grok session from one account to another **without
+losing the session** — the multi-account parity Claude and Antigravity
+already had. Each account is an isolated `GROK_HOME`; the heavy install and
+cache directories are shared across accounts by symlink, so a second
+account costs kilobytes, not gigabytes.
+
+### Added
+
+- Grok multi-account: pool accounts, pick one per session, and live-switch
+  a running session between them (`PATCH /sessions/{id}/grok-account`)
+  without dropping it. Each account is an isolated `GROK_HOME`; MCP trust is
+  per-account and the heavy install/cache dirs are shared by symlink.
+  (#533, #534, #535)
+- Cortex spawn injections (memory guidance, ambient memory, skills) now
+  reach grok too, coalesced into grok's single `--rules`. (#530)
+
+## [v2.13.3] — 2026-08-22
+
+The one-line installer runs to the end again — as root, on a fresh Proxmox
+LXC or VPS, which is exactly how it is usually run. And Cortex, the
+knowledge layer, grows a lifecycle: operator edits stick, a page can be
+handed to an in-session agent, proposals are reviewed as a diff, and the
+sweep respects a page's approval gate.
+
+### Added
+
+- Cortex knowledge lifecycle: durable operator edits, polarity,
+  deletion-as-signal, and conflict execution. (#521)
+- Hand a knowledge page to in-session agents (#513); review proposals as a
+  diff instead of two full documents (#515); let the sweep honour a page's
+  approval gate (#516).
+- Tasks grouped by project in the management views. (#520)
+- Git: an "Update branch" action so a stale PR can be merged from opendray. (#518)
+
+### Fixed
+
+- Installer: root installs never completed — the Postgres readiness gate
+  always failed as root (`run_priv -u postgres` ran a literal `-u`), and
+  `migrate` ran with `HOME=/root` so its backup keyfile was unreadable. The
+  one-liner now runs to the end. (#529)
+- Mobile: a knowledge proposal is reviewable before you decide on it. (#519)
+- Cortex: `doc_read`'s framing is no longer written into pages. (#517)
+- Catalog: compare resolved paths when detecting non-npm bin links. (#514)
+
 ## [v2.13.2] — 2026-08-11
 
 The Vault stops being a flat pile of markdown. It holds a folder
