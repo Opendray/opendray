@@ -29,7 +29,7 @@ running under `systemd` / `launchd` and the admin UI is reachable.
 | 5 | DB name, app user, app password | `CREATE DATABASE`, `CREATE USER`, `CREATE EXTENSION vector`, grants |
 | 6 | admin password, listen address | `config.toml`, schema migrations, systemd unit / launchd plist |
 
-What it **doesn't** do (intentionally — these are interactive):
+What it **doesn't** do (intentionally, since these are interactive):
 
 - Log into the AI CLIs (`claude login`, `gemini auth login`, …)
 - Configure providers, channels, or backup destinations
@@ -41,7 +41,7 @@ Those happen after the wizard, in the admin UI.
 
 ## Quick start
 
-### Linux / macOS / WSL2 — one-liner
+### Linux / macOS / WSL2 one-liner
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Opendray/opendray/main/scripts/install.sh | bash
@@ -62,7 +62,7 @@ Either way you end up with `install-linux.sh` (or `install-macos.sh`)
 walking through the same wizard. The one-liner just removes the
 `git clone` + `cd` step.
 
-### Linux / macOS — from a checkout
+### Linux / macOS, from a checkout
 
 If you'd rather inspect the code before running anything:
 
@@ -76,7 +76,7 @@ bash scripts/install-macos.sh          # macOS (Intel + Apple Silicon)
 
 The wizard prompts before each privileged step. macOS default scope
 is a **user LaunchAgent** (runs at login). Pass `--launchd-daemon` for
-`/Library/LaunchDaemons` (boot-time, all users — needs admin).
+`/Library/LaunchDaemons` (boot-time, all users, needs admin).
 Homebrew is required for the macOS path; if it's missing the wizard
 prints the install command and exits.
 
@@ -102,7 +102,7 @@ It either:
 2. Installs WSL2 + Ubuntu via `wsl --install -d Ubuntu` (needs admin
    + reboot) and tells you to rerun afterwards.
 
-Inside the Ubuntu shell, run the Linux one-liner above — WSL2's
+Inside the Ubuntu shell, run the Linux one-liner above. WSL2's
 loopback forwarding makes the admin UI reachable at
 `http://localhost:8770/admin/` from the Windows host.
 
@@ -133,11 +133,11 @@ If you just press Enter at every prompt:
 - **Database name**: `opendray`
 - **App DB user**: `opendray_user`
 - **App DB password**: random 24-char alphanumeric (printed at the end)
-- **Listen address**: `127.0.0.1:8770` (loopback only — safest)
+- **Listen address**: `127.0.0.1:8770` (loopback only, safest)
 - **Admin password**: random 20-char alphanumeric (printed at the end)
 
 The two random passwords are printed exactly once, at the end of the
-wizard. **Save them somewhere safe** — opendray hashes the admin one
+wizard. **Save them somewhere safe**. opendray hashes the admin one
 into a bcrypt keyfile after your first UI password change, so you
 can rotate the admin password later, but the DB password is what
 `config.toml` keeps.
@@ -205,12 +205,12 @@ strictly-permissioned file, never in the unit definition or
 ### Secrets model (both OSes)
 
 opendray's config loader treats `OPENDRAY_…` environment variables as
-overrides — see `internal/config/config.go`. The wizard takes
+overrides. See `internal/config/config.go`. The wizard takes
 advantage of this: `OPENDRAY_DATABASE_URL` and
 `OPENDRAY_ADMIN_PASSWORD` live in `opendray.env`, everything else
 lives in `config.toml`. If you ever need to rotate the DB password
 or the bootstrap admin password, edit `opendray.env` and restart the
-service — no `config.toml` touch required.
+service, with no `config.toml` touch required.
 
 ---
 
@@ -246,7 +246,7 @@ bash scripts/uninstall.sh --purge
 > **Heads up on `bash -s -- --purge`:** the `--` and `--purge` MUST
 > be on the same line as `bash -s`. If your terminal soft-wraps the
 > command across two lines and you actually paste a newline, the
-> shell parses it as two commands — the first one is `bash -s` with
+> shell parses it as two commands. The first one is `bash -s` with
 > no args (default-mode uninstall, keeps your data), the second is
 > `-- --purge` (which fails with `--: command not found`). The
 > env-var form (`OPENDRAY_PURGE=1`) doesn't have this footgun.
@@ -273,7 +273,7 @@ host/user/password). The uninstaller does **not** touch:
 |---|---|---|
 | `--purge` | `OPENDRAY_PURGE=1` | Also drop the DB, role, config, data, logs, and the service user. |
 | `--yes`, `-y` | `OPENDRAY_YES=1` | Skip all confirmations. Combine with `--purge` for unattended cleanup. |
-| `-h`, `--help` | — | Built-in help. |
+| `-h`, `--help` | none | Built-in help. |
 
 Env-var forms are equivalent to the flag forms; pick whichever
 survives your copy-paste flow.
@@ -288,7 +288,7 @@ survives your copy-paste flow.
 | `pgvector extension is not available on this PG server` | missing OS package | `apt install postgresql-<ver>-pgvector` / `brew install pgvector`, then rerun |
 | `cannot connect to <host>:<port>` after bootstrap | `pg_hba.conf` doesn't allow the app user from this host | Add a `host opendray opendray_user <client-ip>/32 md5` line; reload PG |
 | `Health check did not succeed within 20s` | gateway crashed during startup | `journalctl -u opendray -n 50` (Linux) or `tail ~/.opendray/logs/opendray.err` (macOS) |
-| AI CLI says `command not found` after wizard | `npm bin -g` is not on your shell PATH | `echo $PATH` — make sure it contains the output of `npm bin -g` |
+| AI CLI says `command not found` after wizard | `npm bin -g` is not on your shell PATH | `echo $PATH`, make sure it contains the output of `npm bin -g` |
 
 ---
 
@@ -312,16 +312,16 @@ psql "<your DSN>" -tAc \
 ```
 
 If all three pass, the wizard did its job. Open the admin UI and
-proceed with [docs/getting-started.md § Step 4 — first login](
+proceed with [docs/getting-started.md § Step 4, first login](
 ../docs/getting-started.md#step-4--first-login--change-admin-password).
 
 
-## `enable-cli-updates.sh` — one-shot helper to enable in-app CLI updates
+## `enable-cli-updates.sh`, one-shot helper to enable in-app CLI updates
 
 On a non-root install the opendray service user can't write to the global
 npm prefix (`/usr/lib/node_modules` or similar), so the per-provider
 **Update** button on the Providers page returns *"In-app updates aren't
-available here — npm global prefix isn't writable."*
+available here: npm global prefix isn't writable."*
 
 `scripts/enable-cli-updates.sh` flips that by creating an opendray-owned
 npm prefix at `$OPENDRAY_DATA_DIR/.npm-global`, dropping a systemd unit
@@ -333,7 +333,7 @@ fragment that pins `NPM_CONFIG_PREFIX` + prepends the prefix's `bin` onto
 sudo bash scripts/enable-cli-updates.sh
 ```
 
-Idempotent — re-running just refreshes the CLIs in the prefix.
+Idempotent: re-running just refreshes the CLIs in the prefix.
 
 **Skip individual providers** with env vars:
 

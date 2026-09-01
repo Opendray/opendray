@@ -1,8 +1,8 @@
-# Round Table — rollback (experimental feature)
+# Round Table: rollback (experimental feature)
 
 Round Table is an **experimental** feature. If it does not pan out, it is
 designed to be removed with zero residue. This file is the manual rollback
-(the migration runner has no down-migrations — `//go:embed migrations/*.sql`
+(the migration runner has no down-migrations, since `//go:embed migrations/*.sql`
 would re-run any `.sql` placed in that directory, so the DROP statements live
 here, NOT in `internal/store/migrations/`).
 
@@ -21,7 +21,7 @@ here, NOT in `internal/store/migrations/`).
 
 ## Rollback steps
 
-1. **Drop the tables** — run against each live DB (`opendray_v2`):
+1. **Drop the tables**, run against each live DB (`opendray_v2`):
 
    ```sql
    DROP TABLE IF EXISTS round_table_messages;
@@ -39,7 +39,7 @@ here, NOT in `internal/store/migrations/`).
    ```
    (Adjust the table/column name to this deployment's migration ledger.)
 
-2. **Remove the code** — delete the `feat/round-table` branch (never merged) or,
+2. **Remove the code**: delete the `feat/round-table` branch (never merged) or,
    if merged, revert the merge commit. The package is self-contained; the only
    edit outside it is the marked wiring block in `app.go`.
 

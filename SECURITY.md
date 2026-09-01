@@ -12,7 +12,7 @@ Concretely:
 - The WebSocket terminal stream carries raw PTY I/O; intercepting it is
   equivalent to a shell session hijack.
 - Integration API keys can proxy arbitrary HTTP traffic through OpenDray to
-  any registered upstream — operators choose what gets registered.
+  any registered upstream, and operators choose what gets registered.
 
 **Always run OpenDray behind authentication.** It is not designed to be
 exposed to the public internet without a reverse proxy and TLS.
@@ -45,7 +45,7 @@ every login attempt** rather than booting with no auth.
 5. **Least privilege.** Run OpenDray as a dedicated unprivileged user.
 6. **Token TTL.** Keep `[admin].token_ttl ≤ 24h`. Rotate on compromise via
    server restart (active tokens are invalidated).
-7. **Cloudflare Tunnel binding.** Bind to `127.0.0.1`, not `0.0.0.0` —
+7. **Cloudflare Tunnel binding.** Bind to `127.0.0.1`, not `0.0.0.0`, because
    `middleware.RealIP` trusts `X-Forwarded-For`, which is spoofable on a
    public bind.
 
@@ -65,7 +65,7 @@ issues within 7 days.
 | Version | Supported |
 |---|---|
 | v1.0-rc onward | ✅ |
-| v1 (`Opendray/opendray`) | Archived — no further fixes. Migrate to v2. |
+| v1 (`Opendray/opendray`) | Archived, no further fixes. Migrate to v2. |
 
 ## CVE History
 

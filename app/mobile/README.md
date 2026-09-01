@@ -1,19 +1,19 @@
 # opendray mobile
 
-The Flutter control client for an opendray gateway — feature parity
+The Flutter control client for an opendray gateway: feature parity
 with the web admin (Sessions, Channels, Integrations, Memory, Git,
 Settings). It attaches to a **running gateway**; it is not a gateway
 itself.
 
 ## Build & install
 
-Full walkthrough — Android APK sideload and iOS install via Xcode,
+Full walkthrough: Android APK sideload and iOS install via Xcode,
 plus making the gateway reachable from the phone:
 
 **[→ `docs/mobile-app.md`](../../docs/mobile-app.md)**
 
 Available in 10 languages (English, 简体中文, فارسی, Español, Português,
-日本語, 한국어, Français, Deutsch, Русский) — use the language switcher at
+日本語, 한국어, Français, Deutsch, Русский). Use the language switcher at
 the top of the guide.
 
 ## Quick reference

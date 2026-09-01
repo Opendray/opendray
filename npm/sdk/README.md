@@ -42,8 +42,8 @@ for await (const frame of subscribeEvents(client, { topics: ["session.*"] })) {
 | Sessions         | `createSession`, `listSessions`, `getSession`, `deleteSession`, `sendInput`, `resizeSession`, `getSessionBuffer` |
 | Providers        | `listProviders`, `setProviderConfig` |
 | Channels         | `listChannels` |
-| Event stream     | `subscribeEvents(client, { topics })` — async iterable, auto-reconnect |
-| Session stream   | `streamSession(client, id, { onOutput, onEnded })` — bidirectional terminal WS |
+| Event stream     | `subscribeEvents(client, { topics })`, async iterable, auto-reconnect |
+| Session stream   | `streamSession(client, id, { onOutput, onEnded })`, bidirectional terminal WS |
 
 Errors thrown by REST calls are `OpendrayError` instances with `status` and `body`.
 

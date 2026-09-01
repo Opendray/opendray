@@ -2,13 +2,13 @@
 
 # نصب و اجرا از باینری از‌پیش‌ساخته‌شده
 
-برای وقتی که فقط باینری `opendray` را می‌خواهید — بدون wizard نصب‌کننده که دست به تنظیمات ماشین شما بزند. این مسیر مناسب است برای:
+برای وقتی که فقط باینری `opendray` را می‌خواهید، بدون wizard نصب‌کننده که دست به تنظیمات ماشین شما بزند. این مسیر مناسب است برای:
 
-- **`npm install -g opendray` / `npx opendray`** — پکیج npm باینری رسمی Go release را شامل می‌شود (ببینید [README → npm / npx](../README.fa.md)).
-- **دانلود Release** — فایل `opendray_*_<os>_<arch>.tar.gz` را از [صفحه Releases](https://github.com/Opendray/opendray/releases) بردارید.
-- **محیط‌های scripted / ephemeral** — CI runnerها، golden imageها، config management (Ansible، Nix، Docker)، یا هر hostی که Postgres و process supervisor خودتان را دارید.
+- **`npm install -g opendray` / `npx opendray`**: پکیج npm باینری رسمی Go release را شامل می‌شود (ببینید [README → npm / npx](../README.fa.md)).
+- **دانلود Release**: فایل `opendray_*_<os>_<arch>.tar.gz` را از [صفحه Releases](https://github.com/Opendray/opendray/releases) بردارید.
+- **محیط‌های scripted / ephemeral**: CI runnerها، golden imageها، config management (Ansible، Nix، Docker)، یا هر hostی که Postgres و process supervisor خودتان را دارید.
 
-باینری همان *کل* gateway است — web admin SPA داخلش embed شده، پس نه Node runtime لازم است، نه static server جداگانه، و نه چیزی برای build کردن. آنچه **نمی‌کند** این است که چیزی را برای شما setup نکند. این همان معامله است: شما یک دیتابیس PostgreSQL و روشی برای نگه‌داشتن فرایند می‌آورید، و در عوض هیچ‌چیزی بدون اطلاع شما نصب، تنظیم، یا ثبت نمی‌شود.
+باینری همان *کل* gateway است: web admin SPA داخلش embed شده، پس نه Node runtime لازم است، نه static server جداگانه، و نه چیزی برای build کردن. آنچه **نمی‌کند** این است که چیزی را برای شما setup نکند. این همان معامله است: شما یک دیتابیس PostgreSQL و روشی برای نگه‌داشتن فرایند می‌آورید، و در عوض هیچ‌چیزی بدون اطلاع شما نصب، تنظیم، یا ثبت نمی‌شود.
 
 > **می‌خواهید همه‌چیز برایتان انجام شود؟** روی یک Linux / macOS تازه، installer تک‌خطی Postgres را provision می‌کند، AI CLIها را نصب می‌کند، config را می‌نویسد، و یک service را در ۵ تا ۱۰ دقیقه ثبت می‌کند. ببینید [README → نصب‌کننده تک‌خطی](../README.fa.md) یا راهنمای دستی [getting-started.fa.md](getting-started.fa.md).
 
@@ -16,7 +16,7 @@
 
 ---
 
-## گام ۱ — باینری را بگیرید
+## گام ۱. باینری را بگیرید
 
 ### از طریق npm (هر OS با Node ≥ 18)
 
@@ -33,7 +33,7 @@ yarn global add opendray
 
 </div>
 
-باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) به‌صورت خودکار از طریق `optionalDependencies` انتخاب می‌شود — هیچ `postinstall` hookی وجود ندارد و هیچ network call هنگام نصب زده نمی‌شود. از دادن `--no-optional` **خودداری کنید**: این پکیج پلتفرم را رد می‌کند و launcher را بدون باینری‌ای که exec کند رها می‌کند.
+باینری پلتفرم متناظر (`opendray-{linux,darwin}-{x64,arm64}`) به‌صورت خودکار از طریق `optionalDependencies` انتخاب می‌شود. هیچ `postinstall` hookی وجود ندارد و هیچ network call هنگام نصب زده نمی‌شود. از دادن `--no-optional` **خودداری کنید**: این پکیج پلتفرم را رد می‌کند و launcher را بدون باینری‌ای که exec کند رها می‌کند.
 
 ### از طریق آرشیو release
 
@@ -59,11 +59,11 @@ opendray --help           # همه subcommandها را فهرست می‌کند
 </div>
 
 پلتفرم‌های پشتیبانی‌شده: **Linux** (x64, arm64) و **macOS** (x64, arm64).
-Windows بومی بسته‌بندی نشده — از WSL2 استفاده کنید و مسیر Linux را دنبال کنید.
+Windows بومی بسته‌بندی نشده. از WSL2 استفاده کنید و مسیر Linux را دنبال کنید.
 
 ---
 
-## گام ۲ — PostgreSQL 15+ با pgvector را فراهم کنید
+## گام ۲. PostgreSQL 15+ با pgvector را فراهم کنید
 
 opendray همه‌چیز (سشن‌ها، حافظه، audit log) را در PostgreSQL ذخیره می‌کند، و زیرسیستم حافظه‌اش به extension [`pgvector`](https://github.com/pgvector/pgvector) نیاز دارد. نسخه‌های server پشتیبانی‌شده: **15، 16، 17**.
 
@@ -91,15 +91,15 @@ sudo -u postgres psql -d opendray -c 'GRANT ALL ON SCHEMA public TO opendray;'
 
 </div>
 
-وقتی extension موجود باشد، نقش CRUD-only opendray بدون هیچ دسترسی superuser بیشتری migration اجرا می‌کند. **هرگز opendray را به یک نقش superuser در زمان اجرا وصل نکنید** — به آن یک حساب scoped به پروژه بدهید و رمز عبورش را جداگانه rotate کنید.
+وقتی extension موجود باشد، نقش CRUD-only opendray بدون هیچ دسترسی superuser بیشتری migration اجرا می‌کند. **هرگز opendray را به یک نقش superuser در زمان اجرا وصل نکنید**. به آن یک حساب scoped به پروژه بدهید و رمز عبورش را جداگانه rotate کنید.
 
 ---
 
-## گام ۳ — تنظیم کنید
+## گام ۳. تنظیم کنید
 
-opendray config خود را از یک فایل TOML **یا** صرفاً از متغیرهای محیط (12-factor) می‌خواند — env همیشه بر فایل ارجحیت دارد. تنها نیاز اجباری database URL است؛ بقیه مقادیر پیش‌فرض دارند.
+opendray config خود را از یک فایل TOML **یا** صرفاً از متغیرهای محیط (12-factor) می‌خواند، و env همیشه بر فایل ارجحیت دارد. تنها نیاز اجباری database URL است؛ بقیه مقادیر پیش‌فرض دارند.
 
-### گزینه الف — متغیرهای محیط (مناسب برای containerها / hostهای ephemeral)
+### گزینه الف. متغیرهای محیط (مناسب برای containerها / hostهای ephemeral)
 
 <div dir="ltr">
 
@@ -113,8 +113,8 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # اختیاری؛
 
 | متغیر | اجباری | پیش‌فرض | هدف |
 |---|---|---|---|
-| `OPENDRAY_DATABASE_URL` | **بله** | — | Postgres DSN |
-| `OPENDRAY_ADMIN_PASSWORD` | توصیه می‌شود | — | رمز ادمین وب/موبایل |
+| `OPENDRAY_DATABASE_URL` | **بله** | ندارد | Postgres DSN |
+| `OPENDRAY_ADMIN_PASSWORD` | توصیه می‌شود | ندارد | رمز ادمین وب/موبایل |
 | `OPENDRAY_ADMIN_USER` | خیر | `admin` | نام کاربری ادمین |
 | `OPENDRAY_LISTEN` | خیر | `127.0.0.1:8770` | آدرس bind |
 | `OPENDRAY_LOG_LEVEL` | خیر | `info` | `debug`/`info`/`warn`/`error` |
@@ -122,7 +122,7 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # اختیاری؛
 
 `opendray serve` را بدون flag مربوط به `-config` اجرا کنید و کاملاً از محیط بارگذاری می‌شود.
 
-### گزینه ب — config.toml
+### گزینه ب. config.toml
 
 <div dir="ltr">
 
@@ -151,11 +151,11 @@ password = "use-a-real-password"
 
 </div>
 
-فایل کاملاً annotated را در [`config.example.toml`](../config.example.toml) ببینید (logging، session idle detection، backupها، vault، MCP). آن را با `-config config.toml` به دستورات زیر بدهید. secretها را روی hostهای shared داخل TOML نگذارید — `OPENDRAY_DATABASE_URL` / `OPENDRAY_ADMIN_PASSWORD` را از طریق env تنظیم کنید و فایل را non-secret نگه دارید.
+فایل کاملاً annotated را در [`config.example.toml`](../config.example.toml) ببینید (logging، session idle detection، backupها، vault، MCP). آن را با `-config config.toml` به دستورات زیر بدهید. secretها را روی hostهای shared داخل TOML نگذارید: `OPENDRAY_DATABASE_URL` / `OPENDRAY_ADMIN_PASSWORD` را از طریق env تنظیم کنید و فایل را non-secret نگه دارید.
 
 ---
 
-## گام ۴ — schema را اعمال کنید
+## گام ۴. schema را اعمال کنید
 
 <div dir="ltr">
 
@@ -167,11 +167,11 @@ opendray migrate -config config.toml
 
 </div>
 
-Idempotent است — اجرای مجدد وقتی schema جاری است no-op می‌شود. این باید قبل از اولین `serve` با موفقیت اجرا شود.
+Idempotent است: اجرای مجدد وقتی schema جاری است no-op می‌شود. این باید قبل از اولین `serve` با موفقیت اجرا شود.
 
 ---
 
-## گام ۵ — اجرا کنید
+## گام ۵. اجرا کنید
 
 <div dir="ltr">
 
@@ -187,10 +187,10 @@ opendray serve -config config.toml
 
 | آدرس | کاربرد |
 |---|---|
-| `http://127.0.0.1:8770/admin/` | ادمین وب — با `admin` + رمز عبورتان وارد شوید |
+| `http://127.0.0.1:8770/admin/` | ادمین وب: با `admin` + رمز عبورتان وارد شوید |
 | `http://127.0.0.1:8770/api/v1/...` | REST + WebSocket API |
 
-این یک gateway کامل و در حال اجرا است. برای هر چیزی فراتر از یک تست سریع، آن را زیر یک supervisor اجرا کنید تا از reboots جان سالم به در ببرد و در صورت crash دوباره راه‌اندازی شود — ادامه می‌دهیم.
+این یک gateway کامل و در حال اجرا است. برای هر چیزی فراتر از یک تست سریع، آن را زیر یک supervisor اجرا کنید تا از reboots جان سالم به در ببرد و در صورت crash دوباره راه‌اندازی شود. ادامه می‌دهیم.
 
 ---
 
@@ -199,7 +199,7 @@ opendray serve -config config.toml
 `opendray serve` دقیقاً همان دستوری است که start command یک service unit باید فراخوانی کند.
 opendray unitهای hardened و آماده‌به‌استفاده ارائه می‌کند؛ مراحل زیر همان [README → انتشار عملیاتی](../README.fa.md#production-deploy) است که مرجع اصلی است (bootstrap کامل، نکات sandboxing، reverse-proxy/TLS).
 
-### Linux — systemd
+### Linux: systemd
 
 این repo یک unit hardened در
 [`deploy/systemd/opendray.service`](../deploy/systemd/opendray.service)
@@ -232,7 +232,7 @@ journalctl -u opendray -f --no-pager
 systemd ندارید؟ (LXC بدون آن، OpenRC، runit، s6، supervisord…) supervisor خودتان را به `opendray serve -config /etc/opendray/config.toml` اشاره دهید و `opendray migrate` را یک بار به‌عنوان pre-start step اجرا کنید. ببینید
 [README → انتشار عملیاتی §B](../README.fa.md#production-deploy).
 
-### macOS — launchd
+### macOS: launchd
 
 این repo یک LaunchDaemon در
 [`deploy/launchd/com.opendray.opendray.plist`](../deploy/launchd/com.opendray.opendray.plist)
@@ -258,7 +258,7 @@ sudo launchctl print system/com.opendray.opendray
 Restart: `sudo launchctl kickstart -k system/com.opendray.opendray`.
 Unload: `sudo launchctl bootout system/com.opendray.opendray`.
 
-> هر دو unit به‌طور کامل — شامل چیدمان secretها و دلیل خاموش گذاشتن `MemoryDenyWriteExecute` — در [`deploy/README.md`](../deploy/README.md) مستند شده‌اند.
+> هر دو unit به‌طور کامل (شامل چیدمان secretها و دلیل خاموش گذاشتن `MemoryDenyWriteExecute`) در [`deploy/README.md`](../deploy/README.md) مستند شده‌اند.
 
 ---
 
@@ -266,7 +266,7 @@ Unload: `sudo launchctl bootout system/com.opendray.opendray`.
 
 نحوه به‌روزرسانی به روش نصب بستگی دارد:
 
-- **از طریق npm نصب شده** — با package manager خود به‌روز کنید. `opendray update`
+- **از طریق npm نصب شده**: با package manager خود به‌روز کنید. `opendray update`
   باینری را *داخل* `node_modules` پشت npm جایگزین می‌کند و با اجرای بعدی install بازنویسی می‌شود؛ پس اینجا از آن استفاده نکنید.
 
 <div dir="ltr">
@@ -277,7 +277,7 @@ Unload: `sudo launchctl bootout system/com.opendray.opendray`.
 
 </div>
 
-- **دانلود release / نصب wizard** — باینری خودش را in-place به‌روز می‌کند
+- **دانلود release / نصب wizard**: باینری خودش را in-place به‌روز می‌کند
   (آخرین release را دانلود می‌کند، SHA-256 آن را تأیید می‌کند، به‌صورت atomic خودش را swap می‌کند):
 
 <div dir="ltr">
@@ -297,7 +297,7 @@ Unload: `sudo launchctl bootout system/com.opendray.opendray`.
 npm با `--no-optional` اجرا شده، یا نصب قطع شده است. `npm install -g opendray` را دوباره اجرا کنید (بدون `--no-optional`).
 
 **`unsupported platform`**
-پکیج npm فقط Linux/macOS روی x64/arm64 را پوشش می‌دهد. روی targetهای دیگر، از source بسازید — ببینید [quickstart.md](quickstart.md).
+پکیج npm فقط Linux/macOS روی x64/arm64 را پوشش می‌دهد. روی targetهای دیگر، از source بسازید. ببینید [quickstart.md](quickstart.md).
 
 **`config: database.url is empty`**
 نه `OPENDRAY_DATABASE_URL` و نه `[database].url` تنظیم نشده‌اند. یکی را تنظیم کنید (گام ۳).
@@ -315,9 +315,9 @@ Extension روی server نصب نشده، یا داخل دیتابیس opendray 
 
 ## گام‌های بعدی
 
-- [README → انتشار عملیاتی](../README.fa.md#production-deploy) — مرجع کامل deploy (systemd / launchd / own-supervisor، hardening، reverse proxy)
-- [`docs/operator-guide.md`](operator-guide.md) — ops: توپولوژی reverse-proxy/TLS، backupهای رمزنگاری‌شده DB، data export/import
-- [`docs/integration-guide.md`](integration-guide.md) — ساختن یک integration خارجی با REST + WebSocket API
-- [`docs/getting-started.fa.md`](getting-started.fa.md) — راه‌اندازی راهنما و all-in-one اگر ترجیح می‌دهید قطعات را خودتان سر هم نکنید
+- [README → انتشار عملیاتی](../README.fa.md#production-deploy). مرجع کامل deploy (systemd / launchd / own-supervisor، hardening، reverse proxy)
+- [`docs/operator-guide.md`](operator-guide.md). ops: توپولوژی reverse-proxy/TLS، backupهای رمزنگاری‌شده DB، data export/import
+- [`docs/integration-guide.md`](integration-guide.md). ساختن یک integration خارجی با REST + WebSocket API
+- [`docs/getting-started.fa.md`](getting-started.fa.md). راه‌اندازی راهنما و all-in-one اگر ترجیح می‌دهید قطعات را خودتان سر هم نکنید
 
 </div>

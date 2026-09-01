@@ -32,11 +32,11 @@ container"**. Or in `/etc/pve/lxc/<vmid>.conf`:
 unprivileged: 0
 ```
 
-Recreate the container after toggling — Proxmox doesn't migrate the
+Recreate the container after toggling. Proxmox doesn't migrate the
 existing rootfs across the privilege boundary. There's nothing else to
 configure for OpenDray.
 
-## Unprivileged container — making PTY work
+## Unprivileged container: making PTY work
 
 If you must stay unprivileged (shared-tenancy hosts, compliance, etc.),
 add the following to `/etc/pve/lxc/<vmid>.conf`:
@@ -54,7 +54,7 @@ What these do:
 |---|---|
 | `features: nesting=1` | Lets unprivileged containers create their own user namespaces. Required for some PTY allocation paths. |
 | `c 5:2 rwm` | Grants `/dev/ptmx` read/write/mknod (major 5, minor 2). |
-| `c 136:* rwm` | Grants `/dev/pts/*` (major 136, any minor) — the PTY slaves. |
+| `c 136:* rwm` | Grants `/dev/pts/*` (major 136, any minor), the PTY slaves. |
 | `lxc.mount.entry … /dev/ptmx` | Bind-mounts the host's `/dev/ptmx` into the container so `pty.Open` finds it. |
 
 Restart the container after editing:
@@ -117,7 +117,7 @@ If empty:
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-The OpenDray migration runner does NOT create extensions — that
+The OpenDray migration runner does NOT create extensions. That
 typically requires `superuser`, which the project-scoped role
 shouldn't have. Install the extension with a DBA / superuser one-shot
 and OpenDray's project role will use it.
@@ -127,7 +127,7 @@ and OpenDray's project role will use it.
 If you set `[backup].enabled = true`, **`pg_dump` and `pg_restore`
 must match the major version of the Postgres they target.** A common
 mistake is installing `pg_dump` 15 in the LXC while the database is
-PG 17 — `pg_dump` aborts with `server version mismatch`.
+PG 17, so `pg_dump` aborts with `server version mismatch`.
 
 Install the matching client tools and point at them:
 
@@ -150,9 +150,9 @@ The systemd unit ships an `EnvironmentFile=/etc/opendray/env.d/secrets`
 directive. In an LXC the file lives inside the container's filesystem;
 that's fine for self-host. For tighter isolation, two upgrades:
 
-1. **systemd-creds** — encrypted-at-rest credentials decrypted only at
+1. **systemd-creds**: encrypted-at-rest credentials decrypted only at
    service start. Requires systemd 250+ (Debian 12 ships 252, OK).
-2. **Vault Agent / OS keychain** — render the EnvironmentFile from a
+2. **Vault Agent / OS keychain**: render the EnvironmentFile from a
    secret manager at boot. More moving parts; needed for multi-host
    fleets.
 
@@ -197,6 +197,6 @@ location / {
 - [ ] systemd unit shows `active (running)` and `journalctl -u opendray` is clean
 - [ ] `curl -fsS http://127.0.0.1:8770/admin/` returns the SPA HTML
 - [ ] Reverse proxy fronts the LXC and the SPA loads over TLS in a browser
-- [ ] Login + create one test session — confirm the terminal renders
+- [ ] Login + create one test session, confirm the terminal renders
 
 If all eight are green, the deploy is complete.

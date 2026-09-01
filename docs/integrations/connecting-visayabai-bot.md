@@ -1,10 +1,10 @@
 # Connecting the visayabai bot to opendray
 
 Goal: let the **visayabai bot** drive opendray-managed Claude Code (or
-Codex / Antigravity / shell) sessions — send a user's message in, stream the
-agent's reply back out — using opendray's **Integrations** system.
+Codex / Antigravity / shell) sessions (send a user's message in, stream the
+agent's reply back out) using opendray's **Integrations** system.
 
-> Scope note: this is the *legitimate* integration path — your own bot
+> Scope note: this is the *legitimate* integration path: your own bot
 > orchestrating your own interactive sessions through opendray's API.
 > It is NOT a way to resell Claude-subscription inference to third
 > parties (that violates Anthropic's terms). Keep visayabai as a
@@ -17,7 +17,7 @@ agent's reply back out — using opendray's **Integrations** system.
 Operator chose the **bridge channel** path. It's the best outcome for a
 chat bot: opendray handles session routing, reply detection
 (`session.turn_completed`), notification policy, `/new` provider
-selection, account switching, and the voice MCP — visayabai just relays
+selection, account switching, and the voice MCP. visayabai just relays
 messages in/out. Runnable reference adapter:
 **`docs/integrations/visayabai_bridge_adapter.py`**.
 
@@ -35,7 +35,7 @@ messages in/out. Runnable reference adapter:
   opendray replies `{"type":"register_ack","ok":true}` (or
   `ok:false`+`error`). Capabilities (exact strings): `text`, `card`,
   `buttons`, `image`, `file`, `typing`, `update_message`,
-  `reply_to_message`. Declare only what visayabai can render — opendray
+  `reply_to_message`. Declare only what visayabai can render. opendray
   only sends frames for declared caps; everything degrades to `text`.
 - **Inbound (adapter → opendray):** a user message →
   ```json
@@ -44,11 +44,11 @@ messages in/out. Runnable reference adapter:
   ```
   Button taps → `{"type":"card_action","action":"<id>","conversation_id":...}`.
   Adapter ping → `{"type":"ping"}` (opendray replies `{"type":"pong"}`).
-- **Outbound (opendray → adapter):** render to the user —
+- **Outbound (opendray → adapter):** render to the user:
   `{"type":"send",...,"text"}`, `{"type":"start_typing"/"stop_typing"}`,
   `{"type":"send_card",...,"card"}`, `{"type":"send_buttons",...,"buttons":[[…]]}`,
   `{"type":"send_image"/"send_file",...}`, `{"type":"update_message",...}`.
-- **`conversation_id` is the routing key** — use a stable id per
+- **`conversation_id` is the routing key**: use a stable id per
   visayabai user/chat. opendray binds each `conversation_id` to its own
   session, so N users → N independent Claude sessions automatically.
 
@@ -79,7 +79,7 @@ Integrations UI in the screenshots), then summarizes **Pattern B**.
 
 ---
 
-## Pattern A — Consumer integration
+## Pattern A: Consumer integration
 
 ### A1. Register the integration (operator, one-time, in the web UI)
 
@@ -88,17 +88,17 @@ has **no Base URL** and **no route prefix** (those are only for the
 reverse-proxy direction). Give it:
 
 - **Name:** `visayabai`
-- **Base URL:** *(leave blank — consumer, not reverse-proxied)*
+- **Base URL:** *(leave blank: consumer, not reverse-proxied)*
 - **Scopes** (minimum to drive a chat→Claude→chat loop):
-  - `session:read` — list/get sessions, read buffer, fetch history
-  - `session:create` — spawn / restart / delete sessions
-  - `session:input` — **required** to forward messages into the PTY
-  - `event:subscribe:session.*` — live-tail `session.idle` /
+  - `session:read`: list/get sessions, read buffer, fetch history
+  - `session:create`: spawn / restart / delete sessions
+  - `session:input`: **required** to forward messages into the PTY
+  - `event:subscribe:session.*`: live-tail `session.idle` /
     `session.turn_completed` / `session.ended` so the bot knows when a
     reply has settled
-  - `provider:read` *(optional)* — list providers (claude/codex/…)
+  - `provider:read` *(optional)*: list providers (claude/codex/…)
 
-On save, opendray shows the **API key once** — format
+On save, opendray shows the **API key once**: format
 `odk_live_<...>`. Copy it into visayabai's secret store (env var, not
 source). It's bcrypt-hashed server-side and never shown again; use
 **Rotate key** to issue a new one.
@@ -157,8 +157,8 @@ curl -sX POST https://HOST/api/v1/sessions/$SES/input \
   `wss://HOST/api/v1/sessions/$SES/stream?token=$OPENDRAY_KEY`
   On connect it replays the recent buffer, then streams live output as
   binary frames. Send binary frames back to write to stdin (alternative
-  to the `/input` POST). This is the raw terminal stream (ANSI included)
-  — strip ANSI for a chat surface.
+  to the `/input` POST). This is the raw terminal stream (ANSI included).
+  Strip ANSI for a chat surface.
 
 - **Event bus (know when the turn is done):**
   `wss://HOST/api/v1/integrations/_events?topics=session.*&token=$OPENDRAY_KEY`
@@ -169,7 +169,7 @@ curl -sX POST https://HOST/api/v1/sessions/$SES/input \
     "data": { "session_id": "ses_...", "recent_output": "..." } }
   ```
   `session.turn_completed` fires a few seconds after the agent stops
-  emitting — the right signal to grab `recent_output` and post it back
+  emitting, the right signal to grab `recent_output` and post it back
   to the visayabai user, and to stop any "typing…" indicator.
 
 **Recommended bot pattern:** open the `_events` WS once (not per
@@ -181,19 +181,19 @@ to recreate a session if the CLI exited.
 
 ### A4. Useful extras
 
-- `GET /api/v1/sessions` — list (filter to visayabai's own by name).
-- `GET /api/v1/sessions/{id}/buffer?since=<cursor>` — pull output
+- `GET /api/v1/sessions`: list (filter to visayabai's own by name).
+- `GET /api/v1/sessions/{id}/buffer?since=<cursor>`: pull output
   since a byte cursor (headers `X-OpenDray-Buffer-Cursor`) instead of
   the WS, if the bot prefers polling.
-- `GET /api/v1/sessions/{id}/history?limit=N` — past user prompts.
+- `GET /api/v1/sessions/{id}/history?limit=N`: past user prompts.
 - `POST /api/v1/sessions/{id}/stop` / `POST /.../start` /
-  `DELETE /.../{id}` — lifecycle.
-- `POST /api/v1/sessions/{id}/uploads` — attach a file (multipart);
+  `DELETE /.../{id}`: lifecycle.
+- `POST /api/v1/sessions/{id}/uploads`: attach a file (multipart);
   returns a server path to reference in a prompt.
 
 ---
 
-## Pattern B — Bridge channel (alternative)
+## Pattern B: Bridge channel (alternative)
 
 If visayabai is fundamentally a chat surface (user texts, Claude
 replies) and you'd rather not write the session-routing yourself, model
@@ -209,20 +209,20 @@ adapter** (`kind=bridge`, registered in opendray's channel system).
   `channel:send`).
 
 This reuses opendray's reply detection, notification policy, and
-`/new`-style session management for free — at the cost of less
+`/new`-style session management for free, at the cost of less
 low-level control than Pattern A. The bridge adapter WS endpoint is
 mounted publicly (`bridgeHandlers.Mount`, see `internal/channel/bridge`).
 
 ---
 
-## Reverse-proxy direction (for completeness — NOT this use case)
+## Reverse-proxy direction (for completeness, NOT this use case)
 
 The "Base URL + route prefix" fields you saw on the PDAweb integration
 are the *other* direction: opendray reverse-proxies
 `/api/v1/proxy/<prefix>/*` **to** the integration's Base URL (opendray
 → your app). Use that when you want opendray to be the authenticated
 front door to a service. visayabai driving sessions does **not** need
-it — leave Base URL blank.
+it. Leave Base URL blank.
 
 ---
 
@@ -259,7 +259,7 @@ it — leave Base URL blank.
   `internal/app/app.go:759` (`/integrations/_events`)
 - Reverse proxy: `internal/integration/proxy.go`
   (`/proxy/{prefix}/*`)
-- Scope catalog (UI strings): web bundle `QO{...}` —
+- Scope catalog (UI strings): web bundle `QO{...}`,
   session:read/create/input, channel:send/receive,
   event:subscribe:{session,channel,integration}.*, provider:read,
   memory:read/write

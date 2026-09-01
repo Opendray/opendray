@@ -71,12 +71,12 @@ over file.
 
 | Key | Env | Default | Notes |
 |---|---|---|---|
-| `user` | `OPENDRAY_ADMIN_USER` | `admin` | Single-admin model — there's no multi-user system in v1. Used as the bootstrap username before the operator changes credentials via the UI; superseded by the keyfile thereafter. |
+| `user` | `OPENDRAY_ADMIN_USER` | `admin` | Single-admin model, there's no multi-user system in v1. Used as the bootstrap username before the operator changes credentials via the UI; superseded by the keyfile thereafter. |
 | `password` | `OPENDRAY_ADMIN_PASSWORD` | _(required for first boot)_ | Bootstrap-only plaintext password. The first time the operator changes credentials via the UI (`/api/v1/auth/change-credentials`), opendray writes a bcrypt-hashed keyfile at `$HOME/.opendray/secrets/admin.key` (mode `0600`, parent dir `0700`). From that point on the keyfile is authoritative and this value is **ignored** even if you keep updating it. |
 | `token_ttl` | `OPENDRAY_ADMIN_TOKEN_TTL` | `24h` | Bearer token absolute lifetime for browser logins (`/api/v1/auth/login`). |
 | `mobile_token_ttl` | `OPENDRAY_ADMIN_MOBILE_TOKEN_TTL` | `30d` (`720h`) | Bearer token absolute lifetime for the Flutter mobile app (`/api/v1/auth/mobile-login`). Longer because the device gates access via biometrics + secure storage. |
 
-> **Where the password lives at rest** — credential precedence in
+> **Where the password lives at rest**: credential precedence in
 > `LoadCreds` (`internal/auth/keyfile.go`):
 >
 > 1. If `OPENDRAY_ADMIN_KEY_FILE` is set, the file at that path is
@@ -88,7 +88,7 @@ over file.
 >    config/env (plaintext, bootstrap only).
 >
 > For docker / systemd `LoadCredential` / k8s secret deployments,
-> point `OPENDRAY_ADMIN_KEY_FILE` at the injected file — this skips
+> point `OPENDRAY_ADMIN_KEY_FILE` at the injected file, which skips
 > step 2 entirely so a stale home-dir keyfile never wins over the
 > deployment's intent.
 
@@ -131,7 +131,7 @@ Plus one **env-only** secret:
 
 | Env | Default | Notes |
 |---|---|---|
-| `OPENDRAY_BACKUP_KEY` | _(required when backups are enabled)_ | Master passphrase, AES-256-GCM key derivation. **Never write this in `config.toml`** — by design the loader rejects it there. |
+| `OPENDRAY_BACKUP_KEY` | _(required when backups are enabled)_ | Master passphrase, AES-256-GCM key derivation. **Never write this in `config.toml`**. By design the loader rejects it there. |
 
 ## Database lifecycle
 
@@ -148,7 +148,7 @@ The runner:
 opendray migrate -config config.toml
 ```
 
-It's idempotent — already-applied versions are skipped, so it's safe
+It's idempotent: already-applied versions are skipped, so it's safe
 to re-run on every deploy. There are **no down-migrations**; rollback
 is manual via raw SQL. To re-run a specific migration after a fix:
 
@@ -183,8 +183,8 @@ probes.
 
 Standard library `log/slog` with two handlers:
 
-- **Text** (default) — human-readable
-- **JSON** — for ingestion by log shippers (Vector, Fluentd, etc.)
+- **Text** (default): human-readable
+- **JSON**: for ingestion by log shippers (Vector, Fluentd, etc.)
 
 Outputs:
 - Always to stdout/stderr
@@ -198,10 +198,10 @@ Production: keep at `info` with `format = "json"` if shipping logs.
 
 Two surfaces:
 
-1. **Disaster-recovery backups** — full PostgreSQL dumps via `pg_dump`,
+1. **Disaster-recovery backups**: full PostgreSQL dumps via `pg_dump`,
    encrypted client-side with AES-256-GCM, written to a configured
    target (local FS, SMB, WebDAV, SFTP, rclone, or S3).
-2. **Data exports** — admin-triggered zip bundles of memories /
+2. **Data exports**: admin-triggered zip bundles of memories /
    integrations / custom tasks, downloaded via signed URL.
 
 Enabling:
@@ -223,9 +223,9 @@ flow) is documented in §Backup below
 section.
 
 State persists in three DB tables (created by migration `0014_backups.sql`):
-- `backup_targets` — destination configs
-- `backup_schedules` — recurring specs
-- `backups` — audit log of every dump
+- `backup_targets`: destination configs
+- `backup_schedules`: recurring specs
+- `backups`: audit log of every dump
 
 Rotate `OPENDRAY_BACKUP_KEY` carefully: backups encrypted with the old
 key remain decryptable only with the old key. Keep the old passphrase
@@ -236,13 +236,13 @@ apply) restore flow, pre-migrate safety snapshots, and **rebuilding a
 dead host from zero**, see the
 [Disaster Recovery Handbook](disaster-recovery.md).
 
-A backup or schedule can **fan out to several targets at once** (3-2-1)
-— the same sealed bundle is written to each, one row per target sharing
+A backup or schedule can **fan out to several targets at once** (3-2-1):
+the same sealed bundle is written to each, one row per target sharing
 a fan-out id, with per-target retention. Identical consecutive backups
 are **content-deduped** (the new row points at the existing blob rather
 than re-uploading; retention won't drop a blob a deduped row still
 references). When backups are armed, **git-host API tokens are encrypted
-at rest** with the backup key — rotating the backup passphrase requires
+at rest** with the backup key, so rotating the backup passphrase requires
 re-entering those tokens.
 
 ## Process lifecycle
@@ -264,14 +264,14 @@ opendray traps `SIGINT` and `SIGTERM` and runs a graceful shutdown
 
 The grace window is **15 seconds** total for the supervisor to forward
 to subsystems plus the per-subsystem timeouts above. Plan your
-deploy/restart cycle so requests finish or fail fast — long-running
+deploy/restart cycle so requests finish or fail fast. Long-running
 PTY sessions get a SIGTERM and may not complete in 15s; the agent
 process is responsible for handling that.
 
 ## Sessions / PTY
 
 opendray runs interactive PTYs via `creack/pty`, which works on macOS
-and Linux (and other Unix-likes). **Windows is not supported** — there
+and Linux (and other Unix-likes). **Windows is not supported**: there
 is no PTY abstraction.
 
 Each session has:
@@ -288,15 +288,15 @@ There's one human admin. The flow:
 1. Client `POST /api/v1/auth/login` with `{user, password}`
 2. opendray verifies the credentials against the active source
    (see [`[admin]`](#admin) for precedence):
-   - **Keyfile source** — bcrypt-hashes the submitted password and
+   - **Keyfile source**: bcrypt-hashes the submitted password and
      compares against the stored hash. A dummy bcrypt compare runs
      even on username mismatch so the response time doesn't leak
      "user exists" vs "user doesn't".
-   - **Config source** (bootstrap only) — constant-time compares the
+   - **Config source** (bootstrap only): constant-time compares the
      plaintext password from `[admin].password` / env.
 3. On match, opendray issues a 32-byte random bearer token
 4. Token lives in process memory only (`map[string]TokenInfo`); it's
-   **lost on restart** — every operator restart forces re-login on
+   **lost on restart**: every operator restart forces re-login on
    active web sessions
 5. Tokens expire absolutely after `[admin].token_ttl` (default 24h)
 6. WebSocket endpoints accept the token via `?token=` query parameter
@@ -320,7 +320,7 @@ Password in the web UI, mirror form in the mobile app) atomically:
 
 The plaintext password never reaches disk and never appears in logs.
 After the first rotation, the `OPENDRAY_ADMIN_PASSWORD` env var is
-inert — change it all you want, opendray won't read it again until
+inert: change it all you want, opendray won't read it again until
 the keyfile is deleted.
 
 ## Unified memory subsystem
@@ -343,11 +343,11 @@ leakage between projects.
 
 UI surfaces:
 
-- **Mobile / web → Memory → Project** — 7-tab page for the
+- **Mobile / web → Memory → Project**: 7-tab page for the
   per-project goal/plan/tech/activity/journal/inbox/cleanup
-- **Memory → Cleanup inbox** — cross-project pending cleanup
+- **Memory → Cleanup inbox**: cross-project pending cleanup
   decisions
-- **Session detail → 🏁 Project memory** — jump from any session
+- **Session detail → 🏁 Project memory**: jump from any session
   into its project's memory page
 
 Operator-facing detail and SQL recipes for validation are in
@@ -355,8 +355,8 @@ Operator-facing detail and SQL recipes for validation are in
 
 ## Where to look next
 
-- [`docs/memory-system.md`](memory-system.md) — operator guide for the unified memory layer
-- [`config.example.toml`](../config.example.toml) — full annotated config
-- [`docs/quickstart.md`](quickstart.md) — developer setup
-- [`docs/integration-guide.md`](integration-guide.md) — building external integrations
-- [`deploy/`](../deploy/) — systemd unit + Proxmox LXC notes for production install
+- [`docs/memory-system.md`](memory-system.md): operator guide for the unified memory layer
+- [`config.example.toml`](../config.example.toml): full annotated config
+- [`docs/quickstart.md`](quickstart.md): developer setup
+- [`docs/integration-guide.md`](integration-guide.md): building external integrations
+- [`deploy/`](../deploy/): systemd unit + Proxmox LXC notes for production install

@@ -1,7 +1,7 @@
 # DingTalk (钉钉)
 
-**Mode:** custom group robot (outbound only — no public URL needed)
-**Capabilities:** text · card (markdown / actionCard) — no callback buttons
+**Mode:** custom group robot (outbound only, no public URL needed)
+**Capabilities:** text · card (markdown / actionCard), no callback buttons
 
 > v1 supports outbound notifications only. To receive messages or
 > handle interactive callbacks you need the app-platform credential
@@ -17,7 +17,7 @@
    - Generates a `SEC...` secret.
    - opendray will append `&timestamp=...&sign=...` to every webhook
      call automatically.
-4. Click **Done** — DingTalk reveals the **Webhook URL** like:
+4. Click **Done**. DingTalk reveals the **Webhook URL** like:
    ```
    https://oapi.dingtalk.com/robot/send?access_token=abc123...
    ```
@@ -41,7 +41,7 @@ Save with **Enabled = on**.
 ## 3. Test
 
 - Admin **Test** button sends a plain-text message to the group.
-- Trigger session.idle — opendray sends an actionCard with title +
+- Trigger session.idle, and opendray sends an actionCard with title +
   markdown body. Buttons whose value is a clickable URL (e.g.
   `https://opendray.example/sessions/<id>`) appear as buttons; `cmd:`
   buttons are dropped silently because group-robot cards cannot fire
@@ -54,6 +54,6 @@ Save with **Enabled = on**.
   callbacks, switch to the app-platform setup (planned for a future
   release).
 - The `Sign` security mode produces a per-request signature; the
-  `timestamp` must be within 1 hour of DingTalk's clock — opendray
+  `timestamp` must be within 1 hour of DingTalk's clock, and opendray
   uses `time.Now().UnixMilli()` which is fine as long as the host
   clock is roughly in sync.

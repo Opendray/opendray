@@ -1,6 +1,6 @@
 # opendray-v2 example configuration. Copy to config.toml and edit.
 #
-# Any field can be overridden by an OPENDRAY_-prefixed env variable —
+# Any field can be overridden by an OPENDRAY_-prefixed env variable:
 # OPENDRAY_LISTEN, OPENDRAY_DATABASE_URL, OPENDRAY_ADMIN_USER,
 # OPENDRAY_ADMIN_PASSWORD, OPENDRAY_LOG_LEVEL, OPENDRAY_LOG_FORMAT.
 
@@ -43,7 +43,7 @@ idle_interval  = "5s"
 # the whole section can be omitted to run the zero-config default
 # (keyword/BM25 retrieval over pgvector, project-scoped).
 #
-# backend — how text is turned into vectors:
+# backend controls how text is turned into vectors:
 #   "auto"  (default) availability-tiered, upgrade-only. If a dense
 #           [memory.http] endpoint is configured AND reachable at
 #           startup it is used (semantic memory); otherwise the pure-Go
@@ -51,21 +51,21 @@ idle_interval  = "5s"
 #           model installed. If the store already holds dense rows but
 #           the endpoint is down, the dense embedder is kept active
 #           (existing vectors stay visible, nothing is re-embedded) and
-#           writes/search degrade until it responds — "auto" never
+#           writes/search degrade until it responds. "auto" never
 #           silently downgrades dense→BM25.
 #   "bm25"  force the keyword floor.
 #   "http"  force the [memory.http] dense endpoint.
 #   "local" force the cgo ONNX embedder ([memory.local], -tags local_onnx).
 backend = "auto"
-# similarity_threshold — retrieval cutoff (0..1). Empty/0 → 0.1.
+# similarity_threshold: retrieval cutoff (0..1). Empty/0 → 0.1.
 # similarity_threshold = 0.1
-# dedup_threshold — write-time fold: a new write whose cosine similarity
+# dedup_threshold controls the write-time fold: a new write whose cosine similarity
 # to an existing memory in the same scope is ≥ this folds into it
 # (lossless). Empty/0 → an embedder-relative default (~0.85 dense /
 # ~0.2 BM25); a NEGATIVE value disables folding.
 # dedup_threshold = 0.0
 
-# Dense embedder — any OpenAI-compatible /v1/embeddings endpoint
+# Dense embedder: any OpenAI-compatible /v1/embeddings endpoint
 # (ollama, LM Studio, vLLM, LocalAI, OpenAI…). With backend="auto" this
 # is used automatically when reachable; no need to also set backend="http".
 [memory.http]
@@ -74,7 +74,7 @@ backend = "auto"
 # api_key  = ""          # required for cloud endpoints (e.g. OpenAI)
 # dimensions = 0          # 0 = discover from the first response
 
-# Optional pre-write LLM judge. Off by default — write quality is carried
+# Optional pre-write LLM judge. Off by default, write quality is carried
 # by folding + ranking + the maintenance loop, not a write-path gate.
 [memory.gatekeeper]
 enabled = false
@@ -92,7 +92,7 @@ enabled = false
 [memory.scope]
 default = "project"
 
-# Database tool — per-project external database connections (schema browser,
+# Database tool: per-project external database connections (schema browser,
 # row CRUD, SQL console) over REST + the opendray-dbtool MCP server.
 # Enabled by default; the feature is inert until an admin registers a
 # connection. Passwords are encrypted at rest with the backup field cipher
@@ -107,9 +107,9 @@ default = "project"
 # Settings about the machine opendray runs on, rather than the gateway
 # process. A sleeping host takes its network down with it, so the gateway
 # is simply unreachable from phone and web until something wakes the
-# machine — which is why opendray holds a power assertion while serving.
+# machine, which is why opendray holds a power assertion while serving.
 # macOS only (via caffeinate); accepted and ignored elsewhere. A
-# deliberate sleep — lid close, Apple menu -> Sleep — is never blocked.
+# deliberate sleep (lid close, Apple menu -> Sleep) is never blocked.
 [host]
 # prevent_idle_sleep = "ac"   # "ac" (default) hold awake on wall power only,
 #                             # so a laptop on battery still sleeps;

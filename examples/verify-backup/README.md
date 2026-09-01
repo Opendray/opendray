@@ -1,7 +1,7 @@
 # verify-backup
 
 One-shot tool that proves a `.tar.gz.enc` bundle from `/backups`
-round-trips correctly — decrypt → untar → `pg_restore --list` —
+round-trips correctly (decrypt → untar → `pg_restore --list`)
 without needing a target PostgreSQL server.
 
 Use this when you want to know "is this bundle still readable
@@ -35,6 +35,6 @@ or `pg_restore --dbname=...` it into a target DB by hand.
 The full restore flow lives in the admin UI (`/backups →
 Restore from file`) and HTTP API (`POST /backups/restore`),
 which is the supported path. This example is a developer / SRE
-tool — concise enough to read in one screen, runs against the
+tool, concise enough to read in one screen, runs against the
 package's exported `backup.Cipher` interface, and stays out of
 the production binary surface.

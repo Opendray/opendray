@@ -8,17 +8,17 @@ description: Read, search, and write notes in the opendray file-system vault. Us
 You have access to a markdown notes vault rooted on the gateway host. The
 vault holds three conventional sections:
 
-- `daily/YYYY-MM-DD.md` — daily logs / standup-style notes
-- `projects/<basename>/<file>.md` — per-project documentation (one
+- `daily/YYYY-MM-DD.md`: daily logs / standup-style notes
+- `projects/<basename>/<file>.md`: per-project documentation (one
   folder per repo). You write here: README.md, spec.md, architecture.md,
   decisions/0001-xxx.md, retros/2026-q2.md, etc. The user reads these
   in their inspector but rarely edits them by hand.
-- `personal/<basename>.md` — the user's PERSONAL scratchpad for this
-  project. **Do not write here** — this lane is owned by the user. If
+- `personal/<basename>.md`: the user's PERSONAL scratchpad for this
+  project. **Do not write here.** This lane is owned by the user. If
   the user explicitly tells you "add this to my notes", write to
   projects/<basename>/<something>.md instead and tell them where it
   landed; let them copy across if they want.
-- anywhere else under the vault — free-form library content
+- anywhere else under the vault: free-form library content
 
 All operations go through the `opendray notes` CLI subcommand. The gateway
 process does not need to be running; the CLI talks to the vault filesystem
@@ -32,7 +32,7 @@ directly.
 - They want a persistent TODO list scoped to a project
 - They mention `[[wiki-links]]`, tags (`#area-X`), or daily notes
 
-Do **not** use this skill for ephemeral within-session scratch state — that
+Do **not** use this skill for ephemeral within-session scratch state. That
 belongs in your normal context. Save things that are valuable across sessions.
 
 ## Commands
@@ -103,9 +103,9 @@ created: 2026-05-02
 
 ## Conventions
 
-- **One note per concern** — split unrelated topics into separate files
-- **Short titles, dated when temporal** — `2026-q2-plan.md`, not `Q2 2026 Strategic Planning Document.md`
-- **Append rather than rewrite** for daily/log content — preserves history
+- **One note per concern**: split unrelated topics into separate files
+- **Short titles, dated when temporal**: `2026-q2-plan.md`, not `Q2 2026 Strategic Planning Document.md`
+- **Append rather than rewrite** for daily/log content: preserves history
 - **Replace** when the file is structured (frontmatter / project doc / spec)
 
 ## Failure modes

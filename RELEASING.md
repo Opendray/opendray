@@ -60,13 +60,13 @@ themselves, see [`CHANGELOG.md`](CHANGELOG.md).
 Goreleaser snapshots the entire repo at the tagged commit when it
 builds the release. If the tag is at a commit that doesn't yet have
 the v<X.Y.Z> CHANGELOG section, the release body comes out as
-"See CHANGELOG.md for the full release notes" — useless to the people
+"See CHANGELOG.md for the full release notes", useless to the people
 who land on the release page, useless to the `opendray.dev` rebuild
 that pulls from GitHub Releases.
 
 Recovery if you tagged first: PATCH the release body via the GitHub
 API with the changelog section after the fact. Annoying, single-use
-mistake — better to do it in the right order.
+mistake. Better to do it in the right order.
 
 **A note on the same symptom with a different cause.** Every release
 from v2.12.0 to v2.13.1 published that placeholder body *despite* the
@@ -80,14 +80,14 @@ extracted. Notes extracted but body empty = a goreleaser config
 problem, not an ordering problem.
 
 **Check the release body after every release.** Both failure modes are
-silent — the workflow goes green and the release publishes either way.
+silent. The workflow goes green and the release publishes either way.
 
 ## Repository secrets (one-time setup)
 
 The release pipeline reads two repository secrets. `GITHUB_TOKEN` is
-provided automatically by Actions — you don't manage it. The other:
+provided automatically by Actions, so you don't manage it. The other:
 
-- **`NPM_TOKEN`** — npm Automation token with publish permission for
+- **`NPM_TOKEN`**: npm Automation token with publish permission for
   `opendray`, `opendray-{linux,darwin}-{x64,arm64}`, and
   `@opendray/sdk`. Used by the `Publish to npm` job in `release.yml`.
 
@@ -100,10 +100,10 @@ provided automatically by Actions — you don't manage it. The other:
   with the name `NPM_TOKEN`.
 
   If the secret is missing, `scripts/publish-npm.mjs` skips cleanly
-  with a clear log message — the GitHub release tarballs still ship,
+  with a clear log message, and the GitHub release tarballs still ship,
   just without the npm channel.
 
-  **To publish npm for a tag whose release already exists** — a missing
+  **To publish npm for a tag whose release already exists**, a missing
   secret, a skipped job, any reason the package fell behind GitHub:
 
   ```sh
@@ -125,7 +125,7 @@ provided automatically by Actions — you don't manage it. The other:
   workflow refuses to run in that combination rather than silently
   publishing to `latest`; drop `checkout_ref` for anything newer.
 
-  `npm publish` does no semver comparison — it points `latest` at
+  `npm publish` does no semver comparison: it points `latest` at
   whatever it just published. Filling a historical hole under the
   default tag would make `npm install opendray` resolve to the older
   version. The hole is cosmetic; the downgrade is not. Confirm with
@@ -145,7 +145,7 @@ provided automatically by Actions — you don't manage it. The other:
 
   Operational note: never paste an npm token into a chat transcript,
   PR comment, issue, or any persisted log. If you do, treat it as
-  compromised — revoke immediately at the npm tokens page above and
+  compromised: revoke immediately at the npm tokens page above and
   rotate the secret value.
 
 ### macOS Developer ID signing + notarization (optional)
@@ -160,7 +160,7 @@ clears Gatekeeper for browser-downloaded assets.
 This is **opt-in and gated**: with no cert secret set, the signing step is
 skipped and the release is exactly what it is today (ad-hoc macOS
 binaries). Nothing breaks for contributors or non-macOS users, and the
-signing job only runs on tag/dispatch in this repo — never on fork PRs, so
+signing job only runs on tag/dispatch in this repo, never on fork PRs, so
 the cert can't leak.
 
 One-time setup (maintainer with an Apple Developer account):
@@ -172,7 +172,7 @@ One-time setup (maintainer with an Apple Developer account):
    **Export** as a `.p12` (this bundles the private key); set an export
    password.
 
-2. **Add the secrets** (run in your own terminal — the private keys never
+2. **Add the secrets** (run in your own terminal, the private keys never
    touch the repo, a PR, or a chat; `gh secret set` reads from a file/stdin
    without echoing):
 
@@ -188,7 +188,7 @@ One-time setup (maintainer with an Apple Developer account):
 
    The ASC **key id** (`BPL8QFJ8M2`) and **issuer id** are non-secret
    identifiers and are set directly in `release.yml` (`QUILL_NOTARY_KEY_ID`
-   / `QUILL_NOTARY_ISSUER`) — edit them there if you rotate keys.
+   / `QUILL_NOTARY_ISSUER`). Edit them there if you rotate keys.
 
 3. **Cut a release** as usual. The `Install quill` step and the build's
    sign hook (`scripts/macos-sign.sh`) activate automatically once
@@ -204,12 +204,12 @@ One-time setup (maintainer with an Apple Developer account):
 
 The rules from [`VERSIONING.md`](VERSIONING.md):
 
-- **Major** (`v2.x.x` → `v3.0.0`) — new product generation. Architectural
+- **Major** (`v2.x.x` → `v3.0.0`): new product generation. Architectural
   rewrite, breaking changes the operator must consciously plan for,
   documented migration path. Rare.
-- **Minor** (`v2.3.x` → `v2.4.0`) — new feature, possibly with new
+- **Minor** (`v2.3.x` → `v2.4.0`): new feature, possibly with new
   endpoints / new config / new schema migration. Backwards compatible.
-- **Patch** (`v2.3.4` → `v2.3.5`) — bug fix, polish, documentation,
+- **Patch** (`v2.3.4` → `v2.3.5`): bug fix, polish, documentation,
   CI/dependency bump. No new feature surface.
 
 When in doubt, **minor**. Operators who care can read the changelog;
@@ -229,7 +229,7 @@ $EDITOR CHANGELOG.md
 ```
 
 Add a new section between `## [Unreleased]` and the previous version's
-section. Follow the Keep-a-Changelog format the file already uses —
+section. Follow the Keep-a-Changelog format the file already uses:
 group by `### Added` / `### Changed` / `### Fixed` / `### Security` /
 `### API` / `### Config`.
 
@@ -248,8 +248,8 @@ git push -u origin docs/changelog-v<X.Y.Z>
 
 If the release adds a notable capability (new minor or major), update
 the `## Status` block in both `README.md` and `README.zh.md` to point
-at the new version. Fold those edits into the same PR as the changelog
-— or a separate one if you prefer.
+at the new version. Fold those edits into the same PR as the changelog,
+or a separate one if you prefer.
 
 ### 3. Open the changelog PR and merge it
 
@@ -275,7 +275,7 @@ The release workflow fires immediately. Watch it:
 https://github.com/Opendray/opendray/actions/workflows/release.yml
 ```
 
-Takes ~2 minutes — goreleaser cross-compiles Linux/macOS × amd64/arm64,
+Takes ~2 minutes: goreleaser cross-compiles Linux/macOS × amd64/arm64,
 cosign signs SHA256SUMS keylessly via Sigstore, Anchore generates an
 SPDX SBOM. All artifacts uploaded to the draft release.
 
@@ -287,7 +287,7 @@ appears at the top with a "Draft" badge.
 - Click **Edit**.
 - Skim the auto-populated body. If it's the right CHANGELOG section,
   good. If it's just "See CHANGELOG.md for the full release notes"
-  you missed step 1 — fix via API after publish (see Recovery below)
+  you missed step 1: fix via API after publish (see Recovery below)
   or cancel and start over.
 - Confirm all 8 assets are attached:
   - `opendray_<X.Y.Z>_linux_amd64.tar.gz`
@@ -323,7 +323,7 @@ If the notify workflow doesn't fire or `opendray.dev` doesn't rebuild:
 - Check the workflow secret `ODSITE_DISPATCH_PAT` still exists on the
   opendray repo (Settings → Secrets and variables → Actions).
 - Check the PAT hasn't expired (fine-grained PATs default to ~1y).
-- The site has a daily cron as a safety net — it'll pick the release
+- The site has a daily cron as a safety net, it'll pick the release
   up within 24 h regardless.
 
 ### 7. Verify on a host
@@ -373,16 +373,16 @@ with an auth token works the same.)
 ## Recovery: bad release / pulled back
 
 GitHub releases are reversible. The atomic-cosign-signed binaries are
-not — once `cosign verify-blob` has signed your SHA256SUMS for a tag,
+not: once `cosign verify-blob` has signed your SHA256SUMS for a tag,
 that signature stays in the Sigstore transparency log forever. If a
 release is genuinely broken:
 
-1. **Mark the release as draft again** (PATCH `draft: true`) — pulls
+1. **Mark the release as draft again** (PATCH `draft: true`), which pulls
    it from `releases/latest` so `opendray update` no longer offers it.
 2. **Delete the tag** locally and on origin:
    `git tag -d v<X.Y.Z> && git push origin :refs/tags/v<X.Y.Z>`.
-3. **Cut a new patch** with the fix. Use `v<X.Y.Z+1>` — never reuse a
-   tag, the transparency log makes that ambiguous forever.
+3. **Cut a new patch** with the fix. Use `v<X.Y.Z+1>`. Never reuse a
+   tag, since the transparency log makes that ambiguous forever.
 
 ## Local pre-release checklist (the day-of)
 
@@ -393,8 +393,8 @@ Before tagging:
 - [ ] CI on `main` is green (look at the badge in the README or hit
       `gh run list --workflow=ci.yml --limit=1`)
 - [ ] `go test ./...` passes locally in a clean env (the two
-      `internal/config` tests are env-pollution sensitive — pre-
-      existing, not a blocker)
+      `internal/config` tests are env-pollution sensitive, pre-existing,
+      not a blocker)
 - [ ] The release matches your intent: features in the changelog
       under the right groups, no surprise commits between the last
       tag and this one (`git log v<prev>..main --oneline`)
@@ -408,7 +408,7 @@ After publishing:
       ~2 minutes
 - [ ] `opendray update --check` on a host reports the new version
 - [ ] `npm view opendray version` returns the new version (and the
-      four `opendray-{linux,darwin}-{x64,arm64}` packages match —
+      four `opendray-{linux,darwin}-{x64,arm64}` packages match,
       one-liner:
       `for p in opendray opendray-linux-x64 opendray-linux-arm64 opendray-darwin-x64 opendray-darwin-arm64 @opendray/sdk; do npm view "$p" version; done`)
 

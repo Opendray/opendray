@@ -41,8 +41,8 @@ https://your-opendray-host/api/v1/channels/<channel_id>/webhook
 ```
 
 Paste it as the **Request URL** in the Feishu console. Feishu will
-immediately fire a verification challenge and opendray echoes it back
-— you should see ✅ in the console.
+immediately fire a verification challenge and opendray echoes it back,
+so you should see ✅ in the console.
 
 (Optional) Copy the **Verification Token** shown on the same page and
 paste it into opendray's `verification_token` field for additional
@@ -82,9 +82,9 @@ Feishu chat → ⋯ → **Settings** → **Bots** → **Add bot** → pick yours
 
 ## 8. Test
 
-- Send any message in the chat — opendray logs it.
-- Send `/help` — opendray replies with the command list.
-- Trigger session.idle — an interactive card with action buttons
+- Send any message in the chat, and opendray logs it.
+- Send `/help` and opendray replies with the command list.
+- Trigger session.idle and an interactive card with action buttons
   appears.
 
 ## Notes

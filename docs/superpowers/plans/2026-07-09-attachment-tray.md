@@ -11,12 +11,12 @@
 ## Global Constraints
 
 - **No backend change**, no new endpoint. Reuse `uploadSessionFile` / `sessionsApiProvider.uploadFile` + `sendInput` (web) / `_terminal.paste` (mobile). The text delivered to the CLI is **unchanged**: the bare server path, multiples space-separated with a trailing space.
-- **All new copy via `app/i18n/{en,es,zh}.json`** — web under `web.sessions.terminal.*`, mobile under `sessions.terminal.attachments.*`. **No literal English in components.**
+- **All new copy via `app/i18n/{en,es,zh}.json`**: web under `web.sessions.terminal.*`, mobile under `sessions.terminal.attachments.*`. **No literal English in components.**
 - **Placeholders use single braces `{name}`** (both slang and this repo's react-i18next are single-brace); the SAME placeholder tokens must appear in all three locales (i18n-parity CI fails on token mismatch).
 - After editing the JSON, **regenerate mobile slang**: `cd app/mobile && dart run slang` (rewrites `lib/core/i18n/strings.g.dart` + per-locale files).
-- **`Esc` semantics:** clears ALL staged chips and is swallowed (never reaches the CLI) — web via capture-phase `window` listener active only while the tray is non-empty; mobile via the keyboard-bar `Esc` key. Empty tray → `Esc`/`\x1b` behaves exactly as today.
-- **Styling** via Tailwind tokens + `cn` (web) and `Theme.of(context).colorScheme` (mobile) — no hardcoded colors.
-- **Verify:** web `pnpm --filter web exec tsc -b` + file-scoped `pnpm --filter web exec eslint <paths>` (the full `pnpm build:web` is blocked by a pre-existing root-owned `internal/web/dist` EACCES); mobile `cd app/mobile && flutter analyze`. No unit-test runner on either surface — the gate is typecheck/analyze/lint + a manual pass.
+- **`Esc` semantics:** clears ALL staged chips and is swallowed (never reaches the CLI): web via capture-phase `window` listener active only while the tray is non-empty; mobile via the keyboard-bar `Esc` key. Empty tray → `Esc`/`\x1b` behaves exactly as today.
+- **Styling** via Tailwind tokens + `cn` (web) and `Theme.of(context).colorScheme` (mobile), no hardcoded colors.
+- **Verify:** web `pnpm --filter web exec tsc -b` + file-scoped `pnpm --filter web exec eslint <paths>` (the full `pnpm build:web` is blocked by a pre-existing root-owned `internal/web/dist` EACCES); mobile `cd app/mobile && flutter analyze`. No unit-test runner on either surface: the gate is typecheck/analyze/lint + a manual pass.
 - Commit per task. Open the PR only after all tasks pass and the operator approves; this feature **bundles with #433 into v2.11.3**.
 
 ---
@@ -105,7 +105,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 ---
 
-### Task 2: Web — AttachmentTray + Terminal staging
+### Task 2: Web, AttachmentTray + Terminal staging
 
 **Files:**
 - Create: `app/web/src/components/sessions/AttachmentTray.tsx`
@@ -298,7 +298,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 ---
 
-### Task 3: Mobile — staging tray + keyboard-bar Esc
+### Task 3: Mobile, staging tray + keyboard-bar Esc
 
 **Files:**
 - Modify: `app/mobile/lib/features/sessions/session_terminal_view.dart`
@@ -429,7 +429,7 @@ class _AttachmentTray extends StatelessWidget {
   }
 }
 ```
-(`t` is the slang global — it's already imported and used throughout this file.)
+(`t` is the slang global, already imported and used throughout this file.)
 
 - [ ] **Step 5: Render the tray + wire the keyboard bar**
 
@@ -500,8 +500,8 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 ## Notes for the implementer
 
-- **Do not change** what the CLI receives — Insert sends the same bare path(s) that `sendInput`/`_terminal.paste` sent before, just deferred and space-joined.
-- **Do not add** a delete-on-cancel endpoint, thumbnails, or a composer — all out of scope.
+- **Do not change** what the CLI receives: Insert sends the same bare path(s) that `sendInput`/`_terminal.paste` sent before, just deferred and space-joined.
+- **Do not add** a delete-on-cancel endpoint, thumbnails, or a composer, all out of scope.
 - The only literal escape sequence (`'\x1b'`) is pre-existing protocol, not a hardcoding-rule concern.
 - No JS/Go test runner is added; the gate is `tsc -b` + `eslint` (web), `flutter analyze` (mobile), plus the manual passes.
 - After all three tasks pass, this branch is ready to bundle with #433 for the **v2.11.3** release (changelog entry added at release time).

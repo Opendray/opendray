@@ -28,7 +28,7 @@ Closes #
 
 - [ ] 🐞 Bug fix (non-breaking change that fixes an issue)
 - [ ] ✨ New feature (non-breaking change that adds capability)
-- [ ] 💥 Breaking change (existing behaviour changes — bump VERSIONING.md if user-visible)
+- [ ] 💥 Breaking change (existing behaviour changes, so bump VERSIONING.md if user-visible)
 - [ ] 📖 Documentation only
 - [ ] 🔧 CI / build / release pipeline
 - [ ] 🧹 Chore (deps, refactor, repo housekeeping)
@@ -37,17 +37,17 @@ Closes #
 
 <!-- Tick all that apply so reviewers know what to focus on. -->
 
-- [ ] Backend (Go) — `internal/*`, `cmd/*`
-- [ ] Web admin (React) — `app/web/`
-- [ ] Mobile app (Flutter) — `app/mobile/`
-- [ ] Channel adapter — `internal/channel/*`
-- [ ] Memory subsystem — `internal/memory/*`
-- [ ] Backup / restore — `internal/backup/*`
-- [ ] Notes / vault — `internal/notes/*`, `internal/vaultgit/*`
-- [ ] Integration API — `internal/integration/*`, `internal/gateway/*`
-- [ ] DB migrations — `internal/store/migrations/*`
-- [ ] Deploy artefacts — `deploy/`, `scripts/install*.sh`, `scripts/uninstall*.sh`
-- [ ] Docs — `README*`, `docs/`, `CHANGELOG.md`
+- [ ] Backend (Go): `internal/*`, `cmd/*`
+- [ ] Web admin (React): `app/web/`
+- [ ] Mobile app (Flutter): `app/mobile/`
+- [ ] Channel adapter: `internal/channel/*`
+- [ ] Memory subsystem: `internal/memory/*`
+- [ ] Backup / restore: `internal/backup/*`
+- [ ] Notes / vault: `internal/notes/*`, `internal/vaultgit/*`
+- [ ] Integration API: `internal/integration/*`, `internal/gateway/*`
+- [ ] DB migrations: `internal/store/migrations/*`
+- [ ] Deploy artefacts: `deploy/`, `scripts/install*.sh`, `scripts/uninstall*.sh`
+- [ ] Docs: `README*`, `docs/`, `CHANGELOG.md`
 
 ## Test plan
 
@@ -64,9 +64,9 @@ Closes #
 <!-- Tick whichever applies. Be explicit when 'no' so the reviewer doesn't have to check. -->
 
 - [ ] No DB migration
-- [ ] Adds a new migration (`internal/store/migrations/NNNN_*.sql`) — idempotent + safe to re-run
-- [ ] Changes existing user-facing config (env var rename, key removal, ...) — call out as **BREAKING** in CHANGELOG
-- [ ] Adds new env vars / config keys — documented in `config.example.toml` and `docs/operator-guide.md`
+- [ ] Adds a new migration (`internal/store/migrations/NNNN_*.sql`): idempotent + safe to re-run
+- [ ] Changes existing user-facing config (env var rename, key removal, ...): call out as **BREAKING** in CHANGELOG
+- [ ] Adds new env vars / config keys: documented in `config.example.toml` and `docs/operator-guide.md`
 - [ ] None of the above
 
 ## Screenshots / before-after (UI changes)

@@ -24,7 +24,7 @@ The simplest path:
 Channels → New channel → kind `Telegram`.
 
 - **Bot token:** the BotFather token from step 1.
-- **Default chat ID:** from step 2 (optional — used as the destination
+- **Default chat ID:** from step 2 (optional, used as the destination
   for outbound notifications when no `ReplyCtx` is set).
 
 Save with **Enabled = on**. The channel card flips to *running* once
@@ -34,9 +34,9 @@ the long-poll loop starts (a few seconds).
 
 - The admin **Test** button sends `OpenDray channel test ✓` to the
   default chat.
-- Send `/help` to the bot — opendray replies with the registered
+- Send `/help` to the bot, and opendray replies with the registered
   command list.
-- Trigger a session.idle event — you should see a card with Resume /
+- Trigger a session.idle event, and you should see a card with Resume /
   End / Mute buttons.
 
 ## Notes
@@ -44,6 +44,6 @@ the long-poll loop starts (a few seconds).
 - Inline-keyboard `callback_data` is capped at 64 bytes by Telegram.
   The Hub's command system uses payloads like `cmd:/cancel <session-id>`
   which fit comfortably.
-- Telegram has no built-in slash command registration — `/help` etc.
+- Telegram has no built-in slash command registration, so `/help` etc.
   work as plain text. To get autocomplete, run the BotFather
   `/setcommands` flow with the same list opendray reports for `/help`.
