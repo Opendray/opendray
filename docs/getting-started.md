@@ -3,31 +3,31 @@
 Zero-to-first-session walkthrough. Plan for ~15 minutes if Postgres
 is already on the host; 25 minutes if you need to install one too.
 
-This guide is intentionally end-to-end — it covers the things that
+This guide is intentionally end-to-end. It covers the things that
 sit *around* opendray (installing the CLIs it wraps, bootstrapping
-Postgres) on top of the deploy paths in the [README](../README.md#install).
+Postgres) on top of the deploy paths in the [README](../README.md#quick-start).
 If you've used opendray before and just want to redeploy, the
 condensed paths in README Production deploy are a better fit.
 
 > **Already know "is opendray for me?"**
-> If not, read the [What is opendray?](../README.md#what-is-opendray)
+> If not, read the [What is opendray?](../README.md#why-opendray)
 > section in the README first. The bullets there will save you
 > 15 minutes if your use case isn't a match.
 
 ---
 
-## Step 0 — what you'll need
+## Step 0: what you'll need
 
 | Tool | Why | Note |
 |---|---|---|
-| At least one of: Claude Code / Codex CLI / Antigravity CLI | opendray is a **wrapper**, not a model — it spawns a CLI on your host | Step 1 below |
+| At least one of: Claude Code / Codex CLI / Antigravity CLI | opendray is a **wrapper**, not a model (it spawns a CLI on your host) | Step 1 below |
 | PostgreSQL 15 / 16 / 17 + **pgvector** extension | State, sessions, memory vectors | Step 2 below |
-| `go` 1.25+ and `pnpm` 10+ — *only* if you build from source | Skip if you grab a release binary | [Releases page](https://github.com/Opendray/opendray/releases) |
+| `go` 1.25+ and `pnpm` 10+, *only* if you build from source | Skip if you grab a release binary | [Releases page](https://github.com/Opendray/opendray/releases) |
 | A reachable network port (default `:8770`) for the web admin | UI + API + WebSockets | Bind to `127.0.0.1` unless behind a reverse proxy |
 
 ---
 
-## Step 1 — install at least one AI CLI
+## Step 1: install at least one AI CLI
 
 opendray spawns these CLIs against your local accounts. You install
 them just like you would for terminal use; opendray finds them on
@@ -68,13 +68,13 @@ which claude codex agy      # at least one line should resolve
 ```
 
 > You can run opendray with just **one** CLI installed and add the
-> others later. The provider list is dynamic — opendray probes the
+> others later. The provider list is dynamic: opendray probes the
 > binary at spawn time, missing ones just show as "command not
 > found" in the Sessions error panel.
 
 ---
 
-## Step 2 — install Postgres + pgvector
+## Step 2: install Postgres + pgvector
 
 opendray requires PostgreSQL **15, 16, or 17** with the
 [`pgvector`](https://github.com/pgvector/pgvector) extension. Pick
@@ -117,7 +117,7 @@ GRANT ALL ON SCHEMA public TO opendray_user;
 ```
 
 > `CREATE EXTENSION vector` needs **superuser**. After it lands,
-> `opendray_user` only needs the CRUD privileges granted above —
+> `opendray_user` only needs the CRUD privileges granted above.
 > opendray never reconnects as superuser at runtime.
 
 Test the credentials from the host you'll run opendray on:
@@ -130,25 +130,25 @@ You should see `check: ok` and no errors.
 
 ---
 
-## Step 3 — pick a deploy path and install opendray
+## Step 3: pick a deploy path and install opendray
 
 **Decision question first**: are you here for the session spawn
 feature (drive Claude / Codex / Antigravity from the web Sessions page)?
 
-### If YES — you need a "Full" path
+### If YES: you need a "Full" path
 
 | Your host | Path | README section |
 |---|---|---|
-| macOS as 24/7 home server | macOS LaunchDaemon | [Option D](../README.md#option-d--macos-launchd-mac-mini--studio-as-home-server) |
-| Linux box / VPS / LXC | systemd | [Option B](../README.md#option-b--systemd-bare-metal--vm--lxc) |
-| Just testing in foreground | `go run` from source | [Quickstart](../README.md#quickstart-5-minute-dev-path) |
-| Hand-rolled supervisor (s6 / runit / launchd Agent) | Direct binary | [Option C](../README.md#option-c--direct-binary--your-own-process-supervisor) |
+| macOS as 24/7 home server | macOS LaunchDaemon | [Production deploy](../README.md#production-deploy) |
+| Linux box / VPS / LXC | systemd | [Production deploy](../README.md#production-deploy) |
+| Just testing in foreground | `go run` from source | [Quickstart](quickstart.md) |
+| Hand-rolled supervisor (s6 / runit / launchd Agent) | Direct binary | [Binary install](install-binary.md) |
 
 > Skip Docker. The image is distroless (no Node, no AI CLIs, no
 > `pg_dump`), so the Sessions tab will error on every spawn click.
 > See the §A callout for the architectural reason.
 
-### If NO — you only need channels / integrations / notes / API
+### If NO: you only need channels / integrations / notes / API
 
 | Your host | Path | README section |
 |---|---|---|
@@ -182,12 +182,12 @@ url = "postgres://opendray_user:<password>@<host>:5432/opendray?sslmode=disable"
 password = "<initial-bootstrap-password>"
 ```
 
-Everything else has sensible defaults — see `config.example.toml`
+Everything else has sensible defaults. See `config.example.toml`
 inline comments for the full surface.
 
 ---
 
-## Step 4 — first login + change admin password
+## Step 4: first login + change admin password
 
 Open `http://localhost:8770/admin/` (or whatever host:port opendray
 is bound to via `listen` in `config.toml`).
@@ -206,14 +206,14 @@ The full credential precedence chain is in
 
 ---
 
-## Step 5 — configure a Provider
+## Step 5: configure a Provider
 
 Providers → click the provider you installed in Step 1 → fill in:
 
-- **Command path** — absolute path to the CLI binary
+- **Command path**: absolute path to the CLI binary
   (`which claude` finds it; on Apple Silicon Homebrew installs land
   at `/opt/homebrew/bin/claude`).
-- **Accounts dir** (Claude only, optional) — a directory of named
+- **Accounts dir** (Claude only, optional): a directory of named
   Claude credential sets if you want to switch identities per
   session. Leave blank to use the default `~/.claude`.
 
@@ -222,7 +222,7 @@ provider card turns green when the binary is reachable.
 
 ---
 
-## Step 6 — spawn your first session
+## Step 6: spawn your first session
 
 Sessions → New session → pick the provider → pick a working
 directory (any project on your machine) → Spawn.
@@ -233,7 +233,7 @@ come back, the scrollback is intact.
 
 ---
 
-## Step 7 (optional) — add a Telegram channel
+## Step 7 (optional): add a Telegram channel
 
 This is the feature that makes opendray different from
 `tmux` + `ssh`. With a channel wired up, opendray pushes
@@ -247,7 +247,7 @@ and your reply on Telegram flows back as the next stdin write.
    `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`.
 3. Find your chat ID:
    - DM your bot once (any text).
-   - Open `https://api.telegram.org/bot<token>/getUpdates` — your
+   - Open `https://api.telegram.org/bot<token>/getUpdates`. Your
      numeric `chat.id` is in the JSON response.
 
 ### In opendray
@@ -261,8 +261,8 @@ Channels → New channel → kind **Telegram**:
 Save → click **Test** on the channel card. Within seconds you'll
 see a test message in Telegram.
 
-Now leave a session idle for 30 seconds (the default idle threshold
-— configurable via `[session].idle_threshold`). Telegram pings you
+Now leave a session idle for 30 seconds (the default idle threshold,
+configurable via `[session].idle_threshold`). Telegram pings you
 with the last bit of CLI output. Reply, and the text flows back
 into the session's stdin.
 
@@ -271,22 +271,22 @@ into the session's stdin.
 ## What next?
 
 - **More channels**: Slack / Discord / Feishu (飞书) / DingTalk
-  (钉钉) / WeCom (企业微信) — each has its own setup in the in-app
+  (钉钉) / WeCom (企业微信): each has its own setup in the in-app
   Tutorial at `/admin/tutorial/`.
-- **API integrations**: [docs/integration-guide.md](integration-guide.md)
-  — scoped API keys, reverse-proxy mount, events WebSocket.
+- **API integrations**: [docs/integration-guide.md](integration-guide.md):
+  scoped API keys, reverse-proxy mount, events WebSocket.
 - **Memory subsystem**: enable local-first embeddings via
-  `[memory.backend] = "local"` or wire up Ollama / LM Studio — see
+  `[memory.backend] = "local"` or wire up Ollama / LM Studio, see
   in-app Tutorial → Memory section.
 - **Encrypted backups**: configure `[backup]` to push DB dumps to
-  S3 / R2 / B2 / SFTP / rclone — see
+  S3 / R2 / B2 / SFTP / rclone, see
   [operator-guide §backup](operator-guide.md#backup).
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `relation "providers" does not exist` on migrate | Pre-v2.0.0 binary (issue #162) | Pull the latest binary — fix is in v2.0.0 |
+| `relation "providers" does not exist` on migrate | Pre-v2.0.0 binary (issue #162) | Pull the latest binary (fix is in v2.0.0) |
 | `type "vector" does not exist` on migrate | pgvector extension not enabled in the opendray database | Run `CREATE EXTENSION vector;` as superuser in `opendray` |
 | `Spawn session failed: executable file not found in $PATH` | The wrapped CLI isn't installed on the opendray host, or the Command Path in the Provider config is wrong | Step 1 above; verify with `which claude` (or whichever CLI) |
 | Telegram bot doesn't respond to replies | Bot privacy mode is on by default (bot only sees commands) | BotFather → `/setprivacy` → Disable |
@@ -297,10 +297,10 @@ into the session's stdin.
 
 ## See also
 
-- [README](../README.md) — install table, deploy paths, project status
-- [README.zh.md](../README.zh.md) — Simplified Chinese version
-- [docs/quickstart.md](quickstart.md) — 5-minute dev environment (more focused than this guide)
-- [docs/operator-guide.md](operator-guide.md) — operator reference: topology, auth, backup, logging
-- [docs/integration-guide.md](integration-guide.md) — third-party API surface
-- [VERSIONING.md](../VERSIONING.md) — major-as-generation versioning
-- [CHANGELOG.md](../CHANGELOG.md) — release history
+- [README](../README.md): install table, deploy paths, project status
+- [README.zh.md](../README.zh.md): Simplified Chinese version
+- [docs/quickstart.md](quickstart.md): 5-minute dev environment (more focused than this guide)
+- [docs/operator-guide.md](operator-guide.md): operator reference for topology, auth, backup, logging
+- [docs/integration-guide.md](integration-guide.md): third-party API surface
+- [VERSIONING.md](../VERSIONING.md): major-as-generation versioning
+- [CHANGELOG.md](../CHANGELOG.md): release history

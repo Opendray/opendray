@@ -1,4 +1,4 @@
-# Knowledge System Orchestration — Memory · Notes · Knowledge
+# Knowledge System Orchestration: Memory · Notes · Knowledge
 
 > Blueprint for unifying opendray's three knowledge surfaces into one
 > AI-driven, coordinated pipeline. Supersedes the "three independent
@@ -9,18 +9,18 @@
 
 Three surfaces exist but work as silos:
 
-- **Memory** (`internal/memory`) — pgvector episodic facts, auto-captured, AI-only.
-- **Notes** (`internal/projectdoc`) — goal / plan / tech_stack / recent_activity docs + journal + proposals. The project's official documentation.
-- **Knowledge** (`internal/knowledge` + KB docs) — entity/fact/playbook/skill graph + curated KB pages (infra/conventions/lessons/handbook).
+- **Memory** (`internal/memory`): pgvector episodic facts, auto-captured, AI-only.
+- **Notes** (`internal/projectdoc`): goal / plan / tech_stack / recent_activity docs + journal + proposals. The project's official documentation.
+- **Knowledge** (`internal/knowledge` + KB docs): entity/fact/playbook/skill graph + curated KB pages (infra/conventions/lessons/handbook).
 
 Pain points:
 
 1. **Overlap.** Notes' goal/plan/tech_stack duplicate facts also sitting in Memory; the Knowledge graph's `fact` nodes are a 1:1 copy of Memory rows.
-2. **Notes has no AI drive.** goal/plan update only when an agent explicitly calls the MCP tool; in practice they're forgotten and go stale — yet Notes is the developer's (and a team's) primary project-doc view.
+2. **Notes has no AI drive.** goal/plan update only when an agent explicitly calls the MCP tool; in practice they're forgotten and go stale, yet Notes is the developer's (and a team's) primary project-doc view.
 3. **No coordination.** Each layer has its own sweep; nothing routes one consolidation pass into the right destinations.
 4. **No time-decay.** Infrastructure changes (RCC → opendray) and dead/paused projects accumulate as stale noise; nothing supersedes or archives.
 
-## 2. The model — three layers by time-horizon × audience
+## 2. The model: three layers by time-horizon × audience
 
 | Layer | Horizon | Scope | Audience | Role | AI drive (today → target) |
 |-------|---------|-------|----------|------|---------------------------|
@@ -72,9 +72,9 @@ Principles:
 
 ## 5. AI drive per layer (close the gaps)
 
-- **Memory** — already automatic. No change.
-- **Notes** — NEW: consolidation proposes goal/plan/architecture/handbook from Memory+Journal when it detects drift (the plan-drift detector already exists for plans; generalize it). Operator approves in the Inbox. This is the headline fix.
-- **Knowledge** — already AI-drafted; extend with a **reusable-features** page (past project capabilities worth lifting) and keep skills/lessons.
+- **Memory**: already automatic. No change.
+- **Notes** (NEW): consolidation proposes goal/plan/architecture/handbook from Memory+Journal when it detects drift (the plan-drift detector already exists for plans; generalize it). Operator approves in the Inbox. This is the headline fix.
+- **Knowledge**: already AI-drafted; extend with a **reusable-features** page (past project capabilities worth lifting) and keep skills/lessons.
 
 ## 6. Time-decay
 
@@ -88,8 +88,8 @@ Principles:
 
 A spawning session, for its cwd, receives:
 
-1. **Notes** of THIS project (goal / plan / architecture / handbook) — current state.
-2. **Knowledge** global (infrastructure / conventions / lessons / reusable-features / skills) — transferable expertise.
+1. **Notes** of THIS project (goal / plan / architecture / handbook), current state.
+2. **Knowledge** global (infrastructure / conventions / lessons / reusable-features / skills), transferable expertise.
 3. A bounded slice of recent **Journal** (what just happened).
 
 Memory facts are NOT injected wholesale (they're feedstock); the agent pulls from Memory on demand via the MCP. Budgeted; archived projects contribute nothing.
@@ -98,9 +98,9 @@ Memory facts are NOT injected wholesale (they're feedstock); the agent pulls fro
 
 The entity/fact graph stays as an internal index for now (operator: "暂留观望"):
 
-- `fact` nodes — hidden from the UI (Memory is the fact surface); kept only as the anchor for entity extraction. Candidate for retirement once entities derive directly from Memory.
-- `entity` nodes — retained: they power cross-project linking ("everything about PostgreSQL").
-- `playbook` / `skill` — retained: the distilled value, surfaced via Knowledge (Lessons / Skills).
+- `fact` nodes are hidden from the UI (Memory is the fact surface); kept only as the anchor for entity extraction. Candidate for retirement once entities derive directly from Memory.
+- `entity` nodes are retained: they power cross-project linking ("everything about PostgreSQL").
+- `playbook` / `skill` are retained: the distilled value, surfaced via Knowledge (Lessons / Skills).
 
 The Knowledge web page already leads with the KB; the graph tab is the demoted view.
 
@@ -108,13 +108,13 @@ The Knowledge web page already leads with the KB; the graph tab is the demoted v
 
 The same discipline as the M-KB work: additive schema, feature-flagged, one-way deps, local-until-tested.
 
-- **P-A — De-dup + ownership.** ✅ Folded: goal/plan are already canonical in Notes (projectdoc); Notes is now AI-current via P-B, and fact-node de-dup is P-G. No separate change needed.
-- **P-B — Notes AI drive.** ✅ DONE (d7c0779). Generalized the plan-drift detector to also propose GOAL on session-end; Notes stays AI-current via propose→approve. (Architecture proposals deferred — tech_stack stays scanner-managed.)
-- **P-C — Unified scheduler.** ✅ DONE (3283397). `knowledge.ConsolidationEngine` runs one ordered loop (anchor → reflect → KB draft) per cycle, replacing the three independent sweep goroutines; each stage keeps its internal dirty-check + lock-awareness. Dead Run*Sweep loops + *SweepConfig types removed.
-- **P-D — Project lifecycle.** ✅ DONE (ba5397c). `project_lifecycle(cwd,status)` (migration 0040); GetStatus/SetStatus/ListProjects (idle_days + suggest_archive); frozen projects dropped from spawn injection, goal/plan drift, and handbook distillation; HTTP `GET /project-docs/projects` + `POST /project-docs/lifecycle`; web + mobile status badge / activate-pause-archive controls + idle hint; i18n (en/zh/es) + slang.
-- **P-E — Supersession.** ✅ DONE (65d85c1). KB + reflect prompts prefer current state / mark superseded. (Explicit alias map + entity supersedes edges deferred — prompt handles RCC→opendray.)
-- **P-F — Knowledge: reusable-features page.** ✅ DONE (65d85c1). New `kb_reusable` global page, end-to-end.
-- **P-G — Graph demotion / fact-node retirement.** ✅ DONE (2f54739). Fact nodes retired: MemorySource gains ListAllMemories; anchorer extracts entities straight from Memory (entity→project, no fact node) and uses knowledge_fact_sources as a processed-marker against the project entity; reflect + KB feedstock come from Memory (WithMemory); ProjectBrain surfaces linked entities; migration 0041 deletes fact nodes/edges/markers (next sweep re-derives, bounded + idempotent). KindFact kept as a retired constant.
+- **P-A: De-dup + ownership.** ✅ Folded: goal/plan are already canonical in Notes (projectdoc); Notes is now AI-current via P-B, and fact-node de-dup is P-G. No separate change needed.
+- **P-B: Notes AI drive.** ✅ DONE (d7c0779). Generalized the plan-drift detector to also propose GOAL on session-end; Notes stays AI-current via propose→approve. (Architecture proposals deferred, tech_stack stays scanner-managed.)
+- **P-C: Unified scheduler.** ✅ DONE (3283397). `knowledge.ConsolidationEngine` runs one ordered loop (anchor → reflect → KB draft) per cycle, replacing the three independent sweep goroutines; each stage keeps its internal dirty-check + lock-awareness. Dead Run*Sweep loops + *SweepConfig types removed.
+- **P-D: Project lifecycle.** ✅ DONE (ba5397c). `project_lifecycle(cwd,status)` (migration 0040); GetStatus/SetStatus/ListProjects (idle_days + suggest_archive); frozen projects dropped from spawn injection, goal/plan drift, and handbook distillation; HTTP `GET /project-docs/projects` + `POST /project-docs/lifecycle`; web + mobile status badge / activate-pause-archive controls + idle hint; i18n (en/zh/es) + slang.
+- **P-E: Supersession.** ✅ DONE (65d85c1). KB + reflect prompts prefer current state / mark superseded. (Explicit alias map + entity supersedes edges deferred, the prompt handles RCC→opendray.)
+- **P-F: Knowledge reusable-features page.** ✅ DONE (65d85c1). New `kb_reusable` global page, end-to-end.
+- **P-G: Graph demotion / fact-node retirement.** ✅ DONE (2f54739). Fact nodes retired: MemorySource gains ListAllMemories; anchorer extracts entities straight from Memory (entity→project, no fact node) and uses knowledge_fact_sources as a processed-marker against the project entity; reflect + KB feedstock come from Memory (WithMemory); ProjectBrain surfaces linked entities; migration 0041 deletes fact nodes/edges/markers (next sweep re-derives, bounded + idempotent). KindFact kept as a retired constant.
 
 Each phase: build → local rebuild + restart → operator validates → next. Push only after the whole arc is accepted.
 

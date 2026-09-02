@@ -1,7 +1,7 @@
 # Versioning
 
 This document explains how opendray version numbers work. It is
-intentionally short — but the policy it captures is deliberate, so
+intentionally short, but the policy it captures is deliberate, so
 read it before opening a PR that touches versioning, tags, or
 release-pipeline behaviour.
 
@@ -12,7 +12,7 @@ release-pipeline behaviour.
   (`Opendray/opendray`). v3 is reserved for a future cross-
   architecture rewrite.
 - **Minor version = feature iteration.** New channels, new providers,
-  new memory subsystems, new API endpoints — anything additive within
+  new memory subsystems, new API endpoints, anything additive within
   the current generation.
 - **Patch version = fix / polish / docs.** Anything not user-facing
   and anything that fixes a regression without changing the contract.
@@ -22,8 +22,8 @@ release-pipeline behaviour.
 
 ## Why not strict SemVer?
 
-SemVer's strict reading — "major bump on any backwards-incompatible
-change to the public API" — works well for libraries, where the
+SemVer's strict reading ("major bump on any backwards-incompatible
+change to the public API") works well for libraries, where the
 public API is the only contract. opendray is a deployed system: the
 public surface is the operator-facing config schema, the database
 migrations, the channel webhooks, and the integration API. Some of
@@ -36,9 +36,9 @@ either:
   fixing legitimate design mistakes during a generation's lifetime.
 
 The major-as-generation approach is widely used in the JavaScript
-and infrastructure worlds — see Vue (2 → 3), React (16 → 17 → 18),
+and infrastructure worlds. See Vue (2 → 3), React (16 → 17 → 18),
 Angular (2 → 4 → 17), Webpack (4 → 5), Vite (4 → 5 → 6), MySQL (5.7
-→ 8.0), Node.js (16 → 18 → 20), PHP (5 → 7 → 8 — skipping 6).
+→ 8.0), Node.js (16 → 18 → 20), PHP (5 → 7 → 8, skipping 6).
 opendray follows the same convention.
 
 ## What a major bump means here
@@ -47,10 +47,10 @@ A v3 will ship when **any** of the following is true:
 
 1. **Architectural rewrite** comparable to v1 → v2 (Flutter → Go +
    React, hand-rolled DB → pgx + pgvector, etc.).
-2. **Forced cross-generation migration path** — operators cannot
+2. **Forced cross-generation migration path**: operators cannot
    in-place upgrade and must run a one-shot conversion tool or
    re-deploy from scratch.
-3. **Replacement of the core deployment contract** — different
+3. **Replacement of the core deployment contract**: different
    binary layout, different process model, different default
    on-disk paths that previous versions wouldn't recognise.
 
@@ -100,10 +100,10 @@ should always read the release notes between minor versions.
 
 For testing significant new functionality before a final release:
 
-- `vX.Y.Z-rc1`, `vX.Y.Z-rc2`, … — release candidates against an
+- `vX.Y.Z-rc1`, `vX.Y.Z-rc2`, …: release candidates against an
   upcoming `vX.Y.Z`. Promote the highest-numbered RC to `vX.Y.Z`
-  once it stabilises (no force-push — both tags coexist forever).
-- `vX.Y.Z-beta.N`, `vX.Y.Z-alpha.N` — earlier-stage previews. Used
+  once it stabilises (no force-push, both tags coexist forever).
+- `vX.Y.Z-beta.N`, `vX.Y.Z-alpha.N`: earlier-stage previews. Used
   rarely; most pre-release testing happens via `-dev` builds from
   `main` HEAD instead.
 

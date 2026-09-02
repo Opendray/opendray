@@ -3,7 +3,7 @@
 零到首次会话的完整 walkthrough。Postgres 已经在 host 上的话 ~15
 分钟,需要顺便装 Postgres 的话 25 分钟。
 
-这份指南是**端到端**的 —— 把 opendray 外围的事情(装 opendray
+这份指南是**端到端**的:把 opendray 外围的事情(装 opendray
 wrap 的 CLI、bootstrap Postgres)跟 README 里的部署路径串到一起。
 如果你之前用过 opendray、只是想重新部署,直接看 README 生产部署
 里压缩版的步骤就够。
@@ -14,18 +14,18 @@ wrap 的 CLI、bootstrap Postgres)跟 README 里的部署路径串到一起。
 
 ---
 
-## 第 0 步 —— 你需要什么
+## 第 0 步:你需要什么
 
 | 工具 | 为什么 | 备注 |
 |---|---|---|
-| 至少一个:Claude Code / Codex CLI / Antigravity CLI | opendray 是 **wrapper**,不是模型 —— 它在 host 上 spawn 你装好的 CLI | 第 1 步 |
+| 至少一个:Claude Code / Codex CLI / Antigravity CLI | opendray 是 **wrapper**,不是模型,它在 host 上 spawn 你装好的 CLI | 第 1 步 |
 | PostgreSQL 15 / 16 / 17 + **pgvector** 扩展 | 状态、会话、记忆向量 | 第 2 步 |
-| `go` 1.25+ 和 `pnpm` 10+ —— *只在* 从源码 build 时需要 | 用 release binary 的话跳过 | [Releases 页](https://github.com/Opendray/opendray/releases) |
+| `go` 1.25+ 和 `pnpm` 10+,*只在* 从源码 build 时需要 | 用 release binary 的话跳过 | [Releases 页](https://github.com/Opendray/opendray/releases) |
 | 一个可达的端口(默认 `:8770`)给 Web 后台 | UI + API + WebSocket | 没反向代理就绑 `127.0.0.1` |
 
 ---
 
-## 第 1 步 —— 至少装一个 AI CLI
+## 第 1 步:至少装一个 AI CLI
 
 opendray 用你本地的账户 spawn 这些 CLI。你像平时终端用一样装它们,
 opendray 在 `$PATH` 上找。
@@ -63,12 +63,12 @@ which claude codex agy      # 至少一行能 resolve
 ```
 
 > 只装 **一个** CLI 就能跑 opendray,其他以后再加。Provider 列表是
-> 动态的 —— spawn 时 opendray 现场探测 binary,装漏的会在 Sessions
+> 动态的:spawn 时 opendray 现场探测 binary,装漏的会在 Sessions
 > 错误面板里显示 "command not found"。
 
 ---
 
-## 第 2 步 —— 装 Postgres + pgvector
+## 第 2 步:装 Postgres + pgvector
 
 opendray 要求 PostgreSQL **15、16 或 17**,并装
 [`pgvector`](https://github.com/pgvector/pgvector) 扩展。按 host
@@ -111,7 +111,7 @@ GRANT ALL ON SCHEMA public TO opendray_user;
 ```
 
 > `CREATE EXTENSION vector` 需要 **superuser**。装完之后,
-> `opendray_user` 只需要上面 grant 的 CRUD 权限就够 —— opendray
+> `opendray_user` 只需要上面 grant 的 CRUD 权限就够,opendray
 > 运行时不会再以 superuser 连接。
 
 从将来要跑 opendray 的 host 上测一下凭据:
@@ -124,12 +124,12 @@ PGPASSWORD='<密码>' psql -h <pg-host> -U opendray_user -d opendray -c "SELECT 
 
 ---
 
-## 第 3 步 —— 选部署路径、装 opendray
+## 第 3 步:选部署路径、装 opendray
 
 **先问自己**:你来这里是为了 session spawn 功能吗(在 web Sessions
 页 spawn Claude / Codex / Antigravity)?
 
-### 如果是 —— 需要 "完整" 路径
+### 如果是:需要 "完整" 路径
 
 | 你的 host | 路径 | README 章节 |
 |---|---|---|
@@ -141,7 +141,7 @@ PGPASSWORD='<密码>' psql -h <pg-host> -U opendray_user -d opendray -c "SELECT 
 > 跳过 Docker。镜像是 distroless(没 Node、没 AI CLI、没 `pg_dump`),
 > Sessions tab 每次 spawn 都会报错。架构原因见 §A 的 callout。
 
-### 如果不是 —— 只需要 channels / integrations / notes / API
+### 如果不是:只需要 channels / integrations / notes / API
 
 | 你的 host | 路径 | README 章节 |
 |---|---|---|
@@ -174,11 +174,11 @@ url = "postgres://opendray_user:<密码>@<host>:5432/opendray?sslmode=disable"
 password = "<初始 bootstrap 密码>"
 ```
 
-其他都有合理默认 —— `config.example.toml` 行内注释覆盖了所有 surface。
+其他都有合理默认,`config.example.toml` 行内注释覆盖了所有 surface。
 
 ---
 
-## 第 4 步 —— 首次登录 + 立刻改 admin 密码
+## 第 4 步:首次登录 + 立刻改 admin 密码
 
 打开 `http://localhost:8770/admin/`(或者按 `config.toml` 里
 `listen` 绑定的 host:port)。
@@ -196,14 +196,14 @@ keyfile 到 `$HOME/.opendray/secrets/admin.key`,从此 `config.toml`
 
 ---
 
-## 第 5 步 —— 配 Provider
+## 第 5 步:配 Provider
 
 Providers → 点你第 1 步装的那个 CLI → 填:
 
-- **Command path** —— CLI 二进制的绝对路径
+- **Command path**:CLI 二进制的绝对路径
   (`which claude` 可以找到;Apple Silicon Homebrew 装的一般在
   `/opt/homebrew/bin/claude`)。
-- **Accounts dir**(只 Claude,可选) —— 多套命名的 Claude 凭据
+- **Accounts dir**(只 Claude,可选):多套命名的 Claude 凭据
   目录,做"每个 session 不同账号"切换时用。留空就用默认
   `~/.claude`。
 
@@ -212,17 +212,17 @@ Save。opendray 会跑一次 `<cli> --version` 探测;binary 能找到就
 
 ---
 
-## 第 6 步 —— spawn 第一个 session
+## 第 6 步:spawn 第一个 session
 
 Sessions → New session → 选 provider → 选工作目录(随便一个项目) → Spawn。
 
-浏览器内开一个终端 pane。像在真实终端一样输入 prompt —— 每个字节都
+浏览器内开一个终端 pane。像在真实终端一样输入 prompt,每个字节都
 通过 opendray 的 PTY wrapper 中转。关掉浏览器 tab,session 在 host
 上继续跑;回头来,scrollback 完整。
 
 ---
 
-## 第 7 步(可选) —— 加 Telegram 频道
+## 第 7 步(可选):加 Telegram 频道
 
 这就是 opendray 跟 `tmux + ssh` 不同的地方。配好频道后,session
 变 idle(CLI 在等你输入)时 opendray 推 Telegram 通知,你在 Telegram
@@ -257,21 +257,21 @@ Save → 点 channel 卡上的 **Test** 按钮。几秒内 Telegram 会收到测
 
 ## 下一步
 
-- **更多频道**:Slack / Discord / 飞书 / 钉钉 / 企业微信 —— 每个的
+- **更多频道**:Slack / Discord / 飞书 / 钉钉 / 企业微信,每个的
   设置都在应用内 Tutorial(`/admin/tutorial/`)里。
-- **API 集成**:[docs/integration-guide.md](integration-guide.md)
-  —— scope 化的 API key、反向代理挂载、events WebSocket。
+- **API 集成**:[docs/integration-guide.md](integration-guide.md),
+  提供 scope 化的 API key、反向代理挂载、events WebSocket。
 - **记忆子系统**:用 `[memory.backend] = "local"` 启用本地优先
-  嵌入向量,或者接 Ollama / LM Studio —— 见应用内 Tutorial →
+  嵌入向量,或者接 Ollama / LM Studio,见应用内 Tutorial →
   Memory 章节。
 - **加密备份**:配 `[backup]` 把 DB 备份推到 S3 / R2 / B2 / SFTP /
-  rclone —— 见 [operator-guide §backup](operator-guide.md#backup)。
+  rclone,见 [operator-guide §backup](operator-guide.md#backup)。
 
 ## 排错
 
 | 症状 | 原因 | 修复 |
 |---|---|---|
-| migrate 报 `relation "providers" does not exist` | v2.0.0 之前的二进制(issue #162) | 拉最新二进制 —— v2.0.0 已修 |
+| migrate 报 `relation "providers" does not exist` | v2.0.0 之前的二进制(issue #162) | 拉最新二进制,v2.0.0 已修 |
 | migrate 报 `type "vector" does not exist` | opendray 数据库里 pgvector 扩展没启用 | 用 superuser 在 `opendray` 库里跑 `CREATE EXTENSION vector;` |
 | `Spawn session failed: executable file not found in $PATH` | wrap 的 CLI 没装在 opendray host 上,或者 Provider 配置里 Command Path 不对 | 回第 1 步;`which claude`(或对应 CLI)验证 |
 | Telegram bot 不回复 | Bot 默认 privacy mode(bot 只看到 commands) | BotFather → `/setprivacy` → Disable |
@@ -282,10 +282,10 @@ Save → 点 channel 卡上的 **Test** 按钮。几秒内 Telegram 会收到测
 
 ## 另见
 
-- [README.zh.md](../README.zh.md) —— 安装表、部署路径、项目状态
-- [README.md](../README.md) —— English version
-- [docs/quickstart.md](quickstart.md) —— 5 分钟开发环境(更聚焦)
-- [docs/operator-guide.md](operator-guide.md) —— 运维参考:topology、认证、备份、日志
-- [docs/integration-guide.md](integration-guide.md) —— 第三方 API surface
-- [VERSIONING.md](../VERSIONING.md) —— major-as-generation 版本策略
-- [CHANGELOG.md](../CHANGELOG.md) —— 发布历史
+- [README.zh.md](../README.zh.md):安装表、部署路径、项目状态
+- [README.md](../README.md):English version
+- [docs/quickstart.md](quickstart.md):5 分钟开发环境(更聚焦)
+- [docs/operator-guide.md](operator-guide.md):运维参考,包含 topology、认证、备份、日志
+- [docs/integration-guide.md](integration-guide.md):第三方 API surface
+- [VERSIONING.md](../VERSIONING.md):major-as-generation 版本策略
+- [CHANGELOG.md](../CHANGELOG.md):发布历史

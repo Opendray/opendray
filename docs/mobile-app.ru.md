@@ -1,12 +1,12 @@
-# Мобильное приложение — сборка и установка
+# Мобильное приложение: сборка и установка
 
 🌐 [English](mobile-app.md) · [简体中文](mobile-app.zh.md) · [فارسی](mobile-app.fa.md) · [Español](mobile-app.es.md) · [Português](mobile-app.pt-BR.md) · [日本語](mobile-app.ja.md) · [한국어](mobile-app.ko.md) · [Français](mobile-app.fr.md) · [Deutsch](mobile-app.de.md) · **Русский**
 
-Мобильное приложение opendray (`app/mobile/`) — это **клиент управления**, а
+Мобильное приложение opendray (`app/mobile/`) это **клиент управления**, а
 не второй шлюз. Оно выполняет ту же работу, что и веб-админка по адресу
 `/admin/`: запускает и ведёт сессии, управляет каналами и интеграциями,
 просматривает память, читает git-хосты. Сами агенты продолжают работать на
-вашем хосте-шлюзе — телефон лишь подключается к ним.
+вашем хосте-шлюзе, а телефон лишь подключается к ним.
 
 Поэтому само по себе приложение бесполезно: оно подключается к **работающему
 шлюзу opendray** по HTTPS. Сначала поднимите шлюз
@@ -14,16 +14,16 @@
 ему URL вашего шлюза.
 
 > **Почему нет загрузки из App Store / Play Store?**
-> opendray — это self-hosted, однотенантное ПО. Сборка для магазина была бы
+> opendray это self-hosted, однотенантное ПО. Сборка для магазина была бы
 > вынуждена зашить в себя *чей-то* бэкенд, а это ровно то, чем opendray не
 > является. Поэтому вы собираете приложение сами, подписанное вашей
 > собственной учётной записью, и оно общается только с вашим шлюзом. Два
-> поддерживаемых пути ниже — **(A)** Android APK, который вы устанавливаете
+> поддерживаемых пути ниже: **(A)** Android APK, который вы устанавливаете
 > вручную (sideload), и **(B)** iOS-сборка, которую вы ставите через Xcode.
 
 ---
 
-## Шаг 0 — сделайте шлюз доступным с телефона
+## Шаг 0: сделайте шлюз доступным с телефона
 
 Приложение общается со шлюзом по сети, поэтому телефон должен иметь
 возможность достучаться до него.
@@ -32,20 +32,20 @@
 |---|---|
 | Телефон в той же LAN, что и шлюз | `http://<gateway-lan-ip>:8770` (например, `http://192.168.1.50:8770`) |
 | Шлюз за reverse-proxy с TLS | `https://opendray.yourdomain.com` |
-| Доступ вне LAN (сотовая связь, в дороге) | Публичный HTTPS-эндпоинт — Cloudflare Tunnel, Tailscale или reverse-proxy на nginx/Caddy |
+| Доступ вне LAN (сотовая связь, в дороге) | Публичный HTTPS-эндпоинт: Cloudflare Tunnel, Tailscale или reverse-proxy на nginx/Caddy |
 
 > **Не выставляйте `:8770` голым в интернет.** Поставьте перед ним TLS и
-> ingress. Cloudflare Tunnel — вариант с наименьшим трением (без
-> проброса портов, без публичного IP). Сниппеты для nginx / Caddy —
-> включая **заголовки WebSocket upgrade**, которые нужны терминалу сессий, —
+> ingress. Cloudflare Tunnel это вариант с наименьшим трением (без
+> проброса портов, без публичного IP). Сниппеты для nginx / Caddy,
+> включая **заголовки WebSocket upgrade**, которые нужны терминалу сессий,
 > приведены в [operator-guide §Topology](operator-guide.md#topology).
 
-Проверьте доступность с телефона *до* сборки — например, откройте Gateway URL
+Проверьте доступность с телефона *до* сборки, например, откройте Gateway URL
 в браузере телефона: вы должны увидеть страницу входа веб-админки.
 
 ---
 
-## Шаг 1 — установите тулчейн Flutter
+## Шаг 1: установите тулчейн Flutter
 
 Приложение собирается с помощью Flutter. Он нужен на машине, которая делает
 сборку (не на телефоне).
@@ -56,7 +56,7 @@ flutter --version          # нужен 3.41+ (Dart SDK ^3.11)
 flutter doctor             # устраните любые ✗ для целевой платформы
 ```
 
-`flutter doctor` — это контрольная точка: он точно сообщает, чего не хватает
+`flutter doctor` это контрольная точка: он точно сообщает, чего не хватает
 для Android (Android SDK + устройство/эмулятор) или iOS (Xcode + CocoaPods).
 Исправьте строки с ✗ для вашей целевой платформы, прежде чем продолжить.
 
@@ -69,9 +69,9 @@ flutter pub get
 
 ---
 
-## Шаг 2A — Android: соберите APK и установите его вручную
+## Шаг 2A. Android: соберите APK и установите его вручную
 
-Это самый простой путь — без аккаунта разработчика, без магазина.
+Это самый простой путь: без аккаунта разработчика, без магазина.
 
 ### Соберите APK
 
@@ -96,7 +96,7 @@ app/mobile/build/app/outputs/flutter-apk/app-release.apk
 > `android/app/build.gradle.kts`). Для личной установки вручную этого
 > достаточно. Если вам нужен полноценный upload-ключ (обязателен для Play
 > Store и хорош как гигиена для сборки, которую вы будете обновлять),
-> следуйте [Flutter — Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
+> следуйте [Flutter: Sign the app](https://docs.flutter.dev/deployment/android#sign-the-app)
 > и добавьте `signingConfig` для `release`.
 
 ### Перенесите APK на телефон
@@ -113,16 +113,16 @@ adb install -r build/app/outputs/flutter-apk/app-release.apk
 Либо перенесите файл `.apk` на телефон (аналог AirDrop, файловая шара, ссылка
 для скачивания, письмо самому себе) и нажмите на него. Android попросит
 разрешить **«Установка неизвестных приложений»** для того приложения, которое
-открывает файл (Files, Chrome и т. д.) — выдайте разрешение, затем подтвердите
+открывает файл (Files, Chrome и т. д.): выдайте разрешение, затем подтвердите
 установку.
 
 Приложение появляется как **Opendray** (`io.opendray.opendray`).
 
 ---
 
-## Шаг 2B — iOS: сборка и установка через Xcode
+## Шаг 2B. iOS: сборка и установка через Xcode
 
-В iOS нет аналога установки APK вручную — каждая установка подписана кодом.
+В iOS нет аналога установки APK вручную: каждая установка подписана кодом.
 Вам нужен **Mac с Xcode** и **Apple ID**. Бесплатный Apple ID подойдёт
 (приложение переподписывается каждые 7 дней; вы переустанавливаете его, когда
 provisioning-профиль истекает). Платный аккаунт Apple Developer
@@ -143,8 +143,8 @@ open ios/Runner.xcworkspace        # откройте WORKSPACE, а не .xcodep
 3. **Team**: выберите команду вашего Apple ID (добавьте Apple ID в
    Xcode → Settings → Accounts, если его нет в списке).
 4. **Bundle Identifier**: поставляется как `io.opendray.opendray`. С
-   бесплатным Apple ID этот точный ID может быть уже занят на стороне Apple —
-   если Xcode показывает ошибку provisioning, измените его на что-то
+   бесплатным Apple ID этот точный ID может быть уже занят на стороне Apple.
+   Если Xcode показывает ошибку provisioning, измените его на что-то
    уникальное, например `io.opendray.opendray.<yourname>`.
 
 ### Сборка и установка на iPhone
@@ -177,16 +177,16 @@ iOS не запустит приложение, подписанное перс�
 
 ---
 
-## Шаг 3 — подключите приложение к вашему шлюзу
+## Шаг 3: подключите приложение к вашему шлюзу
 
 Первый запуск показывает экран онбординга:
 
-1. **Gateway URL** — введите URL из Шага 0
+1. **Gateway URL**: введите URL из Шага 0
    (например, `https://opendray.yourdomain.com`). Нажмите **Continue**.
-2. **Вход** — `admin` + ваш пароль администратора (тот, что вы задали в
+2. **Вход**: `admin` + ваш пароль администратора (тот, что вы задали в
    `[admin].password`, или сменили позже).
 
-Вот и всё — вы попадаете на те же поверхности, что и в веб-админке: Sessions,
+Вот и всё, вы попадаете на те же поверхности, что и в веб-админке: Sessions,
 Channels, Integrations, Memory, Git, Settings.
 
 Чтобы позже направить приложение на другой шлюз, нажмите **Change** на экране
@@ -196,7 +196,7 @@ Channels, Integrations, Memory, Git, Settings.
 
 ## Обновление приложения
 
-Авто-обновления нет — вы переустанавливаете приложение после получения нового
+Авто-обновления нет, вы переустанавливаете приложение после получения нового
 кода:
 
 ```sh
@@ -221,7 +221,7 @@ open ios/Runner.xcworkspace      # снова ▶ Run, или `flutter run --rel
 | Симптом | Причина | Решение |
 |---|---|---|
 | Онбординг «could not connect» | Телефон не может достучаться до Gateway URL | Откройте URL в браузере телефона; сначала исправьте LAN IP / туннель / TLS (Шаг 0) |
-| Вход работает, но терминал сессий не подключается | Reverse-proxy отбрасывает WebSocket upgrade | Добавьте WS-заголовки — [operator-guide §Topology](operator-guide.md#topology) |
+| Вход работает, но терминал сессий не подключается | Reverse-proxy отбрасывает WebSocket upgrade | Добавьте WS-заголовки: [operator-guide §Topology](operator-guide.md#topology) |
 | Android блокирует установку | Не выдано «Установка неизвестных приложений» | Разрешите её для приложения, открывающего `.apk` (Files / Chrome) |
 | iOS «Untrusted Developer» при запуске | Профиль персональной команды ещё не доверен | Settings → General → VPN & Device Management → Trust |
 | iOS «Unable to install / signing» в Xcode | Конфликт Bundle ID с бесплатным Apple ID | Измените Bundle Identifier на `io.opendray.opendray.<yourname>` |
@@ -232,7 +232,7 @@ open ios/Runner.xcworkspace      # снова ▶ Run, или `flutter run --rel
 
 ## См. также
 
-- [getting-started.md](getting-started.md) — поднимите шлюз, к которому подключается приложение
-- [operator-guide.md](operator-guide.md) — топология reverse-proxy / туннеля для доступа вне LAN
-- [Flutter — build & release Android](https://docs.flutter.dev/deployment/android)
-- [Flutter — build & release iOS](https://docs.flutter.dev/deployment/ios)
+- [getting-started.md](getting-started.md): поднимите шлюз, к которому подключается приложение
+- [operator-guide.md](operator-guide.md): топология reverse-proxy / туннеля для доступа вне LAN
+- [Flutter: build & release Android](https://docs.flutter.dev/deployment/android)
+- [Flutter: build & release iOS](https://docs.flutter.dev/deployment/ios)

@@ -1,4 +1,4 @@
-# opendray memory system — operator guide
+# opendray memory system, operator guide
 
 This guide walks through what opendray's unified memory system
 does, how to use it day-to-day, and how to verify it's behaving.
@@ -6,9 +6,9 @@ does, how to use it day-to-day, and how to verify it's behaving.
 > **⚠️ Partially superseded by the M-U unification arc.** Several
 > behaviours below changed in the memory-unification redesign
 > ([`memory-redesign.md`](./memory-redesign.md)). The sections flagged
-> **[Superseded — M-U]** describe the *pre-M-U* system; the deltas are:
+> **[Superseded, M-U]** describe the *pre-M-U* system; the deltas are:
 >
-> - **Two scopes, not three.** `session` was removed — a session ≡ its
+> - **Two scopes, not three.** `session` was removed, since a session ≡ its
 >   project. Memory is `project` (default, keyed by cwd) or `global`
 >   (operator-only). See [Project isolation](#project-isolation-guarantees).
 > - **Writes are free; cleanup is automatic.** The manual Cleanup inbox
@@ -30,11 +30,11 @@ does, how to use it day-to-day, and how to verify it's behaving.
 > - **`backend = "auto"` is self-configuring (Phase 7).** It uses your
 >   configured dense `[memory.http]` endpoint when reachable (semantic
 >   memory) and otherwise falls back to the always-present BM25 keyword
->   floor — a fresh install with no model still works. It is
+>   floor, so a fresh install with no model still works. It is
 >   *upgrade-only*: if the store already holds dense rows but the endpoint
 >   is down at startup, the dense tier is kept active (existing vectors
 >   stay visible, nothing is re-embedded) and writes/search degrade until
->   it responds — `auto` never silently downgrades to BM25. The Memory
+>   it responds. `auto` never silently downgrades to BM25. The Memory
 >   settings status strip shows the effective embedder and warns when a
 >   configured dense endpoint is unreachable or only the floor is active.
 >   New cleaner knobs `lifecycle_dormant_days` (90) and `grace_days` (30)
@@ -58,8 +58,8 @@ without you saying it again.
 
 | Layer | What it is | Who edits it |
 |---|---|---|
-| **Tech stack & structure** | Auto-detected — Flutter / Go / Node / Postgres etc. via marker files. Plus current git branch + HEAD. Plus top-level directory layout. | Scanner only (read-only in UI). Refreshes every 6h or on stale-spawn. |
-| **Project goal** | What we are building, one paragraph. | You — directly in the mobile/web Project screen. Agents can *propose* edits, which queue in the Inbox for your approval. |
+| **Tech stack & structure** | Auto-detected: Flutter / Go / Node / Postgres etc. via marker files. Plus current git branch + HEAD. Plus top-level directory layout. | Scanner only (read-only in UI). Refreshes every 6h or on stale-spawn. |
+| **Project goal** | What we are building, one paragraph. | You, directly in the mobile/web Project screen. Agents can *propose* edits, which queue in the Inbox for your approval. |
 | **Project plan** | What we are doing right now and what's next. | Same as goal. |
 | **Recent activity** | LLM narrative of `git log --since="7 days ago"` plus hot-path file list. | Scanner only. 24h refresh ticker. |
 | **Recent journal** | Last 5 session-end summaries. | Auto. Each session-end appends one. |
@@ -82,7 +82,7 @@ system prompt via each CLI's native injection channel.
 ### Reviewing agent-proposed changes
 
 When an agent calls `project_goal_set` or `project_plan_set` MCP
-tools, the change doesn't apply immediately — it goes to the
+tools, the change doesn't apply immediately. It goes to the
 **Inbox** tab as a proposal with a red banner warning that
 "Approve REPLACES the current goal/plan entirely". A side-by-side
 diff shows current vs proposed. You can Approve (with a confirm
@@ -93,7 +93,7 @@ overwrite your hand-written goal with their interpretation.
 
 ### Cleanup inbox
 
-> **[Superseded — M-U]** The manual approve/reject Cleanup inbox below
+> **[Superseded, M-U]** The manual approve/reject Cleanup inbox below
 > is removed. The cleaner now **auto-applies** keep/stale/duplicate
 > verdicts as **reversible soft-archives** (no queue to triage). What it
 > archived is restorable from **Memory → Archived** for a 30-day grace
@@ -135,9 +135,9 @@ If either step fails, check the spawn injection channel:
 
 ## Project isolation guarantees
 
-> **[Superseded — M-U]** Scope model is now **two** scopes, not three:
+> **[Superseded, M-U]** Scope model is now **two** scopes, not three:
 > `project` (default, keyed by cwd) and `global` (operator-only).
-> `session` was removed — a session is always its project's cwd, so
+> `session` was removed, since a session is always its project's cwd, so
 > session-scoped memory was a redundant partition. Existing
 > `session` rows were folded to `project` (keyed by the session's cwd)
 > by migration 0034; the isolation guarantees below still hold per
@@ -147,28 +147,28 @@ opendray promises that **project A's records will never appear in
 project B's agent context**. The reader implementation in
 `internal/session/transcript.go` enforces three checks:
 
-1. **Fail-closed on missing UUID file** — if the caller asked for
+1. **Fail-closed on missing UUID file**: if the caller asked for
    a specific session UUID and the file isn't there, return empty
    rather than fall back to "latest mtime in directory" (which is
    how unrelated sessions used to leak in).
-2. **Time-window filter** — every parsed turn must have a
+2. **Time-window filter**: every parsed turn must have a
    timestamp within `[startedAt - 30s, endedAt + 30s]`. Even when
    the right file is opened, accumulated content from other
    spawns in the same cwd is filtered out.
-3. **Cwd canary** — the first jsonl entry that carries a `cwd`
+3. **Cwd canary**: the first jsonl entry that carries a `cwd`
    field must exactly match the calling session's cwd. One
    mismatch and the whole file is abandoned.
 
 When any defense triggers, the journaler degrades to metadata-only
 (no LLM summary appended). "We don't know what happened" is the
-correct failure mode — never a confidently-wrong summary.
+correct failure mode, never a confidently-wrong summary.
 
 ## Quality gates (anti-noise mechanisms)
 
-> **[Superseded — M-U]** Quality is now carried by **write-time
+> **[Superseded, M-U]** Quality is now carried by **write-time
 > semantic fold + ranking + the background maintenance loop**, not by a
 > write gate. The Gatekeeper described next is now an **optional,
-> off-by-default** knob (writes are free by design — the only human
+> off-by-default** knob (writes are free by design, the only human
 > gate is conflict detection). Server-side dedup is on the write hot
 > path by default and **folds** near-duplicates losslessly
 > (`merged_from` audit) rather than just merging counts. The LLM
@@ -231,7 +231,7 @@ git log --since="7 days ago" --name-only --format='' | sort -u
 ```
 
 Every path the LLM mentions should be in the git log output. If
-not, the LLM is hallucinating — file a bug.
+not, the LLM is hallucinating, so file a bug.
 
 ### Gatekeeper categorisation distribution
 
@@ -319,19 +319,19 @@ Settings → Server → Memory.
 Each of the four memory touch-points (gatekeeper / cleaner /
 gitactivity / transcript) can independently be served by either:
 
-- **SummarizerWorker** — the original OpenAI-compat HTTP path
+- **SummarizerWorker**: the original OpenAI-compat HTTP path
   (LM Studio / OpenAI / ollama). ~1s latency.
-- **AgentWorker** — a headless `claude --print` or `agy --print`
+- **AgentWorker**: a headless `claude --print` or `agy --print`
   spawn keyed to one of your multi-account OAuth tokens. ~5-15s
   latency, frontier-model quality, draws from your Claude / Antigravity
   subscription quota.
 
 Operators flip per task on the **Memory → Workers** page (web +
-mobile). Default rows are all `summarizer` — zero behavioural
+mobile). Default rows are all `summarizer`, zero behavioural
 change for existing installs. Per-call latency + outcome lands in
 `memory_worker_calls`; a 24h rollup is surfaced on each card.
 
-Gatekeeper stays summarizer-only by design — agent spawn (5-15s)
+Gatekeeper stays summarizer-only by design: agent spawn (5-15s)
 violates its <500ms latency budget. Codex is unsupported (no
 `--print` mode).
 
@@ -341,16 +341,16 @@ workflow, and the implementation under `internal/memory/worker/`.
 ## Plan-drift auto-proposals (M-PA, shipped)
 
 The plan document used to update only when an agent explicitly
-called `project_plan_set` — which agents rarely did in practice,
+called `project_plan_set`, which agents rarely did in practice,
 so plans drifted out of date as projects iterated.
 
-M-PA adds a fifth memory worker task — **`plan_drift`** — that
+M-PA adds a fifth memory worker task, **`plan_drift`**, that
 runs after every `session.ended` event. Given the session's
 transcript summary, the current plan, and the last few journal
 entries, it asks the configured worker LLM: "does this plan need
 updating?" If yes, it files a proposal into the operator's inbox
 with a one-line reason. Same approval flow as a manual
-`project_plan_set` — operators always have final say.
+`project_plan_set`. Operators always have final say.
 
 Worker selection lives at **Memory → Workers → plan_drift**;
 default is `summarizer`. Disable per task if you want the
@@ -376,14 +376,14 @@ actually working for this project?":
 - Plan-drift proposals filed this week
 - Top-hit fact (most retrieved) + count of zero-hit stale facts
 
-Backed by `GET /api/v1/memory/health?cwd=<cwd>` — one aggregate
+Backed by `GET /api/v1/memory/health?cwd=<cwd>`, one aggregate
 read that crosses both subsystems. No polling; refreshes on tab
 view.
 
 ## Cross-layer search (M-PB, shipped)
 
 Phase B closes the second gap from Phase A: the journal was
-write-only — `session_log_append` shoved entries in but agents had
+write-only: `session_log_append` shoved entries in but agents had
 no way to ask "what did we decide about X last month". M-PB makes
 journal entries first-class semantic-search citizens alongside
 memory facts.
@@ -406,10 +406,10 @@ memory facts.
 take a natural-language query and return the top-K hits across
 **five layers** in one ranked list:
 
-- `fact` — memory_search results (layer 5)
-- `journal` — semantic match against session_logs (layer 4)
-- `goal` — lexical match against project_docs.goal (layer 2)
-- `plan` — lexical match against project_docs.plan (layer 3)
+- `fact`: memory_search results (layer 5)
+- `journal`: semantic match against session_logs (layer 4)
+- `goal`: lexical match against project_docs.goal (layer 2)
+- `plan`: lexical match against project_docs.plan (layer 3)
 
 Each hit carries `similarity`, `effective_score` (similarity with
 time-decay applied: 1.0 today, 0.5 floor past 180 days), and the
@@ -424,7 +424,7 @@ pages by hand.
 
 `RenderForSpawn` now has a sibling `RenderForSpawnWithBudget`
 (`maxBytes int`). Operators dial it via
-`SessionProvider.WithProjectDocBudget(N)` — 0 keeps today's
+`SessionProvider.WithProjectDocBudget(N)`, where 0 keeps today's
 unconstrained behaviour. When set, sections are appended in
 priority order (plan → tech_stack → goal → recent_activity →
 journal) and rendering stops once the budget is exhausted, with
@@ -454,7 +454,7 @@ Threshold filtering still uses raw `similarity` so an explicit
 match (score 0.50), which is what operators were already doing
 mentally.
 
-Tuning knobs live in `internal/memory/ranking.go` — recompile to
+Tuning knobs live in `internal/memory/ranking.go`. Recompile to
 change them.
 
 ## Cross-layer conflict detection (M-PC, shipped)
@@ -468,11 +468,11 @@ two conflicting refs + the LLM's evidence + a severity tag.
 Operators review the inbox at `/memory/project` → **Conflicts**
 tab. Two buttons per row:
 
-- **Accept** — operator agrees a contradiction exists and will
+- **Accept**: operator agrees a contradiction exists and will
   apply the fix manually (delete a stale fact, update the plan,
   etc.). Status flips to `accepted` and the row stays in the
   audit history.
-- **Dismiss** — the detector got it wrong; status flips to
+- **Dismiss**: the detector got it wrong; status flips to
   `dismissed` and an identical pair won't be re-flagged in
   future sweeps.
 
@@ -535,7 +535,7 @@ Each conflict card on the **Conflicts** tab now grows a
   Accept after editing).
 
 The "Open editor" jumps work because `ProjectScreen`'s Tabs
-component is controlled (`activeTab` state) — the panel exposes
+component is controlled (`activeTab` state), and the panel exposes
 an `onJumpTab(tab: string)` callback that flips it.
 
 ## Roadmap

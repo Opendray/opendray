@@ -86,20 +86,20 @@ for builds; Vite dev keeps `base: '/'`. The TanStack Router reads
 `import.meta.env.BASE_URL` so client-side routing works in both modes.
 
 Code splits (Vite rolldown manualChunks):
-- `react` — react / react-dom / scheduler (~60 kB gzip)
-- `tanstack` — query + router (~37 kB gzip)
-- `xterm` — xterm.js + addons (~88 kB gzip, **only loaded on
+- `react`: react / react-dom / scheduler (~60 kB gzip)
+- `tanstack`: query + router (~37 kB gzip)
+- `xterm`: xterm.js + addons (~88 kB gzip, **only loaded on
   `/sessions`** via `React.lazy`)
-- `index` — entry + login + remaining pages (~90 kB gzip)
+- `index`: entry + login + remaining pages (~90 kB gzip)
 
 First-paint at `/login` ≈ 187 kB gzip; session workbench adds the
 xterm chunk on-demand.
 
 ## Milestones (delivered)
 
-- W0 — scaffold, tokens, login, sidebar
-- W1 — command palette, topbar, settings page, toasts
-- W2 — sessions workbench: list, multi-tab, xterm.js, spawn dialog
-- W3 — providers / channels / integrations CRUD pages
-- W4 — Activity live event viewer + Integrations reverse-proxy console
-- W5 — code-split, /admin/ basepath, health banner, go:embed
+- W0: scaffold, tokens, login, sidebar
+- W1: command palette, topbar, settings page, toasts
+- W2: sessions workbench: list, multi-tab, xterm.js, spawn dialog
+- W3: providers / channels / integrations CRUD pages
+- W4: Activity live event viewer + Integrations reverse-proxy console
+- W5: code-split, /admin/ basepath, health banner, go:embed

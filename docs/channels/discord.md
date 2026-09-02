@@ -14,7 +14,7 @@
 
 Same Bot page, scroll to **Privileged Gateway Intents**:
 
-- ✅ **Message Content Intent** (required — without this, message
+- ✅ **Message Content Intent** (required: without this, message
   events arrive with `content=""` and opendray cannot read them).
 - ✅ **Server Members Intent** (only needed if you ever want to read
   member info; safe to leave on).
@@ -51,7 +51,7 @@ Gateway handshake completes (`READY` event in logs).
 
 - Admin **Test** button posts a message to the default channel.
 - Send `/help` in any channel where the bot can read messages.
-- Trigger session.idle — a coloured embed with Resume/End/Mute
+- Trigger session.idle and a coloured embed with Resume/End/Mute
   buttons appears.
 
 ## Notes
@@ -60,7 +60,7 @@ Gateway handshake completes (`READY` event in logs).
   `green→#22c55e`, `red→#ef4444`, `yellow→#eab308`, etc. Custom hex
   not supported (yet).
 - `custom_id` on a button is what arrives back as the inbound action.
-  The Hub uses values like `cmd:/cancel <sid>` — well below Discord's
+  The Hub uses values like `cmd:/cancel <sid>`, well below Discord's
   100-char limit.
 - The bot token is highly sensitive: if leaked, anyone can act as the
   bot (DM users, edit channels). Reset it from the dev portal if

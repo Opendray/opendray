@@ -9,7 +9,7 @@ The opendray gateway exposes read-only git inspection endpoints
 backed by the `git` binary in the session's cwd, plus PR listing
 across configured hosts (GitHub, Gitea, GitLab). Use them instead of
 shelling out to `git` directly when you want structured output that's
-easy to summarise back to the user — falls back to plain `git` for
+easy to summarise back to the user. It falls back to plain `git` for
 anything not covered.
 
 ## When to use
@@ -20,7 +20,7 @@ anything not covered.
 - Before opening a PR, to check the diff against `HEAD` or origin
 
 For destructive ops (commit, push, branch, rebase, …) keep using the
-plain `git` CLI — those are not exposed via the gateway and are safer
+plain `git` CLI. Those are not exposed via the gateway and are safer
 to run with the user's explicit confirmation.
 
 ## Endpoints (gateway runs at http://127.0.0.1:8770 by default)
@@ -44,7 +44,7 @@ familiar git output. Reach for the gateway endpoints when:
 
 - you want to surface a structured PR list (no `gh`/`tea` setup needed)
 - the user wants you to *summarise* a long diff without dumping all
-  of it into the chat — fetch the JSON, then paraphrase
+  of it into the chat: fetch the JSON, then paraphrase
 
 ## Patterns
 
@@ -89,6 +89,6 @@ PRs should:
 
 - Never run destructive git ops without confirming the working tree
   state and asking the user
-- For force-push, rebase main, branch -D — always pause and confirm
+- For force-push, rebase main, branch -D, always pause and confirm
 - Read-only endpoints are safe to call freely; PR listing hits remote
   APIs (GitHub/Gitea/GitLab), which counts against rate limits

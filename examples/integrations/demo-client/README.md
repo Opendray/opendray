@@ -10,7 +10,7 @@ the exact credential lifecycle a real consumer would follow:
    admin token again.
 3. **If the operator rotates the key in the UI**, the next run
    detects 401 and recovers by rotating once with the admin
-   token — emulating what an automated consumer would do under a
+   token, emulating what an automated consumer would do under a
    secret-rotation policy.
 4. `pnpm reset` undoes everything (deletes the integration row
    and removes the state file) so you can replay the demo from
@@ -115,12 +115,12 @@ on every demo start and chooses one of these branches:
 This is the lifecycle scenario you can't see clearly without a
 persistent state:
 
-1. `pnpm dev` — fresh registration; state saved.
-2. `pnpm dev` — reuses saved key (`✓ reused saved key`).
+1. `pnpm dev`: fresh registration; state saved.
+2. `pnpm dev`: reuses saved key (`✓ reused saved key`).
 3. Open the web UI, go to **Integrations → demo-client → Rotate key**.
 4. Acknowledge the new key in the dialog (you can ignore it for
-   this test — we want to see the recovery branch fire).
-5. `pnpm dev` — output now shows:
+   this test, we want to see the recovery branch fire).
+5. `pnpm dev`: output now shows:
    ```
    loaded state for integration int_…
    ⚠ saved key returned 401 — assume operator rotated it; recovering…
@@ -211,17 +211,17 @@ full scope list lives at `app/web/src/lib/types.ts: ALL_SCOPES`.
 
 ## Troubleshooting
 
-**`HTTP 401: unauthorized`** on the very first call — admin
+**`HTTP 401: unauthorized`** on the very first call: admin
 credentials in `.env` don't match `config.toml`. Log in once via
 the web UI to confirm.
 
-**Recovery loop returns 404 on rotate** — the integration row
+**Recovery loop returns 404 on rotate**: the integration row
 was deleted (e.g. via the UI). The demo should fall through to
 fresh registration; if it doesn't, run `pnpm reset` and try
 again.
 
-**`Cannot find module 'tsx'`** — run `pnpm install` first.
+**`Cannot find module 'tsx'`**: run `pnpm install` first.
 
-**WS closes immediately with code 1006** — the integration's
+**WS closes immediately with code 1006**: the integration's
 scopes don't include the topic you're subscribing to. Reset and
 re-register to pick up the demo's full scope set.

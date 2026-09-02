@@ -1,4 +1,4 @@
-# The Experience Compiler — ground-up rework of distillation + graph
+# The Experience Compiler: ground-up rework of distillation + graph
 
 > Status: DESIGN APPROVED FOR IMPLEMENTATION (operator demanded a
 > qualitative leap, not patches). Replaces the reflect→playbook→
@@ -15,9 +15,9 @@ The operator's definition of value is different:
 > A skill is something we REPEAT. Its value = how much manual time it
 > removes from future work.
 
-So the unit of distillation is not "a session log" — it is a
+So the unit of distillation is not "a session log". It is a
 **recurring procedure across the whole history of work**, and the
-output is not prose — it is a **compiled, executable, feedback-tracked
+output is not prose. It is a **compiled, executable, feedback-tracked
 artifact**.
 
 ## 1. The pipeline (replaces Reflector)
@@ -53,12 +53,12 @@ artifact**.
 ```
 
 Key mechanical guarantees (not prompt hopes):
-- **nothing with <2 successful occurrences is ever synthesised** —
+- **nothing with <2 successful occurrences is ever synthesised**:
   recurrence is computed by clustering, the LLM never decides it;
 - pitfall candidates keep today's gate but require either recurrence
   OR a failed trace with a root cause + working alternative;
 - every candidate carries `saves_minutes_estimate = avg(trace
-  duration) × recurrence` — the ranking key.
+  duration) × recurrence`, the ranking key.
 
 ## 2. Data model
 
@@ -79,7 +79,7 @@ procedure_traces (
 --    outcome TEXT, created_at)
 ```
 
-## 3. UI — the workbench becomes a decision queue
+## 3. UI: the workbench becomes a decision queue
 
 Distillation tab (full replacement of the two-column view):
 
@@ -110,7 +110,7 @@ Distillation tab (full replacement of the two-column view):
 
 The graph earns its place by serving the pipeline, not by existing:
 
-1. **Recurrence map** (primary view): clusters as rows — which
+1. **Recurrence map** (primary view): clusters as rows, showing which
    procedures recur, across which projects, trend over time. This IS
    the graph (trace→cluster→project edges) rendered as a worklist.
 2. **Blast radius** (kept from Impact view): entity → dependents.
@@ -121,9 +121,9 @@ The graph earns its place by serving the pipeline, not by existing:
 ## 5. What gets deleted
 
 - Reflector's per-project playbook drafting (reflect.go synthesis
-  path) — trace extraction replaces it. The structural gate
+  path). Trace extraction replaces it. The structural gate
   (validateDraftPlaybook) survives as the floor for ③'s output.
-- 'Automate:' title-prefix heuristic — recurrence clustering IS the
+- 'Automate:' title-prefix heuristic: recurrence clustering IS the
   automation detector now.
 - The skills/playbooks two-column workbench.
 
@@ -147,5 +147,5 @@ The graph earns its place by serving the pipeline, not by existing:
 
 Stage ① uses the capture-grade cheap model per session end (one call);
 ②⑤ are SQL/embedding-only; ③④ use strong models but fire only for
-clusters with proven recurrence — by construction, the expensive calls
+clusters with proven recurrence. By construction, the expensive calls
 happen exactly where value is already demonstrated.

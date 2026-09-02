@@ -1,17 +1,17 @@
 # Instalar y ejecutar desde un binario precompilado
 
-Para cuando ya tienes — o quieres — solo el binario `opendray`, sin que ningún
+Para cuando ya tienes (o quieres) solo el binario `opendray`, sin que ningún
 asistente de instalación toque tu máquina. Este es el camino para:
 
-- **`npm install -g opendray` / `npx opendray`** — el paquete npm incluye el
+- **`npm install -g opendray` / `npx opendray`**: el paquete npm incluye el
   binario de release oficial de Go (ver [README → npm / npx](../README.es.md#npm--npx-node--18)).
-- **Descargas de release** — descarga `opendray_*_<os>_<arch>.tar.gz` desde la
+- **Descargas de release**: descarga `opendray_*_<os>_<arch>.tar.gz` desde la
   [página de releases](https://github.com/Opendray/opendray/releases).
-- **Entornos con scripts / efímeros** — runners de CI, imágenes doradas, gestión
+- **Entornos con scripts / efímeros**: runners de CI, imágenes doradas, gestión
   de configuración (Ansible, Nix, Docker), o cualquier host donde ya ejecutes tu
   propio Postgres y supervisor de procesos.
 
-El binario es el *gateway completo* — la SPA de administración web está embebida, así que
+El binario es el *gateway completo*: la SPA de administración web está embebida, así que
 no hay runtime de Node, no hay servidor de archivos estáticos separado y nada que compilar. Lo que
 **no** hace es configurar nada por ti. Ese es el trato: tú aportas una
 base de datos PostgreSQL y una forma de mantener el proceso en marcha, y a cambio
@@ -28,7 +28,7 @@ pasos, y luego muestra cómo mantenerlo en ejecución como servicio.
 
 ---
 
-## Paso 1 — Obtener el binario
+## Paso 1: Obtener el binario
 
 ### Vía npm (cualquier SO con Node ≥ 18)
 
@@ -42,7 +42,7 @@ yarn global add opendray
 ```
 
 El binario de plataforma correcto (`opendray-{linux,darwin}-{x64,arm64}`) se selecciona
-automáticamente vía `optionalDependencies` — no hay hook `postinstall` ni
+automáticamente vía `optionalDependencies`, y no hay hook `postinstall` ni
 llamada de red durante la instalación. **No** uses `--no-optional`: omite el
 paquete de plataforma y deja al lanzador sin binario que ejecutar.
 
@@ -62,11 +62,11 @@ opendray --help           # lista todos los subcomandos
 ```
 
 Plataformas soportadas: **Linux** (x64, arm64) y **macOS** (x64, arm64).
-Windows nativo no está empaquetado — usa WSL2 y sigue el camino de Linux.
+Windows nativo no está empaquetado: usa WSL2 y sigue el camino de Linux.
 
 ---
 
-## Paso 2 — Proporcionar PostgreSQL 15+ con pgvector
+## Paso 2: Proporcionar PostgreSQL 15+ con pgvector
 
 opendray almacena todo (sesiones, memoria, log de auditoría) en PostgreSQL, y
 su subsistema de memoria necesita la extensión [`pgvector`](https://github.com/pgvector/pgvector).
@@ -95,18 +95,18 @@ sudo -u postgres psql -d opendray -c 'GRANT ALL ON SCHEMA public TO opendray;'
 
 Una vez que la extensión existe, el rol solo-CRUD de opendray ejecuta migraciones sin
 ningún acceso adicional de superusuario. **Nunca apuntes opendray a un rol superusuario en
-runtime** — dale una cuenta con scope al proyecto y rota su contraseña fuera
+runtime**: dale una cuenta con scope al proyecto y rota su contraseña fuera
 de banda.
 
 ---
 
-## Paso 3 — Configurar
+## Paso 3: Configurar
 
 opendray lee su configuración desde un archivo TOML **o** puramente desde variables de
-entorno (12-factor) — las variables de entorno siempre tienen prioridad sobre el archivo. El único requisito
+entorno (12-factor), y las variables de entorno siempre tienen prioridad sobre el archivo. El único requisito
 estricto es la URL de la base de datos; todo lo demás tiene un valor por defecto.
 
-### Opción A — variables de entorno (recomendado para contenedores / hosts efímeros)
+### Opción A: variables de entorno (recomendado para contenedores / hosts efímeros)
 
 ```sh
 export OPENDRAY_DATABASE_URL="postgres://opendray:change-me@127.0.0.1:5432/opendray?sslmode=disable"
@@ -116,8 +116,8 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # opcional; este e
 
 | Variable | Requerida | Por defecto | Propósito |
 |---|---|---|---|
-| `OPENDRAY_DATABASE_URL` | **sí** | — | DSN de Postgres |
-| `OPENDRAY_ADMIN_PASSWORD` | recomendada | — | Contraseña de administración web/móvil |
+| `OPENDRAY_DATABASE_URL` | **sí** | ninguno | DSN de Postgres |
+| `OPENDRAY_ADMIN_PASSWORD` | recomendada | ninguno | Contraseña de administración web/móvil |
 | `OPENDRAY_ADMIN_USER` | no | `admin` | Nombre de usuario administrador |
 | `OPENDRAY_LISTEN` | no | `127.0.0.1:8770` | Dirección de escucha |
 | `OPENDRAY_LOG_LEVEL` | no | `info` | `debug`/`info`/`warn`/`error` |
@@ -126,7 +126,7 @@ export OPENDRAY_LISTEN="127.0.0.1:8770"                       # opcional; este e
 Ejecuta `opendray serve` sin el flag `-config` y cargará todo desde el
 entorno.
 
-### Opción B — config.toml
+### Opción B: config.toml
 
 ```sh
 curl -fsSLO https://raw.githubusercontent.com/Opendray/opendray/main/config.example.toml
@@ -150,12 +150,12 @@ password = "use-a-real-password"
 Consulta [`config.example.toml`](../config.example.toml) para el archivo
 completamente anotado (logging, detección de sesión inactiva, backups, vault, MCP). Pásalo con
 `-config config.toml` a los comandos de abajo. Mantén los secretos fuera del TOML en
-hosts compartidos — establece `OPENDRAY_DATABASE_URL` / `OPENDRAY_ADMIN_PASSWORD` vía entorno
+hosts compartidos: establece `OPENDRAY_DATABASE_URL` / `OPENDRAY_ADMIN_PASSWORD` vía entorno
 y deja el archivo sin secretos.
 
 ---
 
-## Paso 4 — Aplicar el esquema
+## Paso 4: Aplicar el esquema
 
 ```sh
 opendray migrate                          # configuración solo por entorno
@@ -163,12 +163,12 @@ opendray migrate                          # configuración solo por entorno
 opendray migrate -config config.toml
 ```
 
-Idempotente — volver a ejecutarlo no tiene efecto una vez que el esquema está actualizado. Esto debe
+Idempotente: volver a ejecutarlo no tiene efecto una vez que el esquema está actualizado. Esto debe
 ejecutarse con éxito antes del primer `serve`.
 
 ---
 
-## Paso 5 — Ejecutarlo
+## Paso 5: Ejecutarlo
 
 ```sh
 opendray serve                            # configuración solo por entorno
@@ -180,11 +180,11 @@ Esto se ejecuta en **primer plano** (Ctrl-C lo detiene). Deberías tener ahora:
 
 | URL | Qué es |
 |---|---|
-| `http://127.0.0.1:8770/admin/` | Panel de administración web — inicia sesión con `admin` + tu contraseña |
+| `http://127.0.0.1:8770/admin/` | Panel de administración web, inicia sesión con `admin` + tu contraseña |
 | `http://127.0.0.1:8770/api/v1/...` | API REST + WebSocket |
 
 Eso es un gateway completo y en marcha. Para cualquier cosa más allá de una prueba rápida, ejecútalo
-bajo un supervisor para que sobreviva a reinicios y se reinicie ante fallos — a continuación.
+bajo un supervisor para que sobreviva a reinicios y se reinicie ante fallos, como se explica a continuación.
 
 ---
 
@@ -195,7 +195,7 @@ opendray incluye unidades endurecidas y listas para usar; los pasos a continuaci
 [README → Despliegue de producción](../README.es.md#despliegue-de-producción), que es la
 referencia autorizada (bootstrap completo, notas de sandboxing, reverse-proxy/TLS).
 
-### Linux — systemd
+### Linux: systemd
 
 El repositorio incluye una unidad endurecida en
 [`deploy/systemd/opendray.service`](../deploy/systemd/opendray.service)
@@ -225,7 +225,7 @@ supervisor a `opendray serve -config /etc/opendray/config.toml` y ejecuta
 `opendray migrate` una vez como paso previo al inicio. Consulta
 [README → Despliegue de producción §B](../README.es.md#opción-b--binario-directo--tu-propio-supervisor-de-procesos).
 
-### macOS — launchd
+### macOS: launchd
 
 El repositorio incluye un LaunchDaemon en
 [`deploy/launchd/com.opendray.opendray.plist`](../deploy/launchd/com.opendray.opendray.plist)
@@ -246,8 +246,8 @@ sudo launchctl print system/com.opendray.opendray
 Reiniciar: `sudo launchctl kickstart -k system/com.opendray.opendray`.
 Descargar: `sudo launchctl bootout system/com.opendray.opendray`.
 
-> Ambas unidades están documentadas en detalle — incluyendo el layout de secretos y por qué
-> `MemoryDenyWriteExecute` está desactivado — en
+> Ambas unidades están documentadas en detalle (incluyendo el layout de secretos y por qué
+> `MemoryDenyWriteExecute` está desactivado) en
 > [`deploy/README.md`](../deploy/README.md).
 
 ---
@@ -256,7 +256,7 @@ Descargar: `sudo launchctl bootout system/com.opendray.opendray`.
 
 La forma de actualizar depende de cómo lo instalaste:
 
-- **Instalado vía npm** — actualiza con tu gestor de paquetes. `opendray update`
+- **Instalado vía npm**: actualiza con tu gestor de paquetes. `opendray update`
   reemplazaría el binario *dentro de* `node_modules` a espaldas de npm y se
   sobreescribiría en la próxima instalación, así que no lo uses aquí.
 
@@ -264,7 +264,7 @@ La forma de actualizar depende de cómo lo instalaste:
   npm install -g opendray@latest
   ```
 
-- **Descarga de release / instalación con asistente** — el binario se autoactualiza en su sitio
+- **Descarga de release / instalación con asistente**: el binario se autoactualiza en su sitio
   (descarga el último release, verifica su SHA-256, se intercambia a sí mismo atómicamente):
 
   ```sh
@@ -282,7 +282,7 @@ npm se ejecutó con `--no-optional`, o la instalación se interrumpió. Vuelve a
 
 **`unsupported platform`**
 El paquete npm cubre Linux/macOS en x64/arm64 únicamente. En otros objetivos, compila
-desde el código fuente — consulta [quickstart.md](quickstart.md).
+desde el código fuente. Consulta [quickstart.md](quickstart.md).
 
 **`config: database.url is empty`**
 Ni `OPENDRAY_DATABASE_URL` ni `[database].url` están configurados. Establece uno (Paso 3).
@@ -303,11 +303,11 @@ Cambia `OPENDRAY_LISTEN` (o `listen` en config.toml) a un puerto libre.
 
 ## Próximos pasos
 
-- [README → Despliegue de producción](../README.es.md#despliegue-de-producción) — referencia completa
+- [README → Despliegue de producción](../README.es.md#despliegue-de-producción), referencia completa
   de despliegue (systemd / launchd / supervisor propio, hardening, reverse proxy)
-- [`docs/operator-guide.md`](operator-guide.md) — ops: topología de reverse-proxy/TLS,
+- [`docs/operator-guide.md`](operator-guide.md), ops: topología de reverse-proxy/TLS,
   backups cifrados de DB, exportación/importación de datos
-- [`docs/integration-guide.md`](integration-guide.md) — construye una integración externa
+- [`docs/integration-guide.md`](integration-guide.md), construye una integración externa
   contra la API REST + WebSocket
-- [`docs/getting-started.md`](getting-started.md) — la configuración guiada y todo-en-uno
+- [`docs/getting-started.md`](getting-started.md), la configuración guiada y todo-en-uno
   si prefieres no ensamblar las piezas tú mismo

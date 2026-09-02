@@ -121,6 +121,11 @@ type Session struct {
 	// (~/.gemini). Mirrors ClaudeAccountID for the agy provider, whose
 	// accounts are isolated by HOME rather than CLAUDE_CONFIG_DIR.
 	AntigravityAccountID string `json:"antigravity_account_id,omitempty"`
+	// GrokAccountID is the grokacct account this session is pinned to
+	// (provider "grok"). Empty means the CLI's default grok home
+	// (~/.grok). Mirrors AntigravityAccountID for the grok provider,
+	// whose accounts are isolated by GROK_HOME.
+	GrokAccountID string `json:"grok_account_id,omitempty"`
 	// ParentSessionID links a session spawned on behalf of another
 	// (e.g. the Inspector's Tasks tab spawns shell children of an
 	// AI session). Empty for top-level sessions. Used purely for UI
@@ -181,6 +186,7 @@ type CreateRequest struct {
 	Model                string   `json:"model,omitempty"`
 	ClaudeAccountID      string   `json:"claude_account_id,omitempty"`
 	AntigravityAccountID string   `json:"antigravity_account_id,omitempty"`
+	GrokAccountID        string   `json:"grok_account_id,omitempty"`
 	ParentSessionID      string   `json:"parent_session_id,omitempty"`
 	Cwd                  string   `json:"cwd"`
 	Args                 []string `json:"args"`

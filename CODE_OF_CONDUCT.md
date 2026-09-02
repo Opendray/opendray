@@ -51,10 +51,10 @@ for moderation decisions when appropriate.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces — including the
+This Code of Conduct applies within all community spaces, including the
 opendray GitHub repository (issues, pull requests, discussions, code review),
 release announcements, and any official channel where opendray is the
-subject — and also applies when an individual is officially representing the
+subject. It also applies when an individual is officially representing the
 community in public spaces.
 
 ## Enforcement

@@ -1,4 +1,4 @@
-# Channels — provisioning guides
+# Channels: provisioning guides
 
 opendray bundles native implementations for the most common messaging
 platforms. Each guide below walks through obtaining credentials from
@@ -12,7 +12,7 @@ the platform and pasting them into the admin UI.
 | `feishu`    | webhook       | tenant-token API  | interactive card | **yes**    |
 | `dingtalk`  | (none in v1)  | group-robot webhook | nav links only  | no         |
 | `wecom`     | (none in v1)  | group-robot webhook | nav links only  | no         |
-| `wechat`    | (none — push) | WxPusher push     | nav links only  | no         |
+| `wechat`    | (none, push)  | WxPusher push     | nav links only  | no         |
 | `bridge`    | WebSocket     | WebSocket         | adapter-defined | no          |
 
 "Public URL" means the platform pushes events to opendray over HTTP and

@@ -1,12 +1,12 @@
 # WeChat (个人微信)
 
-**Mode:** push via WxPusher (https://wxpusher.zjiecode.com) — no public URL needed
+**Mode:** push via WxPusher (https://wxpusher.zjiecode.com), no public URL needed
 **Capabilities:** text · card (markdown)
 
 > Personal WeChat has no official open API. opendray uses **WxPusher**,
 > a free, account-safe push relay: each recipient subscribes to your
 > *application* once via QR code in WeChat; opendray then pushes
-> notifications by App Token. **Outbound only** — push services
+> notifications by App Token. **Outbound only**: push services
 > cannot relay user replies. For bidirectional personal WeChat use a
 > bridge channel with a WeChaty / iPad-protocol adapter.
 
@@ -34,7 +34,7 @@ There are two ways to address recipients:
    topic.
 3. Pasting the topicId in opendray sends to **everyone** subscribed.
 
-You can mix both — opendray pushes to the union of UIDs + topic
+You can mix both, and opendray pushes to the union of UIDs + topic
 subscribers.
 
 ## 3. Configure in opendray
@@ -53,7 +53,7 @@ At least one of UIDs / topic IDs is required.
 
 - Admin **Test** button pushes a one-line text. Check the recipient's
   WeChat for the notification.
-- Trigger session.idle — a markdown message arrives with the **header
+- Trigger session.idle: a markdown message arrives with the **header
   title** + body. Buttons whose value is a clickable URL appear as
   inline links; `cmd:` buttons are dropped.
 
@@ -63,7 +63,7 @@ At least one of UIDs / topic IDs is required.
   messages/sec. Plenty for opendray notifications.
 - Notification banner preview is capped to ~20 chars. opendray uses
   the card header (or trims the body) for the preview.
-- App Token is bearer-style — anyone with it can push to all your
+- App Token is bearer-style: anyone with it can push to all your
   recipients. Rotate via WxPusher's app management page if leaked.
 - WxPusher requires phone-side WeChat to be alive to deliver; offline
   recipients receive on next reconnect.
