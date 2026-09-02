@@ -27,6 +27,48 @@ void main() {
       );
     });
 
+    // The live failure this was found through: Access with a single
+    // identity provider bounces past its own team domain straight to
+    // the IdP. With followRedirects on, Dio chased that chain and
+    // came back holding Google's HTML login page from a host that
+    // matched no signal at all, which then failed to parse as JSON
+    // and surfaced as "Server replied 0: Network error".
+    test('a redirect off the gateway host is a challenge', () {
+      expect(
+        isAccessChallengeResponse(
+          statusCode: 302,
+          realUri: Uri.parse('https://od.example.com/api/v1/health'),
+          location: 'https://accounts.google.com/o/oauth2/v2/auth?foo=bar',
+        ),
+        isTrue,
+      );
+    });
+
+    // A same-host redirect is the gateway's own (GET / -> /admin/),
+    // or a proxy normalising a path. Not a challenge, and treating it
+    // as one would pop a sign-in that fixes nothing.
+    test('a same-host redirect is not a challenge', () {
+      expect(
+        isAccessChallengeResponse(
+          statusCode: 302,
+          realUri: Uri.parse('https://od.example.com/'),
+          location: 'https://od.example.com/admin/',
+        ),
+        isFalse,
+      );
+    });
+
+    test('a relative same-host redirect is not a challenge', () {
+      expect(
+        isAccessChallengeResponse(
+          statusCode: 302,
+          realUri: Uri.parse('https://od.example.com/'),
+          location: '/admin/',
+        ),
+        isFalse,
+      );
+    });
+
     test('redirect to the Access domain is a challenge', () {
       expect(
         isAccessChallengeResponse(

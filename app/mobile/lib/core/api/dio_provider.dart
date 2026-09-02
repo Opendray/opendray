@@ -81,6 +81,20 @@ Dio buildDio({
         if (cookieHeader != null) 'Cookie': cookieHeader,
       },
       validateStatus: (_) => true, // we throw ApiException ourselves
+      // Do NOT follow redirects. opendray answers an API request with
+      // data or an error, never a 3xx, so a redirect means something
+      // in front of the gateway intercepted the call -- which is
+      // exactly what Cloudflare Access does when it wants a sign-in.
+      //
+      // Following it is actively harmful: Access bounces to the team
+      // domain, which bounces to the identity provider, which bounces
+      // again. Past five hops dart:io throws RedirectException; short
+      // of that the response that comes back is the IdP's HTML login
+      // page from a host that matches none of the challenge signals,
+      // so it gets parsed as JSON and surfaces as an unexplained
+      // "Network error". Stopping at the first 3xx keeps the Location
+      // header, which says plainly who intercepted us.
+      followRedirects: false,
     ),
   )..httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () => HttpClient()..idleTimeout = _poolIdleTimeout,

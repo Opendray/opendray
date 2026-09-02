@@ -104,6 +104,8 @@ void main() {
   // An expired bearer must keep reaching onUnauthorized. Routing it
   // into the Access flow instead would pop a WebView that signs in
   // successfully and leaves the app just as logged out.
+  _redirectSuite();
+
   test('a gateway 401 is still a plain 401', () async {
     var unauthorized = false;
     var challenged = false;
@@ -133,6 +135,48 @@ void main() {
     );
     expect(unauthorized, isTrue);
     expect(challenged, isFalse);
+  });
+}
+
+
+// The end-to-end shape of the live bug: Access answers the probe with
+// a 302 and the client must NOT chase it. Chasing it walked to the
+// identity provider and came back with HTML that parsed as neither
+// JSON nor a recognisable challenge.
+void _redirectSuite() {
+  test('an unfollowed Access redirect becomes AccessChallengeException',
+      () async {
+    var challenged = false;
+    final dio = buildDio(
+      baseUrl: 'https://od.example.com',
+      token: 't',
+      onAccessChallenge: (_) => challenged = true,
+    )..httpClientAdapter = _CannedAdapter(
+        status: 302,
+        body: '',
+        headers: {
+          'location': [
+            'https://acme.cloudflareaccess.com/cdn-cgi/access/login/od.example.com',
+          ],
+        },
+      );
+
+    await expectLater(
+      dio.get<dynamic>('/api/v1/health'),
+      throwsA(
+        isA<DioException>().having(
+          (e) => e.error,
+          'error',
+          isA<AccessChallengeException>(),
+        ),
+      ),
+    );
+    expect(challenged, isTrue);
+  });
+
+  test('the client is configured not to chase redirects', () {
+    expect(buildDio(baseUrl: 'https://od.example.com').options.followRedirects,
+        isFalse);
   });
 }
 

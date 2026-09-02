@@ -75,9 +75,25 @@ bool isAccessChallengeResponse({
   // page itself.
   if (realUri.host.toLowerCase().endsWith(_accessHostSuffix)) return true;
 
-  // Redirect not followed — the Location header gives it away.
+  // A redirect we deliberately did not follow: the clients set
+  // followRedirects: false precisely so this stays reachable.
   if (statusCode >= 300 && statusCode < 400) {
-    if ((location ?? '').toLowerCase().contains(_accessHostSuffix)) return true;
+    final loc = (location ?? '').trim();
+    if (loc.toLowerCase().contains(_accessHostSuffix)) return true;
+    // Any redirect that leaves the gateway's own host was injected by
+    // something sitting in front of it. opendray answers an API
+    // request with data or an error, never a 3xx: the one redirect
+    // the gateway serves is GET / -> /admin/, which this app never
+    // requests and which is same-host anyway. Catching the general
+    // case matters because Access configured with a single identity
+    // provider can bounce straight past its own team domain to the
+    // IdP, whose hostname matches none of the other signals.
+    final target = Uri.tryParse(loc);
+    if (target != null &&
+        target.host.isNotEmpty &&
+        target.host.toLowerCase() != realUri.host.toLowerCase()) {
+      return true;
+    }
   }
 
   // Cloudflare says it handled the request at the edge.

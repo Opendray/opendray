@@ -96,6 +96,11 @@ Dio buildOnboardingDio(String baseUrl, {String? cfCookie}) {
         if (cookie != null) 'Cookie': cookie,
       },
       validateStatus: (_) => true,
+      // Same reasoning as buildDio: onboarding is the most likely
+      // place to meet an Access challenge, and following the redirect
+      // lands on an identity provider's HTML instead of reporting the
+      // challenge, which surfaces as an unexplained "Network error".
+      followRedirects: false,
     ),
   );
 }
