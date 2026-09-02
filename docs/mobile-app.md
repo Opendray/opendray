@@ -42,8 +42,7 @@ able to reach it.
 
 > **Gating the tunnel with Cloudflare Access?** The app signs in
 > through the same Access flow, so off-LAN access needs no VPN.
-> Read [mobile-cloudflare-access.md](mobile-cloudflare-access.md)
-> first: the choice of identity provider matters.
+> Setup and caveats: [mobile-cloudflare-access.md](mobile-cloudflare-access.md).
 
 Verify reachability from the phone *before* building, e.g. open the
 Gateway URL in the phone's browser. You should get the web admin

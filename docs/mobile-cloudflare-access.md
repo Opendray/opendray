@@ -34,7 +34,8 @@ It costs the browser's own address bar. When you type identity-provider
 credentials into the sign-in screen, the hostname shown above the page
 is drawn by opendray, not by Safari or Chrome, so it is only as
 trustworthy as the app rendering it. A system browser would give you
-chrome the app cannot forge.
+chrome the app cannot forge. This is also why several identity
+providers refuse embedded WebViews outright.
 
 The reason it is a WebView anyway is that the cookie is the entire
 mechanism. Cloudflare Access proves who you are by setting
@@ -50,24 +51,34 @@ If that trade is not one you want to make, the alternative is to leave
 the app on the LAN or on a VPN. There is no version of this feature
 that is both WebView-free and cookie-based.
 
-## Before you start: pick an identity provider the WebView accepts
-
-This is the one real constraint, and it is worth settling first.
+## Identity providers
 
 | Access login method | Works in the app's WebView |
 |---|---|
-| One-time PIN (email code) | Yes. Recommended. |
+| One-time PIN (email code) | Yes |
+| Google | Yes, tested 2026-09-02 on Android |
 | GitHub | Yes |
 | Generic OIDC / SAML (self-hosted IdP) | Usually |
-| Google | No. Google refuses OAuth in embedded WebViews (`disallowed_useragent`). |
-| Microsoft Entra ID | Often refused, for the same reason |
+| Microsoft Entra ID | Untested |
 
-If your Access policy uses Google as the identity provider, the app's
-sign-in will fail with a Google error page. Add One-time PIN as an
-additional login method on the Access application; the web admin keeps
-using Google, and the phone uses the emailed code. Faking a desktop
-browser user-agent to get around the check is not supported here, and
-Google's terms disallow it.
+Google is worth a note. Google refuses OAuth from embedded WebViews in
+general (`disallowed_useragent`), and an earlier version of this page
+said flatly that it would not work here. It does: signing in through
+Cloudflare Access with Google as the identity provider was tested on a
+real device and completed normally. Access brokers the OAuth itself
+rather than handing the app a raw Google consent screen, which is
+apparently enough.
+
+Treat that as an observation rather than a guarantee. Google's
+WebView policy has changed before and can differ by device, WebView
+version and user-agent. If your sign-in ever fails with a Google error
+page, add **One-time PIN** as a second login method on the Access
+application: the web admin keeps using Google, the phone uses the
+emailed code, and an `Emails` include rule covers both because either
+login yields an email identity.
+
+Faking a desktop user-agent to dodge such a check is not done here and
+is against Google's terms.
 
 ## Cloudflare side
 
@@ -144,7 +155,7 @@ make the two features fight each other.
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Sign-in page shows a Google "disallowed_useragent" error | Access is using Google as the identity provider | Add One-time PIN to the application's login methods |
+| Sign-in page shows a Google "disallowed_useragent" error | Google is refusing the embedded WebView on this device | Add One-time PIN to the application's login methods |
 | Sign-in completes but the app still says Access is required | The Access application covers a different hostname than the Gateway URL | Make the Gateway URL exactly the hostname the Access application protects |
 | Terminal or live logs drop, then the sign-in appears | The Access session expired mid-stream | Finish the sign-in; the stream reconnects |
 | Terminal never connects and no sign-in appears, everything else works | Something in the path is dropping the WebSocket upgrade | Not an Access problem; see [operator-guide §Topology](operator-guide.md#topology) |

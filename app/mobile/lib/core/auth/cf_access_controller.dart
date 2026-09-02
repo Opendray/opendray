@@ -151,7 +151,16 @@ class CfAccessController extends StateNotifier<CfAccessState> {
   /// [baseUrl] is the gateway the cookie belongs to. It is optional
   /// only because a caller may no longer know it, in which case the
   /// platform copy is left alone rather than guessed at.
-  Future<void> clear({String? baseUrl}) async {
+  /// [remote] false wipes only what is on the device, skipping the
+  /// round trips to Cloudflare.
+  ///
+  /// That is the right shape for changing gateway: the operator is
+  /// often changing it *because* the old address does not answer, and
+  /// waiting out two logout timeouts to move on would be absurd. The
+  /// cookie is scoped to the old host, so leaving Cloudflare's side of
+  /// the session alone costs the new gateway nothing. Ending it on
+  /// purpose is what the Security screen's button is for.
+  Future<void> clear({String? baseUrl, bool remote = true}) async {
     // Order matters. Deleting cookies first would leave the logout
     // requests unauthenticated, and Cloudflare answers those with an
     // error page instead of ending anything.
@@ -163,11 +172,11 @@ class CfAccessController extends StateNotifier<CfAccessState> {
     // on the team domain and re-issued a cookie without asking for
     // anything, so "clear" appeared to do nothing.
     final team = _teamDomain;
-    if (team != null && team.isNotEmpty) {
+    if (remote && team != null && team.isNotEmpty) {
       await _visitLogout(accessLogoutUrl(team));
     }
     if (baseUrl != null && baseUrl.isNotEmpty) {
-      await _visitLogout(accessLogoutUrl(baseUrl));
+      if (remote) await _visitLogout(accessLogoutUrl(baseUrl));
       try {
         // Sweep whatever the logout did not take. CF_AppSession lives
         // here too, alongside CF_Authorization, and deleting one
