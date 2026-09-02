@@ -14,7 +14,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:opendray/core/api/ws_connect.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class LogRecord {
@@ -72,15 +74,17 @@ class LogsStream {
   // LogsStream first and then mutate _sub after the WS subscription
   // is attached, which factory ctors don't permit cleanly.
   // ignore: prefer_constructors_over_static_methods
-  static LogsStream open({required String serverUrl, required String token}) {
-    final base = serverUrl.replaceAll(RegExp(r'/+$'), '');
-    final wsBase = base.startsWith('https')
-        ? base.replaceFirst('https', 'wss')
-        : base.replaceFirst('http', 'ws');
-    final url = Uri.parse(
-      '$wsBase/api/v1/admin/logs/stream?token=${Uri.encodeQueryComponent(token)}',
+  static LogsStream open({
+    required String serverUrl,
+    required String token,
+    String? cfCookie,
+  }) {
+    final channel = connectGatewayWs(
+      serverUrl: serverUrl,
+      path: '/api/v1/admin/logs/stream',
+      token: token,
+      cfCookie: cfCookie,
     );
-    final channel = WebSocketChannel.connect(url);
     final s = LogsStream._(channel);
     s._sub = channel.stream.listen(
       s._onMessage,
@@ -124,5 +128,9 @@ class LogsStream {
 LogsStream? openLogsStream(WidgetRef ref) {
   final auth = ref.read(authControllerProvider);
   if (auth is! AuthLoggedIn) return null;
-  return LogsStream.open(serverUrl: auth.serverUrl, token: auth.token);
+  return LogsStream.open(
+    serverUrl: auth.serverUrl,
+    token: auth.token,
+    cfCookie: ref.read(cfAccessControllerProvider.notifier).cookie,
+  );
 }

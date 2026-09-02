@@ -5611,6 +5611,13 @@
         "pickFromList": "Elegir de la lista"
       },
       "legacyLayout": "Los directorios propios de opendray siguen dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de abajo cuando puedas."
+    },
+    "security": {
+      "section": "Seguridad",
+      "appLock": "Requerir desbloqueo",
+      "appLockSubtitle": "Pedir biometría o el código del dispositivo antes de mostrar la app",
+      "appLockUnavailable": "Este dispositivo no tiene código ni biometría configurados",
+      "appLockFailed": "No se pudo activar el bloqueo de la app"
     }
   },
   "memoryQuarantine": {
@@ -5665,5 +5672,27 @@
     "providersManageOnWeb": "Añade o edita proveedores en el panel web.",
     "providersLoadFailed": "Error al cargar proveedores",
     "defaultBadge": "predeterminado"
+  },
+  "access": {
+    "signInTitle": "Inicio de sesión de Cloudflare Access",
+    "cancel": "Cancelar",
+    "failed": "El inicio de sesión de Access no se completó: {error}",
+    "loadFailed": "No se pudo cargar la página de inicio de sesión de Cloudflare Access: {error}",
+    "section": "Cloudflare Access",
+    "sectionSubtitle": "Inicia sesión en el borde para que la app llegue al gateway desde fuera de la LAN",
+    "sessionActive": "Sesión de Access activa",
+    "sessionExpires": "Caduca {when}",
+    "sessionExpiryUnknown": "La caducidad no se puede leer de la cookie",
+    "sessionNone": "No hay sesión de Access en este dispositivo",
+    "signIn": "Iniciar sesión con Cloudflare Access",
+    "clear": "Borrar la sesión de Access",
+    "clearSubtitle": "Olvidar la cookie de Cloudflare Access de este dispositivo",
+    "challengeBanner": "Cloudflare Access necesita verificar este dispositivo antes de poder llegar a {host}.",
+    "notEnabled": "Este gateway no parece estar detrás de Cloudflare Access."
+  },
+  "lock": {
+    "title": "opendray está bloqueado",
+    "reason": "Desbloquear opendray",
+    "unlock": "Desbloquear"
   }
 }

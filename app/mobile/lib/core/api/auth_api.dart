@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/dio_provider.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/auth/cf_access.dart';
 
 // Calls into /api/v1/health and /api/v1/auth/mobile-login. The
 // onboarding screen uses health() for URL validation; the login
@@ -77,22 +79,42 @@ final authApiProvider = Provider<AuthApi>((ref) {
 
 // Onboarding-only Dio: hits an arbitrary user-typed server URL
 // without requiring it to be persisted to AuthState first.
-Dio buildOnboardingDio(String baseUrl) {
+//
+// [cfCookie] is threaded through because onboarding is where a
+// Cloudflare Access challenge is *most* likely: the operator has
+// just typed a public hostname, and the very first probe is the one
+// the edge bounces.
+Dio buildOnboardingDio(String baseUrl, {String? cfCookie}) {
+  final cookie = cfCookieHeader(cfCookie);
   return Dio(
     BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 6),
       receiveTimeout: const Duration(seconds: 6),
-      headers: {'Accept': 'application/json'},
+      headers: {
+        'Accept': 'application/json',
+        if (cookie != null) 'Cookie': cookie,
+      },
       validateStatus: (_) => true,
     ),
   );
 }
 
-Future<HealthResponse> probeHealth(String baseUrl) async {
-  final dio = buildOnboardingDio(baseUrl);
+/// Probes /api/v1/health on a candidate gateway URL.
+///
+/// Throws [AccessChallengeException] when Cloudflare Access answered
+/// instead of the gateway, so onboarding can offer SSO rather than
+/// reporting the login page as a broken server.
+Future<HealthResponse> probeHealth(String baseUrl, {String? cfCookie}) async {
+  final dio = buildOnboardingDio(baseUrl, cfCookie: cfCookie);
   try {
     final res = await dio.get<Map<String, dynamic>>('/api/v1/health');
+    if (isAccessChallenge(res)) {
+      throw AccessChallengeException(
+        statusCode: res.statusCode ?? 0,
+        host: res.realUri.host,
+      );
+    }
     final status = res.statusCode ?? 0;
     if (status < 200 || status >= 300) {
       throw toApiException(

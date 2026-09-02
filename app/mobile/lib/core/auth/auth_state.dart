@@ -134,8 +134,25 @@ class AuthController extends StateNotifier<AuthState> {
         : AuthLoggedOut(serverUrl);
   }
 
+  /// Forgets the gateway entirely and returns to onboarding.
+  ///
+  /// Deletes its own keys rather than calling deleteAll: the app lock
+  /// is a device preference, not a property of the gateway, and
+  /// wiping it here would silently disable the lock every time the
+  /// operator pointed the app at a different server.
+  ///
+  /// The Cloudflare Access cookie IS gateway-scoped, but clearing it
+  /// belongs to CfAccessController, which also has to reach the
+  /// WebView's cookie jar and keep its own state in step. So any
+  /// caller of this method MUST call
+  /// `cfAccessControllerProvider.notifier.clear(baseUrl: <old url>)`
+  /// first, while the old URL is still readable. Skipping it leaves
+  /// a cookie for the previous host in storage, and the stored
+  /// cookie is a single global value with no host affinity, so it
+  /// would then be attached to the NEXT gateway's requests.
   Future<void> resetServer() async {
-    await _storage.deleteAll();
+    await _clearTokenOnly();
+    await _storage.delete(key: SecureKeys.serverUrl);
     state = const AuthOnboarding();
   }
 

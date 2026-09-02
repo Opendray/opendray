@@ -5,6 +5,8 @@ import 'package:dio/io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/auth/cf_access.dart';
+import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 // How many times a transient request is replayed before the failure is
@@ -60,8 +62,11 @@ bool isReplayable(RequestOptions options) {
 Dio buildDio({
   required String baseUrl,
   String? token,
+  String? cfCookie,
   void Function()? onUnauthorized,
+  void Function(String host)? onAccessChallenge,
 }) {
+  final cookieHeader = cfCookieHeader(cfCookie);
   final dio = Dio(
     BaseOptions(
       baseUrl: baseUrl,
@@ -70,6 +75,10 @@ Dio buildDio({
       headers: {
         'Accept': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
+        // Cloudflare Access reads this at the edge; the gateway
+        // never sees it. Absent on a LAN deployment, where there is
+        // no Access in the path.
+        if (cookieHeader != null) 'Cookie': cookieHeader,
       },
       validateStatus: (_) => true, // we throw ApiException ourselves
     ),
@@ -80,6 +89,25 @@ Dio buildDio({
   dio.interceptors.add(
     InterceptorsWrapper(
       onResponse: (response, handler) {
+        // Checked before the status code, because a challenge
+        // usually arrives as a perfectly healthy 200 carrying the
+        // Access login page instead of our JSON.
+        if (isAccessChallenge(response)) {
+          final host = response.realUri.host;
+          onAccessChallenge?.call(host);
+          handler.reject(
+            DioException(
+              requestOptions: response.requestOptions,
+              response: response,
+              type: DioExceptionType.badResponse,
+              error: AccessChallengeException(
+                statusCode: response.statusCode ?? 0,
+                host: host,
+              ),
+            ),
+          );
+          return;
+        }
         final status = response.statusCode ?? 0;
         if (status >= 200 && status < 300) {
           handler.next(response);
@@ -153,6 +181,11 @@ Dio buildDio({
 // `ref.watch(dioProvider)` and don't worry about staleness.
 final dioProvider = Provider<Dio>((ref) {
   final auth = ref.watch(authControllerProvider);
+  // Watched, not read: a fresh Access cookie has to rebuild the
+  // client, otherwise every request keeps going out with the dead
+  // one until something else happens to invalidate the provider.
+  ref.watch(cfAccessControllerProvider);
+  final cfCookie = ref.read(cfAccessControllerProvider.notifier).cookie;
   final baseUrl = switch (auth) {
     AuthLoggedOut(serverUrl: final s) => s,
     AuthLoggedIn(serverUrl: final s) => s,
@@ -166,7 +199,11 @@ final dioProvider = Provider<Dio>((ref) {
   return buildDio(
     baseUrl: baseUrl,
     token: token,
+    cfCookie: cfCookie,
     onUnauthorized: () => ref.read(authControllerProvider.notifier).logout(),
+    onAccessChallenge: (host) => ref
+        .read(cfAccessControllerProvider.notifier)
+        .challenged(reason: host),
   );
 });
 

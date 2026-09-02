@@ -14,6 +14,7 @@ import 'package:opendray/core/locale/locale_controller.dart';
 import 'package:opendray/core/theme/theme_controller.dart';
 import 'package:opendray/features/settings/change_credentials_screen.dart';
 import 'package:opendray/features/settings/log_viewer_screen.dart';
+import 'package:opendray/features/settings/security_screen.dart';
 import 'package:opendray/features/settings/server_settings_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -116,6 +117,20 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const ChangeCredentialsScreen(),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: Text(t.settings.security.section),
+              subtitle: Text(
+                t.settings.security.appLockSubtitle,
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: const Icon(Icons.chevron_right, size: 18),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SecurityScreen(),
                 ),
               ),
             ),

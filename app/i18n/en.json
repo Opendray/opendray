@@ -5611,6 +5611,13 @@
         "pickFromList": "Pick from list"
       },
       "legacyLayout": "opendray's own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient."
+    },
+    "security": {
+      "section": "Security",
+      "appLock": "Require unlock",
+      "appLockSubtitle": "Ask for biometrics or the device passcode before showing the app",
+      "appLockUnavailable": "This device has no passcode or biometrics enrolled",
+      "appLockFailed": "Could not turn on the app lock"
     }
   },
   "memoryQuarantine": {
@@ -5665,5 +5672,27 @@
     "providersManageOnWeb": "Add or edit providers on the web admin.",
     "providersLoadFailed": "Failed to load providers",
     "defaultBadge": "default"
+  },
+  "access": {
+    "signInTitle": "Cloudflare Access sign-in",
+    "cancel": "Cancel",
+    "failed": "Access sign-in did not complete: {error}",
+    "loadFailed": "Could not load the Cloudflare Access sign-in page: {error}",
+    "section": "Cloudflare Access",
+    "sectionSubtitle": "Sign in at the edge so the app reaches the gateway from outside the LAN",
+    "sessionActive": "Access session active",
+    "sessionExpires": "Expires {when}",
+    "sessionExpiryUnknown": "Expiry not readable from the cookie",
+    "sessionNone": "No Access session on this device",
+    "signIn": "Sign in with Cloudflare Access",
+    "clear": "Clear Access session",
+    "clearSubtitle": "Forget this device's Cloudflare Access cookie",
+    "challengeBanner": "Cloudflare Access needs to verify this device before it can reach {host}.",
+    "notEnabled": "This gateway does not appear to be behind Cloudflare Access."
+  },
+  "lock": {
+    "title": "opendray is locked",
+    "reason": "Unlock opendray",
+    "unlock": "Unlock"
   }
 }

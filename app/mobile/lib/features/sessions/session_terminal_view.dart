@@ -7,9 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:opendray/core/api/api_exception.dart';
+import 'package:opendray/core/api/dio_provider.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
+import 'package:opendray/core/api/ws_connect.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/features/sessions/terminal_select_sheet.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -42,6 +45,9 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   Timer? _reconnectTimer;
+  // True between scheduling a reconnect and running it, so the two
+  // callbacks a single failure fires collapse into one attempt.
+  bool _reconnectPending = false;
   ProviderSubscription<AsyncValue<SessionSummary>>? _sessionStateSub;
   _ConnState _state = _ConnState.connecting;
   String? _lastError;
@@ -139,6 +145,7 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
 
   void _connect() {
     if (_disposed) return;
+    _reconnectPending = false;
     final auth = ref.read(authControllerProvider);
     if (auth is! AuthLoggedIn) {
       setState(() {
@@ -153,45 +160,36 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
       _lastError = null;
     });
 
-    final wsUrl = _wsUrl(
-      baseUrl: auth.serverUrl,
-      sessionId: widget.sessionId,
-      token: auth.token,
-    );
-
     try {
-      _channel = WebSocketChannel.connect(wsUrl);
+      _channel = connectGatewayWs(
+        serverUrl: auth.serverUrl,
+        path: '/api/v1/sessions/${widget.sessionId}/stream',
+        token: auth.token,
+        cfCookie: ref.read(cfAccessControllerProvider.notifier).cookie,
+      );
       _sub = _channel!.stream.listen(
         _onWsMessage,
         onError: _onWsError,
         onDone: _onWsDone,
         cancelOnError: false,
       );
-      // Optimistic — if we get the first message, we'll flip to
-      // connected in _onWsMessage.
-      _retryAttempt = 0;
+      // The budget is NOT reset here. connectGatewayWs returns as
+      // soon as the socket object exists, long before the handshake
+      // is known to have succeeded, so resetting on this line made
+      // every attempt look like attempt one and turned the cap below
+      // into an unbounded reconnect loop. It resets in _onWsMessage,
+      // on the first byte that proves the connection actually works.
     } on Object catch (e) {
       _scheduleReconnect(error: 'Failed to open WebSocket: $e');
     }
   }
 
-  Uri _wsUrl({
-    required String baseUrl,
-    required String sessionId,
-    required String token,
-  }) {
-    final trimmed = baseUrl.replaceAll(RegExp(r'/+$'), '');
-    final wsBase = trimmed.startsWith('https')
-        ? trimmed.replaceFirst('https', 'wss')
-        : trimmed.replaceFirst('http', 'ws');
-    return Uri.parse(
-      '$wsBase/api/v1/sessions/$sessionId/stream?token=${Uri.encodeQueryComponent(token)}',
-    );
-  }
-
   void _onWsMessage(dynamic msg) {
     if (_disposed) return;
     if (_state != _ConnState.connected) {
+      // Proof the handshake got through, which is the only thing
+      // that earns a fresh retry budget.
+      _retryAttempt = 0;
       setState(() => _state = _ConnState.connected);
     }
     if (msg is Uint8List) {
@@ -229,12 +227,21 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
 
   void _scheduleReconnect({required String error}) {
     if (_disposed) return;
+    // A rejected handshake emits onError AND onDone for the same
+    // failure, so this runs twice per disconnect unless we say
+    // otherwise. Left unguarded that spends the retry budget at
+    // double rate and sends two probes for one event.
+    if (_reconnectPending) return;
+    _reconnectPending = true;
+    // A dead Access cookie looks exactly like a dead gateway from
+    // here, so ask over HTTP, where the difference is visible.
+    unawaited(probeForAccessChallenge(ref.read(dioProvider)));
     _sub?.cancel();
     _channel?.sink.close();
     _channel = null;
     _sub = null;
     _retryAttempt += 1;
-    if (_retryAttempt > 5) {
+    if (_retryAttempt > kMaxReconnectAttempts) {
       setState(() {
         _state = _ConnState.error;
         _lastError = error;
@@ -245,9 +252,8 @@ class _SessionTerminalViewState extends ConsumerState<SessionTerminalView> {
       _state = _ConnState.reconnecting;
       _lastError = error;
     });
-    final backoff = Duration(milliseconds: 500 * (1 << (_retryAttempt - 1)));
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(backoff, _connect);
+    _reconnectTimer = Timer(reconnectBackoff(_retryAttempt), _connect);
   }
 
   void _onTerminalOutput(String data) {

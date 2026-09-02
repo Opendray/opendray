@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
+import 'package:opendray/features/auth/cf_access_login_screen.dart';
 
 // First-run screen. The user types the gateway URL here; we
 // validate by calling /api/v1/health on it before persisting.
@@ -46,16 +48,46 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _detected = null;
     });
     try {
-      final h = await probeHealth(normalized);
-      setState(() => _detected = 'opendray ${h.version} (${h.status})');
-      await ref.read(authControllerProvider.notifier).setServerUrl(normalized);
-      // Router redirects automatically on AuthState change.
+      await _probeAndPersist(normalized);
+    } on AccessChallengeException catch (e) {
+      // The gateway is behind Cloudflare Access and this device has
+      // no Access session yet. Onboarding drives the SSO itself
+      // rather than deferring to AccessGate: there is no server URL
+      // persisted yet, so the gate has nothing to sign in to.
+      setState(() => _error = t.access.challengeBanner(host: e.host));
+      await _runAccessSso(normalized);
     } on ApiException catch (e) {
       setState(() => _error = 'Server replied ${e.statusCode}: ${e.message}');
     } on Object catch (e) {
       setState(() => _error = 'Could not reach $normalized: $e');
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _probeAndPersist(String normalized) async {
+    final h = await probeHealth(
+      normalized,
+      cfCookie: ref.read(cfAccessControllerProvider.notifier).cookie,
+    );
+    if (!mounted) return;
+    setState(() => _detected = 'opendray ${h.version} (${h.status})');
+    await ref.read(authControllerProvider.notifier).setServerUrl(normalized);
+    // Router redirects automatically on AuthState change.
+  }
+
+  Future<void> _runAccessSso(String normalized) async {
+    if (!mounted) return;
+    final cookie = await CfAccessLoginScreen.show(context, normalized);
+    if (cookie == null || !mounted) return;
+    await ref.read(cfAccessControllerProvider.notifier).save(cookie);
+    if (!mounted) return;
+    setState(() => _error = null);
+    try {
+      await _probeAndPersist(normalized);
+    } on Object catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Could not reach $normalized: $e');
     }
   }
 

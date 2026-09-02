@@ -17,3 +17,20 @@ class ApiException implements Exception {
   @override
   String toString() => 'ApiException($statusCode): $message';
 }
+
+/// Cloudflare Access blocked the request before it reached the
+/// gateway. Distinct from [ApiException] so callers can tell "the
+/// edge wants you to sign in again" apart from "opendray said no" —
+/// they need completely different recovery (SSO WebView vs. login
+/// screen), and conflating them sends the operator to a screen that
+/// cannot fix their problem.
+class AccessChallengeException extends ApiException {
+  AccessChallengeException({required super.statusCode, required this.host})
+      : super(message: 'Cloudflare Access authentication required');
+
+  /// Host that issued the challenge, for the error banner.
+  final String host;
+
+  @override
+  String toString() => 'AccessChallengeException($host)';
+}

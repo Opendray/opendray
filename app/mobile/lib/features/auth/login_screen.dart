@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // Username + password login. Calls /api/v1/auth/mobile-login which
@@ -64,6 +65,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _changeServer() async {
+    // The Access cookie is scoped to the old hostname, so it is both
+    // useless against the new one and worth not leaving behind. Read
+    // the URL before resetServer clears it, and hand it over so the
+    // WebView's copy goes too.
+    final auth = ref.read(authControllerProvider);
+    final oldUrl = switch (auth) {
+      AuthLoggedOut(serverUrl: final s) => s,
+      AuthLoggedIn(serverUrl: final s) => s,
+      _ => null,
+    };
+    await ref.read(cfAccessControllerProvider.notifier).clear(baseUrl: oldUrl);
     await ref.read(authControllerProvider.notifier).resetServer();
   }
 
