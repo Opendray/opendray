@@ -24,11 +24,7 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // settings) and as an inline overlay (AccessGate), where there is no
 // route of its own to pop.
 class CfAccessLoginScreen extends StatefulWidget {
-  const CfAccessLoginScreen({
-    required this.baseUrl,
-    this.onResult,
-    super.key,
-  });
+  const CfAccessLoginScreen({required this.baseUrl, this.onResult, super.key});
 
   /// Gateway base URL, e.g. `https://opendray.example.com`.
   final String baseUrl;
@@ -56,7 +52,7 @@ class _CfAccessLoginScreenState extends State<CfAccessLoginScreen> {
   bool _finishing = false;
   String? _error;
 
-  late final WebUri _start = WebUri(accessLoginUrl(widget.baseUrl));
+  late final WebUri _start = WebUri(accessSignInUrl(widget.baseUrl));
   late final String _gatewayHost = Uri.parse(widget.baseUrl).host;
 
   // Access can bounce through the team domain and back more than
@@ -167,53 +163,62 @@ class _CfAccessLoginScreenState extends State<CfAccessLoginScreen> {
               ),
             ),
           Expanded(
-            child: InAppWebView(
-              initialUrlRequest: URLRequest(url: _start),
-              initialSettings: InAppWebViewSettings(
-                // Access sign-in is a plain web flow; nothing here
-                // needs to talk back to Dart.
-                javaScriptEnabled: true,
-                // No navigation interception. This does NOT affect
-                // the user-agent (we deliberately do not spoof one);
-                // it only turns off the shouldOverrideUrlLoading
-                // callback. There is nothing useful to do in it: an
-                // Access sign-in hops through whichever identity
-                // provider the operator configured, so the set of
-                // legitimate hosts cannot be enumerated ahead of
-                // time, and a guessed allowlist would break real
-                // sign-ins while stopping nothing.
-                useShouldOverrideUrlLoading: false,
-                transparentBackground: true,
+            // The WebView paints its own background, but only once it
+            // has something to paint. Until then, and on Chrome's own
+            // error pages, an unpainted WebView used to let the app's
+            // dark Scaffold show through behind dark text -- the page
+            // was there and completely unreadable. A light ground
+            // under it matches what Cloudflare's sign-in and the
+            // error pages actually draw.
+            child: ColoredBox(
+              color: Colors.white,
+              child: InAppWebView(
+                initialUrlRequest: URLRequest(url: _start),
+                initialSettings: InAppWebViewSettings(
+                  // Access sign-in is a plain web flow; nothing here
+                  // needs to talk back to Dart.
+                  javaScriptEnabled: true,
+                  // No navigation interception. This does NOT affect
+                  // the user-agent (we deliberately do not spoof one);
+                  // it only turns off the shouldOverrideUrlLoading
+                  // callback. There is nothing useful to do in it: an
+                  // Access sign-in hops through whichever identity
+                  // provider the operator configured, so the set of
+                  // legitimate hosts cannot be enumerated ahead of
+                  // time, and a guessed allowlist would break real
+                  // sign-ins while stopping nothing.
+                  useShouldOverrideUrlLoading: false,
+                ),
+                onLoadStart: (_, url) {
+                  if (!mounted) return;
+                  setState(() {
+                    _loading = true;
+                    _error = null;
+                    _currentHost = url?.host ?? _currentHost;
+                    _currentPath = url?.path ?? _currentPath;
+                  });
+                },
+                onLoadStop: (_, url) async {
+                  if (!mounted) return;
+                  setState(() {
+                    _loading = false;
+                    _currentHost = url?.host ?? _currentHost;
+                    _currentPath = url?.path ?? _currentPath;
+                  });
+                  await _tryHarvestCookie();
+                },
+                onReceivedError: (_, request, error) {
+                  // Subresource failures are noise; only report the
+                  // main document failing to load, which is what the
+                  // operator can actually act on.
+                  if (!(request.isForMainFrame ?? false)) return;
+                  if (!mounted) return;
+                  setState(() {
+                    _loading = false;
+                    _error = t.access.loadFailed(error: error.description);
+                  });
+                },
               ),
-              onLoadStart: (_, url) {
-                if (!mounted) return;
-                setState(() {
-                  _loading = true;
-                  _error = null;
-                  _currentHost = url?.host ?? _currentHost;
-                  _currentPath = url?.path ?? _currentPath;
-                });
-              },
-              onLoadStop: (_, url) async {
-                if (!mounted) return;
-                setState(() {
-                  _loading = false;
-                  _currentHost = url?.host ?? _currentHost;
-                  _currentPath = url?.path ?? _currentPath;
-                });
-                await _tryHarvestCookie();
-              },
-              onReceivedError: (_, request, error) {
-                // Subresource failures are noise; only report the
-                // main document failing to load, which is what the
-                // operator can actually act on.
-                if (!(request.isForMainFrame ?? false)) return;
-                if (!mounted) return;
-                setState(() {
-                  _loading = false;
-                  _error = t.access.loadFailed(error: error.description);
-                });
-              },
             ),
           ),
         ],

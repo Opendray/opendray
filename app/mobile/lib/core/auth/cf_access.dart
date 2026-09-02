@@ -25,11 +25,6 @@ const kCfAccessCookieName = 'CF_Authorization';
 /// whole admin SPA just to prove the cookie works.
 const kAccessProbePath = '/api/v1/health';
 
-/// Cloudflare's login endpoint is served from the *app* hostname; the
-/// identity provider redirect goes to the team domain below and comes
-/// back here.
-const _accessLoginPath = '/cdn-cgi/access/login';
-
 /// Every Access team domain ends in this. Landing here means we were
 /// challenged rather than served.
 const _accessHostSuffix = '.cloudflareaccess.com';
@@ -157,13 +152,23 @@ DateTime? cfAuthorizationExpiry(String jwt) {
   }
 }
 
-/// URL that starts the Access SSO flow for [baseUrl] and returns to a
-/// JSON endpoint we can recognise once it succeeds.
-String accessLoginUrl(String baseUrl) {
-  final base = _trimSlashes(baseUrl);
-  final redirect = Uri.encodeQueryComponent(kAccessProbePath);
-  return '$base$_accessLoginPath?redirect_url=$redirect';
-}
+/// URL to load in the sign-in WebView.
+///
+/// Deliberately a protected resource, NOT Cloudflare's login endpoint.
+/// Access owns that URL and it cannot be built by hand: it lives on
+/// the team domain rather than the app's, its path carries the app
+/// hostname, and it is signed with `kid` and `meta` parameters. A
+/// hand-assembled /cdn-cgi/access/login on the app hostname simply
+/// fails to load (ERR_HTTP_RESPONSE_CODE_FAILURE), which is what a
+/// first attempt at this did.
+///
+/// Loading the protected resource instead lets Access issue its own
+/// redirect, correctly signed, run the identity provider, and land
+/// back here with the cookie set. Landing back on a small JSON
+/// endpoint also means the WebView shows something harmless for the
+/// instant before we read the cookie and close it.
+String accessSignInUrl(String baseUrl) =>
+    '${_trimSlashes(baseUrl)}$kAccessProbePath';
 
 /// The `Cookie` header value for [cookie], or null when there is no
 /// session — sending `Cookie: CF_Authorization=` would be worse than

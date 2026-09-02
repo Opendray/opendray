@@ -206,18 +206,24 @@ void main() {
     });
   });
 
-  group('accessLoginUrl', () {
-    test('targets the gateway host and comes back to a JSON endpoint', () {
-      final u = Uri.parse(accessLoginUrl('https://od.example.com'));
+  group('accessSignInUrl', () {
+    // Must be a protected resource, never a hand-built
+    // /cdn-cgi/access/login. Access's real login URL lives on the
+    // team domain, carries the app hostname in its path, and is
+    // signed with kid/meta parameters; assembling one by hand
+    // produced ERR_HTTP_RESPONSE_CODE_FAILURE on a real device.
+    test('loads a protected resource so Access issues its own redirect', () {
+      final u = Uri.parse(accessSignInUrl('https://od.example.com'));
       expect(u.host, 'od.example.com');
-      expect(u.path, '/cdn-cgi/access/login');
-      expect(u.queryParameters['redirect_url'], kAccessProbePath);
+      expect(u.path, kAccessProbePath);
+      expect(u.path, isNot(contains('cdn-cgi')));
+      expect(u.hasQuery, isFalse);
     });
 
     test('tolerates a trailing slash on the base URL', () {
       expect(
-        accessLoginUrl('https://od.example.com/'),
-        accessLoginUrl('https://od.example.com'),
+        accessSignInUrl('https://od.example.com/'),
+        accessSignInUrl('https://od.example.com'),
       );
     });
   });
