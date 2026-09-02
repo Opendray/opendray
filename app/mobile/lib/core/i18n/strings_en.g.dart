@@ -2451,14 +2451,20 @@ class TranslationsAccessEn {
 	/// en: 'Clear Access session'
 	String get clear => 'Clear Access session';
 
-	/// en: 'Forget this device's Cloudflare Access cookie'
-	String get clearSubtitle => 'Forget this device\'s Cloudflare Access cookie';
+	/// en: 'Sign out of Cloudflare Access on this device'
+	String get clearSubtitle => 'Sign out of Cloudflare Access on this device';
 
 	/// en: 'Cloudflare Access needs to verify this device before it can reach {host}.'
 	String challengeBanner({required Object host}) => 'Cloudflare Access needs to verify this device before it can reach ${host}.';
 
 	/// en: 'This gateway does not appear to be behind Cloudflare Access.'
 	String get notEnabled => 'This gateway does not appear to be behind Cloudflare Access.';
+
+	/// en: 'Signing out of Cloudflare Access…'
+	String get clearing => 'Signing out of Cloudflare Access…';
+
+	/// en: 'Signed out. The next request will ask you to sign in again.'
+	String get cleared => 'Signed out. The next request will ask you to sign in again.';
 }
 
 // Path: lock
@@ -24094,9 +24100,11 @@ extension on Translations {
 			'access.sessionNone' => 'No Access session on this device',
 			'access.signIn' => 'Sign in with Cloudflare Access',
 			'access.clear' => 'Clear Access session',
-			'access.clearSubtitle' => 'Forget this device\'s Cloudflare Access cookie',
+			'access.clearSubtitle' => 'Sign out of Cloudflare Access on this device',
 			'access.challengeBanner' => ({required Object host}) => 'Cloudflare Access needs to verify this device before it can reach ${host}.',
 			'access.notEnabled' => 'This gateway does not appear to be behind Cloudflare Access.',
+			'access.clearing' => 'Signing out of Cloudflare Access…',
+			'access.cleared' => 'Signed out. The next request will ask you to sign in again.',
 			'lock.title' => 'opendray is locked',
 			'lock.reason' => 'Unlock opendray',
 			'lock.unlock' => 'Unlock',

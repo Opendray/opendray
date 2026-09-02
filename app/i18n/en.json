@@ -5686,9 +5686,11 @@
     "sessionNone": "No Access session on this device",
     "signIn": "Sign in with Cloudflare Access",
     "clear": "Clear Access session",
-    "clearSubtitle": "Forget this device's Cloudflare Access cookie",
+    "clearSubtitle": "Sign out of Cloudflare Access on this device",
     "challengeBanner": "Cloudflare Access needs to verify this device before it can reach {host}.",
-    "notEnabled": "This gateway does not appear to be behind Cloudflare Access."
+    "notEnabled": "This gateway does not appear to be behind Cloudflare Access.",
+    "clearing": "Signing out of Cloudflare Access…",
+    "cleared": "Signed out. The next request will ask you to sign in again."
   },
   "lock": {
     "title": "opendray is locked",

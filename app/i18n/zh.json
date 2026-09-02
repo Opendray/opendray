@@ -5683,9 +5683,11 @@
     "sessionNone": "本设备没有 Access 会话",
     "signIn": "使用 Cloudflare Access 登录",
     "clear": "清除 Access 会话",
-    "clearSubtitle": "删除本设备的 Cloudflare Access Cookie",
+    "clearSubtitle": "在本设备上登出 Cloudflare Access",
     "challengeBanner": "Cloudflare Access 需要先验证本设备，才能访问 {host}。",
-    "notEnabled": "该网关似乎没有启用 Cloudflare Access。"
+    "notEnabled": "该网关似乎没有启用 Cloudflare Access。",
+    "clearing": "正在登出 Cloudflare Access…",
+    "cleared": "已登出。下次请求会要求重新登录。"
   },
   "lock": {
     "title": "opendray 已锁定",

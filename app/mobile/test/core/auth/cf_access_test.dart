@@ -238,4 +238,59 @@ void main() {
       expect(cfCookieHeader(''), isNull);
     });
   });
+
+  group('team domain discovery', () {
+    // Signing out has to reach the TEAM domain, not just the app's.
+    // The app-domain cookie is only half the session; the team domain
+    // is what lets Access re-issue one without asking the identity
+    // provider anything, which is exactly what "clear" failed to stop.
+    test('reads the team domain from the challenge redirect', () {
+      expect(
+        teamDomainFromLocation(
+          'https://acme.cloudflareaccess.com/cdn-cgi/access/login/od.example.com?kid=x',
+        ),
+        'acme.cloudflareaccess.com',
+      );
+    });
+
+    test('ignores a redirect that is not Cloudflare Access', () {
+      expect(
+        teamDomainFromLocation('https://accounts.google.com/o/oauth2/v2/auth'),
+        isNull,
+      );
+      expect(teamDomainFromLocation(null), isNull);
+      expect(teamDomainFromLocation(''), isNull);
+    });
+
+    test('reads the team domain from the cookie iss claim', () {
+      final jwt = _jwt({'iss': 'https://acme.cloudflareaccess.com', 'exp': 1});
+      expect(teamDomainFromJwt(jwt), 'acme.cloudflareaccess.com');
+    });
+
+    test('tolerates a cookie with no usable iss', () {
+      expect(teamDomainFromJwt(_jwt({'exp': 1})), isNull);
+      expect(teamDomainFromJwt(_jwt({'iss': 'not a url'})), isNull);
+      expect(teamDomainFromJwt('garbage'), isNull);
+    });
+  });
+
+  group('accessLogoutUrl', () {
+    test('builds the logout endpoint for a host', () {
+      expect(
+        accessLogoutUrl('acme.cloudflareaccess.com'),
+        'https://acme.cloudflareaccess.com/cdn-cgi/access/logout',
+      );
+    });
+
+    test('accepts a full base URL and keeps its scheme', () {
+      expect(
+        accessLogoutUrl('https://od.example.com'),
+        'https://od.example.com/cdn-cgi/access/logout',
+      );
+      expect(
+        accessLogoutUrl('http://od.example.com/'),
+        'http://od.example.com/cdn-cgi/access/logout',
+      );
+    });
+  });
 }

@@ -134,19 +134,60 @@ bool isAccessChallenge(Response<dynamic> res) {
   );
 }
 
+/// The Cloudflare Access logout endpoint for a host or base URL.
+///
+/// Signing out has to reach BOTH: the app's own domain holds the
+/// CF_Authorization cookie, but the team domain holds the identity
+/// session, and that is the one that decides whether the next
+/// sign-in silently re-issues a cookie instead of asking the identity
+/// provider anything.
+String accessLogoutUrl(String hostOrBaseUrl) {
+  final v = _trimSlashes(hostOrBaseUrl.trim());
+  final base = (v.startsWith('http://') || v.startsWith('https://'))
+      ? v
+      : 'https://$v';
+  return '$base/cdn-cgi/access/logout';
+}
+
+/// The Access team domain named by a challenge redirect's Location.
+String? teamDomainFromLocation(String? location) {
+  final loc = (location ?? '').trim();
+  if (loc.isEmpty) return null;
+  final host = Uri.tryParse(loc)?.host.toLowerCase() ?? '';
+  if (!host.endsWith(_accessHostSuffix)) return null;
+  return host;
+}
+
+/// The Access team domain from a cookie's `iss` claim, for when we
+/// hold a session but never saw the challenge that created it.
+String? teamDomainFromJwt(String jwt) {
+  final claims = _jwtClaims(jwt);
+  final iss = claims?['iss'];
+  if (iss is! String) return null;
+  final host = Uri.tryParse(iss)?.host.toLowerCase() ?? '';
+  if (!host.endsWith(_accessHostSuffix)) return null;
+  return host;
+}
+
 /// Reads `exp` out of an Access JWT. Returns null for anything we
 /// cannot parse — a cookie we do not understand is still worth
 /// sending, we just cannot predict when it dies.
 DateTime? cfAuthorizationExpiry(String jwt) {
+  final exp = _jwtClaims(jwt)?['exp'];
+  if (exp is! int) return null;
+  return DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true);
+}
+
+/// Decoded claims of a JWT, or null for anything unparseable. A
+/// cookie we cannot read is still worth sending; we just cannot
+/// reason about it.
+Map<String, dynamic>? _jwtClaims(String jwt) {
   final parts = jwt.split('.');
   if (parts.length != 3) return null;
   try {
     final raw = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
     final payload = jsonDecode(raw);
-    if (payload is! Map) return null;
-    final exp = payload['exp'];
-    if (exp is! int) return null;
-    return DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true);
+    return payload is Map<String, dynamic> ? payload : null;
   } on Object catch (_) {
     return null;
   }

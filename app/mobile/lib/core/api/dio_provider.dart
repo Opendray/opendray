@@ -64,7 +64,7 @@ Dio buildDio({
   String? token,
   String? cfCookie,
   void Function()? onUnauthorized,
-  void Function(String host)? onAccessChallenge,
+  void Function(String host, String? teamDomain)? onAccessChallenge,
 }) {
   final cookieHeader = cfCookieHeader(cfCookie);
   final dio = Dio(
@@ -108,7 +108,12 @@ Dio buildDio({
         // Access login page instead of our JSON.
         if (isAccessChallenge(response)) {
           final host = response.realUri.host;
-          onAccessChallenge?.call(host);
+          // The Location names the team domain, which sign-out needs
+          // and cannot discover later once the cookie is gone.
+          onAccessChallenge?.call(
+            host,
+            teamDomainFromLocation(response.headers.value('location')),
+          );
           handler.reject(
             DioException(
               requestOptions: response.requestOptions,
@@ -215,9 +220,9 @@ final dioProvider = Provider<Dio>((ref) {
     token: token,
     cfCookie: cfCookie,
     onUnauthorized: () => ref.read(authControllerProvider.notifier).logout(),
-    onAccessChallenge: (host) => ref
+    onAccessChallenge: (host, teamDomain) => ref
         .read(cfAccessControllerProvider.notifier)
-        .challenged(reason: host),
+        .challenged(reason: host, teamDomain: teamDomain),
   );
 });
 

@@ -1132,9 +1132,11 @@ class _TranslationsAccessZh extends TranslationsAccessEn {
 	@override String get sessionNone => '本设备没有 Access 会话';
 	@override String get signIn => '使用 Cloudflare Access 登录';
 	@override String get clear => '清除 Access 会话';
-	@override String get clearSubtitle => '删除本设备的 Cloudflare Access Cookie';
+	@override String get clearSubtitle => '在本设备上登出 Cloudflare Access';
 	@override String challengeBanner({required Object host}) => 'Cloudflare Access 需要先验证本设备，才能访问 ${host}。';
 	@override String get notEnabled => '该网关似乎没有启用 Cloudflare Access。';
+	@override String get clearing => '正在登出 Cloudflare Access…';
+	@override String get cleared => '已登出。下次请求会要求重新登录。';
 }
 
 // Path: lock
@@ -14823,9 +14825,11 @@ extension on TranslationsZh {
 			'access.sessionNone' => '本设备没有 Access 会话',
 			'access.signIn' => '使用 Cloudflare Access 登录',
 			'access.clear' => '清除 Access 会话',
-			'access.clearSubtitle' => '删除本设备的 Cloudflare Access Cookie',
+			'access.clearSubtitle' => '在本设备上登出 Cloudflare Access',
 			'access.challengeBanner' => ({required Object host}) => 'Cloudflare Access 需要先验证本设备，才能访问 ${host}。',
 			'access.notEnabled' => '该网关似乎没有启用 Cloudflare Access。',
+			'access.clearing' => '正在登出 Cloudflare Access…',
+			'access.cleared' => '已登出。下次请求会要求重新登录。',
 			'lock.title' => 'opendray 已锁定',
 			'lock.reason' => '解锁 opendray',
 			'lock.unlock' => '解锁',

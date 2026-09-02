@@ -102,12 +102,21 @@ expiry, re-runs the sign-in on demand, and clears this device's Access
 cookie. Pointing the app at a different gateway clears the cookie
 automatically, since it is scoped to the old hostname.
 
-"Clear Access session" means what it says and no more: it forgets the
-cookie on this device, in both places it is stored. It does not end
-the session at Cloudflare, and it does not sign you out of your
-identity provider. If your IdP still has you signed in, the next
-sign-in may complete without asking you for anything. To actually end
-the Access session, sign out at your identity provider.
+"Clear Access session" signs this device out at Cloudflare. It visits
+Cloudflare's logout endpoint on the **team domain** first and then on
+the gateway's own, and sweeps what is left from the app's cookie
+store. The team domain matters: the gateway's cookie is only half the
+session, and clearing it alone leaves Access still recognising the
+device, so the next sign-in silently re-issues a cookie and the whole
+thing looks like it did nothing.
+
+It does not sign you out of your identity provider. If Google (or
+whoever) still has a live session, the next sign-in will run through
+it without asking for a password. That is the IdP's session, not
+Cloudflare's, and you end it at the IdP.
+
+Uninstalling and reinstalling the app is the blunt version: it drops
+the WebView cookie store and the keystore together.
 
 The session terminal and the live log tail run over WebSockets, which
 Access gates like any other request. A WebSocket rejected by Access

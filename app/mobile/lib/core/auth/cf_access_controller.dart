@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -60,8 +62,13 @@ class CfAccessController extends StateNotifier<CfAccessState> {
   // read the error underneath.
   DateTime? _suppressedUntil;
 
+  // Learned from a challenge redirect or from the cookie's iss claim.
+  // Persisted because sign-out needs it after the cookie is gone.
+  String? _teamDomain;
+
   Future<void> _bootstrap() async {
     try {
+      _teamDomain = await _storage.read(key: SecureKeys.cfAccessTeamDomain);
       final cookie = await _storage.read(key: SecureKeys.cfAccessCookie);
       if (cookie == null || cookie.isEmpty) {
         state = const CfAccessIdle();
@@ -99,6 +106,7 @@ class CfAccessController extends StateNotifier<CfAccessState> {
   Future<void> save(String cookie) async {
     if (cookie.isEmpty) return;
     _suppressedUntil = null;
+    await _rememberTeamDomain(teamDomainFromJwt(cookie));
     await _storage.write(key: SecureKeys.cfAccessCookie, value: cookie);
     state = CfAccessReady(
       CfAccessSession(cookie: cookie, expiresAt: cfAuthorizationExpiry(cookie)),
@@ -110,7 +118,8 @@ class CfAccessController extends StateNotifier<CfAccessState> {
   /// Idempotent on purpose: a screen that fires six parallel requests
   /// gets six challenges, and each one must not re-trigger the login
   /// sheet on top of itself.
-  void challenged({String? reason}) {
+  void challenged({String? reason, String? teamDomain}) {
+    if (teamDomain != null) unawaited(_rememberTeamDomain(teamDomain));
     if (state is CfAccessNeedsLogin) return;
     final until = _suppressedUntil;
     if (until != null && DateTime.now().isBefore(until)) return;
@@ -143,19 +152,74 @@ class CfAccessController extends StateNotifier<CfAccessState> {
   /// only because a caller may no longer know it, in which case the
   /// platform copy is left alone rather than guessed at.
   Future<void> clear({String? baseUrl}) async {
-    await _storage.delete(key: SecureKeys.cfAccessCookie);
+    // Order matters. Deleting cookies first would leave the logout
+    // requests unauthenticated, and Cloudflare answers those with an
+    // error page instead of ending anything.
+    //
+    // The team domain goes first because it is the half that decides
+    // whether the next sign-in has to involve the identity provider
+    // at all. Clearing only the app domain's CF_Authorization looked
+    // like it worked and wasn't: Access still recognised the device
+    // on the team domain and re-issued a cookie without asking for
+    // anything, so "clear" appeared to do nothing.
+    final team = _teamDomain;
+    if (team != null && team.isNotEmpty) {
+      await _visitLogout(accessLogoutUrl(team));
+    }
     if (baseUrl != null && baseUrl.isNotEmpty) {
+      await _visitLogout(accessLogoutUrl(baseUrl));
       try {
-        await CookieManager.instance().deleteCookie(
-          url: WebUri(baseUrl),
-          name: kCfAccessCookieName,
-        );
+        // Sweep whatever the logout did not take. CF_AppSession lives
+        // here too, alongside CF_Authorization, and deleting one
+        // named cookie left the other behind.
+        await CookieManager.instance().deleteCookies(url: WebUri(baseUrl));
       } on Object catch (_) {
-        // Best effort. A cookie store we cannot reach is not a
-        // reason to leave our own copy in place.
+        // Best effort: a cookie store we cannot reach is not a reason
+        // to keep our own copy.
       }
     }
+    await _storage.delete(key: SecureKeys.cfAccessCookie);
     state = const CfAccessIdle();
+  }
+
+  /// Loads a Cloudflare logout URL in an offscreen WebView.
+  ///
+  /// It has to be a WebView, not an HTTP call: the session being
+  /// ended is the WebView cookie jar's, and only a request made from
+  /// there carries the cookies and receives the clearing Set-Cookie
+  /// headers back.
+  Future<void> _visitLogout(String url) async {
+    final done = Completer<void>();
+    HeadlessInAppWebView? web;
+    try {
+      web = HeadlessInAppWebView(
+        initialUrlRequest: URLRequest(url: WebUri(url)),
+        onLoadStop: (_, __) {
+          if (!done.isCompleted) done.complete();
+        },
+        onReceivedError: (_, __, ___) {
+          if (!done.isCompleted) done.complete();
+        },
+      );
+      await web.run();
+      // Bounded: sign-out must not hang the settings screen because
+      // the gateway is unreachable. A logout we could not deliver
+      // still gets the local cookies wiped by the caller.
+      await done.future.timeout(const Duration(seconds: 10));
+    } on Object catch (_) {
+      // Best effort by design.
+    } finally {
+      await web?.dispose();
+    }
+  }
+
+  Future<void> _rememberTeamDomain(String? domain) async {
+    if (domain == null || domain.isEmpty || domain == _teamDomain) return;
+    _teamDomain = domain;
+    await _storage.write(
+      key: SecureKeys.cfAccessTeamDomain,
+      value: domain,
+    );
   }
 }
 

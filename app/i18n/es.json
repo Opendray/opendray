@@ -5686,9 +5686,11 @@
     "sessionNone": "No hay sesión de Access en este dispositivo",
     "signIn": "Iniciar sesión con Cloudflare Access",
     "clear": "Borrar la sesión de Access",
-    "clearSubtitle": "Olvidar la cookie de Cloudflare Access de este dispositivo",
+    "clearSubtitle": "Cerrar sesión de Cloudflare Access en este dispositivo",
     "challengeBanner": "Cloudflare Access necesita verificar este dispositivo antes de poder llegar a {host}.",
-    "notEnabled": "Este gateway no parece estar detrás de Cloudflare Access."
+    "notEnabled": "Este gateway no parece estar detrás de Cloudflare Access.",
+    "clearing": "Cerrando sesión de Cloudflare Access…",
+    "cleared": "Sesión cerrada. La próxima solicitud pedirá iniciar sesión de nuevo."
   },
   "lock": {
     "title": "opendray está bloqueado",

@@ -54,7 +54,7 @@ void main() {
     final dio = buildDio(
       baseUrl: 'https://od.example.com',
       token: 't',
-      onAccessChallenge: (h) => challengedHost = h,
+      onAccessChallenge: (h, _) => challengedHost = h,
     )..httpClientAdapter = _CannedAdapter(
         status: 200,
         body: _accessLoginPage,
@@ -114,7 +114,7 @@ void main() {
       token: 'stale',
       cfCookie: 'jwt-value',
       onUnauthorized: () => unauthorized = true,
-      onAccessChallenge: (_) => challenged = true,
+      onAccessChallenge: (_, __) => challenged = true,
     )..httpClientAdapter = _CannedAdapter(
         status: 401,
         body: '{"error":"unauthorized"}',
@@ -147,10 +147,14 @@ void _redirectSuite() {
   test('an unfollowed Access redirect becomes AccessChallengeException',
       () async {
     var challenged = false;
+    String? seenTeam;
     final dio = buildDio(
       baseUrl: 'https://od.example.com',
       token: 't',
-      onAccessChallenge: (_) => challenged = true,
+      onAccessChallenge: (_, team) {
+        challenged = true;
+        seenTeam = team;
+      },
     )..httpClientAdapter = _CannedAdapter(
         status: 302,
         body: '',
@@ -172,6 +176,9 @@ void _redirectSuite() {
       ),
     );
     expect(challenged, isTrue);
+    // Captured here or nowhere: by sign-out time the cookie that
+    // also names the team domain may already be gone.
+    expect(seenTeam, 'acme.cloudflareaccess.com');
   });
 
   test('the client is configured not to chase redirects', () {

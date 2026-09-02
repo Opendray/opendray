@@ -29,6 +29,11 @@ class SecureKeys {
   // the public internet.
   static const cfAccessCookie = 'opendray.cf_access_cookie';
 
+  // Access team domain (<team>.cloudflareaccess.com). Kept because
+  // signing out has to reach it, and by then the cookie it could be
+  // read from may already be gone.
+  static const cfAccessTeamDomain = 'opendray.cf_access_team_domain';
+
   // "1" once the operator turns on the biometric app lock.
   static const biometricLock = 'opendray.biometric_lock';
 }

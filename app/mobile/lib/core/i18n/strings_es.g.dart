@@ -1132,9 +1132,11 @@ class _TranslationsAccessEs extends TranslationsAccessEn {
 	@override String get sessionNone => 'No hay sesión de Access en este dispositivo';
 	@override String get signIn => 'Iniciar sesión con Cloudflare Access';
 	@override String get clear => 'Borrar la sesión de Access';
-	@override String get clearSubtitle => 'Olvidar la cookie de Cloudflare Access de este dispositivo';
+	@override String get clearSubtitle => 'Cerrar sesión de Cloudflare Access en este dispositivo';
 	@override String challengeBanner({required Object host}) => 'Cloudflare Access necesita verificar este dispositivo antes de poder llegar a ${host}.';
 	@override String get notEnabled => 'Este gateway no parece estar detrás de Cloudflare Access.';
+	@override String get clearing => 'Cerrando sesión de Cloudflare Access…';
+	@override String get cleared => 'Sesión cerrada. La próxima solicitud pedirá iniciar sesión de nuevo.';
 }
 
 // Path: lock
@@ -14829,9 +14831,11 @@ extension on TranslationsEs {
 			'access.sessionNone' => 'No hay sesión de Access en este dispositivo',
 			'access.signIn' => 'Iniciar sesión con Cloudflare Access',
 			'access.clear' => 'Borrar la sesión de Access',
-			'access.clearSubtitle' => 'Olvidar la cookie de Cloudflare Access de este dispositivo',
+			'access.clearSubtitle' => 'Cerrar sesión de Cloudflare Access en este dispositivo',
 			'access.challengeBanner' => ({required Object host}) => 'Cloudflare Access necesita verificar este dispositivo antes de poder llegar a ${host}.',
 			'access.notEnabled' => 'Este gateway no parece estar detrás de Cloudflare Access.',
+			'access.clearing' => 'Cerrando sesión de Cloudflare Access…',
+			'access.cleared' => 'Sesión cerrada. La próxima solicitud pedirá iniciar sesión de nuevo.',
 			'lock.title' => 'opendray está bloqueado',
 			'lock.reason' => 'Desbloquear opendray',
 			'lock.unlock' => 'Desbloquear',

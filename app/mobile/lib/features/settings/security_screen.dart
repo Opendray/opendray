@@ -23,6 +23,9 @@ class SecurityScreen extends ConsumerStatefulWidget {
 
 class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   String? _lockError;
+  // Signing out now makes two network round trips through an
+  // offscreen WebView, so it needs to say it is working.
+  bool _clearingAccess = false;
 
   Future<void> _setLock({required bool enabled}) async {
     setState(() => _lockError = null);
@@ -51,6 +54,22 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
       return;
     }
     await controller.setEnabled(enabled: true);
+  }
+
+  Future<void> _clearAccess(String baseUrl) async {
+    if (_clearingAccess) return;
+    setState(() => _clearingAccess = true);
+    try {
+      await ref
+          .read(cfAccessControllerProvider.notifier)
+          .clear(baseUrl: baseUrl);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.access.cleared)),
+      );
+    } finally {
+      if (mounted) setState(() => _clearingAccess = false);
+    }
   }
 
   Future<void> _signInToAccess(String baseUrl) async {
@@ -114,21 +133,24 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 title: Text(t.access.signIn),
                 onTap: () => _signInToAccess(baseUrl),
               ),
-            if (access is CfAccessReady)
+            if (access is CfAccessReady && baseUrl.isNotEmpty)
               ListTile(
-                // Not a logout icon: this forgets the cookie on this
-                // device, it does not end the session at Cloudflare.
-                // The identity provider may still sign you straight
-                // back in without asking for anything.
-                leading: const Icon(Icons.delete_outline),
+                leading: _clearingAccess
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.logout_outlined),
                 title: Text(t.access.clear),
                 subtitle: Text(
-                  t.access.clearSubtitle,
+                  _clearingAccess
+                      ? t.access.clearing
+                      : t.access.clearSubtitle,
                   style: theme.textTheme.bodySmall,
                 ),
-                onTap: () => ref
-                    .read(cfAccessControllerProvider.notifier)
-                    .clear(baseUrl: baseUrl),
+                enabled: !_clearingAccess,
+                onTap: () => _clearAccess(baseUrl),
               ),
             const SizedBox(height: 24),
           ],
