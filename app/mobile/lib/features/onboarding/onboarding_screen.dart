@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
+import 'package:opendray/core/api/gateway_url.dart';
 import 'package:opendray/core/auth/auth_state.dart';
 import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
@@ -24,7 +25,11 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final _controller = TextEditingController(text: 'http://');
+  // Deliberately empty. It used to be pre-filled with "http://",
+  // which meant typing a published hostname after it produced a
+  // cleartext URL and a redirect the app could not explain.
+  // normalizeGatewayUrl picks the scheme from the address instead.
+  final _controller = TextEditingController();
   bool _busy = false;
   String? _error;
   String? _detected;
@@ -41,7 +46,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       setState(() => _error = 'Enter your gateway URL');
       return;
     }
-    final normalized = _normalize(raw);
+    final normalized = normalizeGatewayUrl(raw);
     setState(() {
       _busy = true;
       _error = null;
@@ -54,8 +59,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // no Access session yet. Onboarding drives the SSO itself
       // rather than deferring to AccessGate: there is no server URL
       // persisted yet, so the gate has nothing to sign in to.
+      //
+      // e.baseUrl, not what was typed: an http:// entry was upgraded
+      // to https before the challenge came back, and the Secure
+      // CF_Authorization cookie is unreadable through an http:// URL.
       setState(() => _error = t.access.challengeBanner(host: e.host));
-      await _runAccessSso(normalized);
+      await _runAccessSso(e.baseUrl ?? normalized);
     } on ApiException catch (e) {
       setState(() => _error = 'Server replied ${e.statusCode}: ${e.message}');
     } on Object catch (e) {
@@ -66,13 +75,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _probeAndPersist(String normalized) async {
-    final h = await probeHealth(
+    final probe = await probeGateway(
       normalized,
       cfCookie: ref.read(cfAccessControllerProvider.notifier).cookie,
     );
     if (!mounted) return;
+    final h = probe.health;
     setState(() => _detected = 'opendray ${h.version} (${h.status})');
-    await ref.read(authControllerProvider.notifier).setServerUrl(normalized);
+    // probe.baseUrl, not the typed one: the gateway may have upgraded
+    // us to https, and persisting the http form would earn that
+    // redirect on every request for the life of the install.
+    await ref
+        .read(authControllerProvider.notifier)
+        .setServerUrl(probe.baseUrl);
     // Router redirects automatically on AuthState change.
   }
 
@@ -89,17 +104,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (!mounted) return;
       setState(() => _error = 'Could not reach $normalized: $e');
     }
-  }
-
-  String _normalize(String raw) {
-    var v = raw.trim();
-    if (!v.startsWith('http://') && !v.startsWith('https://')) {
-      v = 'https://$v';
-    }
-    while (v.endsWith('/')) {
-      v = v.substring(0, v.length - 1);
-    }
-    return v;
   }
 
   @override

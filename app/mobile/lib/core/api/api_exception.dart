@@ -25,11 +25,24 @@ class ApiException implements Exception {
 /// screen), and conflating them sends the operator to a screen that
 /// cannot fix their problem.
 class AccessChallengeException extends ApiException {
-  AccessChallengeException({required super.statusCode, required this.host})
-      : super(message: 'Cloudflare Access authentication required');
+  AccessChallengeException({
+    required super.statusCode,
+    required this.host,
+    this.baseUrl,
+  }) : super(message: 'Cloudflare Access authentication required');
 
   /// Host that issued the challenge, for the error banner.
   final String host;
+
+  /// The gateway base URL that was actually being probed when the
+  /// challenge came back, which is not always the one the operator
+  /// typed: an http:// entry gets upgraded to https first.
+  ///
+  /// The sign-in flow must use this one. CF_Authorization is a Secure
+  /// cookie, so running the WebView from the http:// form and then
+  /// reading the cookie back through an http:// URL returns nothing,
+  /// and the sign-in appears to succeed while changing nothing.
+  final String? baseUrl;
 
   @override
   String toString() => 'AccessChallengeException($host)';

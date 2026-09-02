@@ -225,9 +225,15 @@ ApiException toApiException(Object error) {
   if (error is ApiException) return error;
   if (error is DioException) {
     if (error.error is ApiException) return error.error! as ApiException;
+    // error.message is null for anything Dio did not raise itself --
+    // a decode failure, a bad cast, a platform socket error. Falling
+    // straight through to "Network error" hid a _TypeError behind a
+    // message that pointed at the network, which cost two rounds of
+    // debugging on a problem that was never about the network.
+    final detail = error.message ?? error.error?.toString();
     return ApiException(
       statusCode: error.response?.statusCode ?? 0,
-      message: error.message ?? 'Network error',
+      message: (detail == null || detail.isEmpty) ? 'Network error' : detail,
       body: error.response?.data,
     );
   }

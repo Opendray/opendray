@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/dio_provider.dart';
+import 'package:opendray/core/api/gateway_url.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/auth/cf_access.dart';
 
@@ -105,22 +107,93 @@ Dio buildOnboardingDio(String baseUrl, {String? cfCookie}) {
   );
 }
 
+/// What a successful probe learned about a candidate gateway.
+class GatewayProbe {
+  const GatewayProbe({required this.health, required this.baseUrl});
+
+  final HealthResponse health;
+
+  /// The URL that actually answered. Differs from the one probed when
+  /// the gateway redirected http to https, in which case this is the
+  /// one worth persisting: saving the http form would earn the same
+  /// redirect on every request from then on.
+  final String baseUrl;
+}
+
 /// Probes /api/v1/health on a candidate gateway URL.
 ///
 /// Throws [AccessChallengeException] when Cloudflare Access answered
 /// instead of the gateway, so onboarding can offer SSO rather than
 /// reporting the login page as a broken server.
-Future<HealthResponse> probeHealth(String baseUrl, {String? cfCookie}) async {
-  final dio = buildOnboardingDio(baseUrl, cfCookie: cfCookie);
+///
+/// Follows exactly one kind of redirect: a same-host, same-path
+/// upgrade from http to https, which is what a TLS front end answers
+/// plain http with. Everything else is reported, because everything
+/// else is somebody intercepting the request.
+Future<GatewayProbe> probeGateway(
+  String baseUrl, {
+  String? cfCookie,
+  @visibleForTesting
+  Dio Function(String baseUrl, {String? cfCookie})? dioFactory,
+}) async {
+  final first =
+      await _probeOnce(baseUrl, cfCookie: cfCookie, dioFactory: dioFactory);
+  if (first.health != null) {
+    return GatewayProbe(health: first.health!, baseUrl: baseUrl);
+  }
+  final upgraded = upgradedBaseUrl(baseUrl: baseUrl, upgraded: first.upgrade!);
+  final second =
+      await _probeOnce(upgraded, cfCookie: cfCookie, dioFactory: dioFactory);
+  if (second.health != null) {
+    return GatewayProbe(health: second.health!, baseUrl: upgraded);
+  }
+  // Two upgrades in a row means a redirect loop, not a front end
+  // doing its job. Report the second answer rather than looping.
+  throw ApiException(
+    statusCode: 0,
+    message: 'Gateway kept redirecting $baseUrl to itself',
+  );
+}
+
+class _ProbeResult {
+  const _ProbeResult.ok(this.health) : upgrade = null;
+  const _ProbeResult.upgradeTo(this.upgrade) : health = null;
+  final HealthResponse? health;
+  final String? upgrade;
+}
+
+Future<_ProbeResult> _probeOnce(
+  String baseUrl, {
+  String? cfCookie,
+  Dio Function(String baseUrl, {String? cfCookie})? dioFactory,
+}) async {
+  final dio = (dioFactory ?? buildOnboardingDio)(baseUrl, cfCookie: cfCookie);
   try {
-    final res = await dio.get<Map<String, dynamic>>('/api/v1/health');
+    // get<dynamic>, never get<Map<String, dynamic>>. Dio casts the
+    // decoded body to the type argument, and that cast runs INSIDE
+    // the await -- before any line below it. A challenge answers with
+    // an HTML login page, so asking for a Map threw a _TypeError with
+    // a null message, which toApiException rendered as the useless
+    // "Network error" while every check here sat unreachable. This
+    // client has no interceptors (the main one in dio_provider does,
+    // and those DO run before the cast), so the shape of the response
+    // has to be our problem, not Dio's.
+    final res = await dio.get<dynamic>('/api/v1/health');
     if (isAccessChallenge(res)) {
       throw AccessChallengeException(
         statusCode: res.statusCode ?? 0,
         host: res.realUri.host,
+        baseUrl: baseUrl,
       );
     }
     final status = res.statusCode ?? 0;
+    if (status >= 300 && status < 400) {
+      final target = protocolUpgradeTarget(
+        from: res.realUri,
+        location: res.headers.value('location'),
+      );
+      if (target != null) return _ProbeResult.upgradeTo(target);
+    }
     if (status < 200 || status >= 300) {
       throw toApiException(
         DioException(
@@ -130,7 +203,18 @@ Future<HealthResponse> probeHealth(String baseUrl, {String? cfCookie}) async {
         ),
       );
     }
-    return HealthResponse.fromJson(res.data ?? {});
+    final data = res.data;
+    if (data is! Map<String, dynamic>) {
+      // A 2xx that is not JSON is not our gateway. Say what actually
+      // came back rather than letting a cast failure downstream turn
+      // it into an unexplained network error.
+      final ct = res.headers.value(Headers.contentTypeHeader) ?? 'none';
+      throw ApiException(
+        statusCode: status,
+        message: 'Not an opendray gateway: expected JSON, got $ct',
+      );
+    }
+    return _ProbeResult.ok(HealthResponse.fromJson(data));
   } catch (e) {
     throw toApiException(e);
   } finally {
