@@ -48,6 +48,12 @@
 	<string>opendray uses the camera so you can attach a fresh photo to your CLI session.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>opendray does not record audio. This entry exists because image_picker's video-pick path links AVFoundation; opendray never invokes it.</string>
+	<!-- local_auth: the optional app lock. Once the gateway is
+	     published through Cloudflare an unlocked phone is a live
+	     admin console, so the operator can require Face ID (or the
+	     device passcode) before the app is shown. Off by default. -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>opendray uses Face ID to unlock the app when you turn on the app lock.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

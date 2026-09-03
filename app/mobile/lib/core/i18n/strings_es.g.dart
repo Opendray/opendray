@@ -71,6 +71,8 @@ class TranslationsEs extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMemoryQuarantineEs memoryQuarantine = _TranslationsMemoryQuarantineEs._(_root);
 	@override late final _TranslationsCortexHubEs cortexHub = _TranslationsCortexHubEs._(_root);
 	@override late final _TranslationsCortexSettingsEs cortexSettings = _TranslationsCortexSettingsEs._(_root);
+	@override late final _TranslationsAccessEs access = _TranslationsAccessEs._(_root);
+	@override late final _TranslationsLockEs lock = _TranslationsLockEs._(_root);
 }
 
 // Path: common
@@ -1034,6 +1036,7 @@ class _TranslationsSettingsEs extends TranslationsSettingsEn {
 	@override late final _TranslationsSettingsChangeCredentialsEs changeCredentials = _TranslationsSettingsChangeCredentialsEs._(_root);
 	@override late final _TranslationsSettingsLogViewerEs logViewer = _TranslationsSettingsLogViewerEs._(_root);
 	@override late final _TranslationsSettingsServerSettingsEs serverSettings = _TranslationsSettingsServerSettingsEs._(_root);
+	@override late final _TranslationsSettingsSecurityEs security = _TranslationsSettingsSecurityEs._(_root);
 }
 
 // Path: memoryQuarantine
@@ -1108,6 +1111,44 @@ class _TranslationsCortexSettingsEs extends TranslationsCortexSettingsEn {
 	@override String get providersManageOnWeb => 'Añade o edita proveedores en el panel web.';
 	@override String get providersLoadFailed => 'Error al cargar proveedores';
 	@override String get defaultBadge => 'predeterminado';
+}
+
+// Path: access
+class _TranslationsAccessEs extends TranslationsAccessEn {
+	_TranslationsAccessEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get signInTitle => 'Inicio de sesión de Cloudflare Access';
+	@override String get cancel => 'Cancelar';
+	@override String failed({required Object error}) => 'El inicio de sesión de Access no se completó: ${error}';
+	@override String loadFailed({required Object error}) => 'No se pudo cargar la página de inicio de sesión de Cloudflare Access: ${error}';
+	@override String get section => 'Cloudflare Access';
+	@override String get sectionSubtitle => 'Inicia sesión en el borde para que la app llegue al gateway desde fuera de la LAN';
+	@override String get sessionActive => 'Sesión de Access activa';
+	@override String sessionExpires({required Object when}) => 'Caduca ${when}';
+	@override String get sessionExpiryUnknown => 'La caducidad no se puede leer de la cookie';
+	@override String get sessionNone => 'No hay sesión de Access en este dispositivo';
+	@override String get signIn => 'Iniciar sesión con Cloudflare Access';
+	@override String get clear => 'Borrar la sesión de Access';
+	@override String get clearSubtitle => 'Cerrar sesión de Cloudflare Access en este dispositivo';
+	@override String challengeBanner({required Object host}) => 'Cloudflare Access necesita verificar este dispositivo antes de poder llegar a ${host}.';
+	@override String get notEnabled => 'Este gateway no parece estar detrás de Cloudflare Access.';
+	@override String get clearing => 'Cerrando sesión de Cloudflare Access…';
+	@override String get cleared => 'Sesión cerrada. La próxima solicitud pedirá iniciar sesión de nuevo.';
+}
+
+// Path: lock
+class _TranslationsLockEs extends TranslationsLockEn {
+	_TranslationsLockEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'opendray está bloqueado';
+	@override String get reason => 'Desbloquear opendray';
+	@override String get unlock => 'Desbloquear';
 }
 
 // Path: nav.updates
@@ -3373,6 +3414,20 @@ class _TranslationsSettingsServerSettingsEs extends TranslationsSettingsServerSe
 	@override String validateNumber({required Object field}) => '"${field}" debe ser un número';
 	@override late final _TranslationsSettingsServerSettingsEmbedderModelEs embedderModel = _TranslationsSettingsServerSettingsEmbedderModelEs._(_root);
 	@override String get legacyLayout => 'Los directorios propios de opendray siguen dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de abajo cuando puedas.';
+}
+
+// Path: settings.security
+class _TranslationsSettingsSecurityEs extends TranslationsSettingsSecurityEn {
+	_TranslationsSettingsSecurityEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get section => 'Seguridad';
+	@override String get appLock => 'Requerir desbloqueo';
+	@override String get appLockSubtitle => 'Pedir biometría o el código del dispositivo antes de mostrar la app';
+	@override String get appLockUnavailable => 'Este dispositivo no tiene código ni biometría configurados';
+	@override String get appLockFailed => 'No se pudo activar el bloqueo de la app';
 }
 
 // Path: web.sessions.list
@@ -14750,6 +14805,11 @@ extension on TranslationsEs {
 			'settings.serverSettings.embedderModel.manual' => 'Escribir manualmente',
 			'settings.serverSettings.embedderModel.pickFromList' => 'Elegir de la lista',
 			'settings.serverSettings.legacyLayout' => 'Los directorios propios de opendray siguen dentro de tus documentos, así que aparecen en el Vault y la sincronización se los lleva. Siguen funcionando: muévelos fuera y fija las rutas de abajo cuando puedas.',
+			'settings.security.section' => 'Seguridad',
+			'settings.security.appLock' => 'Requerir desbloqueo',
+			'settings.security.appLockSubtitle' => 'Pedir biometría o el código del dispositivo antes de mostrar la app',
+			'settings.security.appLockUnavailable' => 'Este dispositivo no tiene código ni biometría configurados',
+			'settings.security.appLockFailed' => 'No se pudo activar el bloqueo de la app',
 			'memoryQuarantine.title' => 'Cuarentena',
 			'memoryQuarantine.subtitle' => 'Hechos que necesitan revisión antes de contar como memoria durable: las capturas de integraciones llegan aquí por política, y puedes poner cualquier memoria en cuarentena a mano. Promueve lo verdadero; descarta el resto — las filas sin revisar expiran solas.',
 			'memoryQuarantine.empty' => 'Nada en cuarentena.',
@@ -14797,6 +14857,26 @@ extension on TranslationsEs {
 			'cortexSettings.providersManageOnWeb' => 'Añade o edita proveedores en el panel web.',
 			'cortexSettings.providersLoadFailed' => 'Error al cargar proveedores',
 			'cortexSettings.defaultBadge' => 'predeterminado',
+			'access.signInTitle' => 'Inicio de sesión de Cloudflare Access',
+			'access.cancel' => 'Cancelar',
+			'access.failed' => ({required Object error}) => 'El inicio de sesión de Access no se completó: ${error}',
+			'access.loadFailed' => ({required Object error}) => 'No se pudo cargar la página de inicio de sesión de Cloudflare Access: ${error}',
+			'access.section' => 'Cloudflare Access',
+			'access.sectionSubtitle' => 'Inicia sesión en el borde para que la app llegue al gateway desde fuera de la LAN',
+			'access.sessionActive' => 'Sesión de Access activa',
+			'access.sessionExpires' => ({required Object when}) => 'Caduca ${when}',
+			'access.sessionExpiryUnknown' => 'La caducidad no se puede leer de la cookie',
+			'access.sessionNone' => 'No hay sesión de Access en este dispositivo',
+			'access.signIn' => 'Iniciar sesión con Cloudflare Access',
+			'access.clear' => 'Borrar la sesión de Access',
+			'access.clearSubtitle' => 'Cerrar sesión de Cloudflare Access en este dispositivo',
+			'access.challengeBanner' => ({required Object host}) => 'Cloudflare Access necesita verificar este dispositivo antes de poder llegar a ${host}.',
+			'access.notEnabled' => 'Este gateway no parece estar detrás de Cloudflare Access.',
+			'access.clearing' => 'Cerrando sesión de Cloudflare Access…',
+			'access.cleared' => 'Sesión cerrada. La próxima solicitud pedirá iniciar sesión de nuevo.',
+			'lock.title' => 'opendray está bloqueado',
+			'lock.reason' => 'Desbloquear opendray',
+			'lock.unlock' => 'Desbloquear',
 			_ => null,
 		};
 	}

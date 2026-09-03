@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/auth/access_gate.dart';
+import 'package:opendray/core/auth/biometric_lock.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 import 'package:opendray/core/lifecycle/resume_refresh.dart';
 import 'package:opendray/core/locale/locale_controller.dart';
@@ -43,6 +45,13 @@ class OpendrayApp extends ConsumerWidget {
       supportedLocales: AppLocaleUtils.instance.supportedLocales,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: router,
+      // Both gates sit above the router because both are orthogonal
+      // to which screen is showing. Order matters: the app lock is
+      // outermost, so a locked device does not expose the Cloudflare
+      // Access sign-in either.
+      builder: (context, child) => BiometricGate(
+        child: AccessGate(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }

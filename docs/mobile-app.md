@@ -40,6 +40,10 @@ able to reach it.
 > including the **WebSocket upgrade headers** the Sessions terminal
 > needs, are in [operator-guide §Topology](operator-guide.md#topology).
 
+> **Gating the tunnel with Cloudflare Access?** The app signs in
+> through the same Access flow, so off-LAN access needs no VPN.
+> Setup and caveats: [mobile-cloudflare-access.md](mobile-cloudflare-access.md).
+
 Verify reachability from the phone *before* building, e.g. open the
 Gateway URL in the phone's browser. You should get the web admin
 login page.
@@ -220,6 +224,7 @@ The app's own version string lives in `app/mobile/pubspec.yaml`
 | Symptom | Cause | Fix |
 |---|---|---|
 | Onboarding "could not connect" | Phone can't reach the Gateway URL | Open the URL in the phone's browser; fix LAN IP / tunnel / TLS first (Step 0) |
+| Onboarding says Cloudflare Access must verify the device | The gateway is gated by Access | Finish the sign-in it offers; see [mobile-cloudflare-access.md](mobile-cloudflare-access.md) |
 | Login works but Sessions terminal never connects | Reverse proxy is dropping the WebSocket upgrade | Add WS headers: [operator-guide §Topology](operator-guide.md#topology) |
 | Android blocks the install | "Install unknown apps" not granted | Allow it for the app that opens the `.apk` (Files / Chrome) |
 | iOS "Untrusted Developer" on launch | Personal-team profile not trusted yet | Settings → General → VPN & Device Management → Trust |
@@ -232,6 +237,7 @@ The app's own version string lives in `app/mobile/pubspec.yaml`
 ## See also
 
 - [getting-started.md](getting-started.md): stand up the gateway the app connects to
+- [mobile-cloudflare-access.md](mobile-cloudflare-access.md): using the app when the gateway is gated by Cloudflare Access
 - [operator-guide.md](operator-guide.md): reverse proxy / tunnel topology for off-LAN access
 - [Flutter: build & release Android](https://docs.flutter.dev/deployment/android)
 - [Flutter: build & release iOS](https://docs.flutter.dev/deployment/ios)

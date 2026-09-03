@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/auth_api.dart';
 import 'package:opendray/core/auth/auth_state.dart';
+import 'package:opendray/core/auth/cf_access_controller.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // Username + password login. Calls /api/v1/auth/mobile-login which
@@ -64,7 +65,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _changeServer() async {
-    await ref.read(authControllerProvider.notifier).resetServer();
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      // The Access cookie is scoped to the old hostname, so it is both
+      // useless against the new one and worth not leaving behind. Read
+      // the URL before resetServer clears it, and hand it over so the
+      // WebView's copy goes too.
+      //
+      // remote: false — local wipe only. Signing out at Cloudflare
+      // would mean up to two ten-second round trips before the screen
+      // moves, and the operator is frequently changing gateway
+      // precisely because the old one does not answer.
+      final auth = ref.read(authControllerProvider);
+      final oldUrl = switch (auth) {
+        AuthLoggedOut(serverUrl: final s) => s,
+        AuthLoggedIn(serverUrl: final s) => s,
+        _ => null,
+      };
+      await ref
+          .read(cfAccessControllerProvider.notifier)
+          .clear(baseUrl: oldUrl, remote: false);
+      await ref.read(authControllerProvider.notifier).resetServer();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
