@@ -54,22 +54,30 @@ func NewMirror(svc *Service, log *slog.Logger) *Mirror {
 // Idempotent: safe to call multiple times in sequence; no-ops when
 // no Claude memory dir exists for the cwd.
 func (m *Mirror) SyncCwd(ctx context.Context, cwd string) (int, error) {
+	return m.SyncDir(ctx, cwd, cwd)
+}
+
+// SyncDir is SyncCwd with the source directory and the memory scope
+// key split: srcDir is where Claude actually wrote its files (a
+// worktree for isolated sessions), scopeKey the logical project the
+// facts belong to. SyncCwd is the srcDir==scopeKey special case.
+func (m *Mirror) SyncDir(ctx context.Context, srcDir, scopeKey string) (int, error) {
 	if m == nil || m.svc == nil {
 		return 0, errors.New("memory: mirror not initialised")
 	}
-	if strings.TrimSpace(cwd) == "" {
-		return 0, errors.New("memory: SyncCwd needs a cwd")
+	if strings.TrimSpace(srcDir) == "" || strings.TrimSpace(scopeKey) == "" {
+		return 0, errors.New("memory: SyncDir needs a source dir and a scope key")
 	}
 
-	dirs := findClaudeMemoryDirs(cwd)
+	dirs := findClaudeMemoryDirs(srcDir)
 	if len(dirs) == 0 {
 		return 0, nil
 	}
 
-	// Snapshot what we've already ingested for this cwd so we can
-	// dedupe against source_path. One List call per cwd is cheaper
+	// Snapshot what we've already ingested for this project so we can
+	// dedupe against source_path. One List call per sync is cheaper
 	// than one query per file.
-	existing, err := m.svc.List(ctx, ScopeProject, cwd, 1000)
+	existing, err := m.svc.List(ctx, ScopeProject, scopeKey, 1000)
 	if err != nil {
 		return 0, fmt.Errorf("snapshot existing memories: %w", err)
 	}
@@ -129,7 +137,7 @@ func (m *Mirror) SyncCwd(ctx context.Context, cwd string) (int, error) {
 			if _, err := m.svc.Store(ctx, StoreRequest{
 				Text:     string(body),
 				Scope:    ScopeProject,
-				ScopeKey: cwd,
+				ScopeKey: scopeKey,
 				Metadata: meta,
 			}); err != nil {
 				m.log.Warn("ingest claude memory", "path", path, "err", err)
@@ -140,7 +148,7 @@ func (m *Mirror) SyncCwd(ctx context.Context, cwd string) (int, error) {
 	}
 	if ingested > 0 {
 		m.log.Info("synced claude memory files",
-			"cwd", cwd, "count", ingested)
+			"src", srcDir, "scope_key", scopeKey, "count", ingested)
 	}
 	return ingested, nil
 }

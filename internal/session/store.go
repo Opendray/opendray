@@ -19,6 +19,7 @@ func newStore(pool *pgxpool.Pool) *sessionStore { return &sessionStore{pool: poo
 
 const sessionSelect = `
     SELECT id, COALESCE(name, ''), provider_id, COALESCE(model, ''), cwd,
+           COALESCE(work_dir, ''), COALESCE(worktree_branch, ''),
            args, state, COALESCE(pid, 0),
            COALESCE(claude_account_id, ''), COALESCE(claude_session_id, ''),
            COALESCE(antigravity_account_id, ''),
@@ -43,13 +44,15 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 	}
 	_, err = s.pool.Exec(ctx, `
         INSERT INTO sessions
-            (id, name, provider_id, model, cwd, args, state, pid,
+            (id, name, provider_id, model, cwd, work_dir, worktree_branch,
+             args, state, pid,
              claude_account_id, claude_session_id, antigravity_account_id,
              parent_session_id, origin, integration_id, started_at,
              grok_account_id)
-        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
 		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Model,
-		sess.Cwd, argsJSON, string(sess.State), nullableInt(sess.PID),
+		sess.Cwd, sess.WorkDir, sess.WorktreeBranch,
+		argsJSON, string(sess.State), nullableInt(sess.PID),
 		nullableString(sess.ClaudeAccountID), nullableString(sess.ClaudeSessionID),
 		nullableString(sess.AntigravityAccountID),
 		nullableString(sess.ParentSessionID),
@@ -289,7 +292,8 @@ func scanSession(row rowScanner) (Session, error) {
 		originStr  string
 		interruptR string
 	)
-	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd, &argsJSON,
+	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd,
+		&s.WorkDir, &s.WorktreeBranch, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
 		&s.AntigravityAccountID, &s.GrokAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
 		&interruptR, &s.StartedAt, &endedAt, &exitCode)

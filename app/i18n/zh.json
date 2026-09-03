@@ -104,7 +104,8 @@
           "titleRemoveHistory": "从历史中移除",
           "titleTerminate": "终止并移除",
           "titleRemove": "移除",
-          "claudeAccountTitle": "Claude 账号：{label}"
+          "claudeAccountTitle": "Claude 账号：{label}",
+          "worktreeTitle": "隔离 worktree 会话,分支 {branch}"
         },
         "deleteFailedToast": "删除失败"
       },
@@ -208,7 +209,13 @@
         "submitting": "创建中…",
         "spawnedToast": "会话已创建",
         "spawnedDescription": "{provider} · pid {pid}",
-        "pidFallback": "—"
+        "pidFallback": "—",
+        "worktreeIsolation": "在隔离 worktree 中运行",
+        "worktreeOnHint": "会话将在独立的 git worktree(分支 opendray/<session-id>)中运行,改动通过常规的分支 → PR 流程合回。未跟踪文件(.env、node_modules)不会复制。",
+        "worktreeOffHint": "当其他会话可能同时修改该项目时建议开启——每个隔离会话都在自己的检出副本中编辑。",
+        "worktreeUnavailableNotRepo": "不可用:工作目录不在 git 仓库内。",
+        "worktreeUnavailableLinked": "不可用:该路径本身是一个 linked worktree,请选择主检出目录。",
+        "worktreeConcurrentWarning": "已有其他活跃会话正在此项目中运行且未隔离——建议开启 worktree,避免同时编辑同一份文件。"
       },
       "accountSwitcher": {
         "tooltip": "切换 Claude 账号（将重启 CLI 进程）",
@@ -4060,6 +4067,15 @@
         "noTokenSuffix": "（无令牌）",
         "noneHint": "未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。",
         "errorHint": "无法加载 Claude 账号（{error}）。会话将以网关默认配置启动。"
+      },
+      "worktree": {
+        "label": "在隔离 worktree 中运行",
+        "subtitleOn": "会话在独立 git worktree(分支 opendray/<session-id>)中运行,改动经分支 → PR 合回。未跟踪文件(.env、node_modules)不会复制。",
+        "subtitleOff": "当其他会话可能同时修改该项目时建议开启。",
+        "unavailableNotRepo": "不可用:工作目录不在 git 仓库内。",
+        "unavailableLinked": "不可用:该路径本身是 linked worktree,请选择主检出目录。",
+        "concurrentWarning": "已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。",
+        "checking": "正在检查工作目录……"
       }
     }
   },

@@ -131,7 +131,9 @@ func (m *Manager) idleWatcher(rs *runningSession) {
 func (m *Manager) recentResponseSnippet(rs *runningSession) string {
 	rs.sessMu.RLock()
 	provider := rs.sess.ProviderID
-	cwd := rs.sess.Cwd
+	// Transcripts live under the CLI's actual working directory — the
+	// worktree for isolated sessions.
+	cwd := rs.sess.EffectiveWorkDir()
 	rs.sessMu.RUnlock()
 
 	snippet := ""

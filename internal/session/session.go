@@ -89,9 +89,25 @@ type Session struct {
 	// Model pins the model this session spawns against, applied at
 	// spawn via the provider's model flag. Empty falls back to the
 	// provider config default. See CreateRequest.Model.
-	Model string   `json:"model,omitempty"`
-	Cwd   string   `json:"cwd"`
-	Args  []string `json:"args"`
+	Model string `json:"model,omitempty"`
+	// Cwd is the LOGICAL project path: it keys memory scope, project
+	// docs, Cortex capture, custom-task grouping, and UI grouping. It
+	// never changes meaning, isolated or not.
+	Cwd string `json:"cwd"`
+	// WorkDir is the PHYSICAL execution path — where the CLI process
+	// actually runs. Empty means "not isolated" (the process runs in
+	// Cwd). For worktree-isolated sessions it points at the managed
+	// worktree; child sessions inherit the parent's WorkDir. Consumers
+	// that touch the session's literal files (spawn dir, transcripts,
+	// history, git/fs inspection) must use EffectiveWorkDir.
+	WorkDir string `json:"work_dir,omitempty"`
+	// WorktreeBranch is the managed branch (opendray/<session-id>) of
+	// the worktree this session OWNS. Set only on the session whose
+	// create carried isolation=worktree — empty for children sharing
+	// the worktree and for normal sessions — so it doubles as the
+	// reclamation marker.
+	WorktreeBranch string   `json:"worktree_branch,omitempty"`
+	Args           []string `json:"args"`
 	// Theme is the operator's applied opendray theme ("light"/"dark") at
 	// spawn time. Advertised to the CLI via COLORFGBG so a TUI can pick a
 	// matching palette. Empty = unknown; the CLI keeps its own default.
@@ -136,6 +152,17 @@ type Session struct {
 	ExitCode        *int           `json:"exit_code,omitempty"`
 }
 
+// EffectiveWorkDir returns where the session's process runs: WorkDir
+// when isolated, Cwd otherwise. Every consumer of the session's
+// literal files goes through this; project-identity consumers keep
+// using Cwd directly.
+func (s Session) EffectiveWorkDir() string {
+	if s.WorkDir != "" {
+		return s.WorkDir
+	}
+	return s.Cwd
+}
+
 // Origin identifies the kind of principal that created a session.
 type Origin string
 
@@ -163,6 +190,13 @@ type CreateRequest struct {
 	ParentSessionID      string   `json:"parent_session_id,omitempty"`
 	Cwd                  string   `json:"cwd"`
 	Args                 []string `json:"args"`
+	// Isolation selects the session's workspace mode. "" (default)
+	// runs the CLI directly in Cwd — today's behaviour, unchanged.
+	// IsolationWorktree spawns it in a private git worktree on branch
+	// opendray/<session-id>; requires Cwd to be inside a git repo's
+	// main checkout. Ignored for child sessions (ParentSessionID set),
+	// which always inherit the parent's workspace.
+	Isolation string `json:"isolation,omitempty"`
 	// Theme is the client's applied theme ("light"/"dark"). Optional: an
 	// older client or an API caller may omit it, in which case opendray
 	// advertises nothing and the CLI keeps its own default.
@@ -201,8 +235,15 @@ func (r CreateRequest) Validate() error {
 	if r.Theme != "" && r.Theme != "light" && r.Theme != "dark" {
 		return errors.New(`theme must be "light" or "dark"`)
 	}
+	if r.Isolation != "" && r.Isolation != IsolationWorktree {
+		return errors.New(`isolation must be "" or "worktree"`)
+	}
 	return nil
 }
+
+// IsolationWorktree is the only non-default CreateRequest.Isolation
+// value: run the session in a managed git worktree.
+const IsolationWorktree = "worktree"
 
 // InputRequest is the JSON body for POST /api/v1/sessions/{id}/input.
 // `Data` is treated as raw bytes (not base64-decoded) and sent verbatim
@@ -240,6 +281,10 @@ var (
 	ErrUnknownProvider          = errors.New("unknown provider")
 	ErrProviderUnavailable      = errors.New("provider unavailable")
 	ErrAccountSwitchUnsupported = errors.New("account switch only supported for claude and antigravity providers")
+	// ErrIsolationUnavailable — isolation=worktree was requested but the
+	// gateway has no workspace manager wired, or the target worktree is
+	// mid-reclaim. A client precondition failure (400), not a fault.
+	ErrIsolationUnavailable = errors.New("worktree isolation is not available for this request")
 )
 
 func newID() string {

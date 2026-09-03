@@ -41,13 +41,15 @@ func (m *Manager) Transcript(ctx context.Context, sessionID string, maxBytes int
 	if sess.EndedAt != nil {
 		endedAt = *sess.EndedAt
 	}
+	// Every provider records transcripts under the CLI's ACTUAL
+	// working directory — the worktree for isolated sessions.
 	switch sess.ProviderID {
 	case "claude":
-		return claudeTranscript(m.claudeHistoryCfg, sess.Cwd, sess.ClaudeSessionID, sess.StartedAt, endedAt, maxBytes), nil
+		return claudeTranscript(m.claudeHistoryCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID, sess.StartedAt, endedAt, maxBytes), nil
 	case "codex":
-		return codexTranscript(m.codexHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
+		return codexTranscript(m.codexHistoryCfg, sess.EffectiveWorkDir(), sess.StartedAt, endedAt, maxBytes), nil
 	case "antigravity":
-		return antigravityTranscript(m.antigravityHistoryCfg, sess.Cwd, sess.StartedAt, endedAt, maxBytes), nil
+		return antigravityTranscript(m.antigravityHistoryCfg, sess.EffectiveWorkDir(), sess.StartedAt, endedAt, maxBytes), nil
 	default:
 		return nil, nil
 	}

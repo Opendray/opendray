@@ -55,9 +55,14 @@ Future<void> openSessionToolSheet(
 ) {
   final child = switch (tool) {
     SessionTool.files =>
-      FilesTab(sessionId: session.id, initialPath: session.cwd),
-    SessionTool.git => GitTab(sessionId: session.id, cwd: session.cwd),
-    SessionTool.tasks => TasksTab(sessionId: session.id, cwd: session.cwd),
+      FilesTab(sessionId: session.id, initialPath: session.effectiveWorkDir),
+    SessionTool.git =>
+      GitTab(sessionId: session.id, cwd: session.effectiveWorkDir),
+    SessionTool.tasks => TasksTab(
+        sessionId: session.id,
+        cwd: session.cwd,
+        workDir: session.effectiveWorkDir,
+      ),
     SessionTool.history => HistoryTab(sessionId: session.id),
     SessionTool.vault => NotesTab(sessionId: session.id, cwd: session.cwd),
     SessionTool.canvas => CanvasTab(sessionId: session.id, cwd: session.cwd),

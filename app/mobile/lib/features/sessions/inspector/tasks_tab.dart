@@ -41,10 +41,22 @@ import 'package:yaml/yaml.dart';
 // and skim pyproject's `[*.scripts]` sections — the same surface the
 // web panel offers.
 class TasksTab extends ConsumerStatefulWidget {
-  const TasksTab({required this.sessionId, required this.cwd, super.key});
+  const TasksTab({
+    required this.sessionId,
+    required this.cwd,
+    String? workDir,
+    super.key,
+  }) : workDir = workDir ?? cwd;
 
   final String sessionId;
+  // cwd is the LOGICAL project path — custom-task registration/lookup
+  // and child-session identity stay keyed by it.
   final String cwd;
+  // workDir is where the session's files actually live (the worktree
+  // for isolated sessions) — manifest/script discovery reads it, and
+  // task shell children execute there (inherited server-side via
+  // parent_session_id).
+  final String workDir;
 
   @override
   ConsumerState<TasksTab> createState() => _TasksTabState();
@@ -75,7 +87,9 @@ class _TasksTabState extends ConsumerState<TasksTab>
     setState(() => _state = const AsyncValue.loading());
     try {
       final fs = ref.read(fsApiProvider);
-      final cwd = widget.cwd;
+      // Discovery reads the session's ACTUAL files — the worktree
+      // when isolated.
+      final cwd = widget.workDir;
       final list = await fs.list(path: cwd);
 
       // Split the listing into files and dirs, keyed by name so the
@@ -131,8 +145,10 @@ class _TasksTabState extends ConsumerState<TasksTab>
       // Custom tasks first — mirrors the web ordering (global +
       // cwd-scoped). Optional: a failure here must not blank the tab.
       try {
+        // Custom-task lookup stays keyed by the LOGICAL project cwd,
+        // not the worktree the discovery pass just read.
         final custom =
-            await ref.read(customTasksApiProvider).listForCwd(cwd);
+            await ref.read(customTasksApiProvider).listForCwd(widget.cwd);
         if (custom.isNotEmpty) {
           groups.add(_TaskGroup(
             source: _TaskSource.custom,

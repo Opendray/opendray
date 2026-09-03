@@ -22,6 +22,7 @@ import {
   useLayout,
 } from '@/stores/layout'
 import { previewFileToCanvas } from '@/lib/canvas'
+import { sessionWorkDir } from '@/lib/sessions'
 import type { Session } from '@/lib/types'
 
 import { FilesPanel } from './inspector/FilesPanel'
@@ -210,13 +211,13 @@ export function InspectorPanel({ session }: InspectorPanelProps) {
             in its own overflow-auto containers, not this viewport). */}
         <ScrollArea className="flex-1 min-h-0 [&_[data-radix-scroll-area-viewport]>div]:!block">
           <TabsContent value="files" className="m-0 p-3">
-            <FilesPanel cwd={session.cwd} onPreviewHtml={onPreviewHtml} />
+            <FilesPanel cwd={sessionWorkDir(session)} onPreviewHtml={onPreviewHtml} />
           </TabsContent>
           <TabsContent value="git" className="m-0 p-3">
-            <GitPanel cwd={session.cwd} />
+            <GitPanel cwd={sessionWorkDir(session)} />
           </TabsContent>
           <TabsContent value="search" className="m-0 p-3">
-            <SearchPanel cwd={session.cwd} />
+            <SearchPanel cwd={sessionWorkDir(session)} />
           </TabsContent>
           <TabsContent value="tasks" className="m-0 p-3">
             <TaskRunnerPanel session={session} />

@@ -138,6 +138,31 @@ func Cwd(ctx context.Context) string {
 	return ""
 }
 
+type workDirCtxKey struct{}
+
+// WithWorkDir attaches the session's physical execution directory for
+// prepare-time use. Set alongside WithCwd on every spawn: identical to
+// cwd for normal sessions, the worktree path for isolated ones.
+// Prepare-time consumers that touch the session's literal files (MCP
+// subprocess spawn dir, local memory mirror source) read this;
+// project-identity consumers (scope keys, doc injection) keep reading
+// Cwd.
+func WithWorkDir(ctx context.Context, dir string) context.Context {
+	if dir == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, workDirCtxKey{}, dir)
+}
+
+// WorkDir retrieves the value set by WithWorkDir, falling back to the
+// logical cwd when unset so pre-worktree callers keep their behaviour.
+func WorkDir(ctx context.Context) string {
+	if v, ok := ctx.Value(workDirCtxKey{}).(string); ok {
+		return v
+	}
+	return Cwd(ctx)
+}
+
 // ── Origin propagation ─────────────────────────────────────────────
 //
 // Prepare-time isolation decisions need the session's provenance: a

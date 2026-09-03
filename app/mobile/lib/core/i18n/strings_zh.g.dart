@@ -2145,6 +2145,7 @@ class _TranslationsSessionsSpawnSheetZh extends TranslationsSessionsSpawnSheetEn
 	@override late final _TranslationsSessionsSpawnSheetNoProvidersZh noProviders = _TranslationsSessionsSpawnSheetNoProvidersZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetProviderLoadErrorZh providerLoadError = _TranslationsSessionsSpawnSheetProviderLoadErrorZh._(_root);
 	@override late final _TranslationsSessionsSpawnSheetClaudeAccountZh claudeAccount = _TranslationsSessionsSpawnSheetClaudeAccountZh._(_root);
+	@override late final _TranslationsSessionsSpawnSheetWorktreeZh worktree = _TranslationsSessionsSpawnSheetWorktreeZh._(_root);
 }
 
 // Path: mcp.errorPrefix
@@ -3596,6 +3597,12 @@ class _TranslationsWebSessionsSpawnZh extends TranslationsWebSessionsSpawnEn {
 	@override String get spawnedToast => '会话已创建';
 	@override String spawnedDescription({required Object provider, required Object pid}) => '${provider} · pid ${pid}';
 	@override String get pidFallback => '—';
+	@override String get worktreeIsolation => '在隔离 worktree 中运行';
+	@override String get worktreeOnHint => '会话将在独立的 git worktree(分支 opendray/<session-id>)中运行,改动通过常规的分支 → PR 流程合回。未跟踪文件(.env、node_modules)不会复制。';
+	@override String get worktreeOffHint => '当其他会话可能同时修改该项目时建议开启——每个隔离会话都在自己的检出副本中编辑。';
+	@override String get worktreeUnavailableNotRepo => '不可用:工作目录不在 git 仓库内。';
+	@override String get worktreeUnavailableLinked => '不可用:该路径本身是一个 linked worktree,请选择主检出目录。';
+	@override String get worktreeConcurrentWarning => '已有其他活跃会话正在此项目中运行且未隔离——建议开启 worktree,避免同时编辑同一份文件。';
 }
 
 // Path: web.sessions.accountSwitcher
@@ -7273,6 +7280,22 @@ class _TranslationsSessionsSpawnSheetClaudeAccountZh extends TranslationsSession
 	@override String errorHint({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。';
 }
 
+// Path: sessions.spawnSheet.worktree
+class _TranslationsSessionsSpawnSheetWorktreeZh extends TranslationsSessionsSpawnSheetWorktreeEn {
+	_TranslationsSessionsSpawnSheetWorktreeZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get label => '在隔离 worktree 中运行';
+	@override String get subtitleOn => '会话在独立 git worktree(分支 opendray/<session-id>)中运行,改动经分支 → PR 合回。未跟踪文件(.env、node_modules)不会复制。';
+	@override String get subtitleOff => '当其他会话可能同时修改该项目时建议开启。';
+	@override String get unavailableNotRepo => '不可用:工作目录不在 git 仓库内。';
+	@override String get unavailableLinked => '不可用:该路径本身是 linked worktree,请选择主检出目录。';
+	@override String get concurrentWarning => '已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。';
+	@override String get checking => '正在检查工作目录……';
+}
+
 // Path: memoryWorkers.tasks.gatekeeper
 class _TranslationsMemoryWorkersTasksGatekeeperZh extends TranslationsMemoryWorkersTasksGatekeeperEn {
 	_TranslationsMemoryWorkersTasksGatekeeperZh._(TranslationsZh root) : this._root = root, super.internal(root);
@@ -7791,6 +7814,7 @@ class _TranslationsWebSessionsListRowZh extends TranslationsWebSessionsListRowEn
 	@override String get titleTerminate => '终止并移除';
 	@override String get titleRemove => '移除';
 	@override String claudeAccountTitle({required Object label}) => 'Claude 账号：${label}';
+	@override String worktreeTitle({required Object branch}) => '隔离 worktree 会话,分支 ${branch}';
 }
 
 // Path: web.sessions.inspector.tabs
@@ -10340,6 +10364,7 @@ extension on TranslationsZh {
 			'web.sessions.list.row.titleTerminate' => '终止并移除',
 			'web.sessions.list.row.titleRemove' => '移除',
 			'web.sessions.list.row.claudeAccountTitle' => ({required Object label}) => 'Claude 账号：${label}',
+			'web.sessions.list.row.worktreeTitle' => ({required Object branch}) => '隔离 worktree 会话,分支 ${branch}',
 			'web.sessions.list.deleteFailedToast' => '删除失败',
 			'web.sessions.tabs.closeAria' => '关闭标签并移除会话',
 			'web.sessions.tabs.closeTitle' => '关闭标签并移除会话',
@@ -10431,6 +10456,12 @@ extension on TranslationsZh {
 			'web.sessions.spawn.spawnedToast' => '会话已创建',
 			'web.sessions.spawn.spawnedDescription' => ({required Object provider, required Object pid}) => '${provider} · pid ${pid}',
 			'web.sessions.spawn.pidFallback' => '—',
+			'web.sessions.spawn.worktreeIsolation' => '在隔离 worktree 中运行',
+			'web.sessions.spawn.worktreeOnHint' => '会话将在独立的 git worktree(分支 opendray/<session-id>)中运行,改动通过常规的分支 → PR 流程合回。未跟踪文件(.env、node_modules)不会复制。',
+			'web.sessions.spawn.worktreeOffHint' => '当其他会话可能同时修改该项目时建议开启——每个隔离会话都在自己的检出副本中编辑。',
+			'web.sessions.spawn.worktreeUnavailableNotRepo' => '不可用:工作目录不在 git 仓库内。',
+			'web.sessions.spawn.worktreeUnavailableLinked' => '不可用:该路径本身是一个 linked worktree,请选择主检出目录。',
+			'web.sessions.spawn.worktreeConcurrentWarning' => '已有其他活跃会话正在此项目中运行且未隔离——建议开启 worktree,避免同时编辑同一份文件。',
 			'web.sessions.accountSwitcher.tooltip' => '切换 Claude 账号（将重启 CLI 进程）',
 			'web.sessions.accountSwitcher.tooltipAgy' => '切换 Antigravity 账号（将重启 CLI 进程）',
 			'web.sessions.accountSwitcher.currentDefault' => '默认',
@@ -10753,6 +10784,8 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Git 活动总结器',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。',
 			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'git 历史的叙事性总结——均衡模型（sonnet / flash）的可读性明显更好。',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.transcript.label' => '会话记录总结器',
 			'web.memoryWorkers.tasks.transcript.description' => '会话结束时的“agent 都做了什么”总结。天然适合 agent worker。',
 			'web.memoryWorkers.tasks.transcript.modelAdvice' => '会话「agent 做了什么」总结——推荐均衡模型；其产出供日志与漂移检测使用。',
@@ -10760,8 +10793,6 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.plan_drift.description' => '每个 session 结束后判断项目 plan 是否需要更新并提出 proposal。用 agent 推理质量更高。',
 			'web.memoryWorkers.tasks.plan_drift.modelAdvice' => '改写目标/计划/章节——判断密集型；强模型（sonnet/opus）能避免糟糕的自动更新。',
 			'web.memoryWorkers.tasks.conflict_detector.label' => '跨层冲突检测',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.conflict_detector.description' => '每日扫描 facts/plan/goal/journal 之间的矛盾。模型越强，误报越少。',
 			'web.memoryWorkers.tasks.conflict_detector.modelAdvice' => '每日跨层矛盾扫描——均衡模型即可。',
 			'web.memoryWorkers.tasks.capture.label' => 'Capture 引擎',
@@ -11267,6 +11298,8 @@ extension on TranslationsZh {
 			'web.activity.filters.status' => '状态',
 			'web.activity.filters.allIntegrations' => '所有集成',
 			'web.activity.filters.all' => '全部',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.filters.inbound' => '入站',
 			'web.activity.filters.outbound' => '出站',
 			'web.activity.filters.allStatuses' => '所有状态',
@@ -11274,8 +11307,6 @@ extension on TranslationsZh {
 			'web.activity.filters.status3' => '3xx 重定向',
 			'web.activity.filters.status4' => '4xx 客户端错误',
 			'web.activity.filters.status5' => '5xx 服务端错误',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.callsCount_one' => ({required Object count}) => '${count} 次调用',
 			'web.activity.callsCount_other' => ({required Object count}) => '${count} 次调用',
 			'web.activity.loading' => '加载中…',
@@ -11781,6 +11812,8 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.description' => 'Token 存储在网关上。仅用于只读 API 调用（列出 PR 等）。',
 			'web.plugins.gitHosts.dialog.kindLabel' => '类型',
 			'web.plugins.gitHosts.dialog.kindGitHub' => 'GitHub',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.kindGitea' => 'Gitea',
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => '主机',
@@ -11788,8 +11821,6 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.displayNameLabel' => '显示名称（可选）',
 			'web.plugins.gitHosts.dialog.displayNamePlaceholder' => 'Personal',
 			'web.plugins.gitHosts.dialog.tokenLabel' => 'Token',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.newTokenLabel' => '新 token（留空表示保留）',
 			'web.plugins.gitHosts.dialog.tokenPlaceholder' => 'ghp_… / gho_… / glpat-…',
 			'web.plugins.gitHosts.dialog.tokenPlaceholderEdit' => '…',
@@ -12295,6 +12326,8 @@ extension on TranslationsZh {
 			'web.serverSettings.targetRow.deleteSuccess' => '目标已删除',
 			'web.serverSettings.targetRow.deleteFailedTitle' => '删除失败',
 			'web.serverSettings.targetRow.unknownError' => '未知错误',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.toggle.on' => '开启',
 			'web.serverSettings.toggle.off' => '关闭',
 			'web.serverSettings.toggle.defaultOn' => '默认（开）',
@@ -12302,8 +12335,6 @@ extension on TranslationsZh {
 			'web.serverSettings.memoryRuntimeBanner' => '运行时 AI 行为——工作器、捕获规则、注入策略与 spawn 模式——位于 Cortex 设置，保存即生效。本区块是基础设施的一半：嵌入后端、存储与后台治理（需重启生效）。',
 			'web.serverSettings.memoryRuntimeBannerButton' => '打开 Cortex 设置',
 			'web.serverSettings.host.intro' => '睡眠中的 Mac 会一并关掉网络,网关随即停止应答 —— 手机连不上、网页连不上、连数据库也断开。表面看像"opendray 不稳定",实际只是机器睡着了。请选择 opendray 的应对方式。',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.host.platformNote' => '仅 macOS 生效。Linux 与 Windows 会接受但忽略此设置 —— 常规服务器安装下这些主机不会空闲休眠。主动睡眠(合盖、苹果菜单 → 睡眠)永不被阻止;opendray 退出或被强制结束时,电源断言会立即释放。',
 			'web.serverSettings.host.modes.ac.label' => '插电时保持唤醒',
 			'web.serverSettings.host.modes.ac.desc' => '插电状态下机器不会空闲休眠,手机与网页随时秒连;使用电池时照常休眠。屏幕仍会正常熄灭。',
@@ -12809,6 +12840,8 @@ extension on TranslationsZh {
 			'web.cortex.chat.thinking' => 'AI 处理中…',
 			'web.cortex.chat.sendFailed' => '发送失败',
 			'web.cortex.chat.escalate' => '升级为会话',
+			_ => null,
+		} ?? switch (path) {
 			'web.cortex.chat.escalated' => '已升级',
 			'web.cortex.chat.escalateHint' => '拉起完整 agent 会话，基于代码库取证，并携带本对话上下文',
 			'web.cortex.chat.escalateFailed' => '升级失败',
@@ -12816,8 +12849,6 @@ extension on TranslationsZh {
 			'web.cortex.chat.closeHint' => '关闭此对话',
 			'web.cortex.chat.revisionApplied' => '文档已更新',
 			'web.cortex.chat.revisionProposed' => '已生成提案——请到收件箱审阅',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.rulesSuggestionTitle' => '规则建议',
 			'web.cortex.chat.rulesGuidance' => '指引',
 			'web.cortex.chat.rulesExclusionsAdd' => '新增排除主题',
@@ -13323,6 +13354,8 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
 			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
 			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
@@ -13330,8 +13363,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.cancelTooltip' => '取消',
 			'sessions.inspector.notes.newDocTooltip' => '新建文档',
 			'sessions.inspector.notes.noProjectMapping' => '无法为此会话解析项目映射。检查网关是否配置了笔记库，以及会话的 cwd 是否已设置。',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.emptyProjectDocs' => '暂无项目文档。点击 + 创建一个，或让 AI agent 根据提示生成。',
 			'sessions.inspector.notes.emptyFilterMatch' => ({required Object query}) => '未找到匹配「${query}」的内容。',
 			'sessions.inspector.notes.locationDialogHelp' => '将此会话的 cwd 固定到笔记库下的某个文件夹。留空 = 重置。',
@@ -13462,6 +13493,13 @@ extension on TranslationsZh {
 			'sessions.spawnSheet.claudeAccount.noTokenSuffix' => '（无令牌）',
 			'sessions.spawnSheet.claudeAccount.noneHint' => '未配置 Claude 账号 — 网关将使用系统的 ANTHROPIC_API_KEY。在 Web 管理端的「设置 → 账号」中添加账号。',
 			'sessions.spawnSheet.claudeAccount.errorHint' => ({required Object error}) => '无法加载 Claude 账号（${error}）。会话将以网关默认配置启动。',
+			'sessions.spawnSheet.worktree.label' => '在隔离 worktree 中运行',
+			'sessions.spawnSheet.worktree.subtitleOn' => '会话在独立 git worktree(分支 opendray/<session-id>)中运行,改动经分支 → PR 合回。未跟踪文件(.env、node_modules)不会复制。',
+			'sessions.spawnSheet.worktree.subtitleOff' => '当其他会话可能同时修改该项目时建议开启。',
+			'sessions.spawnSheet.worktree.unavailableNotRepo' => '不可用:工作目录不在 git 仓库内。',
+			'sessions.spawnSheet.worktree.unavailableLinked' => '不可用:该路径本身是 linked worktree,请选择主检出目录。',
+			'sessions.spawnSheet.worktree.concurrentWarning' => '已有其他活跃会话未隔离地运行在此项目——建议开启 worktree。',
+			'sessions.spawnSheet.worktree.checking' => '正在检查工作目录……',
 			'mcp.title' => 'MCP',
 			'mcp.newServer' => '新建服务器',
 			'mcp.addSecret' => '添加密钥',
@@ -13830,6 +13868,8 @@ extension on TranslationsZh {
 			'backups.runConfirmTitle' => '立即运行备份？',
 			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
 			'backups.runFullInstance' => '完整实例',
+			_ => null,
+		} ?? switch (path) {
 			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
 			'backups.kindDbOnly' => '仅数据库',
 			'backups.kindFullInstance' => '完整实例',
@@ -13844,8 +13884,6 @@ extension on TranslationsZh {
 			'backups.runFailedApi' => ({required Object error}) => '运行失败：${error}',
 			'backups.runFailedGeneric' => ({required Object error}) => '运行失败：${error}',
 			'backups.rowSucceededSnack' => ({required Object bytes}) => '备份成功（${bytes}）。',
-			_ => null,
-		} ?? switch (path) {
 			'backups.rowFailedSnack' => ({required Object error}) => '备份失败：${error}',
 			'backups.unknownError' => '未知错误',
 			'backups.detailTitle' => '备份详情',
@@ -14344,6 +14382,8 @@ extension on TranslationsZh {
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'notesPage.editor.showPreview' => '预览',
+			_ => null,
+		} ?? switch (path) {
 			'notesPage.editor.showSource' => '源码',
 			'notesPage.editor.save' => '保存',
 			'notesPage.editor.unsaved' => '有未保存的修改',
@@ -14358,8 +14398,6 @@ extension on TranslationsZh {
 			'notesPage.flatten.description' => '文档会逐个改名,指向它的 [[wiki 链接]] 也会一并改写。不会覆盖任何东西:目标已存在的会跳过并原样留下。',
 			'notesPage.flatten.nothingToMove' => '没有需要移动的文件。',
 			'notesPage.flatten.skipped' => ({required Object count}) => '未处理(${count}):',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.flatten.convert' => ({required Object count}) => '转换 ${count} 个',
 			'notesPage.flatten.done' => ({required Object count}) => '已移动 ${count} 个文档。重启网关后生效。',
 			'notesPage.flatten.restartHint' => '完成后请重启网关。',

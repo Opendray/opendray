@@ -17,10 +17,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ProviderIcon } from '@/components/ProviderIcon'
 import { FileBrowserDialog } from '@/components/sessions/FileBrowserDialog'
-import { createSession } from '@/lib/sessions'
+import { createSession, listSessions } from '@/lib/sessions'
+import { getGitInfo } from '@/lib/git'
 import { listProviders } from '@/lib/catalog'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
-import type { Session } from '@/lib/types'
+import { isTerminalSessionState, type Session } from '@/lib/types'
 
 interface SpawnDialogProps {
   open: boolean
@@ -85,8 +86,50 @@ export function SpawnDialog({
   // Defaults OFF; operators opt in per spawn. Independent of the provider's own
   // bypass config — additive only.
   const [bypassEnabled, setBypassEnabled] = useState(false)
+  // Worktree isolation: spawn the CLI in a private git worktree on
+  // branch opendray/<session-id> so concurrent sessions on the same
+  // project can't clobber each other's files. Offerable only when the
+  // cwd is inside a git repo's main checkout (probed below).
+  const [isolationEnabled, setIsolationEnabled] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [browserOpen, setBrowserOpen] = useState(false)
+
+  // Debounce the cwd so the repo probe doesn't fire per keystroke.
+  const [probeCwd, setProbeCwd] = useState('')
+  useEffect(() => {
+    const trimmed = cwd.trim()
+    const handle = setTimeout(() => setProbeCwd(trimmed), 300)
+    return () => clearTimeout(handle)
+  }, [cwd])
+  const { data: gitInfo } = useQuery({
+    queryKey: ['git-info', probeCwd],
+    queryFn: () => getGitInfo(probeCwd),
+    enabled: open && probeCwd !== '' && probeCwd !== HOME_HINT,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const isolationAvailable = !!gitInfo?.is_repo && !gitInfo.linked_worktree
+  // Never submit a stale toggle for a cwd where isolation can't work.
+  useEffect(() => {
+    if (!isolationAvailable) setIsolationEnabled(false)
+  }, [isolationAvailable])
+
+  // Advisory concurrency check: another live session already working
+  // this project without isolation means two CLIs would share one
+  // working tree. Never blocking — a deliberately shared tree is a
+  // valid single-operator workflow.
+  const { data: allSessions } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: listSessions,
+    enabled: open,
+    staleTime: 10_000,
+  })
+  const concurrentUnisolated = (allSessions ?? []).some(
+    (s) =>
+      s.cwd === probeCwd &&
+      !isTerminalSessionState(s.state) &&
+      !s.work_dir,
+  )
 
   // Default to first enabled provider when list loads.
   useEffect(() => {
@@ -144,6 +187,7 @@ export function SpawnDialog({
       setName('')
       setArgsText('')
       setBypassEnabled(false)
+      setIsolationEnabled(false)
       setError(null)
     },
     onError: (err: Error) => {
@@ -179,6 +223,7 @@ export function SpawnDialog({
       name: name.trim() || undefined,
       args: args.length > 0 ? args : undefined,
       claude_account_id: isClaude && accountId ? accountId : undefined,
+      isolation: isolationEnabled && isolationAvailable ? 'worktree' : undefined,
     })
   }
 
@@ -342,6 +387,41 @@ export function SpawnDialog({
               className="w-full font-mono text-[12px] rounded-md border border-border bg-input/40 px-3 py-2 text-foreground transition-colors placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
+
+          <label
+            className={`flex items-start gap-2 text-[12px] select-none ${
+              isolationAvailable
+                ? 'cursor-pointer'
+                : 'cursor-not-allowed opacity-50'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={isolationEnabled}
+              disabled={!isolationAvailable}
+              onChange={(e) => setIsolationEnabled(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span className="flex-1">
+              <span className="font-medium">
+                {t('web.sessions.spawn.worktreeIsolation')}
+              </span>
+              <span className="block text-muted-foreground mt-0.5 text-[11px]">
+                {isolationAvailable
+                  ? isolationEnabled
+                    ? t('web.sessions.spawn.worktreeOnHint')
+                    : t('web.sessions.spawn.worktreeOffHint')
+                  : gitInfo?.linked_worktree
+                    ? t('web.sessions.spawn.worktreeUnavailableLinked')
+                    : t('web.sessions.spawn.worktreeUnavailableNotRepo')}
+              </span>
+              {concurrentUnisolated && !isolationEnabled && (
+                <span className="block text-amber-500/90 mt-0.5 text-[11px]">
+                  {t('web.sessions.spawn.worktreeConcurrentWarning')}
+                </span>
+              )}
+            </span>
+          </label>
 
           {bypassLabelKey && (
             <label className="flex items-start gap-2 text-[12px] cursor-pointer select-none">

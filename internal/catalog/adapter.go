@@ -176,13 +176,15 @@ type GitActivityRefresher interface {
 	RefreshAsync(cwd string)
 }
 
-// MemoryMirrorFunc syncs Claude's local memory files for the given
-// cwd into opendray's pgvector store. The catalog package keeps a
+// MemoryMirrorFunc syncs Claude's local memory files into opendray's
+// pgvector store: srcDir is where Claude actually writes (the
+// session's work dir — a worktree when isolated), scopeKey the logical
+// project cwd the facts are filed under. The catalog package keeps a
 // function reference rather than the concrete *memory.Mirror so the
 // import graph stays one-directional — internal/memory imports
 // internal/catalog would create a cycle, since catalog already
 // imports many other packages.
-type MemoryMirrorFunc func(ctx context.Context, cwd string) (int, error)
+type MemoryMirrorFunc func(ctx context.Context, srcDir, scopeKey string) (int, error)
 
 // MemoryAutoAttach holds the runtime knobs the SessionProvider
 // uses to inject opendray's memory MCP into every spawned session.
@@ -784,10 +786,14 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 		// so spawn isn't blocked on filesystem walks.
 		if sp.memoryMirror != nil {
 			cwd := session.Cwd(prepareCtx)
-			if cwd != "" {
+			// Claude writes its local memory under the directory it
+			// actually runs in; the facts still belong to the logical
+			// project.
+			srcDir := session.WorkDir(prepareCtx)
+			if cwd != "" && srcDir != "" {
 				go func() {
-					if _, err := sp.memoryMirror(context.Background(), cwd); err != nil {
-						sp.log.Debug("memory mirror sync", "cwd", cwd, "err", err)
+					if _, err := sp.memoryMirror(context.Background(), srcDir, cwd); err != nil {
+						sp.log.Debug("memory mirror sync", "src", srcDir, "scope_key", cwd, "err", err)
 					}
 				}()
 			}
@@ -853,7 +859,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 				sp.log.Warn("MCP servers reference unset secrets",
 					"provider", providerID, "missing", missing)
 			}
-			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, cwd, sessionHome, resolved)
+			// renderMCP's cwd parameter is the RUN dir (grok writes
+			// <runCwd>/.grok; agy spawns MCP subprocesses from it) —
+			// the physical work dir, not the logical project path.
+			extraArgs, mcpEnv, err := renderMCP(providerID, baseDir, session.WorkDir(prepareCtx), sessionHome, resolved)
 			if err != nil {
 				return session.PrepareOutput{}, err
 			}
