@@ -28,7 +28,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:opendray/core/api/dio_provider.dart';
 import 'package:opendray/core/api/logs_api.dart';
+import 'package:opendray/core/api/ws_connect.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 const _maxBuffered = 2000;
@@ -82,6 +84,10 @@ class _LogViewerScreenState extends ConsumerState<LogViewerScreen> {
       _onRecord,
       onError: (Object err) {
         if (!mounted) return;
+        // Same blind spot as the session terminal: Access rejecting
+        // the upgrade is indistinguishable from an unreachable
+        // gateway here, so re-ask over HTTP where it is visible.
+        unawaited(probeForAccessChallenge(ref.read(dioProvider)));
         setState(() {
           _connected = false;
           _connectError = err.toString();

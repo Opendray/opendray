@@ -72,6 +72,8 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final TranslationsMemoryQuarantineEn memoryQuarantine = TranslationsMemoryQuarantineEn.internal(_root);
 	late final TranslationsCortexHubEn cortexHub = TranslationsCortexHubEn.internal(_root);
 	late final TranslationsCortexSettingsEn cortexSettings = TranslationsCortexSettingsEn.internal(_root);
+	late final TranslationsAccessEn access = TranslationsAccessEn.internal(_root);
+	late final TranslationsLockEn lock = TranslationsLockEn.internal(_root);
 }
 
 // Path: common
@@ -2234,6 +2236,7 @@ class TranslationsSettingsEn {
 	late final TranslationsSettingsChangeCredentialsEn changeCredentials = TranslationsSettingsChangeCredentialsEn.internal(_root);
 	late final TranslationsSettingsLogViewerEn logViewer = TranslationsSettingsLogViewerEn.internal(_root);
 	late final TranslationsSettingsServerSettingsEn serverSettings = TranslationsSettingsServerSettingsEn.internal(_root);
+	late final TranslationsSettingsSecurityEn security = TranslationsSettingsSecurityEn.internal(_root);
 }
 
 // Path: memoryQuarantine
@@ -2402,6 +2405,84 @@ class TranslationsCortexSettingsEn {
 
 	/// en: 'default'
 	String get defaultBadge => 'default';
+}
+
+// Path: access
+class TranslationsAccessEn {
+	TranslationsAccessEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Cloudflare Access sign-in'
+	String get signInTitle => 'Cloudflare Access sign-in';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Access sign-in did not complete: {error}'
+	String failed({required Object error}) => 'Access sign-in did not complete: ${error}';
+
+	/// en: 'Could not load the Cloudflare Access sign-in page: {error}'
+	String loadFailed({required Object error}) => 'Could not load the Cloudflare Access sign-in page: ${error}';
+
+	/// en: 'Cloudflare Access'
+	String get section => 'Cloudflare Access';
+
+	/// en: 'Sign in at the edge so the app reaches the gateway from outside the LAN'
+	String get sectionSubtitle => 'Sign in at the edge so the app reaches the gateway from outside the LAN';
+
+	/// en: 'Access session active'
+	String get sessionActive => 'Access session active';
+
+	/// en: 'Expires {when}'
+	String sessionExpires({required Object when}) => 'Expires ${when}';
+
+	/// en: 'Expiry not readable from the cookie'
+	String get sessionExpiryUnknown => 'Expiry not readable from the cookie';
+
+	/// en: 'No Access session on this device'
+	String get sessionNone => 'No Access session on this device';
+
+	/// en: 'Sign in with Cloudflare Access'
+	String get signIn => 'Sign in with Cloudflare Access';
+
+	/// en: 'Clear Access session'
+	String get clear => 'Clear Access session';
+
+	/// en: 'Sign out of Cloudflare Access on this device'
+	String get clearSubtitle => 'Sign out of Cloudflare Access on this device';
+
+	/// en: 'Cloudflare Access needs to verify this device before it can reach {host}.'
+	String challengeBanner({required Object host}) => 'Cloudflare Access needs to verify this device before it can reach ${host}.';
+
+	/// en: 'This gateway does not appear to be behind Cloudflare Access.'
+	String get notEnabled => 'This gateway does not appear to be behind Cloudflare Access.';
+
+	/// en: 'Signing out of Cloudflare Access…'
+	String get clearing => 'Signing out of Cloudflare Access…';
+
+	/// en: 'Signed out. The next request will ask you to sign in again.'
+	String get cleared => 'Signed out. The next request will ask you to sign in again.';
+}
+
+// Path: lock
+class TranslationsLockEn {
+	TranslationsLockEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'opendray is locked'
+	String get title => 'opendray is locked';
+
+	/// en: 'Unlock opendray'
+	String get reason => 'Unlock opendray';
+
+	/// en: 'Unlock'
+	String get unlock => 'Unlock';
 }
 
 // Path: nav.updates
@@ -6577,6 +6658,30 @@ class TranslationsSettingsServerSettingsEn {
 
 	/// en: 'opendray's own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient.'
 	String get legacyLayout => 'opendray\'s own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient.';
+}
+
+// Path: settings.security
+class TranslationsSettingsSecurityEn {
+	TranslationsSettingsSecurityEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Security'
+	String get section => 'Security';
+
+	/// en: 'Require unlock'
+	String get appLock => 'Require unlock';
+
+	/// en: 'Ask for biometrics or the device passcode before showing the app'
+	String get appLockSubtitle => 'Ask for biometrics or the device passcode before showing the app';
+
+	/// en: 'This device has no passcode or biometrics enrolled'
+	String get appLockUnavailable => 'This device has no passcode or biometrics enrolled';
+
+	/// en: 'Could not turn on the app lock'
+	String get appLockFailed => 'Could not turn on the app lock';
 }
 
 // Path: web.sessions.list
@@ -23931,6 +24036,11 @@ extension on Translations {
 			'settings.serverSettings.embedderModel.manual' => 'Type manually',
 			'settings.serverSettings.embedderModel.pickFromList' => 'Pick from list',
 			'settings.serverSettings.legacyLayout' => 'opendray\'s own directories still sit inside your documents, so they show up in the Vault and a sync carries them along. They keep working — move them out and set the paths below when convenient.',
+			'settings.security.section' => 'Security',
+			'settings.security.appLock' => 'Require unlock',
+			'settings.security.appLockSubtitle' => 'Ask for biometrics or the device passcode before showing the app',
+			'settings.security.appLockUnavailable' => 'This device has no passcode or biometrics enrolled',
+			'settings.security.appLockFailed' => 'Could not turn on the app lock',
 			'memoryQuarantine.title' => 'Quarantine',
 			'memoryQuarantine.subtitle' => 'Facts that need review before they count as durable memory: integration captures land here by policy, and you can quarantine any memory by hand. Promote what is true; discard the rest — unreviewed rows expire on their own.',
 			'memoryQuarantine.empty' => 'Nothing in quarantine.',
@@ -23978,6 +24088,26 @@ extension on Translations {
 			'cortexSettings.providersManageOnWeb' => 'Add or edit providers on the web admin.',
 			'cortexSettings.providersLoadFailed' => 'Failed to load providers',
 			'cortexSettings.defaultBadge' => 'default',
+			'access.signInTitle' => 'Cloudflare Access sign-in',
+			'access.cancel' => 'Cancel',
+			'access.failed' => ({required Object error}) => 'Access sign-in did not complete: ${error}',
+			'access.loadFailed' => ({required Object error}) => 'Could not load the Cloudflare Access sign-in page: ${error}',
+			'access.section' => 'Cloudflare Access',
+			'access.sectionSubtitle' => 'Sign in at the edge so the app reaches the gateway from outside the LAN',
+			'access.sessionActive' => 'Access session active',
+			'access.sessionExpires' => ({required Object when}) => 'Expires ${when}',
+			'access.sessionExpiryUnknown' => 'Expiry not readable from the cookie',
+			'access.sessionNone' => 'No Access session on this device',
+			'access.signIn' => 'Sign in with Cloudflare Access',
+			'access.clear' => 'Clear Access session',
+			'access.clearSubtitle' => 'Sign out of Cloudflare Access on this device',
+			'access.challengeBanner' => ({required Object host}) => 'Cloudflare Access needs to verify this device before it can reach ${host}.',
+			'access.notEnabled' => 'This gateway does not appear to be behind Cloudflare Access.',
+			'access.clearing' => 'Signing out of Cloudflare Access…',
+			'access.cleared' => 'Signed out. The next request will ask you to sign in again.',
+			'lock.title' => 'opendray is locked',
+			'lock.reason' => 'Unlock opendray',
+			'lock.unlock' => 'Unlock',
 			_ => null,
 		};
 	}

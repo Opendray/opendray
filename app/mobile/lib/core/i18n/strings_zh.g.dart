@@ -71,6 +71,8 @@ class TranslationsZh extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _TranslationsMemoryQuarantineZh memoryQuarantine = _TranslationsMemoryQuarantineZh._(_root);
 	@override late final _TranslationsCortexHubZh cortexHub = _TranslationsCortexHubZh._(_root);
 	@override late final _TranslationsCortexSettingsZh cortexSettings = _TranslationsCortexSettingsZh._(_root);
+	@override late final _TranslationsAccessZh access = _TranslationsAccessZh._(_root);
+	@override late final _TranslationsLockZh lock = _TranslationsLockZh._(_root);
 }
 
 // Path: common
@@ -1034,6 +1036,7 @@ class _TranslationsSettingsZh extends TranslationsSettingsEn {
 	@override late final _TranslationsSettingsChangeCredentialsZh changeCredentials = _TranslationsSettingsChangeCredentialsZh._(_root);
 	@override late final _TranslationsSettingsLogViewerZh logViewer = _TranslationsSettingsLogViewerZh._(_root);
 	@override late final _TranslationsSettingsServerSettingsZh serverSettings = _TranslationsSettingsServerSettingsZh._(_root);
+	@override late final _TranslationsSettingsSecurityZh security = _TranslationsSettingsSecurityZh._(_root);
 }
 
 // Path: memoryQuarantine
@@ -1108,6 +1111,44 @@ class _TranslationsCortexSettingsZh extends TranslationsCortexSettingsEn {
 	@override String get providersManageOnWeb => '在 web 管理端添加或编辑 provider。';
 	@override String get providersLoadFailed => '加载 provider 失败';
 	@override String get defaultBadge => '默认';
+}
+
+// Path: access
+class _TranslationsAccessZh extends TranslationsAccessEn {
+	_TranslationsAccessZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get signInTitle => 'Cloudflare Access 登录';
+	@override String get cancel => '取消';
+	@override String failed({required Object error}) => 'Access 登录未完成：${error}';
+	@override String loadFailed({required Object error}) => '无法加载 Cloudflare Access 登录页：${error}';
+	@override String get section => 'Cloudflare Access';
+	@override String get sectionSubtitle => '在边缘完成登录，让 App 在内网之外也能访问网关';
+	@override String get sessionActive => 'Access 会话有效';
+	@override String sessionExpires({required Object when}) => '${when} 过期';
+	@override String get sessionExpiryUnknown => '无法从 Cookie 中读取有效期';
+	@override String get sessionNone => '本设备没有 Access 会话';
+	@override String get signIn => '使用 Cloudflare Access 登录';
+	@override String get clear => '清除 Access 会话';
+	@override String get clearSubtitle => '在本设备上登出 Cloudflare Access';
+	@override String challengeBanner({required Object host}) => 'Cloudflare Access 需要先验证本设备，才能访问 ${host}。';
+	@override String get notEnabled => '该网关似乎没有启用 Cloudflare Access。';
+	@override String get clearing => '正在登出 Cloudflare Access…';
+	@override String get cleared => '已登出。下次请求会要求重新登录。';
+}
+
+// Path: lock
+class _TranslationsLockZh extends TranslationsLockEn {
+	_TranslationsLockZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'opendray 已锁定';
+	@override String get reason => '解锁 opendray';
+	@override String get unlock => '解锁';
 }
 
 // Path: nav.updates
@@ -3372,6 +3413,20 @@ class _TranslationsSettingsServerSettingsZh extends TranslationsSettingsServerSe
 	@override String validateNumber({required Object field}) => '「${field}」必须是数字';
 	@override late final _TranslationsSettingsServerSettingsEmbedderModelZh embedderModel = _TranslationsSettingsServerSettingsEmbedderModelZh._(_root);
 	@override String get legacyLayout => 'opendray 自己的目录仍在你的文档里,所以它们会出现在 Vault 中,同步时也会被带走。它们照常工作 —— 方便时把它们移出去,并在下面填好路径。';
+}
+
+// Path: settings.security
+class _TranslationsSettingsSecurityZh extends TranslationsSettingsSecurityEn {
+	_TranslationsSettingsSecurityZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get section => '安全';
+	@override String get appLock => '启动时验证';
+	@override String get appLockSubtitle => '打开 App 前需要生物识别或设备密码';
+	@override String get appLockUnavailable => '本设备未设置密码或生物识别';
+	@override String get appLockFailed => '无法开启应用锁';
 }
 
 // Path: web.sessions.list
@@ -14706,6 +14761,11 @@ extension on TranslationsZh {
 			'settings.serverSettings.embedderModel.manual' => '手动输入',
 			'settings.serverSettings.embedderModel.pickFromList' => '从列表选择',
 			'settings.serverSettings.legacyLayout' => 'opendray 自己的目录仍在你的文档里,所以它们会出现在 Vault 中,同步时也会被带走。它们照常工作 —— 方便时把它们移出去,并在下面填好路径。',
+			'settings.security.section' => '安全',
+			'settings.security.appLock' => '启动时验证',
+			'settings.security.appLockSubtitle' => '打开 App 前需要生物识别或设备密码',
+			'settings.security.appLockUnavailable' => '本设备未设置密码或生物识别',
+			'settings.security.appLockFailed' => '无法开启应用锁',
 			'memoryQuarantine.title' => '隔离区',
 			'memoryQuarantine.subtitle' => '在被采信为持久记忆前需要审查的事实：integration 捕获按策略落到这里，你也可以手动隔离任何记忆。属实的批准入库，其余丢弃——未审查的条目会自动过期。',
 			'memoryQuarantine.empty' => '隔离区为空。',
@@ -14753,6 +14813,26 @@ extension on TranslationsZh {
 			'cortexSettings.providersManageOnWeb' => '在 web 管理端添加或编辑 provider。',
 			'cortexSettings.providersLoadFailed' => '加载 provider 失败',
 			'cortexSettings.defaultBadge' => '默认',
+			'access.signInTitle' => 'Cloudflare Access 登录',
+			'access.cancel' => '取消',
+			'access.failed' => ({required Object error}) => 'Access 登录未完成：${error}',
+			'access.loadFailed' => ({required Object error}) => '无法加载 Cloudflare Access 登录页：${error}',
+			'access.section' => 'Cloudflare Access',
+			'access.sectionSubtitle' => '在边缘完成登录，让 App 在内网之外也能访问网关',
+			'access.sessionActive' => 'Access 会话有效',
+			'access.sessionExpires' => ({required Object when}) => '${when} 过期',
+			'access.sessionExpiryUnknown' => '无法从 Cookie 中读取有效期',
+			'access.sessionNone' => '本设备没有 Access 会话',
+			'access.signIn' => '使用 Cloudflare Access 登录',
+			'access.clear' => '清除 Access 会话',
+			'access.clearSubtitle' => '在本设备上登出 Cloudflare Access',
+			'access.challengeBanner' => ({required Object host}) => 'Cloudflare Access 需要先验证本设备，才能访问 ${host}。',
+			'access.notEnabled' => '该网关似乎没有启用 Cloudflare Access。',
+			'access.clearing' => '正在登出 Cloudflare Access…',
+			'access.cleared' => '已登出。下次请求会要求重新登录。',
+			'lock.title' => 'opendray 已锁定',
+			'lock.reason' => '解锁 opendray',
+			'lock.unlock' => '解锁',
 			_ => null,
 		};
 	}

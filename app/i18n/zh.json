@@ -5608,6 +5608,13 @@
         "pickFromList": "从列表选择"
       },
       "legacyLayout": "opendray 自己的目录仍在你的文档里,所以它们会出现在 Vault 中,同步时也会被带走。它们照常工作 —— 方便时把它们移出去,并在下面填好路径。"
+    },
+    "security": {
+      "section": "安全",
+      "appLock": "启动时验证",
+      "appLockSubtitle": "打开 App 前需要生物识别或设备密码",
+      "appLockUnavailable": "本设备未设置密码或生物识别",
+      "appLockFailed": "无法开启应用锁"
     }
   },
   "memoryQuarantine": {
@@ -5662,5 +5669,29 @@
     "providersManageOnWeb": "在 web 管理端添加或编辑 provider。",
     "providersLoadFailed": "加载 provider 失败",
     "defaultBadge": "默认"
+  },
+  "access": {
+    "signInTitle": "Cloudflare Access 登录",
+    "cancel": "取消",
+    "failed": "Access 登录未完成：{error}",
+    "loadFailed": "无法加载 Cloudflare Access 登录页：{error}",
+    "section": "Cloudflare Access",
+    "sectionSubtitle": "在边缘完成登录，让 App 在内网之外也能访问网关",
+    "sessionActive": "Access 会话有效",
+    "sessionExpires": "{when} 过期",
+    "sessionExpiryUnknown": "无法从 Cookie 中读取有效期",
+    "sessionNone": "本设备没有 Access 会话",
+    "signIn": "使用 Cloudflare Access 登录",
+    "clear": "清除 Access 会话",
+    "clearSubtitle": "在本设备上登出 Cloudflare Access",
+    "challengeBanner": "Cloudflare Access 需要先验证本设备，才能访问 {host}。",
+    "notEnabled": "该网关似乎没有启用 Cloudflare Access。",
+    "clearing": "正在登出 Cloudflare Access…",
+    "cleared": "已登出。下次请求会要求重新登录。"
+  },
+  "lock": {
+    "title": "opendray 已锁定",
+    "reason": "解锁 opendray",
+    "unlock": "解锁"
   }
 }
