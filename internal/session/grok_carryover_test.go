@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // writeGrokCarryoverFixture writes a minimal grok chat transcript at
@@ -141,6 +142,71 @@ func TestBuildGrokCarryover(t *testing.T) {
 			if got := BuildGrokCarryover(cfg, cwd, evil, 0); got != "" {
 				t.Errorf("traversal sessionID %q must return empty, got:\n%s", evil, got)
 			}
+		}
+	})
+}
+
+func TestLatestGrokSessionID(t *testing.T) {
+	cwd := "/var/lib/opendray/vocaler-grok"
+
+	newFixtureWithSessions := func(t *testing.T, sessions map[string]time.Time) GrokHistoryConfig {
+		t.Helper()
+		root := t.TempDir()
+		encoded := strings.ReplaceAll(cwd, "/", "%2F")
+		for sid, mt := range sessions {
+			dir := filepath.Join(root, encoded, sid)
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			ch := filepath.Join(dir, "chat_history.jsonl")
+			if err := os.WriteFile(ch, []byte("{}\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chtimes(ch, mt, mt); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return GrokHistoryConfig{SessionsRoots: []string{root}}
+	}
+
+	t.Run("returns the session whose transcript was touched most recently", func(t *testing.T) {
+		base := time.Now().Add(-time.Hour)
+		cfg := newFixtureWithSessions(t, map[string]time.Time{
+			"01a00000-0000-0000-0000-00000000aaaa": base,
+			"01a00000-0000-0000-0000-00000000bbbb": base.Add(30 * time.Minute), // newest
+			"01a00000-0000-0000-0000-00000000cccc": base.Add(10 * time.Minute),
+		})
+		if got := LatestGrokSessionID(cfg, cwd); got != "01a00000-0000-0000-0000-00000000bbbb" {
+			t.Errorf("got %q, want the newest session bbbb", got)
+		}
+	})
+
+	t.Run("empty cwd is a no-op", func(t *testing.T) {
+		cfg := newFixtureWithSessions(t, map[string]time.Time{
+			"01a00000-0000-0000-0000-00000000aaaa": time.Now(),
+		})
+		if got := LatestGrokSessionID(cfg, ""); got != "" {
+			t.Errorf("empty cwd should return empty, got %q", got)
+		}
+	})
+
+	t.Run("no matching cwd dir returns empty", func(t *testing.T) {
+		cfg := GrokHistoryConfig{SessionsRoots: []string{t.TempDir()}}
+		if got := LatestGrokSessionID(cfg, cwd); got != "" {
+			t.Errorf("expected empty when no session dir exists, got %q", got)
+		}
+	})
+
+	t.Run("dir without chat_history is ignored", func(t *testing.T) {
+		root := t.TempDir()
+		encoded := strings.ReplaceAll(cwd, "/", "%2F")
+		// A session dir with no transcript yet must not be selected.
+		if err := os.MkdirAll(filepath.Join(root, encoded, "01a00000-0000-0000-0000-0000000empty"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		cfg := GrokHistoryConfig{SessionsRoots: []string{root}}
+		if got := LatestGrokSessionID(cfg, cwd); got != "" {
+			t.Errorf("dir without chat_history must be ignored, got %q", got)
 		}
 	})
 }

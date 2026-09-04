@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // grok_jsonl.go: read the grok CLI's per-session transcript so an
@@ -81,6 +82,47 @@ func BuildGrokCarryover(cfg GrokHistoryConfig, cwd, sessionID string, budgetByte
 		return ""
 	}
 	return renderCarryover(turns, budgetBytes)
+}
+
+// LatestGrokSessionID returns the session UUID whose chat_history.jsonl
+// under the grok session dir matching `cwd` was modified most recently,
+// across every configured root. It resolves Q1 (RFC #541): opendray does
+// not track a grok session id on the session row, so at switch time —
+// right after the old grok process is stopped — the just-used session's
+// transcript is the freshest one for that cwd. Returns "" when nothing
+// matches; a dir without a transcript yet is never selected.
+func LatestGrokSessionID(cfg GrokHistoryConfig, cwd string) string {
+	if cwd == "" {
+		return ""
+	}
+	var (
+		best     string
+		bestTime time.Time
+	)
+	for _, root := range cfg.resolveGrokSessionsRoots() {
+		cwdDir := findGrokCwdDir(root, cwd)
+		if cwdDir == "" {
+			continue
+		}
+		entries, err := os.ReadDir(cwdDir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if !e.IsDir() || !safePathElement(e.Name()) {
+				continue
+			}
+			info, err := os.Stat(filepath.Join(cwdDir, e.Name(), "chat_history.jsonl"))
+			if err != nil || info.IsDir() {
+				continue
+			}
+			if best == "" || info.ModTime().After(bestTime) {
+				best = e.Name()
+				bestTime = info.ModTime()
+			}
+		}
+	}
+	return best
 }
 
 // findGrokTranscriptForSession locates
