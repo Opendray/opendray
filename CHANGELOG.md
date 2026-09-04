@@ -10,6 +10,24 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.14.1], 2026-09-04
+
+### Added
+
+- Grok accounts get a full UI: a Grok accounts panel in the Providers page
+  (list, import local, enable or disable, remove) and live account
+  switching from the session header, matching Claude and Antigravity. This
+  surfaces the grok multi-account backend that shipped in v2.14.0. (#539)
+- Opt-in git worktree isolation, so concurrent sessions can each work in
+  their own worktree without stepping on one another. (#531)
+- Mobile can reach a gateway behind Cloudflare Access without a VPN. (#538)
+
+### Changed
+
+- Documentation rewritten in plain, human prose with no em dashes, the
+  README simplified so it reads top to bottom in one pass, and the
+  changelog brought up to date. (#537, #528, #536)
+
 ## [v2.14.0], 2026-08-31
 
 Grok catches up. You can pool several xAI accounts, bind one to a session,
