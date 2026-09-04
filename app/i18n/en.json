@@ -234,7 +234,10 @@
         "switchedToast": "Account switched",
         "switchedDescription": "Now using @{account} · pid {pid}",
         "switchedDefault": "default",
-        "switchFailedToast": "Switch failed"
+        "switchFailedToast": "Switch failed",
+        "tooltipGrok": "Switch Grok account (restarts the CLI process)",
+        "menuTitleGrok": "Switch Grok account",
+        "confirmSwitchGrok": "Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?"
       },
       "inspector": {
         "tabs": {
@@ -1357,6 +1360,28 @@
         "removeAria": "Remove {name}",
         "identityAcceptedToast": "New identity recorded",
         "identityAcceptFailedToast": "Could not accept identity"
+      },
+      "grokAccounts": {
+        "title": "Grok accounts",
+        "importLocal": "Import local",
+        "importLocalTooltip": "Scan ~/.grok-accounts/ (and the gateway user's ~/.grok) on the host and register any logged-in account dirs. Gateway-host only.",
+        "importedNothingToast": "Nothing to import, accounts already in sync.",
+        "importedToast_one": "Imported {count} account from ~/.grok-accounts",
+        "importedToast_other": "Imported {count} accounts from ~/.grok-accounts",
+        "importFailedToast": "Import failed",
+        "addingTitle": "Adding a new account.",
+        "addingBodyPrefix": "Grok keys its state off GROK_HOME. Give each account its own GROK_HOME and log in there on the gateway host:",
+        "addingBodySuffix": "Then click <1>Import local</1> to register it. The directory only counts as an account once the sign-in has written its auth.json token.",
+        "loading": "Loading…",
+        "empty": "No Grok accounts yet. Run <1>GROK_HOME=~/.grok-accounts/&lt;name&gt; grok login</1> on the gateway host, complete the sign-in, then click Import local.",
+        "noTokenYet": "not logged in",
+        "homeDir": "home:",
+        "toggleFailedToast": "Toggle failed",
+        "removeConfirm": "Remove account \"{name}\"?",
+        "removedToast": "Account removed",
+        "removeFailedToast": "Remove failed",
+        "toggleAria": "Toggle {name}",
+        "removeAria": "Remove {name}"
       },
       "antigravityAccounts": {
         "title": "Antigravity accounts",

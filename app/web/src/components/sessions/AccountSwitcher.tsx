@@ -15,7 +15,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { listAntigravityAccounts } from '@/lib/antigravityAccounts'
-import { switchClaudeAccount, switchAntigravityAccount } from '@/lib/sessions'
+import { listGrokAccounts } from '@/lib/grokAccounts'
+import {
+  switchClaudeAccount,
+  switchAntigravityAccount,
+  switchGrokAccount,
+} from '@/lib/sessions'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
 
@@ -23,9 +28,9 @@ interface AccountSwitcherProps {
   session: Session
 }
 
-// Minimal shape shared by ClaudeAccount and AntigravityAccount — the
-// only fields this dropdown renders. Lets one component drive both
-// providers' multi-account switching.
+// Minimal shape shared by Claude, Antigravity, and Grok accounts, the
+// only fields this dropdown renders. Lets one component drive every
+// provider's multi-account switching.
 interface SwitcherAccount {
   id: string
   name: string
@@ -36,28 +41,50 @@ interface SwitcherAccount {
 }
 
 // AccountSwitcher renders a header dropdown that lets the user rebind a
-// *running* multi-account session (claude or antigravity) to a different
-// account. The backend terminates the current child process and respawns
-// it under the new credential — the in-CLI conversation is lost (the
-// process is replaced), so the dropdown confirms before firing.
+// *running* multi-account session (claude, antigravity, or grok) to a
+// different account. The backend terminates the current child process and
+// respawns it under the new credential, so the in-CLI conversation is lost
+// (the process is replaced) and the dropdown confirms before firing.
 //
 // Claude isolates accounts via CLAUDE_CONFIG_DIR and supports carrying a
-// recap across the switch (the carry toggle). Antigravity isolates via
-// HOME and has no cross-account recap builder yet, so its switch is
+// recap across the switch (the carry toggle). Antigravity (HOME) and Grok
+// (GROK_HOME) have no cross-account recap builder yet, so their switch is
 // always clean-slate and the carry toggle is hidden.
 export function AccountSwitcher({ session }: AccountSwitcherProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const isAgy = session.provider_id === 'antigravity'
+  const kind: 'claude' | 'antigravity' | 'grok' =
+    session.provider_id === 'antigravity'
+      ? 'antigravity'
+      : session.provider_id === 'grok'
+        ? 'grok'
+        : 'claude'
+  const isClaude = kind === 'claude'
+
+  const queryKey =
+    kind === 'antigravity'
+      ? ['antigravity-accounts']
+      : kind === 'grok'
+        ? ['grok-accounts']
+        : ['claude-accounts']
+  const queryFn =
+    kind === 'antigravity'
+      ? listAntigravityAccounts
+      : kind === 'grok'
+        ? listGrokAccounts
+        : listClaudeAccounts
 
   const { data: accounts } = useQuery<SwitcherAccount[]>({
-    queryKey: isAgy ? ['antigravity-accounts'] : ['claude-accounts'],
-    queryFn: isAgy ? listAntigravityAccounts : listClaudeAccounts,
+    queryKey,
+    queryFn,
     staleTime: 30_000,
   })
-  const currentId = isAgy
-    ? session.antigravity_account_id
-    : session.claude_account_id
+  const currentId =
+    kind === 'antigravity'
+      ? session.antigravity_account_id
+      : kind === 'grok'
+        ? session.grok_account_id
+        : session.claude_account_id
   const enabled = (accounts ?? []).filter((a) => a.enabled)
   const current = (accounts ?? []).find((a) => a.id === currentId)
   const currentLabel = currentId
@@ -70,21 +97,26 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
 
   const mutation = useMutation({
     mutationFn: (accountId: string) =>
-      isAgy
+      kind === 'antigravity'
         ? switchAntigravityAccount(session.id, accountId)
-        : switchClaudeAccount(session.id, accountId, carryContext),
+        : kind === 'grok'
+          ? switchGrokAccount(session.id, accountId)
+          : switchClaudeAccount(session.id, accountId, carryContext),
     onSuccess: (next) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
-      const nextId = isAgy
-        ? next.antigravity_account_id
-        : next.claude_account_id
+      const nextId =
+        kind === 'antigravity'
+          ? next.antigravity_account_id
+          : kind === 'grok'
+            ? next.grok_account_id
+            : next.claude_account_id
       const account = nextId
         ? enabled.find((a) => a.id === nextId)?.display_name || nextId
         : t('web.sessions.accountSwitcher.switchedDefault')
       toast.success(t('web.sessions.accountSwitcher.switchedToast'), {
         description: t('web.sessions.accountSwitcher.switchedDescription', {
           account,
-          pid: next.pid ?? '—',
+          pid: next.pid ?? 'unknown',
         }),
       })
     },
@@ -96,16 +128,32 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
 
   const pick = (accountId: string) => {
     if (accountId === (currentId ?? '')) return
-    const msg = isAgy
-      ? t('web.sessions.accountSwitcher.confirmSwitchAgy')
-      : carryContext
-        ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
-        : t('web.sessions.accountSwitcher.confirmSwitch')
+    const msg =
+      kind === 'antigravity'
+        ? t('web.sessions.accountSwitcher.confirmSwitchAgy')
+        : kind === 'grok'
+          ? t('web.sessions.accountSwitcher.confirmSwitchGrok')
+          : carryContext
+            ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
+            : t('web.sessions.accountSwitcher.confirmSwitch')
     if (!confirm(msg)) {
       return
     }
     mutation.mutate(accountId)
   }
+
+  const tooltipKey =
+    kind === 'antigravity'
+      ? 'web.sessions.accountSwitcher.tooltipAgy'
+      : kind === 'grok'
+        ? 'web.sessions.accountSwitcher.tooltipGrok'
+        : 'web.sessions.accountSwitcher.tooltip'
+  const menuTitleKey =
+    kind === 'antigravity'
+      ? 'web.sessions.accountSwitcher.menuTitleAgy'
+      : kind === 'grok'
+        ? 'web.sessions.accountSwitcher.menuTitleGrok'
+        : 'web.sessions.accountSwitcher.menuTitle'
 
   return (
     <DropdownMenu>
@@ -115,11 +163,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
           size="sm"
           disabled={mutation.isPending}
           className="text-[11px] gap-1 hover:text-foreground"
-          title={t(
-            isAgy
-              ? 'web.sessions.accountSwitcher.tooltipAgy'
-              : 'web.sessions.accountSwitcher.tooltip',
-          )}
+          title={t(tooltipKey)}
         >
           {mutation.isPending ? (
             <Loader2 className="size-3 animate-spin" />
@@ -132,18 +176,14 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[220px]">
         <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-          {t(
-            isAgy
-              ? 'web.sessions.accountSwitcher.menuTitleAgy'
-              : 'web.sessions.accountSwitcher.menuTitle',
-          )}
+          {t(menuTitleKey)}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {/* Carry-over toggle (claude only). Stays open on click
             (preventDefault) so the operator sets it before picking a
             destination. The subtitle is the consent surface for the
             cross-account data flow. */}
-        {!isAgy && (
+        {isClaude && (
           <>
             <DropdownMenuItem
               onSelect={(e) => {

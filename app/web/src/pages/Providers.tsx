@@ -15,6 +15,7 @@ import { BrandAvatar } from '@/components/BrandAvatar'
 import { providerIconKey } from '@/lib/providerIcons'
 import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
 import { AntigravityAccountsPanel } from '@/components/providers/AntigravityAccountsPanel'
+import { GrokAccountsPanel } from '@/components/providers/GrokAccountsPanel'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import {
   listProviders,
@@ -413,6 +414,12 @@ function ProviderDetail({
             <>
               <Separator className="my-6" />
               <AntigravityAccountsPanel />
+            </>
+          )}
+          {m.id === 'grok' && (
+            <>
+              <Separator className="my-6" />
+              <GrokAccountsPanel />
             </>
           )}
           <Separator className="my-6" />

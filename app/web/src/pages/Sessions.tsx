@@ -563,7 +563,8 @@ function WorkbenchHeader({
       </div>
       <StatePill state={session.state} exitCode={session.exit_code} />
       {(session.provider_id === 'claude' ||
-        session.provider_id === 'antigravity') &&
+        session.provider_id === 'antigravity' ||
+        session.provider_id === 'grok') &&
         !isTerminalSessionState(session.state) && (
           <AccountSwitcher session={session} />
         )}
