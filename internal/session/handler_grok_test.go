@@ -88,3 +88,34 @@ func TestSwitchGrokAccount_BadJSON(t *testing.T) {
 		t.Fatalf("status=%d; want 400 for bad JSON", rr.Code)
 	}
 }
+
+// carry_context in the PATCH body must reach the service (parity with
+// the Claude switch). Grok now builds a recap across the switch.
+func TestSwitchGrokAccount_CarryContextFlows(t *testing.T) {
+	t.Run("carry_context true is forwarded", func(t *testing.T) {
+		svc := newFakeSvc()
+		svc.sessions["s1"] = Session{ID: "s1", ProviderID: "grok", State: StateRunning}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/grok-account",
+			bytes.NewBufferString(`{"account_id":"grok_new","carry_context":true}`))
+		newRouter(svc).ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status=%d body=%s", rr.Code, rr.Body)
+		}
+		if !svc.lastCarryContext {
+			t.Error("expected carry_context=true forwarded to the grok service")
+		}
+	})
+
+	t.Run("omitted carry_context defaults to false", func(t *testing.T) {
+		svc := newFakeSvc()
+		svc.sessions["s1"] = Session{ID: "s1", ProviderID: "grok", State: StateRunning}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/grok-account",
+			bytes.NewBufferString(`{"account_id":"grok_new"}`))
+		newRouter(svc).ServeHTTP(rr, req)
+		if svc.lastCarryContext {
+			t.Error("expected carry_context to default to false when omitted")
+		}
+	})
+}

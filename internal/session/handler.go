@@ -40,7 +40,7 @@ type Service interface {
 	Buffer(ctx context.Context, id string, since int64) (Replay, error)
 	SwitchClaudeAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	SwitchAntigravityAccount(ctx context.Context, id, accountID string) (Session, error)
-	SwitchGrokAccount(ctx context.Context, id, accountID string) (Session, error)
+	SwitchGrokAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
@@ -687,10 +687,11 @@ func (h *Handlers) switchAntigravityAccount(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, sess)
 }
 
-// switchGrokAccount handles PATCH /sessions/{id}/grok-account. Mirrors
-// switchAntigravityAccount: validate the target up-front (so a bad id
-// fails before the PTY is stopped), then hand off to the manager which
-// stops the running `grok`, rebinds GROK_HOME, and respawns.
+// switchGrokAccount handles PATCH /sessions/{id}/grok-account. Validates
+// the target up-front (so a bad id fails before the PTY is stopped), then
+// hands off to the manager which stops the running `grok`, rebinds
+// GROK_HOME, and respawns. carry_context in the body, when true, seeds
+// the fresh session with a recap of the prior conversation (RFC #541).
 func (h *Handlers) switchGrokAccount(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	var req SwitchAccountRequest
@@ -704,7 +705,7 @@ func (h *Handlers) switchGrokAccount(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	sess, err := h.svc.SwitchGrokAccount(r.Context(), id, req.AccountID)
+	sess, err := h.svc.SwitchGrokAccount(r.Context(), id, req.AccountID, req.CarryContext)
 	if err != nil {
 		h.respondError(w, err)
 		return

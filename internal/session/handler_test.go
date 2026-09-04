@@ -153,7 +153,8 @@ func (f *fakeSvc) SwitchAntigravityAccount(_ context.Context, id, accountID stri
 	return s, nil
 }
 
-func (f *fakeSvc) SwitchGrokAccount(_ context.Context, id, accountID string) (Session, error) {
+func (f *fakeSvc) SwitchGrokAccount(_ context.Context, id, accountID string, carryContext bool) (Session, error) {
+	f.lastCarryContext = carryContext
 	if f.switchErr != nil {
 		return Session{}, f.switchErr
 	}
