@@ -32,6 +32,8 @@ export interface Session {
   claude_session_id?: string
   /** Antigravity account this session is pinned to (provider "antigravity"). */
   antigravity_account_id?: string
+  /** Grok account this session is pinned to (provider "grok"). */
+  grok_account_id?: string
   /** Set when this session was spawned on behalf of another (e.g. a Task). */
   parent_session_id?: string
   started_at: string
@@ -131,6 +133,37 @@ export interface CreateAntigravityAccountRequest {
 }
 
 export interface UpdateAntigravityAccountRequest {
+  name?: string
+  display_name?: string
+  config_dir?: string
+  description?: string
+  enabled?: boolean
+}
+
+export interface GrokAccount {
+  id: string
+  name: string
+  display_name: string
+  config_dir: string // per-account GROK_HOME directory
+  description: string
+  enabled: boolean
+  token_filled: boolean
+  created_at: string
+  updated_at: string
+  // Derived, optional for forward-compat.
+  last_used_at?: string
+  active_sessions?: number
+}
+
+export interface CreateGrokAccountRequest {
+  name: string
+  display_name?: string
+  config_dir?: string
+  description?: string
+  enabled?: boolean
+}
+
+export interface UpdateGrokAccountRequest {
   name?: string
   display_name?: string
   config_dir?: string
