@@ -59,7 +59,11 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       : session.provider_id === 'grok'
         ? 'grok'
         : 'claude'
-  const isClaude = kind === 'claude'
+  // Claude and Grok both carry a recap across the switch (Claude via
+  // --append-system-prompt, Grok via --rules); Antigravity carries the
+  // whole conversation with no toggle. So the carry toggle shows for the
+  // two recap providers.
+  const supportsCarry = kind === 'claude' || kind === 'grok'
 
   const queryKey =
     kind === 'antigravity'
@@ -100,7 +104,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       kind === 'antigravity'
         ? switchAntigravityAccount(session.id, accountId)
         : kind === 'grok'
-          ? switchGrokAccount(session.id, accountId)
+          ? switchGrokAccount(session.id, accountId, carryContext)
           : switchClaudeAccount(session.id, accountId, carryContext),
     onSuccess: (next) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
@@ -132,7 +136,9 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       kind === 'antigravity'
         ? t('web.sessions.accountSwitcher.confirmSwitchAgy')
         : kind === 'grok'
-          ? t('web.sessions.accountSwitcher.confirmSwitchGrok')
+          ? carryContext
+            ? t('web.sessions.accountSwitcher.confirmSwitchGrokCarry')
+            : t('web.sessions.accountSwitcher.confirmSwitchGrok')
           : carryContext
             ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
             : t('web.sessions.accountSwitcher.confirmSwitch')
@@ -183,7 +189,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
             (preventDefault) so the operator sets it before picking a
             destination. The subtitle is the consent surface for the
             cross-account data flow. */}
-        {isClaude && (
+        {supportsCarry && (
           <>
             <DropdownMenuItem
               onSelect={(e) => {
