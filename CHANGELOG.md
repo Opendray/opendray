@@ -10,6 +10,17 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.15.0], 2026-09-05
+
+### Added
+
+- Grok account switching can now carry the conversation across the switch,
+  matching Claude. Switching a running grok session to another account with
+  "carry over conversation context" turned on seeds the new account's fresh
+  session with a recap of your recent conversation. It is opt in and
+  consent gated: the recap is sent to the provider under the new account,
+  which the confirm dialog states before you switch. (#542, #543, #544)
+
 ## [v2.14.1], 2026-09-04
 
 ### Added
