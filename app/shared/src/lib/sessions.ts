@@ -94,17 +94,18 @@ export async function switchAntigravityAccount(
 }
 
 // switchGrokAccount rebinds a running grok session to a different account
-// (a different GROK_HOME) and respawns it. grok has no cross-account recap
-// builder, so this is always a clean-slate switch, hence no carryContext
-// parameter. `accountId === ''` clears the binding (CLI uses the gateway
-// user's default ~/.grok home).
+// (a different GROK_HOME) and respawns it. carryContext, when true, asks
+// the gateway to seed the new account's fresh session with a recap of the
+// recent conversation (injected via grok --rules). `accountId === ''`
+// clears the binding (CLI uses the gateway user's default ~/.grok home).
 export async function switchGrokAccount(
   id: string,
   accountId: string,
+  carryContext = false,
 ): Promise<Session> {
   return api<Session>(`/api/v1/sessions/${id}/grok-account`, {
     method: 'PATCH',
-    body: { account_id: accountId },
+    body: { account_id: accountId, carry_context: carryContext },
   })
 }
 

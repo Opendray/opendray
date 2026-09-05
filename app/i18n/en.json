@@ -237,7 +237,8 @@
         "switchFailedToast": "Switch failed",
         "tooltipGrok": "Switch Grok account (restarts the CLI process)",
         "menuTitleGrok": "Switch Grok account",
-        "confirmSwitchGrok": "Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?"
+        "confirmSwitchGrok": "Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?",
+        "confirmSwitchGrokCarry": "Switching account restarts the Grok CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?"
       },
       "inspector": {
         "tabs": {
