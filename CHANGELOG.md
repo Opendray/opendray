@@ -10,6 +10,16 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.15.2], 2026-09-16
+
+### Fixed
+
+- Grok sessions rendered as a blank screen. The v2.15.1 change that made grok
+  open in scrollback native mode does not paint under the opendray web
+  terminal, so sessions came up empty. Reverted so grok opens the way it did
+  before and renders again. The scrolling improvement will return once the
+  terminal handshake it needs is handled. (#548)
+
 ## [v2.15.1], 2026-09-08
 
 ### Fixed
