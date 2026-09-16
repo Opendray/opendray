@@ -10,6 +10,18 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.15.3], 2026-09-16
+
+### Fixed
+
+- Grok sessions no longer come up as a blank screen, and grok is back in
+  its clean scrollback native mode so sessions scroll on desktop and
+  mobile. The real cause was that a session's terminal was created with no
+  size until the browser first resized it, and grok's scrollback native
+  mode waits for a real size before drawing, so it stayed blank. Sessions
+  now start with a sensible default terminal size, so grok draws right
+  away. (#550)
+
 ## [v2.15.2], 2026-09-16
 
 ### Fixed
