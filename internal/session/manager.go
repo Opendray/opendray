@@ -831,6 +831,16 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 	return rs.sess, nil
 }
 
+// defaultPTY{Cols,Rows} is the initial window size a session's PTY is
+// created with, before the connected client sends its real dimensions.
+// A nonzero floor (the classic 80x24) keeps CLIs that gate their first
+// render on terminal size — e.g. grok's --minimal mode — from coming up
+// blank when no client has resized yet.
+const (
+	defaultPTYCols uint16 = 80
+	defaultPTYRows uint16 = 24
+)
+
 // spawn does the shared "PTY launch + bookkeeping" work for both
 // Create (insert row) and Start (reactivate row). When reactivate is
 // true, the session row is expected to already exist and is updated
@@ -965,7 +975,15 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	cmd.Dir = workDir
 	cmd.Env = mergeEnv(ensureThemeEnv(ensureColorTerm(os.Environ()), sess.Theme), extraEnv)
 
-	ptmx, err := pty.Start(cmd)
+	// Start the PTY with a sane initial window size instead of the 0x0
+	// that pty.Start leaves it at until the first client resize. Some
+	// CLIs won't render (or exit) until they know the terminal
+	// dimensions: grok's scrollback-native ("--minimal") mode blocks its
+	// first paint at 0x0, which surfaced as a black session (and could
+	// wedge or exit before any client resize arrived). The connected
+	// client's fit() sends the real size moments later; this is just a
+	// floor so the very first frame renders regardless of client timing.
+	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: defaultPTYRows, Cols: defaultPTYCols})
 	if err != nil {
 		_ = os.RemoveAll(tempDir)
 		return nil, fmt.Errorf("pty.Start: %w", err)
