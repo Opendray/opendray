@@ -11,6 +11,7 @@
   "executable": "grok",
   "npmPackage": "@xai-official/grok",
   "modelFlag": "--model",
+  "defaultArgs": ["--minimal"],
   "knownModels": [
     "grok-build",
     "grok-composer-2.5-fast"
