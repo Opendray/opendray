@@ -927,6 +927,14 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 					prepareCtx = WithAntigravityResumeConversation(prepareCtx, convID)
 				}
 			}
+			// Grok: on a same-account restart, resume the cwd's most recent
+			// session (--continue) so stop/start keeps the conversation
+			// instead of starting blank. Suppressed on an account switch,
+			// where the target home has no such session and the switch
+			// carries a recap instead.
+			if sess.ProviderID == "grok" && !GrokAccountSwitchFromContext(ctx) {
+				prepareCtx = WithGrokContinue(prepareCtx)
+			}
 		}
 		out, err := p.Prepare(prepareCtx, sess.ID, tempDir)
 		if err != nil {
@@ -1629,7 +1637,10 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 	// Thread the recap (if any) into the respawn only — one-shot, absent
 	// from later restarts. The adapter's grok arm injects it as a coalesced
 	// --rules fragment (see injectCarryoverFor / injectAmbientMemoryFor).
-	spawnCtx := WithCarryoverContext(ctx, carryover)
+	// Mark this as an account switch so spawn() does NOT add --continue:
+	// the new account's home has no session for this cwd to resume, and
+	// the recap is the carry mechanism across accounts.
+	spawnCtx := WithCarryoverContext(WithGrokAccountSwitch(ctx), carryover)
 	rs, err := m.spawn(spawnCtx, sess, true)
 	if err != nil {
 		return Session{}, fmt.Errorf("respawn under new account: %w", err)

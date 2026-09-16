@@ -323,6 +323,42 @@ func CarryoverContextFromContext(ctx context.Context) string {
 	return ""
 }
 
+// grokContinueCtxKey signals that a grok spawn should resume the cwd's
+// most recent session via `--continue` instead of starting fresh. Set by
+// the manager ONLY on a same-account restart (reactivate) — never on a
+// fresh spawn (which would hijack an unrelated prior conversation in a
+// reused cwd) and never on an account switch (the other account's home
+// has no such session; that path carries a recap instead).
+type grokContinueCtxKey struct{}
+
+// WithGrokContinue marks the context so the grok adapter emits --continue.
+func WithGrokContinue(ctx context.Context) context.Context {
+	return context.WithValue(ctx, grokContinueCtxKey{}, true)
+}
+
+// GrokContinueFromContext reports whether --continue was requested.
+func GrokContinueFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(grokContinueCtxKey{}).(bool)
+	return v
+}
+
+// grokAccountSwitchCtxKey marks a grok respawn as an account switch, so
+// the manager's reactivation path suppresses the --continue signal (the
+// switch carries a recap into the new account's home instead of resuming
+// a session that home doesn't have).
+type grokAccountSwitchCtxKey struct{}
+
+// WithGrokAccountSwitch marks the context as an account-switch respawn.
+func WithGrokAccountSwitch(ctx context.Context) context.Context {
+	return context.WithValue(ctx, grokAccountSwitchCtxKey{}, true)
+}
+
+// GrokAccountSwitchFromContext reports whether this respawn is a switch.
+func GrokAccountSwitchFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(grokAccountSwitchCtxKey{}).(bool)
+	return v
+}
+
 // ── Integration spawn profile ──────────────────────────────────────
 //
 // The three keys below carry the provider-AGNOSTIC half of an
