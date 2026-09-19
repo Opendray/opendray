@@ -10,6 +10,16 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.0], 2026-09-19
+
+### Added
+
+- Grok sessions keep their conversation across a stop and restart. On a
+  same-account restart opendray now resumes the current working
+  directory's most recent grok session instead of starting a blank one,
+  matching how Claude and Antigravity sessions carry across a restart.
+  Account switches still start fresh under the new account. (#552)
+
 ## [v2.16.0], 2026-09-19
 
 ### Added
