@@ -65,3 +65,30 @@ func flagValue(args []string, flag string) string {
 	}
 	return ""
 }
+
+// Grok restart-resume: on reactivation (a restart in the same account)
+// the manager sets the grok-continue signal so grok reopens the cwd's
+// most recent session via --continue instead of starting blank. A fresh
+// spawn (no signal) must NOT pass --continue, or a brand-new session in
+// a reused folder would hijack an unrelated prior conversation.
+func TestInjectSessionIDFor_GrokContinue(t *testing.T) {
+	t.Run("continue signal -> --continue", func(t *testing.T) {
+		ctx := session.WithGrokContinue(context.Background())
+		var out session.PrepareOutput
+		ok := injectSessionIDFor(ctx, "grok", &out)
+		if !ok {
+			t.Fatal("expected injection for grok with continue signal")
+		}
+		if !hasFlag(out.Args, "--continue") {
+			t.Errorf("grok restart should pass --continue, got %v", out.Args)
+		}
+	})
+
+	t.Run("no signal -> no --continue (fresh)", func(t *testing.T) {
+		var out session.PrepareOutput
+		injectSessionIDFor(context.Background(), "grok", &out)
+		if hasFlag(out.Args, "--continue") {
+			t.Errorf("fresh grok spawn must NOT pass --continue, got %v", out.Args)
+		}
+	})
+}
