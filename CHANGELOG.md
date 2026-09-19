@@ -10,6 +10,19 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.1], 2026-09-19
+
+### Fixed
+
+- The one-line installer no longer crashes or hangs when there is no
+  controlling terminal (LXC / `pct exec`, Docker without `-t`, CI,
+  cloud-init). It aborted at startup trying to open `/dev/tty`, and a
+  menu prompt could spin forever on end-of-input. It now reattaches to a
+  terminal only when one can actually be opened, and menu prompts fail
+  fast with guidance instead of looping. Interactive `curl … | bash`
+  installs are unchanged; automated installs now work or fail cleanly.
+  (install-linux.sh, install-macos.sh)
+
 ## [v2.17.0], 2026-09-19
 
 ### Added
