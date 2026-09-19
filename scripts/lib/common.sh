@@ -132,7 +132,13 @@ ask_menu() {
     while true; do
         printf "  Enter 1-%d: " "${#_menu_opts[@]}"
         choice=""
-        read -r choice || choice=""
+        # read fails on EOF (no controlling terminal / stdin exhausted).
+        # A menu has no safe silent default, so fail fast with guidance
+        # instead of looping forever re-printing the prompt.
+        if ! read -r choice; then
+            printf "\n"
+            log_die "No input for menu \"$prompt\" (stdin closed / no terminal). Run the installer in an interactive terminal, or pipe answers on stdin."
+        fi
         if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#_menu_opts[@]}" ]; then
             printf -v "$var_name" '%s' "${_menu_opts[$((choice - 1))]}"
             return 0

@@ -22,7 +22,14 @@ set -euo pipefail
 # Reattach stdin to the controlling terminal so prompts work even when
 # we arrived here via `curl … | bash` (the inherited stdin is the curl
 # pipe at EOF, which makes every `read` fail immediately).
-if [ ! -t 0 ] && [ -r /dev/tty ]; then
+#
+# The node /dev/tty can exist and pass `-r` yet still fail to open with
+# ENXIO when there is no controlling terminal (containers, `pct exec`,
+# CI, cloud-init). A bare `exec </dev/tty` there aborts the whole script
+# under `set -e`. So probe openability in a subshell first; if it fails,
+# leave stdin as-is and let the prompt helpers fall back to their
+# defaults on EOF (unattended install).
+if [ ! -t 0 ] && (exec </dev/tty) 2>/dev/null; then
     exec </dev/tty
 fi
 

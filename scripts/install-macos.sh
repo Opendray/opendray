@@ -11,7 +11,11 @@ set -euo pipefail
 # Reattach stdin to the controlling terminal so prompts work even when
 # we arrived here via `curl … | bash` (the inherited stdin is the curl
 # pipe at EOF, which makes every `read` fail immediately).
-if [ ! -t 0 ] && [ -r /dev/tty ]; then
+# /dev/tty can pass `-r` yet fail to open (ENXIO) with no controlling
+# terminal (CI, piped curl|bash without a tty); a bare exec would abort
+# under set -e. Probe openability in a subshell first, else leave stdin
+# as-is and let prompts fall back to defaults on EOF.
+if [ ! -t 0 ] && (exec </dev/tty) 2>/dev/null; then
     exec </dev/tty
 fi
 
