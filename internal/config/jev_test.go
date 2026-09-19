@@ -53,7 +53,9 @@ func TestJevConfigResolveEnv(t *testing.T) {
 
 	t.Run("inline key wins over file", func(t *testing.T) {
 		p := filepath.Join(t.TempDir(), "key")
-		os.WriteFile(p, []byte("filekey"), 0o600)
+		if err := os.WriteFile(p, []byte("filekey"), 0o600); err != nil {
+			t.Fatal(err)
+		}
 		env, _ := JevConfig{APIKey: "inlinekey", APIKeyFile: p}.ResolveEnv()
 		if env["TYPESAFE_API_KEY"] != "inlinekey" {
 			t.Errorf("inline api_key should win, got %v", env)
