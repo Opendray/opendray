@@ -122,3 +122,17 @@ default = "project"
 #                             #   awake only while requests, live streams or
 #                             #   running sessions need it, +2min linger;
 #                             # "off" never touch host power state
+
+# Jev (TypeSafe) integration. Jev is a "System One" decision CLI: give it
+# state plus typed questions and it returns calibrated probabilities and a
+# verdict as JSON (classify, verify, route, screen, match, rank) in a few
+# hundred milliseconds. It is a shell tool the agent invokes, not a session
+# provider. Set a key here and opendray injects it into EVERY session's
+# environment, so any provider's agent (claude, grok, codex, antigravity,
+# opencode, shell) can call `jev` with no per-provider setup. Install the
+# CLI on the gateway host first: `npm i -g jevctl` (command: jev).
+[jev]
+# api_key = "apikey_..."               # inline key (simplest)
+# api_key_file = "/var/lib/opendray/.config/jev.key"  # preferred: raw key in a 0600 file
+# env_var = "TYPESAFE_API_KEY"         # default; use OPENROUTER_API_KEY or
+#                                      # CLOUDFLARE_API_TOKEN for those providers
