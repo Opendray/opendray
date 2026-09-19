@@ -10,6 +10,19 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.16.0], 2026-09-19
+
+### Added
+
+- Jev (TypeSafe) integration. Jev is a "System One" decision CLI that
+  returns calibrated probabilities and a verdict as JSON (classify,
+  verify, route, screen, match, rank) instead of prose. Set one API key
+  under a new `[jev]` config section and opendray injects it into every
+  session, so any provider's agent (Claude, Grok, Codex, Antigravity,
+  OpenCode, shell) can call the `jev` CLI with no per-provider setup.
+  `api_key` or `api_key_file`, and an `env_var` override for OpenRouter or
+  Cloudflare providers. Install the CLI on the host with `npm i -g jevctl`.
+
 ## [v2.15.3], 2026-09-16
 
 ### Fixed

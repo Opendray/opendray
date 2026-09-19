@@ -673,6 +673,15 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	wsResolver := workspace.NewResolver()
 	wsManager := workspace.NewManager(defaultBackupDir("", "worktrees"), log)
 	sessionOpts = append(sessionOpts, session.WithWorkspaces(wsManager, wsResolver))
+	// Jev (TypeSafe) integration: inject the configured key into every
+	// session so any provider's agent can call the `jev` CLI. No-op when
+	// unconfigured.
+	if jevEnv, err := cfg.Jev.ResolveEnv(); err != nil {
+		log.Warn("jev api key not loaded; jev disabled for sessions", "err", err)
+	} else if len(jevEnv) > 0 {
+		sessionOpts = append(sessionOpts, session.WithSessionEnv(jevEnv))
+		log.Info("jev integration enabled; key injected into all sessions")
+	}
 	sessionMgr := session.NewManager(
 		st.Pool(),
 		bus,

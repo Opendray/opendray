@@ -201,6 +201,15 @@ func WithGrokHistoryConfig(cfg GrokHistoryConfig) ManagerOption {
 	return func(m *Manager) { m.grokHistoryCfg = cfg }
 }
 
+// WithSessionEnv injects extra environment variables into every spawned
+// session, beneath provider-specific env (so a provider can still
+// override a key deliberately). Used for gateway-level tool credentials
+// like the Jev API key, so any provider's agent can call the tool with no
+// per-provider setup. Empty map = no-op.
+func WithSessionEnv(env map[string]string) ManagerOption {
+	return func(m *Manager) { m.sessionEnv = env }
+}
+
 // Manager owns the lifecycle of all live sessions in this process.
 // Sessions are persisted in postgres for visibility / audit, but the
 // authoritative state for a running session is the in-memory map here.
@@ -223,6 +232,7 @@ type Manager struct {
 	codexHistoryCfg       CodexHistoryConfig
 	antigravityHistoryCfg AntigravityHistoryConfig
 	grokHistoryCfg        GrokHistoryConfig
+	sessionEnv            map[string]string // gateway-level env injected into every session (e.g. Jev key)
 
 	// workspaces + wsResolver enable worktree isolation. Both nil →
 	// isolation requests are rejected and every session runs in cwd,
@@ -981,7 +991,11 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = workDir
-	cmd.Env = mergeEnv(ensureThemeEnv(ensureColorTerm(os.Environ()), sess.Theme), extraEnv)
+	// Layer env: base (gateway) < sessionEnv (gateway-level tool creds like
+	// the Jev key, injected into every session) < extraEnv (provider/account
+	// specific, wins deliberately).
+	baseEnv := mergeEnv(ensureThemeEnv(ensureColorTerm(os.Environ()), sess.Theme), m.sessionEnv)
+	cmd.Env = mergeEnv(baseEnv, extraEnv)
 
 	// Start the PTY with a sane initial window size instead of the 0x0
 	// that pty.Start leaves it at until the first client resize. Some
