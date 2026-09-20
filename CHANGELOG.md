@@ -10,6 +10,20 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.2], 2026-09-20
+
+### Changed
+
+- Reworked the Jev (TypeSafe) integration into a generic, modular session
+  environment mechanism. Instead of a jev-specific `[jev]` config section
+  baked into the core, sessions now inherit operator-defined env vars from
+  `[session.env]` (inline) and `[session.env_files]` (value read from a
+  file, keeping secrets out of config.toml). This injects any host tool's
+  credentials into every provider's agent with no per-provider setup and
+  nothing tool-specific in the codebase. Jev is now just one consumer:
+  point `TYPESAFE_API_KEY` at a key file under `[session.env_files]`. The
+  `[jev]` section is removed.
+
 ## [v2.17.1], 2026-09-19
 
 ### Fixed

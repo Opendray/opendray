@@ -31,7 +31,6 @@ type Config struct {
 	Knowledge KnowledgeConfig `toml:"knowledge" json:"knowledge"`
 	Dbtool    DbtoolConfig    `toml:"dbtool" json:"dbtool"`
 	Host      HostConfig      `toml:"host" json:"host"`
-	Jev       JevConfig       `toml:"jev" json:"jev"`
 
 	// FilePath is the path config.toml was loaded from. Set by Load
 	// after a successful read so the runtime can find the same file
@@ -546,6 +545,17 @@ type LogConfig struct {
 type SessionConfig struct {
 	IdleThreshold string `toml:"idle_threshold" json:"idle_threshold"` // e.g. "30s", "2m"
 	IdleInterval  string `toml:"idle_interval" json:"idle_interval"`   // e.g. "5s"
+
+	// Env is a generic map of environment variables injected into EVERY
+	// spawned session, so any provider's agent inherits them. This is the
+	// modular way to give sessions access to a host CLI's credentials
+	// (e.g. a decision tool like jev via TYPESAFE_API_KEY) without the
+	// core knowing anything about that tool. Inline values.
+	Env map[string]string `toml:"env" json:"env"`
+	// EnvFiles maps an env var name to a file whose trimmed contents are
+	// the value — the preferred way to inject secrets, keeping them out of
+	// config.toml. A file that resolves for the same key overrides Env.
+	EnvFiles map[string]string `toml:"env_files" json:"env_files"`
 }
 
 // Threshold parses IdleThreshold; returns 0 if unset or invalid (caller
@@ -561,44 +571,30 @@ func (s SessionConfig) Interval() time.Duration {
 	return d
 }
 
-// JevConfig wires the Jev (TypeSafe) decision CLI into every session.
-// When a key is configured, opendray injects it into each spawned
-// session's environment so any provider's agent (claude, grok, codex,
-// antigravity, opencode, shell) can call the `jev` CLI — no per-provider
-// setup, just the key. Jev is a shell tool the agent invokes, not a
-// session provider, so this is env injection rather than a manifest.
-type JevConfig struct {
-	// APIKey is the key inline in config. Prefer APIKeyFile so the secret
-	// isn't stored in config.toml.
-	APIKey string `toml:"api_key" json:"api_key"`
-	// APIKeyFile is a path to a file whose (trimmed) contents are the key.
-	APIKeyFile string `toml:"api_key_file" json:"api_key_file"`
-	// EnvVar overrides the injected variable name. Defaults to
-	// TYPESAFE_API_KEY (jev's own provider); set OPENROUTER_API_KEY or
-	// CLOUDFLARE_API_TOKEN to point jev at an alternate provider.
-	EnvVar string `toml:"env_var" json:"env_var"`
-}
-
-// ResolveEnv returns the env var(s) to inject into sessions, or an empty
-// map when no key is configured (feature off). Inline APIKey wins over
-// APIKeyFile. Returns an error only when APIKeyFile is set but unreadable.
-func (j JevConfig) ResolveEnv() (map[string]string, error) {
-	key := strings.TrimSpace(j.APIKey)
-	if key == "" && strings.TrimSpace(j.APIKeyFile) != "" {
-		b, err := os.ReadFile(strings.TrimSpace(j.APIKeyFile))
-		if err != nil {
-			return nil, fmt.Errorf("read jev api_key_file: %w", err)
+// ResolveEnv merges Env (inline) and EnvFiles (file-backed, trimmed) into
+// the environment map injected into every session. EnvFiles wins on key
+// conflict (the deliberate secret source). Blank keys/paths are skipped.
+// Returns an error only when a referenced file can't be read.
+func (s SessionConfig) ResolveEnv() (map[string]string, error) {
+	out := map[string]string{}
+	for k, v := range s.Env {
+		if k = strings.TrimSpace(k); k != "" {
+			out[k] = v
 		}
-		key = strings.TrimSpace(string(b))
 	}
-	if key == "" {
-		return map[string]string{}, nil
+	for k, path := range s.EnvFiles {
+		k = strings.TrimSpace(k)
+		path = strings.TrimSpace(path)
+		if k == "" || path == "" {
+			continue
+		}
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("read session env_files[%q]: %w", k, err)
+		}
+		out[k] = strings.TrimSpace(string(b))
 	}
-	name := strings.TrimSpace(j.EnvVar)
-	if name == "" {
-		name = "TYPESAFE_API_KEY"
-	}
-	return map[string]string{name: key}, nil
+	return out, nil
 }
 
 func defaults() Config {

@@ -79,7 +79,7 @@ Then open the web admin at **`http://<host>:8770/admin/`**.
 | **Database** | Inspect and query project databases from the session inspector: PostgreSQL, MySQL, MariaDB, SQLite. Per-project isolation. Web and mobile. |
 | **Channels** | Telegram, Slack, Discord, Feishu, DingTalk, WeCom, plus a Bridge adapter for custom transports. Bidirectional: sessions notify, replies feed back. |
 | **Integrations** | REST + WebSocket API with scoped keys, per-call audit log, reverse-proxy mounts. HashiCorp Vault MCP. See [integration guide](docs/integration-guide.md). |
-| **Typed decisions (Jev)** | Built-in [Jev](https://docs.typesafe.ai) (TypeSafe "System One") integration: set one API key under `[jev]` and every provider's agent can call the `jev` CLI for calibrated, hallucination-free decisions (classify, verify, route, screen, rank) that return JSON probabilities in ~half a second. Works across Claude, Grok, Codex, Antigravity, OpenCode and shell with no per-provider setup. |
+| **Session env (host tools)** | A generic `[session.env]` / `[session.env_files]` config injects env vars — including host-CLI credentials — into every session, so any provider's agent inherits them with no per-provider setup and nothing tool-specific in the core. Example: point `TYPESAFE_API_KEY` at a key file and every agent can call [Jev](https://docs.typesafe.ai) (TypeSafe "System One") for calibrated, hallucination-free decisions (classify, verify, route, screen) returning JSON probabilities in ~half a second. |
 | **Ops & security** | Single Go binary. One-line installer (Linux, macOS, WSL2). Self-managing (`opendray update / start / stop`). Encrypted Postgres backups. Cosign-signed releases + SPDX SBOM. Apache 2.0, no telemetry. |
 
 ## How it compares
