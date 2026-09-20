@@ -673,14 +673,16 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	wsResolver := workspace.NewResolver()
 	wsManager := workspace.NewManager(defaultBackupDir("", "worktrees"), log)
 	sessionOpts = append(sessionOpts, session.WithWorkspaces(wsManager, wsResolver))
-	// Jev (TypeSafe) integration: inject the configured key into every
-	// session so any provider's agent can call the `jev` CLI. No-op when
-	// unconfigured.
-	if jevEnv, err := cfg.Jev.ResolveEnv(); err != nil {
-		log.Warn("jev api key not loaded; jev disabled for sessions", "err", err)
-	} else if len(jevEnv) > 0 {
-		sessionOpts = append(sessionOpts, session.WithSessionEnv(jevEnv))
-		log.Info("jev integration enabled; key injected into all sessions")
+	// Generic session env: inject operator-configured env vars into every
+	// session ([session.env] / [session.env_files]). Modular by design —
+	// this is how a host CLI's credentials (e.g. a decision tool like jev
+	// via TYPESAFE_API_KEY) reach agents without the core knowing the tool.
+	// No-op when unconfigured.
+	if sessEnv, err := cfg.Session.ResolveEnv(); err != nil {
+		log.Warn("session env not fully loaded; some vars skipped", "err", err)
+	} else if len(sessEnv) > 0 {
+		sessionOpts = append(sessionOpts, session.WithSessionEnv(sessEnv))
+		log.Info("session env injection enabled", "vars", len(sessEnv))
 	}
 	sessionMgr := session.NewManager(
 		st.Pool(),
