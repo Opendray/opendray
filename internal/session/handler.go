@@ -64,6 +64,10 @@ type GrokAccountChecker interface {
 	// grok account; an error otherwise (distinguishing not-found from
 	// disabled so the handler maps both to 400).
 	CheckEnabled(ctx context.Context, id string) error
+	// CheckUsable is stricter: nil only when id is existing, enabled, AND
+	// logged in (token on disk). Used to guard an account switch so we
+	// never stop a working session to respawn under a logged-out account.
+	CheckUsable(ctx context.Context, id string) error
 }
 
 // ClaudeAccountChecker is the minimal cliacct surface the session
@@ -699,8 +703,12 @@ func (h *Handlers) switchGrokAccount(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	// Guard the switch: require the target to be logged in (not merely
+	// enabled), so we don't stop a working session and then fail to
+	// respawn under a logged-out account. Empty account_id = default home,
+	// validated at spawn.
 	if h.grokAcct != nil && req.AccountID != "" {
-		if err := h.grokAcct.CheckEnabled(r.Context(), req.AccountID); err != nil {
+		if err := h.grokAcct.CheckUsable(r.Context(), req.AccountID); err != nil {
 			writeError(w, http.StatusBadRequest, fmt.Errorf("account_id: %w", err))
 			return
 		}

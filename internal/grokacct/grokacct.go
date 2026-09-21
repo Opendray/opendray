@@ -78,7 +78,9 @@ type UpdateRequest struct {
 }
 
 var (
-	ErrNotFound  = errors.New("grok account not found")
-	ErrDuplicate = errors.New("grok account name already exists")
-	ErrDisabled  = errors.New("grok account is disabled")
+	ErrNotFound     = errors.New("grok account not found")
+	ErrDuplicate    = errors.New("grok account name already exists")
+	ErrDisabled     = errors.New("grok account is disabled")
+	ErrNotLoggedIn  = errors.New("grok account is not logged in")
+	ErrNoUsableGrok = errors.New("no logged-in grok account available")
 )

@@ -629,9 +629,16 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			// an account = pointing GROK_HOME at the account's dedicated
 			// dir. Unlike agy this relocates ONLY grok's state, never the
 			// whole HOME, so other tools sharing HOME are untouched.
-			home, err := sp.grokAccounts.ResolveSpawnHome(prepareCtx, selectedAccountID)
+			// Resilient: prefer the pinned account but fall back to the
+			// default home / any other logged-in account, so a session
+			// keeps working across whatever grok accounts are available and
+			// is never bricked by a logged-out binding.
+			home, used, err := sp.grokAccounts.ResolveSpawnHomeResilient(prepareCtx, selectedAccountID)
 			if err != nil {
 				return session.PrepareOutput{}, fmt.Errorf("grok account %s: %w", selectedAccountID, err)
+			}
+			if selectedAccountID != "" && used != "" {
+				sp.log.Info("grok spawn account resolved", "requested", selectedAccountID, "using", used)
 			}
 			out.Env["GROK_HOME"] = home
 			// Share the heavy, account-independent install/cache dirs

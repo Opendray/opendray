@@ -1657,7 +1657,22 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 	spawnCtx := WithCarryoverContext(WithGrokAccountSwitch(ctx), carryover)
 	rs, err := m.spawn(spawnCtx, sess, true)
 	if err != nil {
-		return Session{}, fmt.Errorf("respawn under new account: %w", err)
+		// Rollback: the new account failed to spawn. Restore the previous
+		// account and bring the session back up on it, so a bad switch
+		// never leaves the session dead — it keeps working on whatever
+		// account was already working.
+		m.log.Warn("grok switch respawn failed; rolling back to previous account",
+			"session", id, "new_account", newAccountID, "old_account", current.GrokAccountID, "err", err)
+		sess.GrokAccountID = current.GrokAccountID
+		sess.State = StateRunning
+		sess.EndedAt = nil
+		sess.ExitCode = nil
+		sess.StartedAt = time.Now().UTC()
+		if _, rbErr := m.spawn(WithGrokAccountSwitch(ctx), sess, true); rbErr != nil {
+			m.log.Error("grok switch rollback respawn also failed",
+				"session", id, "old_account", current.GrokAccountID, "err", rbErr)
+		}
+		return Session{}, fmt.Errorf("switch to grok account %q failed (session restored to previous account): %w", newAccountID, err)
 	}
 
 	if err := m.store.UpdateGrokAccount(ctx, id, newAccountID); err != nil {
