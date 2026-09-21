@@ -10,6 +10,19 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.3], 2026-09-21
+
+### Fixed
+
+- Grok sessions stay working across account switches and are never bricked
+  by a logged-out account. Switching now requires the target account to be
+  logged in — a logged-out target is rejected up-front with a clear error
+  and the running session is left untouched, instead of being stopped and
+  failing to respawn. If a switch respawn fails, the session rolls back to
+  the previously working account. And at spawn/restart, a session whose
+  bound account is logged out falls back to the default grok home, then to
+  any other logged-in account, so it comes up on whatever account works.
+
 ## [v2.17.2], 2026-09-20
 
 ### Changed

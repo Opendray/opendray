@@ -13,10 +13,26 @@ import (
 
 // fakeGrokChecker is a minimal GrokAccountChecker for handler tests.
 type fakeGrokChecker struct {
-	known map[string]bool
+	known  map[string]bool
+	usable map[string]bool // logged-in accounts; nil = treat all known as usable
 }
 
 func (f *fakeGrokChecker) CheckEnabled(_ context.Context, id string) error {
+	if f.known[id] {
+		return nil
+	}
+	return ErrNotFound
+}
+
+// usable maps id -> logged-in. When nil, fall back to `known` so existing
+// tests treat any known account as usable.
+func (f *fakeGrokChecker) CheckUsable(_ context.Context, id string) error {
+	if f.usable != nil {
+		if f.usable[id] {
+			return nil
+		}
+		return ErrNotFound
+	}
 	if f.known[id] {
 		return nil
 	}
@@ -118,4 +134,22 @@ func TestSwitchGrokAccount_CarryContextFlows(t *testing.T) {
 			t.Error("expected carry_context to default to false when omitted")
 		}
 	})
+}
+
+// Switching to a logged-out (enabled but no token) grok account must be
+// rejected up-front without stopping the running session.
+func TestSwitchGrokAccount_RejectsLoggedOut(t *testing.T) {
+	svc := newFakeSvc()
+	svc.sessions["s1"] = Session{ID: "s1", ProviderID: "grok", State: StateRunning}
+	checker := &fakeGrokChecker{usable: map[string]bool{"grok_live": true}} // grok_dead absent = not usable
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPatch, "/sessions/s1/grok-account",
+		bytes.NewBufferString(`{"account_id":"grok_dead"}`))
+	newRouterWithGrokChecker(svc, checker).ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("want 400 for logged-out target, got %d body=%s", rr.Code, rr.Body)
+	}
+	if svc.sessions["s1"].State != StateRunning {
+		t.Errorf("session must stay running on a rejected switch, got %s", svc.sessions["s1"].State)
+	}
 }
