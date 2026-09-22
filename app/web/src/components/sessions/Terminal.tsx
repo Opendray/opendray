@@ -209,6 +209,43 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     // 404 and browser logs it red in console even though we .catch().
     let alive = true
 
+    // Push the measured PTY size to the server, deduped. A CLI obeys
+    // whatever size we send: grok in particular sizes its layout from the
+    // PTY and only repaints on the SIGWINCH a resize triggers, so if the
+    // server is left on a stale size the session sits at that size.
+    let lastCols = 0
+    let lastRows = 0
+    const sendSize = (cols: number, rows: number) => {
+      if (!alive || cols <= 0 || rows <= 0) return
+      if (cols === lastCols && rows === lastRows) return
+      lastCols = cols
+      lastRows = rows
+      resizeSession(sessionId, cols, rows).catch(() => {})
+    }
+    // Re-fit then push. fit() reads the container's rendered size, which is
+    // 0/unmeasured for the first frames after mount (the terminal lives in a
+    // `flex-1 min-h-0` box), so an early fit yields xterm's 80x24 default.
+    const fitAndSend = () => {
+      if (!alive) return
+      try {
+        fit.fit()
+      } catch {
+        /* element not measured yet */
+      }
+      sendSize(term.cols, term.rows)
+    }
+    // The container needs a few frames (and, where a webfont monospace ships,
+    // its load) before its size is stable. A single post-open fit can land in
+    // that window, measure 80x24, and — because nothing changes afterwards on
+    // a static window — never correct, leaving grok stuck small. Re-fit on a
+    // short bounded schedule so the real size always lands.
+    const settleTimers: number[] = []
+    const settleSize = () => {
+      for (const d of [0, 60, 180, 400, 900, 1600]) {
+        settleTimers.push(window.setTimeout(fitAndSend, d))
+      }
+    }
+
     const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream`, token), {
       onMessage: (data) => {
         term.write(data)
@@ -229,12 +266,17 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         )
       },
       onOpen: () => {
-        // After (re)connect, push current dimensions so server sizes the PTY.
+        // After (re)connect, size the PTY from a real measurement. Reading
+        // term.cols/rows synchronously here would be the stale 80x24 default
+        // before the flex container is measured; settleSize re-fits over the
+        // next ~1.6s so the true size lands even on a static window.
         if (!alive) return
-        const { cols, rows } = term
-        if (cols && rows) {
-          resizeSession(sessionId, cols, rows).catch(() => {})
-        }
+        // Reset the dedup: a reconnect may front a freshly spawned PTY (a grok
+        // account switch/restart respawns at 80x24), so re-push even when the
+        // browser-side size is unchanged.
+        lastCols = 0
+        lastRows = 0
+        settleSize()
       },
     })
     wsRef.current = ws
@@ -245,8 +287,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       ws.send(enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer)
     })
     term.onResize(({ cols, rows }) => {
-      if (!alive) return
-      resizeSession(sessionId, cols, rows).catch(() => {})
+      sendSize(cols, rows)
     })
 
     // Touch-scroll forwarding. A phone has no mouse wheel, and a
@@ -361,12 +402,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
       if (!alive || fitRaf) return
       fitRaf = requestAnimationFrame(() => {
         fitRaf = 0
-        if (!alive) return
-        try {
-          fit.fit()
-        } catch {
-          /* element not measured yet */
-        }
+        fitAndSend()
       })
     }
     // Observe the in-flow root (not the absolute-positioned host).
@@ -399,6 +435,7 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
     return () => {
       alive = false
       if (fitRaf) cancelAnimationFrame(fitRaf)
+      for (const id of settleTimers) clearTimeout(id)
       touchHost?.removeEventListener('touchstart', onTouchStart)
       touchHost?.removeEventListener('touchmove', onTouchMove)
       touchHost?.removeEventListener('touchend', onTouchEnd)

@@ -10,6 +10,18 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.4], 2026-09-22
+
+### Fixed
+
+- Web terminal now sizes the session to the browser window automatically on
+  open. The initial fit could run before the flex container was measured,
+  leaving the PTY at xterm's 80x24 default; grok (which lays out from the PTY
+  size and only repaints on resize) then sat stuck small until the window was
+  manually resized. The terminal now re-fits and pushes the measured size on
+  a short bounded schedule after connect, and re-pushes on reconnect so a
+  freshly respawned PTY (e.g. after a grok account switch) is sized correctly.
+
 ## [v2.17.3], 2026-09-21
 
 ### Fixed
