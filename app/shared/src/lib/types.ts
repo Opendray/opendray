@@ -153,6 +153,9 @@ export interface GrokAccount {
   // Derived, optional for forward-compat.
   last_used_at?: string
   active_sessions?: number
+  // Account holder tag, read from the on-disk grok login (auth.json).
+  oauth_email?: string
+  oauth_name?: string
 }
 
 export interface CreateGrokAccountRequest {

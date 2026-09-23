@@ -105,6 +105,9 @@ func (s *Service) decorate(a *Account, stats sessionStats) {
 	a.TokenFilled = accountHasCredentials(a.ConfigDir)
 	a.ActiveSessions = stats.ActiveSessions
 	a.LastUsedAt = stats.LastUsedAt
+	id := readOAuthIdentity(a.ConfigDir)
+	a.OAuthEmail = id.Email
+	a.OAuthName = id.Name
 }
 
 func (s *Service) Create(ctx context.Context, req CreateRequest) (Account, error) {
