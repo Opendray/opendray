@@ -74,4 +74,67 @@ func TestSessionConfigResolveEnv(t *testing.T) {
 			t.Errorf("blank entries should be skipped, got %v", env)
 		}
 	})
+
+	t.Run("dotenv file: KEY=VAL lines all injected", func(t *testing.T) {
+		p := filepath.Join(t.TempDir(), "secrets.env")
+		body := "" +
+			"# a comment\n" +
+			"\n" +
+			"GH_TOKEN=ghp_abc\n" +
+			"export CLOUDFLARE_API_TOKEN=cf_xyz\n" +
+			"QUOTED=\"has spaces\"\n" +
+			"SINGLE='sq'\n" +
+			"  SPACED = trimmed \n"
+		if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		env, err := SessionConfig{EnvDotenvFiles: []string{p}}.ResolveEnv()
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := map[string]string{
+			"GH_TOKEN":             "ghp_abc",
+			"CLOUDFLARE_API_TOKEN": "cf_xyz",
+			"QUOTED":               "has spaces",
+			"SINGLE":               "sq",
+			"SPACED":               "trimmed",
+		}
+		for k, v := range want {
+			if env[k] != v {
+				t.Errorf("%s = %q, want %q (full: %v)", k, env[k], v, env)
+			}
+		}
+	})
+
+	t.Run("precedence: dotenv < inline env < env_files", func(t *testing.T) {
+		de := filepath.Join(t.TempDir(), "d.env")
+		if err := os.WriteFile(de, []byte("K=fromdotenv\nONLYD=d\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		ef := filepath.Join(t.TempDir(), "k")
+		if err := os.WriteFile(ef, []byte("fromenvfile"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		env, err := SessionConfig{
+			EnvDotenvFiles: []string{de},
+			Env:            map[string]string{"K": "frominline", "ONLYI": "i"},
+			EnvFiles:       map[string]string{"K": ef},
+		}.ResolveEnv()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if env["K"] != "fromenvfile" {
+			t.Errorf("K = %q, want fromenvfile (env_files wins)", env["K"])
+		}
+		if env["ONLYD"] != "d" || env["ONLYI"] != "i" {
+			t.Errorf("non-conflicting keys lost: %v", env)
+		}
+	})
+
+	t.Run("missing dotenv file errors", func(t *testing.T) {
+		_, err := SessionConfig{EnvDotenvFiles: []string{"/no/such/file.env"}}.ResolveEnv()
+		if err == nil {
+			t.Error("expected error for unreadable dotenv file")
+		}
+	})
 }

@@ -556,6 +556,13 @@ type SessionConfig struct {
 	// the value — the preferred way to inject secrets, keeping them out of
 	// config.toml. A file that resolves for the same key overrides Env.
 	EnvFiles map[string]string `toml:"env_files" json:"env_files"`
+	// EnvDotenvFiles is a list of dotenv-style files (KEY=VAL per line)
+	// whose every entry is injected into each session. This is the modular
+	// way to feed a whole bundle of host secrets (e.g. a secrets.env) into
+	// sessions with one line, instead of a file per variable. Lines that
+	// are blank or start with '#' are ignored; an optional leading
+	// "export " is stripped; surrounding single/double quotes are removed.
+	EnvDotenvFiles []string `toml:"env_dotenv_files" json:"env_dotenv_files"`
 }
 
 // Threshold parses IdleThreshold; returns 0 if unset or invalid (caller
@@ -571,17 +578,34 @@ func (s SessionConfig) Interval() time.Duration {
 	return d
 }
 
-// ResolveEnv merges Env (inline) and EnvFiles (file-backed, trimmed) into
-// the environment map injected into every session. EnvFiles wins on key
-// conflict (the deliberate secret source). Blank keys/paths are skipped.
-// Returns an error only when a referenced file can't be read.
+// ResolveEnv merges the three sources into the environment map injected
+// into every session, in ascending precedence: EnvDotenvFiles (bulk base)
+// < Env (inline) < EnvFiles (explicit file-backed secret). Blank
+// keys/paths are skipped. Returns an error only when a referenced file
+// can't be read.
 func (s SessionConfig) ResolveEnv() (map[string]string, error) {
 	out := map[string]string{}
+	// 1) dotenv bundles first (base layer).
+	for _, path := range s.EnvDotenvFiles {
+		path = strings.TrimSpace(path)
+		if path == "" {
+			continue
+		}
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("read session env_dotenv_files[%q]: %w", path, err)
+		}
+		for k, v := range parseDotenv(string(b)) {
+			out[k] = v
+		}
+	}
+	// 2) inline Env overrides dotenv.
 	for k, v := range s.Env {
 		if k = strings.TrimSpace(k); k != "" {
 			out[k] = v
 		}
 	}
+	// 3) EnvFiles (explicit single-value secret) wins last.
 	for k, path := range s.EnvFiles {
 		k = strings.TrimSpace(k)
 		path = strings.TrimSpace(path)
@@ -595,6 +619,38 @@ func (s SessionConfig) ResolveEnv() (map[string]string, error) {
 		out[k] = strings.TrimSpace(string(b))
 	}
 	return out, nil
+}
+
+// parseDotenv parses a dotenv-style body (KEY=VAL per line) into a map.
+// Blank lines and '#' comments are skipped; a leading "export " is
+// stripped; keys and values are trimmed; a value fully wrapped in
+// matching single or double quotes has those quotes removed. Lines
+// without '=' or with a blank key are ignored.
+func parseDotenv(body string) map[string]string {
+	out := map[string]string{}
+	for _, line := range strings.Split(body, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		line = strings.TrimPrefix(line, "export ")
+		eq := strings.IndexByte(line, '=')
+		if eq < 0 {
+			continue
+		}
+		k := strings.TrimSpace(line[:eq])
+		v := strings.TrimSpace(line[eq+1:])
+		if k == "" {
+			continue
+		}
+		if len(v) >= 2 {
+			if (v[0] == '"' && v[len(v)-1] == '"') || (v[0] == '\'' && v[len(v)-1] == '\'') {
+				v = v[1 : len(v)-1]
+			}
+		}
+		out[k] = v
+	}
+	return out
 }
 
 func defaults() Config {
