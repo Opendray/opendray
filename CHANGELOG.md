@@ -10,6 +10,18 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.7], 2026-09-23
+
+### Added
+
+- `[session]` gains `env_dotenv_files` — a list of dotenv-style files
+  (`KEY=VAL` per line) whose every entry is injected into each spawned
+  session. This is the modular way to feed a whole bundle of host secrets
+  (e.g. a `secrets.env`) into sessions with one config line, instead of one
+  file per variable via `env_files`. Blank lines and `#` comments are
+  skipped, a leading `export ` is stripped, and surrounding quotes removed.
+  Precedence, lowest to highest: `env_dotenv_files` < `env` < `env_files`.
+
 ## [v2.17.6], 2026-09-23
 
 ### Fixed
