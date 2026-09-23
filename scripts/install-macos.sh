@@ -160,7 +160,7 @@ EOF
 
 ask_yes_no "Install Claude Code (npm @anthropic-ai/claude-code)?" "y" WANT_CLAUDE
 ask_yes_no "Install Codex CLI (npm @openai/codex)?"                "n" WANT_CODEX
-ask_yes_no "Enable Grok Build CLI (grok) — install manually after wizard?" "n" WANT_GROK
+ask_yes_no "Install Grok Build CLI (npm @xai-official/grok)?" "n" WANT_GROK
 
 INSTALLED_ANY=0
 npm_install_global() {
@@ -184,17 +184,8 @@ npm_install_global() {
 
 [ "$WANT_CLAUDE" = "y" ] && npm_install_global "@anthropic-ai/claude-code" claude
 [ "$WANT_CODEX"  = "y" ] && npm_install_global "@openai/codex"             codex
-
-# Grok Build (grok) is xAI's standalone binary (not npm). Surface the
-# one-liner rather than auto-fetching it into the wrong HOME.
-if [ "$WANT_GROK" = "y" ]; then
-    if have_cmd grok; then
-        log_ok "grok already on PATH: $(grok --version 2>/dev/null | head -1 || echo '?')"
-        INSTALLED_ANY=1
-    else
-        log_warn "Grok Build CLI (grok) is not on PATH. Install it with: curl -fsSL https://x.ai/cli/install.sh | bash — then run 'grok login'."
-    fi
-fi
+# Grok Build (grok) ships on npm as @xai-official/grok; install like the rest.
+[ "$WANT_GROK"   = "y" ] && npm_install_global "@xai-official/grok"        grok
 
 if [ "$INSTALLED_ANY" = "0" ] && ! have_cmd claude && ! have_cmd codex && ! have_cmd grok; then
     log_warn "No AI CLI installed. opendray will run but session spawn will fail until you install one."
