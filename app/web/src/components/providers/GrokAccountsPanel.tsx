@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CircleDot, Download, KeyRound, Loader2, Trash2 } from 'lucide-react'
+import {
+  CircleDot,
+  Download,
+  KeyRound,
+  Loader2,
+  Trash2,
+  UserRound,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Trans, useTranslation } from 'react-i18next'
 
@@ -198,6 +205,16 @@ GROK_HOME=~/.grok-accounts/<name> grok login   # complete xAI sign-in, then exit
                     </span>
                   )}
                 </div>
+                {a.oauth_email && (
+                  <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground/80 truncate">
+                    <UserRound className="size-2.5 shrink-0" />
+                    <span className="truncate">
+                      {a.oauth_name
+                        ? `${a.oauth_name} · ${a.oauth_email}`
+                        : a.oauth_email}
+                    </span>
+                  </div>
+                )}
                 <div className="text-[10px] font-mono text-muted-foreground/70 truncate">
                   {t('web.providers.grokAccounts.homeDir')}{' '}
                   {a.config_dir || 'default'}

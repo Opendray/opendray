@@ -10,6 +10,16 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.5], 2026-09-23
+
+### Added
+
+- Grok accounts now show the signed-in account holder (name and email) as a
+  tag in the Grok Accounts panel, read on each list from the on-disk grok
+  login (`<GROK_HOME>/auth.json`). This mirrors the Claude accounts panel's
+  `oauth_email` tag so you can tell which xAI account each row authenticates
+  as. Derived on every read, never persisted; empty when logged out.
+
 ## [v2.17.4], 2026-09-22
 
 ### Fixed

@@ -51,6 +51,12 @@ type Account struct {
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
 	// ActiveSessions counts non-terminal sessions pinned to this account.
 	ActiveSessions int `json:"active_sessions"`
+
+	// OAuthEmail / OAuthName tag the account with the xAI holder it is
+	// currently signed in as, read from <ConfigDir>/auth.json on each
+	// list (mirrors cliacct's oauth_email). Empty when logged out.
+	OAuthEmail string `json:"oauth_email,omitempty"`
+	OAuthName  string `json:"oauth_name,omitempty"`
 }
 
 // CreateRequest is the body for POST /api/v1/grok-accounts.
