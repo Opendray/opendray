@@ -147,7 +147,12 @@ func renderClaudeMCP(baseDir string, servers []MCPServer) ([]string, map[string]
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return nil, nil, fmt.Errorf("write claude mcp: %w", err)
 	}
-	return []string{"--mcp-config", path}, nil, nil
+	// --strict-mcp-config makes claude use ONLY the servers in claude-mcp.json
+	// and ignore every other source (the account's claude.ai connectors and
+	// the user ~/.claude.json). opendray owns the session's MCP set, so this
+	// keeps it deterministic and stops sessions surfacing "N MCP servers need
+	// authentication" for account connectors that can't be OAuth'd headlessly.
+	return []string{"--mcp-config", path, "--strict-mcp-config"}, nil, nil
 }
 
 // geminiManagedFile records which mcpServers entries inside the

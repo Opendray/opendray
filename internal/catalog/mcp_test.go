@@ -24,8 +24,20 @@ func TestRenderClaudeMCP_StdioServer(t *testing.T) {
 	if len(env) != 0 {
 		t.Errorf("env=%v, want none", env)
 	}
-	if len(args) != 2 || args[0] != "--mcp-config" {
+	if len(args) != 3 || args[0] != "--mcp-config" {
 		t.Fatalf("args=%v", args)
+	}
+	// opendray owns the MCP set for the session; --strict-mcp-config makes
+	// claude ignore the account's claude.ai connectors + user config so
+	// sessions don't surface "N servers need authentication" for them.
+	hasStrict := false
+	for _, a := range args {
+		if a == "--strict-mcp-config" {
+			hasStrict = true
+		}
+	}
+	if !hasStrict {
+		t.Errorf("expected --strict-mcp-config in args, got %v", args)
 	}
 	body, err := os.ReadFile(args[1])
 	if err != nil {
@@ -48,7 +60,7 @@ func TestRenderClaudeMCP_HTTPServer(t *testing.T) {
 			Headers: map[string]string{"Authorization": "Bearer xyz"}},
 	}
 	args, _, err := renderMCP("claude", dir, "", "", servers)
-	if err != nil || len(args) != 2 {
+	if err != nil || len(args) != 3 {
 		t.Fatalf("unexpected args=%v err=%v", args, err)
 	}
 	body, _ := os.ReadFile(args[1])
@@ -66,7 +78,7 @@ func TestRenderClaudeMCP_DropsInvalid(t *testing.T) {
 		{Name: "ok", Command: "node", Args: []string{"x.js"}}, // kept
 	}
 	args, _, err := renderMCP("claude", dir, "", "", servers)
-	if err != nil || len(args) != 2 {
+	if err != nil || len(args) != 3 {
 		t.Fatalf("args=%v err=%v", args, err)
 	}
 	body, _ := os.ReadFile(args[1])

@@ -10,6 +10,15 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Fixed
+
+- Claude sessions no longer surface "N MCP servers need authentication" for
+  the account's claude.ai connectors. opendray now spawns claude with
+  `--strict-mcp-config`, so a session uses only opendray-managed MCP servers
+  (the `--mcp-config` set) and ignores the account's claude.ai connectors and
+  user `~/.claude.json`. Those connectors require interactive OAuth that a
+  headless gateway session can't complete, so they only produced noise.
+
 ## [v2.17.7], 2026-09-23
 
 ### Added
