@@ -32,12 +32,14 @@ type providerSpec struct {
 
 // Order here is the same order the install wizard offers them. Only
 // npm-distributed CLIs live here (this command npm-updates them).
-// Binary-distributed CLIs (antigravity `agy`, xAI `grok`) self-update
-// via their own installers and are intentionally absent. Gemini was
-// removed in favour of antigravity, so it is no longer offered.
+// Antigravity `agy` is binary-distributed and self-updates via its own
+// installer, so it is intentionally absent. grok ships on npm as
+// @xai-official/grok, so it is included. Gemini was removed in favour of
+// antigravity, so it is no longer offered.
 var providerCatalog = []providerSpec{
 	{Bin: "claude", NpmPkg: "@anthropic-ai/claude-code", Display: "Claude Code"},
 	{Bin: "codex", NpmPkg: "@openai/codex", Display: "Codex CLI"},
+	{Bin: "grok", NpmPkg: "@xai-official/grok", Display: "Grok Build"},
 }
 
 func runProviders(args []string) int {
@@ -191,7 +193,7 @@ func providersUpdate(args []string) int {
 	}
 
 	if !checkedAny {
-		fmt.Fprintln(os.Stderr, "no providers matched --only — known names: claude, codex")
+		fmt.Fprintln(os.Stderr, "no providers matched --only — known names: claude, codex, grok")
 		return 2
 	}
 	return rc

@@ -10,6 +10,27 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.6], 2026-09-23
+
+### Fixed
+
+- The install wizard now actually installs the Grok Build CLI when you opt in.
+  Selecting Grok previously only printed a "install it manually" warning (it
+  assumed grok was distributed outside npm), so grok was missing after the
+  install even though you said yes. grok ships on npm as `@xai-official/grok`,
+  so it now installs the same way as Claude Code and Codex, in both the Linux
+  and macOS wizards.
+- `opendray providers list` / `opendray providers update` now include grok
+  (`@xai-official/grok`) alongside claude and codex.
+
+### Changed
+
+- npm package README clarifies that `npm install -g opendray` ships the gateway
+  binary only — it does not provision PostgreSQL, a service user, the AI CLIs,
+  or a system service. It points to the curl installer for a fully-managed
+  setup and documents installing at least one AI CLI (claude/codex/grok) for
+  the npm route. Also removed the stale "Gemini" reference.
+
 ## [v2.17.5], 2026-09-23
 
 ### Added

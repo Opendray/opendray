@@ -49,11 +49,13 @@ func TestContains(t *testing.T) {
 func TestProviderCatalogShape(t *testing.T) {
 	// Defensive: rest of the wizard / CI assumes these are the npm-
 	// distributed catalog. Gemini was removed (superseded by
-	// antigravity); binary CLIs (agy, grok) self-update and aren't here.
-	// If anyone adds a new npm provider, update this list.
+	// antigravity); agy is binary-distributed and self-updates, so it is
+	// intentionally absent. grok ships on npm (@xai-official/grok) and is
+	// included. If anyone adds a new npm provider, update this list.
 	expected := map[string]string{
 		"claude": "@anthropic-ai/claude-code",
 		"codex":  "@openai/codex",
+		"grok":   "@xai-official/grok",
 	}
 	if len(providerCatalog) != len(expected) {
 		t.Fatalf("providerCatalog has %d entries, expected %d", len(providerCatalog), len(expected))

@@ -202,7 +202,7 @@ EOF
 ask_yes_no "Install Claude Code (npm @anthropic-ai/claude-code)?" "y" WANT_CLAUDE
 ask_yes_no "Install Codex CLI (npm @openai/codex)?" "n" WANT_CODEX
 ask_yes_no "Enable Antigravity CLI (agy) — install manually after wizard?" "n" WANT_ANTIGRAVITY
-ask_yes_no "Enable Grok Build CLI (grok) — install manually after wizard?" "n" WANT_GROK
+ask_yes_no "Install Grok Build CLI (npm @xai-official/grok)?" "n" WANT_GROK
 
 INSTALLED_ANY=0
 
@@ -228,6 +228,9 @@ npm_install_global() {
 
 [ "$WANT_CLAUDE" = "y" ] && npm_install_global "@anthropic-ai/claude-code" claude
 [ "$WANT_CODEX"  = "y" ] && npm_install_global "@openai/codex" codex
+# Grok Build (grok) ships on npm as @xai-official/grok, so install it the
+# same way as claude/codex. `grok login` (below) still runs post-wizard.
+[ "$WANT_GROK"   = "y" ] && npm_install_global "@xai-official/grok" grok
 
 # Antigravity (agy) is a Google product distributed outside npm. We do not
 # fetch it automatically because the canonical install path may change; if
@@ -239,19 +242,6 @@ if [ "$WANT_ANTIGRAVITY" = "y" ]; then
         INSTALLED_ANY=1
     else
         log_warn "Antigravity CLI (agy) is not on PATH. Install it from https://antigravity.google.com, then run 'agy' once to log in. opendray will pick it up on the next session spawn."
-    fi
-fi
-
-# Grok Build (grok) is xAI's standalone binary, distributed via x.ai's
-# installer (not npm). Same handling as agy: we don't auto-fetch it
-# because it must land in the opendray service user's HOME to be
-# readable at spawn time; we surface the one-liner instead.
-if [ "$WANT_GROK" = "y" ]; then
-    if have_cmd grok; then
-        log_ok "grok already on PATH: $(grok --version 2>/dev/null | head -1 || echo 'version unknown')"
-        INSTALLED_ANY=1
-    else
-        log_warn "Grok Build CLI (grok) is not on PATH. Install it as the opendray user with: curl -fsSL https://x.ai/cli/install.sh | bash — then run 'grok login'. opendray will pick it up on the next session spawn."
     fi
 fi
 
