@@ -12,6 +12,12 @@ for the full rationale and what triggers a major bump.
 
 ### Fixed
 
+- Terminal sessions recover from a corrupted render on (re)connect. opendray
+  replays its output ring buffer to a new connection, which for a full-screen
+  (alt-screen) TUI like grok could begin mid-escape-sequence and garble the
+  screen (stray codes, fragmented boxes). The web terminal now forces a clean
+  repaint after the size settles (a brief one-column resize nudge → the TUI
+  redraws over the replay). Fixes grok sessions that opened messy / not filling.
 - Claude sessions no longer surface "N MCP servers need authentication" for
   the account's claude.ai connectors. opendray now spawns claude with
   `--strict-mcp-config`, so a session uses only opendray-managed MCP servers

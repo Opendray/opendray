@@ -245,6 +245,32 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         settleTimers.push(window.setTimeout(fitAndSend, d))
       }
     }
+    // Force a clean full repaint after (re)connect. On connect opendray
+    // replays its output ring buffer to the new subscriber; for a
+    // full-screen (alt-screen) TUI like grok that replay can begin
+    // mid-escape-sequence and corrupt the render (stray codes like a bare
+    // "238m", fragmented boxes). A resize to the SAME size is a no-op (the
+    // kernel only emits SIGWINCH when the size changes), so we briefly
+    // shrink one column then restore: two SIGWINCHes make the TUI clear and
+    // repaint over the garbage. Runs after settleSize has established the
+    // real size. Harmless for non-TUI sessions (a brief reflow).
+    const nudgeRepaint = () => {
+      if (!alive) return
+      const cols = term.cols
+      const rows = term.rows
+      if (cols <= 1 || rows <= 0) return
+      resizeSession(sessionId, cols - 1, rows).catch(() => {})
+      lastCols = cols - 1
+      lastRows = rows
+      settleTimers.push(
+        window.setTimeout(() => {
+          if (!alive) return
+          resizeSession(sessionId, cols, rows).catch(() => {})
+          lastCols = cols
+          lastRows = rows
+        }, 150),
+      )
+    }
 
     const ws = new BinaryWS(wsURL(`/api/v1/sessions/${sessionId}/stream`, token), {
       onMessage: (data) => {
@@ -277,6 +303,11 @@ export const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Termi
         lastCols = 0
         lastRows = 0
         settleSize()
+        // After the size settles, force a clean repaint so a TUI recovers
+        // from any corruption in the replayed ring buffer. Two attempts
+        // cover both fast- and slow-settling layouts.
+        settleTimers.push(window.setTimeout(nudgeRepaint, 700))
+        settleTimers.push(window.setTimeout(nudgeRepaint, 2000))
       },
     })
     wsRef.current = ws
