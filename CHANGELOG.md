@@ -10,6 +10,8 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.17.8], 2026-09-24
+
 ### Fixed
 
 - Terminal sessions recover from a corrupted render on (re)connect. opendray
