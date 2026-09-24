@@ -111,7 +111,13 @@ type Session struct {
 	// Theme is the operator's applied opendray theme ("light"/"dark") at
 	// spawn time. Advertised to the CLI via COLORFGBG so a TUI can pick a
 	// matching palette. Empty = unknown; the CLI keeps its own default.
-	Theme           string `json:"theme,omitempty"`
+	Theme string `json:"theme,omitempty"`
+	// TermCols/TermRows remember the last terminal size a client fit this
+	// session to (persisted from /resize). On (re)spawn the PTY starts at
+	// this size instead of the 80x24 floor, so a TUI like grok comes up
+	// already matching the last window. Zero = never sized; use the floor.
+	TermCols        uint16 `json:"term_cols,omitempty"`
+	TermRows        uint16 `json:"term_rows,omitempty"`
 	State           State  `json:"state"`
 	PID             int    `json:"pid,omitempty"`
 	ClaudeAccountID string `json:"claude_account_id,omitempty"`
