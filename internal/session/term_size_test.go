@@ -4,9 +4,9 @@ import "testing"
 
 func TestSpawnWinsize(t *testing.T) {
 	cases := []struct {
-		name             string
-		cols, rows       uint16
-		wantC, wantR     uint16
+		name         string
+		cols, rows   uint16
+		wantC, wantR uint16
 	}{
 		{"unset falls back to default", 0, 0, defaultPTYCols, defaultPTYRows},
 		{"remembered size is used", 144, 59, 144, 59},
