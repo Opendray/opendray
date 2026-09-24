@@ -10,6 +10,15 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+### Added
+
+- Sessions remember their last terminal size and (re)spawn at it instead of
+  the fixed 80x24 floor. opendray persists the size from each client resize;
+  on restart/reconnect the PTY starts already matching the last window, so a
+  full-screen TUI like grok comes up correctly sized instead of tiny-then-jump
+  (and never renders a stale small frame the browser must correct). Bounded to
+  a sane range; unset falls back to the floor.
+
 ## [v2.17.8], 2026-09-24
 
 ### Fixed

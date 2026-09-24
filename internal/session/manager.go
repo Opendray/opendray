@@ -849,7 +849,25 @@ func (m *Manager) Start(ctx context.Context, id string) (Session, error) {
 const (
 	defaultPTYCols uint16 = 80
 	defaultPTYRows uint16 = 24
+	// Upper sanity bounds for a remembered terminal size. A persisted
+	// value outside (0, max] is treated as bogus and falls back to the
+	// default, so a corrupt row can never spawn a giant/degenerate PTY.
+	maxPTYCols uint16 = 500
+	maxPTYRows uint16 = 300
 )
+
+// spawnWinsize picks the PTY window size to start a session at. It uses a
+// remembered size (persisted from the last client resize) when both
+// dimensions are valid, so a session — grok especially — comes up already
+// matching the last window instead of the 80x24 floor and only correcting
+// once the browser's fit lands. Anything unset or out of bounds falls back
+// to the default floor.
+func spawnWinsize(cols, rows uint16) pty.Winsize {
+	if cols > 0 && rows > 0 && cols <= maxPTYCols && rows <= maxPTYRows {
+		return pty.Winsize{Cols: cols, Rows: rows}
+	}
+	return pty.Winsize{Cols: defaultPTYCols, Rows: defaultPTYRows}
+}
 
 // spawn does the shared "PTY launch + bookkeeping" work for both
 // Create (insert row) and Start (reactivate row). When reactivate is
@@ -1005,7 +1023,8 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	// wedge or exit before any client resize arrived). The connected
 	// client's fit() sends the real size moments later; this is just a
 	// floor so the very first frame renders regardless of client timing.
-	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Rows: defaultPTYRows, Cols: defaultPTYCols})
+	initialWinsize := spawnWinsize(sess.TermCols, sess.TermRows)
+	ptmx, err := pty.StartWithSize(cmd, &initialWinsize)
 	if err != nil {
 		_ = os.RemoveAll(tempDir)
 		return nil, fmt.Errorf("pty.Start: %w", err)
@@ -1855,6 +1874,26 @@ func (m *Manager) Resize(_ context.Context, id string, cols, rows uint16) error 
 	}
 	if rs.vt != nil && cols > 0 && rows > 0 {
 		rs.vt.Resize(int(cols), int(rows))
+	}
+	// Remember a valid size so the next (re)spawn starts the PTY at it
+	// instead of the 80x24 floor. Deduped (only on change) to avoid a DB
+	// write per window-drag frame, and best-effort (a failed persist must
+	// not fail the live resize).
+	if cols > 0 && rows > 0 {
+		rs.sessMu.Lock()
+		changed := rs.sess.TermCols != cols || rs.sess.TermRows != rows
+		if changed {
+			rs.sess.TermCols = cols
+			rs.sess.TermRows = rows
+		}
+		rs.sessMu.Unlock()
+		if changed && m.store != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			if err := m.store.UpdateTermSize(ctx, id, cols, rows); err != nil {
+				m.log.Debug("persist term size failed", "session", id, "err", err)
+			}
+			cancel()
+		}
 	}
 	return pty.Setsize(rs.pty, &pty.Winsize{Cols: cols, Rows: rows})
 }

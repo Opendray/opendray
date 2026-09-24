@@ -27,6 +27,7 @@ const sessionSelect = `
            COALESCE(parent_session_id, ''),
            COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
            COALESCE(interrupt_reason, ''),
+           COALESCE(term_cols, 0), COALESCE(term_rows, 0),
            started_at, ended_at, exit_code
     FROM sessions`
 
@@ -265,6 +266,19 @@ func (s *sessionStore) UpdateGrokAccount(ctx context.Context, id, accountID stri
 	return nil
 }
 
+// UpdateTermSize persists the last client terminal size so a later spawn
+// starts the PTY at it instead of the 80x24 floor. Best-effort: callers
+// ignore the error (a missing row just means the session ended).
+func (s *sessionStore) UpdateTermSize(ctx context.Context, id string, cols, rows uint16) error {
+	_, err := s.pool.Exec(ctx, `
+        UPDATE sessions SET term_cols=$1, term_rows=$2 WHERE id=$3`,
+		int(cols), int(rows), id)
+	if err != nil {
+		return fmt.Errorf("update term size: %w", err)
+	}
+	return nil
+}
+
 // Delete permanently removes the row. Caller must ensure the session
 // is no longer running (Manager.Stop first).
 func (s *sessionStore) Delete(ctx context.Context, id string) error {
@@ -291,12 +305,14 @@ func scanSession(row rowScanner) (Session, error) {
 		stateStr   string
 		originStr  string
 		interruptR string
+		termCols   int
+		termRows   int
 	)
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd,
 		&s.WorkDir, &s.WorktreeBranch, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
 		&s.AntigravityAccountID, &s.GrokAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
-		&interruptR, &s.StartedAt, &endedAt, &exitCode)
+		&interruptR, &termCols, &termRows, &s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound
 	}
@@ -306,6 +322,8 @@ func scanSession(row rowScanner) (Session, error) {
 	s.State = State(stateStr)
 	s.Origin = Origin(originStr)
 	s.InterruptReason = InterruptCause(interruptR)
+	s.TermCols = uint16(termCols)
+	s.TermRows = uint16(termRows)
 	_ = json.Unmarshal(argsJSON, &s.Args)
 	if endedAt.Valid {
 		t := endedAt.Time
