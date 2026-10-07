@@ -562,7 +562,7 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// no-Prepare fast path even when nothing else needs one.
 	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
 
-	if !wantClaudeAccount && !wantAgyAccount && !wantGrokAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
+	if !wantClaudeAccount && !wantAgyAccount && !wantGrokAccount && !wantCodexAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
 		return info, nil
 	}
 
