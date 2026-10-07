@@ -184,6 +184,27 @@ class SessionsApi {
       throw toApiException(e);
     }
   }
+  // PATCH /api/v1/sessions/:id/opencode-account — rebind a running
+  // OpenCode session to a different credential bundle. Every opencode
+  // account shares one session DB, so carry_context: true resumes the same
+  // conversation (full history) under the new account — same default as
+  // the web switcher's carry toggle. The session id / tab is preserved.
+  // `accountId == ''` clears the binding (opencode's on-disk auth.json).
+  // Mirrors web switchOpenCodeAccount (app/shared/src/lib/sessions.ts).
+  Future<SessionSummary> switchOpenCodeAccount(
+    String id,
+    String accountId,
+  ) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/opencode-account',
+        data: {'account_id': accountId, 'carry_context': true},
+      );
+      return SessionSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
 
   // Upload a file (typically an image) and let the gateway hand
   // back the absolute path it landed at on the server's tempdir.

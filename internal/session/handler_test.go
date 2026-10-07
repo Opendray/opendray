@@ -189,6 +189,24 @@ func (f *fakeSvc) SwitchGrokAccount(_ context.Context, id, accountID string, car
 	return s, nil
 }
 
+func (f *fakeSvc) SwitchOpenCodeAccount(_ context.Context, id, accountID string, carryContext bool) (Session, error) {
+	f.lastCarryContext = carryContext
+	if f.switchErr != nil {
+		return Session{}, f.switchErr
+	}
+	s, ok := f.sessions[id]
+	if !ok {
+		return Session{}, ErrNotFound
+	}
+	if s.ProviderID != "opencode" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	s.OpenCodeAccountID = accountID
+	s.State = StateRunning
+	f.sessions[id] = s
+	return s, nil
+}
+
 func (f *fakeSvc) Buffer(_ context.Context, id string, since int64) (Replay, error) {
 	if _, ok := f.sessions[id]; !ok {
 		return Replay{}, ErrNotFound

@@ -242,7 +242,11 @@
         "tooltipCodex": "Switch Codex account (restarts the CLI process)",
         "menuTitleCodex": "Switch Codex account",
         "confirmSwitchCodex": "Switching account restarts the Codex CLI under a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?",
-        "confirmSwitchCodexCarry": "Switching account restarts the Codex CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?"
+        "confirmSwitchCodexCarry": "Switching account restarts the Codex CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?",
+        "confirmSwitchOpenCode": "Switching account restarts the OpenCode CLI under the new credentials with a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?",
+        "confirmSwitchOpenCodeCarry": "Switching account restarts the OpenCode CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?",
+        "tooltipOpenCode": "Switch the OpenCode account (credential set) this session uses",
+        "menuTitleOpenCode": "OpenCode account"
       },
       "inspector": {
         "tabs": {
@@ -1448,6 +1452,31 @@
         "removeFailedToast": "Remove failed",
         "toggleAria": "Toggle {name}",
         "removeAria": "Remove {name}"
+      },
+      "opencodeAccounts": {
+        "title": "OpenCode accounts",
+        "importLocal": "Import local",
+        "importLocalTooltip": "Add this host's current opencode credentials (auth.json) as an account",
+        "add": "Add",
+        "explainer": "Each account is a set of opencode provider credentials, injected per session. All accounts share opencode's session history, so you can switch a running session to another account and keep the conversation. Keys are encrypted at rest and never shown again.",
+        "namePlaceholder": "Account name (e.g. work)",
+        "providerPlaceholder": "opencode provider id (e.g. moonshotai)",
+        "apiKeyPlaceholder": "API key",
+        "cancel": "Cancel",
+        "save": "Save",
+        "loading": "Loading accounts…",
+        "empty": "No OpenCode accounts yet. Import this host's credentials or add a provider key.",
+        "unusable": "no usable credentials",
+        "addedToast": "OpenCode account added",
+        "addFailedToast": "Could not add OpenCode account",
+        "importedToast": "Imported local OpenCode credentials",
+        "importFailedToast": "Could not import local OpenCode credentials",
+        "toggleFailedToast": "Could not update OpenCode account",
+        "removedToast": "OpenCode account removed",
+        "removeFailedToast": "Could not remove OpenCode account",
+        "removeConfirm": "Remove OpenCode account \"{name}\"? Sessions pinned to it fall back to the default credentials.",
+        "removeAria": "Remove OpenCode account {name}",
+        "toggleAria": "Enable or disable OpenCode account {name}"
       }
     },
     "channels": {

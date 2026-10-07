@@ -189,3 +189,18 @@ export async function uploadSessionFile(
   })
 }
 
+// switchOpenCodeAccount rebinds a running opencode session to a different
+// credential bundle and respawns it. Every opencode account shares one
+// session DB, so carryContext, when true, resumes the SAME conversation
+// (full history) under the new account; false starts fresh. `accountId
+// === ''` clears the binding (opencode's own on-disk auth.json).
+export async function switchOpenCodeAccount(
+  id: string,
+  accountId: string,
+  carryContext = false,
+): Promise<Session> {
+  return api<Session>(`/api/v1/sessions/${id}/opencode-account`, {
+    method: 'PATCH',
+    body: { account_id: accountId, carry_context: carryContext },
+  })
+}

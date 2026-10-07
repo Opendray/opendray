@@ -256,6 +256,7 @@ type Manager struct {
 	bus                 *eventbus.Hub
 	store               *sessionStore
 	providers           ProviderResolver
+	opencodeSessions    OpenCodeSessionLocator     // optional; nil disables opencode resume
 	claudeAccounts      ClaudeAccountResolver      // optional; nil disables transcript migration + failover
 	antigravityAccounts AntigravityAccountResolver // optional; nil disables antigravity conversation resume/carry
 	codexAccounts       CodexAccountResolver       // optional; nil disables codex conversation carry on account switch
@@ -703,6 +704,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		AntigravityAccountID: req.AntigravityAccountID,
 		GrokAccountID:        req.GrokAccountID,
 		CodexAccountID:       req.CodexAccountID,
+		OpenCodeAccountID:    req.OpenCodeAccountID,
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
@@ -945,6 +947,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	if sess.ProviderID == "codex" {
 		accountID = sess.CodexAccountID
 	}
+	if sess.ProviderID == "opencode" {
+		accountID = sess.OpenCodeAccountID
+	}
 	resolveCtx := WithKBAdmin(WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model), sess.KBAdmin)
 	// Integration spawn profile: provider-agnostic MCP servers + system
 	// prompt + auto-approve declared on the creating integration, applied
@@ -1011,6 +1016,19 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 			// carries a recap instead.
 			if sess.ProviderID == "grok" && !GrokAccountSwitchFromContext(ctx) {
 				prepareCtx = WithGrokContinue(prepareCtx)
+			}
+			// OpenCode: resume the working dir's conversation with
+			// --session so a restart keeps the chat. The switch path
+			// pre-sets the id (or deliberately omits it when the operator
+			// declined to carry context); a plain restart looks it up.
+			if sess.ProviderID == "opencode" {
+				ocID := OpenCodeResumeSessionFromContext(ctx)
+				if ocID == "" && !openCodeSwitchFromContext(ctx) && m.opencodeSessions != nil {
+					ocID = m.opencodeSessions.LatestSessionID(ctx, workDir, time.Time{})
+				}
+				if ocID != "" {
+					prepareCtx = WithOpenCodeResumeSession(prepareCtx, ocID)
+				}
 			}
 		}
 		out, err := p.Prepare(prepareCtx, sess.ID, tempDir)
@@ -2415,4 +2433,116 @@ func flagName(tok string) (string, bool) {
 		return tok[:eq], true
 	}
 	return tok, true
+}
+
+// SwitchOpenCodeAccount terminates the running `opencode` process and
+// respawns it under a different opencode credential bundle (injected via
+// OPENCODE_AUTH_CONTENT). The session row, cwd, args and tab are preserved.
+//
+// Every opencode account shares the one session DB, so nothing needs
+// copying: when carryContext is set (the operator's consent to send the
+// prior conversation to the provider under the new account), the working
+// dir's opencode conversation is looked up and resumed with
+// `--session <id>` — the chat continues with its full history. Without
+// consent, or when no conversation is found, the new account starts
+// fresh. On respawn failure the session is rolled back onto the previous
+// account (never persisted the new value), like SwitchGrokAccount.
+func (m *Manager) SwitchOpenCodeAccount(ctx context.Context, id, newAccountID string, carryContext bool) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	current, err := m.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if current.ProviderID != "opencode" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	if current.OpenCodeAccountID == newAccountID {
+		// No-op: caller picked the binding already in place.
+		return current, nil
+	}
+
+	if err := m.Stop(ctx, id); err != nil {
+		return Session{}, fmt.Errorf("stop before switch: %w", err)
+	}
+
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+
+	// Find the conversation to carry BEFORE StartedAt is reset: prefer the
+	// opencode session active since this run began, so a concurrent
+	// opencode session in the same directory doesn't win.
+	var resumeID string
+	if carryContext && m.opencodeSessions != nil {
+		resumeID = m.opencodeSessions.LatestSessionID(ctx, sess.EffectiveWorkDir(), current.StartedAt)
+		if resumeID == "" {
+			m.log.Debug("opencode carry-context requested but no conversation found; switch starts fresh",
+				"session_id", id, "cwd", sess.EffectiveWorkDir())
+		}
+	}
+
+	sess.OpenCodeAccountID = newAccountID
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	spawnCtx := WithOpenCodeResumeSession(withOpenCodeSwitch(ctx), resumeID)
+	rs, err := m.spawn(spawnCtx, sess, true)
+	if err != nil {
+		// Rollback: bring the session back up on the account that was
+		// working, resuming the same conversation, so a bad switch never
+		// leaves the session dead.
+		m.log.Warn("opencode switch respawn failed; rolling back to previous account",
+			"session", id, "new_account", newAccountID, "old_account", current.OpenCodeAccountID, "err", err)
+		sess.OpenCodeAccountID = current.OpenCodeAccountID
+		sess.State = StateRunning
+		sess.EndedAt = nil
+		sess.ExitCode = nil
+		sess.StartedAt = time.Now().UTC()
+		if _, rbErr := m.spawn(WithOpenCodeResumeSession(withOpenCodeSwitch(ctx), resumeID), sess, true); rbErr != nil {
+			m.log.Error("opencode switch rollback respawn also failed",
+				"session", id, "old_account", current.OpenCodeAccountID, "err", rbErr)
+		}
+		return Session{}, fmt.Errorf("switch to opencode account %q failed (session restored to previous account): %w", newAccountID, err)
+	}
+
+	if err := m.store.UpdateOpenCodeAccount(ctx, id, newAccountID); err != nil {
+		m.log.Error("persist new opencode account failed",
+			"session", id, "account", newAccountID, "err", err)
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.account_switched",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"account_id":  newAccountID,
+		},
+	})
+	return rs.sess, nil
+}
+
+// OpenCodeSessionLocator finds the opencode conversation (session id) for
+// a working directory, so a restart or account switch can `--session` it
+// instead of starting blank. Implemented by opencodeacct.SessionLocator;
+// an interface keeps session free of that import. Nil disables resume
+// (opencode sessions then start fresh on restart/switch).
+type OpenCodeSessionLocator interface {
+	// LatestSessionID returns the most recently updated opencode session
+	// for workDir, preferring ones active at/after since; "" if none.
+	LatestSessionID(ctx context.Context, workDir string, since time.Time) string
+}
+
+// WithOpenCodeSessionLocator injects the locator used to resume opencode
+// conversations across restart + account switch.
+func WithOpenCodeSessionLocator(l OpenCodeSessionLocator) ManagerOption {
+	return func(m *Manager) { m.opencodeSessions = l }
 }
