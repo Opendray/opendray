@@ -7121,14 +7121,14 @@ class TranslationsWebSessionsAccountSwitcherEn {
 	/// en: 'Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn't carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?'
 	String get confirmSwitch => 'Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?';
 
-	/// en: 'Switching account restarts the Claude CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?'
-	String get confirmSwitchCarry => 'Switching account restarts the Claude CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?';
+	/// en: 'Switching account restarts the Claude CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchCarry => 'Switching account restarts the Claude CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?';
 
 	/// en: 'Carry over conversation context'
 	String get carryContext => 'Carry over conversation context';
 
-	/// en: 'Seeds the new account with a recap of your recent conversation. Prior content is sent to the provider under the new account.'
-	String get carryContextHelp => 'Seeds the new account with a recap of your recent conversation. Prior content is sent to the provider under the new account.';
+	/// en: 'Keeps this conversation going on the new account with its full history. Prior content is sent to the provider under the new account. Off = start fresh.'
+	String get carryContextHelp => 'Keeps this conversation going on the new account with its full history. Prior content is sent to the provider under the new account. Off = start fresh.';
 
 	/// en: 'Account switched'
 	String get switchedToast => 'Account switched';
@@ -13380,8 +13380,8 @@ class TranslationsSessionsDetailAccountSwitcherEn {
 	/// en: 'Switch account?'
 	String get confirmTitle => 'Switch account?';
 
-	/// en: 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).'
-	String get confirmBody => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).';
+	/// en: 'This restarts the CLI under the new account and resumes the same conversation — the full history carries over and is sent to the provider under that account. The session tab is kept.'
+	String get confirmBody => 'This restarts the CLI under the new account and resumes the same conversation — the full history carries over and is sent to the provider under that account. The session tab is kept.';
 
 	/// en: 'Switch'
 	String get confirmAction => 'Switch';
@@ -19772,9 +19772,9 @@ extension on Translations {
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI\'s system keychain / env',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·empty',
 			'web.sessions.accountSwitcher.confirmSwitch' => 'Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?',
-			'web.sessions.accountSwitcher.confirmSwitchCarry' => 'Switching account restarts the Claude CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchCarry' => 'Switching account restarts the Claude CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?',
 			'web.sessions.accountSwitcher.carryContext' => 'Carry over conversation context',
-			'web.sessions.accountSwitcher.carryContextHelp' => 'Seeds the new account with a recap of your recent conversation. Prior content is sent to the provider under the new account.',
+			'web.sessions.accountSwitcher.carryContextHelp' => 'Keeps this conversation going on the new account with its full history. Prior content is sent to the provider under the new account. Off = start fresh.',
 			'web.sessions.accountSwitcher.switchedToast' => 'Account switched',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => 'Now using @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => 'default',
@@ -22526,7 +22526,7 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.defaultShort' => 'default',
 			'sessions.detail.accountSwitcher.tokenEmpty' => 'no token',
 			'sessions.detail.accountSwitcher.confirmTitle' => 'Switch account?',
-			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).',
+			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account and resumes the same conversation — the full history carries over and is sent to the provider under that account. The session tab is kept.',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Switch',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancel',
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',

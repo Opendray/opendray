@@ -41,6 +41,7 @@ type Service interface {
 	SwitchClaudeAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	SwitchAntigravityAccount(ctx context.Context, id, accountID string) (Session, error)
 	SwitchGrokAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
+	SwitchCodexAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
@@ -111,13 +112,14 @@ type IntegrationDefaults interface {
 }
 
 type Handlers struct {
-	svc      Service
-	acct     ClaudeAccountChecker      // optional; nil disables early validation
-	agyAcct  AntigravityAccountChecker // optional; nil disables early validation
-	grokAcct GrokAccountChecker        // optional; nil disables early validation
-	defaults IntegrationDefaults       // optional; nil disables integration spawn defaults
-	log      *slog.Logger
-	upgrader websocket.Upgrader
+	svc       Service
+	acct      ClaudeAccountChecker      // optional; nil disables early validation
+	agyAcct   AntigravityAccountChecker // optional; nil disables early validation
+	grokAcct  GrokAccountChecker        // optional; nil disables early validation
+	codexAcct CodexAccountChecker       // optional; nil disables early validation
+	defaults  IntegrationDefaults       // optional; nil disables integration spawn defaults
+	log       *slog.Logger
+	upgrader  websocket.Upgrader
 }
 
 // HandlerOption mutates Handlers at construction time. Used so adding
@@ -137,6 +139,21 @@ func WithClaudeAccountChecker(c ClaudeAccountChecker) HandlerOption {
 // nil is equivalent to omitting the option (validation is skipped).
 func WithAntigravityAccountChecker(c AntigravityAccountChecker) HandlerOption {
 	return func(h *Handlers) { h.agyAcct = c }
+}
+
+// CodexAccountChecker is the minimal codexacct surface the session handler
+// needs to validate `codex_account_id` before a switch stops the running
+// session. Mirrors GrokAccountChecker; nil disables early validation.
+type CodexAccountChecker interface {
+	// CheckUsable returns nil only when id is an existing, enabled codex
+	// account with a login on disk.
+	CheckUsable(ctx context.Context, id string) error
+}
+
+// WithCodexAccountChecker wires the codexacct surface used to validate
+// codex_account_id in switchCodexAccount(). Nil skips validation.
+func WithCodexAccountChecker(c CodexAccountChecker) HandlerOption {
+	return func(h *Handlers) { h.codexAcct = c }
 }
 
 // WithGrokAccountChecker wires the grokacct surface used to validate
@@ -199,6 +216,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Patch("/claude-account", h.switchClaudeAccount)
 			r.Patch("/antigravity-account", h.switchAntigravityAccount)
 			r.Patch("/grok-account", h.switchGrokAccount)
+			r.Patch("/codex-account", h.switchCodexAccount)
 			r.Post("/uploads", h.upload)
 		})
 	})
@@ -714,6 +732,32 @@ func (h *Handlers) switchGrokAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	sess, err := h.svc.SwitchGrokAccount(r.Context(), id, req.AccountID, req.CarryContext)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
+}
+
+// switchCodexAccount handles PATCH /sessions/{id}/codex-account. Validates
+// the target up-front (so a bad id fails before the PTY is stopped), then
+// hands off to the manager, which stops `codex`, carries the conversation
+// rollout into the new account's CODEX_HOME when carry_context is true,
+// and respawns resuming it (`codex resume <thread-id>`).
+func (h *Handlers) switchCodexAccount(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req SwitchAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	if h.codexAcct != nil && req.AccountID != "" {
+		if err := h.codexAcct.CheckUsable(r.Context(), req.AccountID); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("account_id: %w", err))
+			return
+		}
+	}
+	sess, err := h.svc.SwitchCodexAccount(r.Context(), id, req.AccountID, req.CarryContext)
 	if err != nil {
 		h.respondError(w, err)
 		return

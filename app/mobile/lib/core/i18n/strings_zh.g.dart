@@ -3622,9 +3622,9 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 	@override String get defaultSubtitle => 'CLI 的系统 keychain / 环境变量';
 	@override String get tokenEmpty => '·未填';
 	@override String get confirmSwitch => '切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？';
-	@override String get confirmSwitchCarry => '切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitchCarry => '切换账户将重启 Claude CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
 	@override String get carryContext => '带入对话上下文';
-	@override String get carryContextHelp => '用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。';
+	@override String get carryContextHelp => '在新账户下延续这段对话及其完整历史。先前内容会以新账户发送给服务商。关闭 = 重新开始。';
 	@override String get switchedToast => '账号已切换';
 	@override String switchedDescription({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}';
 	@override String get switchedDefault => '默认';
@@ -6860,7 +6860,7 @@ class _TranslationsSessionsDetailAccountSwitcherZh extends TranslationsSessionsD
 	@override String get defaultShort => '默认';
 	@override String get tokenEmpty => '无 token';
 	@override String get confirmTitle => '切换账号？';
-	@override String get confirmBody => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。';
+	@override String get confirmBody => '这会在新账户下重启 CLI 并继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。会话标签页会保留。';
 	@override String get confirmAction => '切换';
 	@override String get cancel => '取消';
 	@override String switchedSnack({required Object account}) => '已切换到 ${account}';
@@ -10472,9 +10472,9 @@ extension on TranslationsZh {
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI 的系统 keychain / 环境变量',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·未填',
 			'web.sessions.accountSwitcher.confirmSwitch' => '切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？',
-			'web.sessions.accountSwitcher.confirmSwitchCarry' => '切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchCarry' => '切换账户将重启 Claude CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
 			'web.sessions.accountSwitcher.carryContext' => '带入对话上下文',
-			'web.sessions.accountSwitcher.carryContextHelp' => '用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。',
+			'web.sessions.accountSwitcher.carryContextHelp' => '在新账户下延续这段对话及其完整历史。先前内容会以新账户发送给服务商。关闭 = 重新开始。',
 			'web.sessions.accountSwitcher.switchedToast' => '账号已切换',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => '默认',
@@ -13223,7 +13223,7 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.defaultShort' => '默认',
 			'sessions.detail.accountSwitcher.tokenEmpty' => '无 token',
 			'sessions.detail.accountSwitcher.confirmTitle' => '切换账号？',
-			'sessions.detail.accountSwitcher.confirmBody' => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。',
+			'sessions.detail.accountSwitcher.confirmBody' => '这会在新账户下重启 CLI 并继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。会话标签页会保留。',
 			'sessions.detail.accountSwitcher.confirmAction' => '切换',
 			'sessions.detail.accountSwitcher.cancel' => '取消',
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',

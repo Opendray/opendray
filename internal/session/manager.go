@@ -70,8 +70,9 @@ type ManagerOption func(*Manager)
 // WithIdleThreshold sets how long a session must be silent before
 // session.idle fires. Pass 0 to disable idle detection.
 // ClaudeAccountResolver is the minimum cliacct surface the manager needs
-// for rate-limit auto-failover: marking/checking throttled accounts and
-// picking the next account to switch a throttled session to. Wiring it as
+// for rate-limit auto-failover (marking/checking throttled accounts and
+// picking the next account to switch a throttled session to) and for
+// carrying the conversation transcript across an account switch. Wiring it as
 // a small interface keeps session free of the cliacct ↔ session
 // cyclic-dep risk and lets tests inject a fake. Nil disables failover.
 type ClaudeAccountResolver interface {
@@ -88,6 +89,11 @@ type ClaudeAccountResolver interface {
 	// throttled session to. Returns "" + nil when no non-throttled
 	// enabled account is available.
 	PickFailoverClaudeAccount(ctx context.Context, currentAccountID string) (string, error)
+	// ResolveClaudeConfigDir returns the CLAUDE_CONFIG_DIR an account's
+	// transcripts live under ("" id → the CLI default ~/.claude), so
+	// SwitchClaudeAccount can move the conversation into the new
+	// account's projects tree and --resume it there.
+	ResolveClaudeConfigDir(ctx context.Context, accountID string) (string, error)
 }
 
 // WithClaudeAccountResolver injects the cliacct resolver the manager uses
@@ -118,11 +124,43 @@ type AntigravityAccountResolver interface {
 	CopyConversation(srcHome, dstHome, convID, cwd string) error
 }
 
+// CodexAccountResolver is the minimum codexacct surface the manager needs
+// to carry a codex conversation across an account switch: the credential
+// CODEX_HOME (where durable rollouts live) for an account id ("" → the
+// gateway default ~/.codex). Wired as an interface to keep session free of
+// a codexacct import. Nil → switches start a fresh conversation.
+type CodexAccountResolver interface {
+	AccountHome(ctx context.Context, id string) (string, error)
+}
+
+// WithCodexAccountResolver injects the codexacct resolver SwitchCodexAccount
+// uses to move the conversation rollout into the new account's home.
+func WithCodexAccountResolver(r CodexAccountResolver) ManagerOption {
+	return func(m *Manager) { m.codexAccounts = r }
+}
+
 // WithAntigravityAccountResolver injects the agyacct resolver used to
 // resume/carry antigravity conversations across restart + account switch.
 // Defaults to nil (sessions start fresh).
 func WithAntigravityAccountResolver(r AntigravityAccountResolver) ManagerOption {
 	return func(m *Manager) { m.antigravityAccounts = r }
+}
+
+// GrokAccountResolver is the minimum grokacct surface the manager needs to
+// carry a grok conversation across an account switch: each account is its
+// own GROK_HOME, and grok keeps sessions under <GROK_HOME>/sessions, so
+// the switch copies the session dir from the old home into the new one
+// and resumes it there. Nil → the switch falls back to a recap.
+type GrokAccountResolver interface {
+	// AccountHome returns the GROK_HOME for an account id ("" → the
+	// gateway user's default grok home).
+	AccountHome(ctx context.Context, id string) (string, error)
+}
+
+// WithGrokAccountResolver injects the grokacct resolver SwitchGrokAccount
+// uses to carry the conversation into the new account's GROK_HOME.
+func WithGrokAccountResolver(r GrokAccountResolver) ManagerOption {
+	return func(m *Manager) { m.grokAccounts = r }
 }
 
 // WithAutoFailoverEnabled flips on the rate-limit-aware auto-failover
@@ -220,6 +258,7 @@ type Manager struct {
 	providers           ProviderResolver
 	claudeAccounts      ClaudeAccountResolver      // optional; nil disables transcript migration + failover
 	antigravityAccounts AntigravityAccountResolver // optional; nil disables antigravity conversation resume/carry
+	codexAccounts       CodexAccountResolver       // optional; nil disables codex conversation carry on account switch
 	autoFailoverEnabled bool                       // when true + claudeAccounts != nil, rate-limit scanner is hot
 	spawnProfiles       IntegrationSpawnProfiles   // optional; nil disables integration spawn-profile injection
 
@@ -232,7 +271,8 @@ type Manager struct {
 	codexHistoryCfg       CodexHistoryConfig
 	antigravityHistoryCfg AntigravityHistoryConfig
 	grokHistoryCfg        GrokHistoryConfig
-	sessionEnv            map[string]string // gateway-level env injected into every session (e.g. Jev key)
+	grokAccounts          GrokAccountResolver // optional; nil → grok switch carries a recap only
+	sessionEnv            map[string]string   // gateway-level env injected into every session (e.g. Jev key)
 
 	// workspaces + wsResolver enable worktree isolation. Both nil →
 	// isolation requests are rejected and every session runs in cwd,
@@ -319,6 +359,9 @@ type runningSession struct {
 	vt vt10x.Terminal
 
 	tempDir string // per-session scratch dir, removed on session.ended
+	// onExit is the provider's PrepareOutput.OnExit hook, run by the pump
+	// before tempDir is removed. Nil for providers without one.
+	onExit func() string
 
 	subsMu sync.Mutex
 	subs   map[chan []byte]struct{}
@@ -659,6 +702,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		ClaudeAccountID:      req.ClaudeAccountID,
 		AntigravityAccountID: req.AntigravityAccountID,
 		GrokAccountID:        req.GrokAccountID,
+		CodexAccountID:       req.CodexAccountID,
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
@@ -898,6 +942,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	if sess.ProviderID == "grok" {
 		accountID = sess.GrokAccountID
 	}
+	if sess.ProviderID == "codex" {
+		accountID = sess.CodexAccountID
+	}
 	resolveCtx := WithKBAdmin(WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model), sess.KBAdmin)
 	// Integration spawn profile: provider-agnostic MCP servers + system
 	// prompt + auto-approve declared on the creating integration, applied
@@ -923,9 +970,11 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	}
 
 	var (
-		extraArgs []string
-		extraEnv  map[string]string
-		notices   []string
+		extraArgs   []string
+		leadingArgs []string
+		extraEnv    map[string]string
+		notices     []string
+		onExit      func() string
 	)
 	var preparedClaudeSessionID string
 	if p.Prepare != nil {
@@ -970,8 +1019,10 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 			return nil, fmt.Errorf("provider prepare: %w", err)
 		}
 		extraArgs = out.Args
+		leadingArgs = out.LeadingArgs
 		extraEnv = out.Env
 		notices = out.Notices
+		onExit = out.OnExit
 		// Capture the agent-side session UUID so the M18 transcript
 		// reader can anchor the right *.jsonl file. For fresh spawns
 		// this lands in the Insert below via sess.ClaudeSessionID;
@@ -1006,6 +1057,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	providerArgs := dropOverriddenFlags(p.Args, userArgs)
 	providerArgs = dropConflictingFlags(providerArgs, userArgs, p.Conflicts)
 	args := finalizeSpawnArgs(p.ID, providerArgs, extraArgs, userArgs)
+	if len(leadingArgs) > 0 {
+		args = append(append([]string(nil), leadingArgs...), args...)
+	}
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = workDir
@@ -1065,6 +1119,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		ring:         NewRing(DefaultRingSize),
 		vt:           vt10x.New(vt10x.WithSize(defaultVTCols, defaultVTRows)),
 		tempDir:      tempDir,
+		onExit:       onExit,
 		subs:         make(map[chan []byte]struct{}),
 		lastActivity: sess.StartedAt,
 		endedCh:      make(chan struct{}),
@@ -1402,10 +1457,11 @@ func (m *Manager) Stop(ctx context.Context, id string) error {
 
 // SwitchClaudeAccount terminates the running CLI process and respawns
 // it under a different Claude account binding, reusing the same row id
-// (so the UI tab and history stay intact). The CLI's in-memory
-// conversation state is lost — the underlying child process is
-// replaced. newAccountID == "" clears the binding (CLI uses its
-// system-keychain default).
+// (so the UI tab and history stay intact). The conversation transcript
+// is carried into the new account's config dir and resumed, so the
+// chat continues where it left off; only when there's no transcript to
+// carry does it start fresh. newAccountID == "" clears the binding
+// (CLI uses its system-keychain default).
 //
 // Rollback: if the respawn fails the row is left in 'stopped' state
 // with the *original* account_id preserved, so the user can manually
@@ -1440,35 +1496,49 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 		return Session{}, err
 	}
 
-	// Optionally capture a recap of the OLD conversation before we clear
-	// the binding below. Best-effort: a failure here must never block the
-	// switch, so BuildClaudeCarryover returns "" rather than erroring.
-	// Read it now while sess still holds the previous account's UUID +
-	// cwd — the transcript file persists on disk past Stop(), but the
-	// fields we key on are about to be overwritten.
-	var carryover string
-	if carryContext && sess.ClaudeSessionID != "" {
-		carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID, 0)
-		if carryover == "" {
-			m.log.Debug("carry-context requested but no transcript recap built",
-				"session_id", id, "old_claude_session_id", sess.ClaudeSessionID)
+	// Keep the conversation: Claude stores it per config dir at
+	// <CLAUDE_CONFIG_DIR>/projects/<workspace>/<uuid>.jsonl, and
+	// `claude --resume <uuid>` under the new account only needs that
+	// file present in the new account's tree. So link/copy it across and
+	// keep ClaudeSessionID — spawn(reactivate=true) then emits --resume
+	// and the session continues with its full history, as if nothing
+	// happened. Gated on carryContext: it's the operator's consent to
+	// send the prior conversation to the provider under the new account
+	// (off → fresh start, nothing carried). Read the old account from
+	// `current` before the binding is overwritten below.
+	resumable := false
+	if carryContext && m.claudeAccounts != nil && sess.ClaudeSessionID != "" {
+		oldCfg, errOld := m.claudeAccounts.ResolveClaudeConfigDir(ctx, current.ClaudeAccountID)
+		newCfg, errNew := m.claudeAccounts.ResolveClaudeConfigDir(ctx, newAccountID)
+		if errOld == nil && errNew == nil {
+			ok, err := migrateClaudeTranscript(oldCfg, newCfg, sess.ClaudeSessionID)
+			if err != nil {
+				m.log.Warn("claude transcript migration failed; switch starts a fresh conversation",
+					"session", id, "old_cfg", oldCfg, "new_cfg", newCfg, "err", err)
+			}
+			resumable = ok
 		}
 	}
 
-	// Switching account starts a FRESH conversation under the new
-	// credential. We can't carry the old one across via --resume:
-	// `claude --resume <uuid>` validates the UUID against the *target*
-	// account's own session registry (not just a transcript file), so
-	// resuming a UUID minted under the previous account fails with "No
-	// conversation found" and the CLI exits immediately — which left the
-	// session stopped AND unrestartable, since every Start retried the
-	// same doomed --resume. Clearing ClaudeSessionID makes the respawn
-	// mint a new `--session-id` under the new account (a session that
-	// account *does* know), so the switch comes up and later restarts
-	// resume it cleanly. When carry-context is on, the prior transcript
-	// is instead injected into the new session's system prompt below.
-	// The new UUID is captured + persisted by spawn().
-	sess.ClaudeSessionID = ""
+	// Fallback when the transcript couldn't be carried (none persisted
+	// yet, no resolver, migration error): start a FRESH conversation.
+	// Resuming a UUID whose transcript isn't in the new account's tree
+	// fails with "No conversation found" and the CLI exits — and every
+	// restart would retry the same doomed --resume (#331). Clearing
+	// ClaudeSessionID makes the respawn mint a new --session-id instead.
+	// If the operator opted into carry-context, a recap of the old
+	// transcript is injected into the new session's system prompt.
+	var carryover string
+	if !resumable {
+		if carryContext && sess.ClaudeSessionID != "" {
+			carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID, 0)
+			if carryover == "" {
+				m.log.Debug("carry-context requested but no transcript recap built",
+					"session_id", id, "old_claude_session_id", sess.ClaudeSessionID)
+			}
+		}
+		sess.ClaudeSessionID = ""
+	}
 	sess.ClaudeAccountID = newAccountID
 	sess.State = StateRunning
 	sess.EndedAt = nil
@@ -1611,11 +1681,12 @@ func (m *Manager) SwitchAntigravityAccount(ctx context.Context, id, newAccountID
 // 'stopped' with the ORIGINAL account (never persisted the new value) so
 // the user can Restart on it.
 //
-// When carryContext is set, a recap of the prior conversation is read
-// from the old account's transcript (best-effort) and injected into the
-// fresh session via grok --rules — parity with SwitchClaudeAccount (RFC
-// #541). grok can't --resume across accounts (the session id isn't in
-// the new account's store), so a recap is the carry mechanism.
+// When carryContext is set (the operator's consent to send the prior
+// conversation to the provider under the new account), the session's
+// directory is copied into the new account's GROK_HOME and resumed there
+// with --resume <id>, so the conversation continues with full history —
+// parity with SwitchClaudeAccount. Only when that copy isn't possible is
+// a recap of the old transcript injected via grok --rules instead.
 func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string, carryContext bool) (Session, error) {
 	m.mu.RLock()
 	if m.closed {
@@ -1645,17 +1716,44 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 		return Session{}, err
 	}
 
-	// Capture a recap of the OLD conversation before rebinding. The grok
-	// process is stopped (above) but its transcript persists on disk under
-	// the old account's GROK_HOME; LatestGrokSessionID picks the just-used
-	// session by transcript mtime (Q1). Best-effort: any miss degrades to
-	// a clean-slate switch, never blocks it.
-	var carryover string
+	// Carry the OLD conversation before rebinding. The grok process is
+	// stopped (above) but its session dir persists under the old
+	// account's GROK_HOME; the just-used session is the freshest one for
+	// this cwd there (Q1). Scope the lookup to the old home when we know
+	// it, so a newer session of the same cwd under another account can't
+	// be picked. Best-effort: any miss degrades to a recap, then to a
+	// clean slate — never blocks the switch.
+	var (
+		carryover string
+		oldSID    string
+		resumeSID string
+	)
 	if carryContext {
-		if sid := LatestGrokSessionID(m.grokHistoryCfg, sess.EffectiveWorkDir()); sid != "" {
-			carryover = BuildGrokCarryover(m.grokHistoryCfg, sess.EffectiveWorkDir(), sid, 0)
+		histCfg := m.grokHistoryCfg
+		var oldHome, newHome string
+		if m.grokAccounts != nil {
+			oh, oerr := m.grokAccounts.AccountHome(ctx, current.GrokAccountID)
+			nh, nerr := m.grokAccounts.AccountHome(ctx, newAccountID)
+			if oerr == nil && nerr == nil && oh != "" && nh != "" {
+				oldHome, newHome = oh, nh
+				histCfg = GrokHistoryConfig{SessionsRoots: []string{filepath.Join(oldHome, "sessions")}}
+			}
 		}
-		if carryover == "" {
+		oldSID = LatestGrokSessionID(histCfg, sess.EffectiveWorkDir())
+		if oldSID != "" && oldHome != "" {
+			ok, err := migrateGrokSession(oldHome, newHome, sess.EffectiveWorkDir(), oldSID)
+			if err != nil {
+				m.log.Warn("grok session migration failed; switch carries a recap instead",
+					"session", id, "grok_session", oldSID, "err", err)
+			}
+			if ok {
+				resumeSID = oldSID
+			}
+		}
+		if resumeSID == "" && oldSID != "" {
+			carryover = BuildGrokCarryover(histCfg, sess.EffectiveWorkDir(), oldSID, 0)
+		}
+		if resumeSID == "" && carryover == "" {
 			m.log.Debug("grok carry-context requested but no transcript recap built",
 				"session_id", id, "cwd", sess.EffectiveWorkDir())
 		}
@@ -1667,13 +1765,13 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 	sess.ExitCode = nil
 	sess.StartedAt = time.Now().UTC()
 
-	// Thread the recap (if any) into the respawn only — one-shot, absent
-	// from later restarts. The adapter's grok arm injects it as a coalesced
-	// --rules fragment (see injectCarryoverFor / injectAmbientMemoryFor).
-	// Mark this as an account switch so spawn() does NOT add --continue:
-	// the new account's home has no session for this cwd to resume, and
-	// the recap is the carry mechanism across accounts.
-	spawnCtx := WithCarryoverContext(WithGrokAccountSwitch(ctx), carryover)
+	// Resume the carried session by id, or thread the recap (if any) into
+	// the respawn only — one-shot, absent from later restarts, which
+	// --continue the new home's freshest session (the resumed one). The
+	// adapter's grok arm injects a recap as a coalesced --rules fragment
+	// (see injectCarryoverFor / injectAmbientMemoryFor). Marked as an
+	// account switch so spawn() does NOT add a blind --continue.
+	spawnCtx := WithGrokResumeSession(WithCarryoverContext(WithGrokAccountSwitch(ctx), carryover), resumeSID)
 	rs, err := m.spawn(spawnCtx, sess, true)
 	if err != nil {
 		// Rollback: the new account failed to spawn. Restore the previous
@@ -1687,7 +1785,9 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 		sess.EndedAt = nil
 		sess.ExitCode = nil
 		sess.StartedAt = time.Now().UTC()
-		if _, rbErr := m.spawn(WithGrokAccountSwitch(ctx), sess, true); rbErr != nil {
+		// The old session is still in the old home: resume it so the
+		// rollback keeps the conversation too.
+		if _, rbErr := m.spawn(WithGrokResumeSession(WithGrokAccountSwitch(ctx), oldSID), sess, true); rbErr != nil {
 			m.log.Error("grok switch rollback respawn also failed",
 				"session", id, "old_account", current.GrokAccountID, "err", rbErr)
 		}
@@ -1697,6 +1797,115 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 	if err := m.store.UpdateGrokAccount(ctx, id, newAccountID); err != nil {
 		m.log.Error("persist new grok account failed",
 			"session", id, "account", newAccountID, "err", err)
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.account_switched",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"account_id":  newAccountID,
+		},
+	})
+	return rs.sess, nil
+}
+
+// SwitchCodexAccount terminates the running `codex` process and respawns
+// it under a different codex account binding (a different credential
+// CODEX_HOME). The session row, cwd, args and slot are preserved.
+//
+// With carryContext the conversation continues: Stop runs the codex exit
+// hook, which syncs the scratch home's rollouts into the OLD account's
+// home and records the thread id on the row (ClaudeSessionID); the rollout
+// is then copied into the NEW account's home and the respawn resumes it
+// (`codex resume <thread-id>`), so the chat keeps its full history.
+// carryContext is the operator's consent to send the prior conversation to
+// the provider under the new account — off (or no rollout to carry) starts
+// fresh, never a resume that would exit with "no rollout found".
+//
+// On respawn failure the previous account (and thread) is restored and
+// brought back up, so a bad switch never leaves the session dead.
+func (m *Manager) SwitchCodexAccount(ctx context.Context, id, newAccountID string, carryContext bool) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	current, err := m.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if current.ProviderID != "codex" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	if current.CodexAccountID == newAccountID {
+		// No-op: caller picked the binding already in place.
+		return current, nil
+	}
+
+	if err := m.Stop(ctx, id); err != nil {
+		return Session{}, fmt.Errorf("stop before switch: %w", err)
+	}
+
+	// Re-read after Stop: the exit hook persisted the thread id.
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	prevThread := sess.ClaudeSessionID
+
+	resumable := false
+	if carryContext && sess.ClaudeSessionID != "" && m.codexAccounts != nil {
+		oldHome, errOld := m.codexAccounts.AccountHome(ctx, current.CodexAccountID)
+		newHome, errNew := m.codexAccounts.AccountHome(ctx, newAccountID)
+		if errOld == nil && errNew == nil {
+			ok, err := MigrateCodexRollout(oldHome, newHome, sess.ClaudeSessionID)
+			if err != nil {
+				m.log.Warn("codex rollout migration failed; switch starts a fresh conversation",
+					"session", id, "old_home", oldHome, "new_home", newHome, "err", err)
+			}
+			resumable = ok
+		}
+	}
+	if !resumable {
+		sess.ClaudeSessionID = ""
+	}
+
+	sess.CodexAccountID = newAccountID
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	rs, err := m.spawn(ctx, sess, true)
+	if err != nil {
+		m.log.Warn("codex switch respawn failed; rolling back to previous account",
+			"session", id, "new_account", newAccountID, "old_account", current.CodexAccountID, "err", err)
+		sess.CodexAccountID = current.CodexAccountID
+		sess.ClaudeSessionID = prevThread
+		sess.State = StateRunning
+		sess.EndedAt = nil
+		sess.ExitCode = nil
+		sess.StartedAt = time.Now().UTC()
+		if _, rbErr := m.spawn(ctx, sess, true); rbErr != nil {
+			m.log.Error("codex switch rollback respawn also failed",
+				"session", id, "old_account", current.CodexAccountID, "err", rbErr)
+		}
+		return Session{}, fmt.Errorf("switch to codex account %q failed (session restored to previous account): %w", newAccountID, err)
+	}
+
+	if err := m.store.UpdateCodexAccount(ctx, id, newAccountID); err != nil {
+		m.log.Error("persist new codex account failed",
+			"session", id, "account", newAccountID, "err", err)
+	}
+	if !resumable && prevThread != "" {
+		// The new account starts a fresh thread; drop the old id so a later
+		// restart doesn't look for it (the exit hook records the new one).
+		if err := m.store.SetClaudeSessionID(ctx, id, ""); err != nil {
+			m.log.Warn("clear codex thread id after fresh switch failed", "session", id, "err", err)
+		}
 	}
 
 	m.bus.Publish(eventbus.Event{

@@ -1,4 +1,4 @@
-package grokacct
+package codexacct
 
 import (
 	"context"
@@ -15,12 +15,13 @@ import (
 )
 
 // Service is the public surface used by HTTP handlers and the
-// SessionProvider adapter. It hides the on-disk GROK_HOME plumbing.
+// SessionProvider adapter. It hides the on-disk CODEX_HOME plumbing.
 type Service struct {
 	log         *slog.Logger
 	store       *store
 	bus         *eventbus.Hub
-	accountsDir string // root for derived ConfigDir; "" → ~/.grok-accounts
+	accountsDir string // root for derived ConfigDir; "" → ~/.codex-accounts
+	codexBin    string // codex executable for SetAPIKey; "" → PATH lookup
 
 	// importMu serializes ImportLocal() so concurrent invocations
 	// (startup scan + UI "Import local" click) don't race on the
@@ -32,10 +33,16 @@ type Service struct {
 type Option func(*Service)
 
 // WithAccountsDir overrides the directory used to derive default
-// ConfigDir (per-account GROK_HOME) for new accounts. Empty value falls
-// back to ~/.grok-accounts.
+// ConfigDir (per-account CODEX_HOME) for new accounts. Empty value falls
+// back to ~/.codex-accounts.
 func WithAccountsDir(dir string) Option {
 	return func(s *Service) { s.accountsDir = dir }
+}
+
+// WithCodexBinary pins the codex executable SetAPIKey runs. Empty (the
+// default) resolves `codex` from PATH at call time.
+func WithCodexBinary(path string) Option {
+	return func(s *Service) { s.codexBin = path }
 }
 
 func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ...Option) *Service {
@@ -43,7 +50,7 @@ func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ..
 		log = slog.Default()
 	}
 	s := &Service{
-		log:   log.With("component", "grokacct"),
+		log:   log.With("component", "codexacct"),
 		store: newStore(pool),
 		bus:   bus,
 	}
@@ -54,7 +61,7 @@ func NewService(pool *pgxpool.Pool, bus *eventbus.Hub, log *slog.Logger, opts ..
 }
 
 // resolveAccountsDir returns the configured root, falling back to
-// ~/.grok-accounts when unset. Returns "" only when HOME is also unset
+// ~/.codex-accounts when unset. Returns "" only when HOME is also unset
 // (test environments must inject WithAccountsDir explicitly).
 func (s *Service) resolveAccountsDir() string {
 	if s.accountsDir != "" {
@@ -64,7 +71,7 @@ func (s *Service) resolveAccountsDir() string {
 	if home == "" {
 		return ""
 	}
-	return filepath.Join(home, ".grok-accounts")
+	return filepath.Join(home, ".codex-accounts")
 }
 
 // AccountsDir is the public version of resolveAccountsDir, exposed so the
@@ -146,7 +153,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (Account, error
 	s.decorate(&created, sessionStats{}) // brand-new row → no sessions yet
 	if s.bus != nil {
 		s.bus.Publish(eventbus.Event{
-			Topic: "grok_account.created",
+			Topic: "codex_account.created",
 			Data:  map[string]any{"id": created.ID, "name": created.Name},
 		})
 	}
@@ -188,7 +195,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	}
 	if s.bus != nil {
 		s.bus.Publish(eventbus.Event{
-			Topic: "grok_account.deleted",
+			Topic: "codex_account.deleted",
 			Data:  map[string]any{"id": id},
 		})
 	}
@@ -209,8 +216,8 @@ func (s *Service) CheckEnabled(ctx context.Context, id string) error {
 	return nil
 }
 
-// ResolveSpawnHome returns the GROK_HOME directory to inject when spawning
-// `grok` for account id. The directory must exist and contain a logged-in
+// ResolveSpawnHome returns the CODEX_HOME directory to inject when spawning
+// `codex` for account id. The directory must exist and contain a logged-in
 // token; otherwise we error with a guided-login hint rather than spawning
 // a session that would immediately demand interactive auth. Used at
 // session spawn time (catalog adapter); not exposed over HTTP.
@@ -225,26 +232,7 @@ func (s *Service) ResolveSpawnHome(ctx context.Context, id string) (string, erro
 	return selectSpawnHome(a.Name, a.ConfigDir)
 }
 
-// AccountHome returns the GROK_HOME an account's state (auth + sessions)
-// lives under, without the enabled/logged-in checks ResolveSpawnHome
-// applies — an account switch must still read the conversation out of
-// the account it's leaving. "" id → the gateway user's own grok home.
-// Implements session.GrokAccountResolver.
-func (s *Service) AccountHome(ctx context.Context, id string) (string, error) {
-	if id == "" {
-		return defaultGrokHome(), nil
-	}
-	a, err := s.store.Get(ctx, id)
-	if err != nil {
-		return "", err
-	}
-	if a.ConfigDir == "" {
-		return defaultGrokHome(), nil
-	}
-	return a.ConfigDir, nil
-}
-
-// ImportLocal scans the accounts dir (and the gateway user's own grok
+// ImportLocal scans the accounts dir (and the gateway user's own codex
 // home) for logged-in accounts and creates a metadata row for any not yet
 // known. Idempotent; safe to call on startup and from the UI.
 func (s *Service) ImportLocal(ctx context.Context) ([]Account, error) {

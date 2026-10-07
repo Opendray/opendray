@@ -119,9 +119,12 @@ class SessionsApi {
 
   // PATCH /api/v1/sessions/:id/claude-account — rebind a running Claude
   // session to a different OAuth account. The gateway terminates the
-  // current child process and respawns it under the new credential, so
-  // the in-CLI conversation context is lost (the session id / tab is
-  // preserved). `accountId == ''` clears the binding (system default).
+  // current child process and respawns it under the new credential.
+  // carry_context: true carries the conversation transcript into the new
+  // account and resumes it, so the chat continues with its full history
+  // (same default as the web switcher's "carry over" toggle). The session
+  // id / tab is preserved. `accountId == ''` clears the binding (system
+  // default).
   // Mirrors web switchClaudeAccount (app/shared/src/lib/sessions.ts).
   Future<SessionSummary> switchClaudeAccount(
     String id,
@@ -130,7 +133,7 @@ class SessionsApi {
     try {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/api/v1/sessions/$id/claude-account',
-        data: {'account_id': accountId},
+        data: {'account_id': accountId, 'carry_context': true},
       );
       return SessionSummary.fromJson(res.data ?? {});
     } on Object catch (e) {
@@ -153,6 +156,28 @@ class SessionsApi {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/api/v1/sessions/$id/antigravity-account',
         data: {'account_id': accountId},
+      );
+      return SessionSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PATCH /api/v1/sessions/:id/codex-account — rebind a running Codex
+  // session to a different account (CODEX_HOME login). carry_context: true
+  // carries the conversation rollout into the new account and resumes it
+  // (`codex resume <thread-id>`), so the chat keeps its full history — the
+  // same default as the web switcher's carry toggle. The session id / tab
+  // is preserved. `accountId == ''` clears the binding (gateway default
+  // ~/.codex). Mirrors web switchCodexAccount (app/shared/src/lib/sessions.ts).
+  Future<SessionSummary> switchCodexAccount(
+    String id,
+    String accountId,
+  ) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/codex-account',
+        data: {'account_id': accountId, 'carry_context': true},
       );
       return SessionSummary.fromJson(res.data ?? {});
     } on Object catch (e) {

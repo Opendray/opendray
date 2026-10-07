@@ -46,6 +46,20 @@ type PrepareOutput struct {
 	// support pre-assigned session IDs (e.g. codex).
 	ClaudeSessionID string
 
+	// LeadingArgs are placed BEFORE every other spawn arg — for CLIs whose
+	// resume form is a subcommand (`codex resume <thread-id> [flags]`),
+	// which must come first on the command line.
+	LeadingArgs []string
+
+	// OnExit, when set, runs once after the CLI process ends and before
+	// the per-session temp dir is removed — the provider's chance to move
+	// durable state (e.g. codex conversation rollouts and a refreshed
+	// auth.json written into a scratch CODEX_HOME) out of the temp dir.
+	// It returns the agent-side session id observed for this run ("" if
+	// none); the manager persists it as the session's ClaudeSessionID so a
+	// later restart / account switch can resume that conversation.
+	OnExit func() string
+
 	// Notices are one-time operator hints surfaced at the top of the
 	// session terminal (and the ring buffer / transcript) before the
 	// CLI's own output — e.g. "the CLI will disable MCP here because the
@@ -295,10 +309,11 @@ func AntigravityResumeConversationFromContext(ctx context.Context) string {
 
 // carryoverContextCtxKey carries a block of prior-conversation text to
 // seed a freshly spawned session's system prompt. Set ONLY by
-// SwitchClaudeAccount when the operator opts into "carry context":
-// switching accounts can't --resume the old conversation (the UUID
-// isn't in the new account's registry), so instead we read the old
-// transcript and inject a recap via --append-system-prompt. It's a
+// SwitchClaudeAccount when the operator opts into "carry context" AND
+// the old transcript couldn't be carried into the new account's config
+// dir (normally it is, and the switch --resumes the same conversation),
+// so instead we read the old transcript and inject a recap via
+// --append-system-prompt. It's a
 // one-shot — present only on the switch respawn, absent on later
 // restarts (which --resume the new account's own UUID, whose
 // transcript already contains the seeded recap).
@@ -340,6 +355,31 @@ func WithGrokContinue(ctx context.Context) context.Context {
 func GrokContinueFromContext(ctx context.Context) bool {
 	v, _ := ctx.Value(grokContinueCtxKey{}).(bool)
 	return v
+}
+
+// grokResumeSessionCtxKey carries the grok session UUID an account-switched
+// grok session should resume, so the adapter emits `--resume <id>` (the
+// session dir was just copied into the new account's GROK_HOME). Explicit
+// rather than --continue: the new home may already hold other sessions
+// for this cwd, and --continue would pick whichever is most recent.
+type grokResumeSessionCtxKey struct{}
+
+// WithGrokResumeSession returns a derived context carrying the grok
+// session id to resume. Empty is a no-op.
+func WithGrokResumeSession(ctx context.Context, id string) context.Context {
+	if id == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, grokResumeSessionCtxKey{}, id)
+}
+
+// GrokResumeSessionFromContext returns the id set by
+// WithGrokResumeSession, or "".
+func GrokResumeSessionFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(grokResumeSessionCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
 }
 
 // grokAccountSwitchCtxKey marks a grok respawn as an account switch, so
