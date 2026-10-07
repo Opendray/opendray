@@ -25,6 +25,7 @@ const sessionSelect = `
            COALESCE(antigravity_account_id, ''),
            COALESCE(grok_account_id, ''),
            COALESCE(codex_account_id, ''),
+           COALESCE(opencode_account_id, ''),
            COALESCE(parent_session_id, ''),
            COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
            COALESCE(interrupt_reason, ''),
@@ -50,8 +51,8 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
              args, state, pid,
              claude_account_id, claude_session_id, antigravity_account_id,
              parent_session_id, origin, integration_id, started_at,
-             grok_account_id, codex_account_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+             grok_account_id, codex_account_id, opencode_account_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
 		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Model,
 		sess.Cwd, sess.WorkDir, sess.WorktreeBranch,
 		argsJSON, string(sess.State), nullableInt(sess.PID),
@@ -61,7 +62,8 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 		string(origin), nullableString(sess.IntegrationID),
 		sess.StartedAt,
 		nullableString(sess.GrokAccountID),
-		nullableString(sess.CodexAccountID))
+		nullableString(sess.CodexAccountID),
+		nullableString(sess.OpenCodeAccountID))
 	if err != nil {
 		return fmt.Errorf("insert session: %w", err)
 	}
@@ -281,6 +283,19 @@ func (s *sessionStore) UpdateGrokAccount(ctx context.Context, id, accountID stri
 	return nil
 }
 
+func (s *sessionStore) UpdateOpenCodeAccount(ctx context.Context, id, accountID string) error {
+	res, err := s.pool.Exec(ctx, `
+        UPDATE sessions SET opencode_account_id=$1 WHERE id=$2`,
+		nullableString(accountID), id)
+	if err != nil {
+		return fmt.Errorf("update opencode account: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // UpdateTermSize persists the last client terminal size so a later spawn
 // starts the PTY at it instead of the 80x24 floor. Best-effort: callers
 // ignore the error (a missing row just means the session ended).
@@ -326,7 +341,7 @@ func scanSession(row rowScanner) (Session, error) {
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd,
 		&s.WorkDir, &s.WorktreeBranch, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
-		&s.AntigravityAccountID, &s.GrokAccountID, &s.CodexAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
+		&s.AntigravityAccountID, &s.GrokAccountID, &s.CodexAccountID, &s.OpenCodeAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
 		&interruptR, &termCols, &termRows, &s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound

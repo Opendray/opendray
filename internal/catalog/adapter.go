@@ -67,10 +67,15 @@ type SessionProvider struct {
 	// CODEX_HOME login and keeps its conversation rollouts there. Nil
 	// disables codex multi-account. Set via WithCodexAccounts.
 	codexAccounts *codexacct.Service
-	skills        *skills.Loader // optional; nil disables skill injection
-	mcps          *mcp.Loader    // optional; nil disables vault MCP injection
-	secretsFile   string         // dotenv file for ${KEY} substitution; empty = no substitution
-	log           *slog.Logger
+	// opencodeAccounts, when set, enables opencode multi-account: a
+	// session bound to an opencode account spawns `opencode` with
+	// OPENCODE_AUTH_CONTENT set to that account's credential bundle.
+	// Nil disables it. Set via WithOpenCodeAccounts.
+	opencodeAccounts OpenCodeAuthResolver
+	skills           *skills.Loader // optional; nil disables skill injection
+	mcps             *mcp.Loader    // optional; nil disables vault MCP injection
+	secretsFile      string         // dotenv file for ${KEY} substitution; empty = no substitution
+	log              *slog.Logger
 
 	// memory describes the auto-attached memory MCP server. Zero
 	// value (Enabled=false) skips injection. Set via
@@ -246,6 +251,40 @@ func NewSessionProvider(
 // default). Returns the receiver for fluent setup at app startup.
 func (sp *SessionProvider) WithMemoryAutoAttach(cfg MemoryAutoAttach) *SessionProvider {
 	sp.memory = cfg
+	return sp
+}
+
+// OpenCodeAuthResolver is the opencodeacct surface the adapter needs:
+// the decrypted credential bundle to inject as OPENCODE_AUTH_CONTENT.
+type OpenCodeAuthResolver interface {
+	ResolveSpawnAuth(ctx context.Context, id string) (string, error)
+}
+
+// injectOpenCodeAccount sets OPENCODE_AUTH_CONTENT to the bound account's
+// credential bundle, which REPLACES opencode's on-disk auth.json for this
+// process only. No-op for an empty account id (opencode's own auth).
+// The value is never logged.
+func injectOpenCodeAccount(ctx context.Context, r OpenCodeAuthResolver, accountID string, out *session.PrepareOutput) error {
+	if accountID == "" || r == nil {
+		return nil
+	}
+	auth, err := r.ResolveSpawnAuth(ctx, accountID)
+	if err != nil {
+		return fmt.Errorf("opencode account %s: %w", accountID, err)
+	}
+	if out.Env == nil {
+		out.Env = map[string]string{}
+	}
+	out.Env["OPENCODE_AUTH_CONTENT"] = auth
+	return nil
+}
+
+// WithOpenCodeAccounts installs the opencode multi-account resolver. When
+// set, a session bound to an opencode account spawns with
+// OPENCODE_AUTH_CONTENT = that account's bundle (which replaces opencode's
+// on-disk auth.json). Nil (the default) disables opencode multi-account.
+func (sp *SessionProvider) WithOpenCodeAccounts(r OpenCodeAuthResolver) *SessionProvider {
+	sp.opencodeAccounts = r
 	return sp
 }
 
@@ -443,6 +482,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// codex isolates via CODEX_HOME: the account's dir holds its login and
 	// durable conversation rollouts (see finalizeCodexHome).
 	wantCodexAccount := id == "codex" && selectedAccountID != "" && sp.codexAccounts != nil
+	// opencode takes its credential set from OPENCODE_AUTH_CONTENT, so an
+	// account binding is an env var — no dir relocation; the session DB
+	// stays shared across accounts.
+	wantOpenCodeAccount := id == "opencode" && selectedAccountID != "" && sp.opencodeAccounts != nil
 
 	// Merge vault MCP registry (enabled-only) into the provider's
 	// inline mcp_servers list. Vault entries are loaded eagerly here
@@ -562,7 +605,10 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// no-Prepare fast path even when nothing else needs one.
 	hasIntegrationPrompt := session.IntegrationSystemPromptFromContext(ctx) != ""
 
-	if !wantClaudeAccount && !wantAgyAccount && !wantGrokAccount && !wantCodexAccount && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
+	// opencode always takes the Prepare path: a restart / account switch
+	// resumes its conversation via `--session <id>`, which is injected
+	// inside Prepare from the reactivation context.
+	if !wantClaudeAccount && !wantAgyAccount && !wantGrokAccount && !wantCodexAccount && !wantOpenCodeAccount && id != "opencode" && !mcpEnabled && !skillsEnabled && len(configEnv) == 0 && !wantsOpenCodeConfig && !hasIntegrationPrompt {
 		return info, nil
 	}
 
@@ -667,6 +713,12 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 			// into this same GROK_HOME, so MCP trust is already per-account.
 			if err := grokacct.EnsureSharedAssets(home); err != nil {
 				sp.log.Warn("grok shared-assets symlink failed", "home", home, "err", err)
+			}
+		}
+
+		if wantOpenCodeAccount {
+			if err := injectOpenCodeAccount(prepareCtx, sp.opencodeAccounts, selectedAccountID, &out); err != nil {
+				return session.PrepareOutput{}, err
 			}
 		}
 
@@ -1640,6 +1692,16 @@ func injectSessionIDFor(ctx context.Context, providerID string, out *session.Pre
 		// into the new account's HOME first), and we resume it.
 		if convID := session.AntigravityResumeConversationFromContext(ctx); convID != "" {
 			out.Args = append(out.Args, "--conversation", convID)
+			return true
+		}
+		return false
+	case "opencode":
+		// opencode can't pre-assign a NEW session's id. On restart /
+		// account switch the manager sets the conversation to continue;
+		// the session DB is shared across accounts, so it resumes under
+		// whichever credential bundle this spawn uses.
+		if sid := session.OpenCodeResumeSessionFromContext(ctx); sid != "" {
+			out.Args = append(out.Args, "--session", sid)
 			return true
 		}
 		return false

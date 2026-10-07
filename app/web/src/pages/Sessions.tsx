@@ -565,7 +565,8 @@ function WorkbenchHeader({
       {(session.provider_id === 'claude' ||
         session.provider_id === 'antigravity' ||
         session.provider_id === 'grok' ||
-        session.provider_id === 'codex') &&
+        session.provider_id === 'codex' ||
+        session.provider_id === 'opencode') &&
         !isTerminalSessionState(session.state) && (
           <AccountSwitcher session={session} />
         )}

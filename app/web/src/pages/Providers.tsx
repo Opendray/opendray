@@ -17,6 +17,7 @@ import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
 import { AntigravityAccountsPanel } from '@/components/providers/AntigravityAccountsPanel'
 import { GrokAccountsPanel } from '@/components/providers/GrokAccountsPanel'
 import { CodexAccountsPanel } from '@/components/providers/CodexAccountsPanel'
+import { OpenCodeAccountsPanel } from '@/components/providers/OpenCodeAccountsPanel'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import {
   listProviders,
@@ -427,6 +428,12 @@ function ProviderDetail({
             <>
               <Separator className="my-6" />
               <CodexAccountsPanel />
+            </>
+          )}
+          {m.id === 'opencode' && (
+            <>
+              <Separator className="my-6" />
+              <OpenCodeAccountsPanel />
             </>
           )}
           <Separator className="my-6" />
