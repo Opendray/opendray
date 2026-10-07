@@ -250,6 +250,25 @@ func (m *Manager) waitExit(rs *runningSession) {
 
 		_ = rs.pty.Close()
 		rs.closeSubs()
+		// Let the provider move durable state out of the temp dir before
+		// it's removed, and record the agent-side session id it observed
+		// so a restart / account switch can resume the conversation.
+		if rs.onExit != nil {
+			if agentID := rs.onExit(); agentID != "" {
+				rs.sessMu.Lock()
+				changed := rs.sess.ClaudeSessionID != agentID
+				rs.sess.ClaudeSessionID = agentID
+				rs.sessMu.Unlock()
+				if changed {
+					pctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					if err := m.store.SetClaudeSessionID(pctx, rs.sess.ID, agentID); err != nil {
+						m.log.Warn("persist agent session id on exit failed",
+							"session_id", rs.sess.ID, "err", err)
+					}
+					cancel()
+				}
+			}
+		}
 		if rs.tempDir != "" {
 			_ = os.RemoveAll(rs.tempDir)
 		}

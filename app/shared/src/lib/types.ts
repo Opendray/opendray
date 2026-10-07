@@ -34,6 +34,8 @@ export interface Session {
   antigravity_account_id?: string
   /** Grok account this session is pinned to (provider "grok"). */
   grok_account_id?: string
+  /** Codex account this session is pinned to (provider "codex"). */
+  codex_account_id?: string
   /** Set when this session was spawned on behalf of another (e.g. a Task). */
   parent_session_id?: string
   started_at: string
@@ -156,6 +158,41 @@ export interface GrokAccount {
   // Account holder tag, read from the on-disk grok login (auth.json).
   oauth_email?: string
   oauth_name?: string
+}
+
+export interface CodexAccount {
+  id: string
+  name: string
+  display_name: string
+  config_dir: string // per-account CODEX_HOME directory
+  description: string
+  enabled: boolean
+  token_filled: boolean
+  created_at: string
+  updated_at: string
+  // Derived, optional for forward-compat.
+  last_used_at?: string
+  active_sessions?: number
+  // Account holder tag, read from the on-disk ChatGPT login (auth.json
+  // id_token). Empty for API-key logins.
+  oauth_email?: string
+  oauth_name?: string
+}
+
+export interface CreateCodexAccountRequest {
+  name: string
+  display_name?: string
+  config_dir?: string
+  description?: string
+  enabled?: boolean
+}
+
+export interface UpdateCodexAccountRequest {
+  name?: string
+  display_name?: string
+  config_dir?: string
+  description?: string
+  enabled?: boolean
 }
 
 export interface CreateGrokAccountRequest {

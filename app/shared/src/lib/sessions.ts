@@ -109,6 +109,23 @@ export async function switchGrokAccount(
   })
 }
 
+// switchCodexAccount rebinds a running codex session to a different account
+// (a different CODEX_HOME login) and respawns it. carryContext, when true,
+// carries the conversation rollout into the new account and resumes it
+// (`codex resume <thread-id>`), so the chat keeps its full history; false
+// starts fresh. `accountId === ''` clears the binding (gateway default
+// ~/.codex login).
+export async function switchCodexAccount(
+  id: string,
+  accountId: string,
+  carryContext = false,
+): Promise<Session> {
+  return api<Session>(`/api/v1/sessions/${id}/codex-account`, {
+    method: 'PATCH',
+    body: { account_id: accountId, carry_context: carryContext },
+  })
+}
+
 export interface HistoryEntry {
   ts: string
   text: string

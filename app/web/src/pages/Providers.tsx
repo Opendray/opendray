@@ -16,6 +16,7 @@ import { providerIconKey } from '@/lib/providerIcons'
 import { ClaudeAccountsPanel } from '@/components/providers/ClaudeAccountsPanel'
 import { AntigravityAccountsPanel } from '@/components/providers/AntigravityAccountsPanel'
 import { GrokAccountsPanel } from '@/components/providers/GrokAccountsPanel'
+import { CodexAccountsPanel } from '@/components/providers/CodexAccountsPanel'
 import { useConfirmDialog } from '@/components/ConfirmDialog'
 import {
   listProviders,
@@ -420,6 +421,12 @@ function ProviderDetail({
             <>
               <Separator className="my-6" />
               <GrokAccountsPanel />
+            </>
+          )}
+          {m.id === 'codex' && (
+            <>
+              <Separator className="my-6" />
+              <CodexAccountsPanel />
             </>
           )}
           <Separator className="my-6" />

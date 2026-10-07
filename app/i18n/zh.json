@@ -235,7 +235,11 @@
         "switchedDescription": "当前使用 @{account} · pid {pid}",
         "switchedDefault": "默认",
         "switchFailedToast": "切换失败",
-        "confirmSwitchGrokCarry": "切换账户将重启 Grok CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？"
+        "confirmSwitchGrokCarry": "切换账户将重启 Grok CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "tooltipCodex": "切换 Codex 账户（会重启 CLI 进程）",
+        "menuTitleCodex": "切换 Codex 账户",
+        "confirmSwitchCodex": "切换账户会以全新对话重启 Codex CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "confirmSwitchCodexCarry": "切换账户将重启 Codex CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？"
       },
       "inspector": {
         "tabs": {
@@ -1389,6 +1393,33 @@
         "makeDefault": "设为默认",
         "setDefault": "用作默认模型",
         "remove": "移除 {model}"
+      },
+      "codexAccounts": {
+        "title": "Codex 账户",
+        "importLocal": "导入本地账户",
+        "importLocalTooltip": "扫描主机上的 ~/.codex-accounts/（以及网关用户的 ~/.codex），注册所有已登录的账户目录。仅限网关主机。",
+        "importedNothingToast": "无需导入，账户已同步。",
+        "importedToast_one": "已从 ~/.codex-accounts 导入 {count} 个账户",
+        "importedToast_other": "已从 ~/.codex-accounts 导入 {count} 个账户",
+        "importFailedToast": "导入失败",
+        "addingTitle": "添加新账户。",
+        "addingBodyPrefix": "Codex 的状态保存在 CODEX_HOME 中。使用 ChatGPT 登录时，为每个账户分配独立的 CODEX_HOME，并在网关主机上登录：",
+        "addingBodySuffix": "然后点击<1>导入本地账户</1>完成注册。也可以用下方表单添加 API 密钥账户。切勿把一个账户的 auth.json 复制到另一个账户：codex 会轮换令牌，两者会互相注销。",
+        "apiKeyNamePlaceholder": "账户名称",
+        "apiKeyPlaceholder": "OpenAI API 密钥（sk-…）",
+        "apiKeyAdd": "用 API 密钥添加",
+        "apiKeyAddedToast": "已添加 Codex 账户",
+        "apiKeyFailedToast": "无法添加 API 密钥账户",
+        "loading": "加载中…",
+        "empty": "还没有 Codex 账户。在网关主机上运行 <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> 后点击导入本地账户，或用 API 密钥添加。",
+        "noTokenYet": "未登录",
+        "homeDir": "home:",
+        "toggleFailedToast": "切换失败",
+        "removeConfirm": "删除账户“{name}”？",
+        "removedToast": "账户已删除",
+        "removeFailedToast": "删除失败",
+        "toggleAria": "切换 {name}",
+        "removeAria": "删除 {name}"
       }
     },
     "channels": {

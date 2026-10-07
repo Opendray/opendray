@@ -235,7 +235,11 @@
         "switchedDescription": "Ahora usando @{account} · pid {pid}",
         "switchedDefault": "predeterminada",
         "switchFailedToast": "Error al cambiar",
-        "confirmSwitchGrokCarry": "Cambiar de cuenta reinicia la CLI de Grok y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?"
+        "confirmSwitchGrokCarry": "Cambiar de cuenta reinicia la CLI de Grok y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
+        "tooltipCodex": "Cambiar la cuenta de Codex (reinicia el proceso de la CLI)",
+        "menuTitleCodex": "Cambiar la cuenta de Codex",
+        "confirmSwitchCodex": "Cambiar de cuenta reinicia la CLI de Codex con una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
+        "confirmSwitchCodexCarry": "Cambiar de cuenta reinicia la CLI de Codex y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?"
       },
       "inspector": {
         "tabs": {
@@ -1392,6 +1396,33 @@
         "makeDefault": "establecer como predeterminado",
         "setDefault": "Usar como modelo predeterminado",
         "remove": "Quitar {model}"
+      },
+      "codexAccounts": {
+        "title": "Cuentas de Codex",
+        "importLocal": "Importar locales",
+        "importLocalTooltip": "Escanea ~/.codex-accounts/ (y el ~/.codex del usuario del gateway) en el host y registra los directorios de cuentas con sesión iniciada. Solo en el host del gateway.",
+        "importedNothingToast": "Nada que importar, las cuentas ya están sincronizadas.",
+        "importedToast_one": "Se importó {count} cuenta desde ~/.codex-accounts",
+        "importedToast_other": "Se importaron {count} cuentas desde ~/.codex-accounts",
+        "importFailedToast": "Error al importar",
+        "addingTitle": "Añadir una cuenta nueva.",
+        "addingBodyPrefix": "Codex guarda su estado en CODEX_HOME. Para un inicio de sesión de ChatGPT, da a cada cuenta su propio CODEX_HOME e inicia sesión allí en el host del gateway:",
+        "addingBodySuffix": "Luego pulsa <1>Importar locales</1> para registrarla. O añade una cuenta con clave de API en el formulario de abajo. Nunca copies el auth.json de una cuenta a otra: codex rota sus tokens y ambas se cerrarían la sesión mutuamente.",
+        "apiKeyNamePlaceholder": "nombre de la cuenta",
+        "apiKeyPlaceholder": "Clave de API de OpenAI (sk-…)",
+        "apiKeyAdd": "Añadir con clave de API",
+        "apiKeyAddedToast": "Cuenta de Codex añadida",
+        "apiKeyFailedToast": "No se pudo añadir la cuenta con clave de API",
+        "loading": "Cargando…",
+        "empty": "Aún no hay cuentas de Codex. Ejecuta <1>CODEX_HOME=~/.codex-accounts/&lt;nombre&gt; codex login --device-auth</1> en el host del gateway y pulsa Importar locales, o añade una con clave de API.",
+        "noTokenYet": "sin sesión",
+        "homeDir": "home:",
+        "toggleFailedToast": "Error al cambiar el estado",
+        "removeConfirm": "¿Eliminar la cuenta \"{name}\"?",
+        "removedToast": "Cuenta eliminada",
+        "removeFailedToast": "Error al eliminar",
+        "toggleAria": "Activar/desactivar {name}",
+        "removeAria": "Eliminar {name}"
       }
     },
     "channels": {
