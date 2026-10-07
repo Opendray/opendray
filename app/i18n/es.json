@@ -239,7 +239,11 @@
         "tooltipCodex": "Cambiar la cuenta de Codex (reinicia el proceso de la CLI)",
         "menuTitleCodex": "Cambiar la cuenta de Codex",
         "confirmSwitchCodex": "Cambiar de cuenta reinicia la CLI de Codex con una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
-        "confirmSwitchCodexCarry": "Cambiar de cuenta reinicia la CLI de Codex y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?"
+        "confirmSwitchCodexCarry": "Cambiar de cuenta reinicia la CLI de Codex y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
+        "confirmSwitchOpenCode": "Cambiar de cuenta reinicia la CLI de OpenCode con las nuevas credenciales y una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
+        "confirmSwitchOpenCodeCarry": "Cambiar de cuenta reinicia la CLI de OpenCode y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
+        "tooltipOpenCode": "Cambiar la cuenta de OpenCode (conjunto de credenciales) que usa esta sesión",
+        "menuTitleOpenCode": "Cuenta de OpenCode"
       },
       "inspector": {
         "tabs": {
@@ -1423,6 +1427,31 @@
         "removeFailedToast": "Error al eliminar",
         "toggleAria": "Activar/desactivar {name}",
         "removeAria": "Eliminar {name}"
+      },
+      "opencodeAccounts": {
+        "title": "Cuentas de OpenCode",
+        "importLocal": "Importar local",
+        "importLocalTooltip": "Añadir las credenciales actuales de opencode de este host (auth.json) como cuenta",
+        "add": "Añadir",
+        "explainer": "Cada cuenta es un conjunto de credenciales de proveedores de opencode, inyectado por sesión. Todas las cuentas comparten el historial de sesiones de opencode, así que puedes cambiar una sesión en curso a otra cuenta y conservar la conversación. Las claves se cifran en reposo y no se vuelven a mostrar.",
+        "namePlaceholder": "Nombre de la cuenta (p. ej. trabajo)",
+        "providerPlaceholder": "id de proveedor de opencode (p. ej. moonshotai)",
+        "apiKeyPlaceholder": "Clave de API",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "loading": "Cargando cuentas…",
+        "empty": "Aún no hay cuentas de OpenCode. Importa las credenciales de este host o añade una clave de proveedor.",
+        "unusable": "sin credenciales utilizables",
+        "addedToast": "Cuenta de OpenCode añadida",
+        "addFailedToast": "No se pudo añadir la cuenta de OpenCode",
+        "importedToast": "Credenciales locales de OpenCode importadas",
+        "importFailedToast": "No se pudieron importar las credenciales locales de OpenCode",
+        "toggleFailedToast": "No se pudo actualizar la cuenta de OpenCode",
+        "removedToast": "Cuenta de OpenCode eliminada",
+        "removeFailedToast": "No se pudo eliminar la cuenta de OpenCode",
+        "removeConfirm": "¿Eliminar la cuenta de OpenCode \"{name}\"? Las sesiones vinculadas vuelven a las credenciales predeterminadas.",
+        "removeAria": "Eliminar la cuenta de OpenCode {name}",
+        "toggleAria": "Activar o desactivar la cuenta de OpenCode {name}"
       }
     },
     "channels": {

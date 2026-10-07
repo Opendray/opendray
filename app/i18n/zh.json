@@ -239,7 +239,11 @@
         "tooltipCodex": "切换 Codex 账户（会重启 CLI 进程）",
         "menuTitleCodex": "切换 Codex 账户",
         "confirmSwitchCodex": "切换账户会以全新对话重启 Codex CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？",
-        "confirmSwitchCodexCarry": "切换账户将重启 Codex CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？"
+        "confirmSwitchCodexCarry": "切换账户将重启 Codex CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "confirmSwitchOpenCode": "切换账户会以新凭据和全新对话重启 OpenCode CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "confirmSwitchOpenCodeCarry": "切换账户将重启 OpenCode CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？",
+        "tooltipOpenCode": "切换此会话使用的 OpenCode 账户（凭据集）",
+        "menuTitleOpenCode": "OpenCode 账户"
       },
       "inspector": {
         "tabs": {
@@ -1420,6 +1424,31 @@
         "removeFailedToast": "删除失败",
         "toggleAria": "切换 {name}",
         "removeAria": "删除 {name}"
+      },
+      "opencodeAccounts": {
+        "title": "OpenCode 账户",
+        "importLocal": "导入本地",
+        "importLocalTooltip": "将本机当前的 opencode 凭据（auth.json）添加为账户",
+        "add": "添加",
+        "explainer": "每个账户是一组 opencode 服务商凭据，按会话注入。所有账户共享 opencode 的会话历史，因此可以把运行中的会话切换到其他账户并保留对话。密钥静态加密存储，且不会再次显示。",
+        "namePlaceholder": "账户名称（如 work）",
+        "providerPlaceholder": "opencode 服务商 ID（如 moonshotai）",
+        "apiKeyPlaceholder": "API 密钥",
+        "cancel": "取消",
+        "save": "保存",
+        "loading": "正在加载账户…",
+        "empty": "还没有 OpenCode 账户。导入本机凭据或添加服务商密钥。",
+        "unusable": "无可用凭据",
+        "addedToast": "已添加 OpenCode 账户",
+        "addFailedToast": "无法添加 OpenCode 账户",
+        "importedToast": "已导入本地 OpenCode 凭据",
+        "importFailedToast": "无法导入本地 OpenCode 凭据",
+        "toggleFailedToast": "无法更新 OpenCode 账户",
+        "removedToast": "已删除 OpenCode 账户",
+        "removeFailedToast": "无法删除 OpenCode 账户",
+        "removeConfirm": "删除 OpenCode 账户“{name}”？绑定到它的会话将改用默认凭据。",
+        "removeAria": "删除 OpenCode 账户 {name}",
+        "toggleAria": "启用或停用 OpenCode 账户 {name}"
       }
     },
     "channels": {

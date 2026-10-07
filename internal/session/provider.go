@@ -307,6 +307,46 @@ func AntigravityResumeConversationFromContext(ctx context.Context) string {
 	return ""
 }
 
+// opencodeResumeSessionCtxKey carries the opencode session id a
+// reactivated or account-switched opencode session should resume, so the
+// provider emits `--session <id>` instead of starting a fresh chat. Every
+// opencode account shares the one session DB, so the same id resumes
+// under any account — which is how a switch keeps the conversation.
+type opencodeResumeSessionCtxKey struct{}
+
+// WithOpenCodeResumeSession returns a derived context carrying the
+// opencode session id to resume. Empty is a no-op.
+func WithOpenCodeResumeSession(ctx context.Context, sessionID string) context.Context {
+	if sessionID == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, opencodeResumeSessionCtxKey{}, sessionID)
+}
+
+// OpenCodeResumeSessionFromContext returns the id set by
+// WithOpenCodeResumeSession, or "" for a fresh spawn.
+func OpenCodeResumeSessionFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(opencodeResumeSessionCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
+// opencodeSwitchCtxKey marks an opencode respawn as an account switch, so
+// spawn() doesn't look up a conversation to resume on its own: the switch
+// decides (resume when the operator consented to carry context, fresh
+// otherwise).
+type opencodeSwitchCtxKey struct{}
+
+func withOpenCodeSwitch(ctx context.Context) context.Context {
+	return context.WithValue(ctx, opencodeSwitchCtxKey{}, true)
+}
+
+func openCodeSwitchFromContext(ctx context.Context) bool {
+	v, _ := ctx.Value(opencodeSwitchCtxKey{}).(bool)
+	return v
+}
+
 // carryoverContextCtxKey carries a block of prior-conversation text to
 // seed a freshly spawned session's system prompt. Set ONLY by
 // SwitchClaudeAccount when the operator opts into "carry context" AND

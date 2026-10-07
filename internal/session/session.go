@@ -138,6 +138,12 @@ type Session struct {
 	// sessions ClaudeSessionID holds the codex thread id (the agent-side
 	// session UUID), so restarts and account switches resume it.
 	CodexAccountID string `json:"codex_account_id,omitempty"`
+	// OpenCodeAccountID is the opencodeacct credential bundle this
+	// session is pinned to (provider "opencode"). Empty means opencode's
+	// own on-disk auth.json. Unlike the dir-isolated providers the bundle
+	// is injected via OPENCODE_AUTH_CONTENT, and every account shares the
+	// one opencode session DB.
+	OpenCodeAccountID string `json:"opencode_account_id,omitempty"`
 	// ParentSessionID links a session spawned on behalf of another
 	// (e.g. the Inspector's Tasks tab spawns shell children of an
 	// AI session). Empty for top-level sessions. Used purely for UI
@@ -200,6 +206,7 @@ type CreateRequest struct {
 	AntigravityAccountID string   `json:"antigravity_account_id,omitempty"`
 	GrokAccountID        string   `json:"grok_account_id,omitempty"`
 	CodexAccountID       string   `json:"codex_account_id,omitempty"`
+	OpenCodeAccountID    string   `json:"opencode_account_id,omitempty"`
 	ParentSessionID      string   `json:"parent_session_id,omitempty"`
 	Cwd                  string   `json:"cwd"`
 	Args                 []string `json:"args"`

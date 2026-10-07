@@ -36,6 +36,8 @@ export interface Session {
   grok_account_id?: string
   /** Codex account this session is pinned to (provider "codex"). */
   codex_account_id?: string
+  /** OpenCode credential bundle this session is pinned to (provider "opencode"). */
+  opencode_account_id?: string
   /** Set when this session was spawned on behalf of another (e.g. a Task). */
   parent_session_id?: string
   started_at: string
@@ -209,6 +211,53 @@ export interface UpdateGrokAccountRequest {
   config_dir?: string
   description?: string
   enabled?: boolean
+}
+
+// An OpenCode account is a named credential bundle (auth.json-shaped),
+// injected per spawn via OPENCODE_AUTH_CONTENT. The secret itself is never
+// returned — only provider ids, auth type and a masked hint.
+export interface OpenCodeCredentialSummary {
+  provider: string
+  type: string
+  hint?: string
+}
+
+export interface OpenCodeAccount {
+  id: string
+  name: string
+  display_name: string
+  config_dir: string // always empty; kept for AccountSwitcher parity
+  description: string
+  enabled: boolean
+  token_filled: boolean // bundle decrypts to at least one credential
+  created_at: string
+  updated_at: string
+  providers: string[]
+  credentials: OpenCodeCredentialSummary[]
+  last_used_at?: string
+  active_sessions?: number
+}
+
+export interface CreateOpenCodeAccountRequest {
+  name: string
+  display_name?: string
+  description?: string
+  enabled?: boolean
+  // Either a full auth.json-shaped bundle…
+  credentials?: Record<string, unknown>
+  // …or the single-provider API-key convenience pair.
+  provider_id?: string
+  api_key?: string
+}
+
+export interface UpdateOpenCodeAccountRequest {
+  name?: string
+  display_name?: string
+  description?: string
+  enabled?: boolean
+  credentials?: Record<string, unknown>
+  provider_id?: string
+  api_key?: string
 }
 
 // ── Catalog (providers) ─────────────────────────────────────
