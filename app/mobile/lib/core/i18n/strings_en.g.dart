@@ -13380,8 +13380,8 @@ class TranslationsSessionsDetailAccountSwitcherEn {
 	/// en: 'Switch account?'
 	String get confirmTitle => 'Switch account?';
 
-	/// en: 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).'
-	String get confirmBody => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).';
+	/// en: 'This restarts the CLI under the new account and resumes the same conversation — the full history carries over and is sent to the provider under that account. The session tab is kept.'
+	String get confirmBody => 'This restarts the CLI under the new account and resumes the same conversation — the full history carries over and is sent to the provider under that account. The session tab is kept.';
 
 	/// en: 'Switch'
 	String get confirmAction => 'Switch';
@@ -22526,7 +22526,7 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.defaultShort' => 'default',
 			'sessions.detail.accountSwitcher.tokenEmpty' => 'no token',
 			'sessions.detail.accountSwitcher.confirmTitle' => 'Switch account?',
-			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account — the current in-CLI conversation context is lost (the session tab is kept).',
+			'sessions.detail.accountSwitcher.confirmBody' => 'This restarts the CLI under the new account and resumes the same conversation — the full history carries over and is sent to the provider under that account. The session tab is kept.',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Switch',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancel',
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
