@@ -3622,9 +3622,9 @@ class _TranslationsWebSessionsAccountSwitcherEs extends TranslationsWebSessionsA
 	@override String get defaultSubtitle => 'keychain del sistema / env de la CLI';
 	@override String get tokenEmpty => '·vacío';
 	@override String get confirmSwitch => 'Cambiar de cuenta reinicia la CLI de Claude con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
-	@override String get confirmSwitchCarry => 'Cambiar de cuenta reinicia la CLI de Claude. Se transferirá un resumen de tu conversación reciente y se enviará al proveedor con la NUEVA cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get confirmSwitchCarry => 'Cambiar de cuenta reinicia la CLI de Claude y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
 	@override String get carryContext => 'Transferir el contexto de la conversación';
-	@override String get carryContextHelp => 'Inicializa la nueva cuenta con un resumen de tu conversación reciente. El contenido previo se envía al proveedor con la nueva cuenta.';
+	@override String get carryContextHelp => 'Mantiene esta conversación en la nueva cuenta con todo su historial. El contenido previo se envía al proveedor con la nueva cuenta. Desactivado = empezar de cero.';
 	@override String get switchedToast => 'Cuenta cambiada';
 	@override String switchedDescription({required Object account, required Object pid}) => 'Ahora usando @${account} · pid ${pid}';
 	@override String get switchedDefault => 'predeterminada';
@@ -10475,9 +10475,9 @@ extension on TranslationsEs {
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'keychain del sistema / env de la CLI',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·vacío',
 			'web.sessions.accountSwitcher.confirmSwitch' => 'Cambiar de cuenta reinicia la CLI de Claude con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
-			'web.sessions.accountSwitcher.confirmSwitchCarry' => 'Cambiar de cuenta reinicia la CLI de Claude. Se transferirá un resumen de tu conversación reciente y se enviará al proveedor con la NUEVA cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.confirmSwitchCarry' => 'Cambiar de cuenta reinicia la CLI de Claude y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
 			'web.sessions.accountSwitcher.carryContext' => 'Transferir el contexto de la conversación',
-			'web.sessions.accountSwitcher.carryContextHelp' => 'Inicializa la nueva cuenta con un resumen de tu conversación reciente. El contenido previo se envía al proveedor con la nueva cuenta.',
+			'web.sessions.accountSwitcher.carryContextHelp' => 'Mantiene esta conversación en la nueva cuenta con todo su historial. El contenido previo se envía al proveedor con la nueva cuenta. Desactivado = empezar de cero.',
 			'web.sessions.accountSwitcher.switchedToast' => 'Cuenta cambiada',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => 'Ahora usando @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => 'predeterminada',

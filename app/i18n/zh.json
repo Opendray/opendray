@@ -230,11 +230,12 @@
         "confirmSwitch": "切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？",
         "confirmSwitchCarry": "切换账户将重启 Claude CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？",
         "carryContext": "带入对话上下文",
-        "carryContextHelp": "在新账户下延续你的对话（Claude 恢复完整历史；其他 CLI 获得摘要）。先前内容会以新账户发送给服务商。",
+        "carryContextHelp": "在新账户下延续这段对话及其完整历史。先前内容会以新账户发送给服务商。关闭 = 重新开始。",
         "switchedToast": "账号已切换",
         "switchedDescription": "当前使用 @{account} · pid {pid}",
         "switchedDefault": "默认",
-        "switchFailedToast": "切换失败"
+        "switchFailedToast": "切换失败",
+        "confirmSwitchGrokCarry": "切换账户将重启 Grok CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？"
       },
       "inspector": {
         "tabs": {

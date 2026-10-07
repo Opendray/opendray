@@ -131,6 +131,23 @@ func WithAntigravityAccountResolver(r AntigravityAccountResolver) ManagerOption 
 	return func(m *Manager) { m.antigravityAccounts = r }
 }
 
+// GrokAccountResolver is the minimum grokacct surface the manager needs to
+// carry a grok conversation across an account switch: each account is its
+// own GROK_HOME, and grok keeps sessions under <GROK_HOME>/sessions, so
+// the switch copies the session dir from the old home into the new one
+// and resumes it there. Nil → the switch falls back to a recap.
+type GrokAccountResolver interface {
+	// AccountHome returns the GROK_HOME for an account id ("" → the
+	// gateway user's default grok home).
+	AccountHome(ctx context.Context, id string) (string, error)
+}
+
+// WithGrokAccountResolver injects the grokacct resolver SwitchGrokAccount
+// uses to carry the conversation into the new account's GROK_HOME.
+func WithGrokAccountResolver(r GrokAccountResolver) ManagerOption {
+	return func(m *Manager) { m.grokAccounts = r }
+}
+
 // WithAutoFailoverEnabled flips on the rate-limit-aware auto-failover
 // behavior: pumpStdout scans each Claude session's PTY output for the
 // "session limit · resets HH:MM" banner and, on a match, marks the
@@ -238,7 +255,8 @@ type Manager struct {
 	codexHistoryCfg       CodexHistoryConfig
 	antigravityHistoryCfg AntigravityHistoryConfig
 	grokHistoryCfg        GrokHistoryConfig
-	sessionEnv            map[string]string // gateway-level env injected into every session (e.g. Jev key)
+	grokAccounts          GrokAccountResolver // optional; nil → grok switch carries a recap only
+	sessionEnv            map[string]string   // gateway-level env injected into every session (e.g. Jev key)
 
 	// workspaces + wsResolver enable worktree isolation. Both nil →
 	// isolation requests are rejected and every session runs in cwd,
@@ -1632,11 +1650,12 @@ func (m *Manager) SwitchAntigravityAccount(ctx context.Context, id, newAccountID
 // 'stopped' with the ORIGINAL account (never persisted the new value) so
 // the user can Restart on it.
 //
-// When carryContext is set, a recap of the prior conversation is read
-// from the old account's transcript (best-effort) and injected into the
-// fresh session via grok --rules — parity with SwitchClaudeAccount (RFC
-// #541). grok can't --resume across accounts (the session id isn't in
-// the new account's store), so a recap is the carry mechanism.
+// When carryContext is set (the operator's consent to send the prior
+// conversation to the provider under the new account), the session's
+// directory is copied into the new account's GROK_HOME and resumed there
+// with --resume <id>, so the conversation continues with full history —
+// parity with SwitchClaudeAccount. Only when that copy isn't possible is
+// a recap of the old transcript injected via grok --rules instead.
 func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string, carryContext bool) (Session, error) {
 	m.mu.RLock()
 	if m.closed {
@@ -1666,17 +1685,44 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 		return Session{}, err
 	}
 
-	// Capture a recap of the OLD conversation before rebinding. The grok
-	// process is stopped (above) but its transcript persists on disk under
-	// the old account's GROK_HOME; LatestGrokSessionID picks the just-used
-	// session by transcript mtime (Q1). Best-effort: any miss degrades to
-	// a clean-slate switch, never blocks it.
-	var carryover string
+	// Carry the OLD conversation before rebinding. The grok process is
+	// stopped (above) but its session dir persists under the old
+	// account's GROK_HOME; the just-used session is the freshest one for
+	// this cwd there (Q1). Scope the lookup to the old home when we know
+	// it, so a newer session of the same cwd under another account can't
+	// be picked. Best-effort: any miss degrades to a recap, then to a
+	// clean slate — never blocks the switch.
+	var (
+		carryover string
+		oldSID    string
+		resumeSID string
+	)
 	if carryContext {
-		if sid := LatestGrokSessionID(m.grokHistoryCfg, sess.EffectiveWorkDir()); sid != "" {
-			carryover = BuildGrokCarryover(m.grokHistoryCfg, sess.EffectiveWorkDir(), sid, 0)
+		histCfg := m.grokHistoryCfg
+		var oldHome, newHome string
+		if m.grokAccounts != nil {
+			oh, oerr := m.grokAccounts.AccountHome(ctx, current.GrokAccountID)
+			nh, nerr := m.grokAccounts.AccountHome(ctx, newAccountID)
+			if oerr == nil && nerr == nil && oh != "" && nh != "" {
+				oldHome, newHome = oh, nh
+				histCfg = GrokHistoryConfig{SessionsRoots: []string{filepath.Join(oldHome, "sessions")}}
+			}
 		}
-		if carryover == "" {
+		oldSID = LatestGrokSessionID(histCfg, sess.EffectiveWorkDir())
+		if oldSID != "" && oldHome != "" {
+			ok, err := migrateGrokSession(oldHome, newHome, sess.EffectiveWorkDir(), oldSID)
+			if err != nil {
+				m.log.Warn("grok session migration failed; switch carries a recap instead",
+					"session", id, "grok_session", oldSID, "err", err)
+			}
+			if ok {
+				resumeSID = oldSID
+			}
+		}
+		if resumeSID == "" && oldSID != "" {
+			carryover = BuildGrokCarryover(histCfg, sess.EffectiveWorkDir(), oldSID, 0)
+		}
+		if resumeSID == "" && carryover == "" {
 			m.log.Debug("grok carry-context requested but no transcript recap built",
 				"session_id", id, "cwd", sess.EffectiveWorkDir())
 		}
@@ -1688,13 +1734,13 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 	sess.ExitCode = nil
 	sess.StartedAt = time.Now().UTC()
 
-	// Thread the recap (if any) into the respawn only — one-shot, absent
-	// from later restarts. The adapter's grok arm injects it as a coalesced
-	// --rules fragment (see injectCarryoverFor / injectAmbientMemoryFor).
-	// Mark this as an account switch so spawn() does NOT add --continue:
-	// the new account's home has no session for this cwd to resume, and
-	// the recap is the carry mechanism across accounts.
-	spawnCtx := WithCarryoverContext(WithGrokAccountSwitch(ctx), carryover)
+	// Resume the carried session by id, or thread the recap (if any) into
+	// the respawn only — one-shot, absent from later restarts, which
+	// --continue the new home's freshest session (the resumed one). The
+	// adapter's grok arm injects a recap as a coalesced --rules fragment
+	// (see injectCarryoverFor / injectAmbientMemoryFor). Marked as an
+	// account switch so spawn() does NOT add a blind --continue.
+	spawnCtx := WithGrokResumeSession(WithCarryoverContext(WithGrokAccountSwitch(ctx), carryover), resumeSID)
 	rs, err := m.spawn(spawnCtx, sess, true)
 	if err != nil {
 		// Rollback: the new account failed to spawn. Restore the previous
@@ -1708,7 +1754,9 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 		sess.EndedAt = nil
 		sess.ExitCode = nil
 		sess.StartedAt = time.Now().UTC()
-		if _, rbErr := m.spawn(WithGrokAccountSwitch(ctx), sess, true); rbErr != nil {
+		// The old session is still in the old home: resume it so the
+		// rollback keeps the conversation too.
+		if _, rbErr := m.spawn(WithGrokResumeSession(WithGrokAccountSwitch(ctx), oldSID), sess, true); rbErr != nil {
 			m.log.Error("grok switch rollback respawn also failed",
 				"session", id, "old_account", current.GrokAccountID, "err", rbErr)
 		}

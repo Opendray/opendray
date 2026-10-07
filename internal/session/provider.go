@@ -343,6 +343,31 @@ func GrokContinueFromContext(ctx context.Context) bool {
 	return v
 }
 
+// grokResumeSessionCtxKey carries the grok session UUID an account-switched
+// grok session should resume, so the adapter emits `--resume <id>` (the
+// session dir was just copied into the new account's GROK_HOME). Explicit
+// rather than --continue: the new home may already hold other sessions
+// for this cwd, and --continue would pick whichever is most recent.
+type grokResumeSessionCtxKey struct{}
+
+// WithGrokResumeSession returns a derived context carrying the grok
+// session id to resume. Empty is a no-op.
+func WithGrokResumeSession(ctx context.Context, id string) context.Context {
+	if id == "" {
+		return ctx
+	}
+	return context.WithValue(ctx, grokResumeSessionCtxKey{}, id)
+}
+
+// GrokResumeSessionFromContext returns the id set by
+// WithGrokResumeSession, or "".
+func GrokResumeSessionFromContext(ctx context.Context) string {
+	if v, ok := ctx.Value(grokResumeSessionCtxKey{}).(string); ok {
+		return v
+	}
+	return ""
+}
+
 // grokAccountSwitchCtxKey marks a grok respawn as an account switch, so
 // the manager's reactivation path suppresses the --continue signal (the
 // switch carries a recap into the new account's home instead of resuming
