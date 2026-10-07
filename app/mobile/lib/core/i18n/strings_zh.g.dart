@@ -3622,9 +3622,9 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 	@override String get defaultSubtitle => 'CLI 的系统 keychain / 环境变量';
 	@override String get tokenEmpty => '·未填';
 	@override String get confirmSwitch => '切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？';
-	@override String get confirmSwitchCarry => '切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitchCarry => '切换账户将重启 Claude CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
 	@override String get carryContext => '带入对话上下文';
-	@override String get carryContextHelp => '用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。';
+	@override String get carryContextHelp => '在新账户下延续这段对话及其完整历史。先前内容会以新账户发送给服务商。关闭 = 重新开始。';
 	@override String get switchedToast => '账号已切换';
 	@override String switchedDescription({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}';
 	@override String get switchedDefault => '默认';
@@ -10472,9 +10472,9 @@ extension on TranslationsZh {
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI 的系统 keychain / 环境变量',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·未填',
 			'web.sessions.accountSwitcher.confirmSwitch' => '切换账户会以全新对话重启 Claude CLI —— CLI 内的历史不会跨账户保留。正在进行的工具调用或未发送的输入会丢失。是否继续？',
-			'web.sessions.accountSwitcher.confirmSwitchCarry' => '切换账户将重启 Claude CLI。你最近对话的摘要会被带入，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchCarry' => '切换账户将重启 Claude CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
 			'web.sessions.accountSwitcher.carryContext' => '带入对话上下文',
-			'web.sessions.accountSwitcher.carryContextHelp' => '用你最近对话的摘要初始化新账户。先前内容会以新账户发送给服务商。',
+			'web.sessions.accountSwitcher.carryContextHelp' => '在新账户下延续这段对话及其完整历史。先前内容会以新账户发送给服务商。关闭 = 重新开始。',
 			'web.sessions.accountSwitcher.switchedToast' => '账号已切换',
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => '默认',

@@ -649,6 +649,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// per-HOME conversation dbs) — so an account switch keeps the
 		// session instead of losing it.
 		session.WithAntigravityAccountResolver(agyacctSvc),
+		// Grok: carry the conversation into the new account's GROK_HOME
+		// on switch and --resume it there, instead of a recap.
+		session.WithGrokAccountResolver(grokacctSvc),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
 	sessionProvider.WithGrokAccounts(grokacctSvc) // grok multi-account: bind GROK_HOME at spawn

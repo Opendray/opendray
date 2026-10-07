@@ -1609,7 +1609,13 @@ func injectSessionIDFor(ctx context.Context, providerID string, out *session.Pre
 	case "grok":
 		// grok has no pre-assignable session id, so a restart resumes the
 		// cwd's most recent session with --continue (set by the manager on
-		// reactivation). Fresh spawns carry no signal and start clean.
+		// reactivation). An account switch instead names the session it
+		// just copied into the new GROK_HOME, so it resumes exactly that
+		// one. Fresh spawns carry no signal and start clean.
+		if id := session.GrokResumeSessionFromContext(ctx); id != "" {
+			out.Args = append(out.Args, "--resume", id)
+			return true
+		}
 		if session.GrokContinueFromContext(ctx) {
 			out.Args = append(out.Args, "--continue")
 			return true

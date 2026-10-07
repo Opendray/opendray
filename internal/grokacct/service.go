@@ -225,6 +225,25 @@ func (s *Service) ResolveSpawnHome(ctx context.Context, id string) (string, erro
 	return selectSpawnHome(a.Name, a.ConfigDir)
 }
 
+// AccountHome returns the GROK_HOME an account's state (auth + sessions)
+// lives under, without the enabled/logged-in checks ResolveSpawnHome
+// applies — an account switch must still read the conversation out of
+// the account it's leaving. "" id → the gateway user's own grok home.
+// Implements session.GrokAccountResolver.
+func (s *Service) AccountHome(ctx context.Context, id string) (string, error) {
+	if id == "" {
+		return defaultGrokHome(), nil
+	}
+	a, err := s.store.Get(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	if a.ConfigDir == "" {
+		return defaultGrokHome(), nil
+	}
+	return a.ConfigDir, nil
+}
+
 // ImportLocal scans the accounts dir (and the gateway user's own grok
 // home) for logged-in accounts and creates a metadata row for any not yet
 // known. Idempotent; safe to call on startup and from the UI.
