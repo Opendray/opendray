@@ -69,15 +69,10 @@ func CodexInputHistory(cfg CodexHistoryConfig, cwd string, limit int) []ProjectI
 	if limit <= 0 {
 		limit = 200
 	}
-	root := cfg.SessionsRoot
-	if root == "" {
-		home := os.Getenv("HOME")
-		if home == "" {
-			return nil
-		}
-		root = filepath.Join(home, ".codex", "sessions")
+	var files []codexRolloutFile
+	for _, root := range codexSessionsRoots(cfg) {
+		files = append(files, collectCodexRollouts(root, cwd)...)
 	}
-	files := collectCodexRollouts(root, cwd)
 	var out []ProjectInput
 	for _, f := range files {
 		out = append(out, extractCodexUserInputs(f.path, f.sessionID)...)
@@ -87,6 +82,34 @@ func CodexInputHistory(cfg CodexHistoryConfig, cwd string, limit int) []ProjectI
 		out = out[:limit]
 	}
 	return out
+}
+
+// codexSessionsRoots lists the rollout roots to scan. An explicit
+// SessionsRoot wins; otherwise ~/.codex/sessions plus every
+// ~/.codex-accounts/<account>/sessions, since a session bound to a codex
+// account keeps its durable rollouts in that account's CODEX_HOME.
+// Symlinked account dirs are skipped.
+func codexSessionsRoots(cfg CodexHistoryConfig) []string {
+	if cfg.SessionsRoot != "" {
+		return []string{cfg.SessionsRoot}
+	}
+	home := os.Getenv("HOME")
+	if home == "" {
+		return nil
+	}
+	roots := []string{filepath.Join(home, ".codex", "sessions")}
+	accountsDir := filepath.Join(home, ".codex-accounts")
+	entries, err := os.ReadDir(accountsDir)
+	if err != nil {
+		return roots
+	}
+	for _, e := range entries {
+		if !e.IsDir() || e.Type()&os.ModeSymlink != 0 {
+			continue
+		}
+		roots = append(roots, filepath.Join(accountsDir, e.Name(), "sessions"))
+	}
+	return roots
 }
 
 type codexRolloutFile struct {

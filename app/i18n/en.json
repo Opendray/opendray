@@ -238,7 +238,11 @@
         "tooltipGrok": "Switch Grok account (restarts the CLI process)",
         "menuTitleGrok": "Switch Grok account",
         "confirmSwitchGrok": "Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?",
-        "confirmSwitchGrokCarry": "Switching account restarts the Grok CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?"
+        "confirmSwitchGrokCarry": "Switching account restarts the Grok CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?",
+        "tooltipCodex": "Switch Codex account (restarts the CLI process)",
+        "menuTitleCodex": "Switch Codex account",
+        "confirmSwitchCodex": "Switching account restarts the Codex CLI under a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?",
+        "confirmSwitchCodexCarry": "Switching account restarts the Codex CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?"
       },
       "inspector": {
         "tabs": {
@@ -1417,6 +1421,33 @@
         "makeDefault": "set default",
         "setDefault": "Use as the default model",
         "remove": "Remove {model}"
+      },
+      "codexAccounts": {
+        "title": "Codex accounts",
+        "importLocal": "Import local",
+        "importLocalTooltip": "Scan ~/.codex-accounts/ (and the gateway user's ~/.codex) on the host and register any logged-in account dirs. Gateway-host only.",
+        "importedNothingToast": "Nothing to import, accounts already in sync.",
+        "importedToast_one": "Imported {count} account from ~/.codex-accounts",
+        "importedToast_other": "Imported {count} accounts from ~/.codex-accounts",
+        "importFailedToast": "Import failed",
+        "addingTitle": "Adding a new account.",
+        "addingBodyPrefix": "Codex keys its state off CODEX_HOME. For a ChatGPT login, give each account its own CODEX_HOME and sign in there on the gateway host:",
+        "addingBodySuffix": "Then click <1>Import local</1> to register it. Or add an API-key account with the form below. Never copy one account's auth.json into another: codex rotates its tokens, so the two would log each other out.",
+        "apiKeyNamePlaceholder": "account name",
+        "apiKeyPlaceholder": "OpenAI API key (sk-…)",
+        "apiKeyAdd": "Add with API key",
+        "apiKeyAddedToast": "Codex account added",
+        "apiKeyFailedToast": "Could not add the API-key account",
+        "loading": "Loading…",
+        "empty": "No Codex accounts yet. Run <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> on the gateway host and click Import local, or add one with an API key.",
+        "noTokenYet": "not logged in",
+        "homeDir": "home:",
+        "toggleFailedToast": "Toggle failed",
+        "removeConfirm": "Remove account \"{name}\"?",
+        "removedToast": "Account removed",
+        "removeFailedToast": "Remove failed",
+        "toggleAria": "Toggle {name}",
+        "removeAria": "Remove {name}"
       }
     },
     "channels": {

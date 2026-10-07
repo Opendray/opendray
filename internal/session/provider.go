@@ -46,6 +46,20 @@ type PrepareOutput struct {
 	// support pre-assigned session IDs (e.g. codex).
 	ClaudeSessionID string
 
+	// LeadingArgs are placed BEFORE every other spawn arg — for CLIs whose
+	// resume form is a subcommand (`codex resume <thread-id> [flags]`),
+	// which must come first on the command line.
+	LeadingArgs []string
+
+	// OnExit, when set, runs once after the CLI process ends and before
+	// the per-session temp dir is removed — the provider's chance to move
+	// durable state (e.g. codex conversation rollouts and a refreshed
+	// auth.json written into a scratch CODEX_HOME) out of the temp dir.
+	// It returns the agent-side session id observed for this run ("" if
+	// none); the manager persists it as the session's ClaudeSessionID so a
+	// later restart / account switch can resume that conversation.
+	OnExit func() string
+
 	// Notices are one-time operator hints surfaced at the top of the
 	// session terminal (and the ring buffer / transcript) before the
 	// CLI's own output — e.g. "the CLI will disable MCP here because the

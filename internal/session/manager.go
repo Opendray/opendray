@@ -124,6 +124,21 @@ type AntigravityAccountResolver interface {
 	CopyConversation(srcHome, dstHome, convID, cwd string) error
 }
 
+// CodexAccountResolver is the minimum codexacct surface the manager needs
+// to carry a codex conversation across an account switch: the credential
+// CODEX_HOME (where durable rollouts live) for an account id ("" → the
+// gateway default ~/.codex). Wired as an interface to keep session free of
+// a codexacct import. Nil → switches start a fresh conversation.
+type CodexAccountResolver interface {
+	AccountHome(ctx context.Context, id string) (string, error)
+}
+
+// WithCodexAccountResolver injects the codexacct resolver SwitchCodexAccount
+// uses to move the conversation rollout into the new account's home.
+func WithCodexAccountResolver(r CodexAccountResolver) ManagerOption {
+	return func(m *Manager) { m.codexAccounts = r }
+}
+
 // WithAntigravityAccountResolver injects the agyacct resolver used to
 // resume/carry antigravity conversations across restart + account switch.
 // Defaults to nil (sessions start fresh).
@@ -243,6 +258,7 @@ type Manager struct {
 	providers           ProviderResolver
 	claudeAccounts      ClaudeAccountResolver      // optional; nil disables transcript migration + failover
 	antigravityAccounts AntigravityAccountResolver // optional; nil disables antigravity conversation resume/carry
+	codexAccounts       CodexAccountResolver       // optional; nil disables codex conversation carry on account switch
 	autoFailoverEnabled bool                       // when true + claudeAccounts != nil, rate-limit scanner is hot
 	spawnProfiles       IntegrationSpawnProfiles   // optional; nil disables integration spawn-profile injection
 
@@ -343,6 +359,9 @@ type runningSession struct {
 	vt vt10x.Terminal
 
 	tempDir string // per-session scratch dir, removed on session.ended
+	// onExit is the provider's PrepareOutput.OnExit hook, run by the pump
+	// before tempDir is removed. Nil for providers without one.
+	onExit func() string
 
 	subsMu sync.Mutex
 	subs   map[chan []byte]struct{}
@@ -683,6 +702,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		ClaudeAccountID:      req.ClaudeAccountID,
 		AntigravityAccountID: req.AntigravityAccountID,
 		GrokAccountID:        req.GrokAccountID,
+		CodexAccountID:       req.CodexAccountID,
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
@@ -922,6 +942,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	if sess.ProviderID == "grok" {
 		accountID = sess.GrokAccountID
 	}
+	if sess.ProviderID == "codex" {
+		accountID = sess.CodexAccountID
+	}
 	resolveCtx := WithKBAdmin(WithModel(WithOrigin(WithAccountID(ctx, accountID), sess.Origin), sess.Model), sess.KBAdmin)
 	// Integration spawn profile: provider-agnostic MCP servers + system
 	// prompt + auto-approve declared on the creating integration, applied
@@ -947,9 +970,11 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	}
 
 	var (
-		extraArgs []string
-		extraEnv  map[string]string
-		notices   []string
+		extraArgs   []string
+		leadingArgs []string
+		extraEnv    map[string]string
+		notices     []string
+		onExit      func() string
 	)
 	var preparedClaudeSessionID string
 	if p.Prepare != nil {
@@ -994,8 +1019,10 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 			return nil, fmt.Errorf("provider prepare: %w", err)
 		}
 		extraArgs = out.Args
+		leadingArgs = out.LeadingArgs
 		extraEnv = out.Env
 		notices = out.Notices
+		onExit = out.OnExit
 		// Capture the agent-side session UUID so the M18 transcript
 		// reader can anchor the right *.jsonl file. For fresh spawns
 		// this lands in the Insert below via sess.ClaudeSessionID;
@@ -1030,6 +1057,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 	providerArgs := dropOverriddenFlags(p.Args, userArgs)
 	providerArgs = dropConflictingFlags(providerArgs, userArgs, p.Conflicts)
 	args := finalizeSpawnArgs(p.ID, providerArgs, extraArgs, userArgs)
+	if len(leadingArgs) > 0 {
+		args = append(append([]string(nil), leadingArgs...), args...)
+	}
 
 	cmd := exec.Command(p.Executable, args...)
 	cmd.Dir = workDir
@@ -1089,6 +1119,7 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		ring:         NewRing(DefaultRingSize),
 		vt:           vt10x.New(vt10x.WithSize(defaultVTCols, defaultVTRows)),
 		tempDir:      tempDir,
+		onExit:       onExit,
 		subs:         make(map[chan []byte]struct{}),
 		lastActivity: sess.StartedAt,
 		endedCh:      make(chan struct{}),
@@ -1766,6 +1797,115 @@ func (m *Manager) SwitchGrokAccount(ctx context.Context, id, newAccountID string
 	if err := m.store.UpdateGrokAccount(ctx, id, newAccountID); err != nil {
 		m.log.Error("persist new grok account failed",
 			"session", id, "account", newAccountID, "err", err)
+	}
+
+	m.bus.Publish(eventbus.Event{
+		Topic: "session.account_switched",
+		Data: map[string]any{
+			"session_id":  rs.sess.ID,
+			"provider_id": rs.sess.ProviderID,
+			"account_id":  newAccountID,
+		},
+	})
+	return rs.sess, nil
+}
+
+// SwitchCodexAccount terminates the running `codex` process and respawns
+// it under a different codex account binding (a different credential
+// CODEX_HOME). The session row, cwd, args and slot are preserved.
+//
+// With carryContext the conversation continues: Stop runs the codex exit
+// hook, which syncs the scratch home's rollouts into the OLD account's
+// home and records the thread id on the row (ClaudeSessionID); the rollout
+// is then copied into the NEW account's home and the respawn resumes it
+// (`codex resume <thread-id>`), so the chat keeps its full history.
+// carryContext is the operator's consent to send the prior conversation to
+// the provider under the new account — off (or no rollout to carry) starts
+// fresh, never a resume that would exit with "no rollout found".
+//
+// On respawn failure the previous account (and thread) is restored and
+// brought back up, so a bad switch never leaves the session dead.
+func (m *Manager) SwitchCodexAccount(ctx context.Context, id, newAccountID string, carryContext bool) (Session, error) {
+	m.mu.RLock()
+	if m.closed {
+		m.mu.RUnlock()
+		return Session{}, errors.New("session manager closed")
+	}
+	m.mu.RUnlock()
+
+	current, err := m.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	if current.ProviderID != "codex" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	if current.CodexAccountID == newAccountID {
+		// No-op: caller picked the binding already in place.
+		return current, nil
+	}
+
+	if err := m.Stop(ctx, id); err != nil {
+		return Session{}, fmt.Errorf("stop before switch: %w", err)
+	}
+
+	// Re-read after Stop: the exit hook persisted the thread id.
+	sess, err := m.store.Get(ctx, id)
+	if err != nil {
+		return Session{}, err
+	}
+	prevThread := sess.ClaudeSessionID
+
+	resumable := false
+	if carryContext && sess.ClaudeSessionID != "" && m.codexAccounts != nil {
+		oldHome, errOld := m.codexAccounts.AccountHome(ctx, current.CodexAccountID)
+		newHome, errNew := m.codexAccounts.AccountHome(ctx, newAccountID)
+		if errOld == nil && errNew == nil {
+			ok, err := MigrateCodexRollout(oldHome, newHome, sess.ClaudeSessionID)
+			if err != nil {
+				m.log.Warn("codex rollout migration failed; switch starts a fresh conversation",
+					"session", id, "old_home", oldHome, "new_home", newHome, "err", err)
+			}
+			resumable = ok
+		}
+	}
+	if !resumable {
+		sess.ClaudeSessionID = ""
+	}
+
+	sess.CodexAccountID = newAccountID
+	sess.State = StateRunning
+	sess.EndedAt = nil
+	sess.ExitCode = nil
+	sess.StartedAt = time.Now().UTC()
+
+	rs, err := m.spawn(ctx, sess, true)
+	if err != nil {
+		m.log.Warn("codex switch respawn failed; rolling back to previous account",
+			"session", id, "new_account", newAccountID, "old_account", current.CodexAccountID, "err", err)
+		sess.CodexAccountID = current.CodexAccountID
+		sess.ClaudeSessionID = prevThread
+		sess.State = StateRunning
+		sess.EndedAt = nil
+		sess.ExitCode = nil
+		sess.StartedAt = time.Now().UTC()
+		if _, rbErr := m.spawn(ctx, sess, true); rbErr != nil {
+			m.log.Error("codex switch rollback respawn also failed",
+				"session", id, "old_account", current.CodexAccountID, "err", rbErr)
+		}
+		return Session{}, fmt.Errorf("switch to codex account %q failed (session restored to previous account): %w", newAccountID, err)
+	}
+
+	if err := m.store.UpdateCodexAccount(ctx, id, newAccountID); err != nil {
+		m.log.Error("persist new codex account failed",
+			"session", id, "account", newAccountID, "err", err)
+	}
+	if !resumable && prevThread != "" {
+		// The new account starts a fresh thread; drop the old id so a later
+		// restart doesn't look for it (the exit hook records the new one).
+		if err := m.store.SetClaudeSessionID(ctx, id, ""); err != nil {
+			m.log.Warn("clear codex thread id after fresh switch failed", "session", id, "err", err)
+		}
 	}
 
 	m.bus.Publish(eventbus.Event{

@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/opendray/opendray-v2/internal/agyacct"
 	"github.com/opendray/opendray-v2/internal/cliacct"
+	"github.com/opendray/opendray-v2/internal/codexacct"
 	"github.com/opendray/opendray-v2/internal/grokacct"
 	"github.com/opendray/opendray-v2/internal/mcp"
 	"github.com/opendray/opendray-v2/internal/session"
@@ -60,10 +61,16 @@ type SessionProvider struct {
 	// WithGrokAccounts (option, not a constructor arg, to avoid churning
 	// every NewSessionProvider call site).
 	grokAccounts *grokacct.Service
-	skills       *skills.Loader // optional; nil disables skill injection
-	mcps         *mcp.Loader    // optional; nil disables vault MCP injection
-	secretsFile  string         // dotenv file for ${KEY} substitution; empty = no substitution
-	log          *slog.Logger
+
+	// codexAccounts, when set, enables codex multi-account: a session
+	// bound to a codex account authenticates with that account's
+	// CODEX_HOME login and keeps its conversation rollouts there. Nil
+	// disables codex multi-account. Set via WithCodexAccounts.
+	codexAccounts *codexacct.Service
+	skills        *skills.Loader // optional; nil disables skill injection
+	mcps          *mcp.Loader    // optional; nil disables vault MCP injection
+	secretsFile   string         // dotenv file for ${KEY} substitution; empty = no substitution
+	log           *slog.Logger
 
 	// memory describes the auto-attached memory MCP server. Zero
 	// value (Enabled=false) skips injection. Set via
@@ -250,6 +257,14 @@ func (sp *SessionProvider) WithGrokAccounts(svc *grokacct.Service) *SessionProvi
 	return sp
 }
 
+// WithCodexAccounts installs the codex multi-account service. When set, a
+// session bound to a codex account authenticates with that account's
+// CODEX_HOME. Nil (the default) disables codex multi-account.
+func (sp *SessionProvider) WithCodexAccounts(svc *codexacct.Service) *SessionProvider {
+	sp.codexAccounts = svc
+	return sp
+}
+
 // DbtoolAutoAttach holds the runtime knobs for injecting the
 // Database-tool MCP server (`opendray mcp-dbtool`) into spawned
 // sessions. Field semantics mirror MemoryAutoAttach; the key is a
@@ -425,6 +440,9 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 	// grok isolates via GROK_HOME (grok keys its state off that dir);
 	// unlike agy this relocates only grok's state, not the whole HOME.
 	wantGrokAccount := id == "grok" && selectedAccountID != "" && sp.grokAccounts != nil
+	// codex isolates via CODEX_HOME: the account's dir holds its login and
+	// durable conversation rollouts (see finalizeCodexHome).
+	wantCodexAccount := id == "codex" && selectedAccountID != "" && sp.codexAccounts != nil
 
 	// Merge vault MCP registry (enabled-only) into the provider's
 	// inline mcp_servers list. Vault entries are loaded eagerly here
@@ -912,6 +930,25 @@ func (sp *SessionProvider) Resolve(ctx context.Context, id string) (session.Prov
 					sp.log.Warn("workspace MCP cleanup failed",
 						"provider", providerID, "cwd", cwd, "err", err)
 				}
+			}
+		}
+
+		// Codex: bind the account's login, resume the session's thread, and
+		// keep its rollouts durable past the temp dir (finalizeCodexHome).
+		// Runs after every injector that may have created the scratch
+		// CODEX_HOME (MCP, skills, memory guidance, banners).
+		if providerID == "codex" {
+			credHome := codexacct.DefaultHome()
+			if wantCodexAccount {
+				home, err := sp.codexAccounts.ResolveSpawnHome(prepareCtx, selectedAccountID)
+				if err != nil {
+					return session.PrepareOutput{}, fmt.Errorf("codex account %s: %w", selectedAccountID, err)
+				}
+				credHome = home
+			}
+			if err := finalizeCodexHome(baseDir, credHome, codexacct.DefaultHome(),
+				session.ResumeClaudeSessionIDFromContext(prepareCtx), wantCodexAccount, &out); err != nil {
+				return session.PrepareOutput{}, fmt.Errorf("prepare codex home: %w", err)
 			}
 		}
 

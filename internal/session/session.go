@@ -132,6 +132,12 @@ type Session struct {
 	// (~/.grok). Mirrors AntigravityAccountID for the grok provider,
 	// whose accounts are isolated by GROK_HOME.
 	GrokAccountID string `json:"grok_account_id,omitempty"`
+	// CodexAccountID is the codexacct account this session is pinned to
+	// (provider "codex"). Empty means the CLI's default codex home
+	// (~/.codex). Codex accounts are isolated by CODEX_HOME. For codex
+	// sessions ClaudeSessionID holds the codex thread id (the agent-side
+	// session UUID), so restarts and account switches resume it.
+	CodexAccountID string `json:"codex_account_id,omitempty"`
 	// ParentSessionID links a session spawned on behalf of another
 	// (e.g. the Inspector's Tasks tab spawns shell children of an
 	// AI session). Empty for top-level sessions. Used purely for UI
@@ -193,6 +199,7 @@ type CreateRequest struct {
 	ClaudeAccountID      string   `json:"claude_account_id,omitempty"`
 	AntigravityAccountID string   `json:"antigravity_account_id,omitempty"`
 	GrokAccountID        string   `json:"grok_account_id,omitempty"`
+	CodexAccountID       string   `json:"codex_account_id,omitempty"`
 	ParentSessionID      string   `json:"parent_session_id,omitempty"`
 	Cwd                  string   `json:"cwd"`
 	Args                 []string `json:"args"`

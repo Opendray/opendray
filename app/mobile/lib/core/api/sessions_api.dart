@@ -163,6 +163,28 @@ class SessionsApi {
     }
   }
 
+  // PATCH /api/v1/sessions/:id/codex-account — rebind a running Codex
+  // session to a different account (CODEX_HOME login). carry_context: true
+  // carries the conversation rollout into the new account and resumes it
+  // (`codex resume <thread-id>`), so the chat keeps its full history — the
+  // same default as the web switcher's carry toggle. The session id / tab
+  // is preserved. `accountId == ''` clears the binding (gateway default
+  // ~/.codex). Mirrors web switchCodexAccount (app/shared/src/lib/sessions.ts).
+  Future<SessionSummary> switchCodexAccount(
+    String id,
+    String accountId,
+  ) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/codex-account',
+        data: {'account_id': accountId, 'carry_context': true},
+      );
+      return SessionSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
   // Upload a file (typically an image) and let the gateway hand
   // back the absolute path it landed at on the server's tempdir.
   // The caller pastes that path into the live PTY so the running

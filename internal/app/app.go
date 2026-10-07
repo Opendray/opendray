@@ -37,6 +37,7 @@ import (
 	_ "github.com/opendray/opendray-v2/internal/channel/wechat"   // register kind=wechat (wxpusher push)
 	_ "github.com/opendray/opendray-v2/internal/channel/wecom"    // register kind=wecom
 	"github.com/opendray/opendray-v2/internal/cliacct"
+	"github.com/opendray/opendray-v2/internal/codexacct"
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/cortex"
 	customtask "github.com/opendray/opendray-v2/internal/customtask"
@@ -565,6 +566,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	grokacctSvc := grokacct.NewService(st.Pool(), bus, log)
 	grokacctHandlers := grokacct.NewHandlers(grokacctSvc, log)
 
+	// Codex multi-account (parallel to grokacct; accounts surfaced via the
+	// "Import local" scan). Each account is a dedicated CODEX_HOME.
+	codexacctSvc := codexacct.NewService(st.Pool(), bus, log)
+	codexacctHandlers := codexacct.NewHandlers(codexacctSvc, log)
+
 	// Every on-disk root comes from one resolver (internal/config/
 	// paths.go) so the gateway and the `opendray notes|skill|mcp`
 	// commands can never disagree about where things live.
@@ -652,9 +658,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// Grok: carry the conversation into the new account's GROK_HOME
 		// on switch and --resume it there, instead of a recap.
 		session.WithGrokAccountResolver(grokacctSvc),
+		// Lets Manager.SwitchCodexAccount carry the conversation rollout
+		// into the new account's CODEX_HOME and resume it.
+		session.WithCodexAccountResolver(codexacctSvc),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
-	sessionProvider.WithGrokAccounts(grokacctSvc) // grok multi-account: bind GROK_HOME at spawn
+	sessionProvider.WithGrokAccounts(grokacctSvc)   // grok multi-account: bind GROK_HOME at spawn
+	sessionProvider.WithCodexAccounts(codexacctSvc) // codex multi-account: bind CODEX_HOME login at spawn
 	// Built before the session manager so spawn can inject an
 	// integration's provider-agnostic spawn profile (MCP servers + system
 	// prompt + auto-approve) into the sessions it creates, and so POST
@@ -711,6 +721,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// /sessions/{id}/antigravity-account.
 		session.WithAntigravityAccountChecker(agyacctSvc),
 		session.WithGrokAccountChecker(grokacctSvc),
+		session.WithCodexAccountChecker(codexacctSvc),
 		// Fill provider/model/claude-account from the integration's
 		// configured defaults for sessions an integration creates and
 		// the request leaves those fields empty (request still wins).
@@ -1606,6 +1617,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				cliacctHandlers.Mount(r)
 				agyacctHandlers.Mount(r)
 				grokacctHandlers.Mount(r)
+				codexacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)
