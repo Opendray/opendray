@@ -142,10 +142,9 @@ class SessionsApi {
   }
 
   // PATCH /api/v1/sessions/:id/antigravity-account — rebind a running
-  // Antigravity session to a different account HOME. Like the Claude
-  // switch, the gateway restarts the agy child under a fresh conversation
-  // (in-CLI history doesn't carry across accounts); the session id / tab
-  // is preserved. `accountId == ''` clears the binding (gateway default
+  // Antigravity session to a different account HOME. The gateway restarts
+  // the agy child and copies the cwd's conversation into the new HOME, so
+  // it resumes with its history; the session id / tab is preserved. `accountId == ''` clears the binding (gateway default
   // HOME). Mirrors web switchAntigravityAccount
   // (app/shared/src/lib/sessions.ts).
   Future<SessionSummary> switchAntigravityAccount(
@@ -156,6 +155,28 @@ class SessionsApi {
       final res = await _dio.patch<Map<String, dynamic>>(
         '/api/v1/sessions/$id/antigravity-account',
         data: {'account_id': accountId},
+      );
+      return SessionSummary.fromJson(res.data ?? {});
+    } on Object catch (e) {
+      throw toApiException(e);
+    }
+  }
+
+  // PATCH /api/v1/sessions/:id/grok-account — rebind a running Grok
+  // session to a different account (GROK_HOME login). carry_context: true
+  // copies the conversation into the new account's home and resumes it
+  // (`grok --resume <id>`), so the chat keeps its full history — the same
+  // default as the web switcher's carry toggle. The session id / tab is
+  // preserved. `accountId == ''` clears the binding (gateway default
+  // ~/.grok). Mirrors web switchGrokAccount (app/shared/src/lib/sessions.ts).
+  Future<SessionSummary> switchGrokAccount(
+    String id,
+    String accountId,
+  ) async {
+    try {
+      final res = await _dio.patch<Map<String, dynamic>>(
+        '/api/v1/sessions/$id/grok-account',
+        data: {'account_id': accountId, 'carry_context': true},
       );
       return SessionSummary.fromJson(res.data ?? {});
     } on Object catch (e) {
@@ -184,6 +205,7 @@ class SessionsApi {
       throw toApiException(e);
     }
   }
+
   // PATCH /api/v1/sessions/:id/opencode-account — rebind a running
   // OpenCode session to a different credential bundle. Every opencode
   // account shares one session DB, so carry_context: true resumes the same

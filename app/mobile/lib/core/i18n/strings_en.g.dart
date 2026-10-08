@@ -3193,8 +3193,11 @@ class TranslationsWebProvidersEn {
 	late final TranslationsWebProvidersDetailEn detail = TranslationsWebProvidersDetailEn.internal(_root);
 	late final TranslationsWebProvidersConfigFormEn configForm = TranslationsWebProvidersConfigFormEn.internal(_root);
 	late final TranslationsWebProvidersClaudeAccountsEn claudeAccounts = TranslationsWebProvidersClaudeAccountsEn.internal(_root);
+	late final TranslationsWebProvidersGrokAccountsEn grokAccounts = TranslationsWebProvidersGrokAccountsEn.internal(_root);
 	late final TranslationsWebProvidersAntigravityAccountsEn antigravityAccounts = TranslationsWebProvidersAntigravityAccountsEn.internal(_root);
 	late final TranslationsWebProvidersModelsEn models = TranslationsWebProvidersModelsEn.internal(_root);
+	late final TranslationsWebProvidersCodexAccountsEn codexAccounts = TranslationsWebProvidersCodexAccountsEn.internal(_root);
+	late final TranslationsWebProvidersOpencodeAccountsEn opencodeAccounts = TranslationsWebProvidersOpencodeAccountsEn.internal(_root);
 }
 
 // Path: web.channels
@@ -7106,8 +7109,8 @@ class TranslationsWebSessionsAccountSwitcherEn {
 	/// en: 'Switch Antigravity account'
 	String get menuTitleAgy => 'Switch Antigravity account';
 
-	/// en: 'Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?'
-	String get confirmSwitchAgy => 'Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?';
+	/// en: 'Switching account restarts the Antigravity CLI under the NEW account and carries this conversation over, so it resumes with its history. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchAgy => 'Switching account restarts the Antigravity CLI under the NEW account and carries this conversation over, so it resumes with its history. Any in-flight tool execution or unsent input is lost. Continue?';
 
 	/// en: 'Default'
 	String get defaultName => 'Default';
@@ -7141,6 +7144,42 @@ class TranslationsWebSessionsAccountSwitcherEn {
 
 	/// en: 'Switch failed'
 	String get switchFailedToast => 'Switch failed';
+
+	/// en: 'Switch Grok account (restarts the CLI process)'
+	String get tooltipGrok => 'Switch Grok account (restarts the CLI process)';
+
+	/// en: 'Switch Grok account'
+	String get menuTitleGrok => 'Switch Grok account';
+
+	/// en: 'Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchGrok => 'Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switching account restarts the Grok CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchGrokCarry => 'Switching account restarts the Grok CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switch Codex account (restarts the CLI process)'
+	String get tooltipCodex => 'Switch Codex account (restarts the CLI process)';
+
+	/// en: 'Switch Codex account'
+	String get menuTitleCodex => 'Switch Codex account';
+
+	/// en: 'Switching account restarts the Codex CLI under a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchCodex => 'Switching account restarts the Codex CLI under a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switching account restarts the Codex CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchCodexCarry => 'Switching account restarts the Codex CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switching account restarts the OpenCode CLI under the new credentials with a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchOpenCode => 'Switching account restarts the OpenCode CLI under the new credentials with a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switching account restarts the OpenCode CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?'
+	String get confirmSwitchOpenCodeCarry => 'Switching account restarts the OpenCode CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?';
+
+	/// en: 'Switch the OpenCode account (credential set) this session uses'
+	String get tooltipOpenCode => 'Switch the OpenCode account (credential set) this session uses';
+
+	/// en: 'OpenCode account'
+	String get menuTitleOpenCode => 'OpenCode account';
 }
 
 // Path: web.sessions.inspector
@@ -9015,6 +9054,75 @@ class TranslationsWebProvidersClaudeAccountsEn {
 	String get identityAcceptFailedToast => 'Could not accept identity';
 }
 
+// Path: web.providers.grokAccounts
+class TranslationsWebProvidersGrokAccountsEn {
+	TranslationsWebProvidersGrokAccountsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Grok accounts'
+	String get title => 'Grok accounts';
+
+	/// en: 'Import local'
+	String get importLocal => 'Import local';
+
+	/// en: 'Scan ~/.grok-accounts/ (and the gateway user's ~/.grok) on the host and register any logged-in account dirs. Gateway-host only.'
+	String get importLocalTooltip => 'Scan ~/.grok-accounts/ (and the gateway user\'s ~/.grok) on the host and register any logged-in account dirs. Gateway-host only.';
+
+	/// en: 'Nothing to import, accounts already in sync.'
+	String get importedNothingToast => 'Nothing to import, accounts already in sync.';
+
+	/// en: 'Imported {count} account from ~/.grok-accounts'
+	String importedToast_one({required Object count}) => 'Imported ${count} account from ~/.grok-accounts';
+
+	/// en: 'Imported {count} accounts from ~/.grok-accounts'
+	String importedToast_other({required Object count}) => 'Imported ${count} accounts from ~/.grok-accounts';
+
+	/// en: 'Import failed'
+	String get importFailedToast => 'Import failed';
+
+	/// en: 'Adding a new account.'
+	String get addingTitle => 'Adding a new account.';
+
+	/// en: 'Grok keys its state off GROK_HOME. Give each account its own GROK_HOME and log in there on the gateway host:'
+	String get addingBodyPrefix => 'Grok keys its state off GROK_HOME. Give each account its own GROK_HOME and log in there on the gateway host:';
+
+	/// en: 'Then click <1>Import local</1> to register it. The directory only counts as an account once the sign-in has written its auth.json token.'
+	String get addingBodySuffix => 'Then click <1>Import local</1> to register it. The directory only counts as an account once the sign-in has written its auth.json token.';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'No Grok accounts yet. Run <1>GROK_HOME=~/.grok-accounts/&lt;name&gt; grok login</1> on the gateway host, complete the sign-in, then click Import local.'
+	String get empty => 'No Grok accounts yet. Run <1>GROK_HOME=~/.grok-accounts/&lt;name&gt; grok login</1> on the gateway host, complete the sign-in, then click Import local.';
+
+	/// en: 'not logged in'
+	String get noTokenYet => 'not logged in';
+
+	/// en: 'home:'
+	String get homeDir => 'home:';
+
+	/// en: 'Toggle failed'
+	String get toggleFailedToast => 'Toggle failed';
+
+	/// en: 'Remove account "{name}"?'
+	String removeConfirm({required Object name}) => 'Remove account "${name}"?';
+
+	/// en: 'Account removed'
+	String get removedToast => 'Account removed';
+
+	/// en: 'Remove failed'
+	String get removeFailedToast => 'Remove failed';
+
+	/// en: 'Toggle {name}'
+	String toggleAria({required Object name}) => 'Toggle ${name}';
+
+	/// en: 'Remove {name}'
+	String removeAria({required Object name}) => 'Remove ${name}';
+}
+
 // Path: web.providers.antigravityAccounts
 class TranslationsWebProvidersAntigravityAccountsEn {
 	TranslationsWebProvidersAntigravityAccountsEn.internal(this._root);
@@ -9121,6 +9229,168 @@ class TranslationsWebProvidersModelsEn {
 
 	/// en: 'Remove {model}'
 	String remove({required Object model}) => 'Remove ${model}';
+}
+
+// Path: web.providers.codexAccounts
+class TranslationsWebProvidersCodexAccountsEn {
+	TranslationsWebProvidersCodexAccountsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Codex accounts'
+	String get title => 'Codex accounts';
+
+	/// en: 'Import local'
+	String get importLocal => 'Import local';
+
+	/// en: 'Scan ~/.codex-accounts/ (and the gateway user's ~/.codex) on the host and register any logged-in account dirs. Gateway-host only.'
+	String get importLocalTooltip => 'Scan ~/.codex-accounts/ (and the gateway user\'s ~/.codex) on the host and register any logged-in account dirs. Gateway-host only.';
+
+	/// en: 'Nothing to import, accounts already in sync.'
+	String get importedNothingToast => 'Nothing to import, accounts already in sync.';
+
+	/// en: 'Imported {count} account from ~/.codex-accounts'
+	String importedToast_one({required Object count}) => 'Imported ${count} account from ~/.codex-accounts';
+
+	/// en: 'Imported {count} accounts from ~/.codex-accounts'
+	String importedToast_other({required Object count}) => 'Imported ${count} accounts from ~/.codex-accounts';
+
+	/// en: 'Import failed'
+	String get importFailedToast => 'Import failed';
+
+	/// en: 'Adding a new account.'
+	String get addingTitle => 'Adding a new account.';
+
+	/// en: 'Codex keys its state off CODEX_HOME. For a ChatGPT login, give each account its own CODEX_HOME and sign in there on the gateway host:'
+	String get addingBodyPrefix => 'Codex keys its state off CODEX_HOME. For a ChatGPT login, give each account its own CODEX_HOME and sign in there on the gateway host:';
+
+	/// en: 'Then click <1>Import local</1> to register it. Or add an API-key account with the form below. Never copy one account's auth.json into another: codex rotates its tokens, so the two would log each other out.'
+	String get addingBodySuffix => 'Then click <1>Import local</1> to register it. Or add an API-key account with the form below. Never copy one account\'s auth.json into another: codex rotates its tokens, so the two would log each other out.';
+
+	/// en: 'account name'
+	String get apiKeyNamePlaceholder => 'account name';
+
+	/// en: 'OpenAI API key (sk-…)'
+	String get apiKeyPlaceholder => 'OpenAI API key (sk-…)';
+
+	/// en: 'Add with API key'
+	String get apiKeyAdd => 'Add with API key';
+
+	/// en: 'Codex account added'
+	String get apiKeyAddedToast => 'Codex account added';
+
+	/// en: 'Could not add the API-key account'
+	String get apiKeyFailedToast => 'Could not add the API-key account';
+
+	/// en: 'Loading…'
+	String get loading => 'Loading…';
+
+	/// en: 'No Codex accounts yet. Run <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> on the gateway host and click Import local, or add one with an API key.'
+	String get empty => 'No Codex accounts yet. Run <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> on the gateway host and click Import local, or add one with an API key.';
+
+	/// en: 'not logged in'
+	String get noTokenYet => 'not logged in';
+
+	/// en: 'home:'
+	String get homeDir => 'home:';
+
+	/// en: 'Toggle failed'
+	String get toggleFailedToast => 'Toggle failed';
+
+	/// en: 'Remove account "{name}"?'
+	String removeConfirm({required Object name}) => 'Remove account "${name}"?';
+
+	/// en: 'Account removed'
+	String get removedToast => 'Account removed';
+
+	/// en: 'Remove failed'
+	String get removeFailedToast => 'Remove failed';
+
+	/// en: 'Toggle {name}'
+	String toggleAria({required Object name}) => 'Toggle ${name}';
+
+	/// en: 'Remove {name}'
+	String removeAria({required Object name}) => 'Remove ${name}';
+}
+
+// Path: web.providers.opencodeAccounts
+class TranslationsWebProvidersOpencodeAccountsEn {
+	TranslationsWebProvidersOpencodeAccountsEn.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'OpenCode accounts'
+	String get title => 'OpenCode accounts';
+
+	/// en: 'Import local'
+	String get importLocal => 'Import local';
+
+	/// en: 'Add this host's current opencode credentials (auth.json) as an account'
+	String get importLocalTooltip => 'Add this host\'s current opencode credentials (auth.json) as an account';
+
+	/// en: 'Add'
+	String get add => 'Add';
+
+	/// en: 'Each account is a set of opencode provider credentials, injected per session. All accounts share opencode's session history, so you can switch a running session to another account and keep the conversation. Keys are encrypted at rest and never shown again.'
+	String get explainer => 'Each account is a set of opencode provider credentials, injected per session. All accounts share opencode\'s session history, so you can switch a running session to another account and keep the conversation. Keys are encrypted at rest and never shown again.';
+
+	/// en: 'Account name (e.g. work)'
+	String get namePlaceholder => 'Account name (e.g. work)';
+
+	/// en: 'opencode provider id (e.g. moonshotai)'
+	String get providerPlaceholder => 'opencode provider id (e.g. moonshotai)';
+
+	/// en: 'API key'
+	String get apiKeyPlaceholder => 'API key';
+
+	/// en: 'Cancel'
+	String get cancel => 'Cancel';
+
+	/// en: 'Save'
+	String get save => 'Save';
+
+	/// en: 'Loading accounts…'
+	String get loading => 'Loading accounts…';
+
+	/// en: 'No OpenCode accounts yet. Import this host's credentials or add a provider key.'
+	String get empty => 'No OpenCode accounts yet. Import this host\'s credentials or add a provider key.';
+
+	/// en: 'no usable credentials'
+	String get unusable => 'no usable credentials';
+
+	/// en: 'OpenCode account added'
+	String get addedToast => 'OpenCode account added';
+
+	/// en: 'Could not add OpenCode account'
+	String get addFailedToast => 'Could not add OpenCode account';
+
+	/// en: 'Imported local OpenCode credentials'
+	String get importedToast => 'Imported local OpenCode credentials';
+
+	/// en: 'Could not import local OpenCode credentials'
+	String get importFailedToast => 'Could not import local OpenCode credentials';
+
+	/// en: 'Could not update OpenCode account'
+	String get toggleFailedToast => 'Could not update OpenCode account';
+
+	/// en: 'OpenCode account removed'
+	String get removedToast => 'OpenCode account removed';
+
+	/// en: 'Could not remove OpenCode account'
+	String get removeFailedToast => 'Could not remove OpenCode account';
+
+	/// en: 'Remove OpenCode account "{name}"? Sessions pinned to it fall back to the default credentials.'
+	String removeConfirm({required Object name}) => 'Remove OpenCode account "${name}"? Sessions pinned to it fall back to the default credentials.';
+
+	/// en: 'Remove OpenCode account {name}'
+	String removeAria({required Object name}) => 'Remove OpenCode account ${name}';
+
+	/// en: 'Enable or disable OpenCode account {name}'
+	String toggleAria({required Object name}) => 'Enable or disable OpenCode account ${name}';
 }
 
 // Path: web.channels.empty
@@ -13356,12 +13626,6 @@ class TranslationsSessionsDetailAccountSwitcherEn {
 
 	// Translations
 
-	/// en: 'Switch Claude account'
-	String get tooltip => 'Switch Claude account';
-
-	/// en: 'Switch Claude account'
-	String get sheetTitle => 'Switch Claude account';
-
 	/// en: 'Currently: {account}'
 	String current({required Object account}) => 'Currently: ${account}';
 
@@ -13398,17 +13662,17 @@ class TranslationsSessionsDetailAccountSwitcherEn {
 	/// en: 'No Claude accounts configured. Add them in More → Providers → Claude.'
 	String get noneHint => 'No Claude accounts configured. Add them in More → Providers → Claude.';
 
-	/// en: 'Switch Antigravity account'
-	String get tooltipAgy => 'Switch Antigravity account';
-
-	/// en: 'Switch Antigravity account'
-	String get sheetTitleAgy => 'Switch Antigravity account';
-
-	/// en: 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts (the session tab is kept).'
-	String get confirmBodyAgy => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).';
+	/// en: 'This restarts the Antigravity CLI under the new account and carries the conversation over, so it resumes with its history. The session tab is kept.'
+	String get confirmBodyAgy => 'This restarts the Antigravity CLI under the new account and carries the conversation over, so it resumes with its history. The session tab is kept.';
 
 	/// en: 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.'
 	String get noneHintAgy => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.';
+
+	/// en: 'Switch {provider} account'
+	String tooltipFor({required Object provider}) => 'Switch ${provider} account';
+
+	/// en: 'No {provider} accounts configured. Add them in the web app under Providers → {provider}.'
+	String noneHintWeb({required Object provider}) => 'No ${provider} accounts configured. Add them in the web app under Providers → ${provider}.';
 }
 
 // Path: sessions.terminal.snackbar
@@ -19767,7 +20031,7 @@ extension on Translations {
 			'web.sessions.accountSwitcher.currentDefault' => 'default',
 			'web.sessions.accountSwitcher.menuTitle' => 'Switch Claude account',
 			'web.sessions.accountSwitcher.menuTitleAgy' => 'Switch Antigravity account',
-			'web.sessions.accountSwitcher.confirmSwitchAgy' => 'Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchAgy' => 'Switching account restarts the Antigravity CLI under the NEW account and carries this conversation over, so it resumes with its history. Any in-flight tool execution or unsent input is lost. Continue?',
 			'web.sessions.accountSwitcher.defaultName' => 'Default',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI\'s system keychain / env',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·empty',
@@ -19779,6 +20043,18 @@ extension on Translations {
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => 'Now using @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => 'default',
 			'web.sessions.accountSwitcher.switchFailedToast' => 'Switch failed',
+			'web.sessions.accountSwitcher.tooltipGrok' => 'Switch Grok account (restarts the CLI process)',
+			'web.sessions.accountSwitcher.menuTitleGrok' => 'Switch Grok account',
+			'web.sessions.accountSwitcher.confirmSwitchGrok' => 'Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchGrokCarry' => 'Switching account restarts the Grok CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.tooltipCodex' => 'Switch Codex account (restarts the CLI process)',
+			'web.sessions.accountSwitcher.menuTitleCodex' => 'Switch Codex account',
+			'web.sessions.accountSwitcher.confirmSwitchCodex' => 'Switching account restarts the Codex CLI under a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchCodexCarry' => 'Switching account restarts the Codex CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchOpenCode' => 'Switching account restarts the OpenCode CLI under the new credentials with a fresh conversation. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.confirmSwitchOpenCodeCarry' => 'Switching account restarts the OpenCode CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?',
+			'web.sessions.accountSwitcher.tooltipOpenCode' => 'Switch the OpenCode account (credential set) this session uses',
+			'web.sessions.accountSwitcher.menuTitleOpenCode' => 'OpenCode account',
 			'web.sessions.inspector.tabs.files' => 'Files',
 			'web.sessions.inspector.tabs.git' => 'Git',
 			'web.sessions.inspector.tabs.search' => 'Search',
@@ -20072,6 +20348,8 @@ extension on Translations {
 			'web.memoryWorkers.savedToast' => ({required Object label}) => '${label} updated',
 			'web.memoryWorkers.saveFailedToast' => 'Save failed',
 			'web.memoryWorkers.testOkToast' => ({required Object label, required Object ms}) => '${label} OK — ${ms}ms',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.testFailedToast' => ({required Object label}) => '${label} failed',
 			'web.memoryWorkers.testCallFailedToast' => 'Test call failed',
 			'web.memoryWorkers.unknownError' => 'unknown error',
@@ -20084,8 +20362,6 @@ extension on Translations {
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Git activity summariser',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 2-3 paragraph narrative every 24h. Naturally fits an agent worker.',
 			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'Narrative summary of git history — a balanced model (sonnet / flash) reads noticeably better.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.transcript.label' => 'Session transcript summariser',
 			'web.memoryWorkers.tasks.transcript.description' => 'Session-end "what did the agent do" summary. Naturally fits an agent worker.',
 			'web.memoryWorkers.tasks.transcript.modelAdvice' => 'Session \'what the agent did\' summaries — balanced model recommended; feeds the journal and drift detection.',
@@ -20586,6 +20862,8 @@ extension on Translations {
 			'web.notes.doc.rename' => 'Rename',
 			'web.notes.doc.renamePrompt' => 'New path for this document (folders are created as needed):',
 			'web.notes.doc.renamed' => ({required Object count}) => 'Renamed. ${count} link(s) repointed.',
+			_ => null,
+		} ?? switch (path) {
 			'web.notes.doc.renamedWithWarning' => 'Renamed, but the links were not all updated',
 			'web.notes.doc.renameFailed' => 'Rename failed',
 			'web.notes.doc.delete' => 'Delete',
@@ -20598,8 +20876,6 @@ extension on Translations {
 			'web.activity.refreshTooltip' => 'Refresh',
 			'web.activity.filters.integration' => 'Integration',
 			'web.activity.filters.direction' => 'Direction',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.filters.status' => 'Status',
 			'web.activity.filters.allIntegrations' => 'All integrations',
 			'web.activity.filters.all' => 'All',
@@ -20697,6 +20973,26 @@ extension on Translations {
 			'web.providers.claudeAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
 			'web.providers.claudeAccounts.identityAcceptedToast' => 'New identity recorded',
 			'web.providers.claudeAccounts.identityAcceptFailedToast' => 'Could not accept identity',
+			'web.providers.grokAccounts.title' => 'Grok accounts',
+			'web.providers.grokAccounts.importLocal' => 'Import local',
+			'web.providers.grokAccounts.importLocalTooltip' => 'Scan ~/.grok-accounts/ (and the gateway user\'s ~/.grok) on the host and register any logged-in account dirs. Gateway-host only.',
+			'web.providers.grokAccounts.importedNothingToast' => 'Nothing to import, accounts already in sync.',
+			'web.providers.grokAccounts.importedToast_one' => ({required Object count}) => 'Imported ${count} account from ~/.grok-accounts',
+			'web.providers.grokAccounts.importedToast_other' => ({required Object count}) => 'Imported ${count} accounts from ~/.grok-accounts',
+			'web.providers.grokAccounts.importFailedToast' => 'Import failed',
+			'web.providers.grokAccounts.addingTitle' => 'Adding a new account.',
+			'web.providers.grokAccounts.addingBodyPrefix' => 'Grok keys its state off GROK_HOME. Give each account its own GROK_HOME and log in there on the gateway host:',
+			'web.providers.grokAccounts.addingBodySuffix' => 'Then click <1>Import local</1> to register it. The directory only counts as an account once the sign-in has written its auth.json token.',
+			'web.providers.grokAccounts.loading' => 'Loading…',
+			'web.providers.grokAccounts.empty' => 'No Grok accounts yet. Run <1>GROK_HOME=~/.grok-accounts/&lt;name&gt; grok login</1> on the gateway host, complete the sign-in, then click Import local.',
+			'web.providers.grokAccounts.noTokenYet' => 'not logged in',
+			'web.providers.grokAccounts.homeDir' => 'home:',
+			'web.providers.grokAccounts.toggleFailedToast' => 'Toggle failed',
+			'web.providers.grokAccounts.removeConfirm' => ({required Object name}) => 'Remove account "${name}"?',
+			'web.providers.grokAccounts.removedToast' => 'Account removed',
+			'web.providers.grokAccounts.removeFailedToast' => 'Remove failed',
+			'web.providers.grokAccounts.toggleAria' => ({required Object name}) => 'Toggle ${name}',
+			'web.providers.grokAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
 			'web.providers.antigravityAccounts.title' => 'Antigravity accounts',
 			'web.providers.antigravityAccounts.importLocal' => 'Import local',
 			'web.providers.antigravityAccounts.importLocalTooltip' => 'Scan ~/.antigravity-accounts/ (and the gateway user\'s ~) on the host and register any logged-in account dirs. Gateway-host only.',
@@ -20727,6 +21023,54 @@ extension on Translations {
 			'web.providers.models.makeDefault' => 'set default',
 			'web.providers.models.setDefault' => 'Use as the default model',
 			'web.providers.models.remove' => ({required Object model}) => 'Remove ${model}',
+			'web.providers.codexAccounts.title' => 'Codex accounts',
+			'web.providers.codexAccounts.importLocal' => 'Import local',
+			'web.providers.codexAccounts.importLocalTooltip' => 'Scan ~/.codex-accounts/ (and the gateway user\'s ~/.codex) on the host and register any logged-in account dirs. Gateway-host only.',
+			'web.providers.codexAccounts.importedNothingToast' => 'Nothing to import, accounts already in sync.',
+			'web.providers.codexAccounts.importedToast_one' => ({required Object count}) => 'Imported ${count} account from ~/.codex-accounts',
+			'web.providers.codexAccounts.importedToast_other' => ({required Object count}) => 'Imported ${count} accounts from ~/.codex-accounts',
+			'web.providers.codexAccounts.importFailedToast' => 'Import failed',
+			'web.providers.codexAccounts.addingTitle' => 'Adding a new account.',
+			'web.providers.codexAccounts.addingBodyPrefix' => 'Codex keys its state off CODEX_HOME. For a ChatGPT login, give each account its own CODEX_HOME and sign in there on the gateway host:',
+			'web.providers.codexAccounts.addingBodySuffix' => 'Then click <1>Import local</1> to register it. Or add an API-key account with the form below. Never copy one account\'s auth.json into another: codex rotates its tokens, so the two would log each other out.',
+			'web.providers.codexAccounts.apiKeyNamePlaceholder' => 'account name',
+			'web.providers.codexAccounts.apiKeyPlaceholder' => 'OpenAI API key (sk-…)',
+			'web.providers.codexAccounts.apiKeyAdd' => 'Add with API key',
+			'web.providers.codexAccounts.apiKeyAddedToast' => 'Codex account added',
+			'web.providers.codexAccounts.apiKeyFailedToast' => 'Could not add the API-key account',
+			'web.providers.codexAccounts.loading' => 'Loading…',
+			'web.providers.codexAccounts.empty' => 'No Codex accounts yet. Run <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> on the gateway host and click Import local, or add one with an API key.',
+			'web.providers.codexAccounts.noTokenYet' => 'not logged in',
+			'web.providers.codexAccounts.homeDir' => 'home:',
+			'web.providers.codexAccounts.toggleFailedToast' => 'Toggle failed',
+			'web.providers.codexAccounts.removeConfirm' => ({required Object name}) => 'Remove account "${name}"?',
+			'web.providers.codexAccounts.removedToast' => 'Account removed',
+			'web.providers.codexAccounts.removeFailedToast' => 'Remove failed',
+			'web.providers.codexAccounts.toggleAria' => ({required Object name}) => 'Toggle ${name}',
+			'web.providers.codexAccounts.removeAria' => ({required Object name}) => 'Remove ${name}',
+			'web.providers.opencodeAccounts.title' => 'OpenCode accounts',
+			'web.providers.opencodeAccounts.importLocal' => 'Import local',
+			'web.providers.opencodeAccounts.importLocalTooltip' => 'Add this host\'s current opencode credentials (auth.json) as an account',
+			'web.providers.opencodeAccounts.add' => 'Add',
+			'web.providers.opencodeAccounts.explainer' => 'Each account is a set of opencode provider credentials, injected per session. All accounts share opencode\'s session history, so you can switch a running session to another account and keep the conversation. Keys are encrypted at rest and never shown again.',
+			'web.providers.opencodeAccounts.namePlaceholder' => 'Account name (e.g. work)',
+			'web.providers.opencodeAccounts.providerPlaceholder' => 'opencode provider id (e.g. moonshotai)',
+			'web.providers.opencodeAccounts.apiKeyPlaceholder' => 'API key',
+			'web.providers.opencodeAccounts.cancel' => 'Cancel',
+			'web.providers.opencodeAccounts.save' => 'Save',
+			'web.providers.opencodeAccounts.loading' => 'Loading accounts…',
+			'web.providers.opencodeAccounts.empty' => 'No OpenCode accounts yet. Import this host\'s credentials or add a provider key.',
+			'web.providers.opencodeAccounts.unusable' => 'no usable credentials',
+			'web.providers.opencodeAccounts.addedToast' => 'OpenCode account added',
+			'web.providers.opencodeAccounts.addFailedToast' => 'Could not add OpenCode account',
+			'web.providers.opencodeAccounts.importedToast' => 'Imported local OpenCode credentials',
+			'web.providers.opencodeAccounts.importFailedToast' => 'Could not import local OpenCode credentials',
+			'web.providers.opencodeAccounts.toggleFailedToast' => 'Could not update OpenCode account',
+			'web.providers.opencodeAccounts.removedToast' => 'OpenCode account removed',
+			'web.providers.opencodeAccounts.removeFailedToast' => 'Could not remove OpenCode account',
+			'web.providers.opencodeAccounts.removeConfirm' => ({required Object name}) => 'Remove OpenCode account "${name}"? Sessions pinned to it fall back to the default credentials.',
+			'web.providers.opencodeAccounts.removeAria' => ({required Object name}) => 'Remove OpenCode account ${name}',
+			'web.providers.opencodeAccounts.toggleAria' => ({required Object name}) => 'Enable or disable OpenCode account ${name}',
 			'web.channels.title' => 'Channels',
 			'web.channels.subtitle' => 'Bidirectional messaging integrations. Every enabled, unmuted channel receives session notifications.',
 			'web.channels.newButton' => 'New channel',
@@ -21032,6 +21376,8 @@ extension on Translations {
 			'web.plugins.skills.description' => 'Reusable capabilities injected into Claude sessions as a Tier 1 index — the agent loads full SKILL.md on demand via <1>opendray skill describe &lt;id&gt;</1>. Built-ins ship in the binary but can be <3>customized</3> — your edits land at <5>~/.opendray/vault/skills/&lt;id&gt;/SKILL.md</5> and override the embedded version. Use Reset to revert.',
 			'web.plugins.skills.newSkill' => 'New skill',
 			'web.plugins.skills.empty' => 'No skills found.',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.skills.columns.id' => 'ID',
 			'web.plugins.skills.columns.description' => 'Description',
 			'web.plugins.skills.columns.source' => 'Source',
@@ -21112,8 +21458,6 @@ extension on Translations {
 			'web.plugins.gitHosts.deleteFailedToast' => 'Delete failed',
 			'web.plugins.gitHosts.dialog.addTitle' => 'Add git host',
 			'web.plugins.gitHosts.dialog.editTitle' => ({required Object host}) => 'Edit ${host}',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.description' => 'Token is stored on the gateway. Used only for read-only API calls (list PRs, etc.).',
 			'web.plugins.gitHosts.dialog.kindLabel' => 'Kind',
 			'web.plugins.gitHosts.dialog.kindGitHub' => 'GitHub',
@@ -21546,6 +21890,8 @@ extension on Translations {
 			'web.serverSettings.fields.gatekeeperLatency.hint' => 'Above this the gatekeeper degrades to "allow" rather than blocking the write on a slow LLM. Default 2000.',
 			'web.serverSettings.fields.cleanerEnabled.label' => 'Cleaner (auto-librarian)',
 			'web.serverSettings.fields.cleanerEnabled.hint' => 'Periodic sweep that soft-archives stale / duplicate memories (reversible, grace period applies). Which LLM runs it is routed in Cortex settings → Workers.',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.fields.cleanerInterval.label' => 'Cleaner interval (s)',
 			'web.serverSettings.fields.cleanerInterval.hint' => 'Seconds between automatic sweeps. Default 86400 (24h).',
 			'web.serverSettings.fields.cleanerGlobalScope.label' => 'Cleaner sweeps global scope',
@@ -21626,8 +21972,6 @@ extension on Translations {
 			'web.serverSettings.targetRow.connectionFailedTitle' => 'Connection failed',
 			'web.serverSettings.targetRow.testFailedTitle' => 'Test failed',
 			'web.serverSettings.targetRow.deleteConfirm' => ({required Object id}) => 'Delete target "${id}"? Schedules referencing it will block the delete.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.targetRow.deleteSuccess' => 'Target deleted',
 			'web.serverSettings.targetRow.deleteFailedTitle' => 'Delete failed',
 			'web.serverSettings.targetRow.unknownError' => 'Unknown error',
@@ -22060,6 +22404,8 @@ extension on Translations {
 			'web.knowledge.distill.tab' => 'Distillation',
 			'web.knowledge.distill.intro' => 'A SKILL is a proven, repeatable PROCEDURE distilled from your real work. The experience compiler mines session journals ACROSS projects, clusters similar work, and only drafts a candidate when the same procedure SUCCEEDED in 2+ sessions — every evidence quote is verified verbatim against the journal. Candidates are ranked by recurrence × the manual procedure\'s time cost, so what saves the most time distills first; fully mechanical procedures also compile to an executable run.sh with a validation step.',
 			'web.knowledge.distill.playbooks' => 'Playbooks — distilled, awaiting review',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.distill.playbooksHint' => 'Every candidate passed the gates: ≥2 successful sessions, verified evidence quotes, ≥3 concrete steps. Ranked by time saved (recurrence × manual minutes). Promote what you\'ll reuse, discard the rest.',
 			'web.knowledge.distill.playbooksEmpty' => 'Nothing mined yet — candidates appear once the same procedure succeeds in two or more sessions.',
 			'web.knowledge.distill.skills' => 'Skills — active, injected at spawn',
@@ -22140,8 +22486,6 @@ extension on Translations {
 			'web.cortex.chat.hide' => 'Hide chat',
 			'web.cortex.chat.emptyHint' => 'Ask the AI to update, restructure, or re-draft this document. Changes apply directly when AI-maintained, or land in the Inbox when you\'ve locked it.',
 			'web.cortex.chat.placeholder' => 'e.g. update this from the latest work · ⌘↵ to send',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.thinking' => 'AI is working…',
 			'web.cortex.chat.sendFailed' => 'Send failed',
 			'web.cortex.chat.escalate' => 'Escalate to session',
@@ -22518,8 +22862,6 @@ extension on Translations {
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'started ${started}  ·  ended ${ended}',
 			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
 			'sessions.detail.errorTitle' => 'Failed to load session',
-			'sessions.detail.accountSwitcher.tooltip' => 'Switch Claude account',
-			'sessions.detail.accountSwitcher.sheetTitle' => 'Switch Claude account',
 			'sessions.detail.accountSwitcher.current' => ({required Object account}) => 'Currently: ${account}',
 			'sessions.detail.accountSwitcher.defaultName' => 'Default (system credential)',
 			'sessions.detail.accountSwitcher.defaultSubtitle' => 'Use the CLI\'s own login, no specific account',
@@ -22532,10 +22874,10 @@ extension on Translations {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Switched to ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Switch failed: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No Claude accounts configured. Add them in More → Providers → Claude.',
-			'sessions.detail.accountSwitcher.tooltipAgy' => 'Switch Antigravity account',
-			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Switch Antigravity account',
-			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn\'t carry across accounts (the session tab is kept).',
+			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'This restarts the Antigravity CLI under the new account and carries the conversation over, so it resumes with its history. The session tab is kept.',
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No Antigravity accounts configured. Add them in More → Providers → Antigravity.',
+			'sessions.detail.accountSwitcher.tooltipFor' => ({required Object provider}) => 'Switch ${provider} account',
+			'sessions.detail.accountSwitcher.noneHintWeb' => ({required Object provider}) => 'No ${provider} accounts configured. Add them in the web app under Providers → ${provider}.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Image picker failed: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Uploading image…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Image attached: ${path}',
@@ -22576,6 +22918,8 @@ extension on Translations {
 			'sessions.action.errors.delete' => ({required Object error}) => 'Delete failed: ${error}',
 			'sessions.dirPicker.parent' => 'Parent',
 			'sessions.dirPicker.newFolder' => 'New folder',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.dirPicker.useThisFolder' => 'Use this folder',
 			'sessions.dirPicker.loading' => 'Loading…',
 			'sessions.dirPicker.empty' => 'No subfolders here.\nPick this folder, or create a new one.',
@@ -22654,8 +22998,6 @@ extension on Translations {
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Insert failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Insert failed: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Create failed: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Create failed: ${error}',
@@ -23090,6 +23432,8 @@ extension on Translations {
 			'project.title' => 'Project',
 			'project.pickFirst' => 'Pick a project first.',
 			'project.health.title' => ({required Object days}) => 'Memory health — last ${days} days',
+			_ => null,
+		} ?? switch (path) {
 			'project.health.subtitle' => 'Aggregate signals across both memory subsystems for this project.',
 			'project.health.newFacts' => 'New facts',
 			'project.health.newFactsHint' => ({required Object total}) => '${total} stored in total',
@@ -23168,8 +23512,6 @@ extension on Translations {
 			'project.archived.restoreFailed' => ({required Object error}) => 'Restore failed: ${error}',
 			'project.archived.restore' => 'Restore',
 			'backups.title' => 'Backups',
-			_ => null,
-		} ?? switch (path) {
 			'backups.runConfirmTitle' => 'Run backup now?',
 			'backups.runConfirmBody' => 'Triggers a fresh dump against the local target. The job runs server-side; this list will refresh as it progresses.',
 			'backups.runFullInstance' => 'Full instance',
@@ -23604,6 +23946,8 @@ extension on Translations {
 			'skills.newSkillTitle' => 'New skill',
 			'skills.customizeTitle' => ({required Object id}) => 'Customize ${id}',
 			'skills.editTitle' => ({required Object id}) => 'Edit ${id}',
+			_ => null,
+		} ?? switch (path) {
 			'skills.resetTooltip' => 'Reset to built-in',
 			'skills.deleteTooltip' => 'Delete',
 			'skills.saving' => 'Saving…',
@@ -23682,8 +24026,6 @@ extension on Translations {
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Load failed: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Save failed: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Save failed: ${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Saved ${time}',
 			'notesPage.editor.showPreview' => 'Preview',
@@ -24118,6 +24460,8 @@ extension on Translations {
 			'memoryQuarantine.actionFailed' => ({required Object error}) => 'Action failed: ${error}',
 			'memoryQuarantine.expires' => ({required Object date}) => 'expires ${date}',
 			'memoryQuarantine.countBadge' => ({required Object count}) => '${count} pending',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.title' => 'Cortex',
 			'cortexHub.subtitle' => 'The experience flywheel: Memory → Brief → Knowledge, fed back into every session.',
 			'cortexHub.idleBadge' => ({required Object days}) => 'idle ${days}d',

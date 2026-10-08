@@ -1518,6 +1518,8 @@ class _TranslationsWebProvidersZh extends TranslationsWebProvidersEn {
 	@override late final _TranslationsWebProvidersClaudeAccountsZh claudeAccounts = _TranslationsWebProvidersClaudeAccountsZh._(_root);
 	@override late final _TranslationsWebProvidersAntigravityAccountsZh antigravityAccounts = _TranslationsWebProvidersAntigravityAccountsZh._(_root);
 	@override late final _TranslationsWebProvidersModelsZh models = _TranslationsWebProvidersModelsZh._(_root);
+	@override late final _TranslationsWebProvidersCodexAccountsZh codexAccounts = _TranslationsWebProvidersCodexAccountsZh._(_root);
+	@override late final _TranslationsWebProvidersOpencodeAccountsZh opencodeAccounts = _TranslationsWebProvidersOpencodeAccountsZh._(_root);
 }
 
 // Path: web.channels
@@ -3617,7 +3619,7 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 	@override String get currentDefault => '默认';
 	@override String get menuTitle => '切换 Claude 账号';
 	@override String get menuTitleAgy => '切换 Antigravity 账号';
-	@override String get confirmSwitchAgy => '切换账号会以全新对话重启 Antigravity CLI——CLI 内的历史记录不会在账号间保留。任何进行中的工具执行或未发送的输入都会丢失。是否继续？';
+	@override String get confirmSwitchAgy => '切换账号会以新账号重启 Antigravity CLI，并迁移当前对话，使其带着历史记录继续。任何进行中的工具执行或未发送的输入都会丢失。是否继续？';
 	@override String get defaultName => '默认';
 	@override String get defaultSubtitle => 'CLI 的系统 keychain / 环境变量';
 	@override String get tokenEmpty => '·未填';
@@ -3629,6 +3631,15 @@ class _TranslationsWebSessionsAccountSwitcherZh extends TranslationsWebSessionsA
 	@override String switchedDescription({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}';
 	@override String get switchedDefault => '默认';
 	@override String get switchFailedToast => '切换失败';
+	@override String get confirmSwitchGrokCarry => '切换账户将重启 Grok CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get tooltipCodex => '切换 Codex 账户（会重启 CLI 进程）';
+	@override String get menuTitleCodex => '切换 Codex 账户';
+	@override String get confirmSwitchCodex => '切换账户会以全新对话重启 Codex CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitchCodexCarry => '切换账户将重启 Codex CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitchOpenCode => '切换账户会以新凭据和全新对话重启 OpenCode CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get confirmSwitchOpenCodeCarry => '切换账户将重启 OpenCode CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？';
+	@override String get tooltipOpenCode => '切换此会话使用的 OpenCode 账户（凭据集）';
+	@override String get menuTitleOpenCode => 'OpenCode 账户';
 }
 
 // Path: web.sessions.inspector
@@ -4658,6 +4669,72 @@ class _TranslationsWebProvidersModelsZh extends TranslationsWebProvidersModelsEn
 	@override String get makeDefault => '设为默认';
 	@override String get setDefault => '用作默认模型';
 	@override String remove({required Object model}) => '移除 ${model}';
+}
+
+// Path: web.providers.codexAccounts
+class _TranslationsWebProvidersCodexAccountsZh extends TranslationsWebProvidersCodexAccountsEn {
+	_TranslationsWebProvidersCodexAccountsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Codex 账户';
+	@override String get importLocal => '导入本地账户';
+	@override String get importLocalTooltip => '扫描主机上的 ~/.codex-accounts/（以及网关用户的 ~/.codex），注册所有已登录的账户目录。仅限网关主机。';
+	@override String get importedNothingToast => '无需导入，账户已同步。';
+	@override String importedToast_one({required Object count}) => '已从 ~/.codex-accounts 导入 ${count} 个账户';
+	@override String importedToast_other({required Object count}) => '已从 ~/.codex-accounts 导入 ${count} 个账户';
+	@override String get importFailedToast => '导入失败';
+	@override String get addingTitle => '添加新账户。';
+	@override String get addingBodyPrefix => 'Codex 的状态保存在 CODEX_HOME 中。使用 ChatGPT 登录时，为每个账户分配独立的 CODEX_HOME，并在网关主机上登录：';
+	@override String get addingBodySuffix => '然后点击<1>导入本地账户</1>完成注册。也可以用下方表单添加 API 密钥账户。切勿把一个账户的 auth.json 复制到另一个账户：codex 会轮换令牌，两者会互相注销。';
+	@override String get apiKeyNamePlaceholder => '账户名称';
+	@override String get apiKeyPlaceholder => 'OpenAI API 密钥（sk-…）';
+	@override String get apiKeyAdd => '用 API 密钥添加';
+	@override String get apiKeyAddedToast => '已添加 Codex 账户';
+	@override String get apiKeyFailedToast => '无法添加 API 密钥账户';
+	@override String get loading => '加载中…';
+	@override String get empty => '还没有 Codex 账户。在网关主机上运行 <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> 后点击导入本地账户，或用 API 密钥添加。';
+	@override String get noTokenYet => '未登录';
+	@override String get homeDir => 'home:';
+	@override String get toggleFailedToast => '切换失败';
+	@override String removeConfirm({required Object name}) => '删除账户“${name}”？';
+	@override String get removedToast => '账户已删除';
+	@override String get removeFailedToast => '删除失败';
+	@override String toggleAria({required Object name}) => '切换 ${name}';
+	@override String removeAria({required Object name}) => '删除 ${name}';
+}
+
+// Path: web.providers.opencodeAccounts
+class _TranslationsWebProvidersOpencodeAccountsZh extends TranslationsWebProvidersOpencodeAccountsEn {
+	_TranslationsWebProvidersOpencodeAccountsZh._(TranslationsZh root) : this._root = root, super.internal(root);
+
+	final TranslationsZh _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'OpenCode 账户';
+	@override String get importLocal => '导入本地';
+	@override String get importLocalTooltip => '将本机当前的 opencode 凭据（auth.json）添加为账户';
+	@override String get add => '添加';
+	@override String get explainer => '每个账户是一组 opencode 服务商凭据，按会话注入。所有账户共享 opencode 的会话历史，因此可以把运行中的会话切换到其他账户并保留对话。密钥静态加密存储，且不会再次显示。';
+	@override String get namePlaceholder => '账户名称（如 work）';
+	@override String get providerPlaceholder => 'opencode 服务商 ID（如 moonshotai）';
+	@override String get apiKeyPlaceholder => 'API 密钥';
+	@override String get cancel => '取消';
+	@override String get save => '保存';
+	@override String get loading => '正在加载账户…';
+	@override String get empty => '还没有 OpenCode 账户。导入本机凭据或添加服务商密钥。';
+	@override String get unusable => '无可用凭据';
+	@override String get addedToast => '已添加 OpenCode 账户';
+	@override String get addFailedToast => '无法添加 OpenCode 账户';
+	@override String get importedToast => '已导入本地 OpenCode 凭据';
+	@override String get importFailedToast => '无法导入本地 OpenCode 凭据';
+	@override String get toggleFailedToast => '无法更新 OpenCode 账户';
+	@override String get removedToast => '已删除 OpenCode 账户';
+	@override String get removeFailedToast => '无法删除 OpenCode 账户';
+	@override String removeConfirm({required Object name}) => '删除 OpenCode 账户“${name}”？绑定到它的会话将改用默认凭据。';
+	@override String removeAria({required Object name}) => '删除 OpenCode 账户 ${name}';
+	@override String toggleAria({required Object name}) => '启用或停用 OpenCode 账户 ${name}';
 }
 
 // Path: web.channels.empty
@@ -6852,8 +6929,6 @@ class _TranslationsSessionsDetailAccountSwitcherZh extends TranslationsSessionsD
 	final TranslationsZh _root; // ignore: unused_field
 
 	// Translations
-	@override String get tooltip => '切换 Claude 账号';
-	@override String get sheetTitle => '切换 Claude 账号';
 	@override String current({required Object account}) => '当前：${account}';
 	@override String get defaultName => '默认（系统凭据）';
 	@override String get defaultSubtitle => '使用 CLI 自身的登录，不指定具体账号';
@@ -6866,10 +6941,10 @@ class _TranslationsSessionsDetailAccountSwitcherZh extends TranslationsSessionsD
 	@override String switchedSnack({required Object account}) => '已切换到 ${account}';
 	@override String switchFailed({required Object error}) => '切换失败：${error}';
 	@override String get noneHint => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。';
-	@override String get tooltipAgy => '切换 Antigravity 账号';
-	@override String get sheetTitleAgy => '切换 Antigravity 账号';
-	@override String get confirmBodyAgy => '这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。';
+	@override String get confirmBodyAgy => '这会以新账号重启 Antigravity CLI，并迁移当前对话，使其带着历史记录继续（会话标签保留）。';
 	@override String get noneHintAgy => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。';
+	@override String tooltipFor({required Object provider}) => '切换 ${provider} 账号';
+	@override String noneHintWeb({required Object provider}) => '未配置 ${provider} 账号。请在网页版的 Providers → ${provider} 中添加。';
 }
 
 // Path: sessions.terminal.snackbar
@@ -10467,7 +10542,7 @@ extension on TranslationsZh {
 			'web.sessions.accountSwitcher.currentDefault' => '默认',
 			'web.sessions.accountSwitcher.menuTitle' => '切换 Claude 账号',
 			'web.sessions.accountSwitcher.menuTitleAgy' => '切换 Antigravity 账号',
-			'web.sessions.accountSwitcher.confirmSwitchAgy' => '切换账号会以全新对话重启 Antigravity CLI——CLI 内的历史记录不会在账号间保留。任何进行中的工具执行或未发送的输入都会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchAgy' => '切换账号会以新账号重启 Antigravity CLI，并迁移当前对话，使其带着历史记录继续。任何进行中的工具执行或未发送的输入都会丢失。是否继续？',
 			'web.sessions.accountSwitcher.defaultName' => '默认',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'CLI 的系统 keychain / 环境变量',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·未填',
@@ -10479,6 +10554,15 @@ extension on TranslationsZh {
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => '当前使用 @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => '默认',
 			'web.sessions.accountSwitcher.switchFailedToast' => '切换失败',
+			'web.sessions.accountSwitcher.confirmSwitchGrokCarry' => '切换账户将重启 Grok CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.tooltipCodex' => '切换 Codex 账户（会重启 CLI 进程）',
+			'web.sessions.accountSwitcher.menuTitleCodex' => '切换 Codex 账户',
+			'web.sessions.accountSwitcher.confirmSwitchCodex' => '切换账户会以全新对话重启 Codex CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchCodexCarry' => '切换账户将重启 Codex CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchOpenCode' => '切换账户会以新凭据和全新对话重启 OpenCode CLI。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.confirmSwitchOpenCodeCarry' => '切换账户将重启 OpenCode CLI，并在新账户下继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。正在进行的工具调用或未发送的输入会丢失。是否继续？',
+			'web.sessions.accountSwitcher.tooltipOpenCode' => '切换此会话使用的 OpenCode 账户（凭据集）',
+			'web.sessions.accountSwitcher.menuTitleOpenCode' => 'OpenCode 账户',
 			'web.sessions.inspector.tabs.files' => '文件',
 			'web.sessions.inspector.tabs.git' => 'Git',
 			'web.sessions.inspector.tabs.search' => '搜索',
@@ -10775,6 +10859,8 @@ extension on TranslationsZh {
 			'web.memoryWorkers.testFailedToast' => ({required Object label}) => '${label} 失败',
 			'web.memoryWorkers.testCallFailedToast' => '测试调用失败',
 			'web.memoryWorkers.unknownError' => '未知错误',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.gatekeeper.label' => 'Gatekeeper',
 			'web.memoryWorkers.tasks.gatekeeper.description' => '每次 memory_store 前的预写过滤器。高频（目标 <500ms） — 仅 summarizer。',
 			'web.memoryWorkers.tasks.gatekeeper.modelAdvice' => '高频的是/否判断——轻量模型（haiku / flash-lite / codex-mini / 本地）完全够用。',
@@ -10784,8 +10870,6 @@ extension on TranslationsZh {
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Git 活动总结器',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → 每 24 小时生成 2-3 段叙事。天然适合 agent worker。',
 			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'git 历史的叙事性总结——均衡模型（sonnet / flash）的可读性明显更好。',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.transcript.label' => '会话记录总结器',
 			'web.memoryWorkers.tasks.transcript.description' => '会话结束时的“agent 都做了什么”总结。天然适合 agent worker。',
 			'web.memoryWorkers.tasks.transcript.modelAdvice' => '会话「agent 做了什么」总结——推荐均衡模型；其产出供日志与漂移检测使用。',
@@ -11289,6 +11373,8 @@ extension on TranslationsZh {
 			'web.notes.doc.deleteConfirm' => ({required Object path}) => '删除 ${path}？此处无法撤销。',
 			'web.notes.doc.deleted' => '文档已删除',
 			'web.notes.doc.deleteFailed' => '删除失败',
+			_ => null,
+		} ?? switch (path) {
 			'web.activity.title' => '活动',
 			'web.activity.subtitle' => '按调用维度审计每个由注册集成发起的 API 请求。包括入站调用（第三方应用以集成 API key 调用 opendray）和出站代理调用（admin → opendray 代理 → 集成）。本管理端 UI 直接发起的调用不会被记录。',
 			'web.activity.refresh' => '刷新',
@@ -11298,8 +11384,6 @@ extension on TranslationsZh {
 			'web.activity.filters.status' => '状态',
 			'web.activity.filters.allIntegrations' => '所有集成',
 			'web.activity.filters.all' => '全部',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.filters.inbound' => '入站',
 			'web.activity.filters.outbound' => '出站',
 			'web.activity.filters.allStatuses' => '所有状态',
@@ -11424,6 +11508,54 @@ extension on TranslationsZh {
 			'web.providers.models.makeDefault' => '设为默认',
 			'web.providers.models.setDefault' => '用作默认模型',
 			'web.providers.models.remove' => ({required Object model}) => '移除 ${model}',
+			'web.providers.codexAccounts.title' => 'Codex 账户',
+			'web.providers.codexAccounts.importLocal' => '导入本地账户',
+			'web.providers.codexAccounts.importLocalTooltip' => '扫描主机上的 ~/.codex-accounts/（以及网关用户的 ~/.codex），注册所有已登录的账户目录。仅限网关主机。',
+			'web.providers.codexAccounts.importedNothingToast' => '无需导入，账户已同步。',
+			'web.providers.codexAccounts.importedToast_one' => ({required Object count}) => '已从 ~/.codex-accounts 导入 ${count} 个账户',
+			'web.providers.codexAccounts.importedToast_other' => ({required Object count}) => '已从 ~/.codex-accounts 导入 ${count} 个账户',
+			'web.providers.codexAccounts.importFailedToast' => '导入失败',
+			'web.providers.codexAccounts.addingTitle' => '添加新账户。',
+			'web.providers.codexAccounts.addingBodyPrefix' => 'Codex 的状态保存在 CODEX_HOME 中。使用 ChatGPT 登录时，为每个账户分配独立的 CODEX_HOME，并在网关主机上登录：',
+			'web.providers.codexAccounts.addingBodySuffix' => '然后点击<1>导入本地账户</1>完成注册。也可以用下方表单添加 API 密钥账户。切勿把一个账户的 auth.json 复制到另一个账户：codex 会轮换令牌，两者会互相注销。',
+			'web.providers.codexAccounts.apiKeyNamePlaceholder' => '账户名称',
+			'web.providers.codexAccounts.apiKeyPlaceholder' => 'OpenAI API 密钥（sk-…）',
+			'web.providers.codexAccounts.apiKeyAdd' => '用 API 密钥添加',
+			'web.providers.codexAccounts.apiKeyAddedToast' => '已添加 Codex 账户',
+			'web.providers.codexAccounts.apiKeyFailedToast' => '无法添加 API 密钥账户',
+			'web.providers.codexAccounts.loading' => '加载中…',
+			'web.providers.codexAccounts.empty' => '还没有 Codex 账户。在网关主机上运行 <1>CODEX_HOME=~/.codex-accounts/&lt;name&gt; codex login --device-auth</1> 后点击导入本地账户，或用 API 密钥添加。',
+			'web.providers.codexAccounts.noTokenYet' => '未登录',
+			'web.providers.codexAccounts.homeDir' => 'home:',
+			'web.providers.codexAccounts.toggleFailedToast' => '切换失败',
+			'web.providers.codexAccounts.removeConfirm' => ({required Object name}) => '删除账户“${name}”？',
+			'web.providers.codexAccounts.removedToast' => '账户已删除',
+			'web.providers.codexAccounts.removeFailedToast' => '删除失败',
+			'web.providers.codexAccounts.toggleAria' => ({required Object name}) => '切换 ${name}',
+			'web.providers.codexAccounts.removeAria' => ({required Object name}) => '删除 ${name}',
+			'web.providers.opencodeAccounts.title' => 'OpenCode 账户',
+			'web.providers.opencodeAccounts.importLocal' => '导入本地',
+			'web.providers.opencodeAccounts.importLocalTooltip' => '将本机当前的 opencode 凭据（auth.json）添加为账户',
+			'web.providers.opencodeAccounts.add' => '添加',
+			'web.providers.opencodeAccounts.explainer' => '每个账户是一组 opencode 服务商凭据，按会话注入。所有账户共享 opencode 的会话历史，因此可以把运行中的会话切换到其他账户并保留对话。密钥静态加密存储，且不会再次显示。',
+			'web.providers.opencodeAccounts.namePlaceholder' => '账户名称（如 work）',
+			'web.providers.opencodeAccounts.providerPlaceholder' => 'opencode 服务商 ID（如 moonshotai）',
+			'web.providers.opencodeAccounts.apiKeyPlaceholder' => 'API 密钥',
+			'web.providers.opencodeAccounts.cancel' => '取消',
+			'web.providers.opencodeAccounts.save' => '保存',
+			'web.providers.opencodeAccounts.loading' => '正在加载账户…',
+			'web.providers.opencodeAccounts.empty' => '还没有 OpenCode 账户。导入本机凭据或添加服务商密钥。',
+			'web.providers.opencodeAccounts.unusable' => '无可用凭据',
+			'web.providers.opencodeAccounts.addedToast' => '已添加 OpenCode 账户',
+			'web.providers.opencodeAccounts.addFailedToast' => '无法添加 OpenCode 账户',
+			'web.providers.opencodeAccounts.importedToast' => '已导入本地 OpenCode 凭据',
+			'web.providers.opencodeAccounts.importFailedToast' => '无法导入本地 OpenCode 凭据',
+			'web.providers.opencodeAccounts.toggleFailedToast' => '无法更新 OpenCode 账户',
+			'web.providers.opencodeAccounts.removedToast' => '已删除 OpenCode 账户',
+			'web.providers.opencodeAccounts.removeFailedToast' => '无法删除 OpenCode 账户',
+			'web.providers.opencodeAccounts.removeConfirm' => ({required Object name}) => '删除 OpenCode 账户“${name}”？绑定到它的会话将改用默认凭据。',
+			'web.providers.opencodeAccounts.removeAria' => ({required Object name}) => '删除 OpenCode 账户 ${name}',
+			'web.providers.opencodeAccounts.toggleAria' => ({required Object name}) => '启用或停用 OpenCode 账户 ${name}',
 			'web.channels.title' => '频道',
 			'web.channels.subtitle' => '双向消息集成。每个已启用且未静音的频道都会接收会话通知。',
 			'web.channels.newButton' => '新建频道',
@@ -11755,6 +11887,8 @@ extension on TranslationsZh {
 			'web.plugins.skills.editor.idLabel' => 'ID',
 			'web.plugins.skills.editor.idPlaceholder' => 'my-helper',
 			'web.plugins.skills.editor.idHint' => '小写字母 / 数字 / 短横 / 下划线。作为 <1>~/.opendray/vault/skills/&lt;id&gt;/</1> 下的目录名。',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.skills.editor.bodyLabel' => 'SKILL.md',
 			'web.plugins.skills.editor.createdToast' => 'Skill 已创建',
 			'web.plugins.skills.editor.savedToast' => 'Skill 已保存',
@@ -11812,8 +11946,6 @@ extension on TranslationsZh {
 			'web.plugins.gitHosts.dialog.description' => 'Token 存储在网关上。仅用于只读 API 调用（列出 PR 等）。',
 			'web.plugins.gitHosts.dialog.kindLabel' => '类型',
 			'web.plugins.gitHosts.dialog.kindGitHub' => 'GitHub',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.kindGitea' => 'Gitea',
 			'web.plugins.gitHosts.dialog.kindGitLab' => 'GitLab',
 			'web.plugins.gitHosts.dialog.hostLabel' => '主机',
@@ -12269,6 +12401,8 @@ extension on TranslationsZh {
 			'web.serverSettings.stringList.addPath' => '添加路径',
 			'web.serverSettings.stringList.removeTitle' => '移除',
 			'web.serverSettings.httpHelpers.autoDetected' => '启动时自动检测到',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.httpHelpers.modelCount' => ({required Object count}) => '${count} 个模型 — 点击使用',
 			'web.serverSettings.httpHelpers.presets' => '预设：',
 			'web.serverSettings.httpHelpers.testConnection' => '测试连接',
@@ -12326,8 +12460,6 @@ extension on TranslationsZh {
 			'web.serverSettings.targetRow.deleteSuccess' => '目标已删除',
 			'web.serverSettings.targetRow.deleteFailedTitle' => '删除失败',
 			'web.serverSettings.targetRow.unknownError' => '未知错误',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.toggle.on' => '开启',
 			'web.serverSettings.toggle.off' => '关闭',
 			'web.serverSettings.toggle.defaultOn' => '默认（开）',
@@ -12783,6 +12915,8 @@ extension on TranslationsZh {
 			'web.knowledge.distill.compiledHint' => '附带可执行的 run.sh（含验证步骤）；提升时还会注册为自定义任务',
 			'web.knowledge.distill.recurrence' => ({required Object count}) => '成功 ×${count}',
 			'web.knowledge.distill.timeCost' => ({required Object minutes}) => '手动约 ${minutes} 分钟',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.distill.projectSpan' => ({required Object count}) => '${count} 个项目',
 			'web.knowledge.distill.scoreHint' => '按「复现次数 × 手动耗时」排序——最省操作员时间的优先蒸馏',
 			'web.knowledge.distill.outcomes' => ({required Object ok, required Object failed}) => '加载后 ${ok} 次成功 / ${failed} 次失败',
@@ -12840,8 +12974,6 @@ extension on TranslationsZh {
 			'web.cortex.chat.thinking' => 'AI 处理中…',
 			'web.cortex.chat.sendFailed' => '发送失败',
 			'web.cortex.chat.escalate' => '升级为会话',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.escalated' => '已升级',
 			'web.cortex.chat.escalateHint' => '拉起完整 agent 会话，基于代码库取证，并携带本对话上下文',
 			'web.cortex.chat.escalateFailed' => '升级失败',
@@ -13215,8 +13347,6 @@ extension on TranslationsZh {
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => '${started} 启动  ·  ${ended} 结束',
 			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
 			'sessions.detail.errorTitle' => '加载会话失败',
-			'sessions.detail.accountSwitcher.tooltip' => '切换 Claude 账号',
-			'sessions.detail.accountSwitcher.sheetTitle' => '切换 Claude 账号',
 			'sessions.detail.accountSwitcher.current' => ({required Object account}) => '当前：${account}',
 			'sessions.detail.accountSwitcher.defaultName' => '默认（系统凭据）',
 			'sessions.detail.accountSwitcher.defaultSubtitle' => '使用 CLI 自身的登录，不指定具体账号',
@@ -13229,10 +13359,10 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => '切换失败：${error}',
 			'sessions.detail.accountSwitcher.noneHint' => '未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。',
-			'sessions.detail.accountSwitcher.tooltipAgy' => '切换 Antigravity 账号',
-			'sessions.detail.accountSwitcher.sheetTitleAgy' => '切换 Antigravity 账号',
-			'sessions.detail.accountSwitcher.confirmBodyAgy' => '这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。',
+			'sessions.detail.accountSwitcher.confirmBodyAgy' => '这会以新账号重启 Antigravity CLI，并迁移当前对话，使其带着历史记录继续（会话标签保留）。',
 			'sessions.detail.accountSwitcher.noneHintAgy' => '未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。',
+			'sessions.detail.accountSwitcher.tooltipFor' => ({required Object provider}) => '切换 ${provider} 账号',
+			'sessions.detail.accountSwitcher.noneHintWeb' => ({required Object provider}) => '未配置 ${provider} 账号。请在网页版的 Providers → ${provider} 中添加。',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => '图片选择失败：${error}',
 			'sessions.terminal.snackbar.uploadingImage' => '正在上传图片…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => '已附加图片：${path}',
@@ -13299,6 +13429,8 @@ extension on TranslationsZh {
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => '插入失败（${status}）：${message}',
 			'sessions.inspector.shared.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.shared.insertFailedShort' => ({required Object error}) => '插入失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.history.insertIntoTerminal' => '插入到终端',
 			'sessions.inspector.history.searchHint' => '搜索提示…',
 			'sessions.inspector.files.insertAtRef' => '作为 @引用 插入',
@@ -13354,8 +13486,6 @@ extension on TranslationsZh {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => '插入失败：${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => '创建失败：${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => '创建失败：${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.personalHint' => '个人草稿 — 随输入自动保存。AI agent 不会写入这里。',
 			'sessions.inspector.notes.projectDocsHint' => '架构 / 规范 / 决策 / 计划 / 回顾 — 通常由 agent 撰写或维护。',
 			'sessions.inspector.notes.mappingCleared' => '映射已清除 — 使用默认值',
@@ -13813,6 +13943,8 @@ extension on TranslationsZh {
 			'project.conflicts.dismiss' => '驳回',
 			'project.conflicts.deleteFact' => '归档事实',
 			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '归档事实 ${side}？',
+			_ => null,
+		} ?? switch (path) {
 			'project.conflicts.deleteConfirmBody' => '该事实将被归档（可恢复）并记录取代原因，同时接受此冲突。另一侧作为存留结论保留。',
 			'project.conflicts.deleteWillDelete' => ({required Object side}) => '将归档（${side} 侧）：',
 			'project.conflicts.deleteWillKeep' => ({required Object side}) => '将保留（${side} 侧）：',
@@ -13868,8 +14000,6 @@ extension on TranslationsZh {
 			'backups.runConfirmTitle' => '立即运行备份？',
 			'backups.runConfirmBody' => '向本地目标触发一次新的转储。任务在服务端运行；此列表会随进度刷新。',
 			'backups.runFullInstance' => '完整实例',
-			_ => null,
-		} ?? switch (path) {
 			'backups.runFullInstanceHint' => '同时打包 vault、secrets.env 和 config.toml —— 而不只是数据库。',
 			'backups.kindDbOnly' => '仅数据库',
 			'backups.kindFullInstance' => '完整实例',
@@ -14327,6 +14457,8 @@ extension on TranslationsZh {
 			'customTasks.snackUpdated' => '任务已更新。',
 			'customTasks.deleteBody' => '从目录中移除任务。已插入到会话中的实例不受影响。',
 			'customTasks.introBanner' => '定义自己的斜杠命令。它们会与内置任务一起出现在会话任务选择器中。',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.validateNameRequired' => '必须填写名称',
 			'customTasks.validateCommandRequired' => '必须填写命令',
 			'customTasks.validateProjectCwd' => '项目范围任务需要绝对 cwd 路径',
@@ -14382,8 +14514,6 @@ extension on TranslationsZh {
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => '保存失败：${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => '${time} 已保存',
 			'notesPage.editor.showPreview' => '预览',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.editor.showSource' => '源码',
 			'notesPage.editor.save' => '保存',
 			'notesPage.editor.unsaved' => '有未保存的修改',
@@ -14841,6 +14971,8 @@ extension on TranslationsZh {
 			'cortexHub.approvedToast' => '提案已批准',
 			'cortexHub.rejectedToast' => '提案已拒绝',
 			'cortexHub.actionFailed' => ({required Object error}) => '操作失败：${error}',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.loadFailed' => ({required Object error}) => '加载失败：${error}',
 			'cortexSettings.title' => 'Cortex 设置',
 			'cortexSettings.tabWorkers' => '工作器',

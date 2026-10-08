@@ -223,7 +223,7 @@
         "currentDefault": "default",
         "menuTitle": "Switch Claude account",
         "menuTitleAgy": "Switch Antigravity account",
-        "confirmSwitchAgy": "Switching account restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?",
+        "confirmSwitchAgy": "Switching account restarts the Antigravity CLI under the NEW account and carries this conversation over, so it resumes with its history. Any in-flight tool execution or unsent input is lost. Continue?",
         "defaultName": "Default",
         "defaultSubtitle": "CLI's system keychain / env",
         "tokenEmpty": "·empty",
@@ -3826,8 +3826,6 @@
       "idPrefix": "id: {id}",
       "errorTitle": "Failed to load session",
       "accountSwitcher": {
-        "tooltip": "Switch Claude account",
-        "sheetTitle": "Switch Claude account",
         "current": "Currently: {account}",
         "defaultName": "Default (system credential)",
         "defaultSubtitle": "Use the CLI's own login, no specific account",
@@ -3840,10 +3838,10 @@
         "switchedSnack": "Switched to {account}",
         "switchFailed": "Switch failed: {error}",
         "noneHint": "No Claude accounts configured. Add them in More → Providers → Claude.",
-        "tooltipAgy": "Switch Antigravity account",
-        "sheetTitleAgy": "Switch Antigravity account",
-        "confirmBodyAgy": "This restarts the Antigravity CLI under a fresh conversation — the in-CLI history doesn't carry across accounts (the session tab is kept).",
-        "noneHintAgy": "No Antigravity accounts configured. Add them in More → Providers → Antigravity."
+        "confirmBodyAgy": "This restarts the Antigravity CLI under the new account and carries the conversation over, so it resumes with its history. The session tab is kept.",
+        "noneHintAgy": "No Antigravity accounts configured. Add them in More → Providers → Antigravity.",
+        "tooltipFor": "Switch {provider} account",
+        "noneHintWeb": "No {provider} accounts configured. Add them in the web app under Providers → {provider}."
       }
     },
     "terminal": {

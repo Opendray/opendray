@@ -223,7 +223,7 @@
         "currentDefault": "默认",
         "menuTitle": "切换 Claude 账号",
         "menuTitleAgy": "切换 Antigravity 账号",
-        "confirmSwitchAgy": "切换账号会以全新对话重启 Antigravity CLI——CLI 内的历史记录不会在账号间保留。任何进行中的工具执行或未发送的输入都会丢失。是否继续？",
+        "confirmSwitchAgy": "切换账号会以新账号重启 Antigravity CLI，并迁移当前对话，使其带着历史记录继续。任何进行中的工具执行或未发送的输入都会丢失。是否继续？",
         "defaultName": "默认",
         "defaultSubtitle": "CLI 的系统 keychain / 环境变量",
         "tokenEmpty": "·未填",
@@ -3798,8 +3798,6 @@
       "idPrefix": "id: {id}",
       "errorTitle": "加载会话失败",
       "accountSwitcher": {
-        "tooltip": "切换 Claude 账号",
-        "sheetTitle": "切换 Claude 账号",
         "current": "当前：{account}",
         "defaultName": "默认（系统凭据）",
         "defaultSubtitle": "使用 CLI 自身的登录，不指定具体账号",
@@ -3812,10 +3810,10 @@
         "switchedSnack": "已切换到 {account}",
         "switchFailed": "切换失败：{error}",
         "noneHint": "未配置 Claude 账号。请在 更多 → Providers → Claude 中添加。",
-        "tooltipAgy": "切换 Antigravity 账号",
-        "sheetTitleAgy": "切换 Antigravity 账号",
-        "confirmBodyAgy": "这会用全新对话重启 Antigravity CLI——CLI 内的历史不会在账号间保留（会话标签保留）。",
-        "noneHintAgy": "未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。"
+        "confirmBodyAgy": "这会以新账号重启 Antigravity CLI，并迁移当前对话，使其带着历史记录继续（会话标签保留）。",
+        "noneHintAgy": "未配置 Antigravity 账号。请在 更多 → Providers → Antigravity 中添加。",
+        "tooltipFor": "切换 {provider} 账号",
+        "noneHintWeb": "未配置 {provider} 账号。请在网页版的 Providers → {provider} 中添加。"
       }
     },
     "terminal": {

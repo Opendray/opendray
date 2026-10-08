@@ -47,11 +47,7 @@ class _SessionToolsSheetBody extends StatefulWidget {
 class _SessionToolsSheetBodyState extends State<_SessionToolsSheetBody> {
   String _query = '';
 
-  bool get _canAccount {
-    final s = widget.session;
-    return (s.providerId == 'claude' || s.providerId == 'antigravity') &&
-        s.isLive;
-  }
+  bool get _canAccount => AccountSwitchSheet.supports(widget.session);
 
   List<SessionTool> get _visibleTools {
     final q = _query.trim().toLowerCase();
@@ -141,7 +137,10 @@ class _SessionToolsSheetBodyState extends State<_SessionToolsSheetBody> {
                         Expanded(
                           child: _ActionButton(
                             icon: Icons.manage_accounts_outlined,
-                            label: t.sessions.detail.accountSwitcher.tooltip,
+                            label: AccountSwitchSheet.title(
+                              t,
+                              widget.session.providerId,
+                            ),
                             onTap: _account,
                           ),
                         ),
