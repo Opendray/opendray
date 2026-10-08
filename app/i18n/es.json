@@ -223,7 +223,7 @@
         "currentDefault": "predeterminada",
         "menuTitle": "Cambiar de cuenta de Claude",
         "menuTitleAgy": "Cambiar de cuenta de Antigravity",
-        "confirmSwitchAgy": "Cambiar de cuenta reinicia la CLI de Antigravity con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
+        "confirmSwitchAgy": "Cambiar de cuenta reinicia la CLI de Antigravity con la NUEVA cuenta y traslada esta conversación, que se reanuda con su historial. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?",
         "defaultName": "Predeterminada",
         "defaultSubtitle": "keychain del sistema / env de la CLI",
         "tokenEmpty": "·vacío",
@@ -3801,8 +3801,6 @@
       "idPrefix": "id: {id}",
       "errorTitle": "No se pudo cargar la sesión",
       "accountSwitcher": {
-        "tooltip": "Cambiar de cuenta de Claude",
-        "sheetTitle": "Cambiar de cuenta de Claude",
         "current": "Actual: {account}",
         "defaultName": "Predeterminada (credencial del sistema)",
         "defaultSubtitle": "Usa el propio inicio de sesión del CLI, sin cuenta específica",
@@ -3815,10 +3813,10 @@
         "switchedSnack": "Cambiado a {account}",
         "switchFailed": "Cambio fallido: {error}",
         "noneHint": "No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.",
-        "tooltipAgy": "Cambiar de cuenta de Antigravity",
-        "sheetTitleAgy": "Cambiar de cuenta de Antigravity",
-        "confirmBodyAgy": "Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).",
-        "noneHintAgy": "No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity."
+        "confirmBodyAgy": "Esto reinicia el CLI de Antigravity con la nueva cuenta y traslada la conversación, que se reanuda con su historial. La pestaña de la sesión se conserva.",
+        "noneHintAgy": "No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.",
+        "tooltipFor": "Cambiar de cuenta de {provider}",
+        "noneHintWeb": "No hay cuentas de {provider} configuradas. Agrégalas en la app web, en Providers → {provider}."
       }
     },
     "terminal": {

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:opendray/core/api/antigravity_accounts_api.dart';
-import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
@@ -72,21 +70,17 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
   }
 
   // Overflow menu — only the low-frequency, session-level actions now
-  // that the tools moved to the dock. The account switcher is
-  // Claude/Antigravity-live only (nothing to rebind otherwise).
+  // that the tools moved to the dock. The account switcher only shows for
+  // live sessions of providers with switchable accounts.
   List<PopupMenuEntry<String>> _menuItems(SessionSummary? s) {
-    final canAccount = s != null &&
-        (s.providerId == 'claude' || s.providerId == 'antigravity') &&
-        s.isLive;
+    final canAccount = s != null && AccountSwitchSheet.supports(s);
     return [
       _menuItem('refresh', Icons.refresh, t.sessions.detail.refreshMetadata),
       if (canAccount)
         _menuItem(
           'account',
           Icons.manage_accounts_outlined,
-          s.providerId == 'antigravity'
-              ? t.sessions.detail.accountSwitcher.tooltipAgy
-              : t.sessions.detail.accountSwitcher.tooltip,
+          AccountSwitchSheet.title(t, s.providerId),
         ),
       if (s != null) ...[
         const PopupMenuDivider(),
@@ -120,15 +114,12 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
   }
 
   Future<void> _switchAccount(SessionSummary s) async {
-    final isAgy = s.providerId == 'antigravity';
     final switched = await AccountSwitchSheet.show(context, session: s);
     if (!switched || !mounted) return;
     ref
       ..invalidate(sessionByIdProvider(widget.sessionId))
-      ..invalidate(sessionsListProvider)
-      ..invalidate(
-        isAgy ? antigravityAccountsListProvider : claudeAccountsListProvider,
-      );
+      ..invalidate(sessionsListProvider);
+    AccountSwitchSheet.invalidateAccounts(ref, s.providerId);
   }
 
   Future<void> _openActions(SessionSummary s) async {
