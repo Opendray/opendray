@@ -91,6 +91,9 @@ class SessionSummary {
     this.endedAt,
     this.claudeAccountId,
     this.antigravityAccountId,
+    this.grokAccountId,
+    this.codexAccountId,
+    this.opencodeAccountId,
     this.workDir,
     this.worktreeBranch,
   });
@@ -113,6 +116,17 @@ class SessionSummary {
         antigravityAccountId:
             (json['antigravity_account_id'] as String?)?.isNotEmpty ?? false
                 ? json['antigravity_account_id'] as String
+                : null,
+        grokAccountId: (json['grok_account_id'] as String?)?.isNotEmpty ?? false
+            ? json['grok_account_id'] as String
+            : null,
+        codexAccountId:
+            (json['codex_account_id'] as String?)?.isNotEmpty ?? false
+                ? json['codex_account_id'] as String
+                : null,
+        opencodeAccountId:
+            (json['opencode_account_id'] as String?)?.isNotEmpty ?? false
+                ? json['opencode_account_id'] as String
                 : null,
         workDir: (json['work_dir'] as String?)?.isNotEmpty ?? false
             ? json['work_dir'] as String
@@ -137,6 +151,13 @@ class SessionSummary {
   // (null = the gateway default HOME). Only meaningful for antigravity
   // sessions; drives the in-session account switcher.
   final String? antigravityAccountId;
+  // Grok (GROK_HOME), Codex (CODEX_HOME) and OpenCode (credential
+  // bundle) account bindings; null = the CLI's default login. Each is
+  // only meaningful for its own provider's sessions and drives the
+  // in-session account switcher.
+  final String? grokAccountId;
+  final String? codexAccountId;
+  final String? opencodeAccountId;
   // Physical execution path when the session is worktree-isolated (or
   // inherits a parent's worktree). Null = the process runs in cwd.
   // File/git/task surfaces must use effectiveWorkDir; cwd stays the
@@ -638,6 +659,47 @@ class AntigravityAccountSummary {
   final int? activeSessions;
 
   bool get isUsable => enabled && tokenFilled;
+}
+
+// A Grok, Codex or OpenCode account as listed by
+// /api/v1/{grok,codex,opencode}-accounts. The three share one row shape
+// (id / name / display_name / enabled / token_filled, plus an optional
+// oauth_email holder tag), so the mobile switcher projects them into this
+// single summary instead of three near-identical classes. Mirrors web
+// GrokAccount / CodexAccount / OpenCodeAccount (app/shared/src/lib/types.ts).
+class ProviderAccountSummary {
+  ProviderAccountSummary({
+    required this.id,
+    required this.name,
+    required this.displayName,
+    required this.enabled,
+    required this.tokenFilled,
+    this.oauthEmail,
+  });
+
+  factory ProviderAccountSummary.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String? ?? '';
+    final name = json['name'] as String? ?? '';
+    final display = json['display_name'] as String? ?? '';
+    final email = json['oauth_email'];
+    return ProviderAccountSummary(
+      id: id,
+      name: name,
+      // display_name → name → id so the picker never shows a blank row.
+      displayName:
+          display.isNotEmpty ? display : (name.isNotEmpty ? name : id),
+      enabled: json['enabled'] as bool? ?? false,
+      tokenFilled: json['token_filled'] as bool? ?? false,
+      oauthEmail: email is String && email.isNotEmpty ? email : null,
+    );
+  }
+
+  final String id;
+  final String name;
+  final String displayName;
+  final bool enabled;
+  final bool tokenFilled;
+  final String? oauthEmail;
 }
 
 class CreateSessionRequest {

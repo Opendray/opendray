@@ -5,17 +5,19 @@ import 'package:opendray/core/api/antigravity_accounts_api.dart';
 import 'package:opendray/core/api/api_exception.dart';
 import 'package:opendray/core/api/claude_accounts_api.dart';
 import 'package:opendray/core/api/models.dart';
+import 'package:opendray/core/api/provider_accounts_api.dart';
 import 'package:opendray/core/api/sessions_api.dart';
 import 'package:opendray/core/i18n/strings.g.dart';
 
 // AccountSwitchSheet rebinds a *running* session to a different account —
 // the mobile mirror of the web header AccountSwitcher
-// (app/web/src/components/sessions/AccountSwitcher.tsx). It serves both
-// the Claude (OAuth account) and Antigravity (per-account HOME) flows:
-// the gateway terminates the current child process and respawns it under
-// the new credential. A Claude switch resumes the same conversation under
-// the new account; an Antigravity switch copies its conversation across.
-// The session id / tab is preserved. A confirm dialog gates the switch.
+// (app/web/src/components/sessions/AccountSwitcher.tsx). It serves every
+// provider with switchable accounts — Claude (OAuth account), Antigravity,
+// Grok and Codex (per-account home) and OpenCode (credential bundle): the
+// gateway terminates the current child process and respawns it under the
+// new credential, carrying the conversation across so it resumes with its
+// full history. The session id / tab is preserved. A confirm dialog gates
+// the switch.
 //
 // Returns true via the modal result when a switch succeeded, so the
 // caller can refresh the session + accounts views.
@@ -37,13 +39,44 @@ class AccountSwitchSheet extends ConsumerStatefulWidget {
     return res ?? false;
   }
 
+  // Provider ids whose live sessions can switch accounts, mapped to the
+  // provider's display name (used in the tooltip / sheet title).
+  static const providerNames = {
+    'claude': 'Claude',
+    'antigravity': 'Antigravity',
+    'grok': 'Grok',
+    'codex': 'Codex',
+    'opencode': 'OpenCode',
+  };
+
+  static bool supports(SessionSummary s) =>
+      providerNames.containsKey(s.providerId) && s.isLive;
+
+  // "Switch <Provider> account" for the session's provider.
+  static String title(Translations t, String providerId) =>
+      t.sessions.detail.accountSwitcher
+          .tooltipFor(provider: providerNames[providerId] ?? providerId);
+
+  // Refreshes the provider's account list after a switch (the bound
+  // account's active-session count / last-used change).
+  static void invalidateAccounts(WidgetRef ref, String providerId) {
+    switch (providerId) {
+      case 'claude':
+        ref.invalidate(claudeAccountsListProvider);
+      case 'antigravity':
+        ref.invalidate(antigravityAccountsListProvider);
+      default:
+        ref.invalidate(providerAccountsListProvider(providerId));
+    }
+  }
+
   @override
   ConsumerState<AccountSwitchSheet> createState() => _AccountSwitchSheetState();
 }
 
 // A provider-agnostic view of a switchable account, projected from
-// either ClaudeAccountSummary or AntigravityAccountSummary so the sheet
-// renders one list regardless of provider.
+// ClaudeAccountSummary, AntigravityAccountSummary or ProviderAccountSummary
+// so the sheet renders one list regardless of provider.
 class _AccountOption {
   const _AccountOption({
     required this.id,
@@ -65,13 +98,34 @@ class _AccountSwitchSheetState extends ConsumerState<AccountSwitchSheet> {
 
   Translations get _t => Translations.of(context);
 
-  bool get _isAgy => widget.session.providerId == 'antigravity';
+  String get _provider => widget.session.providerId;
 
-  String get _currentId =>
-      (_isAgy
-          ? widget.session.antigravityAccountId
-          : widget.session.claudeAccountId) ??
-      '';
+  bool get _isAgy => _provider == 'antigravity';
+
+  String get _currentId {
+    final s = widget.session;
+    return switch (_provider) {
+          'antigravity' => s.antigravityAccountId,
+          'grok' => s.grokAccountId,
+          'codex' => s.codexAccountId,
+          'opencode' => s.opencodeAccountId,
+          _ => s.claudeAccountId,
+        } ??
+        '';
+  }
+
+  // Claude and Antigravity accounts are managed in the mobile Providers
+  // screen; the others only on the web.
+  String get _noneHint {
+    final tr = _t.sessions.detail.accountSwitcher;
+    return switch (_provider) {
+      'claude' => tr.noneHint,
+      'antigravity' => tr.noneHintAgy,
+      _ => tr.noneHintWeb(
+          provider: AccountSwitchSheet.providerNames[_provider] ?? _provider,
+        ),
+    };
+  }
 
   Future<void> _pick(String accountId, String label) async {
     final tr = _t.sessions.detail.accountSwitcher;
@@ -104,11 +158,14 @@ class _AccountSwitchSheetState extends ConsumerState<AccountSwitchSheet> {
     final navigator = Navigator.of(context);
     try {
       final api = ref.read(sessionsApiProvider);
-      if (_isAgy) {
-        await api.switchAntigravityAccount(widget.session.id, accountId);
-      } else {
-        await api.switchClaudeAccount(widget.session.id, accountId);
-      }
+      final id = widget.session.id;
+      await switch (_provider) {
+        'antigravity' => api.switchAntigravityAccount(id, accountId),
+        'grok' => api.switchGrokAccount(id, accountId),
+        'codex' => api.switchCodexAccount(id, accountId),
+        'opencode' => api.switchOpenCodeAccount(id, accountId),
+        _ => api.switchClaudeAccount(id, accountId),
+      };
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
@@ -138,32 +195,46 @@ class _AccountSwitchSheetState extends ConsumerState<AccountSwitchSheet> {
     final tr = _t.sessions.detail.accountSwitcher;
     // Project the right provider's accounts into a common option list so
     // the body below is provider-agnostic.
-    final optionsAsync = _isAgy
-        ? ref.watch(antigravityAccountsListProvider).whenData(
-              (list) => [
-                for (final a in list)
-                  _AccountOption(
-                    id: a.id,
-                    title: a.displayName,
-                    subtitle: a.tokenFilled ? a.name : tr.tokenEmpty,
-                    enabled: a.enabled,
-                    tokenFilled: a.tokenFilled,
-                  ),
-              ],
-            )
-        : ref.watch(claudeAccountsListProvider).whenData(
-              (list) => [
-                for (final a in list)
-                  _AccountOption(
-                    id: a.id,
-                    title: a.displayName,
-                    subtitle:
-                        a.tokenFilled ? (a.oauthEmail ?? a.name) : tr.tokenEmpty,
-                    enabled: a.enabled,
-                    tokenFilled: a.tokenFilled,
-                  ),
-              ],
-            );
+    final optionsAsync = switch (_provider) {
+      'claude' => ref.watch(claudeAccountsListProvider).whenData(
+            (list) => [
+              for (final a in list)
+                _AccountOption(
+                  id: a.id,
+                  title: a.displayName,
+                  subtitle:
+                      a.tokenFilled ? (a.oauthEmail ?? a.name) : tr.tokenEmpty,
+                  enabled: a.enabled,
+                  tokenFilled: a.tokenFilled,
+                ),
+            ],
+          ),
+      'antigravity' => ref.watch(antigravityAccountsListProvider).whenData(
+            (list) => [
+              for (final a in list)
+                _AccountOption(
+                  id: a.id,
+                  title: a.displayName,
+                  subtitle: a.tokenFilled ? a.name : tr.tokenEmpty,
+                  enabled: a.enabled,
+                  tokenFilled: a.tokenFilled,
+                ),
+            ],
+          ),
+      _ => ref.watch(providerAccountsListProvider(_provider)).whenData(
+            (list) => [
+              for (final a in list)
+                _AccountOption(
+                  id: a.id,
+                  title: a.displayName,
+                  subtitle:
+                      a.tokenFilled ? (a.oauthEmail ?? a.name) : tr.tokenEmpty,
+                  enabled: a.enabled,
+                  tokenFilled: a.tokenFilled,
+                ),
+            ],
+          ),
+    };
     final theme = Theme.of(context);
     return SafeArea(
       child: Padding(
@@ -175,7 +246,7 @@ class _AccountSwitchSheetState extends ConsumerState<AccountSwitchSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: Text(
-                _isAgy ? tr.sheetTitleAgy : tr.sheetTitle,
+                AccountSwitchSheet.title(_t, _provider),
                 style: theme.textTheme.titleMedium,
               ),
             ),
@@ -206,7 +277,7 @@ class _AccountSwitchSheetState extends ConsumerState<AccountSwitchSheet> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
                         child: Text(
-                          _isAgy ? tr.noneHintAgy : tr.noneHint,
+                          _noneHint,
                           style: theme.textTheme.bodySmall,
                         ),
                       ),

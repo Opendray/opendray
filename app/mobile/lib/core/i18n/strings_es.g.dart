@@ -1518,6 +1518,8 @@ class _TranslationsWebProvidersEs extends TranslationsWebProvidersEn {
 	@override late final _TranslationsWebProvidersClaudeAccountsEs claudeAccounts = _TranslationsWebProvidersClaudeAccountsEs._(_root);
 	@override late final _TranslationsWebProvidersAntigravityAccountsEs antigravityAccounts = _TranslationsWebProvidersAntigravityAccountsEs._(_root);
 	@override late final _TranslationsWebProvidersModelsEs models = _TranslationsWebProvidersModelsEs._(_root);
+	@override late final _TranslationsWebProvidersCodexAccountsEs codexAccounts = _TranslationsWebProvidersCodexAccountsEs._(_root);
+	@override late final _TranslationsWebProvidersOpencodeAccountsEs opencodeAccounts = _TranslationsWebProvidersOpencodeAccountsEs._(_root);
 }
 
 // Path: web.channels
@@ -3617,7 +3619,7 @@ class _TranslationsWebSessionsAccountSwitcherEs extends TranslationsWebSessionsA
 	@override String get currentDefault => 'predeterminada';
 	@override String get menuTitle => 'Cambiar de cuenta de Claude';
 	@override String get menuTitleAgy => 'Cambiar de cuenta de Antigravity';
-	@override String get confirmSwitchAgy => 'Cambiar de cuenta reinicia la CLI de Antigravity con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get confirmSwitchAgy => 'Cambiar de cuenta reinicia la CLI de Antigravity con la NUEVA cuenta y traslada esta conversación, que se reanuda con su historial. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
 	@override String get defaultName => 'Predeterminada';
 	@override String get defaultSubtitle => 'keychain del sistema / env de la CLI';
 	@override String get tokenEmpty => '·vacío';
@@ -3629,6 +3631,15 @@ class _TranslationsWebSessionsAccountSwitcherEs extends TranslationsWebSessionsA
 	@override String switchedDescription({required Object account, required Object pid}) => 'Ahora usando @${account} · pid ${pid}';
 	@override String get switchedDefault => 'predeterminada';
 	@override String get switchFailedToast => 'Error al cambiar';
+	@override String get confirmSwitchGrokCarry => 'Cambiar de cuenta reinicia la CLI de Grok y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get tooltipCodex => 'Cambiar la cuenta de Codex (reinicia el proceso de la CLI)';
+	@override String get menuTitleCodex => 'Cambiar la cuenta de Codex';
+	@override String get confirmSwitchCodex => 'Cambiar de cuenta reinicia la CLI de Codex con una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get confirmSwitchCodexCarry => 'Cambiar de cuenta reinicia la CLI de Codex y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get confirmSwitchOpenCode => 'Cambiar de cuenta reinicia la CLI de OpenCode con las nuevas credenciales y una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get confirmSwitchOpenCodeCarry => 'Cambiar de cuenta reinicia la CLI de OpenCode y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?';
+	@override String get tooltipOpenCode => 'Cambiar la cuenta de OpenCode (conjunto de credenciales) que usa esta sesión';
+	@override String get menuTitleOpenCode => 'Cuenta de OpenCode';
 }
 
 // Path: web.sessions.inspector
@@ -4658,6 +4669,72 @@ class _TranslationsWebProvidersModelsEs extends TranslationsWebProvidersModelsEn
 	@override String get makeDefault => 'establecer como predeterminado';
 	@override String get setDefault => 'Usar como modelo predeterminado';
 	@override String remove({required Object model}) => 'Quitar ${model}';
+}
+
+// Path: web.providers.codexAccounts
+class _TranslationsWebProvidersCodexAccountsEs extends TranslationsWebProvidersCodexAccountsEn {
+	_TranslationsWebProvidersCodexAccountsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cuentas de Codex';
+	@override String get importLocal => 'Importar locales';
+	@override String get importLocalTooltip => 'Escanea ~/.codex-accounts/ (y el ~/.codex del usuario del gateway) en el host y registra los directorios de cuentas con sesión iniciada. Solo en el host del gateway.';
+	@override String get importedNothingToast => 'Nada que importar, las cuentas ya están sincronizadas.';
+	@override String importedToast_one({required Object count}) => 'Se importó ${count} cuenta desde ~/.codex-accounts';
+	@override String importedToast_other({required Object count}) => 'Se importaron ${count} cuentas desde ~/.codex-accounts';
+	@override String get importFailedToast => 'Error al importar';
+	@override String get addingTitle => 'Añadir una cuenta nueva.';
+	@override String get addingBodyPrefix => 'Codex guarda su estado en CODEX_HOME. Para un inicio de sesión de ChatGPT, da a cada cuenta su propio CODEX_HOME e inicia sesión allí en el host del gateway:';
+	@override String get addingBodySuffix => 'Luego pulsa <1>Importar locales</1> para registrarla. O añade una cuenta con clave de API en el formulario de abajo. Nunca copies el auth.json de una cuenta a otra: codex rota sus tokens y ambas se cerrarían la sesión mutuamente.';
+	@override String get apiKeyNamePlaceholder => 'nombre de la cuenta';
+	@override String get apiKeyPlaceholder => 'Clave de API de OpenAI (sk-…)';
+	@override String get apiKeyAdd => 'Añadir con clave de API';
+	@override String get apiKeyAddedToast => 'Cuenta de Codex añadida';
+	@override String get apiKeyFailedToast => 'No se pudo añadir la cuenta con clave de API';
+	@override String get loading => 'Cargando…';
+	@override String get empty => 'Aún no hay cuentas de Codex. Ejecuta <1>CODEX_HOME=~/.codex-accounts/&lt;nombre&gt; codex login --device-auth</1> en el host del gateway y pulsa Importar locales, o añade una con clave de API.';
+	@override String get noTokenYet => 'sin sesión';
+	@override String get homeDir => 'home:';
+	@override String get toggleFailedToast => 'Error al cambiar el estado';
+	@override String removeConfirm({required Object name}) => '¿Eliminar la cuenta "${name}"?';
+	@override String get removedToast => 'Cuenta eliminada';
+	@override String get removeFailedToast => 'Error al eliminar';
+	@override String toggleAria({required Object name}) => 'Activar/desactivar ${name}';
+	@override String removeAria({required Object name}) => 'Eliminar ${name}';
+}
+
+// Path: web.providers.opencodeAccounts
+class _TranslationsWebProvidersOpencodeAccountsEs extends TranslationsWebProvidersOpencodeAccountsEn {
+	_TranslationsWebProvidersOpencodeAccountsEs._(TranslationsEs root) : this._root = root, super.internal(root);
+
+	final TranslationsEs _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Cuentas de OpenCode';
+	@override String get importLocal => 'Importar local';
+	@override String get importLocalTooltip => 'Añadir las credenciales actuales de opencode de este host (auth.json) como cuenta';
+	@override String get add => 'Añadir';
+	@override String get explainer => 'Cada cuenta es un conjunto de credenciales de proveedores de opencode, inyectado por sesión. Todas las cuentas comparten el historial de sesiones de opencode, así que puedes cambiar una sesión en curso a otra cuenta y conservar la conversación. Las claves se cifran en reposo y no se vuelven a mostrar.';
+	@override String get namePlaceholder => 'Nombre de la cuenta (p. ej. trabajo)';
+	@override String get providerPlaceholder => 'id de proveedor de opencode (p. ej. moonshotai)';
+	@override String get apiKeyPlaceholder => 'Clave de API';
+	@override String get cancel => 'Cancelar';
+	@override String get save => 'Guardar';
+	@override String get loading => 'Cargando cuentas…';
+	@override String get empty => 'Aún no hay cuentas de OpenCode. Importa las credenciales de este host o añade una clave de proveedor.';
+	@override String get unusable => 'sin credenciales utilizables';
+	@override String get addedToast => 'Cuenta de OpenCode añadida';
+	@override String get addFailedToast => 'No se pudo añadir la cuenta de OpenCode';
+	@override String get importedToast => 'Credenciales locales de OpenCode importadas';
+	@override String get importFailedToast => 'No se pudieron importar las credenciales locales de OpenCode';
+	@override String get toggleFailedToast => 'No se pudo actualizar la cuenta de OpenCode';
+	@override String get removedToast => 'Cuenta de OpenCode eliminada';
+	@override String get removeFailedToast => 'No se pudo eliminar la cuenta de OpenCode';
+	@override String removeConfirm({required Object name}) => '¿Eliminar la cuenta de OpenCode "${name}"? Las sesiones vinculadas vuelven a las credenciales predeterminadas.';
+	@override String removeAria({required Object name}) => 'Eliminar la cuenta de OpenCode ${name}';
+	@override String toggleAria({required Object name}) => 'Activar o desactivar la cuenta de OpenCode ${name}';
 }
 
 // Path: web.channels.empty
@@ -6852,8 +6929,6 @@ class _TranslationsSessionsDetailAccountSwitcherEs extends TranslationsSessionsD
 	final TranslationsEs _root; // ignore: unused_field
 
 	// Translations
-	@override String get tooltip => 'Cambiar de cuenta de Claude';
-	@override String get sheetTitle => 'Cambiar de cuenta de Claude';
 	@override String current({required Object account}) => 'Actual: ${account}';
 	@override String get defaultName => 'Predeterminada (credencial del sistema)';
 	@override String get defaultSubtitle => 'Usa el propio inicio de sesión del CLI, sin cuenta específica';
@@ -6866,10 +6941,10 @@ class _TranslationsSessionsDetailAccountSwitcherEs extends TranslationsSessionsD
 	@override String switchedSnack({required Object account}) => 'Cambiado a ${account}';
 	@override String switchFailed({required Object error}) => 'Cambio fallido: ${error}';
 	@override String get noneHint => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.';
-	@override String get tooltipAgy => 'Cambiar de cuenta de Antigravity';
-	@override String get sheetTitleAgy => 'Cambiar de cuenta de Antigravity';
-	@override String get confirmBodyAgy => 'Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).';
+	@override String get confirmBodyAgy => 'Esto reinicia el CLI de Antigravity con la nueva cuenta y traslada la conversación, que se reanuda con su historial. La pestaña de la sesión se conserva.';
 	@override String get noneHintAgy => 'No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.';
+	@override String tooltipFor({required Object provider}) => 'Cambiar de cuenta de ${provider}';
+	@override String noneHintWeb({required Object provider}) => 'No hay cuentas de ${provider} configuradas. Agrégalas en la app web, en Providers → ${provider}.';
 }
 
 // Path: sessions.terminal.snackbar
@@ -10470,7 +10545,7 @@ extension on TranslationsEs {
 			'web.sessions.accountSwitcher.currentDefault' => 'predeterminada',
 			'web.sessions.accountSwitcher.menuTitle' => 'Cambiar de cuenta de Claude',
 			'web.sessions.accountSwitcher.menuTitleAgy' => 'Cambiar de cuenta de Antigravity',
-			'web.sessions.accountSwitcher.confirmSwitchAgy' => 'Cambiar de cuenta reinicia la CLI de Antigravity con una conversación nueva: el historial dentro de la CLI no se transfiere entre cuentas. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.confirmSwitchAgy' => 'Cambiar de cuenta reinicia la CLI de Antigravity con la NUEVA cuenta y traslada esta conversación, que se reanuda con su historial. Se pierde cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
 			'web.sessions.accountSwitcher.defaultName' => 'Predeterminada',
 			'web.sessions.accountSwitcher.defaultSubtitle' => 'keychain del sistema / env de la CLI',
 			'web.sessions.accountSwitcher.tokenEmpty' => '·vacío',
@@ -10482,6 +10557,15 @@ extension on TranslationsEs {
 			'web.sessions.accountSwitcher.switchedDescription' => ({required Object account, required Object pid}) => 'Ahora usando @${account} · pid ${pid}',
 			'web.sessions.accountSwitcher.switchedDefault' => 'predeterminada',
 			'web.sessions.accountSwitcher.switchFailedToast' => 'Error al cambiar',
+			'web.sessions.accountSwitcher.confirmSwitchGrokCarry' => 'Cambiar de cuenta reinicia la CLI de Grok y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.tooltipCodex' => 'Cambiar la cuenta de Codex (reinicia el proceso de la CLI)',
+			'web.sessions.accountSwitcher.menuTitleCodex' => 'Cambiar la cuenta de Codex',
+			'web.sessions.accountSwitcher.confirmSwitchCodex' => 'Cambiar de cuenta reinicia la CLI de Codex con una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.confirmSwitchCodexCarry' => 'Cambiar de cuenta reinicia la CLI de Codex y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.confirmSwitchOpenCode' => 'Cambiar de cuenta reinicia la CLI de OpenCode con las nuevas credenciales y una conversación nueva. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.confirmSwitchOpenCodeCarry' => 'Cambiar de cuenta reinicia la CLI de OpenCode y reanuda esta misma conversación con la NUEVA cuenta: todo el historial se conserva y se envía al proveedor con esa cuenta. Se perderá cualquier ejecución de herramienta en curso o entrada sin enviar. ¿Continuar?',
+			'web.sessions.accountSwitcher.tooltipOpenCode' => 'Cambiar la cuenta de OpenCode (conjunto de credenciales) que usa esta sesión',
+			'web.sessions.accountSwitcher.menuTitleOpenCode' => 'Cuenta de OpenCode',
 			'web.sessions.inspector.tabs.files' => 'Archivos',
 			'web.sessions.inspector.tabs.git' => 'Git',
 			'web.sessions.inspector.tabs.search' => 'Buscar',
@@ -10778,6 +10862,8 @@ extension on TranslationsEs {
 			'web.memoryWorkers.testFailedToast' => ({required Object label}) => '${label} falló',
 			'web.memoryWorkers.testCallFailedToast' => 'La llamada de prueba falló',
 			'web.memoryWorkers.unknownError' => 'error desconocido',
+			_ => null,
+		} ?? switch (path) {
 			'web.memoryWorkers.tasks.gatekeeper.label' => 'Gatekeeper',
 			'web.memoryWorkers.tasks.gatekeeper.description' => 'Filtro previo a la escritura en cada memory_store. Alta frecuencia (objetivo <500ms), solo-summarizer.',
 			'web.memoryWorkers.tasks.gatekeeper.modelAdvice' => 'Juicio sí/no de alta frecuencia — un modelo ligero (haiku / flash-lite / codex-mini / local) basta.',
@@ -10787,8 +10873,6 @@ extension on TranslationsEs {
 			'web.memoryWorkers.tasks.gitactivity.label' => 'Resumidor de actividad de git',
 			'web.memoryWorkers.tasks.gitactivity.description' => 'git log → narrativa de 2-3 párrafos cada 24h. Encaja de forma natural con un worker de agente.',
 			'web.memoryWorkers.tasks.gitactivity.modelAdvice' => 'Resumen narrativo del historial git — un modelo equilibrado (sonnet / flash) se lee mejor.',
-			_ => null,
-		} ?? switch (path) {
 			'web.memoryWorkers.tasks.transcript.label' => 'Resumidor de transcript de sesión',
 			'web.memoryWorkers.tasks.transcript.description' => 'Resumen al final de la sesión sobre "qué hizo el agente". Encaja de forma natural con un worker de agente.',
 			'web.memoryWorkers.tasks.transcript.modelAdvice' => 'Resúmenes de sesión — modelo equilibrado recomendado; alimenta el diario y la detección de deriva.',
@@ -11292,6 +11376,8 @@ extension on TranslationsEs {
 			'web.notes.doc.renamedWithWarning' => 'Renombrado, pero no se actualizaron todos los enlaces',
 			'web.notes.doc.renameFailed' => 'No se pudo renombrar',
 			'web.notes.doc.delete' => 'Eliminar',
+			_ => null,
+		} ?? switch (path) {
 			'web.notes.doc.deleteConfirm' => ({required Object path}) => '¿Eliminar ${path}? Esto no se puede deshacer desde aquí.',
 			'web.notes.doc.deleted' => 'Documento eliminado',
 			'web.notes.doc.deleteFailed' => 'No se pudo eliminar',
@@ -11301,8 +11387,6 @@ extension on TranslationsEs {
 			'web.activity.refreshTooltip' => 'Actualizar',
 			'web.activity.filters.integration' => 'Integración',
 			'web.activity.filters.direction' => 'Dirección',
-			_ => null,
-		} ?? switch (path) {
 			'web.activity.filters.status' => 'Estado',
 			'web.activity.filters.allIntegrations' => 'Todas las integraciones',
 			'web.activity.filters.all' => 'Todas',
@@ -11430,6 +11514,54 @@ extension on TranslationsEs {
 			'web.providers.models.makeDefault' => 'establecer como predeterminado',
 			'web.providers.models.setDefault' => 'Usar como modelo predeterminado',
 			'web.providers.models.remove' => ({required Object model}) => 'Quitar ${model}',
+			'web.providers.codexAccounts.title' => 'Cuentas de Codex',
+			'web.providers.codexAccounts.importLocal' => 'Importar locales',
+			'web.providers.codexAccounts.importLocalTooltip' => 'Escanea ~/.codex-accounts/ (y el ~/.codex del usuario del gateway) en el host y registra los directorios de cuentas con sesión iniciada. Solo en el host del gateway.',
+			'web.providers.codexAccounts.importedNothingToast' => 'Nada que importar, las cuentas ya están sincronizadas.',
+			'web.providers.codexAccounts.importedToast_one' => ({required Object count}) => 'Se importó ${count} cuenta desde ~/.codex-accounts',
+			'web.providers.codexAccounts.importedToast_other' => ({required Object count}) => 'Se importaron ${count} cuentas desde ~/.codex-accounts',
+			'web.providers.codexAccounts.importFailedToast' => 'Error al importar',
+			'web.providers.codexAccounts.addingTitle' => 'Añadir una cuenta nueva.',
+			'web.providers.codexAccounts.addingBodyPrefix' => 'Codex guarda su estado en CODEX_HOME. Para un inicio de sesión de ChatGPT, da a cada cuenta su propio CODEX_HOME e inicia sesión allí en el host del gateway:',
+			'web.providers.codexAccounts.addingBodySuffix' => 'Luego pulsa <1>Importar locales</1> para registrarla. O añade una cuenta con clave de API en el formulario de abajo. Nunca copies el auth.json de una cuenta a otra: codex rota sus tokens y ambas se cerrarían la sesión mutuamente.',
+			'web.providers.codexAccounts.apiKeyNamePlaceholder' => 'nombre de la cuenta',
+			'web.providers.codexAccounts.apiKeyPlaceholder' => 'Clave de API de OpenAI (sk-…)',
+			'web.providers.codexAccounts.apiKeyAdd' => 'Añadir con clave de API',
+			'web.providers.codexAccounts.apiKeyAddedToast' => 'Cuenta de Codex añadida',
+			'web.providers.codexAccounts.apiKeyFailedToast' => 'No se pudo añadir la cuenta con clave de API',
+			'web.providers.codexAccounts.loading' => 'Cargando…',
+			'web.providers.codexAccounts.empty' => 'Aún no hay cuentas de Codex. Ejecuta <1>CODEX_HOME=~/.codex-accounts/&lt;nombre&gt; codex login --device-auth</1> en el host del gateway y pulsa Importar locales, o añade una con clave de API.',
+			'web.providers.codexAccounts.noTokenYet' => 'sin sesión',
+			'web.providers.codexAccounts.homeDir' => 'home:',
+			'web.providers.codexAccounts.toggleFailedToast' => 'Error al cambiar el estado',
+			'web.providers.codexAccounts.removeConfirm' => ({required Object name}) => '¿Eliminar la cuenta "${name}"?',
+			'web.providers.codexAccounts.removedToast' => 'Cuenta eliminada',
+			'web.providers.codexAccounts.removeFailedToast' => 'Error al eliminar',
+			'web.providers.codexAccounts.toggleAria' => ({required Object name}) => 'Activar/desactivar ${name}',
+			'web.providers.codexAccounts.removeAria' => ({required Object name}) => 'Eliminar ${name}',
+			'web.providers.opencodeAccounts.title' => 'Cuentas de OpenCode',
+			'web.providers.opencodeAccounts.importLocal' => 'Importar local',
+			'web.providers.opencodeAccounts.importLocalTooltip' => 'Añadir las credenciales actuales de opencode de este host (auth.json) como cuenta',
+			'web.providers.opencodeAccounts.add' => 'Añadir',
+			'web.providers.opencodeAccounts.explainer' => 'Cada cuenta es un conjunto de credenciales de proveedores de opencode, inyectado por sesión. Todas las cuentas comparten el historial de sesiones de opencode, así que puedes cambiar una sesión en curso a otra cuenta y conservar la conversación. Las claves se cifran en reposo y no se vuelven a mostrar.',
+			'web.providers.opencodeAccounts.namePlaceholder' => 'Nombre de la cuenta (p. ej. trabajo)',
+			'web.providers.opencodeAccounts.providerPlaceholder' => 'id de proveedor de opencode (p. ej. moonshotai)',
+			'web.providers.opencodeAccounts.apiKeyPlaceholder' => 'Clave de API',
+			'web.providers.opencodeAccounts.cancel' => 'Cancelar',
+			'web.providers.opencodeAccounts.save' => 'Guardar',
+			'web.providers.opencodeAccounts.loading' => 'Cargando cuentas…',
+			'web.providers.opencodeAccounts.empty' => 'Aún no hay cuentas de OpenCode. Importa las credenciales de este host o añade una clave de proveedor.',
+			'web.providers.opencodeAccounts.unusable' => 'sin credenciales utilizables',
+			'web.providers.opencodeAccounts.addedToast' => 'Cuenta de OpenCode añadida',
+			'web.providers.opencodeAccounts.addFailedToast' => 'No se pudo añadir la cuenta de OpenCode',
+			'web.providers.opencodeAccounts.importedToast' => 'Credenciales locales de OpenCode importadas',
+			'web.providers.opencodeAccounts.importFailedToast' => 'No se pudieron importar las credenciales locales de OpenCode',
+			'web.providers.opencodeAccounts.toggleFailedToast' => 'No se pudo actualizar la cuenta de OpenCode',
+			'web.providers.opencodeAccounts.removedToast' => 'Cuenta de OpenCode eliminada',
+			'web.providers.opencodeAccounts.removeFailedToast' => 'No se pudo eliminar la cuenta de OpenCode',
+			'web.providers.opencodeAccounts.removeConfirm' => ({required Object name}) => '¿Eliminar la cuenta de OpenCode "${name}"? Las sesiones vinculadas vuelven a las credenciales predeterminadas.',
+			'web.providers.opencodeAccounts.removeAria' => ({required Object name}) => 'Eliminar la cuenta de OpenCode ${name}',
+			'web.providers.opencodeAccounts.toggleAria' => ({required Object name}) => 'Activar o desactivar la cuenta de OpenCode ${name}',
 			'web.channels.title' => 'Canales',
 			'web.channels.subtitle' => 'Integraciones de mensajería bidireccional. Cada canal habilitado y no silenciado recibe notificaciones de sesión.',
 			'web.channels.newButton' => 'Nuevo canal',
@@ -11758,6 +11890,8 @@ extension on TranslationsEs {
 			'web.plugins.skills.editor.editTitle' => ({required Object id}) => 'Editar habilidad: ${id}',
 			'web.plugins.skills.editor.customizeDescription' => 'Estás viendo una habilidad integrada incorporada en opendray. Al guardar se creará una anulación del vault con el mismo id, tus ediciones se guardan en ~/.opendray/vault/skills/<id>/SKILL.md y ocultan la integrada hasta que la Restablezcas.',
 			'web.plugins.skills.editor.editDescription' => 'Formato SKILL.md: frontmatter con name + description, luego instrucciones en markdown. La descripción aparece en el índice de Tier 1 del agente.',
+			_ => null,
+		} ?? switch (path) {
 			'web.plugins.skills.editor.idLabel' => 'ID',
 			'web.plugins.skills.editor.idPlaceholder' => 'my-helper',
 			'web.plugins.skills.editor.idHint' => 'Minúsculas / dígitos / guion / guion bajo. Se convierte en el nombre del directorio bajo <1>~/.opendray/vault/skills/&lt;id&gt;/</1>.',
@@ -11815,8 +11949,6 @@ extension on TranslationsEs {
 			'web.plugins.gitHosts.deleteFailedToast' => 'Error al eliminar',
 			'web.plugins.gitHosts.dialog.addTitle' => 'Añadir host de git',
 			'web.plugins.gitHosts.dialog.editTitle' => ({required Object host}) => 'Editar ${host}',
-			_ => null,
-		} ?? switch (path) {
 			'web.plugins.gitHosts.dialog.description' => 'El token se almacena en el gateway. Se usa solo para llamadas de solo lectura a la API (listar PR, etc.).',
 			'web.plugins.gitHosts.dialog.kindLabel' => 'Tipo',
 			'web.plugins.gitHosts.dialog.kindGitHub' => 'GitHub',
@@ -12272,6 +12404,8 @@ extension on TranslationsEs {
 			'web.serverSettings.memoryInspectorCard.openButton' => 'Abrir Memory →',
 			'web.serverSettings.localOnnxBanner' => 'Requiere que el binario se compile con <1>-tags local_onnx</1>. La compilación estándar devuelve un error de stub claro cuando se selecciona este backend. Consulta el tutorial <3>Memory → ONNX local</3> para los pasos de configuración.',
 			'web.serverSettings.stringList.noneDefault' => '(ninguno, usando los valores por defecto integrados)',
+			_ => null,
+		} ?? switch (path) {
 			'web.serverSettings.stringList.addPath' => 'Añadir ruta',
 			'web.serverSettings.stringList.removeTitle' => 'Eliminar',
 			'web.serverSettings.httpHelpers.autoDetected' => 'Detectado automáticamente al arrancar',
@@ -12329,8 +12463,6 @@ extension on TranslationsEs {
 			'web.serverSettings.targetRow.connectionFailedTitle' => 'Conexión fallida',
 			'web.serverSettings.targetRow.testFailedTitle' => 'Prueba fallida',
 			'web.serverSettings.targetRow.deleteConfirm' => ({required Object id}) => '¿Eliminar el destino "${id}"? Las programaciones que lo referencien bloquearán la eliminación.',
-			_ => null,
-		} ?? switch (path) {
 			'web.serverSettings.targetRow.deleteSuccess' => 'Destino eliminado',
 			'web.serverSettings.targetRow.deleteFailedTitle' => 'Error al eliminar',
 			'web.serverSettings.targetRow.unknownError' => 'Error desconocido',
@@ -12786,6 +12918,8 @@ extension on TranslationsEs {
 			'web.knowledge.distill.agentSkillsHint' => 'El SKILL.md renderizado vive en el vault de skills — míralo o gestiónalo en Plugins → Agent Skills.',
 			'web.knowledge.distill.notInVault' => 'desactivado — SKILL.md retirado del vault',
 			'web.knowledge.distill.compiledBadge' => 'compilado',
+			_ => null,
+		} ?? switch (path) {
 			'web.knowledge.distill.compiledHint' => 'Incluye un run.sh ejecutable con paso de validación; al promover también se registra como tarea personalizada',
 			'web.knowledge.distill.recurrence' => ({required Object count}) => 'exitoso ×${count}',
 			'web.knowledge.distill.timeCost' => ({required Object minutes}) => '~${minutes} min manual',
@@ -12843,8 +12977,6 @@ extension on TranslationsEs {
 			'web.cortex.chat.hide' => 'Ocultar chat',
 			'web.cortex.chat.emptyHint' => 'Pide a la IA actualizar, reestructurar o reescribir este documento. Los cambios se aplican directamente si lo mantiene la IA, o llegan a la bandeja si lo bloqueaste.',
 			'web.cortex.chat.placeholder' => 'p. ej. actualiza esto con el trabajo reciente · ⌘↵ para enviar',
-			_ => null,
-		} ?? switch (path) {
 			'web.cortex.chat.thinking' => 'La IA está trabajando…',
 			'web.cortex.chat.sendFailed' => 'Error al enviar',
 			'web.cortex.chat.escalate' => 'Escalar a sesión',
@@ -13221,8 +13353,6 @@ extension on TranslationsEs {
 			'sessions.detail.startedEnded' => ({required Object started, required Object ended}) => 'iniciada ${started}  ·  finalizada ${ended}',
 			'sessions.detail.idPrefix' => ({required Object id}) => 'id: ${id}',
 			'sessions.detail.errorTitle' => 'No se pudo cargar la sesión',
-			'sessions.detail.accountSwitcher.tooltip' => 'Cambiar de cuenta de Claude',
-			'sessions.detail.accountSwitcher.sheetTitle' => 'Cambiar de cuenta de Claude',
 			'sessions.detail.accountSwitcher.current' => ({required Object account}) => 'Actual: ${account}',
 			'sessions.detail.accountSwitcher.defaultName' => 'Predeterminada (credencial del sistema)',
 			'sessions.detail.accountSwitcher.defaultSubtitle' => 'Usa el propio inicio de sesión del CLI, sin cuenta específica',
@@ -13235,10 +13365,10 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Cambiado a ${account}',
 			'sessions.detail.accountSwitcher.switchFailed' => ({required Object error}) => 'Cambio fallido: ${error}',
 			'sessions.detail.accountSwitcher.noneHint' => 'No hay cuentas de Claude configuradas. Agrégalas en Más → Providers → Claude.',
-			'sessions.detail.accountSwitcher.tooltipAgy' => 'Cambiar de cuenta de Antigravity',
-			'sessions.detail.accountSwitcher.sheetTitleAgy' => 'Cambiar de cuenta de Antigravity',
-			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'Esto reinicia el CLI de Antigravity con una conversación nueva — el historial dentro del CLI no se traslada entre cuentas (la pestaña de la sesión se conserva).',
+			'sessions.detail.accountSwitcher.confirmBodyAgy' => 'Esto reinicia el CLI de Antigravity con la nueva cuenta y traslada la conversación, que se reanuda con su historial. La pestaña de la sesión se conserva.',
 			'sessions.detail.accountSwitcher.noneHintAgy' => 'No hay cuentas de Antigravity configuradas. Agrégalas en Más → Providers → Antigravity.',
+			'sessions.detail.accountSwitcher.tooltipFor' => ({required Object provider}) => 'Cambiar de cuenta de ${provider}',
+			'sessions.detail.accountSwitcher.noneHintWeb' => ({required Object provider}) => 'No hay cuentas de ${provider} configuradas. Agrégalas en la app web, en Providers → ${provider}.',
 			'sessions.terminal.snackbar.imagePickerFailed' => ({required Object error}) => 'Falló el selector de imágenes: ${error}',
 			'sessions.terminal.snackbar.uploadingImage' => 'Subiendo imagen…',
 			'sessions.terminal.snackbar.imageAttached' => ({required Object path}) => 'Imagen adjuntada: ${path}',
@@ -13302,6 +13432,8 @@ extension on TranslationsEs {
 			'sessions.inspector.cortex.open' => 'Abrir espacio Cortex',
 			'sessions.inspector.shared.refresh' => 'Actualizar',
 			'sessions.inspector.shared.inserted' => ({required Object text}) => 'Insertado: ${text}',
+			_ => null,
+		} ?? switch (path) {
 			'sessions.inspector.shared.insertFailedApi' => ({required Object status, required Object message}) => 'Falló la inserción (${status}): ${message}',
 			'sessions.inspector.shared.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.shared.insertFailedShort' => ({required Object error}) => 'Falló la inserción: ${error}',
@@ -13357,8 +13489,6 @@ extension on TranslationsEs {
 			'sessions.inspector.notes.saveFailedApi' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.saveFailedGeneric' => ({required Object error}) => 'Falló al guardar: ${error}',
 			'sessions.inspector.notes.insertFailedApi' => ({required Object error}) => 'Falló la inserción: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'sessions.inspector.notes.insertFailedGeneric' => ({required Object error}) => 'Falló la inserción: ${error}',
 			'sessions.inspector.notes.createFailedApi' => ({required Object error}) => 'Falló al crear: ${error}',
 			'sessions.inspector.notes.createFailedGeneric' => ({required Object error}) => 'Falló al crear: ${error}',
@@ -13816,6 +13946,8 @@ extension on TranslationsEs {
 			'project.conflicts.detectNow' => 'Detectar ahora',
 			'project.conflicts.detected' => ({required Object count}) => '${count} conflicto(s) nuevo(s) encontrado(s)',
 			'project.conflicts.accept' => 'Aceptar',
+			_ => null,
+		} ?? switch (path) {
 			'project.conflicts.dismiss' => 'Descartar',
 			'project.conflicts.deleteFact' => 'Archivar hecho',
 			'project.conflicts.deleteConfirmTitle' => ({required Object side}) => '¿Archivar el hecho ${side}?',
@@ -13871,8 +14003,6 @@ extension on TranslationsEs {
 			'project.archived.restoreFailed' => ({required Object error}) => 'Error al restaurar: ${error}',
 			'project.archived.restore' => 'Restaurar',
 			'backups.title' => 'Copias de seguridad',
-			_ => null,
-		} ?? switch (path) {
 			'backups.runConfirmTitle' => '¿Ejecutar copia de seguridad ahora?',
 			'backups.runConfirmBody' => 'Lanza un nuevo volcado contra el destino local. El trabajo se ejecuta en el servidor; esta lista se actualizará a medida que avance.',
 			'backups.runFullInstance' => 'Instancia completa',
@@ -14330,6 +14460,8 @@ extension on TranslationsEs {
 			'customTasks.scopeProject' => 'Proyecto',
 			'customTasks.cwdHint' => '/Users/you/projects/backend',
 			'customTasks.snackCreated' => 'Tarea creada.',
+			_ => null,
+		} ?? switch (path) {
 			'customTasks.snackUpdated' => 'Tarea actualizada.',
 			'customTasks.deleteBody' => 'Quita la tarea del catálogo. Las sessions que ya la insertaron no se ven afectadas.',
 			'customTasks.introBanner' => 'Define tus propios slash commands. Aparecen en el selector de tareas de la session junto a los integrados.',
@@ -14385,8 +14517,6 @@ extension on TranslationsEs {
 			'notesPage.editor.loadFailedApi' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.loadFailedGeneric' => ({required Object error}) => 'Error al cargar: ${error}',
 			'notesPage.editor.saveFailedApi' => ({required Object error}) => 'Error al guardar: ${error}',
-			_ => null,
-		} ?? switch (path) {
 			'notesPage.editor.saveFailedGeneric' => ({required Object error}) => 'Error al guardar: ${error}',
 			'notesPage.editor.savedAt' => ({required Object time}) => 'Guardado ${time}',
 			'notesPage.editor.showPreview' => 'Vista previa',
@@ -14844,6 +14974,8 @@ extension on TranslationsEs {
 			'cortexHub.hide' => 'Ocultar',
 			'cortexHub.approve' => 'Aprobar',
 			'cortexHub.reject' => 'Rechazar',
+			_ => null,
+		} ?? switch (path) {
 			'cortexHub.approvedToast' => 'Propuesta aprobada',
 			'cortexHub.rejectedToast' => 'Propuesta rechazada',
 			'cortexHub.actionFailed' => ({required Object error}) => 'La acción falló: ${error}',
