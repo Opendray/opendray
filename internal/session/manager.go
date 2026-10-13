@@ -989,6 +989,9 @@ func (m *Manager) spawn(ctx context.Context, sess Session, reactivate bool) (*ru
 		// session and orphaning history.
 		prepareCtx := WithIntegrationSystemPrompt(WithSessionID(WithWorkDir(WithCwd(ctx, sess.Cwd), workDir), sess.ID), spawnProfile.SystemPrompt)
 		if reactivate {
+			if sess.ProviderID == "claude" {
+				m.verifyClaudeResumeID(ctx, &sess, workDir)
+			}
 			prepareCtx = WithResumeClaudeSessionID(prepareCtx, sess.ClaudeSessionID)
 			// Antigravity: resume the cwd's conversation so a restart (or a
 			// switch, which pre-sets the id after copying the db) continues
@@ -1529,6 +1532,11 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 		oldCfg, errOld := m.claudeAccounts.ResolveClaudeConfigDir(ctx, current.ClaudeAccountID)
 		newCfg, errNew := m.claudeAccounts.ResolveClaudeConfigDir(ctx, newAccountID)
 		if errOld == nil && errNew == nil {
+			// Carry the conversation the session is actually writing,
+			// which after a /clear is not the file named by the stored id.
+			if rid := resolveClaudeResumeID(oldCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID); rid != "" {
+				sess.ClaudeSessionID = rid
+			}
 			ok, err := migrateClaudeTranscript(oldCfg, newCfg, sess.ClaudeSessionID)
 			if err != nil {
 				m.log.Warn("claude transcript migration failed; switch starts a fresh conversation",
