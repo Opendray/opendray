@@ -10,6 +10,8 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.18.0], 2026-10-13
+
 ### Added
 
 - Sessions remember their last terminal size and (re)spawn at it instead of
@@ -18,6 +20,38 @@ for the full rationale and what triggers a major bump.
   full-screen TUI like grok comes up correctly sized instead of tiny-then-jump
   (and never renders a stale small frame the browser must correct). Bounded to
   a sane range; unset falls back to the floor.
+- Codex multi-account support. Import several Codex logins (each its own
+  `CODEX_HOME`) under Providers → Codex, pick one per session, and switch a
+  live session between them. The switch copies the conversation rollout into
+  the new account and resumes it (`codex resume <id>`), so the chat keeps its
+  full history. Codex credentials (`auth.json`) are never copied between
+  accounts — refresh tokens rotate, so copies would invalidate each other.
+- OpenCode multi-account support. An OpenCode account is a named credential
+  bundle, stored encrypted with the backup key and injected per spawn via
+  `OPENCODE_AUTH_CONTENT`; adding one is refused when no backup key is set
+  rather than storing it in plain text. Live sessions can switch accounts and
+  resume the same conversation (all accounts share opencode's session DB).
+- Mobile: the in-session account switcher now covers Grok, Codex and OpenCode
+  sessions as well as Claude and Antigravity. Adding those accounts stays on
+  the web.
+
+### Fixed
+
+- Switching a live Claude session to another account now keeps the
+  conversation. The transcript is carried into the new account's config dir
+  and the CLI resumes it with `--resume`, instead of restarting into an empty
+  conversation with only a short recap. The "carry over conversation" toggle
+  (on by default) still controls whether prior content is sent under the new
+  account; if the transcript can't be carried, the switch falls back to the
+  recap.
+- Switching a live Grok session to another account resumes the same
+  conversation (`grok --resume <id>`) instead of starting fresh with a recap.
+- Codex conversations are no longer deleted when a session stops or restarts.
+  opendray ran codex from a temporary home that was removed at exit, taking the
+  conversation (and any refreshed login token) with it; rollouts are now synced
+  back before the temporary home is removed.
+- The Antigravity account-switch confirmation no longer claims the history is
+  lost; the switch already carries the conversation over.
 
 ## [v2.17.8], 2026-09-24
 
