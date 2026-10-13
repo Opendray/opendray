@@ -70,8 +70,9 @@ type ManagerOption func(*Manager)
 // WithIdleThreshold sets how long a session must be silent before
 // session.idle fires. Pass 0 to disable idle detection.
 // ClaudeAccountResolver is the minimum cliacct surface the manager needs
-// for rate-limit auto-failover: marking/checking throttled accounts and
-// picking the next account to switch a throttled session to. Wiring it as
+// for rate-limit auto-failover (marking/checking throttled accounts and
+// picking the next account to switch a throttled session to) and for
+// carrying the conversation transcript across an account switch. Wiring it as
 // a small interface keeps session free of the cliacct ↔ session
 // cyclic-dep risk and lets tests inject a fake. Nil disables failover.
 type ClaudeAccountResolver interface {
@@ -88,6 +89,11 @@ type ClaudeAccountResolver interface {
 	// throttled session to. Returns "" + nil when no non-throttled
 	// enabled account is available.
 	PickFailoverClaudeAccount(ctx context.Context, currentAccountID string) (string, error)
+	// ResolveClaudeConfigDir returns the CLAUDE_CONFIG_DIR an account's
+	// transcripts live under ("" id → the CLI default ~/.claude), so
+	// SwitchClaudeAccount can move the conversation into the new
+	// account's projects tree and --resume it there.
+	ResolveClaudeConfigDir(ctx context.Context, accountID string) (string, error)
 }
 
 // WithClaudeAccountResolver injects the cliacct resolver the manager uses
@@ -1402,10 +1408,11 @@ func (m *Manager) Stop(ctx context.Context, id string) error {
 
 // SwitchClaudeAccount terminates the running CLI process and respawns
 // it under a different Claude account binding, reusing the same row id
-// (so the UI tab and history stay intact). The CLI's in-memory
-// conversation state is lost — the underlying child process is
-// replaced. newAccountID == "" clears the binding (CLI uses its
-// system-keychain default).
+// (so the UI tab and history stay intact). The conversation transcript
+// is carried into the new account's config dir and resumed, so the
+// chat continues where it left off; only when there's no transcript to
+// carry does it start fresh. newAccountID == "" clears the binding
+// (CLI uses its system-keychain default).
 //
 // Rollback: if the respawn fails the row is left in 'stopped' state
 // with the *original* account_id preserved, so the user can manually
@@ -1440,35 +1447,49 @@ func (m *Manager) SwitchClaudeAccount(ctx context.Context, id, newAccountID stri
 		return Session{}, err
 	}
 
-	// Optionally capture a recap of the OLD conversation before we clear
-	// the binding below. Best-effort: a failure here must never block the
-	// switch, so BuildClaudeCarryover returns "" rather than erroring.
-	// Read it now while sess still holds the previous account's UUID +
-	// cwd — the transcript file persists on disk past Stop(), but the
-	// fields we key on are about to be overwritten.
-	var carryover string
-	if carryContext && sess.ClaudeSessionID != "" {
-		carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID, 0)
-		if carryover == "" {
-			m.log.Debug("carry-context requested but no transcript recap built",
-				"session_id", id, "old_claude_session_id", sess.ClaudeSessionID)
+	// Keep the conversation: Claude stores it per config dir at
+	// <CLAUDE_CONFIG_DIR>/projects/<workspace>/<uuid>.jsonl, and
+	// `claude --resume <uuid>` under the new account only needs that
+	// file present in the new account's tree. So link/copy it across and
+	// keep ClaudeSessionID — spawn(reactivate=true) then emits --resume
+	// and the session continues with its full history, as if nothing
+	// happened. Gated on carryContext: it's the operator's consent to
+	// send the prior conversation to the provider under the new account
+	// (off → fresh start, nothing carried). Read the old account from
+	// `current` before the binding is overwritten below.
+	resumable := false
+	if carryContext && m.claudeAccounts != nil && sess.ClaudeSessionID != "" {
+		oldCfg, errOld := m.claudeAccounts.ResolveClaudeConfigDir(ctx, current.ClaudeAccountID)
+		newCfg, errNew := m.claudeAccounts.ResolveClaudeConfigDir(ctx, newAccountID)
+		if errOld == nil && errNew == nil {
+			ok, err := migrateClaudeTranscript(oldCfg, newCfg, sess.ClaudeSessionID)
+			if err != nil {
+				m.log.Warn("claude transcript migration failed; switch starts a fresh conversation",
+					"session", id, "old_cfg", oldCfg, "new_cfg", newCfg, "err", err)
+			}
+			resumable = ok
 		}
 	}
 
-	// Switching account starts a FRESH conversation under the new
-	// credential. We can't carry the old one across via --resume:
-	// `claude --resume <uuid>` validates the UUID against the *target*
-	// account's own session registry (not just a transcript file), so
-	// resuming a UUID minted under the previous account fails with "No
-	// conversation found" and the CLI exits immediately — which left the
-	// session stopped AND unrestartable, since every Start retried the
-	// same doomed --resume. Clearing ClaudeSessionID makes the respawn
-	// mint a new `--session-id` under the new account (a session that
-	// account *does* know), so the switch comes up and later restarts
-	// resume it cleanly. When carry-context is on, the prior transcript
-	// is instead injected into the new session's system prompt below.
-	// The new UUID is captured + persisted by spawn().
-	sess.ClaudeSessionID = ""
+	// Fallback when the transcript couldn't be carried (none persisted
+	// yet, no resolver, migration error): start a FRESH conversation.
+	// Resuming a UUID whose transcript isn't in the new account's tree
+	// fails with "No conversation found" and the CLI exits — and every
+	// restart would retry the same doomed --resume (#331). Clearing
+	// ClaudeSessionID makes the respawn mint a new --session-id instead.
+	// If the operator opted into carry-context, a recap of the old
+	// transcript is injected into the new session's system prompt.
+	var carryover string
+	if !resumable {
+		if carryContext && sess.ClaudeSessionID != "" {
+			carryover = BuildClaudeCarryover(m.claudeHistoryCfg, sess.EffectiveWorkDir(), sess.ClaudeSessionID, 0)
+			if carryover == "" {
+				m.log.Debug("carry-context requested but no transcript recap built",
+					"session_id", id, "old_claude_session_id", sess.ClaudeSessionID)
+			}
+		}
+		sess.ClaudeSessionID = ""
+	}
 	sess.ClaudeAccountID = newAccountID
 	sess.State = StateRunning
 	sess.EndedAt = nil

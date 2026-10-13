@@ -6860,7 +6860,7 @@ class _TranslationsSessionsDetailAccountSwitcherZh extends TranslationsSessionsD
 	@override String get defaultShort => '默认';
 	@override String get tokenEmpty => '无 token';
 	@override String get confirmTitle => '切换账号？';
-	@override String get confirmBody => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。';
+	@override String get confirmBody => '这会在新账户下重启 CLI 并继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。会话标签页会保留。';
 	@override String get confirmAction => '切换';
 	@override String get cancel => '取消';
 	@override String switchedSnack({required Object account}) => '已切换到 ${account}';
@@ -13223,7 +13223,7 @@ extension on TranslationsZh {
 			'sessions.detail.accountSwitcher.defaultShort' => '默认',
 			'sessions.detail.accountSwitcher.tokenEmpty' => '无 token',
 			'sessions.detail.accountSwitcher.confirmTitle' => '切换账号？',
-			'sessions.detail.accountSwitcher.confirmBody' => '这会用新账号重启 CLI——当前 CLI 内的对话上下文会丢失（会话标签保留）。',
+			'sessions.detail.accountSwitcher.confirmBody' => '这会在新账户下重启 CLI 并继续同一段对话 —— 完整历史会保留，并以新账户发送给服务商。会话标签页会保留。',
 			'sessions.detail.accountSwitcher.confirmAction' => '切换',
 			'sessions.detail.accountSwitcher.cancel' => '取消',
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => '已切换到 ${account}',

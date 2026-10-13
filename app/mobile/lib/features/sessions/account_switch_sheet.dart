@@ -13,8 +13,9 @@ import 'package:opendray/core/i18n/strings.g.dart';
 // (app/web/src/components/sessions/AccountSwitcher.tsx). It serves both
 // the Claude (OAuth account) and Antigravity (per-account HOME) flows:
 // the gateway terminates the current child process and respawns it under
-// the new credential, so the in-CLI conversation context is lost (the
-// session id / tab is preserved). A confirm dialog gates the switch.
+// the new credential. A Claude switch resumes the same conversation under
+// the new account; an Antigravity switch copies its conversation across.
+// The session id / tab is preserved. A confirm dialog gates the switch.
 //
 // Returns true via the modal result when a switch succeeded, so the
 // caller can refresh the session + accounts views.

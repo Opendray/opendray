@@ -6860,7 +6860,7 @@ class _TranslationsSessionsDetailAccountSwitcherEs extends TranslationsSessionsD
 	@override String get defaultShort => 'predeterminada';
 	@override String get tokenEmpty => 'sin token';
 	@override String get confirmTitle => '¿Cambiar de cuenta?';
-	@override String get confirmBody => 'Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).';
+	@override String get confirmBody => 'Esto reinicia la CLI con la nueva cuenta y reanuda la misma conversación: todo el historial se conserva y se envía al proveedor con esa cuenta. La pestaña de la sesión se mantiene.';
 	@override String get confirmAction => 'Cambiar';
 	@override String get cancel => 'Cancelar';
 	@override String switchedSnack({required Object account}) => 'Cambiado a ${account}';
@@ -13229,7 +13229,7 @@ extension on TranslationsEs {
 			'sessions.detail.accountSwitcher.defaultShort' => 'predeterminada',
 			'sessions.detail.accountSwitcher.tokenEmpty' => 'sin token',
 			'sessions.detail.accountSwitcher.confirmTitle' => '¿Cambiar de cuenta?',
-			'sessions.detail.accountSwitcher.confirmBody' => 'Esto reinicia el CLI con la nueva cuenta — se pierde el contexto de conversación actual dentro del CLI (la pestaña de la sesión se conserva).',
+			'sessions.detail.accountSwitcher.confirmBody' => 'Esto reinicia la CLI con la nueva cuenta y reanuda la misma conversación: todo el historial se conserva y se envía al proveedor con esa cuenta. La pestaña de la sesión se mantiene.',
 			'sessions.detail.accountSwitcher.confirmAction' => 'Cambiar',
 			'sessions.detail.accountSwitcher.cancel' => 'Cancelar',
 			'sessions.detail.accountSwitcher.switchedSnack' => ({required Object account}) => 'Cambiado a ${account}',

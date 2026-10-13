@@ -12,10 +12,11 @@ import (
 // FRESH `--session-id` (a session the spawning account's CLI will create
 // + recognise), and when a resume UUID is present it must `--resume` it.
 //
-// The account-switch fix (clearing ClaudeSessionID before respawn) hinges
-// on the fresh branch: resuming a UUID minted under a *different* account
-// fails with "No conversation found" and the CLI exits, which previously
-// left a switched session stopped and unrestartable.
+// An account switch uses both branches: when the transcript was carried
+// into the new account's config dir it keeps ClaudeSessionID and resumes;
+// when there was nothing to carry it clears the id and mints fresh —
+// resuming a UUID whose transcript isn't in the new account's tree fails
+// with "No conversation found" and the CLI exits.
 func TestInjectSessionIDFor_ClaudeResumeVsFresh(t *testing.T) {
 	t.Run("no resume id mints a fresh --session-id", func(t *testing.T) {
 		var out session.PrepareOutput

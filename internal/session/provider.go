@@ -295,10 +295,11 @@ func AntigravityResumeConversationFromContext(ctx context.Context) string {
 
 // carryoverContextCtxKey carries a block of prior-conversation text to
 // seed a freshly spawned session's system prompt. Set ONLY by
-// SwitchClaudeAccount when the operator opts into "carry context":
-// switching accounts can't --resume the old conversation (the UUID
-// isn't in the new account's registry), so instead we read the old
-// transcript and inject a recap via --append-system-prompt. It's a
+// SwitchClaudeAccount when the operator opts into "carry context" AND
+// the old transcript couldn't be carried into the new account's config
+// dir (normally it is, and the switch --resumes the same conversation),
+// so instead we read the old transcript and inject a recap via
+// --append-system-prompt. It's a
 // one-shot — present only on the switch respawn, absent on later
 // restarts (which --resume the new account's own UUID, whose
 // transcript already contains the seeded recap).
