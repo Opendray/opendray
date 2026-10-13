@@ -10,6 +10,20 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.18.1], 2026-10-13
+
+### Fixed
+
+- Claude sessions no longer die on every start when their stored
+  conversation id has no transcript. Claude keeps its launch id but moves to
+  a new transcript file after `/clear` (and on some resumes), so the stored
+  id could point at an older conversation or at no file, and
+  `claude --resume` exited at once. Before resuming (restart, the
+  auto-resume after an upgrade, or an account switch), opendray now finds
+  the transcript the session is actually writing and resumes that one. When
+  no transcript exists at all, the session starts a fresh conversation
+  instead of failing. An account switch carries the correct transcript too.
+
 ## [v2.18.0], 2026-10-13
 
 ### Added
