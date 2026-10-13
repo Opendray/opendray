@@ -230,7 +230,7 @@
         "confirmSwitch": "Switching account restarts the Claude CLI under a fresh conversation — the in-CLI history doesn't carry across accounts. Any in-flight tool execution or unsent input is lost. Continue?",
         "confirmSwitchCarry": "Switching account restarts the Claude CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?",
         "carryContext": "Carry over conversation context",
-        "carryContextHelp": "Keeps your conversation going on the new account (Claude resumes the full history; other CLIs get a recap). Prior content is sent to the provider under the new account.",
+        "carryContextHelp": "Keeps this conversation going on the new account with its full history. Prior content is sent to the provider under the new account. Off = start fresh.",
         "switchedToast": "Account switched",
         "switchedDescription": "Now using @{account} · pid {pid}",
         "switchedDefault": "default",
@@ -238,7 +238,7 @@
         "tooltipGrok": "Switch Grok account (restarts the CLI process)",
         "menuTitleGrok": "Switch Grok account",
         "confirmSwitchGrok": "Switching account restarts the Grok CLI under a fresh conversation. The in-CLI history does not carry across accounts, and any in-flight tool execution or unsent input is lost. Continue?",
-        "confirmSwitchGrokCarry": "Switching account restarts the Grok CLI. A recap of your recent conversation will be carried over and sent to the provider under the NEW account. Any in-flight tool execution or unsent input is lost. Continue?"
+        "confirmSwitchGrokCarry": "Switching account restarts the Grok CLI and resumes this same conversation under the NEW account — the full history carries over and is sent to the provider under that account. Any in-flight tool execution or unsent input is lost. Continue?"
       },
       "inspector": {
         "tabs": {

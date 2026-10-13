@@ -93,3 +93,35 @@ func TestInjectSessionIDFor_GrokContinue(t *testing.T) {
 		}
 	})
 }
+
+// A grok account switch names the session it copied into the new
+// GROK_HOME; the adapter must resume exactly that one (--resume <id>),
+// taking precedence over the restart path's blind --continue.
+func TestInjectSessionIDFor_GrokResumeVsContinue(t *testing.T) {
+	const sid = "c715a14b-3dd5-4b67-a18e-dcd0d79251b5"
+	t.Run("switch resumes the named session", func(t *testing.T) {
+		ctx := session.WithGrokContinue(session.WithGrokResumeSession(context.Background(), sid))
+		var out session.PrepareOutput
+		injectSessionIDFor(ctx, "grok", &out)
+		if flagValue(out.Args, "--resume") != sid {
+			t.Errorf("want --resume %s, got %v", sid, out.Args)
+		}
+		if hasFlag(out.Args, "--continue") {
+			t.Errorf("--resume must win over --continue, got %v", out.Args)
+		}
+	})
+	t.Run("restart continues", func(t *testing.T) {
+		var out session.PrepareOutput
+		injectSessionIDFor(session.WithGrokContinue(context.Background()), "grok", &out)
+		if !hasFlag(out.Args, "--continue") || hasFlag(out.Args, "--resume") {
+			t.Errorf("restart should pass only --continue, got %v", out.Args)
+		}
+	})
+	t.Run("fresh spawn passes neither", func(t *testing.T) {
+		var out session.PrepareOutput
+		injectSessionIDFor(context.Background(), "grok", &out)
+		if hasFlag(out.Args, "--continue") || hasFlag(out.Args, "--resume") {
+			t.Errorf("fresh spawn should pass no resume flag, got %v", out.Args)
+		}
+	})
+}
