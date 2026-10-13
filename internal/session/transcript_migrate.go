@@ -143,9 +143,18 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("create dst: %w", err)
 	}
-	defer out.Close()
 	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
 		return fmt.Errorf("copy bytes: %w", err)
 	}
-	return out.Sync()
+	if err := out.Sync(); err != nil {
+		out.Close()
+		return fmt.Errorf("sync dst: %w", err)
+	}
+	// Close can surface a deferred write error; a silently short copy
+	// would be resumed as a truncated conversation.
+	if err := out.Close(); err != nil {
+		return fmt.Errorf("close dst: %w", err)
+	}
+	return nil
 }
