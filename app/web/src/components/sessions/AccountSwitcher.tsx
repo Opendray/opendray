@@ -17,11 +17,13 @@ import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { listAntigravityAccounts } from '@/lib/antigravityAccounts'
 import { listGrokAccounts } from '@/lib/grokAccounts'
 import { listCodexAccounts } from '@/lib/codexAccounts'
+import { listOpenCodeAccounts } from '@/lib/opencodeAccounts'
 import {
   switchClaudeAccount,
   switchAntigravityAccount,
   switchGrokAccount,
   switchCodexAccount,
+  switchOpenCodeAccount,
 } from '@/lib/sessions'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
@@ -30,9 +32,8 @@ interface AccountSwitcherProps {
   session: Session
 }
 
-// Minimal shape shared by Claude, Antigravity, Grok and Codex accounts, the
-// only fields this dropdown renders. Lets one component drive every
-// provider's multi-account switching.
+// Minimal shape shared by every provider's accounts — the only fields this
+// dropdown renders. Lets one component drive all multi-account switching.
 interface SwitcherAccount {
   id: string
   name: string
@@ -40,93 +41,130 @@ interface SwitcherAccount {
   config_dir: string
   enabled: boolean
   token_filled: boolean
+  // opencode accounts are credential bundles (no dir); show their
+  // provider ids as the subtitle instead.
+  providers?: string[]
+}
+
+type Kind = 'claude' | 'antigravity' | 'grok' | 'codex' | 'opencode'
+
+// Per-provider wiring. carry=true shows the "carry over" toggle, which is
+// the operator's consent to send the prior conversation to the provider
+// under the new account (claude, grok, codex and opencode resume it in
+// full); antigravity always carries its conversation, so no toggle.
+const KINDS: Record<
+  Kind,
+  {
+    queryKey: string
+    list: () => Promise<SwitcherAccount[]>
+    accountOf: (s: Session) => string | undefined
+    switchTo: (id: string, accountId: string, carry: boolean) => Promise<Session>
+    carry: boolean
+    confirmKey: string
+    confirmCarryKey: string
+    tooltipKey: string
+    menuTitleKey: string
+  }
+> = {
+  claude: {
+    queryKey: 'claude-accounts',
+    list: listClaudeAccounts,
+    accountOf: (s) => s.claude_account_id,
+    switchTo: switchClaudeAccount,
+    carry: true,
+    confirmKey: 'web.sessions.accountSwitcher.confirmSwitch',
+    confirmCarryKey: 'web.sessions.accountSwitcher.confirmSwitchCarry',
+    tooltipKey: 'web.sessions.accountSwitcher.tooltip',
+    menuTitleKey: 'web.sessions.accountSwitcher.menuTitle',
+  },
+  antigravity: {
+    queryKey: 'antigravity-accounts',
+    list: listAntigravityAccounts,
+    accountOf: (s) => s.antigravity_account_id,
+    switchTo: (id, accountId) => switchAntigravityAccount(id, accountId),
+    carry: false,
+    confirmKey: 'web.sessions.accountSwitcher.confirmSwitchAgy',
+    confirmCarryKey: 'web.sessions.accountSwitcher.confirmSwitchAgy',
+    tooltipKey: 'web.sessions.accountSwitcher.tooltipAgy',
+    menuTitleKey: 'web.sessions.accountSwitcher.menuTitleAgy',
+  },
+  grok: {
+    queryKey: 'grok-accounts',
+    list: listGrokAccounts,
+    accountOf: (s) => s.grok_account_id,
+    switchTo: switchGrokAccount,
+    carry: true,
+    confirmKey: 'web.sessions.accountSwitcher.confirmSwitchGrok',
+    confirmCarryKey: 'web.sessions.accountSwitcher.confirmSwitchGrokCarry',
+    tooltipKey: 'web.sessions.accountSwitcher.tooltipGrok',
+    menuTitleKey: 'web.sessions.accountSwitcher.menuTitleGrok',
+  },
+  codex: {
+    queryKey: 'codex-accounts',
+    list: listCodexAccounts,
+    accountOf: (s) => s.codex_account_id,
+    switchTo: switchCodexAccount,
+    carry: true,
+    confirmKey: 'web.sessions.accountSwitcher.confirmSwitchCodex',
+    confirmCarryKey: 'web.sessions.accountSwitcher.confirmSwitchCodexCarry',
+    tooltipKey: 'web.sessions.accountSwitcher.tooltipCodex',
+    menuTitleKey: 'web.sessions.accountSwitcher.menuTitleCodex',
+  },
+  opencode: {
+    queryKey: 'opencode-accounts',
+    list: listOpenCodeAccounts,
+    accountOf: (s) => s.opencode_account_id,
+    switchTo: switchOpenCodeAccount,
+    carry: true,
+    confirmKey: 'web.sessions.accountSwitcher.confirmSwitchOpenCode',
+    confirmCarryKey: 'web.sessions.accountSwitcher.confirmSwitchOpenCodeCarry',
+    tooltipKey: 'web.sessions.accountSwitcher.tooltipOpenCode',
+    menuTitleKey: 'web.sessions.accountSwitcher.menuTitleOpenCode',
+  },
+}
+
+function kindOf(providerId: string): Kind {
+  return providerId === 'antigravity' ||
+    providerId === 'grok' ||
+    providerId === 'codex' ||
+    providerId === 'opencode'
+    ? providerId
+    : 'claude'
 }
 
 // AccountSwitcher renders a header dropdown that lets the user rebind a
-// *running* multi-account session (claude, antigravity, or grok) to a
-// different account. The backend terminates the current child process and
-// respawns it under the new credential, so the in-CLI conversation is lost
-// (the process is replaced) and the dropdown confirms before firing.
-//
-// Claude isolates accounts via CLAUDE_CONFIG_DIR and supports carrying a
-// recap across the switch (the carry toggle). Antigravity (HOME) and Grok
-// (GROK_HOME) have no cross-account recap builder yet, so their switch is
-// always clean-slate and the carry toggle is hidden.
+// *running* multi-account session (claude, antigravity, grok, codex or
+// opencode)
+// to a different account. The backend terminates the current child process
+// and respawns it under the new credential; with the carry toggle on the
+// conversation follows it, and the dropdown confirms before firing.
 export function AccountSwitcher({ session }: AccountSwitcherProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const kind: 'claude' | 'antigravity' | 'grok' | 'codex' =
-    session.provider_id === 'antigravity'
-      ? 'antigravity'
-      : session.provider_id === 'grok'
-        ? 'grok'
-        : session.provider_id === 'codex'
-          ? 'codex'
-          : 'claude'
-  // Claude, Grok and Codex carry the conversation across the switch behind
-  // the consent toggle (Codex resumes the same thread under the new
-  // account); Antigravity carries the whole conversation with no toggle.
-  const supportsCarry = kind !== 'antigravity'
-
-  const queryKey =
-    kind === 'antigravity'
-      ? ['antigravity-accounts']
-      : kind === 'grok'
-        ? ['grok-accounts']
-        : kind === 'codex'
-          ? ['codex-accounts']
-          : ['claude-accounts']
-  const queryFn =
-    kind === 'antigravity'
-      ? listAntigravityAccounts
-      : kind === 'grok'
-        ? listGrokAccounts
-        : kind === 'codex'
-          ? listCodexAccounts
-          : listClaudeAccounts
+  const kind = kindOf(session.provider_id)
+  const cfg = KINDS[kind]
 
   const { data: accounts } = useQuery<SwitcherAccount[]>({
-    queryKey,
-    queryFn,
+    queryKey: [cfg.queryKey],
+    queryFn: cfg.list,
     staleTime: 30_000,
   })
-  const currentId =
-    kind === 'antigravity'
-      ? session.antigravity_account_id
-      : kind === 'grok'
-        ? session.grok_account_id
-        : kind === 'codex'
-          ? session.codex_account_id
-          : session.claude_account_id
+  const currentId = cfg.accountOf(session)
   const enabled = (accounts ?? []).filter((a) => a.enabled)
   const current = (accounts ?? []).find((a) => a.id === currentId)
   const currentLabel = currentId
     ? current?.display_name || current?.name || currentId
     : t('web.sessions.accountSwitcher.currentDefault')
 
-  // Carry-over toggle (claude only). When on, the switch seeds the new
-  // account's fresh session with a recap of the prior conversation.
+  // Carry-over toggle. When on, the conversation follows the switch.
   const [carryContext, setCarryContext] = useState(true)
 
   const mutation = useMutation({
     mutationFn: (accountId: string) =>
-      kind === 'antigravity'
-        ? switchAntigravityAccount(session.id, accountId)
-        : kind === 'grok'
-          ? switchGrokAccount(session.id, accountId, carryContext)
-          : kind === 'codex'
-            ? switchCodexAccount(session.id, accountId, carryContext)
-            : switchClaudeAccount(session.id, accountId, carryContext),
+      cfg.switchTo(session.id, accountId, carryContext),
     onSuccess: (next) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
-      const nextId =
-        kind === 'antigravity'
-          ? next.antigravity_account_id
-          : kind === 'grok'
-            ? next.grok_account_id
-            : kind === 'codex'
-              ? next.codex_account_id
-              : next.claude_account_id
+      const nextId = cfg.accountOf(next)
       const account = nextId
         ? enabled.find((a) => a.id === nextId)?.display_name || nextId
         : t('web.sessions.accountSwitcher.switchedDefault')
@@ -145,42 +183,18 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
 
   const pick = (accountId: string) => {
     if (accountId === (currentId ?? '')) return
-    const msg =
-      kind === 'antigravity'
-        ? t('web.sessions.accountSwitcher.confirmSwitchAgy')
-        : kind === 'grok'
-          ? carryContext
-            ? t('web.sessions.accountSwitcher.confirmSwitchGrokCarry')
-            : t('web.sessions.accountSwitcher.confirmSwitchGrok')
-          : kind === 'codex'
-            ? carryContext
-              ? t('web.sessions.accountSwitcher.confirmSwitchCodexCarry')
-              : t('web.sessions.accountSwitcher.confirmSwitchCodex')
-            : carryContext
-            ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
-            : t('web.sessions.accountSwitcher.confirmSwitch')
+    const msg = t(
+      cfg.carry && carryContext ? cfg.confirmCarryKey : cfg.confirmKey,
+    )
     if (!confirm(msg)) {
       return
     }
     mutation.mutate(accountId)
   }
 
-  const tooltipKey =
-    kind === 'antigravity'
-      ? 'web.sessions.accountSwitcher.tooltipAgy'
-      : kind === 'grok'
-        ? 'web.sessions.accountSwitcher.tooltipGrok'
-        : kind === 'codex'
-          ? 'web.sessions.accountSwitcher.tooltipCodex'
-          : 'web.sessions.accountSwitcher.tooltip'
-  const menuTitleKey =
-    kind === 'antigravity'
-      ? 'web.sessions.accountSwitcher.menuTitleAgy'
-      : kind === 'grok'
-        ? 'web.sessions.accountSwitcher.menuTitleGrok'
-        : kind === 'codex'
-          ? 'web.sessions.accountSwitcher.menuTitleCodex'
-          : 'web.sessions.accountSwitcher.menuTitle'
+  const supportsCarry = cfg.carry
+  const tooltipKey = cfg.tooltipKey
+  const menuTitleKey = cfg.menuTitleKey
 
   return (
     <DropdownMenu>
@@ -206,7 +220,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
           {t(menuTitleKey)}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {/* Carry-over toggle (claude only). Stays open on click
+        {/* Carry-over toggle (every provider but antigravity). Stays open on click
             (preventDefault) so the operator sets it before picking a
             destination. The subtitle is the consent surface for the
             cross-account data flow. */}
@@ -283,7 +297,7 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
                   {a.display_name || a.name}
                 </span>
                 <span className="text-[10px] text-muted-foreground truncate">
-                  {a.config_dir || a.name}
+                  {a.config_dir || a.providers?.join(', ') || a.name}
                   {!a.token_filled && (
                     <span className="ml-1 text-amber-500/90">
                       {t('web.sessions.accountSwitcher.tokenEmpty')}

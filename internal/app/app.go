@@ -63,6 +63,7 @@ import (
 	memworker "github.com/opendray/opendray-v2/internal/memory/worker"
 	"github.com/opendray/opendray-v2/internal/memquery"
 	notesapi "github.com/opendray/opendray-v2/internal/notes"
+	"github.com/opendray/opendray-v2/internal/opencodeacct"
 	"github.com/opendray/opendray-v2/internal/projectdoc"
 	"github.com/opendray/opendray-v2/internal/projectscan"
 	"github.com/opendray/opendray-v2/internal/prwatcher"
@@ -565,6 +566,11 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// "Import local" scan). Each account is a dedicated GROK_HOME.
 	grokacctSvc := grokacct.NewService(st.Pool(), bus, log)
 	grokacctHandlers := grokacct.NewHandlers(grokacctSvc, log)
+	// OpenCode multi-account: credential bundles injected via
+	// OPENCODE_AUTH_CONTENT. Cipher attached below once the live backup
+	// cipher exists (bundles are never stored plaintext).
+	opencodeacctSvc := opencodeacct.NewService(st.Pool(), bus, log)
+	opencodeacctHandlers := opencodeacct.NewHandlers(opencodeacctSvc, log)
 
 	// Codex multi-account (parallel to grokacct; accounts surfaced via the
 	// "Import local" scan). Each account is a dedicated CODEX_HOME.
@@ -661,10 +667,14 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		// Lets Manager.SwitchCodexAccount carry the conversation rollout
 		// into the new account's CODEX_HOME and resume it.
 		session.WithCodexAccountResolver(codexacctSvc),
+		// opencode: find the working dir's conversation so a restart or
+		// account switch resumes it via --session (shared session DB).
+		session.WithOpenCodeSessionLocator(opencodeacct.SessionLocator{}),
 	)
 	sessionProvider := catalog.NewSessionProvider(cat, cliacctSvc, agyacctSvc, skillsLoader, mcpLoader, secretsFile, log)
-	sessionProvider.WithGrokAccounts(grokacctSvc)   // grok multi-account: bind GROK_HOME at spawn
-	sessionProvider.WithCodexAccounts(codexacctSvc) // codex multi-account: bind CODEX_HOME login at spawn
+	sessionProvider.WithGrokAccounts(grokacctSvc)         // grok multi-account: bind GROK_HOME at spawn
+	sessionProvider.WithCodexAccounts(codexacctSvc)       // codex multi-account: bind CODEX_HOME login at spawn
+	sessionProvider.WithOpenCodeAccounts(opencodeacctSvc) // opencode multi-account: OPENCODE_AUTH_CONTENT at spawn
 	// Built before the session manager so spawn can inject an
 	// integration's provider-agnostic spawn profile (MCP servers + system
 	// prompt + auto-approve) into the sessions it creates, and so POST
@@ -722,6 +732,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		session.WithAntigravityAccountChecker(agyacctSvc),
 		session.WithGrokAccountChecker(grokacctSvc),
 		session.WithCodexAccountChecker(codexacctSvc),
+		session.WithOpenCodeAccountChecker(opencodeacctSvc),
 		// Fill provider/model/claude-account from the integration's
 		// configured defaults for sessions an integration creates and
 		// the request leaves those fields empty (request still wins).
@@ -994,6 +1005,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	// (no-op until the operator arms backups; tokens stay plaintext
 	// until then, matching the historical trust model).
 	gitHostSvc.SetCipher(ambientCipher)
+	// OpenCode account credential bundles: encrypted with the same live
+	// cipher; creation is refused (not stored plaintext) until armed.
+	opencodeacctSvc.SetCipher(ambientCipher)
 	// Same at-rest encryption for channel config secrets (bot tokens,
 	// app secrets, webhook keys).
 	channelHub.SetCipher(ambientCipher)
@@ -1618,6 +1632,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				agyacctHandlers.Mount(r)
 				grokacctHandlers.Mount(r)
 				codexacctHandlers.Mount(r)
+				opencodeacctHandlers.Mount(r)
 				channelHandlers.Mount(r)
 				memoryHandlers.Mount(r)
 				projectDocHandlers.Mount(r)

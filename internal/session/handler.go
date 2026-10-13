@@ -42,6 +42,7 @@ type Service interface {
 	SwitchAntigravityAccount(ctx context.Context, id, accountID string) (Session, error)
 	SwitchGrokAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	SwitchCodexAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
+	SwitchOpenCodeAccount(ctx context.Context, id, accountID string, carryContext bool) (Session, error)
 	History(ctx context.Context, id string, limit int) (HistoryResponse, error)
 }
 
@@ -54,6 +55,17 @@ type AntigravityAccountChecker interface {
 	// antigravity account; an error otherwise (distinguishing
 	// not-found from disabled so the handler maps both to 400).
 	CheckEnabled(ctx context.Context, id string) error
+}
+
+// OpenCodeAccountChecker is the minimal opencodeacct surface the session
+// handler needs to validate `opencode_account_id` before a switch stops
+// the running process. A nil checker disables validation (deferred error
+// at spawn time).
+type OpenCodeAccountChecker interface {
+	// CheckUsable returns nil only when id is an existing, enabled
+	// account whose stored credential bundle decrypts to at least one
+	// credential.
+	CheckUsable(ctx context.Context, id string) error
 }
 
 // GrokAccountChecker is the minimal grokacct surface the session handler
@@ -117,6 +129,7 @@ type Handlers struct {
 	agyAcct   AntigravityAccountChecker // optional; nil disables early validation
 	grokAcct  GrokAccountChecker        // optional; nil disables early validation
 	codexAcct CodexAccountChecker       // optional; nil disables early validation
+	ocAcct    OpenCodeAccountChecker    // optional; nil disables early validation
 	defaults  IntegrationDefaults       // optional; nil disables integration spawn defaults
 	log       *slog.Logger
 	upgrader  websocket.Upgrader
@@ -217,6 +230,7 @@ func (h *Handlers) Mount(r chi.Router) {
 			r.Patch("/antigravity-account", h.switchAntigravityAccount)
 			r.Patch("/grok-account", h.switchGrokAccount)
 			r.Patch("/codex-account", h.switchCodexAccount)
+			r.Patch("/opencode-account", h.switchOpenCodeAccount)
 			r.Post("/uploads", h.upload)
 		})
 	})
@@ -799,4 +813,39 @@ func writeError(w http.ResponseWriter, code int, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+}
+
+// WithOpenCodeAccountChecker wires the opencodeacct surface used to
+// validate opencode_account_id in switchOpenCodeAccount(). nil disables
+// early validation.
+func WithOpenCodeAccountChecker(c OpenCodeAccountChecker) HandlerOption {
+	return func(h *Handlers) { h.ocAcct = c }
+}
+
+// switchOpenCodeAccount handles PATCH /sessions/{id}/opencode-account.
+// Validates the target up-front (so a bad id fails before the PTY is
+// stopped), then hands off to the manager, which stops `opencode`,
+// rebinds the credential bundle and respawns. carry_context, when true,
+// resumes the same opencode conversation under the new account (the
+// session DB is shared across accounts); false starts fresh.
+func (h *Handlers) switchOpenCodeAccount(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req SwitchAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	// Empty account_id = opencode's own on-disk auth, validated at spawn.
+	if h.ocAcct != nil && req.AccountID != "" {
+		if err := h.ocAcct.CheckUsable(r.Context(), req.AccountID); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Errorf("account_id: %w", err))
+			return
+		}
+	}
+	sess, err := h.svc.SwitchOpenCodeAccount(r.Context(), id, req.AccountID, req.CarryContext)
+	if err != nil {
+		h.respondError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, sess)
 }
