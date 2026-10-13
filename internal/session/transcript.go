@@ -377,25 +377,30 @@ func codexTranscript(cfg CodexHistoryConfig, cwd string, startedAt, endedAt time
 	return turns
 }
 
-// resolveLatestCodexJSONL walks the configured sessions root and
-// returns the newest rollout file whose recorded cwd matches.
+// resolveLatestCodexJSONL walks the configured sessions roots (the
+// default home plus every codex account home) and returns the newest
+// rollout file whose recorded cwd matches.
 // Re-uses codexRolloutMatchesCwd already defined in codex_jsonl.go
 // for the cwd predicate.
 func resolveLatestCodexJSONL(cfg CodexHistoryConfig, cwd string) string {
-	root := cfg.SessionsRoot
-	if root == "" {
-		if home := os.Getenv("HOME"); home != "" {
-			root = filepath.Join(home, ".codex", "sessions")
-		}
-	}
-	if root == "" {
-		return ""
-	}
 	type cand struct {
 		path string
 		mt   time.Time
 	}
 	var best cand
+	for _, root := range codexSessionsRoots(cfg) {
+		walkLatestCodexJSONL(root, cwd, func(p string, mt time.Time) {
+			if best.path == "" || mt.After(best.mt) {
+				best = cand{p, mt}
+			}
+		})
+	}
+	return best.path
+}
+
+// walkLatestCodexJSONL calls visit for every rollout under root whose
+// recorded cwd matches.
+func walkLatestCodexJSONL(root, cwd string, visit func(path string, mt time.Time)) {
 	_ = filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return nil
@@ -406,10 +411,7 @@ func resolveLatestCodexJSONL(cfg CodexHistoryConfig, cwd string) string {
 		if !codexRolloutMatchesCwd(p, cwd) {
 			return nil
 		}
-		if best.path == "" || info.ModTime().After(best.mt) {
-			best = cand{p, info.ModTime()}
-		}
+		visit(p, info.ModTime())
 		return nil
 	})
-	return best.path
 }

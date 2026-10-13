@@ -16,10 +16,12 @@ import {
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { listAntigravityAccounts } from '@/lib/antigravityAccounts'
 import { listGrokAccounts } from '@/lib/grokAccounts'
+import { listCodexAccounts } from '@/lib/codexAccounts'
 import {
   switchClaudeAccount,
   switchAntigravityAccount,
   switchGrokAccount,
+  switchCodexAccount,
 } from '@/lib/sessions'
 import { cn } from '@/lib/utils'
 import type { Session } from '@/lib/types'
@@ -28,7 +30,7 @@ interface AccountSwitcherProps {
   session: Session
 }
 
-// Minimal shape shared by Claude, Antigravity, and Grok accounts, the
+// Minimal shape shared by Claude, Antigravity, Grok and Codex accounts, the
 // only fields this dropdown renders. Lets one component drive every
 // provider's multi-account switching.
 interface SwitcherAccount {
@@ -53,30 +55,35 @@ interface SwitcherAccount {
 export function AccountSwitcher({ session }: AccountSwitcherProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const kind: 'claude' | 'antigravity' | 'grok' =
+  const kind: 'claude' | 'antigravity' | 'grok' | 'codex' =
     session.provider_id === 'antigravity'
       ? 'antigravity'
       : session.provider_id === 'grok'
         ? 'grok'
-        : 'claude'
-  // Claude and Grok both carry a recap across the switch (Claude via
-  // --append-system-prompt, Grok via --rules); Antigravity carries the
-  // whole conversation with no toggle. So the carry toggle shows for the
-  // two recap providers.
-  const supportsCarry = kind === 'claude' || kind === 'grok'
+        : session.provider_id === 'codex'
+          ? 'codex'
+          : 'claude'
+  // Claude, Grok and Codex carry the conversation across the switch behind
+  // the consent toggle (Codex resumes the same thread under the new
+  // account); Antigravity carries the whole conversation with no toggle.
+  const supportsCarry = kind !== 'antigravity'
 
   const queryKey =
     kind === 'antigravity'
       ? ['antigravity-accounts']
       : kind === 'grok'
         ? ['grok-accounts']
-        : ['claude-accounts']
+        : kind === 'codex'
+          ? ['codex-accounts']
+          : ['claude-accounts']
   const queryFn =
     kind === 'antigravity'
       ? listAntigravityAccounts
       : kind === 'grok'
         ? listGrokAccounts
-        : listClaudeAccounts
+        : kind === 'codex'
+          ? listCodexAccounts
+          : listClaudeAccounts
 
   const { data: accounts } = useQuery<SwitcherAccount[]>({
     queryKey,
@@ -88,7 +95,9 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       ? session.antigravity_account_id
       : kind === 'grok'
         ? session.grok_account_id
-        : session.claude_account_id
+        : kind === 'codex'
+          ? session.codex_account_id
+          : session.claude_account_id
   const enabled = (accounts ?? []).filter((a) => a.enabled)
   const current = (accounts ?? []).find((a) => a.id === currentId)
   const currentLabel = currentId
@@ -105,7 +114,9 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
         ? switchAntigravityAccount(session.id, accountId)
         : kind === 'grok'
           ? switchGrokAccount(session.id, accountId, carryContext)
-          : switchClaudeAccount(session.id, accountId, carryContext),
+          : kind === 'codex'
+            ? switchCodexAccount(session.id, accountId, carryContext)
+            : switchClaudeAccount(session.id, accountId, carryContext),
     onSuccess: (next) => {
       qc.invalidateQueries({ queryKey: ['sessions'] })
       const nextId =
@@ -113,7 +124,9 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
           ? next.antigravity_account_id
           : kind === 'grok'
             ? next.grok_account_id
-            : next.claude_account_id
+            : kind === 'codex'
+              ? next.codex_account_id
+              : next.claude_account_id
       const account = nextId
         ? enabled.find((a) => a.id === nextId)?.display_name || nextId
         : t('web.sessions.accountSwitcher.switchedDefault')
@@ -139,7 +152,11 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
           ? carryContext
             ? t('web.sessions.accountSwitcher.confirmSwitchGrokCarry')
             : t('web.sessions.accountSwitcher.confirmSwitchGrok')
-          : carryContext
+          : kind === 'codex'
+            ? carryContext
+              ? t('web.sessions.accountSwitcher.confirmSwitchCodexCarry')
+              : t('web.sessions.accountSwitcher.confirmSwitchCodex')
+            : carryContext
             ? t('web.sessions.accountSwitcher.confirmSwitchCarry')
             : t('web.sessions.accountSwitcher.confirmSwitch')
     if (!confirm(msg)) {
@@ -153,13 +170,17 @@ export function AccountSwitcher({ session }: AccountSwitcherProps) {
       ? 'web.sessions.accountSwitcher.tooltipAgy'
       : kind === 'grok'
         ? 'web.sessions.accountSwitcher.tooltipGrok'
-        : 'web.sessions.accountSwitcher.tooltip'
+        : kind === 'codex'
+          ? 'web.sessions.accountSwitcher.tooltipCodex'
+          : 'web.sessions.accountSwitcher.tooltip'
   const menuTitleKey =
     kind === 'antigravity'
       ? 'web.sessions.accountSwitcher.menuTitleAgy'
       : kind === 'grok'
         ? 'web.sessions.accountSwitcher.menuTitleGrok'
-        : 'web.sessions.accountSwitcher.menuTitle'
+        : kind === 'codex'
+          ? 'web.sessions.accountSwitcher.menuTitleCodex'
+          : 'web.sessions.accountSwitcher.menuTitle'
 
   return (
     <DropdownMenu>

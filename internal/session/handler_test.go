@@ -153,6 +153,24 @@ func (f *fakeSvc) SwitchAntigravityAccount(_ context.Context, id, accountID stri
 	return s, nil
 }
 
+func (f *fakeSvc) SwitchCodexAccount(_ context.Context, id, accountID string, carryContext bool) (Session, error) {
+	f.lastCarryContext = carryContext
+	if f.switchErr != nil {
+		return Session{}, f.switchErr
+	}
+	s, ok := f.sessions[id]
+	if !ok {
+		return Session{}, ErrNotFound
+	}
+	if s.ProviderID != "codex" {
+		return Session{}, ErrAccountSwitchUnsupported
+	}
+	s.CodexAccountID = accountID
+	s.State = StateRunning
+	f.sessions[id] = s
+	return s, nil
+}
+
 func (f *fakeSvc) SwitchGrokAccount(_ context.Context, id, accountID string, carryContext bool) (Session, error) {
 	f.lastCarryContext = carryContext
 	if f.switchErr != nil {
