@@ -10,6 +10,16 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.18.2], 2026-10-25
+
+### Fixed
+
+- Skills that ship files beside their `SKILL.md` (references, scripts,
+  templates) now work in agent sessions. `opendray skill describe <id>`
+  printed only the `SKILL.md`, so an agent could not find the files it
+  referenced. It now ends with the skill's directory for vault skills.
+  Built-in skills print as before.
+
 ## [v2.18.1], 2026-10-13
 
 ### Fixed
