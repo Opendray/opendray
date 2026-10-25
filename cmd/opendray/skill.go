@@ -3,7 +3,7 @@
 // directly against the filesystem — no gateway required.
 //
 //	opendray skill list                       # all skills (built-in + vault)
-//	opendray skill describe <id>              # full SKILL.md to stdout
+//	opendray skill describe <id>              # full SKILL.md (+ its directory) to stdout
 //	opendray skill path                       # vault skills root
 
 package main
@@ -78,7 +78,7 @@ func runSkill(args []string) int {
 			_ = json.NewEncoder(os.Stdout).Encode(s)
 			return 0
 		}
-		fmt.Print(s.Body)
+		fmt.Print(skills.Describe(s))
 		return 0
 
 	default:
@@ -112,7 +112,7 @@ usage:
 commands:
   path                    print the skills directory
   list                    list all skills (built-in + vault); cols: id source description
-  describe <id>           print SKILL.md for one skill
+  describe <id>           print SKILL.md for one skill, then its directory (vault skills)
 
 flags:
   -config FILE            config.toml (only [vault] is consulted)
