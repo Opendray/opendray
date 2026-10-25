@@ -243,7 +243,8 @@ func IndexPrompt(skills []Skill) string {
 	b.WriteString("# opendray skills available\n\n")
 	b.WriteString("Each one is a self-contained capability you can invoke when relevant. ")
 	b.WriteString("To get full instructions for a skill, run `opendray skill describe <id>` ")
-	b.WriteString("via your Bash tool — it returns the SKILL.md verbatim. ")
+	b.WriteString("via your Bash tool — it returns the SKILL.md verbatim, followed by the skill's directory ")
+	b.WriteString("when files the skill references (references/, scripts/, templates/) live beside it. ")
 	b.WriteString("Activate a skill only when its description matches what the user just asked for.\n\n")
 	for _, s := range skills {
 		desc := s.Description
@@ -253,6 +254,22 @@ func IndexPrompt(skills []Skill) string {
 		fmt.Fprintf(&b, "- **%s** — %s\n", s.ID, desc)
 	}
 	return b.String()
+}
+
+// Describe returns the text `opendray skill describe` prints: the SKILL.md
+// body, then for a vault skill the directory it was loaded from, so an
+// agent can resolve the relative files (references/, scripts/) the body
+// names. Built-ins have no directory on disk.
+func Describe(s Skill) string {
+	if s.SourcePath == "" {
+		return s.Body
+	}
+	body := s.Body
+	if !strings.HasSuffix(body, "\n") {
+		body += "\n"
+	}
+	return body + "\n---\nSkill directory: " + s.SourcePath + "\n" +
+		"Resolve every relative path in this skill against that directory.\n"
 }
 
 // MirrorClaudeConfig builds a per-session CLAUDE_CONFIG_DIR at destDir
