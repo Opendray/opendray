@@ -127,12 +127,7 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, errors.New("you cannot demote or disable your own login"))
 		return
 	}
-	u, err := us.Update(r.Context(), id, UserPatch{
-		DisplayName: req.DisplayName,
-		Role:        req.Role,
-		Disabled:    req.Disabled,
-		Password:    req.Password,
-	})
+	u, err := us.Update(r.Context(), id, UserPatch(req))
 	if errors.Is(err, ErrUserNotFound) {
 		writeError(w, http.StatusNotFound, err)
 		return
