@@ -10,6 +10,29 @@ for the full rationale and what triggers a major bump.
 
 ## [Unreleased]
 
+## [v2.19.0], 2026-11-19
+
+### Added
+
+- More than one person can sign in. Admins add logins in Settings ›
+  Users and give each one the admin or member role. Members can use
+  sessions, providers and accounts, channels, memory, Cortex, round
+  tables and the workspace tools. Users, integrations, plugins (skills
+  and MCP), backups, server settings, the audit log, self-update and
+  memory pipeline settings stay admin-only. The admin from the config,
+  keyfile or environment is unchanged and stays the recovery login.
+  Roles control what each login can do in opendray, but they don't
+  isolate users: every session runs as the same system user. See
+  `docs/design/multi-user.md`.
+- Sessions record who started them. The session list shows the owner
+  and adds a Mine/All toggle once more than one login has sessions.
+  `GET /api/v1/sessions?owner=me` filters the same way.
+
+### Changed
+
+- Changing the primary admin's password now signs out only the primary
+  admin, not every login.
+
 ## [v2.18.2], 2026-10-25
 
 ### Fixed
