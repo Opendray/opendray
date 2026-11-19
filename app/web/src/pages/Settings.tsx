@@ -9,6 +9,7 @@ import {
   Check,
   Type,
   User as UserIcon,
+  Users as UsersIcon,
   Server,
   Settings2,
   Info,
@@ -32,6 +33,7 @@ import { useLayout } from '@/stores/layout'
 import { cn } from '@/lib/utils'
 import { SlideOverAside } from '@/components/SlideOverAside'
 import { useIsMobile } from '../lib/useIsMobile'
+import { UsersSection } from '@/components/settings/UsersSection'
 import {
   ServerSettings,
   SettingsSearchInput,
@@ -54,6 +56,7 @@ type TopSection =
   | 'appearance'
   | 'font'
   | 'account'
+  | 'users'
   | `server.${ServerSectionId}`
   | 'system'
   | 'about'
@@ -80,6 +83,7 @@ const TOP_SECTION_KEYS = new Set<string>([
   'appearance',
   'font',
   'account',
+  'users',
   'system',
   'about',
 ])
@@ -123,6 +127,8 @@ export function SettingsPage() {
 
   const username = useAuth((s) => s.username)
   const expiresAt = useAuth((s) => s.expiresAt)
+  const isAdmin = useAuth((s) => s.role !== 'member')
+  const primary = useAuth((s) => s.primary)
   const mode = useTheme((s) => s.mode)
   const setMode = useTheme((s) => s.setMode)
   const fontScale = useLayout((s) => s.fontScale)
@@ -167,9 +173,18 @@ export function SettingsPage() {
                   onClick={() => selectSection(item.key)}
                 />
               ))}
+              {isAdmin && (
+                <SidebarItem
+                  icon={UsersIcon}
+                  label={t('web.settings.items.users')}
+                  active={active === 'users'}
+                  onClick={() => selectSection('users')}
+                />
+              )}
             </SidebarGroup>
           ))}
 
+          {isAdmin && (
           <SidebarGroup title={t('web.settings.groups.server')}>
             {SERVER_SECTIONS.map((s) => {
               const key: TopSection = `server.${s.id}`
@@ -184,6 +199,7 @@ export function SettingsPage() {
               )
             })}
           </SidebarGroup>
+          )}
 
           <SidebarGroup title={t('web.settings.groups.system')}>
             <SidebarItem
@@ -256,6 +272,7 @@ export function SettingsPage() {
             setFontScale={setFontScale}
             username={username}
             expiresAt={expiresAt}
+            primary={primary}
             health={health}
             search={search}
           />
@@ -273,6 +290,7 @@ function ContentRouter({
   setFontScale,
   username,
   expiresAt,
+  primary,
   health,
   search,
 }: {
@@ -283,6 +301,7 @@ function ContentRouter({
   setFontScale: (s: number) => void
   username: string | null
   expiresAt: string | null
+  primary: boolean
   health: HealthResponse | undefined
   search: string
 }) {
@@ -299,7 +318,9 @@ function ContentRouter({
         <FontSection fontScale={fontScale} setFontScale={setFontScale} />
       )
     case 'account':
-      return <AccountSection username={username} expiresAt={expiresAt} />
+      return <AccountSection username={username} expiresAt={expiresAt} primary={primary} />
+    case 'users':
+      return <UsersSection />
     case 'system':
       return <SystemSection health={health} />
     case 'about':
@@ -497,9 +518,11 @@ function FontSection({
 function AccountSection({
   username,
   expiresAt,
+  primary,
 }: {
   username: string | null
   expiresAt: string | null
+  primary: boolean
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -529,6 +552,7 @@ function AccountSection({
       {open && (
         <ChangeCredentialsDialog
           currentUsername={username ?? ''}
+          lockUsername={!primary}
           onClose={() => setOpen(false)}
         />
       )}
@@ -543,9 +567,13 @@ function AccountSection({
 // so the operator stays signed in.
 function ChangeCredentialsDialog({
   currentUsername,
+  lockUsername,
   onClose,
 }: {
   currentUsername: string
+  // Users-table logins change only their password; admins manage
+  // usernames from Settings › Users.
+  lockUsername: boolean
   onClose: () => void
 }) {
   const { t } = useTranslation()
@@ -640,7 +668,8 @@ function ChangeCredentialsDialog({
               autoComplete="username"
               value={newUser}
               onChange={(e) => setNewUser(e.target.value)}
-              className="h-8 px-2 rounded-md border border-border bg-input/40 font-mono"
+              readOnly={lockUsername}
+              className="h-8 px-2 rounded-md border border-border bg-input/40 font-mono read-only:opacity-60"
             />
           </label>
           <label className="flex flex-col gap-1">

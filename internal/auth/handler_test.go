@@ -94,12 +94,12 @@ func TestMe_ReturnsUsername(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d", rr.Code)
 	}
-	var resp map[string]string
+	var resp map[string]any
 	if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 		t.Fatal(err)
 	}
-	if resp["username"] != "admin" {
-		t.Errorf("username=%q", resp["username"])
+	if resp["username"] != "admin" || resp["role"] != "admin" || resp["primary"] != true {
+		t.Errorf("me=%v", resp)
 	}
 }
 

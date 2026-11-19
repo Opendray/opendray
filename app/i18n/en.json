@@ -105,9 +105,12 @@
           "titleTerminate": "Terminate and remove",
           "titleRemove": "Remove",
           "claudeAccountTitle": "Claude account: {label}",
-          "worktreeTitle": "Isolated worktree session on branch {branch}"
+          "worktreeTitle": "Isolated worktree session on branch {branch}",
+          "ownerTitle": "Started by {{owner}}"
         },
-        "deleteFailedToast": "Delete failed"
+        "deleteFailedToast": "Delete failed",
+        "showAll": "All",
+        "showMine": "Mine"
       },
       "tabs": {
         "closeAria": "Close tab and remove session",
@@ -2719,7 +2722,8 @@
         "font": "Font size",
         "account": "Account",
         "status": "Status",
-        "about": "About"
+        "about": "About",
+        "users": "Users"
       },
       "health": {
         "connecting": "connecting…",
@@ -2757,6 +2761,29 @@
         "username": "Username",
         "tokenExpires": "Token expires",
         "changeCredentials": "Change credentials"
+      },
+      "users": {
+        "title": "Users",
+        "description": "Logins for this opendray. Members use sessions and projects; admins also manage users, integrations, plugins, backups and server settings. Roles do not isolate users: every login sees every project and session.",
+        "username": "Username",
+        "displayName": "Display name",
+        "password": "Password",
+        "add": "Add user",
+        "created": "User {{user}} created",
+        "roles": {
+          "admin": "Admin",
+          "member": "Member"
+        },
+        "primary": "Primary admin (set in config, keyfile or env)",
+        "lastLogin": "Last login {{when}}",
+        "neverLoggedIn": "Never logged in",
+        "enable": "Enable",
+        "disable": "Disable",
+        "resetPassword": "Reset password",
+        "resetPrompt": "New password for {{user}}",
+        "passwordReset": "Password reset; the user must sign in again",
+        "delete": "Delete",
+        "deleteConfirm": "Delete user {{user}}? Their sessions stay."
       },
       "changeCredentials": {
         "title": "Change credentials",

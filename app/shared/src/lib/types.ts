@@ -40,6 +40,9 @@ export interface Session {
   opencode_account_id?: string
   /** Set when this session was spawned on behalf of another (e.g. a Task). */
   parent_session_id?: string
+  /** Username of the operator login that created it; empty on older
+   * sessions (the primary admin's) and integration / CLI sessions. */
+  owner?: string
   started_at: string
   ended_at?: string
   exit_code?: number

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Loader2, X, CornerDownRight } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ import { listSessions, removeSession } from '@/lib/sessions'
 import { listClaudeAccounts } from '@/lib/claudeAccounts'
 import { isTerminalSessionState, type Session } from '@/lib/types'
 import { useSessionTabs } from '@/stores/sessionTabs'
+import { useAuth } from '@/stores/auth'
 import { providerIconKey } from '@/lib/providerIcons'
 import { BrandAvatar } from '@/components/BrandAvatar'
 import { providerVisual, cwdTail } from '@/lib/providers'
@@ -93,7 +95,17 @@ export function SessionList({ onSpawn, onOpen, fullWidth }: SessionListProps) {
   const closeTab = useSessionTabs((s) => s.close)
   const recents = useSessionTabs((s) => s.recents)
 
-  const all = sessions ?? []
+  // Multi-user: a "mine" filter, shown only once more than one login
+  // owns sessions. Ownerless sessions predate owners and belong to the
+  // primary admin.
+  const me = useAuth((s) => s.username)
+  const primary = useAuth((s) => s.primary)
+  const [mineOnly, setMineOnly] = useState(false)
+  const everything = sessions ?? []
+  const multiUser = new Set(everything.map((s) => (s.owner ?? '').toLowerCase())).size > 1
+  const isMine = (s: Session) =>
+    s.owner ? s.owner.toLowerCase() === (me ?? '').toLowerCase() : primary
+  const all = multiUser && mineOnly ? everything.filter(isMine) : everything
   const { tops, childrenOf } = buildTree(all)
   const sortedTops = tops.slice().sort(orderBy(recents))
   const liveTops = sortedTops.filter((s) => !isTerminalSessionState(s.state))
@@ -177,6 +189,16 @@ export function SessionList({ onSpawn, onOpen, fullWidth }: SessionListProps) {
           <span className="text-[11px] text-muted-foreground/60 font-mono">
             · {all.length}
           </span>
+          {multiUser && (
+            <button
+              type="button"
+              onClick={() => setMineOnly((v) => !v)}
+              className="ml-1 text-[10px] px-1.5 py-px rounded border border-border/60 text-muted-foreground hover:text-foreground"
+              aria-pressed={mineOnly}
+            >
+              {mineOnly ? t('web.sessions.list.showMine') : t('web.sessions.list.showAll')}
+            </button>
+          )}
         </div>
         <Tooltip>
           <TooltipTrigger asChild>

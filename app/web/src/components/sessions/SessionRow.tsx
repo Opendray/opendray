@@ -7,6 +7,7 @@ import { providerVisual, cwdTail } from '@/lib/providers'
 import { providerIconKey } from '@/lib/providerIcons'
 import { BrandAvatar } from '@/components/BrandAvatar'
 import type { Session } from '@/lib/types'
+import { useAuth } from '@/stores/auth'
 
 interface SessionRowProps {
   session: Session
@@ -50,6 +51,7 @@ export function SessionRow({
   accountLabel,
 }: SessionRowProps) {
   const { t } = useTranslation()
+  const me = useAuth((s) => s.username)
   const visual = providerVisual(session.provider_id)
   const isClaude = session.provider_id === 'claude'
   const acct = isClaude
@@ -113,6 +115,14 @@ export function SessionRow({
               })}
             >
               ⎇ {session.worktree_branch.replace(/^opendray\//, '')}
+            </span>
+          )}
+          {session.owner && session.owner.toLowerCase() !== (me ?? '').toLowerCase() && (
+            <span
+              className="shrink-0 text-[10px] px-1.5 py-px rounded bg-card border border-border/60 text-muted-foreground/80"
+              title={t('web.sessions.list.row.ownerTitle', { owner: session.owner })}
+            >
+              {session.owner}
             </span>
           )}
           {acct && (
