@@ -708,6 +708,7 @@ func (m *Manager) Create(ctx context.Context, req CreateRequest) (Session, error
 		ParentSessionID:      req.ParentSessionID,
 		Origin:               origin,
 		IntegrationID:        req.integrationID,
+		Owner:                req.owner,
 		KBAdmin:              req.kbAdmin,
 		StartedAt:            time.Now().UTC(),
 	}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -51,6 +52,7 @@ type loginRequest struct {
 type loginResponse struct {
 	Token     string    `json:"token"`
 	Username  string    `json:"username"`
+	Role      Role      `json:"role,omitempty"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
@@ -89,6 +91,7 @@ func (h *Handlers) handleLogin(
 	writeJSON(w, http.StatusOK, loginResponse{
 		Token:     tok,
 		Username:  info.Username,
+		Role:      info.Role,
 		IssuedAt:  info.IssuedAt,
 		ExpiresAt: info.ExpiresAt,
 	})
@@ -101,8 +104,13 @@ func (h *Handlers) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) me(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
+	info, _ := Info(r.Context())
+	writeJSON(w, http.StatusOK, map[string]any{
 		"username": Username(r.Context()),
+		"role":     info.Role,
+		// primary is the keyfile/config/env admin; false for
+		// users-table logins, which change only their own password.
+		"primary": info.UserID == "",
 		// active_source lets the UI warn when an env var is
 		// shadowing whatever is on disk — "you can change your
 		// credentials but they won't take effect until you unset
@@ -132,6 +140,17 @@ func (h *Handlers) changeCredentials(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
+	info, ok := Info(r.Context())
+	if !ok {
+		// Integration keys reach this route via the dual-auth group
+		// but are not operator logins.
+		writeError(w, http.StatusForbidden, errors.New("operator login required"))
+		return
+	}
+	if info.UserID != "" {
+		h.changeUserPassword(w, r, info, req)
+		return
+	}
 	if err := h.svc.ChangeCredentials(req.CurrentPassword, req.NewUser, req.NewPassword); err != nil {
 		if errors.Is(err, ErrInvalidCredentials) {
 			writeError(w, http.StatusUnauthorized, err)
@@ -154,8 +173,40 @@ func (h *Handlers) changeCredentials(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, loginResponse{
 		Token:     tok,
 		Username:  info.Username,
+		Role:      info.Role,
 		IssuedAt:  info.IssuedAt,
 		ExpiresAt: info.ExpiresAt,
+	})
+}
+
+// changeUserPassword is the users-table branch of change-credentials:
+// only the password changes (usernames are admin-managed), and only
+// that user's tokens are revoked.
+func (h *Handlers) changeUserPassword(w http.ResponseWriter, r *http.Request, info TokenInfo, req changeCredentialsRequest) {
+	if req.NewUser != "" && !strings.EqualFold(req.NewUser, info.Username) {
+		writeError(w, http.StatusBadRequest, errors.New("ask an admin to change your username"))
+		return
+	}
+	u, err := h.svc.ChangeUserPassword(r.Context(), info.UserID, req.CurrentPassword, req.NewPassword)
+	if errors.Is(err, ErrInvalidCredentials) {
+		writeError(w, http.StatusUnauthorized, err)
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+	tok, ti, err := h.svc.IssueFor(u)
+	if err != nil {
+		writeError(w, http.StatusOK, errors.New("password updated; please log in again"))
+		return
+	}
+	writeJSON(w, http.StatusOK, loginResponse{
+		Token:     tok,
+		Username:  ti.Username,
+		Role:      ti.Role,
+		IssuedAt:  ti.IssuedAt,
+		ExpiresAt: ti.ExpiresAt,
 	})
 }
 

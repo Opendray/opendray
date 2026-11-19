@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useLayout } from '@/stores/layout'
+import { useAuth } from '@/stores/auth'
 import { useIsMobile } from '../lib/useIsMobile'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getVersionInfo, type VersionInfo } from '@/lib/version'
@@ -50,6 +51,9 @@ interface NavItem {
   icon: LucideIcon
   labelKey: string
   shortcut: string
+  // adminOnly hides the item for member-role logins; the server
+  // answers those pages' APIs with 403 for members anyway.
+  adminOnly?: boolean
 }
 
 // Three semantic groups separated by a thin divider:
@@ -70,12 +74,12 @@ const groups: NavItem[][] = [
   [
     { to: '/providers', icon: Cpu, labelKey: 'nav.providers', shortcut: 'g p' },
     { to: '/channels', icon: MessageSquare, labelKey: 'nav.channels', shortcut: 'g c' },
-    { to: '/integrations', icon: Plug, labelKey: 'nav.integrations', shortcut: 'g i' },
+    { to: '/integrations', icon: Plug, labelKey: 'nav.integrations', shortcut: 'g i', adminOnly: true },
   ],
   [
     { to: '/vault', icon: BookText, labelKey: 'nav.vault', shortcut: 'g v' },
-    { to: '/plugins', icon: Boxes, labelKey: 'nav.plugins', shortcut: 'g l' },
-    { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b' },
+    { to: '/plugins', icon: Boxes, labelKey: 'nav.plugins', shortcut: 'g l', adminOnly: true },
+    { to: '/backups', icon: Archive, labelKey: 'nav.backups', shortcut: 'g b', adminOnly: true },
     { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: 'g ,' },
   ],
 ]
@@ -116,6 +120,8 @@ export function SidebarNav() {
   // On mobile the nav is a full-width slide-over (positioned by AppShell),
   // so never collapse it to the icon rail there.
   const collapsed = collapsedState && !isMobile
+  const isAdmin = useAuth((s) => s.role !== 'member')
+  const visibleGroups = groups.map((g) => g.filter((i) => isAdmin || !i.adminOnly))
 
   const [updatesOpen, setUpdatesOpen] = useState(false)
   // Bumps when the operator marks a release read so the badge re-renders
@@ -165,7 +171,7 @@ export function SidebarNav() {
           {t('nav.workspace')}
         </div>
       )}
-      {groups.map((group, gi) => (
+      {visibleGroups.map((group, gi) => (
         <Fragment key={gi}>
           {gi > 0 && (
             <div

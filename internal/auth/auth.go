@@ -1,6 +1,8 @@
 // Package auth provides admin bearer-token authentication for opendray.
 //
-// Per design §12, opendray is single-admin. The Service holds an
+// The primary admin comes from the keyfile / config / env (design §12);
+// additional operator logins live in the users table (see users.go) and
+// carry a Role. The Service holds an
 // in-memory token map; tokens are 32 random bytes, base64url-encoded,
 // with absolute TTL (default 24h, configurable via admin.token_ttl).
 // No JWT, no clock-sync requirement, no signing key.
@@ -23,6 +25,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/opendray/opendray-v2/internal/config"
 	"github.com/opendray/opendray-v2/internal/eventbus"
 )
@@ -39,7 +43,12 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 
 // TokenInfo is the public view of an issued token.
 type TokenInfo struct {
-	Username  string    `json:"username"`
+	Username string `json:"username"`
+	// Role is admin for the primary admin and for users created with
+	// the admin role; member otherwise.
+	Role Role `json:"role"`
+	// UserID is the users-table id; empty for the primary admin.
+	UserID    string    `json:"user_id,omitempty"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
@@ -64,6 +73,10 @@ type Service struct {
 	// load.
 	creds   atomic.Pointer[AdminCreds]
 	credsMu sync.Mutex
+
+	// users holds the additional operator logins. nil = single-admin
+	// mode (tests, or a gateway without a DB-backed store wired).
+	users UserStore
 
 	mu     sync.RWMutex
 	tokens map[string]TokenInfo
@@ -104,6 +117,13 @@ func New(cfg config.AdminConfig, bus *eventbus.Hub, log *slog.Logger) *Service {
 	return s
 }
 
+// SetUserStore wires the additional-users store. Call once at startup,
+// before serving requests.
+func (s *Service) SetUserStore(us UserStore) { s.users = us }
+
+// Users returns the wired user store, or nil in single-admin mode.
+func (s *Service) Users() UserStore { return s.users }
+
 // activeCreds returns the current credentials snapshot, or nil
 // when admin is not configured. Single atomic load.
 func (s *Service) activeCreds() *AdminCreds {
@@ -127,31 +147,106 @@ func (s *Service) LoginMobile(user, password string) (string, TokenInfo, error) 
 }
 
 func (s *Service) loginWithTTL(user, password string, ttl time.Duration) (string, TokenInfo, error) {
-	creds := s.activeCreds()
-	if creds == nil {
-		s.publishLogin(user, false, "admin not configured")
-		return "", TokenInfo{}, ErrInvalidCredentials
-	}
-	if !creds.VerifyPassword(user, password) {
+	var info TokenInfo
+	if creds := s.activeCreds(); creds != nil && creds.VerifyPassword(user, password) {
+		info = TokenInfo{Username: creds.User, Role: RoleAdmin}
+	} else if u, ok := s.verifyUser(user, password); ok {
+		info = TokenInfo{Username: u.Username, Role: u.Role, UserID: u.ID}
+	} else {
 		s.publishLogin(user, false, "credentials mismatch")
 		return "", TokenInfo{}, ErrInvalidCredentials
 	}
+	return s.issue(info, ttl)
+}
 
+// issue stores a fresh token for info with the given lifetime.
+func (s *Service) issue(info TokenInfo, ttl time.Duration) (string, TokenInfo, error) {
 	tok, err := generateToken()
 	if err != nil {
 		return "", TokenInfo{}, err
 	}
 	now := time.Now().UTC()
-	info := TokenInfo{
-		Username:  creds.User,
-		IssuedAt:  now,
-		ExpiresAt: now.Add(ttl),
-	}
+	info.IssuedAt = now
+	info.ExpiresAt = now.Add(ttl)
 	s.mu.Lock()
 	s.tokens[tok] = info
 	s.mu.Unlock()
-	s.publishLogin(s.cfg.User, true, "")
+	if info.UserID != "" && s.users != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		if err := s.users.TouchLogin(ctx, info.UserID); err != nil {
+			s.log.Warn("record last login failed", "user", info.Username, "err", err)
+		}
+		cancel()
+	}
+	s.publishLogin(info.Username, true, "")
 	return tok, info, nil
+}
+
+// dummyHash keeps a failed users-table lookup as slow as a real bcrypt
+// verify so login timing doesn't reveal which usernames exist.
+const dummyHash = "$2a$10$3VPyywpwKPbWoaaIFTpWZ.OE3hrKwgZdvDt7yPMtRSXY7WhgVoP4G"
+
+// verifyUser checks user/password against the users table. Disabled
+// users never verify.
+func (s *Service) verifyUser(user, password string) (User, bool) {
+	if s.users == nil {
+		return User{}, false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	u, err := s.users.GetByUsername(ctx, user)
+	if err != nil || u.Disabled {
+		if err != nil && !errors.Is(err, ErrUserNotFound) {
+			s.log.Warn("user lookup failed", "err", err)
+		}
+		_ = bcrypt.CompareHashAndPassword([]byte(dummyHash), []byte(password))
+		return User{}, false
+	}
+	if bcrypt.CompareHashAndPassword([]byte(u.passwordHash), []byte(password)) != nil {
+		return User{}, false
+	}
+	return u, true
+}
+
+// ChangeUserPassword rotates a users-table login's own password after
+// re-verifying the current one, then revokes that user's tokens.
+func (s *Service) ChangeUserPassword(ctx context.Context, userID, currentPassword, newPassword string) (User, error) {
+	if s.users == nil {
+		return User{}, ErrInvalidCredentials
+	}
+	u, err := s.users.Get(ctx, userID)
+	if err != nil || u.Disabled {
+		return User{}, ErrInvalidCredentials
+	}
+	if bcrypt.CompareHashAndPassword([]byte(u.passwordHash), []byte(currentPassword)) != nil {
+		s.publishLogin(u.Username, false, "change-password: current password mismatch")
+		return User{}, ErrInvalidCredentials
+	}
+	u, err = s.users.Update(ctx, userID, UserPatch{Password: &newPassword})
+	if err != nil {
+		return User{}, err
+	}
+	s.RevokeUser(u.Username)
+	return u, nil
+}
+
+// IssueFor logs u in without a password check. Used right after a
+// verified password change so the caller keeps a working session.
+func (s *Service) IssueFor(u User) (string, TokenInfo, error) {
+	return s.issue(TokenInfo{Username: u.Username, Role: u.Role, UserID: u.ID}, s.ttl)
+}
+
+// RevokeUser drops every token issued to username (case-insensitive).
+// Called when a user is disabled, deleted, re-roled or has their
+// password reset, so the change takes effect immediately.
+func (s *Service) RevokeUser(username string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for tok, info := range s.tokens {
+		if strings.EqualFold(info.Username, username) {
+			delete(s.tokens, tok)
+		}
+	}
 }
 
 // ChangeCredentials rotates the operator's username + password.
@@ -196,17 +291,22 @@ func (s *Service) ChangeCredentials(currentPassword, newUser, newPassword string
 		return err
 	}
 	s.creds.Store(&loaded)
-	s.revokeAllTokens()
+	s.revokePrimaryTokens()
 	s.publishCredsChanged(newUser)
 	return nil
 }
 
-// revokeAllTokens drops every issued token so a credential
-// rotation forces re-authentication.
-func (s *Service) revokeAllTokens() {
+// revokePrimaryTokens drops every token issued to the primary admin so a
+// credential rotation forces it to re-authenticate. Users-table logins
+// keep their tokens — their credentials did not change.
+func (s *Service) revokePrimaryTokens() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.tokens = make(map[string]TokenInfo)
+	for tok, info := range s.tokens {
+		if info.UserID == "" {
+			delete(s.tokens, tok)
+		}
+	}
 }
 
 func (s *Service) publishCredsChanged(user string) {
@@ -288,9 +388,7 @@ func (s *Service) Middleware(next http.Handler) http.Handler {
 			writeUnauth(w)
 			return
 		}
-		ctx := context.WithValue(r.Context(), userCtxKey{}, info.Username)
-		ctx = context.WithValue(ctx, tokenCtxKey{}, tok)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(withInfo(r.Context(), info, tok)))
 	})
 }
 
@@ -305,9 +403,40 @@ func (s *Service) AttachContext(ctx context.Context, token string) (context.Cont
 	if !ok {
 		return ctx, false
 	}
+	return withInfo(ctx, info, token), true
+}
+
+func withInfo(ctx context.Context, info TokenInfo, token string) context.Context {
 	ctx = context.WithValue(ctx, userCtxKey{}, info.Username)
-	ctx = context.WithValue(ctx, tokenCtxKey{}, token)
-	return ctx, true
+	ctx = context.WithValue(ctx, infoCtxKey{}, info)
+	return context.WithValue(ctx, tokenCtxKey{}, token)
+}
+
+// Info retrieves the authenticated token's info from a request context.
+func Info(ctx context.Context) (TokenInfo, bool) {
+	v, ok := ctx.Value(infoCtxKey{}).(TokenInfo)
+	return v, ok
+}
+
+// IsAdmin reports whether the request was authenticated with an
+// admin-role token.
+func IsAdmin(ctx context.Context) bool {
+	info, ok := Info(ctx)
+	return ok && info.Role == RoleAdmin
+}
+
+// RequireAdmin rejects requests whose token is not admin-role with 403.
+// Mount it inside a group that already runs Middleware.
+func RequireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !IsAdmin(r.Context()) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"error":"admin role required"}`))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Username retrieves the authenticated username from a request context.
@@ -329,6 +458,7 @@ func TokenFromContext(ctx context.Context) string {
 
 type userCtxKey struct{}
 type tokenCtxKey struct{}
+type infoCtxKey struct{}
 
 func bearerToken(r *http.Request) string {
 	h := r.Header.Get("Authorization")

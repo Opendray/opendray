@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 
+	"github.com/opendray/opendray-v2/internal/auth"
 	"github.com/opendray/opendray-v2/internal/integration"
 	"github.com/opendray/opendray-v2/internal/workspace"
 	"github.com/opendray/opendray-v2/internal/wsutil"
@@ -257,6 +258,7 @@ func (h *Handlers) create(w http.ResponseWriter, r *http.Request) {
 		h.applyIntegrationDefaults(r.Context(), p.ID, &req)
 	} else if ok {
 		req.SetOrigin(OriginOperator, "")
+		req.SetOwner(p.ID)
 	}
 	// Validate claude_account_id up front so the operator gets a clean
 	// 400 instead of a 500 on the deferred spawn-time error. We only
@@ -330,10 +332,30 @@ func (h *Handlers) list(w http.ResponseWriter, r *http.Request) {
 	}
 	p, ok := integration.CurrentPrincipal(r.Context())
 	list = visibleSessions(p, ok, list)
+	if r.URL.Query().Get("owner") == "me" {
+		list = ownedBy(r.Context(), list)
+	}
 	if list == nil {
 		list = []Session{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"sessions": list})
+}
+
+// ownedBy keeps the sessions the calling operator created. Sessions
+// with no recorded owner predate multi-user and belong to the primary
+// admin. Returns a fresh slice (never mutates).
+func ownedBy(ctx context.Context, list []Session) []Session {
+	info, ok := auth.Info(ctx)
+	if !ok {
+		return []Session{}
+	}
+	out := make([]Session, 0, len(list))
+	for _, s := range list {
+		if strings.EqualFold(s.Owner, info.Username) || (s.Owner == "" && info.UserID == "") {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // visibleSessions filters the session list for the calling principal.

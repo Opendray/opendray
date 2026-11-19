@@ -14,6 +14,7 @@ interface LoginResponse {
   username: string
   issued_at: string
   expires_at: string
+  role?: 'admin' | 'member'
 }
 
 export function LoginPage() {
@@ -39,7 +40,7 @@ export function LoginPage() {
         body: { username, password },
         skipAuthRedirect: true,
       })
-      setSession(res.token, res.username, res.expires_at)
+      setSession(res.token, res.username, res.expires_at, res.role)
       navigate({ to: search.next || '/sessions' })
     } catch (err) {
       const message =

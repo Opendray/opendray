@@ -11,11 +11,13 @@ import { HealthBanner } from './HealthBanner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useLayout } from '@/stores/layout'
 import { useIsCompact, useIsMobile } from '../lib/useIsMobile'
+import { useIdentitySync } from '../lib/useIdentitySync'
 
 export function AppShell() {
   const { t } = useTranslation()
   const [paletteOpen, setPaletteOpen] = useState(false)
   useCommandPaletteHotkey(setPaletteOpen)
+  useIdentitySync()
 
   const isMobile = useIsMobile()
   const isCompact = useIsCompact()

@@ -524,6 +524,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	bus := eventbus.New(log)
 
 	authSvc := auth.New(cfg.Admin, bus, log)
+	authSvc.SetUserStore(auth.NewPGUserStore(st.Pool()))
 	authHandlers := auth.NewHandlers(authSvc, log)
 
 	cat, err := catalog.New(st.Pool(), log)
@@ -1547,6 +1548,20 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	log.Info("transcript-aware journaler enabled (worker-registry routing)",
 		"plan_drift_enabled", true)
 
+	versionHandlers := newVersionHandlers(selfUpdateStateDir(), bus, log, func() int {
+		rows, err := sessionMgr.List(context.Background())
+		if err != nil {
+			return 0
+		}
+		live := 0
+		for _, s := range rows {
+			if !s.State.IsTerminal() {
+				live++
+			}
+		}
+		return live
+	})
+
 	gw := gateway.NewServer(gateway.Deps{
 		Logger:    log,
 		DB:        st,
@@ -1562,10 +1577,13 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 			bridgeHandlers.Mount(r)
 			channelHandlers.MountPublic(r)
 
-			// Admin-only: integration CRUD + reverse proxy.
+			// Operator-only (admin token, no integration keys). Every
+			// operator login — admin or member role — reaches the
+			// workspace tools here; the nested group below is admin-role
+			// only.
 			r.Group(func(r chi.Router) {
 				r.Use(authSvc.Middleware)
-				intgrHandlers.MountAdmin(r)
+				versionHandlers.MountRead(r)
 				proxyHandlers.Mount(r)
 				fsHandlers.Mount(r)
 				gitHandlers.Mount(r)
@@ -1574,45 +1592,42 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 				customTaskHandlers.Mount(r)
 				searchHandlers.Mount(r)
 				notesHandlers.Mount(r)
-				skillsHandlers.Mount(r)
-				mcpHandlers.Mount(r)
-				vaultGitHandlers.Mount(r)
-				vaultSyncer.Mount(r)
-				auditHandlers.Mount(r)
-				intgrCallLogHandlers.Mount(r)
-				settingsHandlers.Mount(r)
-				newVersionHandlers(selfUpdateStateDir(), bus, log, func() int {
-					rows, err := sessionMgr.List(context.Background())
-					if err != nil {
-						return 0
-					}
-					live := 0
-					for _, s := range rows {
-						if !s.State.IsTerminal() {
-							live++
-						}
-					}
-					return live
-				}).Mount(r)
-				// SetupHandlers (status + setup + disable) is always
-				// mounted — that's the whole point of PR #49 / #50.
-				// Handlers (the data routes) is also always mounted
-				// since PR #50; its requireArmed middleware 503s
-				// when LiveBackup is disarmed, so the off-state is
-				// safe without a nil-handlers branch here.
-				backup.NewSetupHandlers(liveBackup, keyLoad.Source).Mount(r)
-				backupHandlers.Mount(r)
-				summarizerHandlers.Mount(r)
-				memoryWorkerHandlers.Mount(r)
 				memhealthHandlers.Mount(r)
 				conflictHandlers.Mount(r)
-				captureHandlers.Mount(r)
-				injectorHandlers.Mount(r)
-				if cleanerHandlers != nil {
-					cleanerHandlers.Mount(r)
-				}
 				projectScanHandlers.Mount(r)
 				gitActivityHandlers.Mount(r)
+
+				// Admin role only: user management, integrations
+				// admin, vaults, settings, backups, self-update and
+				// the memory pipeline configuration.
+				r.Group(func(r chi.Router) {
+					r.Use(auth.RequireAdmin)
+					authHandlers.MountUsers(r)
+					intgrHandlers.MountAdmin(r)
+					skillsHandlers.Mount(r)
+					mcpHandlers.Mount(r)
+					vaultGitHandlers.Mount(r)
+					vaultSyncer.Mount(r)
+					auditHandlers.Mount(r)
+					intgrCallLogHandlers.Mount(r)
+					settingsHandlers.Mount(r)
+					versionHandlers.MountUpdate(r)
+					// SetupHandlers (status + setup + disable) is always
+					// mounted — that's the whole point of PR #49 / #50.
+					// Handlers (the data routes) is also always mounted
+					// since PR #50; its requireArmed middleware 503s
+					// when LiveBackup is disarmed, so the off-state is
+					// safe without a nil-handlers branch here.
+					backup.NewSetupHandlers(liveBackup, keyLoad.Source).Mount(r)
+					backupHandlers.Mount(r)
+					summarizerHandlers.Mount(r)
+					memoryWorkerHandlers.Mount(r)
+					captureHandlers.Mount(r)
+					injectorHandlers.Mount(r)
+					if cleanerHandlers != nil {
+						cleanerHandlers.Mount(r)
+					}
+				})
 			})
 
 			// Dual-auth (admin OR integration API key): all business

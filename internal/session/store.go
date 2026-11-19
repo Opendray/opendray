@@ -28,6 +28,7 @@ const sessionSelect = `
            COALESCE(opencode_account_id, ''),
            COALESCE(parent_session_id, ''),
            COALESCE(origin, 'operator'), COALESCE(integration_id, ''),
+           COALESCE(owner, ''),
            COALESCE(interrupt_reason, ''),
            COALESCE(term_cols, 0), COALESCE(term_rows, 0),
            started_at, ended_at, exit_code
@@ -51,8 +52,8 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
              args, state, pid,
              claude_account_id, claude_session_id, antigravity_account_id,
              parent_session_id, origin, integration_id, started_at,
-             grok_account_id, codex_account_id, opencode_account_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
+             grok_account_id, codex_account_id, opencode_account_id, owner)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`,
 		sess.ID, nullableString(sess.Name), sess.ProviderID, sess.Model,
 		sess.Cwd, sess.WorkDir, sess.WorktreeBranch,
 		argsJSON, string(sess.State), nullableInt(sess.PID),
@@ -63,7 +64,8 @@ func (s *sessionStore) Insert(ctx context.Context, sess Session) error {
 		sess.StartedAt,
 		nullableString(sess.GrokAccountID),
 		nullableString(sess.CodexAccountID),
-		nullableString(sess.OpenCodeAccountID))
+		nullableString(sess.OpenCodeAccountID),
+		nullableString(sess.Owner))
 	if err != nil {
 		return fmt.Errorf("insert session: %w", err)
 	}
@@ -341,7 +343,7 @@ func scanSession(row rowScanner) (Session, error) {
 	err := row.Scan(&s.ID, &s.Name, &s.ProviderID, &s.Model, &s.Cwd,
 		&s.WorkDir, &s.WorktreeBranch, &argsJSON,
 		&stateStr, &s.PID, &s.ClaudeAccountID, &s.ClaudeSessionID,
-		&s.AntigravityAccountID, &s.GrokAccountID, &s.CodexAccountID, &s.OpenCodeAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID,
+		&s.AntigravityAccountID, &s.GrokAccountID, &s.CodexAccountID, &s.OpenCodeAccountID, &s.ParentSessionID, &originStr, &s.IntegrationID, &s.Owner,
 		&interruptR, &termCols, &termRows, &s.StartedAt, &endedAt, &exitCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrNotFound

@@ -53,9 +53,15 @@ func selfUpdateStateDir() string {
 }
 
 func (h *versionHandlers) Mount(r chi.Router) {
-	r.Get("/version", h.get)
-	r.Post("/version/update", h.requestUpdate)
+	h.MountRead(r)
+	h.MountUpdate(r)
 }
+
+// MountRead exposes the version + update-availability view to every
+// operator login; MountUpdate (triggering an upgrade) is admin-only.
+func (h *versionHandlers) MountRead(r chi.Router) { r.Get("/version", h.get) }
+
+func (h *versionHandlers) MountUpdate(r chi.Router) { r.Post("/version/update", h.requestUpdate) }
 
 // selfUpdateCapable reports whether a one-click background upgrade can be
 // triggered on this host: Linux, the privileged units are installed, and
